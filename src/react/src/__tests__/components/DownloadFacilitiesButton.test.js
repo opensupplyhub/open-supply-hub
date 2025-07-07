@@ -141,7 +141,7 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: false },
     };
-    const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Additional downloads are available for purchase.";
+    const expectedTooltipText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Additional downloads are available for purchase.";
 
     const { getByRole } = renderComponent(props, customState);
 
@@ -151,7 +151,7 @@ describe('DownloadFacilitiesButton component', () => {
     fireEvent.mouseOver(button);
 
     await waitFor(() =>
-      expect(screen.getByText(expectedText)).toBeInTheDocument()
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
   });
 
@@ -172,7 +172,7 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: false },
     };
-    const expectedText = "You've reached your annual download limit. Purchase additional downloads for immediate access.";
+    const expectedTooltipText = "You've reached your annual download limit. Purchase additional downloads for immediate access.";
 
     const { getByRole } = renderComponent(props, customState);
 
@@ -180,7 +180,7 @@ describe('DownloadFacilitiesButton component', () => {
     fireEvent.mouseOver(button);
 
     await waitFor(() =>
-      expect(screen.getByText(expectedText)).toBeInTheDocument()
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
   });
 
@@ -202,7 +202,7 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: false },
     };
-    const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Purchase additional downloads for immediate access.";
+    const expectedTooltipText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Purchase additional downloads for immediate access.";
     const { getByRole } = renderComponent(props, customState);
 
     const button = getByRole('button', { name: 'Purchase More Downloads' });
@@ -211,7 +211,7 @@ describe('DownloadFacilitiesButton component', () => {
     fireEvent.mouseOver(button);
 
     await waitFor(() =>
-      expect(screen.getByText(expectedText)).toBeInTheDocument()
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
   });
 });

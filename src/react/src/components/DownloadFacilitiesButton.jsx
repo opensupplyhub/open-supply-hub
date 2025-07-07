@@ -112,21 +112,17 @@ const DownloadFacilitiesButton = ({
         handleClose();
     };
 
+    const downloadLimit = isEmbedded
+        ? FACILITIES_DOWNLOAD_LIMIT
+        : FREE_FACILITIES_DOWNLOAD_LIMIT;
+
     const tooltipTexts = {
-        availableDownloads: `Registered users can download up to ${
-            isEmbedded
-                ? FACILITIES_DOWNLOAD_LIMIT
-                : FREE_FACILITIES_DOWNLOAD_LIMIT
-        } production
+        availableDownloads: `Registered users can download up to ${downloadLimit} production
             locations annually for free. This account has ${userAllowedRecords} production locations
             available to download. Additional downloads are available for purchase.`,
         outOfDownloads:
             "You've reached your annual download limit. Purchase additional downloads for immediate access.",
-        limitExceededByResults: `Registered users can download up to ${
-            isEmbedded
-                ? FACILITIES_DOWNLOAD_LIMIT
-                : FREE_FACILITIES_DOWNLOAD_LIMIT
-        }
+        limitExceededByResults: `Registered users can download up to ${downloadLimit}
             production locations annually for free. This account has ${userAllowedRecords} production
             locations available to download. Purchase additional downloads for immediate access.`,
     };
