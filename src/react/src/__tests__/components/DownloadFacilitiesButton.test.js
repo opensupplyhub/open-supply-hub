@@ -128,7 +128,7 @@ describe('DownloadFacilitiesButton component', () => {
     );
   });
 
-  test('should show correct text with custom userAllowedRecords in the tooltip', async () => {
+  test('should show correct tooltip in case has available downloads', async () => {
     const props = {
       disabled: true,
       userAllowedRecords: 1000,
@@ -144,7 +144,65 @@ describe('DownloadFacilitiesButton component', () => {
     };
     const { getByRole } = renderComponent(props, customState);
     const expectedText =
-    'Downloads are supported for searches resulting in 1000 production locations or less. Log in to download this dataset.';
+    `Registered users can download up to ${FACILITIES_DOWNLOAD_LIMIT} production
+                locations annually for free. This account has ${userAllowedRecords} production locations
+                available to download. Additional downloads are available for purchase.`;
+
+    const button = getByRole('button', { name: 'Download' });
+    expect(button).toBeDisabled();
+
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedText)).toBeInTheDocument()
+    );
+  });
+  test('should show correct tooltip in case a user is out of downloads', async () => {
+    const props = {
+      disabled: true,
+      userAllowedRecords: 0,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: true,
+          },
+        },
+      },
+    };
+    const { getByRole } = renderComponent(props, customState);
+    const expectedText =
+     "You've reached your annual download limit. Purchase additional downloads for immediate access.";
+
+    const button = getByRole('button', { name: 'Download' });
+    expect(button).toBeDisabled();
+
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedText)).toBeInTheDocument()
+    );
+  });
+  test('should show correct tooltip in case user’s account has not met it’s limit but the result searches yield more records than available', async () => {
+    const props = {
+      disabled: true,
+      userAllowedRecords: 1000,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: false,
+          },
+        },
+      },
+    };
+    const { getByRole } = renderComponent(props, customState);
+    const expectedText =
+    `Registered users can download up to 5000
+                production locations annually for free. This account has 1000 production
+                locations available to download. Purchase additional downloads for immediate access.`;
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();

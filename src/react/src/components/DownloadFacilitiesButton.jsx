@@ -107,13 +107,29 @@ const DownloadFacilitiesButton = ({
         }
         handleClose();
     };
+    const tooltipTexts = {
+        availableDownloads: `Registered users can download up to ${FACILITIES_DOWNLOAD_LIMIT} production
+            locations annually for free. This account has ${userAllowedRecords} production locations
+            available to download. Additional downloads are available for purchase.`,
+        outOfDownloads:
+            "You've reached your annual download limit. Purchase additional downloads for immediate access.",
+        limitExceededByResults: `Registered users can download up to ${FACILITIES_DOWNLOAD_LIMIT}
+            production locations annually for free. This account has ${userAllowedRecords} production
+            locations available to download. Purchase additional downloads for immediate access.`,
+    };
+
+    let tooltipText;
+    if (upgrade) {
+        tooltipText =
+            user.allowed_records_number === 0
+                ? tooltipTexts.outOfDownloads
+                : tooltipTexts.limitExceededByResults;
+    } else {
+        tooltipText = tooltipTexts.availableDownloads;
+    }
 
     const tooltipTitle = (
-        <p className={classes.downloadTooltip}>
-            Downloads are supported for searches resulting in{' '}
-            {userAllowedRecords} production locations or less.
-            {user.isAnon && ' Log in to download this dataset.'}
-        </p>
+        <p className={classes.downloadTooltip}>{tooltipText}</p>
     );
 
     return (
@@ -136,7 +152,7 @@ const DownloadFacilitiesButton = ({
                             }
                         />
                         <span className={classes.buttonText}>
-                            {upgrade ? 'Upgrade to Download' : 'Download'}
+                            {upgrade ? 'Purchase More Downloads' : 'Download'}
                         </span>
                         {upgrade ? (
                             ''
