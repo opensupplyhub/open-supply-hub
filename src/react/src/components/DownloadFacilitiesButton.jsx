@@ -144,7 +144,6 @@ const DownloadFacilitiesButton = ({
     const tooltipTitle = (
         <p className={classes.downloadTooltip}>{tooltipText}</p>
     );
-    console.log('!!!', upgrade, user.allowed_records_number);
 
     return (
         <Tooltip title={tooltipTitle} placement="left">

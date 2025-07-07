@@ -115,7 +115,7 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: true },
     };
-    const { getByRole } = renderComponent(props,customState);
+    const { getByRole } = renderComponent(props, customState);
     const button = getByRole('button', { name: 'Download' });
 
     expect(button).toBeEnabled();
@@ -141,8 +141,9 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: false },
     };
-    const { getByRole } = renderComponent(props, customState);
     const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Additional downloads are available for purchase.";
+
+    const { getByRole } = renderComponent(props, customState);
 
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
@@ -171,10 +172,11 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: false },
     };
-    const { getByRole } = renderComponent(props, customState);
     const expectedText = "You've reached your annual download limit. Purchase additional downloads for immediate access.";
-    const button = getByRole('button', { name: 'Purchase More Downloads' });
 
+    const { getByRole } = renderComponent(props, customState);
+
+    const button = getByRole('button', { name: 'Purchase More Downloads' });
     fireEvent.mouseOver(button);
 
     await waitFor(() =>
@@ -200,8 +202,8 @@ describe('DownloadFacilitiesButton component', () => {
       },
       embeddedMap: { embed: false },
     };
-    const { getByRole } = renderComponent(props, customState);
     const expectedText = "Registered users can download up to 5000 production locations annually for free. This account has 1000 production locations available to download. Purchase additional downloads for immediate access.";
+    const { getByRole } = renderComponent(props, customState);
 
     const button = getByRole('button', { name: 'Purchase More Downloads' });
     expect(button).toBeDisabled();
