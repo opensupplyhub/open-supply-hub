@@ -22,9 +22,10 @@ class DownloadLocationsCheckoutSessionView(APIView):
     swagger_schema = None
 
     def post(self, request, *args, **kwargs):
-        site_url = request.build_absolute_uri('/')
+        site_url = request.build_absolute_uri('/').rstrip('/')
 
         try:
+            redirect_path = request.data.get('redirect_path')
             checkout_session = stripe.checkout.Session.create(
                 line_items=[
                     {
@@ -42,8 +43,8 @@ class DownloadLocationsCheckoutSessionView(APIView):
                     'user_id': request.user.id,
                 },
                 allow_promotion_codes=True,
-                success_url=site_url + 'facilities',
-                cancel_url=site_url + 'facilities',
+                success_url=site_url + redirect_path,
+                cancel_url=site_url + redirect_path,
             )
 
             return Response(

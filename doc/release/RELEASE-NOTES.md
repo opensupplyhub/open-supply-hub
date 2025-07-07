@@ -48,6 +48,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added logic to skip download limit check for Embeded Map requests.
     * Updated the UI part of Embeded Map to properly allow and show 10k records limitation per download.
     * Update button text from Upgrade to Download to Purchase More Downloads.
+    * Redirected the user back to the last OS Hub url after completing Stripe Checkout.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

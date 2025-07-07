@@ -89,7 +89,8 @@ const DownloadFacilitiesButton = ({
         }
     }, [checkoutUrl, checkoutUrlError]);
     const handleUpgrade = () => {
-        dispatch(downloadLimitCheckoutUrl());
+        const redirectPath = window.location.pathname + window.location.search;
+        dispatch(downloadLimitCheckoutUrl(redirectPath));
     };
     const handleClick = event => {
         if (upgrade) {
