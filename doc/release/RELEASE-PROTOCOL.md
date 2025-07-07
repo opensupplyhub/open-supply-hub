@@ -147,7 +147,7 @@ Each new feature should reside in its own branch, which can be pushed to the cen
 
 Once `main` has acquired enough features for a release (or a predetermined release date is approaching), you run the `[Release] Init` GitHub workflow that creates a new release branch with a version number for the release. The release version number for release branches includes only the major and minor versions.
 
-When the release branch is ready for release, the `[Release] Deploy` workflow should be run for each environment, such as Sandbox and Production. This workflow will create two Git tags, each with a version number.
+When the release branch is ready for release, run the `[Release] Deploy` workflow for each target environment (e.g., Sandbox, Production). This workflow automatically creates a Git tag that includes an environment-specific prefix along with the appropriate version number.
 This workflow will also initiate the Deploy to AWS workflow and pass it the necessary parameters. If you need to clear the custom OpenSearch indexes and templates during deployment, you need to select the `Clear the custom OpenSearch indexes and templates` checkbox.
 
 #### Hotfix branches
@@ -234,7 +234,7 @@ In addition to the Production environment, there may be external collaboration e
 
 General guidelines for deploying to external collaboration environments:
 1. Git Tagging Strategy: Use the same Git tagging strategy as for Production. The only difference is that each tag should include a prefix specific to the external environment. See the [Git branches and tags](#git-branches-and-tags) section for more details.
-2. Release Process: The release process should follow the same steps as outlined for Production in the [Release to Production and Sandbox](#release-to-production-and-sandbox) section. The release day follows the defined [release schedule](#release-schedule).
+2. Release Process: The release process should follow the same steps as outlined for Production in the [Release to Production and Sandbox](#release-to-production-and-sandbox) section. The release day follows the defined [Release Schedule](#release-schedule).
 3. Hotfixes: Hotfixes should be deployed to external environments using the same process as for the Production environment. See the [Hotfixes](#hotfixes) section for more information.
 4. Smoke Testing: Smoke testing should be conducted in the same manner as on the Production environment to ensure stability and feature integrity. Refer to the [Smoke testing on release day](#smoke-testing-on-release-day) section for details.
 5. Reloading DedupeHub: Reloading DedupeHub in external environments can be performed by following the same steps described in the [Reloading the DedupeHub](#reloading-the-dedupehub) section, using the appropriate infrastructure resources of the respective external environment.
