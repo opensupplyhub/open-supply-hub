@@ -46,7 +46,7 @@ const getTooltipForFacilitiesDownload = ({
     if (user.isAnon && !isEmbedded && !isPrivateInstance) {
         finalTooltip = tooltipTexts.anonymousUser;
     } else if (user.isAnon && isPrivateInstance) {
-        finalTooltip = tooltipText + tooltipTexts.anonymousUser;
+        finalTooltip = `${tooltipText} ${tooltipTexts.anonymousUser}`;
     } else {
         finalTooltip = tooltipText;
     }

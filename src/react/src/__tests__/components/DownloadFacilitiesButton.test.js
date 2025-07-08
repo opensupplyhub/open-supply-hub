@@ -249,4 +249,48 @@ describe('DownloadFacilitiesButton component', () => {
       expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
   });
+
+  test('show correct tooltip when turned on PRIVATE_INSTANCE switch', async () => {
+    const props = {
+      disabled: true,
+      userAllowedRecords: 10000,
+      upgrade: true,
+      isEmbedded: false,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: true,
+            allowed_records_number: 10000,
+          },
+        },
+      },
+      embeddedMap: { embed: false },
+      featureFlags:  { flags:
+          {
+            "block_location_downloads": false,
+            "claim_a_facility": true,
+            "disable_list_uploading": false,
+            "embedded_map": true,
+            "extended_profile": true,
+            "private_instance": true,
+            "report_a_facility": true,
+            "show_additional_identifiers": false,
+            "vector_tile": true,
+          },
+        },
+    };
+    const expectedTooltipText = `Downloads are supported for searches resulting in 10000 production locations or less. Log in or sign up to download this dataset.`;
+    const { getByRole } = renderComponent(props, customState);
+
+    const button = getByRole('button', { name: 'Download' });
+    expect(button).toBeDisabled();
+
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
+    );
+  });
 });
