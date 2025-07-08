@@ -93,7 +93,7 @@ const DownloadFacilitiesButton = ({
         dispatch(downloadLimitCheckoutUrl(redirectPath));
     };
     const handleClick = event => {
-        if (upgrade) {
+        if (upgrade && !user.isAnon) {
             handleUpgrade();
         } else {
             setAnchorEl(event.currentTarget);
@@ -138,7 +138,22 @@ const DownloadFacilitiesButton = ({
     }
 
     const tooltipTitle = (
-        <p className={classes.downloadTooltip}>{tooltipText}</p>
+        <p className={classes.downloadTooltip}>
+            {user.isAnon && !isEmbedded
+                ? 'Log in to download this dataset.'
+                : tooltipText}
+        </p>
+    );
+
+    const tooltipTitle2 = (
+        <p className={classes.downloadTooltip}>
+            Downloads are supported for searches resulting in{' '}
+            {isEmbedded ? FACILITIES_DOWNLOAD_LIMIT : userAllowedRecords}{' '}
+            production locations or less.
+            {user.isAnon && !isEmbedded
+                ? ' Log in to download this dataset.'
+                : ''}
+        </p>
     );
 
     return (
@@ -161,7 +176,9 @@ const DownloadFacilitiesButton = ({
                             }
                         />
                         <span className={classes.buttonText}>
-                            {upgrade ? 'Purchase More Downloads' : 'Download'}
+                            {upgrade && !user.isAnon
+                                ? 'Purchase More Downloads'
+                                : 'Download'}
                         </span>
                         {upgrade ? (
                             ''
