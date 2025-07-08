@@ -22,7 +22,7 @@ const getTooltipForFacilitiesDownload = ({
         limitExceededByResults: `Registered users can download up to ${FREE_FACILITIES_DOWNLOAD_LIMIT}
             production locations annually for free. This account has ${userAllowedRecords} production
             locations available to download. Purchase additional downloads for immediate access.`,
-        anonymousUser: ' Log in or sign up to download this dataset.',
+        anonymousUser: 'Log in or sign up to download this dataset.',
         embeddedOrPrivateInstance: `Downloads are supported for searches resulting in ${FACILITIES_DOWNLOAD_LIMIT} production locations or less.`,
     };
 
@@ -46,7 +46,7 @@ const getTooltipForFacilitiesDownload = ({
     if (user.isAnon && (!isEmbedded || !isPrivateInstance)) {
         finalTooltip = tooltipTexts.anonymousUser;
     } else if (user.isAnon && (isEmbedded || isPrivateInstance)) {
-        finalTooltip = tooltipText + tooltipTexts.anonymousUser;
+        finalTooltip = tooltipText + ' ' + tooltipTexts.anonymousUser;
     } else {
         finalTooltip = tooltipText;
     }

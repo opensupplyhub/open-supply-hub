@@ -4,6 +4,9 @@ import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import DownloadFacilitiesButton from '../../components/DownloadFacilitiesButton';
+import {
+    PRIVATE_INSTANCE,
+} from '../../util/constants';
 
 
 jest.mock('../../components/DownloadIcon', () => () => <svg data-testid="download-icon" />);
@@ -46,6 +49,7 @@ describe('DownloadFacilitiesButton component', () => {
       downloadLimit: {
         checkout: { checkoutUrl: "test", error: null },
       },
+      featureFlags: { flags: [] },
       ...customState,
     };
     return createStore(() => initialState);
@@ -100,7 +104,7 @@ describe('DownloadFacilitiesButton component', () => {
   });
 
   test('should show tooltip when embed mode is enabled', async () => {
-    const expectedTooltipText = "Registered users can download up to 10000 production locations annually for free. This account has 5000 production locations available to download. Additional downloads are available for purchase.";
+    const expectedTooltipText = "Downloads are supported for searches resulting in 10000 production locations or less.";
     const props = {
       disabled: false,
       userAllowedRecords: 5000,
@@ -206,6 +210,37 @@ describe('DownloadFacilitiesButton component', () => {
     const { getByRole } = renderComponent(props, customState);
 
     const button = getByRole('button', { name: 'Purchase More Downloads' });
+    expect(button).toBeDisabled();
+
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
+    );
+  });
+
+  test('show correct tooltip when user is non-registered', async () => {
+    const props = {
+      disabled: true,
+      userAllowedRecords: 1000,
+      upgrade: true,
+      isEmbedded: false,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: true,
+            allowed_records_number: 1000,
+          },
+        },
+      },
+      embeddedMap: { embed: false },
+    };
+    const expectedTooltipText = "Log in or sign up to download this dataset.";
+    const { getByRole } = renderComponent(props, customState);
+
+    const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
 
     fireEvent.mouseOver(button);
