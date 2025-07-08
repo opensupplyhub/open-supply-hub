@@ -26,8 +26,9 @@ import NonVectorTileFilterSidebarFacilitiesTab from './NonVectorTileFilterSideba
 import ResultsSortDropdown from './ResultsSortDropdown';
 import ShowOnly from './ShowOnly';
 import MergeModal from './MergeModal';
+import DownloadLimitInfo from './DownloadLimitInfo';
 
-import { VECTOR_TILE } from '../util/constants';
+import { VECTOR_TILE, PRIVATE_INSTANCE } from '../util/constants';
 
 import { setSidebarTabActive, toggleFilterModal } from '../actions/ui';
 import { resetMergeFacilitiesState } from '../actions/mergeFacilities';
@@ -43,6 +44,7 @@ import {
     contributorOptionsPropType,
     countryOptionsPropType,
     sectorOptionsPropType,
+    userPropType,
 } from '../util/propTypes';
 
 import { allListsAreEmpty } from '../util/util';
@@ -52,13 +54,13 @@ import FacilitiesIcon from './FacilitiesIcon';
 const filterSidebarStyles = theme =>
     Object.freeze({
         header: {
-            padding: '24px',
+            padding: '24px 24px 8px 24px',
             fontFamily: theme.typography.fontFamily,
             [theme.breakpoints.up('sm')]: {
                 padding: '12px 24px',
             },
             [theme.breakpoints.up('md')]: {
-                padding: '24px',
+                padding: '24px 24px 8px 24px',
             },
         },
         headerText: {
@@ -134,6 +136,7 @@ const FilterSidebar = ({
     refreshSearchResultsAfterMerge,
     theme,
     classes,
+    user,
 }) => {
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
@@ -207,6 +210,19 @@ const FilterSidebar = ({
                         </Grid>
                     </ShowOnly>
                 </Grid>
+                <ShowOnly
+                    when={
+                        !user.isAnon &&
+                        facilitiesCount > user.allowed_records_number
+                    }
+                >
+                    <FeatureFlag
+                        flag={PRIVATE_INSTANCE}
+                        alternative={<DownloadLimitInfo />}
+                    >
+                        <></>
+                    </FeatureFlag>
+                </ShowOnly>
             </div>
         );
 
@@ -369,6 +385,9 @@ FilterSidebar.defaultProps = {
     countriesData: null,
     sectorsData: null,
     mergeError: null,
+    user: {
+        isAnon: true,
+    },
 };
 
 FilterSidebar.propTypes = {
@@ -383,6 +402,7 @@ FilterSidebar.propTypes = {
     mergeError: arrayOf(string),
     resetMergeState: func.isRequired,
     refreshSearchResultsAfterMerge: func.isRequired,
+    user: userPropType,
 };
 
 function mapStateToProps({
@@ -401,6 +421,9 @@ function mapStateToProps({
     mergeFacilities: {
         merge: { fetching: merging, error: mergeError },
     },
+    auth: {
+        user: { user },
+    },
 }) {
     return {
         activeFilterSidebarTab,
@@ -414,6 +437,7 @@ function mapStateToProps({
         facilitiesCount: get(facilities, 'count', null),
         merging,
         mergeError,
+        user,
     };
 }
 
