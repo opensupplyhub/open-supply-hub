@@ -4,9 +4,6 @@ import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import DownloadFacilitiesButton from '../../components/DownloadFacilitiesButton';
-import {
-    PRIVATE_INSTANCE,
-} from '../../util/constants';
 
 
 jest.mock('../../components/DownloadIcon', () => () => <svg data-testid="download-icon" />);
