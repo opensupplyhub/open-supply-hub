@@ -48,6 +48,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 * [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
+* [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated regarding scenarios: a user has available downloads, out of downloads or within limit, but search results exceed available downloads.
 * [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Added the following:
     * Updated implementation for private_instance flag to allow 10k records instead of 5k records per download.
     * Added logic to skip download limit check for Embeded Map requests.
