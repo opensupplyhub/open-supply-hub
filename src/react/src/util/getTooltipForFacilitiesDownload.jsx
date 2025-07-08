@@ -26,6 +26,7 @@ const getTooltipForFacilitiesDownload = ({
         embeddedOrPrivateInstance: `Downloads are supported for searches resulting in ${FACILITIES_DOWNLOAD_LIMIT} production locations or less.`,
     };
 
+    // Determine base tooltip.
     let tooltipText;
 
     if (isEmbedded || isPrivateInstance) {
@@ -39,15 +40,18 @@ const getTooltipForFacilitiesDownload = ({
         tooltipText = tooltipTexts.availableDownloads;
     }
 
-    const tooltipTitle = (
-        <p className={classes.downloadTooltip}>
-            {user.isAnon && !isEmbedded
-                ? tooltipText + tooltipTexts.anonymousUser
-                : tooltipText}
-        </p>
-    );
+    // Adjust for anonymous users.
+    let finalTooltip;
 
-    return tooltipTitle;
+    if (user.isAnon && (!isEmbedded || !isPrivateInstance)) {
+        finalTooltip = tooltipTexts.anonymousUser;
+    } else if (user.isAnon && (isEmbedded || isPrivateInstance)) {
+        finalTooltip = tooltipText + tooltipTexts.anonymousUser;
+    } else {
+        finalTooltip = tooltipText;
+    }
+
+    return <p className={classes.downloadTooltip}>{finalTooltip}</p>;
 };
 
 export default getTooltipForFacilitiesDownload;
