@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { arrayOf, string, bool, shape, number, object } from 'prop-types';
 import { connect } from 'react-redux';
+import includes from 'lodash/includes';
 import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles, withTheme } from '@material-ui/core/styles';
@@ -18,8 +19,10 @@ import { hideLogDownloadError } from '../actions/logDownload';
 import DownloadMenu from '../components/DownloadMenu';
 import {
     FREE_FACILITIES_DOWNLOAD_LIMIT,
-    FACILITIES_DOWNLOAD_LIMIT,
+    PRIVATE_INSTANCE,
 } from '../util/constants';
+import { convertFeatureFlagsObjectToListOfActiveFlags } from '../util/util';
+import getTooltipForFacilitiesDownload from '../util/getTooltipForFacilitiesDownload';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -55,6 +58,7 @@ const DownloadFacilitiesButton = ({
     /* from state */
     dispatch,
     isEmbedded,
+    activeFeatureFlags,
     logDownloadError,
     user,
     userAllowedRecords,
@@ -68,6 +72,7 @@ const DownloadFacilitiesButton = ({
     theme,
 }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const isPrivateInstance = includes(activeFeatureFlags, PRIVATE_INSTANCE);
 
     const actionContrastText = theme.palette.getContrastText(
         theme.palette.action.main,
@@ -79,6 +84,7 @@ const DownloadFacilitiesButton = ({
             dispatch(hideLogDownloadError());
         }
     }, [logDownloadError]);
+
     useEffect(() => {
         if (checkoutUrl) {
             window.location.href = checkoutUrl;
@@ -88,6 +94,7 @@ const DownloadFacilitiesButton = ({
             dispatch(hideDownloadLimitCheckoutUrlError());
         }
     }, [checkoutUrl, checkoutUrlError]);
+
     const handleUpgrade = () => {
         const redirectPath = window.location.pathname + window.location.search;
         dispatch(downloadLimitCheckoutUrl(redirectPath));
@@ -112,48 +119,24 @@ const DownloadFacilitiesButton = ({
         handleClose();
     };
 
-    const downloadLimit = isEmbedded
-        ? FACILITIES_DOWNLOAD_LIMIT
-        : FREE_FACILITIES_DOWNLOAD_LIMIT;
-
-    const tooltipTexts = {
-        availableDownloads: `Registered users can download up to ${downloadLimit} production
-            locations annually for free. This account has ${userAllowedRecords} production locations
-            available to download. Additional downloads are available for purchase.`,
-        outOfDownloads:
-            "You've reached your annual download limit. Purchase additional downloads for immediate access.",
-        limitExceededByResults: `Registered users can download up to ${downloadLimit}
-            production locations annually for free. This account has ${userAllowedRecords} production
-            locations available to download. Purchase additional downloads for immediate access.`,
-    };
-
-    let tooltipText;
-    if (upgrade) {
-        tooltipText =
-            user.allowed_records_number === 0
-                ? tooltipTexts.outOfDownloads
-                : tooltipTexts.limitExceededByResults;
-    } else {
-        tooltipText = tooltipTexts.availableDownloads;
-    }
-
-    const tooltipTitle = (
-        <p className={classes.downloadTooltip}>
-            {user.isAnon && !isEmbedded
-                ? 'Log in to download this dataset.'
-                : tooltipText}
-        </p>
-    );
-
-    const tooltipTitle2 = (
-        <p className={classes.downloadTooltip}>
-            Downloads are supported for searches resulting in{' '}
-            {isEmbedded ? FACILITIES_DOWNLOAD_LIMIT : userAllowedRecords}{' '}
-            production locations or less.
-            {user.isAnon && !isEmbedded
-                ? ' Log in to download this dataset.'
-                : ''}
-        </p>
+    const tooltipTitle = useMemo(
+        () =>
+            getTooltipForFacilitiesDownload({
+                user,
+                userAllowedRecords,
+                isEmbedded,
+                isPrivateInstance,
+                upgrade,
+                classes,
+            }),
+        [
+            user,
+            userAllowedRecords,
+            isEmbedded,
+            isPrivateInstance,
+            upgrade,
+            classes,
+        ],
     );
 
     return (
@@ -223,6 +206,7 @@ DownloadFacilitiesButton.propTypes = {
     checkoutUrl: string,
     checkoutUrlError: string,
     classes: object.isRequired,
+    activeFeatureFlags: arrayOf(string).isRequired,
 };
 
 function mapStateToProps({
@@ -234,6 +218,7 @@ function mapStateToProps({
     downloadLimit: {
         checkout: { checkoutUrl, error: checkoutUrlError },
     },
+    featureFlags: { flags },
 }) {
     return {
         user,
@@ -241,6 +226,7 @@ function mapStateToProps({
         isEmbedded,
         checkoutUrl,
         checkoutUrlError,
+        activeFeatureFlags: convertFeatureFlagsObjectToListOfActiveFlags(flags),
     };
 }
 
