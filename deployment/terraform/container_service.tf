@@ -239,7 +239,7 @@ data "template_file" "app" {
     cache_port                       = var.ec_memcached_port
     aws_storage_bucket_name          = local.files_bucket_name
     claim_from_email                 = var.claim_from_email
-    kafka_bootstrap_servers          = join(",", module.msk_cluster.bootstrap_brokers)
+    kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name           = var.topic_dedup_basic_name
     opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
     opensearch_port                  = var.opensearch_port
@@ -300,7 +300,7 @@ data "template_file" "app_cli" {
     cache_host                       = aws_route53_record.cache.name
     cache_port                       = var.ec_memcached_port
     aws_storage_bucket_name          = local.files_bucket_name
-    kafka_bootstrap_servers          = join(",", module.msk_cluster.bootstrap_brokers)
+    kafka_bootstrap_servers          = join (",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name           = var.topic_dedup_basic_name
     opensearch_host                  = aws_opensearch_domain.opensearch.endpoint
     opensearch_port                  = var.opensearch_port
@@ -351,7 +351,7 @@ data "template_file" "app_dd" {
     git_commit                       = "latest"
     consumer_group_id                = var.consumer_group_id
     consumer_client_id               = var.consumer_client_id
-    bootstrap_servers                = join(",", module.msk_cluster.bootstrap_brokers)
+    bootstrap_servers                = join (",", module.msk_cluster.bootstrap_brokers)
     topic_dedup_basic_name           = var.topic_dedup_basic_name
     rollbar_server_side_access_token = var.rollbar_server_side_access_token
     security_protocol                = var.security_protocol
@@ -528,18 +528,18 @@ resource "aws_ecs_service" "app_dd" {
 }
 
 locals {
-  broker_host_list = split(",", module.msk_cluster.bootstrap_brokers[0])
+  broker_host_list = split(",",module.msk_cluster.bootstrap_brokers[0])
 }
 
 data "template_file" "app_kafka" {
   template = file("task-definitions/app_kafka.json")
 
   vars = {
-    image                  = local.app_kafka_image
-    log_group_name         = "log${local.short}AppKafka"
-    aws_region             = var.aws_region
-    bootstrap_servers      = local.broker_host_list[0]
-    topic_dedup_basic_name = var.topic_dedup_basic_name
+    image                            = local.app_kafka_image
+    log_group_name                   = "log${local.short}AppKafka"
+    aws_region                       = var.aws_region
+    bootstrap_servers                = local.broker_host_list[0]
+    topic_dedup_basic_name           = var.topic_dedup_basic_name
   }
 }
 
