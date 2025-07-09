@@ -212,6 +212,7 @@ const FilterSidebar = ({
                 </Grid>
                 <ShowOnly
                     when={
+                        !embed &&
                         !user.isAnon &&
                         facilitiesCount > user.allowed_records_number
                     }
