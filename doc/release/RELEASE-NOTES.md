@@ -3,6 +3,43 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.9.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 26, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations
+* *Describe migrations here.*
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Created comprehensive test coverage for the logic that controls the display of download limit lead-in copy on the main location search page (/facilities). The implementation includes:
+    * Tests that verify the `DownloadLimitInfo` component is only shown to logged-in users when search results exceed their download limit.
+    * Tests that ensure the component is properly hidden for anonymous users, in embed mode, when the `private_instance` flag is active, or when facilities count is within the user's allowed download limit.
+    * Tests for the `DownloadLimitInfo` component to ensure it renders correct text content and link attributes for informing users about download limits and purchasing additional downloads.
+    * Refactored the filter sidebar header into a separate `FilterSidebarHeader` component to improve code organization and maintainability.
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.8.0
 
 ## Introduction

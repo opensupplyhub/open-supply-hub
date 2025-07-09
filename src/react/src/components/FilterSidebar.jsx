@@ -16,19 +16,16 @@ import CloseIcon from '@material-ui/icons/Close';
 import get from 'lodash/get';
 
 import Button from './Button';
-import FacilityIcon from './FacilityIcon';
 import FilterIcon from './FilterIcon';
 import FeatureFlag from './FeatureFlag';
 import FilterSidebarSearchTab from './FilterSidebarSearchTab';
 import FilterSidebarFacilitiesTab from './FilterSidebarFacilitiesTab';
 import MapWithHookedHeight from './MapWithHookedHeight';
 import NonVectorTileFilterSidebarFacilitiesTab from './NonVectorTileFilterSidebarFacilitiesTab';
-import ResultsSortDropdown from './ResultsSortDropdown';
-import ShowOnly from './ShowOnly';
 import MergeModal from './MergeModal';
-import DownloadLimitInfo from './DownloadLimitInfo';
+import FilterSidebarHeader from './FilterSidebarHeader';
 
-import { VECTOR_TILE, PRIVATE_INSTANCE } from '../util/constants';
+import { VECTOR_TILE } from '../util/constants';
 
 import { setSidebarTabActive, toggleFilterModal } from '../actions/ui';
 import { resetMergeFacilitiesState } from '../actions/mergeFacilities';
@@ -44,7 +41,6 @@ import {
     contributorOptionsPropType,
     countryOptionsPropType,
     sectorOptionsPropType,
-    userPropType,
 } from '../util/propTypes';
 
 import { allListsAreEmpty } from '../util/util';
@@ -53,24 +49,6 @@ import FacilitiesIcon from './FacilitiesIcon';
 
 const filterSidebarStyles = theme =>
     Object.freeze({
-        header: {
-            padding: '24px 24px 8px 24px',
-            fontFamily: theme.typography.fontFamily,
-            [theme.breakpoints.up('sm')]: {
-                padding: '12px 24px',
-            },
-            [theme.breakpoints.up('md')]: {
-                padding: '24px 24px 8px 24px',
-            },
-        },
-        headerText: {
-            fontWeight: 900,
-            fontSize: '44px',
-            margin: 0,
-            lineHeight: '48px',
-            fontFamily: theme.typography.fontFamily,
-        },
-        numberResults: { fontWeight: 800 },
         filterDrawer: {
             backgroundColor: '#fff',
             height: '100%',
@@ -121,7 +99,6 @@ const FilterSidebar = ({
     countriesData,
     sectorsData,
     fetchingFeatureFlags,
-    embed,
     contributors,
     facilitiesCount,
     merging,
@@ -136,7 +113,6 @@ const FilterSidebar = ({
     refreshSearchResultsAfterMerge,
     theme,
     classes,
-    user,
 }) => {
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
@@ -194,38 +170,8 @@ const FilterSidebar = ({
     );
     const tabContrastText = theme.palette.secondary.contrastText;
 
-    const renderHeader = ({ multiLine }) =>
-        facilitiesCount > 0 && (
-            <div className={`${classes.header} results-height-subtract`}>
-                <h1 className={classes.headerText}>
-                    <FacilityIcon /> Facilities
-                </h1>
-                <Grid container justify="space-between">
-                    <Grid item className={multiLine && classes.numberResults}>
-                        {facilitiesCount} results
-                    </Grid>
-                    <ShowOnly when={!embed}>
-                        <Grid item>
-                            <ResultsSortDropdown />
-                        </Grid>
-                    </ShowOnly>
-                </Grid>
-                <ShowOnly
-                    when={
-                        !embed &&
-                        !user.isAnon &&
-                        facilitiesCount > user.allowed_records_number
-                    }
-                >
-                    <FeatureFlag
-                        flag={PRIVATE_INSTANCE}
-                        alternative={<DownloadLimitInfo />}
-                    >
-                        <></>
-                    </FeatureFlag>
-                </ShowOnly>
-            </div>
-        );
+    const renderHeader = (multiLine = false) =>
+        facilitiesCount > 0 && <FilterSidebarHeader multiLine={multiLine} />;
 
     if (fetchingFeatureFlags) {
         return <CircularProgress />;
@@ -323,7 +269,7 @@ const FilterSidebar = ({
                     </Tabs>
                     {activeFilterSidebarTab === 0 && (
                         <Grid item sm={12}>
-                            {renderHeader({ multiLine: true })}
+                            {renderHeader(true)}
 
                             <FeatureFlag
                                 flag={VECTOR_TILE}
@@ -355,7 +301,7 @@ const FilterSidebar = ({
             </Hidden>
             <Hidden only="xs">
                 <Grid item xs={12} sm={4} className={classes.resultsContainer}>
-                    {renderHeader({})}
+                    {renderHeader()}
                     <FeatureFlag
                         flag={VECTOR_TILE}
                         alternative={
@@ -386,9 +332,6 @@ FilterSidebar.defaultProps = {
     countriesData: null,
     sectorsData: null,
     mergeError: null,
-    user: {
-        isAnon: true,
-    },
 };
 
 FilterSidebar.propTypes = {
@@ -403,7 +346,6 @@ FilterSidebar.propTypes = {
     mergeError: arrayOf(string),
     resetMergeState: func.isRequired,
     refreshSearchResultsAfterMerge: func.isRequired,
-    user: userPropType,
 };
 
 function mapStateToProps({
@@ -414,16 +356,12 @@ function mapStateToProps({
         sectors: { data: sectorsData },
     },
     featureFlags: { fetching: fetchingFeatureFlags },
-    embeddedMap: { embed },
     filters: { contributors },
     facilities: {
         facilities: { data: facilities },
     },
     mergeFacilities: {
         merge: { fetching: merging, error: mergeError },
-    },
-    auth: {
-        user: { user },
     },
 }) {
     return {
@@ -433,12 +371,10 @@ function mapStateToProps({
         countriesData,
         sectorsData,
         fetchingFeatureFlags,
-        embed,
         contributors,
         facilitiesCount: get(facilities, 'count', null),
         merging,
         mergeError,
-        user,
     };
 }
 
