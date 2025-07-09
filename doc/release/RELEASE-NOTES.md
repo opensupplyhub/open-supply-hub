@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Created comprehensive test coverage for the logic that controls the display of download limit lead-in copy on the main location search page (/facilities). The implementation includes:
+* [Follow-up][OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Created comprehensive test coverage for the logic that controls the display of download limit lead-in copy on the main location search page (/facilities). The implementation includes:
     * Tests that verify the `DownloadLimitInfo` component is only shown to logged-in users when search results exceed their download limit.
     * Tests that ensure the component is properly hidden for anonymous users, in embed mode, when the `private_instance` flag is active, or when facilities count is within the user's allowed download limit.
     * Tests for the `DownloadLimitInfo` component to ensure it renders correct text content and link attributes for informing users about download limits and purchasing additional downloads.
