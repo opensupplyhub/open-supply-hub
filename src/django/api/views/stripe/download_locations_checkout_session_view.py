@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.permissions import IsRegisteredAndConfirmed
+from api.services.facilities_download_service import FacilitiesDownloadService
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
@@ -25,6 +26,9 @@ class DownloadLocationsCheckoutSessionView(APIView):
         site_url = request.build_absolute_uri('/').rstrip('/')
 
         try:
+            FacilitiesDownloadService \
+                .get_download_limit(request)
+
             redirect_path = request.data.get('redirect_path')
             checkout_session = stripe.checkout.Session.create(
                 line_items=[
