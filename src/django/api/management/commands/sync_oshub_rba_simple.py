@@ -2,7 +2,7 @@ import logging
 from django.apps import apps
 from django.core.management.base import BaseCommand
 from django.db import connection
-from django.db.models import Max
+from django.db.models import OuterRef, Subquery, Max
 
 logger = logging.getLogger(__name__)
 
@@ -222,39 +222,40 @@ class SimpleSync:
             logger.info(f"Updated sequence {sequence_name}")
         except Exception as e:
             logger.warning(f"Failed to update sequence: {e}")
+    
+    def update_facility_list_item_with_null_facility_id(self):
+        """Update FacilityListItem with null facility_id"""
+        facility_model = apps.get_model('api', 'Facility')
+        fli_model = apps.get_model('api', 'FacilityListItem')
+
+        facility_subquery = facility_model.objects.using('rba').filter(
+            created_from_id=OuterRef('id')
+        ).values('id')[:1]
+
+        updated_count = fli_model.objects.using('rba').filter(
+            facility_id__isnull=True,
+            status='MATCHED'
+        ).update(facility_id=Subquery(facility_subquery))
+
+        logger.info(f"Patched {updated_count} FacilityListItems with facility_id")
 
 
 class Command(BaseCommand):
     help = "Simple sync from OS Hub to RBA with proper dependency handling"
     
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Show what would be synced without making changes'
-        )
+        pass
     
     def handle(self, *args, **options):
-        dry_run = options['dry_run']
-        
-        if dry_run:
-            logger.info("DRY RUN MODE - no changes will be made")
-        
         sync = SimpleSync()
         
         # First pass: sync all models in dependency order
         for model_name in MODELS_TO_SYNC:
-            if not dry_run:
-                if not sync.sync_model(model_name):
-                    logger.error(f"Failed to sync {model_name}")
-                    return
-            else:
-                logger.info(f"[DRY RUN] Would sync {model_name}")
-        
-        # Second pass: update circular references
-        if not dry_run:
+            if not sync.sync_model(model_name):
+                logger.error(f"Failed to sync {model_name}")
+                return
+
             sync.update_circular_references()
-        else:
-            logger.info(f"[DRY RUN] Would update {len(sync.circular_references)} circular references")
+            sync.update_facility_list_item_with_null_facility_id()
         
-        logger.info("Sync completed successfully!") 
+        logger.info("Sync completed successfully!")
