@@ -48,6 +48,9 @@
         { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
         { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" },
         { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
+        { "name": "STRIPE_SECRET_KEY", "value": "${stripe_secret_key}" },
+        { "name": "STRIPE_PRICE_ID", "value": "${stripe_price_id}" },
+        { "name": "STRIPE_WEBHOOK_SECRET", "value": "${stripe_webhook_secret}" },
         { "name": "DARK_VISITORS_PROJECT_KEY", "value": "${dark_visitors_project_key}" },
         { "name": "DARK_VISITORS_TOKEN", "value": "${dark_visitors_token}" }
     ],

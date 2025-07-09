@@ -14,7 +14,7 @@ def filter(event)
   event.set('processing_type', values) if values.any?
 
   return [event]
-end 
+end
 
 test 'processing_type filter with valid matched_values' do
   in_event {
