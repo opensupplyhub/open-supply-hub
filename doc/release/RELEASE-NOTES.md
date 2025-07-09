@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 * *Describe high-level database changes.*
 
-#### Migrations:
+#### Migrations
 * 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 * 0173_create_download_location_success_payment_table - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
 * 0174_create_private_instance_switch - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 5000 records or less per action.
@@ -46,6 +46,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1913](https://opensupplyhub.atlassian.net/browse/OSDEV-1913) - The `max_length` for the `path` field in the `DownloadLog` model has been increased from 2083 to 4096 to fix the too long value error.
 
 ### What's new
+* [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
 * [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
 * [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated regarding scenarios: a user has available downloads, out of downloads or within limit, but search results exceed available downloads.
@@ -57,10 +58,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Redirected the user back to the last OS Hub url after completing Stripe Checkout.
 * [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Introduced lead-in copy to notify only logged-in users about how the download limit works on the main location search page (/facilities) for non-private instances and in non-embedded mode of the platform.
 
-### Release instructions:
+### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after changing the Logstash filters for the `location_type` and `processing_type` fields.
 
 
 ## Release 2.7.0
