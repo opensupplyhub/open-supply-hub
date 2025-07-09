@@ -1729,7 +1729,7 @@ export const downloadLimitInfoStyles = () =>
         }),
         informativeText: Object.freeze({
             fontSize: '16px',
-            color: '#191919',
+            color: COLOURS.NEAR_BLACK,
             lineHeight: '21px',
             '& p': {
                 margin: 0,
