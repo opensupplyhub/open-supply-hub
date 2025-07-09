@@ -10,19 +10,29 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: July 12, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations
-* 0172_increase_path_max_length.py - The migration increases `max_length` for the `path` field in the `DownloadLog` model.
+* 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+* 0173_create_download_location_success_payment_table - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
+* 0174_create_private_instance_switch - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 5000 records or less per action.
+* 0175_increase_path_max_length.py - The migration increases `max_length` for the `path` field in the `DownloadLog` model.
 
 #### Schema changes
-* *Describe schema changes here.*
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
+* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added a new `api_downloadlocationpayment` table with the following fields:
+    * `id`: Auto-incrementing primary key
+    * `stripe_session_id`: `CharField`, unique - stores Stripe checkout session ID
+    * `payment_id`: `CharField`, unique - stores Stripe payment identifier
+    * `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
+    * `amount_total`: `IntegerField` - stores total amount in cents
+    * `discounts`: `JSONField` - optional, stores list of discount objects (with `coupon` and `promotion_code`)
+    * `created_at`: `DateTimeField` - indexed timestamp of when the record was created
+    * `user`: `ForeignKey` to `User` model - references the user who made the payment
 
 ### Code/API changes
-* *Describe code/API changes here.*
-
-### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added the following endpoints to support Stripe payments for downloading additional production location records:
+    * `POST api/v1/download-locations-checkout-session/` - Creates a Stripe Checkout session for purchasing additional download records.
+    * `POST api/v1/download-locations-checkout-webhook/`- Handles Stripe webhook events for successful payments.
 
 ### Bugfix
 * Removed the unnecessary duplicate assignment of the `origin_source` field for `Contributor`, `ExtendedField`, `Facility`, `FacilityActivityReport`, `FacilityAlias`, `FacilityClaim`, `FacilityList`, `FacilityListItem`, `FacilityMatch`, `Source`, `FacilityLocation`, and `User` via the custom `default_origin_source` Django management command — and removed the command itself. The `origin_source` field will be set by Django fixtures when deploying the local environment via the `start_local_dev` script and during test runs, which include executing the `start_code_quality_dev` bash script. For models like `FacilityListItem`, `ExtendedField`, and others, it will also be set during list processing triggered by the `reset_database` custom Django management command in the `start_local_dev` and `start_code_quality_dev` bash scripts.
@@ -33,6 +43,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
+* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
+* [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
+* [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated regarding scenarios: a user has available downloads, out of downloads or within limit, but search results exceed available downloads.
+* [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Added the following:
+    * Updated implementation for private_instance flag to allow 10k records instead of 5k records per download.
+    * Added logic to skip download limit check for Embeded Map requests.
+    * Updated the UI part of Embeded Map to properly allow and show 10k records limitation per download.
+    * Update button text from Upgrade to Download to Purchase More Downloads.
+    * Redirected the user back to the last OS Hub url after completing Stripe Checkout.
+* [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Introduced lead-in copy to notify only logged-in users about how the download limit works on the main location search page (/facilities) for non-private instances and in non-embedded mode of the platform.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

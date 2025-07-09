@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0171_added_origin_source_field'),
+        ('api', '0174_create_private_instance_switch'),
     ]
 
     operations = [

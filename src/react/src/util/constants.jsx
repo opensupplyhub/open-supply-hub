@@ -6,7 +6,8 @@ import COLOURS from './COLOURS';
 export const DEFAULT_SORT_OPTION_INDEX = 2;
 export const OTHER = 'Other';
 export const FACILITIES_REQUEST_PAGE_SIZE = 50;
-export const FACILITIES_DOWNLOAD_DEFAULT_LIMIT = 10000;
+export const FACILITIES_DOWNLOAD_LIMIT = 10000;
+export const FREE_FACILITIES_DOWNLOAD_LIMIT = 5000;
 export const FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE = 100;
 
 export const WEB_HEADER_HEIGHT = '160px';
@@ -553,7 +554,6 @@ export const userApiInfoTooltipTitles = Object.freeze({
 });
 
 export const IS_NOT_SET = 'Is not set';
-export const ALLOW_LARGE_DOWNLOADS = 'allow_large_downloads';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
 export const REPORT_A_FACILITY = 'report_a_facility';
@@ -562,6 +562,7 @@ export const EXTENDED_PROFILE_FLAG = 'extended_profile';
 export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
 export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
+export const PRIVATE_INSTANCE = 'private_instance';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -1301,6 +1302,7 @@ export const USER_DEFAULT_STATE = Object.freeze({
     is_superuser: false,
     is_staff: false,
     is_moderation_mode: false,
+    allowed_records_number: FREE_FACILITIES_DOWNLOAD_LIMIT,
 });
 
 export const facilityClaimStepsNames = Object.freeze({
