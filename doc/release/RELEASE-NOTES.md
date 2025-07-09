@@ -55,6 +55,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Updated the UI part of Embeded Map to properly allow and show 10k records limitation per download.
     * Update button text from Upgrade to Download to Purchase More Downloads.
     * Redirected the user back to the last OS Hub url after completing Stripe Checkout.
+* [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Introduced lead-in copy to notify only logged-in users about how the download limit works on the main location search page (/facilities) for non-private instances and in non-embedded mode of the platform.
 
 ### Release instructions:
 * Ensure that the following commands are included in the `post_deployment` command:

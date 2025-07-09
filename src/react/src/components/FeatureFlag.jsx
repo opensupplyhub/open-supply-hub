@@ -25,7 +25,7 @@ function FeatureFlag({
         return alternative;
     }
 
-    return <React.Fragment>{children}</React.Fragment>;
+    return <>{children}</>;
 }
 
 FeatureFlag.defaultProps = {
