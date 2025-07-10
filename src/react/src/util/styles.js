@@ -1742,3 +1742,27 @@ export const downloadLimitInfoStyles = () =>
             fontSize: '14px',
         }),
     });
+
+export const filterSidebarHeaderStyles = theme =>
+    Object.freeze({
+        header: Object.freeze({
+            padding: '24px 24px 8px 24px',
+            fontFamily: theme.typography.fontFamily,
+            [theme.breakpoints.up('sm')]: {
+                padding: '12px 24px',
+            },
+            [theme.breakpoints.up('md')]: {
+                padding: '24px 24px 8px 24px',
+            },
+        }),
+        headerText: Object.freeze({
+            fontWeight: 900,
+            fontSize: '44px',
+            margin: 0,
+            lineHeight: '48px',
+            fontFamily: theme.typography.fontFamily,
+        }),
+        numberResults: Object.freeze({
+            fontWeight: 800,
+        }),
+    });
