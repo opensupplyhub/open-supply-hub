@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 * 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
 * 0173_create_download_location_success_payment_table - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
-* 0174_create_private_instance_switch - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 5000 records or less per action.
+* 0174_create_private_instance_switch - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 10,000 records or less per action.
 * 0175_increase_path_max_length.py - The migration increases `max_length` for the `path` field in the `DownloadLog` model.
 
 #### Schema changes
@@ -44,7 +44,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
 * [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
-* [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 5,000 record download packages.
+* [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 10,000 record download packages.
 * [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated regarding scenarios: a user has available downloads, out of downloads or within limit, but search results exceed available downloads.
 * [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Added the following:
     * Updated implementation for private_instance flag to allow 10k records instead of 5k records per download.
