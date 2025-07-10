@@ -367,6 +367,7 @@ function FilterSidebarFacilitiesTab({
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
+                                facilitiesCount={facilitiesCount}
                             />
                         }
                     >

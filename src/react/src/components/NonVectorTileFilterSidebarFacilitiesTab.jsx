@@ -242,6 +242,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
+                                facilitiesCount={facilitiesCount}
                             />
                         }
                     >
