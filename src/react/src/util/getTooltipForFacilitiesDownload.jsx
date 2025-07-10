@@ -12,16 +12,17 @@ const getTooltipForFacilitiesDownload = ({
     isPrivateInstance,
     upgrade,
     classes,
+    facilitiesCount,
 }) => {
     const tooltipTexts = {
         availableDownloads: `Registered users can download up to ${FREE_FACILITIES_DOWNLOAD_LIMIT} production
-            locations annually for free. This account has ${userAllowedRecords} production locations
-            available to download. Additional downloads are available for purchase.`,
-        outOfDownloads:
-            "You've reached your annual download limit. Purchase additional downloads for immediate access.",
-        limitExceededByResults: `Registered users can download up to ${FREE_FACILITIES_DOWNLOAD_LIMIT}
-            production locations annually for free. This account has ${userAllowedRecords} production
-            locations available to download. Purchase additional downloads for immediate access.`,
+        locations annually for free. This account has ${userAllowedRecords} production locations available to
+        download. Additional downloads are available for purchase.`,
+        outOfDownloads: `You've reached your annual download limit of ${FREE_FACILITIES_DOWNLOAD_LIMIT} production
+        locations. Purchase additional downloads to download more data.`,
+        limitExceededByResults: `You are trying to download ${facilitiesCount} production locations but this account only has
+        ${userAllowedRecords} production locations available to download. Purchase additional downloads to
+        continue.`,
         anonymousUser: 'Log in or sign up to download this dataset.',
         embeddedOrPrivateInstance: `Downloads are supported for searches resulting in ${FACILITIES_DOWNLOAD_LIMIT} production locations or less.`,
     };

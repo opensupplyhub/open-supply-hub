@@ -70,6 +70,7 @@ const DownloadFacilitiesButton = ({
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
+    facilitiesCount,
 }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const isPrivateInstance = includes(activeFeatureFlags, PRIVATE_INSTANCE);
@@ -128,6 +129,7 @@ const DownloadFacilitiesButton = ({
                 isPrivateInstance,
                 upgrade,
                 classes,
+                facilitiesCount,
             }),
         [
             user,
@@ -136,6 +138,7 @@ const DownloadFacilitiesButton = ({
             isPrivateInstance,
             upgrade,
             classes,
+            facilitiesCount,
         ],
     );
 
@@ -207,6 +210,7 @@ DownloadFacilitiesButton.propTypes = {
     checkoutUrlError: string,
     classes: object.isRequired,
     activeFeatureFlags: arrayOf(string).isRequired,
+    facilitiesCount: number.isRequired,
 };
 
 function mapStateToProps({
