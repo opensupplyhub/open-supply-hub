@@ -40,6 +40,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Fixed the incorrect indexing of the location type in the production locations OpenSearch index. Previously, it was incorrectly taking the processing type value as the location type — using the fourth item in the `matched_values` array instead of the third, which contains the location type. Also, updated the Logstash filters for both processing type and location type to return only unique values and write them to the production locations OpenSearch index.
     * Adjusted the post-submit popup. Instead of displaying the cleaned and transformed data from ContriCleaner, we now show only the raw input submitted by the user.
 * [OSDEV-1913](https://opensupplyhub.atlassian.net/browse/OSDEV-1913) - The `max_length` for the `path` field in the `DownloadLog` model has been increased from 2083 to 4096 to fix the too long value error.
+* [OSDEV-2107](https://opensupplyhub.atlassian.net/browse/OSDEV-2107) - Fixed an issue where navigating back from the Stripe Checkout page using the browser’s back button caused the search button to repeatedly redirect to Stripe Checkout.
 
 ### What's new
 * [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
