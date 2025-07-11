@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import downloadFacilities from '../actions/downloadFacilities';
 import {
     hideDownloadLimitCheckoutUrlError,
+    clearDownloadLimitCheckoutUrl,
     downloadLimitCheckoutUrl,
 } from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
@@ -89,6 +90,7 @@ const DownloadFacilitiesButton = ({
     useEffect(() => {
         if (checkoutUrl) {
             window.location.href = checkoutUrl;
+            dispatch(clearDownloadLimitCheckoutUrl());
         }
         if (checkoutUrlError) {
             toast(checkoutUrlError);

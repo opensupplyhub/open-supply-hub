@@ -14,6 +14,9 @@ export const failFetchDownloadLimitCheckoutUrl = createAction(
 export const hideDownloadLimitCheckoutUrlError = createAction(
     'HIDE_DOWNLOAD_LIMIT_CHECKOUT_URL_ERROR',
 );
+export const clearDownloadLimitCheckoutUrl = createAction(
+    'CLEAR_DOWNLOAD_LIMIT_CHECKOUT_URL',
+);
 export const completeFetchDownloadLimitCheckoutUrl = createAction(
     'COMPLETE_FETCH_DOWNLOAD_LIMIT_CHECKOUT_URL',
 );
