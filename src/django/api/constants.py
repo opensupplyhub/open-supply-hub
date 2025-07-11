@@ -213,7 +213,7 @@ class APIErrorMessages:
 
 
 class FacilitiesDownloadSettings:
-    DEFAULT_LIMIT = 10000
+    FREE_FACILITIES_DOWNLOAD_LIMIT = 5000
 
 
 class FacilitiesListSettings:
@@ -282,3 +282,5 @@ class APIV1MatchTypes:
 LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX = (
     '[API V1 Location Contribution Approval]'
 )
+
+SINGLE_PAID_DOWNLOAD_RECORDS = 10000

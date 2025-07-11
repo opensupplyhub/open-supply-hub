@@ -28,13 +28,13 @@ import {
     updateSidebarFacilitiesTabTextFilter,
 } from '../actions/ui';
 
-import { facilityCollectionPropType } from '../util/propTypes';
+import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
 import {
-    ALLOW_LARGE_DOWNLOADS,
-    FACILITIES_DOWNLOAD_DEFAULT_LIMIT,
     authLoginFormRoute,
     authRegisterFormRoute,
+    PRIVATE_INSTANCE,
+    FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 import { makeFacilityDetailLink, getValueFromEvent } from '../util/util';
@@ -105,10 +105,12 @@ function NonVectorTileFilterSidebarFacilitiesTab({
     data,
     error,
     windowHeight,
+    embed,
     returnToSearchTab,
     filterText,
     updateFilterText,
     classes,
+    user,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
         false,
@@ -224,21 +226,31 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                 <div className={classes.titleRowStyles}>
                     {headerDisplayString}
                     <FeatureFlag
-                        flag={ALLOW_LARGE_DOWNLOADS}
+                        flag={PRIVATE_INSTANCE}
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >=
-                                    FACILITIES_DOWNLOAD_DEFAULT_LIMIT
+                                    embed &&
+                                    facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
                                 }
+                                upgrade={
+                                    !embed &&
+                                    facilitiesCount >
+                                        user.allowed_records_number
+                                }
+                                userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
+                                facilitiesCount={facilitiesCount}
                             />
                         }
                     >
                         <DownloadFacilitiesButton
-                            allowLargeDownloads
+                            disabled={
+                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                            }
+                            userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
                             setLoginRequiredDialogIsOpen={
                                 setLoginRequiredDialogIsOpen
                             }
@@ -363,6 +375,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
 NonVectorTileFilterSidebarFacilitiesTab.defaultProps = {
     data: null,
     error: null,
+    user: null,
 };
 
 NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
@@ -373,6 +386,8 @@ NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
     returnToSearchTab: func.isRequired,
     filterText: string.isRequired,
     updateFilterText: func.isRequired,
+    embed: bool.isRequired,
+    user: userPropType,
 };
 
 function mapStateToProps({
@@ -383,13 +398,19 @@ function mapStateToProps({
         facilitiesSidebarTabSearch: { filterText },
         window: { innerHeight: windowHeight },
     },
+    auth: {
+        user: { user },
+    },
+    embeddedMap: { embed },
 }) {
     return {
+        user,
         data,
         error,
         fetching,
         filterText,
         windowHeight,
+        embed: !!embed,
     };
 }
 

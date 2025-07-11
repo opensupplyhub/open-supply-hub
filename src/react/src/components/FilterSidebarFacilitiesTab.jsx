@@ -48,8 +48,8 @@ import {
     REPORT_A_FACILITY,
     authLoginFormRoute,
     authRegisterFormRoute,
-    ALLOW_LARGE_DOWNLOADS,
-    FACILITIES_DOWNLOAD_DEFAULT_LIMIT,
+    PRIVATE_INSTANCE,
+    FACILITIES_DOWNLOAD_LIMIT,
 } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
@@ -351,21 +351,31 @@ function FilterSidebarFacilitiesTab({
                     </div>
                 ) : (
                     <FeatureFlag
-                        flag={ALLOW_LARGE_DOWNLOADS}
+                        flag={PRIVATE_INSTANCE}
                         alternative={
                             <DownloadFacilitiesButton
                                 disabled={
-                                    facilitiesCount >=
-                                    FACILITIES_DOWNLOAD_DEFAULT_LIMIT
+                                    embed &&
+                                    facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
                                 }
+                                upgrade={
+                                    !embed &&
+                                    facilitiesCount >
+                                        user.allowed_records_number
+                                }
+                                userAllowedRecords={user.allowed_records_number}
                                 setLoginRequiredDialogIsOpen={
                                     setLoginRequiredDialogIsOpen
                                 }
+                                facilitiesCount={facilitiesCount}
                             />
                         }
                     >
                         <DownloadFacilitiesButton
-                            allowLargeDownloads
+                            disabled={
+                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
+                            }
+                            userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
                             setLoginRequiredDialogIsOpen={
                                 setLoginRequiredDialogIsOpen
                             }

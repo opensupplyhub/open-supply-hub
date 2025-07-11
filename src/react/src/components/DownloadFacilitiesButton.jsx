@@ -1,17 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { arrayOf, string, bool } from 'prop-types';
+import React, { useEffect, useMemo } from 'react';
+import { arrayOf, string, bool, shape, number, object } from 'prop-types';
 import { connect } from 'react-redux';
+import includes from 'lodash/includes';
 import Button from '@material-ui/core/Button';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles, withTheme } from '@material-ui/core/styles';
 
 import { toast } from 'react-toastify';
 
 import downloadFacilities from '../actions/downloadFacilities';
+import {
+    hideDownloadLimitCheckoutUrlError,
+    downloadLimitCheckoutUrl,
+} from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
 import ArrowDropDownIcon from './ArrowDropDownIcon';
+import { hideLogDownloadError } from '../actions/logDownload';
+import DownloadMenu from '../components/DownloadMenu';
+import {
+    FREE_FACILITIES_DOWNLOAD_LIMIT,
+    PRIVATE_INSTANCE,
+} from '../util/constants';
+import { convertFeatureFlagsObjectToListOfActiveFlags } from '../util/util';
+import getTooltipForFacilitiesDownload from '../util/getTooltipForFacilitiesDownload';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
@@ -43,43 +54,65 @@ const downloadFacilitiesStyles = theme =>
         },
     });
 
-function DownloadFacilitiesButton({
+const DownloadFacilitiesButton = ({
     /* from state */
     dispatch,
     isEmbedded,
+    activeFeatureFlags,
     logDownloadError,
     user,
+    userAllowedRecords,
+    checkoutUrl,
+    checkoutUrlError,
     /* from props */
-    allowLargeDownloads,
     disabled,
+    upgrade,
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
-}) {
-    const [requestedDownload, setRequestedDownload] = useState(false);
+    facilitiesCount,
+}) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const isPrivateInstance = includes(activeFeatureFlags, PRIVATE_INSTANCE);
 
     const actionContrastText = theme.palette.getContrastText(
         theme.palette.action.main,
     );
 
     useEffect(() => {
-        if (requestedDownload && logDownloadError) {
-            toast('A problem prevented downloading the facilities');
-            setRequestedDownload(false);
+        if (Array.isArray(logDownloadError) && logDownloadError.length > 0) {
+            toast(logDownloadError[0]);
+            dispatch(hideLogDownloadError());
         }
-    }, [logDownloadError, requestedDownload]);
+    }, [logDownloadError]);
 
-    const handleClick = event => setAnchorEl(event.currentTarget);
+    useEffect(() => {
+        if (checkoutUrl) {
+            window.location.href = checkoutUrl;
+        }
+        if (checkoutUrlError) {
+            toast(checkoutUrlError);
+            dispatch(hideDownloadLimitCheckoutUrlError());
+        }
+    }, [checkoutUrl, checkoutUrlError]);
+
+    const handleUpgrade = () => {
+        const redirectPath = window.location.pathname + window.location.search;
+        dispatch(downloadLimitCheckoutUrl(redirectPath));
+    };
+    const handleClick = event => {
+        if (upgrade && !user.isAnon) {
+            handleUpgrade();
+        } else {
+            setAnchorEl(event.currentTarget);
+        }
+    };
     const handleClose = () => setAnchorEl(null);
-
     const handleDownload = format => {
         dispatch(downloadFacilities(format, { isEmbedded }));
     };
-
     const selectFormatAndDownload = format => {
         if (!user.isAnon || isEmbedded) {
-            setRequestedDownload(true);
             handleDownload(format);
         } else {
             setLoginRequiredDialogIsOpen(true);
@@ -87,20 +120,30 @@ function DownloadFacilitiesButton({
         handleClose();
     };
 
+    const tooltipTitle = useMemo(
+        () =>
+            getTooltipForFacilitiesDownload({
+                user,
+                userAllowedRecords,
+                isEmbedded,
+                isPrivateInstance,
+                upgrade,
+                classes,
+                facilitiesCount,
+            }),
+        [
+            user,
+            userAllowedRecords,
+            isEmbedded,
+            isPrivateInstance,
+            upgrade,
+            classes,
+            facilitiesCount,
+        ],
+    );
+
     return (
-        <Tooltip
-            title={
-                allowLargeDownloads ? (
-                    ''
-                ) : (
-                    <p className={classes.downloadTooltip}>
-                        Downloads are supported only for searches resulting in
-                        10,000 facilities or less.
-                    </p>
-                )
-            }
-            placement="left"
-        >
+        <Tooltip title={tooltipTitle} placement="left">
             <div>
                 <Button
                     disabled={disabled}
@@ -118,44 +161,56 @@ function DownloadFacilitiesButton({
                                     : actionContrastText
                             }
                         />
-                        <span className={classes.buttonText}>Download</span>
-                        <ArrowDropDownIcon
-                            color={
-                                disabled
-                                    ? 'rgba(0, 0, 0, 0.26)'
-                                    : actionContrastText
-                            }
-                        />
+                        <span className={classes.buttonText}>
+                            {upgrade && !user.isAnon
+                                ? 'Purchase More Downloads'
+                                : 'Download'}
+                        </span>
+                        {upgrade ? (
+                            ''
+                        ) : (
+                            <ArrowDropDownIcon
+                                color={
+                                    disabled
+                                        ? 'rgba(0, 0, 0, 0.26)'
+                                        : actionContrastText
+                                }
+                            />
+                        )}
                     </div>
                 </Button>
-                <Menu
-                    id="download-menu"
+                <DownloadMenu
                     anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
                     onClose={handleClose}
-                >
-                    <MenuItem onClick={() => selectFormatAndDownload('csv')}>
-                        CSV
-                    </MenuItem>
-                    <MenuItem onClick={() => selectFormatAndDownload('xlsx')}>
-                        Excel
-                    </MenuItem>
-                </Menu>
+                    onSelectFormat={selectFormatAndDownload}
+                />
             </div>
         </Tooltip>
     );
-}
+};
 
 DownloadFacilitiesButton.defaultProps = {
-    allowLargeDownloads: false,
     disabled: false,
+    upgrade: false,
+    userAllowedRecords: FREE_FACILITIES_DOWNLOAD_LIMIT,
     logDownloadError: null,
+    checkoutUrl: null,
+    checkoutUrlError: null,
 };
 
 DownloadFacilitiesButton.propTypes = {
-    allowLargeDownloads: bool,
     disabled: bool,
+    upgrade: bool,
+    userAllowedRecords: number,
     logDownloadError: arrayOf(string),
+    user: shape({
+        isAnon: bool.isRequired,
+    }).isRequired,
+    checkoutUrl: string,
+    checkoutUrlError: string,
+    classes: object.isRequired,
+    activeFeatureFlags: arrayOf(string).isRequired,
+    facilitiesCount: number.isRequired,
 };
 
 function mapStateToProps({
@@ -164,11 +219,18 @@ function mapStateToProps({
     },
     logDownload: { error: logDownloadError },
     embeddedMap: { embed: isEmbedded },
+    downloadLimit: {
+        checkout: { checkoutUrl, error: checkoutUrlError },
+    },
+    featureFlags: { flags },
 }) {
     return {
         user,
         logDownloadError,
         isEmbedded,
+        checkoutUrl,
+        checkoutUrlError,
+        activeFeatureFlags: convertFeatureFlagsObjectToListOfActiveFlags(flags),
     };
 }
 

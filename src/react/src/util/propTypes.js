@@ -18,7 +18,6 @@ import {
     registrationFieldsEnum,
     profileFieldsEnum,
     facilityListItemStatusChoicesEnum,
-    ALLOW_LARGE_DOWNLOADS,
     FEATURE,
     FEATURE_COLLECTION,
     POINT,
@@ -31,6 +30,7 @@ import {
     DISABLE_LIST_UPLOADING,
     facilityClaimStatusChoicesEnum,
     SHOW_ADDITIONAL_IDENTIFIERS,
+    PRIVATE_INSTANCE,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -62,6 +62,7 @@ export const userPropType = shape({
     is_superuser: bool.isRequired,
     is_staff: bool.isRequired,
     is_moderation_mode: bool.isRequired,
+    allowed_records_number: number.isRequired,
 });
 
 export const profileFormValuesPropType = shape(
@@ -355,9 +356,9 @@ export const featureFlagPropType = oneOf([
     REPORT_A_FACILITY,
     EMBEDDED_MAP_FLAG,
     EXTENDED_PROFILE_FLAG,
-    ALLOW_LARGE_DOWNLOADS,
     DISABLE_LIST_UPLOADING,
     SHOW_ADDITIONAL_IDENTIFIERS,
+    PRIVATE_INSTANCE,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
