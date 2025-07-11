@@ -57,7 +57,7 @@ class Facility(models.Model):
         help_text='The lat/lng point location of the facility')
     created_from = models.OneToOneField(
         'FacilityListItem',
-        null=False,
+        null=True,
         on_delete=models.PROTECT,
         related_name='created_facility',
         help_text=('The original uploaded list item from which this facility '
