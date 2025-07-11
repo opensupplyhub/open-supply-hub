@@ -249,6 +249,8 @@ data "template_file" "app" {
     stripe_secret_key                = var.stripe_secret_key
     stripe_price_id                  = var.stripe_price_id
     stripe_webhook_secret            = var.stripe_webhook_secret
+    dark_visitors_project_key        = var.dark_visitors_project_key
+    dark_visitors_token              = var.dark_visitors_token
   }
 }
 

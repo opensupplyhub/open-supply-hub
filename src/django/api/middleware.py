@@ -1,6 +1,10 @@
 import datetime
 import json
 
+from concurrent.futures import ThreadPoolExecutor
+
+import requests
+
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -131,4 +135,45 @@ class OriginSourceMiddleware:
             )
 
         response = self.get_response(request)
+        return response
+
+
+class DarkVisitorsMiddleware:
+    """
+    Middleware to log visits to the Dark Visitors API.
+    It sends a POST request with the request path, method, and headers.
+    This is done in a separate thread to avoid blocking the response to the
+    original request.
+    """
+
+    API_URL = 'https://api.darkvisitors.com/visits'
+    TOKEN = getattr(settings, 'DARK_VISITORS_TOKEN', None)
+    executor = ThreadPoolExecutor(max_workers=5)
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if self.TOKEN:
+            allowed_headers = ['user-agent', 'referer', 'host']
+            payload = {
+                'request_path': request.path,
+                'request_method': request.method,
+                "request_headers": {
+                    key: value
+                    for key, value in request.headers.items()
+                    if key.lower() in allowed_headers
+                },
+            }
+            headers = {
+                'Authorization': f'Bearer {self.TOKEN}',
+                'Content-Type': 'application/json',
+            }
+
+            self.executor.submit(
+                requests.post, self.API_URL, json=payload, headers=headers
+            )
+
         return response

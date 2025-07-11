@@ -217,6 +217,7 @@ MIDDLEWARE = [
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
     'api.middleware.OriginSourceMiddleware',
+    'api.middleware.DarkVisitorsMiddleware',
 ]
 
 ROOT_URLCONF = 'oar.urls'
@@ -613,3 +614,7 @@ BLEACH_STRIP_COMMENTS = True
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID')
+
+# Dark Visitors settings
+DARK_VISITORS_PROJECT_KEY = os.getenv('DARK_VISITORS_PROJECT_KEY', '')
+DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')

@@ -97,6 +97,23 @@
         // End Rollbar Snippet
       }
     </script>
+    <!-- 
+      Dark Visitors
+      https://darkvisitors.com/docs/analytics
+    -->
+    <script>
+      if (
+        window.ENVIRONMENT &&
+        window.ENVIRONMENT.DARK_VISITORS_PROJECT_KEY &&
+        window.ENVIRONMENT.ENVIRONMENT !== 'local'
+      ) {
+        const script = document.createElement('script');
+        script.src = 'https://darkvisitors.com/tracker.js?project_key=' + window.ENVIRONMENT.DARK_VISITORS_PROJECT_KEY;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    </script>
+    <!-- End Dark Visitors -->
   </head>
   <body>
     <div id="root"></div>
