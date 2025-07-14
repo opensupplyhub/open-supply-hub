@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     topic_dedupe_basic_name: str
     # Environment
     env: str
+    instance_source: str = "os_hub"
     # Rollbar SS AT
     rollbar_server_side_access_token: str
     # Postgres

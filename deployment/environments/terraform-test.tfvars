@@ -16,7 +16,7 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "256"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
-rds_instance_type = "db.t3.xlarge"
+rds_instance_type = "db.t3.2xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
@@ -72,4 +72,6 @@ opensearch_instance_type = "t3.small.search"
 
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
+
+instance_source= "os_hub"
 

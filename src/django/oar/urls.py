@@ -21,6 +21,10 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
+from api.views.stripe.download_locations_checkout_session_view \
+     import DownloadLocationsCheckoutSessionView
+from api.views.stripe.download_locations_checkout_webhook_view \
+     import DownloadLocationsCheckoutWebhookView
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
 from web.views import environment
@@ -64,6 +68,19 @@ v1_router.register(
     basename=URLNames.MODERATION_EVENTS
 )
 
+v1_custom_routes = [
+     path(
+          'download-locations-checkout-session/',
+          DownloadLocationsCheckoutSessionView.as_view(),
+          name='download-locations-checkout-session'
+     ),
+     path(
+          'download-locations-checkout-webhook/',
+          DownloadLocationsCheckoutWebhookView.as_view(),
+          name='download-locations-checkout-webhook'
+     ),
+]
+
 public_apis = [
     path('api/', include(router.urls)),
     path('api/contributors/active_count/', views.active_contributors_count,
@@ -95,7 +112,7 @@ public_apis = [
     path('api/sectors/', views.sectors, name='sectors'),
 ]
 
-api_v1 = [path('api/v1/', include(v1_router.urls))]
+api_v1 = [path('api/v1/', include(v1_router.urls + v1_custom_routes))]
 
 schema_view = get_schema_view(
     openapi.Info(

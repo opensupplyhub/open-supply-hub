@@ -81,6 +81,7 @@ data "template_file" "default_job_definition" {
     opensearch_port                  = var.opensearch_port
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    instance_source                  = var.instance_source
   }
 }
 
@@ -178,6 +179,7 @@ data "template_file" "notifications_job_definition" {
     opensearch_port                  = var.opensearch_port
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    instance_source                  = var.instance_source
   }
 }
 
@@ -265,6 +267,7 @@ data "template_file" "export_csv_job_definition" {
     log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64
     google_drive_shared_directory_id    = var.google_drive_shared_directory_id
+    instance_source                     = var.instance_source
   }
 }
 
@@ -351,4 +354,54 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
 resource "aws_cloudwatch_log_group" "batch" {
   name              = "log${local.short}Batch"
   retention_in_days = 0
+}
+
+data "template_file" "direct_data_load_job_definition" {
+  template = file("job-definitions/direct_data_load.json")
+
+  vars = {
+    image_url                           = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
+    aws_region                          = var.aws_region
+    aws_storage_bucket_name             = local.files_bucket_name
+    postgres_host                       = aws_route53_record.database.name
+    postgres_port                       = module.database_enc.port
+    postgres_user                       = var.rds_database_username
+    postgres_password                   = var.rds_database_password
+    postgres_db                         = var.rds_database_name
+    environment                         = var.environment
+    django_secret_key                   = var.django_secret_key
+    google_server_side_api_key          = var.google_server_side_api_key
+    oar_client_key                      = var.oar_client_key
+    external_domain                     = local.domain_name
+    batch_job_queue_name                = "queue${local.short}DDLoad"
+    batch_job_def_name                  = "job${local.short}DDLoad"
+    log_group_name                      = "log${local.short}Batch"
+    google_service_account_creds_base64 = var.google_service_account_creds_base64
+    google_drive_shared_directory_id    = var.google_drive_shared_directory_id
+    sheet_id                            = var.direct_data_load_sheet_id
+    contributor_name                    = var.direct_data_load_contributor_name
+    contributor_email                   = var.direct_data_load_contributor_email
+    user_id                             = var.direct_data_load_user_id
+    sheet_name                          = var.direct_data_load_sheet_name
+    tab_id                              = var.direct_data_load_tab_id
+    opensearch_host                     = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                     = var.opensearch_port
+    opensearch_ssl                      = var.opensearch_ssl
+    opensearch_ssl_cert_verification    = var.opensearch_ssl_cert_verification
+    instance_source                     = var.instance_source
+  }
+}
+
+resource "aws_batch_job_definition" "direct_data_load" {
+  name           = "job${local.short}DirectDataLoad"
+  type           = "container"
+  propagate_tags = true
+
+  platform_capabilities = ["EC2"]
+
+  container_properties = data.template_file.direct_data_load_job_definition.rendered
+
+  retry_strategy {
+    attempts = 2
+  }
 }

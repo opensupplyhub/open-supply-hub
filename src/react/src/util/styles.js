@@ -1721,3 +1721,24 @@ export const makeStyledTooltipStyles = () =>
             lineHeight: '1',
         },
     });
+
+export const downloadLimitInfoStyles = () =>
+    Object.freeze({
+        informativeWrapper: Object.freeze({
+            marginTop: '15px',
+        }),
+        informativeText: Object.freeze({
+            fontSize: '16px',
+            color: COLOURS.JET_BLACK,
+            lineHeight: '21px',
+            '& p': {
+                margin: 0,
+            },
+        }),
+        informativeTextBold: Object.freeze({
+            fontWeight: 700,
+        }),
+        informativeTextSmall: Object.freeze({
+            fontSize: '14px',
+        }),
+    });

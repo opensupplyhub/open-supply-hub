@@ -456,6 +456,10 @@ variable "check_api_limits_schedule_expression" {
   default = "rate(1 hour)"
 }
 
+variable "update_expired_download_limits_schedule_expression" {
+  default = "cron(0 0 * * ? *)" # Once per day at 00:00 UTC.
+}
+
 variable "ec2_service_role_policy_arn" {
   default = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
@@ -563,6 +567,9 @@ variable "dedupe_hub_live" {
 variable "dedupe_hub_name" {
 }
 variable "dedupe_hub_version" {
+}
+variable "instance_source" {
+  default = "os_hub"
 }
 
 variable "opensearch_instance_type" {
@@ -766,30 +773,82 @@ variable "app_ecs_cooldown_scale_down" {
 }
 
 variable "vanta_assumed_role_external_ids" {
-  type      = list
+  type      = list(any)
   default   = []
   sensitive = true
 }
 
 variable "vanta_assumed_role_principals" {
-  type      = list
+  type      = list(any)
   default   = []
   sensitive = true
 }
 
 variable "ip_whitelist" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "List of IP addresses to allow through the AWS WAF"
 }
 
 variable "ip_denylist" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "List of IP addresses to block through the AWS WAF"
 }
 
 variable "waf_enabled" {
-  type        = bool
-  default     = false
+  type    = bool
+  default = false
+}
+
+
+### DIRECT DATA LOAD VARIABLES - START ###
+
+variable "direct_data_load_sheet_id" {
+  type        = string
+  description = "Google Sheet ID for direct data load"
+}
+
+variable "direct_data_load_contributor_name" {
+  type        = string
+  description = "Contributor name for direct data load"
+}
+
+variable "direct_data_load_contributor_email" {
+  type        = string
+  description = "Contributor email for direct data load"
+}
+
+variable "direct_data_load_user_id" {
+  type        = number
+  description = "User ID for direct data load"
+}
+
+variable "direct_data_load_sheet_name" {
+  type        = string
+  description = "Name of the Google Sheet for direct data load"
+}
+
+variable "direct_data_load_tab_id" {
+  type        = number
+  description = "Tab ID of the Google Sheet for direct data load"
+}
+
+### DIRECT DATA LOAD VARIABLES - END ###
+
+variable "stripe_secret_key" {
+  type        = string
+  sensitive   = true
+  description = "Stripe secret key for payment processing"
+}
+
+variable "stripe_webhook_secret" {
+  type        = string
+  sensitive   = true
+  description = "Stripe webhook secret for payment processing"
+}
+
+variable "stripe_price_id" {
+  type        = string
+  description = "Stripe price ID for subscription plans"
 }

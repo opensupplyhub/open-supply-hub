@@ -30,6 +30,9 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 
+# Set environment instance source
+INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
 
@@ -213,6 +216,7 @@ MIDDLEWARE = [
     'waffle.middleware.WaffleMiddleware',
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
+    'api.middleware.OriginSourceMiddleware',
 ]
 
 ROOT_URLCONF = 'oar.urls'
@@ -604,3 +608,8 @@ BLEACH_ALLOWED_ATTRIBUTES = {
 BLEACH_STRIP_TAGS = True
 
 BLEACH_STRIP_COMMENTS = True
+
+# Stripe settings
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID')

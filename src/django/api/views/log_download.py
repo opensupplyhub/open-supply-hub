@@ -7,10 +7,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 
-from ..constants import LogDownloadQueryParams
-from ..models.download_log import DownloadLog
-from ..permissions import IsRegisteredAndConfirmed
-from ..serializers.log_download_query_params import (
+from api.constants import LogDownloadQueryParams
+from api.models.download_log import DownloadLog
+from api.permissions import IsRegisteredAndConfirmed
+from api.serializers.log_download_query_params import (
     LogDownloadQueryParamsSerializer
 )
 
@@ -24,9 +24,11 @@ def log_download(request):
         raise ValidationError(params.errors)
 
     path = request.query_params.get(LogDownloadQueryParams.PATH)
+
     record_count = request.query_params.get(
         LogDownloadQueryParams.RECORD_COUNT
     )
+
     DownloadLog.objects.create(
         user=request.user,
         path=path,

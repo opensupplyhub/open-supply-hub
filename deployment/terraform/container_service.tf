@@ -245,6 +245,10 @@ data "template_file" "app" {
     opensearch_port                  = var.opensearch_port
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    instance_source                  = var.instance_source
+    stripe_secret_key                = var.stripe_secret_key
+    stripe_price_id                  = var.stripe_price_id
+    stripe_webhook_secret            = var.stripe_webhook_secret
   }
 }
 
@@ -300,6 +304,7 @@ data "template_file" "app_cli" {
     opensearch_port                  = var.opensearch_port
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
+    instance_source                  = var.instance_source
   }
 }
 
@@ -351,6 +356,7 @@ data "template_file" "app_dd" {
     dedupe_hub_live                  = var.dedupe_hub_live
     dedupe_hub_name                  = var.dedupe_hub_name
     dedupe_hub_version               = var.dedupe_hub_version
+    instance_source                  = var.instance_source
   }
 }
 

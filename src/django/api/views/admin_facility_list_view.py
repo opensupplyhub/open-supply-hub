@@ -1,16 +1,16 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 
-from ..constants import FacilityListQueryParams
-from ..models.facility.facility_list import FacilityList
-from ..models.facility.facility_list_item import FacilityListItem
-from ..models.source import Source
-from ..pagination import PageAndSizePagination
-from ..permissions import IsSuperuser
-from ..serializers.facility.facility_list_serializer import (
+from api.constants import FacilityListQueryParams
+from api.models.facility.facility_list import FacilityList
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.source import Source
+from api.pagination import PageAndSizePagination
+from api.permissions import IsSuperuser
+from api.serializers.facility.facility_list_serializer import (
     FacilityListSerializer,
 )
-from ..serializers.facility.facility_list_query_params_serializer import (
+from api.serializers.facility.facility_list_query_params_serializer import (
     FacilityListQueryParamsSerializer,
 )
 
