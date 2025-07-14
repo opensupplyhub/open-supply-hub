@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import downloadFacilities from '../actions/downloadFacilities';
 import {
     hideDownloadLimitCheckoutUrlError,
+    clearDownloadLimitCheckoutUrl,
     downloadLimitCheckoutUrl,
 } from '../actions/downloadLimit';
 import DownloadIcon from './DownloadIcon';
@@ -70,6 +71,7 @@ const DownloadFacilitiesButton = ({
     setLoginRequiredDialogIsOpen,
     classes,
     theme,
+    facilitiesCount,
 }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const isPrivateInstance = includes(activeFeatureFlags, PRIVATE_INSTANCE);
@@ -88,6 +90,7 @@ const DownloadFacilitiesButton = ({
     useEffect(() => {
         if (checkoutUrl) {
             window.location.href = checkoutUrl;
+            dispatch(clearDownloadLimitCheckoutUrl());
         }
         if (checkoutUrlError) {
             toast(checkoutUrlError);
@@ -128,6 +131,7 @@ const DownloadFacilitiesButton = ({
                 isPrivateInstance,
                 upgrade,
                 classes,
+                facilitiesCount,
             }),
         [
             user,
@@ -136,6 +140,7 @@ const DownloadFacilitiesButton = ({
             isPrivateInstance,
             upgrade,
             classes,
+            facilitiesCount,
         ],
     );
 
@@ -207,6 +212,7 @@ DownloadFacilitiesButton.propTypes = {
     checkoutUrlError: string,
     classes: object.isRequired,
     activeFeatureFlags: arrayOf(string).isRequired,
+    facilitiesCount: number.isRequired,
 };
 
 function mapStateToProps({
