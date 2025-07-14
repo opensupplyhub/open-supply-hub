@@ -5,6 +5,7 @@ import {
     startFetchDownloadLimitCheckoutUrl,
     failFetchDownloadLimitCheckoutUrl,
     hideDownloadLimitCheckoutUrlError,
+    clearDownloadLimitCheckoutUrl,
     completeFetchDownloadLimitCheckoutUrl,
 } from '../actions/downloadLimit';
 
@@ -37,6 +38,12 @@ export default createReducer(
             update(state, {
                 checkout: {
                     error: { $set: initialState.checkout.error },
+                },
+            }),
+        [clearDownloadLimitCheckoutUrl]: state =>
+            update(state, {
+                checkout: {
+                    checkoutUrl: { $set: initialState.checkout.checkoutUrl },
                 },
             }),
         [completeFetchDownloadLimitCheckoutUrl]: (state, payload) =>
