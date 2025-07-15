@@ -1,0 +1,24 @@
+networks:
+  proxynet:
+    name: os-hub-development
+
+services:
+  private-instance-db:
+    build:
+      context: ./src/database
+      dockerfile: Dockerfile.local
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "os_hub_private_instance"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - ./dumps:/dumps
+    ports:
+      - 5433:5432  # Different port to avoid conflict with main DB
+    environment:
+      - POSTGRES_USER=os_hub_private_instance
+      - POSTGRES_PASSWORD=os_hub_private_instance
+      - POSTGRES_DB=os_hub_private_instance
+    networks:
+      - proxynet
