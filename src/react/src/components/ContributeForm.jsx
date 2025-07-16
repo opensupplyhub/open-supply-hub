@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
     arrayOf,
     bool,
@@ -17,6 +17,7 @@ import Button from './Button';
 import FeatureFlag from './FeatureFlag';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
 import ListUploadErrors from './ListUploadErrors';
+import SelfServiceUploader from './SelfServiceUploader';
 import StyledTooltip from './StyledTooltip';
 
 import COLOURS from '../util/COLOURS';
@@ -54,6 +55,10 @@ import {
 import { facilityListPropType } from '../util/propTypes';
 
 const contributeFormStyles = Object.freeze({
+    uploaderButtonWrapper: Object.freeze({
+        display: 'flex',
+        gap: '10px',
+    }),
     fileNameText: Object.freeze({
         color: COLOURS.LIGHT_BLUE,
         fontSize: '12px',
@@ -95,64 +100,7 @@ const ContributeForm = ({
         toast,
     });
 
-    // Initialize Dromo when component mounts
-    useEffect(() => {
-        if (window.DromoUploader) {
-            // Initialize Dromo with API key and schema ID
-            window.dromoUploader = new window.DromoUploader(
-                'ee427cf5-da27-4f28-a260-c9a17d02ad30', // Frontend API key
-                '6f3e129c-d724-4b80-b2c9-8e54b47e8017', // Schema ID
-            );
-
-            // Set up callback to handle results from Dromo
-            window.dromoUploader.onResults(results => {
-                // Convert the Dromo results into a CSV file
-                const headers = Object.keys(results[0]).join(',');
-                const rows = results.map(row => Object.values(row).join(','));
-                const csvContent = [headers, ...rows].join('\n');
-
-                // Create a File object from the CSV content
-                const csvBlob = new Blob([csvContent], { type: 'text/csv' });
-                const csvFile = new File(
-                    [csvBlob],
-                    `${name || 'facility-data'}.csv`,
-                    { type: 'text/csv' },
-                );
-
-                // Manually set the file to the fileInput ref
-                if (fileInput && fileInput.current) {
-                    // Create a DataTransfer to set files
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(csvFile);
-                    fileInput.current.files = dataTransfer.files;
-
-                    // Update the filename in the UI
-                    updateFileName(fileInput);
-                }
-
-                return 'Data processed successfully!';
-            });
-        }
-
-        // Clean up when component unmounts
-        return () => {
-            if (window.dromoUploader) {
-                window.dromoUploader.onResults(null);
-            }
-        };
-    }, [fileInput, updateFileName, name]);
-
-    const selectFile = () => {
-        // Use only traditional file input for the main button
-        fileInput.current.click();
-    };
-
-    const openDromoUploader = () => {
-        if (window.dromoUploader) {
-            window.dromoUploader.open();
-        }
-    };
-
+    const selectFile = () => fileInput.current.click();
     const updateSelectedFileName = () => updateFileName(fileInput);
     const handleUploadList = () => uploadList(fileInput);
 
@@ -197,7 +145,7 @@ const ContributeForm = ({
         <div className="control-panel__group">
             {formInputs}
             <div className="form__field">
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={contributeFormStyles.uploaderButtonWrapper}>
                     <MaterialButton
                         onClick={selectFile}
                         type="button"
@@ -208,18 +156,10 @@ const ContributeForm = ({
                     >
                         Select Facility List File
                     </MaterialButton>
-                    <MaterialButton
-                        onClick={openDromoUploader}
-                        type="button"
-                        variant="contained"
-                        style={{
-                            backgroundColor: '#62CC74',
-                            color: 'white',
-                        }}
-                        disableRipple
-                    >
-                        Beta Self Service Upload
-                    </MaterialButton>
+                    <SelfServiceUploader
+                        fileInput={fileInput}
+                        updateFileName={updateFileName}
+                    />
                 </div>
                 <p style={contributeFormStyles.fileNameText}>{filename}</p>
                 <p
