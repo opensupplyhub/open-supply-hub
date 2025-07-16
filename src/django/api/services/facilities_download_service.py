@@ -115,7 +115,7 @@ class FacilitiesDownloadService:
             limit.refresh_from_db()
 
             site_url = request.build_absolute_uri('/')
-            redirect_path = site_url + '/facilities'
+            redirect_path = site_url + 'facilities'
             url = FacilitiesDownloadService.get_checkout_url(
                 limit.user.id,
                 redirect_path
