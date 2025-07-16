@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Open Supply Hub Data Downloads Limitation
+        </title>
+    </head>
+    <body>
+        <p>
+            Hello,
+        </p>
+        <p>
+            We’re writing to notify you that you have used over 4,000 of your 5,000 annual production location downloads.
+            This account has {{ available_amount }} production locations available to download.
+        </p>
+        <p>
+            Purchase additional downloads for immediate access when you reach your limit.
+        </p>
+        <p>
+            <a href="{{ purchase_link }}">Purchase More Downloads</a>
+        </p>
+        <p>
+            Best Regards,
+        </p>
+        {% include "mail/signature_block.html" %}
+    </body>
+</html>
