@@ -6,7 +6,7 @@ This account has {{ available_amount }} production locations available to downlo
 
 Purchase additional downloads for immediate access when you reach your limit.
 
-{{ purchase_link }}
+{{ purchase_url }}
 
 Best Regards,
 

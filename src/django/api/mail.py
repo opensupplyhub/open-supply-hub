@@ -597,7 +597,7 @@ def send_slc_contribution_rejected_email(request, moderation_event):
     )
 
 
-def send_ddl_near_annual_limit_email(amount, link, email):
+def send_ddl_near_annual_limit_email(amount, url, email):
     subj_template = get_template(
         'mail/ddl_near_annual_limit_subject.txt'
     )
@@ -610,7 +610,7 @@ def send_ddl_near_annual_limit_email(amount, link, email):
 
     dictionary = {
         'available_amount': amount,
-        'purchase_link': link,
+        'purchase_url': url,
     }
 
     send_mail(
@@ -622,7 +622,7 @@ def send_ddl_near_annual_limit_email(amount, link, email):
     )
 
 
-def send_ddl_reach_annual_limit_email(link, email):
+def send_ddl_reach_annual_limit_email(url, email):
     subj_template = get_template(
         'mail/ddl_reach_annual_limit_subject.txt'
     )
@@ -634,7 +634,7 @@ def send_ddl_reach_annual_limit_email(link, email):
     )
 
     dictionary = {
-        'purchase_link': link,
+        'purchase_url': url,
     }
 
     send_mail(
@@ -646,7 +646,7 @@ def send_ddl_reach_annual_limit_email(link, email):
     )
 
 
-def send_ddl_reach_paid_limit_email(link, email):
+def send_ddl_reach_paid_limit_email(url, email):
     subj_template = get_template(
         'mail/ddl_reach_paid_limit_subject.txt'
     )
@@ -658,7 +658,7 @@ def send_ddl_reach_paid_limit_email(link, email):
     )
 
     dictionary = {
-        'purchase_link': link,
+        'purchase_url': url,
     }
 
     send_mail(

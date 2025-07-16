@@ -73,5 +73,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 facility_download_limit,
                 total_records
             )
+            FacilitiesDownloadService.send_email_if_needed(
+                request,
+                facility_download_limit
+            )
 
         return response

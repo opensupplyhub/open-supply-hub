@@ -5,7 +5,7 @@ You have used all of your purchased production location downloads.
 
 Purchase more downloads to continue accessing Open Supply Hub data.
 
-{{ purchase_link }}
+{{ purchase_url }}
 
 Best Regards,
 

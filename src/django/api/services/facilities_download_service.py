@@ -1,4 +1,7 @@
 import logging
+import stripe
+
+from django.conf import settings
 
 from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
@@ -11,6 +14,15 @@ from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.exceptions import ServiceUnavailableException
 from api.constants import APIErrorMessages
+
+from api.mail import (
+    send_ddl_near_annual_limit_email,
+    send_ddl_reach_annual_limit_email,
+    send_ddl_reach_paid_limit_email
+)
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
 
 logger = logging.getLogger(__name__)
 
@@ -96,3 +108,67 @@ class FacilitiesDownloadService:
     def register_download_if_needed(limit, record_count):
         if limit:
             limit.register_download(record_count)
+
+    @staticmethod
+    def send_email_if_needed(request, limit: FacilityDownloadLimit):
+        if limit:
+            limit.refresh_from_db()
+
+            site_url = request.build_absolute_uri('/')
+            redirect_path = site_url + '/facilities'
+            url = FacilitiesDownloadService.get_checkout_url(
+                limit.user.id,
+                redirect_path
+            )
+
+
+            if (limit.free_download_records <= 1000
+                and limit.free_download_records != 0
+                and limit.paid_download_records == 0
+            ):
+                send_ddl_near_annual_limit_email(
+                    limit.free_download_records,
+                    url,
+                    limit.user.email
+                )
+            if (limit.free_download_records == 0
+                and limit.purchase_date is None
+                and limit.paid_download_records == 0
+            ):
+                send_ddl_reach_annual_limit_email(
+                    url,
+                    limit.user.email
+                )
+            if (limit.paid_download_records == 0
+                and limit.purchase_date is not None
+                and limit.free_download_records == 0
+            ):
+                send_ddl_reach_paid_limit_email(
+                    url,
+                    limit.user.email
+                )
+
+    @staticmethod
+    def get_checkout_url(user_id, redirect_path):
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    'price': STRIPE_PRICE_ID,
+                    'quantity': 1,
+                    'adjustable_quantity': {
+                        'enabled': True,
+                        'minimum': 1,
+                    },
+                },
+            ],
+            payment_method_types=['card'],
+            mode='payment',
+            metadata={
+                'user_id': user_id,
+            },
+            allow_promotion_codes=True,
+            success_url=redirect_path,
+            cancel_url=redirect_path,
+        )
+
+        return checkout_session.url
