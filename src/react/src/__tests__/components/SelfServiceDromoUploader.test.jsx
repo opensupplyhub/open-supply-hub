@@ -7,11 +7,16 @@ jest.mock('dromo-uploader-react', () => {
     return function MockDromoUploader({ open, onCancel, onResults }) {
         return (
             <div data-testid="dromo-uploader" data-open={open ? 'true' : 'false'}>
-                <button data-testid="dromo-cancel-button" onClick={onCancel}>
+                <button
+                    type='button'
+                    data-testid="dromo-cancel-button"
+                    onClick={onCancel}
+                >
                     Cancel
                 </button>
                 {onResults && (
                     <button
+                        type='button'
                         data-testid="dromo-results-button"
                         onClick={() => onResults([{ foo: 'bar' }], { filename: 'test.csv' })}
                     >
@@ -24,7 +29,7 @@ jest.mock('dromo-uploader-react', () => {
 });
 
 jest.mock('@material-ui/core/Button', () => (props) => (
-    <button {...props}>{props.children}</button>
+    <button type='button' {...props}>{props.children}</button>
 ));
 
 jest.mock('../../util/util', () => ({

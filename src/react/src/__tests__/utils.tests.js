@@ -2649,8 +2649,11 @@ describe('formatExtendedField', () => {
 });
 
 describe('processDromoResults', () => {
-    let originalBlob, originalFile, originalDataTransfer;
-    let fileInput, updateFileName;
+    let originalBlob;
+    let originalFile;
+    let originalDataTransfer;
+    let fileInput;
+    let updateFileName;
 
     beforeAll(() => {
         // Mock Blob, File, DataTransfer for the test environment
@@ -2670,7 +2673,7 @@ describe('processDromoResults', () => {
         global.DataTransfer = function () {
             this.items = {
                 files: [],
-                add: function (file) {
+                add(file) {
                     this.files.push(file);
                 },
             };
