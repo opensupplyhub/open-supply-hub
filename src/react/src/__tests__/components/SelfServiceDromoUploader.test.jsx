@@ -22,9 +22,11 @@ jest.mock('dromo-uploader-react', () => {
         );
     };
 });
+
 jest.mock('@material-ui/core/Button', () => (props) => (
     <button {...props}>{props.children}</button>
 ));
+
 jest.mock('../../util/util', () => ({
     processDromoResults: jest.fn(),
 }));
