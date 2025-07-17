@@ -33,7 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe bugfix here.*
 
 ### What's new
-* *Describe what's new here. The changes that can impact user experience should be listed in this section.*
+* [OSDEV-1881](https://opensupplyhub.atlassian.net/browse/OSDEV-1881) - Implemented automated email notifications for registered users in three scenarios: when nearing the 5,000-record annual download limit, upon reaching that limit, and after exhausting all purchased downloads.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
