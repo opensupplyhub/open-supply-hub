@@ -85,6 +85,7 @@ const {
     snakeToTitleCase,
     slcValidationSchema,
     formatExtendedField,
+    processDromoResults,
 } = require('../util/util');
 
 const {
@@ -2644,5 +2645,88 @@ describe('formatExtendedField', () => {
         expect(result.embeddedSecondary).toBe('October 1, 2025');
         expect(result.isVerified).toBe(true);
         expect(result.isFromClaim).toBe(false);
+    });
+});
+
+describe('processDromoResults', () => {
+    let originalBlob, originalFile, originalDataTransfer;
+    let fileInput, updateFileName;
+
+    beforeAll(() => {
+        // Mock Blob, File, DataTransfer for the test environment
+        originalBlob = global.Blob;
+        originalFile = global.File;
+        originalDataTransfer = global.DataTransfer;
+
+        global.Blob = function (content, options) {
+            this.content = content;
+            this.options = options;
+        };
+        global.File = function (content, name, options) {
+            this.content = content;
+            this.name = name;
+            this.options = options;
+        };
+        global.DataTransfer = function () {
+            this.items = {
+                files: [],
+                add: function (file) {
+                    this.files.push(file);
+                },
+            };
+            Object.defineProperty(this, 'files', {
+                get: () => this.items.files,
+            });
+        };
+    });
+
+    afterAll(() => {
+        global.Blob = originalBlob;
+        global.File = originalFile;
+        global.DataTransfer = originalDataTransfer;
+    });
+
+    beforeEach(() => {
+        fileInput = { current: { files: null } };
+        updateFileName = jest.fn();
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should do nothing if results is undefined', () => {
+        processDromoResults(undefined, 'file.xlsx', fileInput, updateFileName);
+        expect(updateFileName).not.toHaveBeenCalled();
+        expect(fileInput.current.files).toBeNull();
+    });
+
+    it('should do nothing if results is empty', () => {
+        processDromoResults([], 'file.xlsx', fileInput, updateFileName);
+        expect(updateFileName).not.toHaveBeenCalled();
+        expect(fileInput.current.files).toBeNull();
+    });
+
+    it('should process results and update file input', () => {
+        const results = [
+            { name: 'Alice', age: 30 },
+            { name: 'Bob', age: 25 },
+        ];
+        processDromoResults(results, 'file.xlsx', fileInput, updateFileName);
+
+        expect(fileInput.current.files).toHaveLength(1);
+        const file = fileInput.current.files[0];
+        expect(file.name).toBe('file.csv');
+        expect(file.options.type).toBe('text/csv');
+
+        expect(updateFileName).toHaveBeenCalledWith(fileInput);
+    });
+
+    it('should not update file input if fileInput.current is null', () => {
+        const results = [{ name: 'Alice', age: 30 }];
+        fileInput.current = null;
+        processDromoResults(results, 'file.xlsx', fileInput, updateFileName);
+        expect(updateFileName).not.toHaveBeenCalled();
     });
 });
