@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe high-level database changes.*
 
 #### Migrations
-* 0176_introduce_enable_dromo_uploading_switch .py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
+* 0176_introduce_enable_dromo_uploading_switch.py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
 
 #### Schema changes
 * *Describe schema changes here.*
