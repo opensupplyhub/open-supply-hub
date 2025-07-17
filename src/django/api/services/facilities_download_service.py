@@ -113,8 +113,8 @@ class FacilitiesDownloadService:
     def send_email_if_needed(
         request,
         limit: FacilityDownloadLimit,
-        prev_free,
-        prev_paid
+        prev_free = 0,
+        prev_paid = 0
     ):
         if limit:
             limit.refresh_from_db()
