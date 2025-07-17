@@ -3,29 +3,27 @@ import { render, fireEvent } from '@testing-library/react';
 import SelfServiceDromoUploader from '../../components/SelfServiceDromoUploader';
 import { processDromoResults } from '../../util/util';
 
-jest.mock('dromo-uploader-react', () => {
-    return function MockDromoUploader({ open, onCancel, onResults }) {
-        return (
-            <div data-testid="dromo-uploader" data-open={open ? 'true' : 'false'}>
+jest.mock('dromo-uploader-react', () => function MockDromoUploader({ open, onCancel, onResults }) {
+    return (
+        <div data-testid="dromo-uploader" data-open={open ? 'true' : 'false'}>
+            <button
+                type='button'
+                data-testid="dromo-cancel-button"
+                onClick={onCancel}
+            >
+                Cancel
+            </button>
+            {onResults && (
                 <button
                     type='button'
-                    data-testid="dromo-cancel-button"
-                    onClick={onCancel}
+                    data-testid="dromo-results-button"
+                    onClick={() => onResults([{ foo: 'bar' }], { filename: 'test.csv' })}
                 >
-                    Cancel
+                    Simulate Results
                 </button>
-                {onResults && (
-                    <button
-                        type='button'
-                        data-testid="dromo-results-button"
-                        onClick={() => onResults([{ foo: 'bar' }], { filename: 'test.csv' })}
-                    >
-                        Simulate Results
-                    </button>
-                )}
-            </div>
-        );
-    };
+            )}
+        </div>
+    );
 });
 
 jest.mock('@material-ui/core/Button', () => (props) => (
