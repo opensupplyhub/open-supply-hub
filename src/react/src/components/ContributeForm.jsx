@@ -34,6 +34,7 @@ import {
     contributeFieldsEnum,
     DISABLE_LIST_UPLOADING,
     MAINTENANCE_MESSAGE,
+    ENABLE_DROMO_UPLOADING,
 } from '../util/constants';
 
 import { useFileUploadHandler } from '../util/hooks';
@@ -156,10 +157,12 @@ const ContributeForm = ({
                     >
                         Select Facility List File
                     </MaterialButton>
-                    <SelfServiceUploader
-                        fileInput={fileInput}
-                        updateFileName={updateFileName}
-                    />
+                    <FeatureFlag flag={ENABLE_DROMO_UPLOADING}>
+                        <SelfServiceUploader
+                            fileInput={fileInput}
+                            updateFileName={updateFileName}
+                        />
+                    </FeatureFlag>
                 </div>
                 <p style={contributeFormStyles.fileNameText}>{filename}</p>
                 <p
