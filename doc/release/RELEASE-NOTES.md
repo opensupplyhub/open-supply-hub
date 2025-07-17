@@ -3,6 +3,39 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.10.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 9, 2025
+
+### Database changes
+* *Describe high-level database changes.*
+
+#### Migrations
+* 0176_introduce_enable_dromo_uploading_switch .py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
+
+#### Schema changes
+* *Describe schema changes here.*
+
+### Code/API changes
+* *Describe code/API changes here.*
+
+### Architecture/Environment changes
+* *Describe architecture/environment changes here.*
+
+### Bugfix
+* *Describe bugfix here.*
+
+### What's new
+* [OSDEV-2084](https://opensupplyhub.atlassian.net/browse/OSDEV-2084) - Implemented front-end logic to display the "Beta Self Service Upload" button on the Upload Multiple Locations page when the `enable_dromo_uploading` feature flag is returned as true from the backend.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.9.0
 
 ## Introduction
