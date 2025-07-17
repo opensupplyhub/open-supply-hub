@@ -9,7 +9,7 @@ const uploaderButtonStyle = Object.freeze({
     color: 'white',
 });
 
-const SelfServiceUploader = ({ fileInput, updateFileName }) => {
+const SelfServiceDromoUploader = ({ fileInput, updateFileName }) => {
     const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
     const openUploader = () => setIsUploaderOpen(true);
@@ -45,9 +45,9 @@ const SelfServiceUploader = ({ fileInput, updateFileName }) => {
     );
 };
 
-SelfServiceUploader.propTypes = {
+SelfServiceDromoUploader.propTypes = {
     fileInput: object.isRequired,
     updateFileName: func.isRequired,
 };
 
-export default SelfServiceUploader;
+export default SelfServiceDromoUploader;

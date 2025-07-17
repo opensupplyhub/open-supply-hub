@@ -17,7 +17,7 @@ import Button from './Button';
 import FeatureFlag from './FeatureFlag';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
 import ListUploadErrors from './ListUploadErrors';
-import SelfServiceUploader from './SelfServiceUploader';
+import SelfServiceDromoUploader from './SelfServiceDromoUploader';
 import StyledTooltip from './StyledTooltip';
 
 import COLOURS from '../util/COLOURS';
@@ -158,7 +158,7 @@ const ContributeForm = ({
                         Select Facility List File
                     </MaterialButton>
                     <FeatureFlag flag={ENABLE_DROMO_UPLOADING}>
-                        <SelfServiceUploader
+                        <SelfServiceDromoUploader
                             fileInput={fileInput}
                             updateFileName={updateFileName}
                         />
