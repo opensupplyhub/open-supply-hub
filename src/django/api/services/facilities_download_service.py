@@ -121,9 +121,6 @@ class FacilitiesDownloadService:
 
         limit.refresh_from_db()
 
-        site_url = request.build_absolute_uri('/')
-        redirect_path = site_url + 'facilities'
-
         nearing_annual_limit = (
             0 < limit.free_download_records <= 1000 and
             limit.paid_download_records == 0
@@ -143,6 +140,8 @@ class FacilitiesDownloadService:
             reached_annual_limit,
             reached_paid_limit
         ]):
+            site_url = request.build_absolute_uri('/')
+            redirect_path = site_url + 'facilities'
             url = FacilitiesDownloadService.get_checkout_url(
                 limit.user.id,
                 redirect_path
