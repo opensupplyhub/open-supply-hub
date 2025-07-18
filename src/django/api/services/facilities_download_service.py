@@ -161,25 +161,30 @@ class FacilitiesDownloadService:
 
     @staticmethod
     def get_checkout_url(user_id, redirect_path):
-        checkout_session = stripe.checkout.Session.create(
-            line_items=[
-                {
-                    'price': STRIPE_PRICE_ID,
-                    'quantity': 1,
-                    'adjustable_quantity': {
-                        'enabled': True,
-                        'minimum': 1,
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                line_items=[
+                    {
+                        'price': STRIPE_PRICE_ID,
+                        'quantity': 1,
+                        'adjustable_quantity': {
+                            'enabled': True,
+                            'minimum': 1,
+                        },
                     },
+                ],
+                payment_method_types=['card'],
+                mode='payment',
+                metadata={
+                    'user_id': user_id,
                 },
-            ],
-            payment_method_types=['card'],
-            mode='payment',
-            metadata={
-                'user_id': user_id,
-            },
-            allow_promotion_codes=True,
-            success_url=redirect_path,
-            cancel_url=redirect_path,
-        )
+                allow_promotion_codes=True,
+                success_url=redirect_path,
+                cancel_url=redirect_path,
+            )
 
-        return checkout_session.url
+            return checkout_session.url
+
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe checkout session creation failed for user {user_id}: {str(e)}")
+            raise ServiceUnavailableException("Payment service temporarily unavailable")
