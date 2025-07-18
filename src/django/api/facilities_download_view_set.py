@@ -52,9 +52,9 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             facility_download_limit = FacilitiesDownloadService \
                 .get_download_limit(request)
             prev_free_amount = facility_download_limit \
-                    .free_download_records
+                .free_download_records
             prev_paid_amount = facility_download_limit \
-                    .paid_download_records
+                .paid_download_records
 
         FacilitiesDownloadService.enforce_limits(
             request,
