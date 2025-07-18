@@ -69,9 +69,26 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         paginator = self.paginator
         if paginator.page.number == paginator.page.paginator.num_pages:
+            prev_free_amount = getattr(
+                facility_download_limit,
+                'free_download_records',
+                0
+            )
+            prev_paid_amount = getattr(
+                facility_download_limit,
+                'paid_download_records',
+                0
+            )
+
             FacilitiesDownloadService.register_download_if_needed(
                 facility_download_limit,
                 total_records
+            )
+            FacilitiesDownloadService.send_email_if_needed(
+                request,
+                facility_download_limit,
+                prev_free_amount,
+                prev_paid_amount
             )
 
         return response

@@ -1,16 +1,9 @@
-import stripe
-
-from django.conf import settings
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.permissions import IsRegisteredAndConfirmed
 from api.services.facilities_download_service import FacilitiesDownloadService
-
-stripe.api_key = settings.STRIPE_SECRET_KEY
-STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
 
 
 class DownloadLocationsCheckoutSessionView(APIView):
@@ -30,29 +23,14 @@ class DownloadLocationsCheckoutSessionView(APIView):
                 .get_download_limit(request)
 
             redirect_path = request.data.get('redirect_path')
-            checkout_session = stripe.checkout.Session.create(
-                line_items=[
-                    {
-                        'price': STRIPE_PRICE_ID,
-                        'quantity': 1,
-                        'adjustable_quantity': {
-                            'enabled': True,
-                            'minimum': 1,
-                        },
-                    },
-                ],
-                payment_method_types=['card'],
-                mode='payment',
-                metadata={
-                    'user_id': request.user.id,
-                },
-                allow_promotion_codes=True,
-                success_url=site_url + redirect_path,
-                cancel_url=site_url + redirect_path,
-            )
+            checkout_url = FacilitiesDownloadService \
+                .get_checkout_url(
+                    request.user.id,
+                    site_url + redirect_path
+                )
 
             return Response(
-                {'url': checkout_session.url}, status=status.HTTP_200_OK
+                {'url': checkout_url}, status=status.HTTP_200_OK
             )
 
         except Exception as e:

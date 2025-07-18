@@ -1,4 +1,7 @@
 import logging
+import stripe
+
+from django.conf import settings
 
 from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
@@ -11,6 +14,15 @@ from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.exceptions import ServiceUnavailableException
 from api.constants import APIErrorMessages
+
+from api.mail import (
+    send_ddl_near_annual_limit_email,
+    send_ddl_reach_annual_limit_email,
+    send_ddl_reach_paid_limit_email
+)
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+STRIPE_PRICE_ID = settings.STRIPE_PRICE_ID
 
 logger = logging.getLogger(__name__)
 
@@ -96,3 +108,92 @@ class FacilitiesDownloadService:
     def register_download_if_needed(limit, record_count):
         if limit:
             limit.register_download(record_count)
+
+    @staticmethod
+    def send_email_if_needed(
+        request,
+        limit: FacilityDownloadLimit,
+        prev_free,
+        prev_paid
+    ):
+        if not limit:
+            return
+
+        limit.refresh_from_db()
+
+        nearing_annual_limit = (
+            0 < limit.free_download_records <= 1000 and
+            limit.paid_download_records == 0
+        )
+        reached_annual_limit = (
+            limit.free_download_records == 0 and
+            prev_free > 0 and
+            prev_paid == 0
+        )
+        reached_paid_limit = (
+            limit.paid_download_records == 0 and
+            prev_paid > 0
+        )
+
+        if any([
+            nearing_annual_limit,
+            reached_annual_limit,
+            reached_paid_limit
+        ]):
+            site_url = request.build_absolute_uri('/')
+            redirect_path = site_url + 'facilities'
+            url = FacilitiesDownloadService.get_checkout_url(
+                limit.user.id,
+                redirect_path
+            )
+
+        if nearing_annual_limit:
+            send_ddl_near_annual_limit_email(
+                limit.free_download_records,
+                url,
+                limit.user.email
+            )
+        elif reached_annual_limit:
+            send_ddl_reach_annual_limit_email(
+                url,
+                limit.user.email
+            )
+        elif reached_paid_limit:
+            send_ddl_reach_paid_limit_email(
+                url,
+                limit.user.email
+            )
+
+    @staticmethod
+    def get_checkout_url(user_id, redirect_path):
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                line_items=[
+                    {
+                        'price': STRIPE_PRICE_ID,
+                        'quantity': 1,
+                        'adjustable_quantity': {
+                            'enabled': True,
+                            'minimum': 1,
+                        },
+                    },
+                ],
+                payment_method_types=['card'],
+                mode='payment',
+                metadata={
+                    'user_id': user_id,
+                },
+                allow_promotion_codes=True,
+                success_url=redirect_path,
+                cancel_url=redirect_path,
+            )
+
+            return checkout_session.url
+
+        except stripe.error.StripeError as e:
+            logger.error(
+                f"Stripe checkout session creation failed: {str(e)}"
+            )
+            raise ServiceUnavailableException(
+                "Payment service temporarily unavailable"
+            )

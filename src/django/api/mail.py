@@ -595,3 +595,76 @@ def send_slc_contribution_rejected_email(request, moderation_event):
         [moderation_event.contributor.admin.email],
         html_message=html_template.render(rejected_dictionary)
     )
+
+
+def send_ddl_near_annual_limit_email(amount, url, email):
+    subj_template = get_template(
+        'mail/ddl_near_annual_limit_subject.txt'
+    )
+    text_template = get_template(
+        'mail/ddl_near_annual_limit_body.txt'
+    )
+    html_template = get_template(
+        'mail/ddl_near_annual_limit_body.html'
+    )
+
+    dictionary = {
+        'available_amount': amount,
+        'purchase_url': url,
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(dictionary),
+        settings.DATA_FROM_EMAIL,
+        [email],
+        html_message=html_template.render(dictionary)
+    )
+
+
+def send_ddl_reach_annual_limit_email(url, email):
+    subj_template = get_template(
+        'mail/ddl_reach_annual_limit_subject.txt'
+    )
+    text_template = get_template(
+        'mail/ddl_reach_annual_limit_body.txt'
+    )
+    html_template = get_template(
+        'mail/ddl_reach_annual_limit_body.html'
+    )
+
+    dictionary = {
+        'purchase_url': url,
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(dictionary),
+        settings.DATA_FROM_EMAIL,
+        [email],
+        html_message=html_template.render(dictionary)
+    )
+
+
+def send_ddl_reach_paid_limit_email(url, email):
+    subj_template = get_template(
+        'mail/ddl_reach_paid_limit_subject.txt'
+    )
+    text_template = get_template(
+        'mail/ddl_reach_paid_limit_body.txt'
+    )
+    html_template = get_template(
+        'mail/ddl_reach_paid_limit_body.html'
+    )
+
+    dictionary = {
+        'purchase_url': url,
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(dictionary),
+        settings.DATA_FROM_EMAIL,
+        [email],
+        html_message=html_template.render(dictionary)
+    )

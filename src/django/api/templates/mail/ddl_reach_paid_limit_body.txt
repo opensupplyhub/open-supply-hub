@@ -1,0 +1,13 @@
+{% block content %}
+Hello,
+
+You have used all of your purchased production location downloads.
+
+Purchase more downloads to continue accessing Open Supply Hub data.
+
+{{ purchase_url }}
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}
