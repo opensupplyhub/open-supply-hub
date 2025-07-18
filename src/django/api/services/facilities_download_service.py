@@ -191,5 +191,9 @@ class FacilitiesDownloadService:
             return checkout_session.url
 
         except stripe.error.StripeError as e:
-            logger.error(f"Stripe checkout session creation failed for user {user_id}: {str(e)}")
-            raise ServiceUnavailableException("Payment service temporarily unavailable")
+            logger.error(
+                f"Stripe checkout session creation failed: {str(e)}"
+            )
+            raise ServiceUnavailableException(
+                "Payment service temporarily unavailable"
+            )
