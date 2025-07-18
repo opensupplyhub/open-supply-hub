@@ -113,8 +113,8 @@ class FacilitiesDownloadService:
     def send_email_if_needed(
         request,
         limit: FacilityDownloadLimit,
-        prev_free = 0,
-        prev_paid = 0
+        prev_free=0,
+        prev_paid=0
     ):
         if limit:
             limit.refresh_from_db()
@@ -126,24 +126,27 @@ class FacilitiesDownloadService:
                 redirect_path
             )
 
-            if (0 < limit.free_download_records <= 1000
-                and limit.paid_download_records == 0
+            if (
+                0 < limit.free_download_records <= 1000 and
+                limit.paid_download_records == 0
             ):
                 send_ddl_near_annual_limit_email(
                     limit.free_download_records,
                     url,
                     limit.user.email
                 )
-            elif (limit.free_download_records == 0
-                and prev_free > 0
-                and prev_paid == 0
+            elif (
+                limit.free_download_records == 0 and
+                prev_free > 0 and
+                prev_paid == 0
             ):
                 send_ddl_reach_annual_limit_email(
                     url,
                     limit.user.email
                 )
-            elif (limit.paid_download_records == 0
-                and prev_paid > 0
+            elif (
+                limit.paid_download_records == 0 and
+                prev_paid > 0
             ):
                 send_ddl_reach_paid_limit_email(
                     url,
