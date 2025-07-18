@@ -51,6 +51,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         ):
             facility_download_limit = FacilitiesDownloadService \
                 .get_download_limit(request)
+            prev_free_amount = facility_download_limit \
+                    .free_download_records
+            prev_paid_amount = facility_download_limit \
+                    .paid_download_records
+
         FacilitiesDownloadService.enforce_limits(
             request,
             total_records,
@@ -69,12 +74,6 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         paginator = self.paginator
         if paginator.page.number == paginator.page.paginator.num_pages:
-            if facility_download_limit:
-                prev_free_amount = facility_download_limit \
-                    .free_download_records
-                prev_paid_amount = facility_download_limit \
-                    .paid_download_records
-
             FacilitiesDownloadService.register_download_if_needed(
                 facility_download_limit,
                 total_records
