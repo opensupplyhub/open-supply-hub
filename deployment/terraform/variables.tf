@@ -863,3 +863,13 @@ variable "dark_visitors_token" {
   description = "Dark Visitors token"
   sensitive   = true
 }
+
+variable "dromo_license_key" {
+  type        = string
+  description = "Dromo license key for data management"
+}
+
+variable "dromo_schema_id" {
+  type        = string
+  description = "Dromo schema ID for data management"
+}

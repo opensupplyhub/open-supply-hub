@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { object, func } from 'prop-types';
 import DromoUploader from 'dromo-uploader-react';
 import MaterialButton from '@material-ui/core/Button';
+
+import env from '../util/env';
 import { processDromoResults } from '../util/util';
 
 const uploaderButtonStyle = Object.freeze({
@@ -35,8 +37,8 @@ const SelfServiceDromoUploader = ({ fileInput, updateFileName }) => {
             </MaterialButton>
 
             <DromoUploader
-                licenseKey="ee427cf5-da27-4f28-a260-c9a17d02ad30"
-                schemaId="6f3e129c-d724-4b80-b2c9-8e54b47e8017"
+                licenseKey={env('REACT_APP_DROMO_LICENSE_KEY')}
+                schemaId={env('REACT_APP_DROMO_SCHEMA_ID')}
                 open={isUploaderOpen}
                 onCancel={closeUploader}
                 onResults={handleDromoResults}
