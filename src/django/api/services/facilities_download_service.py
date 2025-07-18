@@ -116,42 +116,46 @@ class FacilitiesDownloadService:
         prev_free,
         prev_paid
     ):
-        if limit:
-            limit.refresh_from_db()
+        if not limit:
+            return
 
-            site_url = request.build_absolute_uri('/')
-            redirect_path = site_url + 'facilities'
-            url = FacilitiesDownloadService.get_checkout_url(
-                limit.user.id,
-                redirect_path
+        limit.refresh_from_db()
+
+        site_url = request.build_absolute_uri('/')
+        redirect_path = site_url + 'facilities'
+        url = FacilitiesDownloadService.get_checkout_url(limit.user.id, redirect_path)
+
+        nearing_annual_limit = (
+            0 < limit.free_download_records <= 1000 and
+            limit.paid_download_records == 0
+        )
+        reached_annual_limit = (
+            limit.free_download_records == 0 and
+            prev_free > 0 and
+            prev_paid == 0
+        )
+        reached_paid_limit = (
+            limit.paid_download_records == 0 and
+            prev_paid > 0
+        )
+
+        if nearing_annual_limit:
+            send_ddl_near_annual_limit_email(
+                limit.free_download_records,
+                url,
+                limit.user.email
+            )
+        elif reached_annual_limit:
+            send_ddl_reach_annual_limit_email(
+                url,
+                limit.user.email
+            )
+        elif reached_paid_limit:
+            send_ddl_reach_paid_limit_email(
+                url,
+                limit.user.email
             )
 
-            if (
-                0 < limit.free_download_records <= 1000 and
-                limit.paid_download_records == 0
-            ):
-                send_ddl_near_annual_limit_email(
-                    limit.free_download_records,
-                    url,
-                    limit.user.email
-                )
-            elif (
-                limit.free_download_records == 0 and
-                prev_free > 0 and
-                prev_paid == 0
-            ):
-                send_ddl_reach_annual_limit_email(
-                    url,
-                    limit.user.email
-                )
-            elif (
-                limit.paid_download_records == 0 and
-                prev_paid > 0
-            ):
-                send_ddl_reach_paid_limit_email(
-                    url,
-                    limit.user.email
-                )
 
     @staticmethod
     def get_checkout_url(user_id, redirect_path):
