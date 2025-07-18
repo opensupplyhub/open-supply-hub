@@ -563,6 +563,7 @@ export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
 export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const PRIVATE_INSTANCE = 'private_instance';
+export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
