@@ -94,8 +94,6 @@ export default function Navbar() {
         ? window.ENVIRONMENT.ENVIRONMENT === 'staging'
         : false;
 
-    console.log('window.ENVIRONMENT', window.ENVIRONMENT);
-
     const Header = (
         <header className={headerClassName} id="header">
             <div
