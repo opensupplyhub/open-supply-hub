@@ -123,7 +123,10 @@ class FacilitiesDownloadService:
 
         site_url = request.build_absolute_uri('/')
         redirect_path = site_url + 'facilities'
-        url = FacilitiesDownloadService.get_checkout_url(limit.user.id, redirect_path)
+        url = FacilitiesDownloadService.get_checkout_url(
+            limit.user.id,
+            redirect_path
+        )
 
         nearing_annual_limit = (
             0 < limit.free_download_records <= 1000 and
@@ -155,7 +158,6 @@ class FacilitiesDownloadService:
                 url,
                 limit.user.email
             )
-
 
     @staticmethod
     def get_checkout_url(user_id, redirect_path):
