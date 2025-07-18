@@ -1719,3 +1719,32 @@ export const formatExtendedField = ({
         key: uuidv4(),
     };
 };
+
+export const processDromoResults = (
+    results,
+    filename,
+    fileInput,
+    updateFileName,
+) => {
+    if (!results || results.length === 0) {
+        return;
+    }
+
+    const headers = Object.keys(results[0]).join(',');
+    const rows = results.map(row => Object.values(row).join(','));
+    const csvContent = [headers, ...rows].join('\n');
+
+    const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+    const csvFile = new File([csvBlob], filename.replace(/\.[^/.]+$/, '.csv'), {
+        type: 'text/csv',
+    });
+
+    const inputEl = fileInput.current;
+    if (inputEl) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(csvFile);
+        inputEl.files = dataTransfer.files;
+
+        updateFileName(fileInput);
+    }
+};

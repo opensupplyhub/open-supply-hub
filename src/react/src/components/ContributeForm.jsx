@@ -17,6 +17,7 @@ import Button from './Button';
 import FeatureFlag from './FeatureFlag';
 import ContributeFormSelectListToReplace from './ContributeFormSelectListToReplace';
 import ListUploadErrors from './ListUploadErrors';
+import SelfServiceDromoUploader from './SelfServiceDromoUploader';
 import StyledTooltip from './StyledTooltip';
 
 import COLOURS from '../util/COLOURS';
@@ -33,6 +34,7 @@ import {
     contributeFieldsEnum,
     DISABLE_LIST_UPLOADING,
     MAINTENANCE_MESSAGE,
+    ENABLE_DROMO_UPLOADING,
 } from '../util/constants';
 
 import { useFileUploadHandler } from '../util/hooks';
@@ -54,6 +56,10 @@ import {
 import { facilityListPropType } from '../util/propTypes';
 
 const contributeFormStyles = Object.freeze({
+    uploaderButtonWrapper: Object.freeze({
+        display: 'flex',
+        gap: '10px',
+    }),
     fileNameText: Object.freeze({
         color: COLOURS.LIGHT_BLUE,
         fontSize: '12px',
@@ -140,17 +146,33 @@ const ContributeForm = ({
         <div className="control-panel__group">
             {formInputs}
             <div className="form__field">
-                <MaterialButton
-                    onClick={selectFile}
-                    type="button"
-                    variant="outlined"
-                    color="primary"
-                    className="outlined-button"
-                    disableRipple
-                >
-                    Select Facility List File
-                </MaterialButton>
+                <div style={contributeFormStyles.uploaderButtonWrapper}>
+                    <MaterialButton
+                        onClick={selectFile}
+                        type="button"
+                        variant="outlined"
+                        color="primary"
+                        className="outlined-button"
+                        disableRipple
+                    >
+                        Select Facility List File
+                    </MaterialButton>
+                    <FeatureFlag flag={ENABLE_DROMO_UPLOADING}>
+                        <SelfServiceDromoUploader
+                            fileInput={fileInput}
+                            updateFileName={updateFileName}
+                        />
+                    </FeatureFlag>
+                </div>
                 <p style={contributeFormStyles.fileNameText}>{filename}</p>
+                <p
+                    style={{
+                        fontSize: '12px',
+                        marginTop: '8px',
+                    }}
+                >
+                    Upload CSV or Excel files using our enhanced file selector
+                </p>
                 <input
                     type="file"
                     accept=".csv,.xlsx"
