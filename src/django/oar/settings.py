@@ -255,6 +255,17 @@ DATABASES = {
     }
 }
 
+# Only add RBA database if RBA_DB_HOST is configured
+if os.getenv('RBA_DB_HOST'):
+    DATABASES['rba'] = {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'rba', # name of the database in the rba container
+        'USER': os.getenv('POSTGRES_USER'), # user of the database in the rba container
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'), # password of the database in the rba container
+        'HOST': os.getenv('RBA_DB_HOST'), # host of the database in the rba container
+        'PORT': os.getenv('RBA_DB_PORT'), # port of the database in the rba container
+    }
+
 # Use < 3+ default for ID fields
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
