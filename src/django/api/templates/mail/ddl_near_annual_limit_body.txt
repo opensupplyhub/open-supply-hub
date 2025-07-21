@@ -1,0 +1,14 @@
+{% block content %}
+Hello,
+
+We’re writing to notify you that you have used over 4,000 of your 5,000 annual production location downloads.
+This account has {{ available_amount }} production locations available to download.
+
+Purchase additional downloads for immediate access when you reach your limit.
+
+{{ purchase_url }}
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}
