@@ -59,6 +59,7 @@ export const InfoPaths = {
 
     // Other
     resources: 'resources',
+    pricing: 'open-supply-hub-pricing',
 
     // Footer
     mediaHub: 'media-hub',
@@ -916,8 +917,8 @@ export const NavbarItems = [
     },
     {
         type: 'link',
-        label: 'Resources',
-        href: `${InfoLink}/${InfoPaths.resources}`,
+        label: 'Pricing',
+        href: `${InfoLink}/${InfoPaths.pricing}`,
     },
     { type: 'international' },
     { type: 'auth' },
