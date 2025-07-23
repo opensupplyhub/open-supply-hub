@@ -8,7 +8,7 @@ services:
       context: ./src/database
       dockerfile: Dockerfile.local
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "os_hub_private_instance"]
+      test: ["CMD", "pg_isready", "-U", "opensupplyhub"]
       interval: 3s
       timeout: 3s
       retries: 3
@@ -17,8 +17,8 @@ services:
     ports:
       - 5433:5432  # Different port to avoid conflict with main DB
     environment:
-      - POSTGRES_USER=os_hub_private_instance
-      - POSTGRES_PASSWORD=os_hub_private_instance
-      - POSTGRES_DB=os_hub_private_instance
+      - POSTGRES_USER=opensupplyhub
+      - POSTGRES_PASSWORD=opensupplyhub
+      - POSTGRES_DB=opensupplyhub
     networks:
       - proxynet
