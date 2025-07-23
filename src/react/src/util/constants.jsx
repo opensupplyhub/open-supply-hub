@@ -70,7 +70,7 @@ export const InfoResourcesQuery = {
     caseStudy: 'case-study',
     guide: 'guide',
     releaseNotes: 'release-notes',
-}
+};
 
 // This choices must be kept in sync with the identical list
 // kept in the Django API's models.py file
@@ -805,28 +805,29 @@ export const NavbarItems = [
                         },
                     ],
                 },
-            ],
-            [
                 {
                     label: 'Resources',
                     items: [
                         {
                             type: 'link',
                             label: 'Case Study',
-                            href: `${InfoLink}/${InfoPaths.resources}` +
-                            `?contentTypes=${InfoResourcesQuery.caseStudy}`,
+                            href:
+                                `${InfoLink}/${InfoPaths.resources}` +
+                                `?contentTypes=${InfoResourcesQuery.caseStudy}`,
                         },
                         {
                             type: 'link',
                             label: 'Guide',
-                            href: `${InfoLink}/${InfoPaths.resources}` +
-                            `?contentTypes=${InfoResourcesQuery.guide}`,
+                            href:
+                                `${InfoLink}/${InfoPaths.resources}` +
+                                `?contentTypes=${InfoResourcesQuery.guide}`,
                         },
                         {
                             type: 'link',
                             label: 'Release Notes',
-                            href: `${InfoLink}/${InfoPaths.resources}` +
-                            `?contentTypes=${InfoResourcesQuery.releaseNotes}`,
+                            href:
+                                `${InfoLink}/${InfoPaths.resources}` +
+                                `?contentTypes=${InfoResourcesQuery.releaseNotes}`,
                         },
                     ],
                 },
