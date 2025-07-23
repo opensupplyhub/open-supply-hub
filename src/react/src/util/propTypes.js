@@ -31,6 +31,7 @@ import {
     facilityClaimStatusChoicesEnum,
     SHOW_ADDITIONAL_IDENTIFIERS,
     PRIVATE_INSTANCE,
+    ENABLE_DROMO_UPLOADING,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -359,6 +360,7 @@ export const featureFlagPropType = oneOf([
     DISABLE_LIST_UPLOADING,
     SHOW_ADDITIONAL_IDENTIFIERS,
     PRIVATE_INSTANCE,
+    ENABLE_DROMO_UPLOADING,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
