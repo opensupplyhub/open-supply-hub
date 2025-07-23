@@ -65,6 +65,13 @@ export const InfoPaths = {
     mediaHub: 'media-hub',
 };
 
+export const InfoResourcesQuery = {
+    // Resources
+    caseStudy: 'case-study',
+    guide: 'guide',
+    releaseNotes: 'release-notes',
+}
+
 // This choices must be kept in sync with the identical list
 // kept in the Django API's models.py file
 export const contributorTypeOptions = Object.freeze([
@@ -795,6 +802,31 @@ export const NavbarItems = [
                             type: 'link',
                             label: 'Sectors',
                             href: `${InfoLink}/${InfoPaths.sectors}`,
+                        },
+                    ],
+                },
+            ],
+            [
+                {
+                    label: 'Resources',
+                    items: [
+                        {
+                            type: 'link',
+                            label: 'Case Study',
+                            href: `${InfoLink}/${InfoPaths.resources}` +
+                            `?contentTypes=${InfoResourcesQuery.caseStudy}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Guide',
+                            href: `${InfoLink}/${InfoPaths.resources}` +
+                            `?contentTypes=${InfoResourcesQuery.guide}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Release Notes',
+                            href: `${InfoLink}/${InfoPaths.resources}` +
+                            `?contentTypes=${InfoResourcesQuery.releaseNotes}`,
                         },
                     ],
                 },
