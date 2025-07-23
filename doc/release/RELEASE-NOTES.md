@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2084](https://opensupplyhub.atlassian.net/browse/OSDEV-2084) - Implemented front-end logic to display the "Beta Self Service Upload" button on the Upload Multiple Locations page when the `enable_dromo_uploading` feature flag is returned as true from the backend.
+* [OSDEV-2082](https://opensupplyhub.atlassian.net/browse/OSDEV-2082) - Replaced `Resources` with `Pricing` in the platform header globally. Moved the `Resources` content under the How it works category for better organization.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
