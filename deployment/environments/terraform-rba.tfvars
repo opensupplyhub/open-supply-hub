@@ -71,4 +71,3 @@ export_csv_enabled = false
 
 instance_source= "rba"
 
-vpn_ec2_ami = "ami-0940c95b23a1f7cac"
