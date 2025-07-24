@@ -69,7 +69,7 @@ export const InfoResourcesQuery = {
     // Resources
     caseStudy: 'case-study',
     guide: 'guide',
-    releaseNotes: 'release-notes',
+    video: 'video',
 };
 
 // This choices must be kept in sync with the identical list
@@ -810,24 +810,29 @@ export const NavbarItems = [
                     items: [
                         {
                             type: 'link',
-                            label: 'Case Study',
+                            label: 'Full Resource Library',
+                            href: `${InfoLink}/${InfoPaths.resources}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Case Studies',
                             href:
                                 `${InfoLink}/${InfoPaths.resources}` +
                                 `?contentTypes=${InfoResourcesQuery.caseStudy}`,
                         },
                         {
                             type: 'link',
-                            label: 'Guide',
+                            label: 'Guides',
                             href:
                                 `${InfoLink}/${InfoPaths.resources}` +
                                 `?contentTypes=${InfoResourcesQuery.guide}`,
                         },
                         {
                             type: 'link',
-                            label: 'Release Notes',
+                            label: 'Videos',
                             href:
                                 `${InfoLink}/${InfoPaths.resources}` +
-                                `?contentTypes=${InfoResourcesQuery.releaseNotes}`,
+                                `?contentTypes=${InfoResourcesQuery.video}`,
                         },
                     ],
                 },
