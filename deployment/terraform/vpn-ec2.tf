@@ -7,7 +7,7 @@ data "aws_ami" "aws_ami_vpn_ec2" {
   }
   filter {
     name   = "name"
-    values = ["al2023-ami-2023*"]
+    values = ["al2023-ami-2023.7.20250623.1-kernel-6.1-arm64"]
   }
 }
 
