@@ -1,16 +1,3 @@
-data "aws_ami" "aws_ami_vpn_ec2" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "architecture"
-    values = ["arm64"]
-  }
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.7.20250623.1-kernel-6.1-arm64"]
-  }
-}
-
 data "aws_iam_policy_document" "vpn_instance_assume_role" {
   statement {
     effect = "Allow"
@@ -49,7 +36,7 @@ data "template_file" "wireguard_compose" {
 
 resource "aws_instance" "vpn_ec2" {
   count         = var.environment == "Preprod" ? 1 : 0
-  ami           = data.aws_ami.aws_ami_vpn_ec2.id
+  ami           = var.vpn_ec2_ami
   instance_type = "t4g.nano"
   subnet_id     = module.vpc.public_subnet_ids[count.index]
 
