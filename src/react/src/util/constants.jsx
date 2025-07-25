@@ -59,9 +59,17 @@ export const InfoPaths = {
 
     // Other
     resources: 'resources',
+    pricing: 'open-supply-hub-pricing',
 
     // Footer
     mediaHub: 'media-hub',
+};
+
+export const InfoResourcesQuery = {
+    // Resources
+    caseStudy: 'case-study',
+    guide: 'guide',
+    video: 'video',
 };
 
 // This choices must be kept in sync with the identical list
@@ -797,6 +805,37 @@ export const NavbarItems = [
                         },
                     ],
                 },
+                {
+                    label: 'Resources',
+                    items: [
+                        {
+                            type: 'link',
+                            label: 'Full Resource Library',
+                            href: `${InfoLink}/${InfoPaths.resources}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Case Studies',
+                            href:
+                                `${InfoLink}/${InfoPaths.resources}` +
+                                `?contentTypes=${InfoResourcesQuery.caseStudy}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Guides',
+                            href:
+                                `${InfoLink}/${InfoPaths.resources}` +
+                                `?contentTypes=${InfoResourcesQuery.guide}`,
+                        },
+                        {
+                            type: 'link',
+                            label: 'Videos',
+                            href:
+                                `${InfoLink}/${InfoPaths.resources}` +
+                                `?contentTypes=${InfoResourcesQuery.video}`,
+                        },
+                    ],
+                },
             ],
             [
                 {
@@ -916,8 +955,8 @@ export const NavbarItems = [
     },
     {
         type: 'link',
-        label: 'Resources',
-        href: `${InfoLink}/${InfoPaths.resources}`,
+        label: 'Pricing',
+        href: `${InfoLink}/${InfoPaths.pricing}`,
     },
     { type: 'international' },
     { type: 'auth' },
