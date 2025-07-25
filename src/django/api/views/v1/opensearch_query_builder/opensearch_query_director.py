@@ -10,6 +10,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.NAME: 'match',
             V1_PARAMETERS_LIST.OS_ID: 'terms',
             V1_PARAMETERS_LIST.LOCAL_NAME: 'match',
+            V1_PARAMETERS_LIST.CLAIM_STATUS: 'terms',
             V1_PARAMETERS_LIST.COUNTRY: 'terms',
             V1_PARAMETERS_LIST.SECTOR: 'terms',
             V1_PARAMETERS_LIST.PRODUCT_TYPE: 'terms',
