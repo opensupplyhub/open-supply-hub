@@ -802,7 +802,7 @@ variable "waf_enabled" {
 }
 
 
-### DIRECT DATA LOAD VARIABLES - START ###
+# Direct data load variables
 
 variable "direct_data_load_sheet_id" {
   type        = string
@@ -834,7 +834,7 @@ variable "direct_data_load_tab_id" {
   description = "Tab ID of the Google Sheet for direct data load"
 }
 
-### DIRECT DATA LOAD VARIABLES - END ###
+# Stripe variables
 
 variable "stripe_secret_key" {
   type        = string
@@ -852,6 +852,8 @@ variable "stripe_price_id" {
   type        = string
   description = "Stripe price ID for subscription plans"
 }
+
+# Dark visitors variables
 
 variable "dark_visitors_project_key" {
   type        = string
@@ -874,4 +876,11 @@ variable "dromo_schema_id" {
   type        = string
   description = "Dromo schema ID for data management"
   sensitive   = true
+}
+
+# VPN EC2 variables
+
+variable "vpn_ec2_ami" {
+  type        = string
+  description = "VPN EC2 AMI"
 }
