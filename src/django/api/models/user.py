@@ -92,7 +92,13 @@ class User(AbstractBaseUser, PermissionsMixin):
             'Unselect this instead of deleting accounts.'
         ),
     )
-
+    is_trusted = models.BooleanField(
+        ('trusted'),
+        default=False,
+        help_text=(
+            'Designates whether this user is trusted to PATCH production locations.'
+        ),
+    )
     is_moderation_mode = models.BooleanField(
         ('moderation mode'),
         default=False,
