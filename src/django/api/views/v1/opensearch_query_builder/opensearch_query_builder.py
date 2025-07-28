@@ -62,10 +62,8 @@ class OpenSearchQueryBuilder(ABC):
             self.__build_date_range(query_params)
 
     def __build_date_range(self, query_params):
-        date_start = query_params.get('date_gte')
-        date_end = query_params.get('date_lt')
-        status_start = query_params.get('status_gte')
-        status_end = query_params.get('status_lt')
+        date_start = query_params.get('date_gte') or query_params.get('claim_status_gte')
+        date_end = query_params.get('date_lt') or query_params.get('claim_status_lt')
         range_query = {}
 
         if date_start is not None:
@@ -73,12 +71,9 @@ class OpenSearchQueryBuilder(ABC):
         if date_end is not None:
             range_query['lte'] = date_end
 
-        if status_start is not None:
-            range_query['gte'] = status_start
-        if status_end is not None:
-            range_query['lte'] = status_end
-
-        # TODO: Add claim status range query if needed
+        #TODO: For claim status we can't use created_at field,
+        # we need to use claimed_at - this should be basically value from 
+        # the updated_at column in the api_facilityclaim table
         if range_query:
             existing_range = any(
                 query.get('range', {}).get('created_at')
