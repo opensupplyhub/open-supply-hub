@@ -71,3 +71,4 @@ app_logstash_fargate_memory = 2048
 
 instance_source= "os_hub"
 
+vpn_ec2_ami = "ami-0940c95b23a1f7cac"
