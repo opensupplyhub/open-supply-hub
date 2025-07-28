@@ -55,13 +55,17 @@ class OpenSearchQueryBuilder(ABC):
 
         elif field in {
             V1_PARAMETERS_LIST.DATE_GTE,
-            V1_PARAMETERS_LIST.DATE_LT
+            V1_PARAMETERS_LIST.DATE_LT,
+            V1_PARAMETERS_LIST.CLAIM_STATUS_GTE,
+            V1_PARAMETERS_LIST.CLAIM_STATUS_LT
         }:
             self.__build_date_range(query_params)
 
     def __build_date_range(self, query_params):
         date_start = query_params.get('date_gte')
         date_end = query_params.get('date_lt')
+        status_start = query_params.get('status_gte')
+        status_end = query_params.get('status_lt')
         range_query = {}
 
         if date_start is not None:
@@ -69,6 +73,12 @@ class OpenSearchQueryBuilder(ABC):
         if date_end is not None:
             range_query['lte'] = date_end
 
+        if status_start is not None:
+            range_query['gte'] = status_start
+        if status_end is not None:
+            range_query['lte'] = status_end
+
+        # TODO: Add claim status range query if needed
         if range_query:
             existing_range = any(
                 query.get('range', {}).get('created_at')
@@ -144,6 +154,7 @@ class OpenSearchQueryBuilder(ABC):
         ]
 
     def get_final_query_body(self):
+        print(self.query_body)
         return self.query_body
 
     def _build_os_id(self, values):

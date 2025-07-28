@@ -24,6 +24,8 @@ from api.serializers.v1.opensearch_common_validators.\
     geo_bounding_box_validator import GeoBoundingBoxValidator
 from api.serializers.v1.opensearch_common_validators.\
     geo_polygon_validator import GeoPolygonValidator
+from api.serializers.v1.opensearch_common_validators. \
+    claim_status_validator import ClaimStatusValidator
 
 
 class ProductionLocationsSerializer(Serializer):
@@ -44,7 +46,7 @@ class ProductionLocationsSerializer(Serializer):
         required=False
     )
     sort_by = ChoiceField(
-        choices=['name', 'address'],
+        choices=['name', 'address', 'claim_status'],
         required=False
     )
     order_by = ChoiceField(
@@ -68,6 +70,10 @@ class ProductionLocationsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
+    claim_status = ListField(
+        child=CharField(required=False),
+        required=False
+    )
 
     def validate(self, data):
         validators = [
@@ -78,6 +84,7 @@ class ProductionLocationsSerializer(Serializer):
             CountryValidator(),
             GeoBoundingBoxValidator(),
             GeoPolygonValidator(),
+            ClaimStatusValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)

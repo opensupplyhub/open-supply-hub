@@ -11,8 +11,8 @@ from api.serializers.v1.opensearch_common_validators.size_validator \
     import SizeValidator
 from api.serializers.v1.opensearch_common_validators.request_type_validator \
     import RequestTypeValidator
-from api.serializers.v1.opensearch_common_validators.status_validator \
-    import StatusValidator
+from api.serializers.v1.opensearch_common_validators.claim_status_validator \
+    import ClaimStatusValidator
 from api.serializers.v1.opensearch_common_validators.source_validator \
     import SourceValidator
 from api.serializers.v1.opensearch_common_validators.moderation_id_validator \
@@ -49,7 +49,7 @@ class ModerationEventsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
-    status = ListField(
+    claim_status = ListField(
         child=CharField(required=False),
         required=False
     )
@@ -64,7 +64,7 @@ class ModerationEventsSerializer(Serializer):
             'name',
             'address',
             'source',
-            'status',
+            'claim_status',
         ],
         required=False
     )
@@ -79,7 +79,7 @@ class ModerationEventsSerializer(Serializer):
             CountryValidator(),
             DateRangeValidator(),
             RequestTypeValidator(),
-            StatusValidator(),
+            ClaimStatusValidator(),
             SourceValidator(),
             ModerationIdValidator()
         ]
