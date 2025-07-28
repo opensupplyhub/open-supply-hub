@@ -22,7 +22,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe code/API changes here.*
 
 ### Architecture/Environment changes
-* *Describe architecture/environment changes here.*
+* [OSDEV-2083](https://opensupplyhub.atlassian.net/browse/OSDEV-2083) - The following updates were made:
+    * Updated Python version from `3.7` to `3.8` to support higher OpenSearch client version with necessary features.
+    * Added system dependencies: `libmemcached-dev`, `zlib1g-dev` to support building C-based packages like `pylibmc`.
+    * Package `aiokafka` updated from `0.8.0` → `0.8.1` resolve warning that appear with Python `3.8`.
+    * Package `pytz` upgraded from `2018.7` → `2023.3` to include up-to-date and stable timezone data.
+    * Package `requests` upgraded from `2.31.0` → `2.32.4` for improved security and compatibility.
+    * Package `opensearch-py` upgraded from `2.5.0` → `2.8.0` to enabling hybrid search.
 
 ### Bugfix
 * *Describe bugfix here.*
