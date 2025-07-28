@@ -19,6 +19,7 @@ class ModerationEventsQueryBuilder(OpenSearchQueryBuilder):
         self.build_options = {
             'country': self.__build_country,
         }
+        self.date_field = 'created_at'
 
     def __build_country(self, field):
         return f'cleaned_data.{field}.alpha_2'

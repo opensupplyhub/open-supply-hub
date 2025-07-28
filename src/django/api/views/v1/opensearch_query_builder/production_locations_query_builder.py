@@ -21,6 +21,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             'country': self.__build_country,
             'number_of_workers': self.__build_number_of_workers
         }
+        self.date_field = 'claimed_at'
 
     def __build_country(self, field):
         return f'{field}.alpha_2'

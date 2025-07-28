@@ -26,9 +26,16 @@ class ClaimStatusValidator(OpenSearchValidationInterface):
                 "detail": "Claim status must be a string or list of values."
             })
 
-        elif not all(item in self.VALID_CLAIM_STATUSES for item in claim_status):
-            invalid_statuses = [item for item in claim_status if item not in self.VALID_CLAIM_STATUSES]
-            allowed_values = ', '.join(f"'{value}'" for value in self.VALID_CLAIM_STATUSES)
+        elif not all(
+            item in self.VALID_CLAIM_STATUSES for item in claim_status
+        ):
+            invalid_statuses = [
+                item for item in claim_status if
+                item not in self.VALID_CLAIM_STATUSES
+            ]
+            allowed_values = ', '.join(
+                f"'{value}'" for value in self.VALID_CLAIM_STATUSES
+            )
             errors.append({
                 "field": "claim_status",
                 "detail": (
