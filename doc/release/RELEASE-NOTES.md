@@ -37,6 +37,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
 
 
+## Release 2.9.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 30, 2025
+
+### Bugfix
+* [OSDEV-2126](https://opensupplyhub.atlassian.net/browse/OSDEV-2126) - Updated Stripe webhook to handle checkouts for all products without returning errors to Stripe.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.9.0
 
 ## Introduction
