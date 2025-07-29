@@ -1,6 +1,7 @@
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
+from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
 class TestProductionLocationsQueryBuilder(TestCase):
@@ -178,9 +179,8 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
 
     def test_add_range_for_claimed_at_date(self):
-        self.builder.date_field = "claimed_at"
         self.builder.add_range(
-            'claimed_at',
+            V1_PARAMETERS_LIST.CLAIM_STATUS_GTE,
             {
                 'claim_status_gte': '2023-12-31',
                 'claim_status_lt': '2024-12-31'
