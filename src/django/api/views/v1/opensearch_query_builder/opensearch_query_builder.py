@@ -153,7 +153,6 @@ class OpenSearchQueryBuilder(ABC):
         ]
 
     def get_final_query_body(self):
-        print(self.query_body)
         return self.query_body
 
     def _build_os_id(self, values):

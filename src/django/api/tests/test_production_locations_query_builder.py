@@ -177,6 +177,28 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
         )
 
+    def test_add_range_for_claimed_at_date(self):
+        self.builder.date_field = "claimed_at"
+        self.builder.add_range(
+            'claimed_at',
+            {
+                'claim_status_gte': '2023-12-31',
+                'claim_status_lt': '2024-12-31'
+            }
+        )
+        expected = {
+            'range': {
+                'claimed_at': {
+                    'gte': '2023-12-31',
+                    'lte': '2024-12-31'
+                }
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
     def test_add_geo_distance(self):
         self.builder.add_geo_distance('location', 40.7128, -74.0060, '10km')
         expected = {
