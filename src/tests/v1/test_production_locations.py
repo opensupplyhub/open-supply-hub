@@ -353,3 +353,319 @@ class ProductionLocationsTest(BaseAPITest):
             result['data'][0]['lei_id'],
             expected_lei_id
         )
+
+    def test_production_locations_claim_status_filtering(self):
+        claimed_doc = {
+            "sector": ["Apparel"],
+            "address": "Claimed Facility Address",
+            "name": "Claimed Facility",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023CLAIMED01",
+            "coordinates": {"lon": -74.0060, "lat": 40.7128},
+            "claim_status": "claimed",
+            "claimed_at": "2023-06-15T10:30:00Z"
+        }
+        
+        unclaimed_doc = {
+            "sector": ["Apparel"],
+            "address": "Unclaimed Facility Address",
+            "name": "Unclaimed Facility",
+            "country": {"alpha_2": "CA"},
+            "os_id": "CA2023UNCLAIMED01",
+            "coordinates": {"lon": -79.3832, "lat": 43.6532},
+            "claim_status": "unclaimed"
+        }
+        
+        pending_doc = {
+            "sector": ["Apparel"],
+            "address": "Pending Facility Address",
+            "name": "Pending Facility",
+            "country": {"alpha_2": "MX"},
+            "os_id": "MX2023PENDING01",
+            "coordinates": {"lon": -99.1332, "lat": 19.4326},
+            "claim_status": "pending",
+            "claimed_at": "2023-08-20T14:45:00Z"
+        }
+
+        for doc in [claimed_doc, unclaimed_doc, pending_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'US2023CLAIMED01')
+        self.assertEqual(result['data'][0]['claim_status'], 'claimed')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status=pending",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 2)
+        os_ids = {item['os_id'] for item in result['data']}
+        self.assertIn('US2023CLAIMED01', os_ids)
+        self.assertIn('MX2023PENDING01', os_ids)
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=unclaimed",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'CA2023UNCLAIMED01')
+        self.assertEqual(result['data'][0]['claim_status'], 'unclaimed')
+
+    def test_production_locations_claim_status_date_filtering(self):
+        early_claimed_doc = {
+            "sector": ["Apparel"],
+            "address": "Early Claimed Facility",
+            "name": "Early Claimed Facility",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023EARLY01",
+            "coordinates": {"lon": -74.0060, "lat": 40.7128},
+            "claim_status": "claimed",
+            "claimed_at": "2023-01-15T10:30:00Z"
+        }
+
+        late_claimed_doc = {
+            "sector": ["Apparel"],
+            "address": "Late Claimed Facility",
+            "name": "Late Claimed Facility",
+            "country": {"alpha_2": "CA"},
+            "os_id": "CA2023LATE01",
+            "coordinates": {"lon": -79.3832, "lat": 43.6532},
+            "claim_status": "claimed",
+            "claimed_at": "2023-12-15T14:45:00Z"
+        }
+
+        for doc in [early_claimed_doc, late_claimed_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=2023-06-01",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'CA2023LATE01')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status_lt=2023-06-01",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'US2023EARLY01')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=2023-01-01&claim_status_lt=2023-07-01",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'US2023EARLY01')
+
+    def test_production_locations_claim_status_sorting(self):
+        claimed_early_doc = {
+            "sector": ["Apparel"],
+            "address": "Early Claimed Facility",
+            "name": "Early Claimed Facility",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023EARLY02",
+            "coordinates": {"lon": -74.0060, "lat": 40.7128},
+            "claim_status": "claimed",
+            "claimed_at": "2023-01-15T10:30:00Z"
+        }
+
+        claimed_late_doc = {
+            "sector": ["Apparel"],
+            "address": "Late Claimed Facility",
+            "name": "Late Claimed Facility",
+            "country": {"alpha_2": "CA"},
+            "os_id": "CA2023LATE02",
+            "coordinates": {"lon": -79.3832, "lat": 43.6532},
+            "claim_status": "claimed",
+            "claimed_at": "2023-12-15T14:45:00Z"
+        }
+        
+        unclaimed_doc = {
+            "sector": ["Apparel"],
+            "address": "Unclaimed Facility",
+            "name": "Unclaimed Facility",
+            "country": {"alpha_2": "MX"},
+            "os_id": "MX2023UNCLAIMED02",
+            "coordinates": {"lon": -99.1332, "lat": 19.4326},
+            "claim_status": "unclaimed"
+        }
+
+        for doc in [claimed_early_doc, claimed_late_doc, unclaimed_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claim_status&order_by=asc&size=10",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(result['data']), 3)
+
+        claim_statuses = [item['claim_status'] for item in result['data'] if item['os_id'] in ['US2023EARLY02', 'CA2023LATE02', 'MX2023UNCLAIMED02']]
+        self.assertEqual(claim_statuses, ['claimed', 'claimed', 'unclaimed'])
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claim_status&order_by=desc&size=10",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(result['data']), 3)
+
+        claim_statuses = [item['claim_status'] for item in result['data'] if item['os_id'] in ['US2023EARLY02', 'CA2023LATE02', 'MX2023UNCLAIMED02']]
+        self.assertEqual(claim_statuses, ['unclaimed', 'claimed', 'claimed'])
+
+    def test_production_locations_combined_claim_status_filters(self):
+        claimed_us_doc = {
+            "sector": ["Apparel"],
+            "address": "US Claimed Facility",
+            "name": "US Claimed Facility",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023COMBINED01",
+            "coordinates": {"lon": -74.0060, "lat": 40.7128},
+            "claim_status": "claimed",
+            "claimed_at": "2023-06-15T10:30:00Z"
+        }
+
+        unclaimed_ca_doc = {
+            "sector": ["Apparel"],
+            "address": "CA Unclaimed Facility",
+            "name": "CA Unclaimed Facility",
+            "country": {"alpha_2": "CA"},
+            "os_id": "CA2023COMBINED01",
+            "coordinates": {"lon": -79.3832, "lat": 43.6532},
+            "claim_status": "unclaimed"
+        }
+
+        pending_mx_doc = {
+            "sector": ["Apparel"],
+            "address": "MX Pending Facility",
+            "name": "MX Pending Facility",
+            "country": {"alpha_2": "MX"},
+            "os_id": "MX2023COMBINED01",
+            "coordinates": {"lon": -99.1332, "lat": 19.4326},
+            "claim_status": "pending",
+            "claimed_at": "2023-08-20T14:45:00Z"
+        }
+
+        for doc in [claimed_us_doc, unclaimed_ca_doc, pending_mx_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&country=US",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'US2023COMBINED01')
+        self.assertEqual(result['data'][0]['claim_status'], 'claimed')
+        self.assertEqual(result['data'][0]['country']['alpha_2'], 'US')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status_gte=2023-05-01",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 1)
+        self.assertEqual(result['data'][0]['os_id'], 'US2023COMBINED01')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status=pending&country=US&country=MX",
+            headers=self.basic_headers,
+        )
+
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(result['data']), 2)
+        os_ids = {item['os_id'] for item in result['data']}
+        self.assertIn('US2023COMBINED01', os_ids)
+        self.assertIn('MX2023COMBINED01', os_ids)
+
+    def test_production_locations_claim_status_invalid_filters(self):
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=invalid_status",
+            headers=self.basic_headers,
+        )
+        self.assertEqual(response.status_code, 400)
+
+        result = response.json()
+        self.assertEqual(result['detail'], 'The request query is invalid.')
+        self.assertEqual(result['errors'][0]['field'], 'claim_status')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=invalid-date",
+            headers=self.basic_headers,
+        )
+        self.assertEqual(response.status_code, 400)
+
+        result = response.json()
+        self.assertEqual(result['detail'], 'The request query is invalid.')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=invalid_field",
+            headers=self.basic_headers,
+        )
+        self.assertEqual(response.status_code, 400)
+
+        result = response.json()
+        self.assertEqual(result['detail'], 'The request query is invalid.')
+        self.assertEqual(result['errors'][0]['field'], 'sort_by')
