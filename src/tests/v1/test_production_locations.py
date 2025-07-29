@@ -604,7 +604,6 @@ class ProductionLocationsTest(BaseAPITest):
         result = response.json()
         self.assertEqual(response.status_code, 200)
         filtered = [item for item in result['data'] if item['os_id'] in test_os_ids]
-        os_ids = [item['os_id'] for item in filtered]
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
         self.assertTrue(all(item['country']['alpha_2'] == 'US' for item in filtered))
 
@@ -616,7 +615,6 @@ class ProductionLocationsTest(BaseAPITest):
         result = response.json()
         self.assertEqual(response.status_code, 200)
         filtered = [item for item in result['data'] if item['os_id'] in test_os_ids]
-        os_ids = [item['os_id'] for item in filtered]
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
 
         response = requests.get(
