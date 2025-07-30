@@ -461,7 +461,7 @@ class ProductionLocationsTest(BaseAPITest):
         test_os_ids = {'US2023EARLY01', 'CA2023LATE01'}
 
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=2023-06-01&size=100",
+            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=2023-06-01T00:00:00.000000Z&size=100",
             headers=self.basic_headers,
         )
         result = response.json()
@@ -471,7 +471,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
 
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/?claim_status_lt=2023-06-01&size=100",
+            f"{self.root_url}/api/v1/production-locations/?claim_status_lt=2023-06-01T00:00:00.000000Z&size=100",
             headers=self.basic_headers,
         )
         result = response.json()
@@ -481,7 +481,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
 
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=2023-01-01&claim_status_lt=2023-07-01&size=100",
+            f"{self.root_url}/api/v1/production-locations/?claim_status_gte=2023-01-01T00:00:00.000000Z&claim_status_lt=2023-07-01T00:00:00.000000Z&size=100",
             headers=self.basic_headers,
         )
 
@@ -608,7 +608,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertTrue(all(item['country']['alpha_2'] == 'US' for item in filtered))
 
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status_gte=2023-05-01&size=100",
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status_gte=2023-05-01T00:00:00.000000Z&size=100",
             headers=self.basic_headers,
         )
 
