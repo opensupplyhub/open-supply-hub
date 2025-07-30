@@ -27,6 +27,7 @@ class V1_PARAMETERS_LIST:
     CONTRIBUTOR_NAME = 'contributor_name'
     REQUEST_TYPE = 'request_type'
     SOURCE = 'source'
+    STATUS = 'status'
     CLAIM_STATUS = 'claim_status'
     CLAIM_STATUS_GTE = 'claim_status_gte'
     CLAIM_STATUS_LT = 'claim_status_lt'

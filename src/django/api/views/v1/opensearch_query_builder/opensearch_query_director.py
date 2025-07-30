@@ -26,6 +26,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.CONTRIBUTOR_ID: 'terms',
             V1_PARAMETERS_LIST.REQUEST_TYPE: 'terms',
             V1_PARAMETERS_LIST.SOURCE: 'terms',
+            V1_PARAMETERS_LIST.STATUS: 'terms',
             V1_PARAMETERS_LIST.CLAIM_STATUS: 'terms',
             V1_PARAMETERS_LIST.CLAIM_STATUS_GTE: 'range',
             V1_PARAMETERS_LIST.CLAIM_STATUS_LT: 'range',
