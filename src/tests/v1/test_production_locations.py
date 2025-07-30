@@ -1,5 +1,4 @@
 import requests
-from dateutil.parser import parse
 from .base_api_test \
     import BaseAPITest
 
