@@ -212,6 +212,44 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
         )
 
+    def test_add_terms_for_claim_status_single(self):
+        self.builder.add_terms('claim_status', ['pending'])
+        expected = {'terms': {'claim_status.keyword': ['pending']}}
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_add_terms_for_claim_status_multiple(self):
+        self.builder.add_terms(
+            'claim_status',
+            ['pending', 'claimed', 'pending']
+        )
+        expected = {
+            'terms':
+            {
+                'claim_status.keyword': [
+                    'pending',
+                    'claimed',
+                    'pending'
+                ]
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_claimed_at_sorting_asc(self):
+        self.builder.add_sort('claimed_at', 'asc')
+        expected = {'claimed_at': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
+    def test_claimed_at_sorting_desc(self):
+        self.builder.add_sort('claimed_at', 'desc')
+        expected = {'claimed_at': {'order': 'desc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
     def test_add_sort(self):
         self.builder.add_sort('name', 'desc')
         expected = {'name.keyword': {'order': 'desc'}}

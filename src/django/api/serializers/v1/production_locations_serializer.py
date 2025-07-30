@@ -46,7 +46,12 @@ class ProductionLocationsSerializer(Serializer):
         required=False
     )
     sort_by = ChoiceField(
-        choices=['name', 'address', 'claim_status'],
+        choices=[
+            'name',
+            'address',
+            'claim_status',
+            'claimed_at'
+        ],
         required=False
     )
     order_by = ChoiceField(
