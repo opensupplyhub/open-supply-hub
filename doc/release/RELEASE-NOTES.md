@@ -27,7 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added system dependencies: `libmemcached-dev`, `zlib1g-dev` to support building C-based packages like `pylibmc`.
     * Package `pytz` upgraded from `2018.7` → `2023.3` to include up-to-date and stable timezone data.
     * Package `requests` upgraded from `2.31.0` → `2.32.4` for improved security and compatibility.
-    * Package `opensearch-py` upgraded from `2.5.0` → `2.8.0` to enabling hybrid search.
+    * Package `opensearch-py` upgraded from `2.5.0` → `2.8.0` to enable hybrid search.
 
 ### Bugfix
 * *Describe bugfix here.*
