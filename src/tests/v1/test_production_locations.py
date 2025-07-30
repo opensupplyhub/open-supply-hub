@@ -1,4 +1,5 @@
 import requests
+from dateutil.parser import parse
 from .base_api_test \
     import BaseAPITest
 
@@ -660,3 +661,25 @@ class ProductionLocationsTest(BaseAPITest):
             result = response.json()
             self.assertEqual(result['detail'], 'The request query is invalid.')
             self.assertEqual(result['errors'][0]['field'], 'sort_by')
+
+    def test_production_locations_claimed_at_sort_asc(self):
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=asc",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertLess(
+            result['data'][0]['claimed_at'],
+            result['data'][1]['claimed_at']
+        )
+
+    def test_production_locations_claimed_at_sort_desc(self):
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=desc",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertGreater(
+            result['data'][0]['claimed_at'],
+            result['data'][1]['claimed_at']
+        )
