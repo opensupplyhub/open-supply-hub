@@ -37,8 +37,11 @@ class DownloadLocationsCheckoutWebhookView(View):
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
 
+            user_id = session.get("metadata", {}).get("user_id")
+            if not user_id:
+                return HttpResponse(status=202)
+
             try:
-                user_id = session["metadata"]["user_id"]
                 stripe_session_id = session["id"]
                 payment_id = session["payment_intent"]
                 amount_subtotal = session["amount_subtotal"]
