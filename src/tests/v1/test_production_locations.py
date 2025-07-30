@@ -662,23 +662,69 @@ class ProductionLocationsTest(BaseAPITest):
             self.assertEqual(result['errors'][0]['field'], 'sort_by')
 
     def test_production_locations_claimed_at_sort_asc(self):
+        test_doc = {
+            "sector": ["Apparel"],
+            "address": "Test Sort Address",
+            "name": "Test Sort Facility",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023SORT01",
+            "coordinates": {"lon": -74.0060, "lat": 40.7128},
+            "claim_status": "claimed",
+            "claimed_at": "2023-06-15T10:30:00Z"
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=test_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=asc",
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=asc&size=10",
             headers=self.basic_headers,
         )
+
         result = response.json()
+        claimed_results = [item for item in result['data'] if item.get('claimed_at')]
+        self.assertGreaterEqual(len(claimed_results), 2, "Need at least 2 results with claimed_at for comparison")
         self.assertLess(
-            result['data'][0]['claimed_at'],
-            result['data'][1]['claimed_at']
+            claimed_results[0]['claimed_at'],
+            claimed_results[1]['claimed_at']
         )
 
     def test_production_locations_claimed_at_sort_desc(self):
+        test_doc = {
+            "sector": ["Apparel"],
+            "address": "Test Sort Address 2",
+            "name": "Test Sort Facility 2",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023SORT02",
+            "coordinates": {"lon": -75.0060, "lat": 41.7128},
+            "claim_status": "claimed",
+            "claimed_at": "2023-06-15T11:40:00Z"
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=test_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
         response = requests.get(
-            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=desc",
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=desc&size=10",
             headers=self.basic_headers,
         )
+
         result = response.json()
+        claimed_results = [item for item in result['data'] if item.get('claimed_at')]
+        self.assertGreaterEqual(len(claimed_results), 2, "Need at least 2 results with claimed_at for comparison")
         self.assertGreater(
-            result['data'][0]['claimed_at'],
-            result['data'][1]['claimed_at']
+            claimed_results[0]['claimed_at'],
+            claimed_results[1]['claimed_at']
         )
