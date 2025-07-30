@@ -56,8 +56,8 @@ class OpenSearchQueryBuilder(ABC):
         elif field in {
             V1_PARAMETERS_LIST.DATE_GTE,
             V1_PARAMETERS_LIST.DATE_LT,
-            V1_PARAMETERS_LIST.CLAIM_STATUS_GTE,
-            V1_PARAMETERS_LIST.CLAIM_STATUS_LT
+            V1_PARAMETERS_LIST.CLAIMED_AT_GT,
+            V1_PARAMETERS_LIST.CLAIMED_AT_LT
         }:
             self.__build_date_range(query_params)
 
@@ -67,8 +67,8 @@ class OpenSearchQueryBuilder(ABC):
             date_start = query_params.get('date_gte')
             date_end = query_params.get('date_lt')
         elif date_field == "claimed_at":
-            date_start = query_params.get('claim_status_gte')
-            date_end = query_params.get('claim_status_lt')
+            date_start = query_params.get('claimed_at_gt')
+            date_end = query_params.get('claimed_at_lt')
         else:
             date_start = date_end = None
 

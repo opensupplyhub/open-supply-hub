@@ -180,10 +180,10 @@ class TestProductionLocationsQueryBuilder(TestCase):
 
     def test_add_range_for_claimed_at_date(self):
         self.builder.add_range(
-            V1_PARAMETERS_LIST.CLAIM_STATUS_GTE,
+            V1_PARAMETERS_LIST.CLAIMED_AT_GT,
             {
-                'claim_status_gte': '2023-12-31',
-                'claim_status_lt': '2024-12-31'
+                'claimed_at_gt': '2023-12-31',
+                'claimed_at_lt': '2024-12-31'
             }
         )
         expected = {

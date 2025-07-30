@@ -80,10 +80,10 @@ class ProductionLocationsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
-    claim_status_gte = DateTimeField(
+    claimed_at_gt = DateTimeField(
         required=False
     )
-    claim_status_lt = DateTimeField(
+    claimed_at_lt = DateTimeField(
         required=False
     )
 
