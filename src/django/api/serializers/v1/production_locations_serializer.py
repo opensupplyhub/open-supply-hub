@@ -1,6 +1,7 @@
 from rest_framework.serializers import (
     CharField,
     ChoiceField,
+    DateTimeField,
     FloatField,
     IntegerField,
     ListField,
@@ -77,6 +78,12 @@ class ProductionLocationsSerializer(Serializer):
     )
     claim_status = ListField(
         child=CharField(required=False),
+        required=False
+    )
+    claim_status_gte = DateTimeField(
+        required=False
+    )
+    claim_status_lt = DateTimeField(
         required=False
     )
 
