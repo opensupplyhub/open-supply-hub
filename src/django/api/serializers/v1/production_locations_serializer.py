@@ -27,6 +27,8 @@ from api.serializers.v1.opensearch_common_validators.\
     geo_polygon_validator import GeoPolygonValidator
 from api.serializers.v1.opensearch_common_validators. \
     claim_status_validator import ClaimStatusValidator
+from api.serializers.v1.opensearch_common_validators. \
+    claim_date_range_validator import ClaimDateRangeValidator
 
 
 class ProductionLocationsSerializer(Serializer):
@@ -97,6 +99,7 @@ class ProductionLocationsSerializer(Serializer):
             GeoBoundingBoxValidator(),
             GeoPolygonValidator(),
             ClaimStatusValidator(),
+            ClaimDateRangeValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)
