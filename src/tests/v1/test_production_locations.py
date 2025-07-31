@@ -663,34 +663,34 @@ class ProductionLocationsTest(BaseAPITest):
     def test_production_locations_claimed_at_sort_asc(self):
         test_docs = [
             {
-                "sector": ["Apparel"],
-                "address": "Test Sort Address A",
-                "name": "Facility A",
-                "country": {"alpha_2": "US"},
+                "sector": ["Electronics"],
+                "address": "Test Sort ASC Address A",
+                "name": "Facility TR ASC A",
+                "country": {"alpha_2": "TR"},
                 "os_id": "US2023SORT01",
-                "coordinates": {"lon": -74.0060, "lat": 40.7128},
+                "coordinates": {"lon": -73.0060, "lat": 40.7128},
                 "claim_status": "claimed",
-                "claimed_at": "2023-06-15T10:30:00Z"
+                "claimed_at": "2022-06-15T10:30:00Z"
             },
             {
-                "sector": ["Apparel"],
-                "address": "Test Sort Address B",
-                "name": "Facility B",
-                "country": {"alpha_2": "US"},
+                "sector": ["Electronics"],
+                "address": "Test Sort ASC Address B",
+                "name": "Facility TR ASC B",
+                "country": {"alpha_2": "TR"},
                 "os_id": "US2023SORT02",
-                "coordinates": {"lon": -74.0060, "lat": 40.7128},
+                "coordinates": {"lon": -72.0060, "lat": 40.7128},
                 "claim_status": "claimed",
-                "claimed_at": "2023-07-01T09:00:00Z"
+                "claimed_at": "2022-07-01T09:00:00Z"
             },
             {
-                "sector": ["Apparel"],
-                "address": "Test Sort Address C",
-                "name": "Facility C",
-                "country": {"alpha_2": "US"},
+                "sector": ["Electronics"],
+                "address": "Test Sort ASC Address C",
+                "name": "Facility TR ASC C",
+                "country": {"alpha_2": "TR"},
                 "os_id": "US2023SORT03",
-                "coordinates": {"lon": -74.0060, "lat": 40.7128},
+                "coordinates": {"lon": -71.0060, "lat": 40.7128},
                 "claim_status": "claimed",
-                "claimed_at": "2023-05-01T15:45:00Z"
+                "claimed_at": "2022-05-01T15:45:00Z"
             }
         ]
 
@@ -721,8 +721,8 @@ class ProductionLocationsTest(BaseAPITest):
         test_docs = [
             {
                 "sector": ["Apparel"],
-                "address": "Test Sort Address A",
-                "name": "Facility A",
+                "address": "Test Sort DESC Address A",
+                "name": "Facility US DESC A",
                 "country": {"alpha_2": "US"},
                 "os_id": "US2023SORT01",
                 "coordinates": {"lon": -74.0060, "lat": 40.7128},
@@ -731,8 +731,8 @@ class ProductionLocationsTest(BaseAPITest):
             },
             {
                 "sector": ["Apparel"],
-                "address": "Test Sort Address B",
-                "name": "Facility B",
+                "address": "Test Sort DESC Address B",
+                "name": "Facility US DESC B",
                 "country": {"alpha_2": "US"},
                 "os_id": "US2023SORT02",
                 "coordinates": {"lon": -74.0060, "lat": 40.7128},
@@ -741,8 +741,8 @@ class ProductionLocationsTest(BaseAPITest):
             },
             {
                 "sector": ["Apparel"],
-                "address": "Test Sort Address C",
-                "name": "Facility C",
+                "address": "Test Sort DESC Address C",
+                "name": "Facility US DESC C",
                 "country": {"alpha_2": "US"},
                 "os_id": "US2023SORT03",
                 "coordinates": {"lon": -74.0060, "lat": 40.7128},
