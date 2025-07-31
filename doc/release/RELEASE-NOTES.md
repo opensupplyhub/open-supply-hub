@@ -19,7 +19,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by updated claims. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters: 
+    - `claim_status` - filter by the claim status (`claimed`, `unclaimed`, `pending`).
+    - `claimed_at_gt` - starting date to filter by production location claim timestamp.
+    - `claimed_at_lt` - ending date to filter by production location claim timestamp.
 
 ### Architecture/Environment changes
 * [OSDEV-2083](https://opensupplyhub.atlassian.net/browse/OSDEV-2083) - The following updates were made:
