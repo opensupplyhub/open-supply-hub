@@ -33,7 +33,7 @@ const SelfServiceDromoUploader = ({ fileInput, updateFileName }) => {
                 style={uploaderButtonStyle}
                 disableRipple
             >
-                Beta Self Service Upload
+                SMART UPLOAD (BETA)
             </MaterialButton>
 
             <DromoUploader
