@@ -1,6 +1,7 @@
 from django.test import TestCase
 from api.views.v1.opensearch_query_builder. \
     production_locations_query_builder import ProductionLocationsQueryBuilder
+from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
 class TestProductionLocationsQueryBuilder(TestCase):
@@ -177,6 +178,27 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
         )
 
+    def test_add_range_for_claimed_at_date(self):
+        self.builder.add_range(
+            V1_PARAMETERS_LIST.CLAIMED_AT_GT,
+            {
+                'claimed_at_gt': '2023-12-31',
+                'claimed_at_lt': '2024-12-31'
+            }
+        )
+        expected = {
+            'range': {
+                'claimed_at': {
+                    'gte': '2023-12-31',
+                    'lte': '2024-12-31'
+                }
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
     def test_add_geo_distance(self):
         self.builder.add_geo_distance('location', 40.7128, -74.0060, '10km')
         expected = {
@@ -189,6 +211,44 @@ class TestProductionLocationsQueryBuilder(TestCase):
             expected,
             self.builder.query_body['query']['bool']['must']
         )
+
+    def test_add_terms_for_claim_status_single(self):
+        self.builder.add_terms('claim_status', ['pending'])
+        expected = {'terms': {'claim_status.keyword': ['pending']}}
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_add_terms_for_claim_status_multiple(self):
+        self.builder.add_terms(
+            'claim_status',
+            ['pending', 'claimed', 'pending']
+        )
+        expected = {
+            'terms':
+            {
+                'claim_status.keyword': [
+                    'pending',
+                    'claimed',
+                    'pending'
+                ]
+            }
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_claimed_at_sorting_asc(self):
+        self.builder.add_sort('claimed_at', 'asc')
+        expected = {'claimed_at': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
+    def test_claimed_at_sorting_desc(self):
+        self.builder.add_sort('claimed_at', 'desc')
+        expected = {'claimed_at': {'order': 'desc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
 
     def test_add_sort(self):
         self.builder.add_sort('name', 'desc')

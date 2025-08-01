@@ -187,6 +187,9 @@
             }
           }
         },
+        "claimed_at": {
+          "type": "date"
+        },
         "historical_os_id": {
           "type": "text",
           "fields": {
