@@ -10,16 +10,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: August 9, 2025
 
 ### Database changes
-* *Describe high-level database changes.*
 
 #### Migrations
 * 0176_introduce_enable_dromo_uploading_switch.py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
 
-#### Schema changes
-* *Describe schema changes here.*
-
 ### Code/API changes
-* *Describe code/API changes here.*
+* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters: 
+    * `claim_status` - filter by the claim status (`claimed`, `unclaimed`, `pending`).
+    * `claimed_at_gt` - starting date to filter by production location claim timestamp.
+    * `claimed_at_lt` - ending date to filter by production location claim timestamp.
 
 ### Architecture/Environment changes
 * [OSDEV-2083](https://opensupplyhub.atlassian.net/browse/OSDEV-2083) - The following updates were made:
@@ -29,17 +28,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Package `requests` upgraded from `2.31.0` → `2.32.4` for improved security and compatibility.
     * Package `opensearch-py` upgraded from `2.5.0` → `2.8.0` to enable hybrid search.
 
-### Bugfix
-* *Describe bugfix here.*
-
 ### What's new
 * [OSDEV-2084](https://opensupplyhub.atlassian.net/browse/OSDEV-2084) - Implemented front-end logic to display the "Beta Self Service Upload" button on the Upload Multiple Locations page when the `enable_dromo_uploading` feature flag is returned as true from the backend.
 * [OSDEV-2082](https://opensupplyhub.atlassian.net/browse/OSDEV-2082) - Replaced `Resources` with `Pricing` in the platform header globally. Moved the `Resources` content under the `How it works` category for better organization.
+* [OSDEV-2125](https://opensupplyhub.atlassian.net/browse/OSDEV-2125) - Changed the copy on the Dromo Self Service button. Included lead-in copy above the Dromo Self Service button stating.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new field `claimed_at`.
 
 
 ## Release 2.9.1

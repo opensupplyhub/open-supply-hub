@@ -46,7 +46,7 @@ describe('SelfServiceDromoUploader component', () => {
     it('renders the upload button', () => {
         const { getByText } = render(<SelfServiceDromoUploader fileInput={fileInput} updateFileName={updateFileName} />);
 
-        expect(getByText('Beta Self Service Upload')).toBeInTheDocument();
+        expect(getByText('SMART UPLOAD (BETA)')).toBeInTheDocument();
     });
 
     it('opens the uploader when button is clicked', () => {
@@ -54,7 +54,7 @@ describe('SelfServiceDromoUploader component', () => {
             <SelfServiceDromoUploader fileInput={fileInput} updateFileName={updateFileName} />
         );
 
-        fireEvent.click(getByText('Beta Self Service Upload'));
+        fireEvent.click(getByText('SMART UPLOAD (BETA)'));
 
         expect(getByTestId('dromo-uploader')).toHaveAttribute('data-open', 'true');
     });
@@ -64,7 +64,7 @@ describe('SelfServiceDromoUploader component', () => {
             <SelfServiceDromoUploader fileInput={fileInput} updateFileName={updateFileName} />
         );
         
-        fireEvent.click(getByText('Beta Self Service Upload'));
+        fireEvent.click(getByText('SMART UPLOAD (BETA)'));
         fireEvent.click(getByTestId('dromo-cancel-button'));
 
         expect(getByTestId('dromo-uploader')).toHaveAttribute('data-open', 'false');
@@ -75,7 +75,7 @@ describe('SelfServiceDromoUploader component', () => {
             <SelfServiceDromoUploader fileInput={fileInput} updateFileName={updateFileName} />
         );
         
-        fireEvent.click(getByText('Beta Self Service Upload'));
+        fireEvent.click(getByText('SMART UPLOAD (BETA)'));
         fireEvent.click(getByTestId('dromo-results-button'));
 
         expect(processDromoResults).toHaveBeenCalledWith(

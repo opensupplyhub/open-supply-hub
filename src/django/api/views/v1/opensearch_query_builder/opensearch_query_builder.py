@@ -55,15 +55,24 @@ class OpenSearchQueryBuilder(ABC):
 
         elif field in {
             V1_PARAMETERS_LIST.DATE_GTE,
-            V1_PARAMETERS_LIST.DATE_LT
+            V1_PARAMETERS_LIST.DATE_LT,
+            V1_PARAMETERS_LIST.CLAIMED_AT_GT,
+            V1_PARAMETERS_LIST.CLAIMED_AT_LT
         }:
             self.__build_date_range(query_params)
 
     def __build_date_range(self, query_params):
-        date_start = query_params.get('date_gte')
-        date_end = query_params.get('date_lt')
-        range_query = {}
+        date_field = getattr(self, "date_field", "created_at")
+        if date_field == "created_at":
+            date_start = query_params.get('date_gte')
+            date_end = query_params.get('date_lt')
+        elif date_field == "claimed_at":
+            date_start = query_params.get('claimed_at_gt')
+            date_end = query_params.get('claimed_at_lt')
+        else:
+            date_start = date_end = None
 
+        range_query = {}
         if date_start is not None:
             range_query['gte'] = date_start
         if date_end is not None:
@@ -71,12 +80,12 @@ class OpenSearchQueryBuilder(ABC):
 
         if range_query:
             existing_range = any(
-                query.get('range', {}).get('created_at')
+                query.get('range', {}).get(date_field)
                 for query in self.query_body['query']['bool']['must']
             )
             if not existing_range:
                 self.query_body['query']['bool']['must'].append({
-                    'range': {'created_at': range_query}
+                    'range': {date_field: range_query}
                 })
 
     def add_geo_distance(self, field, lat, lng, distance):

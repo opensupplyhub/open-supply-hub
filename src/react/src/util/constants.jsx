@@ -59,7 +59,7 @@ export const InfoPaths = {
 
     // Other
     resources: 'resources',
-    pricing: 'open-supply-hub-pricing',
+    pricing: 'pricing',
 
     // Footer
     mediaHub: 'media-hub',

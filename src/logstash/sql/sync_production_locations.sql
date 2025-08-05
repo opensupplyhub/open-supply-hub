@@ -610,7 +610,8 @@ SELECT
     WHERE
       afa.facility_id = af.id
   ) AS historical_os_id_value,
-  af.updated_at
+  af.updated_at,
+  afc.updated_at AS claimed_at
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id
