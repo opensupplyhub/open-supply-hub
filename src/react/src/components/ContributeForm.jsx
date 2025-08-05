@@ -146,6 +146,17 @@ const ContributeForm = ({
         <div className="control-panel__group">
             {formInputs}
             <div className="form__field">
+                <FeatureFlag flag={ENABLE_DROMO_UPLOADING}>
+                    <p
+                        style={{
+                            fontSize: '16px',
+                        }}
+                    >
+                        <b>New!</b> Try our <b>smart upload</b> assistant (beta)
+                        that checks your file for formatting issues and helps
+                        fix errors before submission
+                    </p>
+                </FeatureFlag>
                 <div style={contributeFormStyles.uploaderButtonWrapper}>
                     <MaterialButton
                         onClick={selectFile}

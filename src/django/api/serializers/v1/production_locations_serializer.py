@@ -1,6 +1,7 @@
 from rest_framework.serializers import (
     CharField,
     ChoiceField,
+    DateTimeField,
     FloatField,
     IntegerField,
     ListField,
@@ -24,6 +25,10 @@ from api.serializers.v1.opensearch_common_validators.\
     geo_bounding_box_validator import GeoBoundingBoxValidator
 from api.serializers.v1.opensearch_common_validators.\
     geo_polygon_validator import GeoPolygonValidator
+from api.serializers.v1.opensearch_common_validators. \
+    claim_status_validator import ClaimStatusValidator
+from api.serializers.v1.opensearch_common_validators. \
+    claim_date_range_validator import ClaimDateRangeValidator
 
 
 class ProductionLocationsSerializer(Serializer):
@@ -44,7 +49,12 @@ class ProductionLocationsSerializer(Serializer):
         required=False
     )
     sort_by = ChoiceField(
-        choices=['name', 'address'],
+        choices=[
+            'name',
+            'address',
+            'claim_status',
+            'claimed_at'
+        ],
         required=False
     )
     order_by = ChoiceField(
@@ -68,6 +78,16 @@ class ProductionLocationsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
+    claim_status = ListField(
+        child=CharField(required=False),
+        required=False
+    )
+    claimed_at_gt = DateTimeField(
+        required=False
+    )
+    claimed_at_lt = DateTimeField(
+        required=False
+    )
 
     def validate(self, data):
         validators = [
@@ -78,6 +98,8 @@ class ProductionLocationsSerializer(Serializer):
             CountryValidator(),
             GeoBoundingBoxValidator(),
             GeoPolygonValidator(),
+            ClaimStatusValidator(),
+            ClaimDateRangeValidator(),
         ]
 
         error_list_builder = OpenSearchErrorListBuilder(validators)

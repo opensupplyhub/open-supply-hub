@@ -21,6 +21,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
             'country': self.__build_country,
             'number_of_workers': self.__build_number_of_workers
         }
+        self.date_field = 'claimed_at'
 
     def __build_country(self, field):
         return f'{field}.alpha_2'
@@ -91,9 +92,15 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         # If there is sorting, then there should be an order.
         if order_by is None:
             order_by = self.default_sort_order
-        self.query_body['sort'].append(
-            {f'{field}.keyword': {'order': order_by}}
-        )
+
+        if field == 'claimed_at':
+            self.query_body['sort'].append(
+                {f'{field}': {'order': order_by}}
+            )
+        else:
+            self.query_body['sort'].append(
+                {f'{field}.keyword': {'order': order_by}}
+            )
 
     def add_search_after(
         self,
