@@ -91,7 +91,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
             FacilitiesDownloadService.register_download_if_needed(
                 facility_download_limit,
-                total_records
+                total_records,
+                is_same_contributor
             )
             FacilitiesDownloadService.send_email_if_needed(
                 request,
@@ -107,7 +108,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         Ensures the current user's contributor is involved in all
         facilities.
         """
-        if not queryset:
+        if not queryset or queryset.count() == 0:
             return False
 
         current_user_contributor_id = None

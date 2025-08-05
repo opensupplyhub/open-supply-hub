@@ -40,3 +40,38 @@ class FacilityDownloadLimitModelTest(TestCase):
             limit.paid_download_records,
             expected_paid_download_records_after
         )
+
+    def test_register_download_with_is_same_contributor_flag(self):
+        limit = FacilityDownloadLimit.objects.create(user=self.user)
+
+        initial_free = limit.free_download_records
+        records_to_subtract = 100
+
+        limit.register_download(records_to_subtract)
+
+        self.assertEqual(
+            limit.free_download_records,
+            initial_free - records_to_subtract
+        )
+
+        limit, created = FacilityDownloadLimit.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'free_download_records': 50,
+                'paid_download_records': 200
+            }
+        )
+
+        if not created:
+            limit.free_download_records = 50
+            limit.paid_download_records = 200
+            limit.save()
+
+        records_to_subtract = 100
+
+        limit.register_download(records_to_subtract)
+
+        self.assertEqual(limit.free_download_records, 0)
+        self.assertEqual(
+            limit.paid_download_records, 150
+        )
