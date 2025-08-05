@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-aws s3 cp s3://oshub-dumps-anonymized/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
+aws s3 cp s3://oshub-dumps-anonymized-1/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
 
 bastion="$(aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENVIRONMENT" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
 
