@@ -31,7 +31,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
 
 ### Release instructions
-* *Provide release instructions here.*
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.10.0
