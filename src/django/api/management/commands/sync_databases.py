@@ -60,9 +60,8 @@ class DatabaseSynchronizer:
     #     
     #     foreign_keys: Dictionary
     #         Maps foreign key field names to their referenced model classes.
-    #         Foreign keys that are unique values have been skipped since
-    #         they don't require complex foreign key handling. Some of the
-    #         foreign keys don't require synchronization so they are skipped.
+    #         Some of the foreign keys don't require synchronization so they
+    #         are skipped.
     #         Key structure: {'foreign_key_field_name': ReferencedModelClass}
     #         
     #     excluded_fields: List of strings
@@ -76,7 +75,10 @@ class DatabaseSynchronizer:
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {},
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'Contributor': {
             'model': Contributor,
@@ -85,104 +87,147 @@ class DatabaseSynchronizer:
             'foreign_keys': {
                 'admin': User,
             },
-            'excluded_fields': ['embed_config', 'embed_level']
+            'excluded_fields': [
+                'embed_config',
+                'embed_level',
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityList': {
             'model': FacilityList,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'replaces_id': FacilityList,
-                'status_change_by_id': User
+                'replaces': FacilityList,
+                'status_change_by': User
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'Source': {
             'model': Source,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'contributor_id': Contributor,
-                'facility_list_id': FacilityList
+                'contributor': Contributor,
+                'facility_list': FacilityList
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityListItem': {
             'model': FacilityListItem,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'source_id': Source,
+                'source': Source,
             },
-            'excluded_fields': ['facility']
+            'excluded_fields': [
+                'facility',
+                'created_at',
+                'updated_at'
+            ]
         },
         'Facility': {
             'model': Facility,
             'sync_field': 'id',
             'pk_type': 'custom',
             'foreign_keys': {
-                'created_from_id': FacilityListItem
+                'created_from': FacilityListItem
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityMatch': {
             'model': FacilityMatch,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'facility_list_item_id': FacilityListItem,
+                'facility_list_item': FacilityListItem,
+                'facility': Facility
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityLocation': {
             'model': FacilityLocation,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'created_by_id': User,
-                'contributor_id': Contributor,
+                'created_by': User,
+                'contributor': Contributor,
+                'facility': Facility
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityClaim': {
             'model': FacilityClaim,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'contributor_id': Contributor,
-                'status_change_by_id': User,
-                'parent_company_id': Contributor,
+                'contributor': Contributor,
+                'status_change_by': User,
+                'parent_company': Contributor,
+                'facility': Facility
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'ExtendedField': {
             'model': ExtendedField,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'contributor_id': Contributor,
-                'facility_list_item_id': FacilityListItem,
-                'facility_claim_id': FacilityClaim
+                'contributor': Contributor,
+                'facility_list_item': FacilityListItem,
+                'facility_claim': FacilityClaim,
+                'facility': Facility
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityActivityReport': {
             'model': FacilityActivityReport,
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
-                'reported_by_user_id': User,
-                'reported_by_contributor_id': Contributor,
-                'status_change_by_id': User
+                'reported_by_user': User,
+                'reported_by_contributor': Contributor,
+                'status_change_by': User,
+                'facility': Facility
             },
-            'excluded_fields': []
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         },
         'FacilityAlias': {
             'model': FacilityAlias,
-            'sync_field': 'id',
+            'sync_field': 'os_id',
             'pk_type': 'custom',
-            'foreign_keys': {},
-            'excluded_fields': []
+            'foreign_keys': {
+                'facility': Facility
+            },
+            'excluded_fields': [
+                'created_at',
+                'updated_at'
+            ]
         }
     }
 
@@ -205,11 +250,9 @@ class DatabaseSynchronizer:
             'errors': 0,
             'skipped': 0,
             'fk_updates': 0,
+            'fk_reassignments': 0,
             'circular_reference_updates': 0
         }
-
-        # Track primary key mappings for foreign key updates
-        self.pk_mappings = defaultdict(dict)  # {model_name: {old_pk: new_pk}}
 
         # Set up database connections
         self._setup_database_connections()
@@ -271,6 +314,8 @@ class DatabaseSynchronizer:
         logger.info(f"Records updated: {self.stats['updates']}")
         logger.info(f"Records skipped: {self.stats['skipped']}")
         logger.info(f"Foreign key updates: {self.stats['fk_updates']}")
+        logger.info(f"Foreign key reassignments: "
+                    f"{self.stats['fk_reassignments']}")
         logger.info(f"Circular Reference Updates: "
                     f"{self.stats['circular_reference_updates']}")
         logger.info(f"Errors: {self.stats['errors']}")
@@ -346,8 +391,9 @@ class DatabaseSynchronizer:
 
             # Record exists, check if it needs updating
             if self._needs_update(source_record, existing_record):
-                self._update_record(model_class, source_record, existing_record,
-                                    foreign_keys, model_name, excluded_fields)
+                self._update_record(source_record, existing_record,
+                                    foreign_keys, model_name, excluded_fields,
+                                    pk_type)
                 self.stats['updates'] += 1
                 logger.debug(f"Updated record with {sync_field}="
                              f"{getattr(source_record, sync_field)} in {model_name}")
@@ -360,7 +406,7 @@ class DatabaseSynchronizer:
             self.stats['inserts'] += 1
             logger.debug(f"Inserted record with {sync_field}="
                          f"{getattr(source_record, sync_field)} in {model_name}")
-    
+
     def _needs_update(self, source_record, target_record):
         """Check if a record needs to be updated based on updated_at field."""
         if hasattr(source_record, 'updated_at') and hasattr(target_record, 'updated_at'):
@@ -395,18 +441,13 @@ class DatabaseSynchronizer:
             logger.error(f"Error inserting record in {model_name}: {e}")
             raise
     
-    def _update_record(self, model_class, source_record, target_record,
-                       foreign_keys, model_name, excluded_fields):
+    def _update_record(self, source_record, target_record,
+                       foreign_keys, model_name, excluded_fields, pk_type):
         """Update an existing record in the target database."""
         if self.dry_run:
             logger.info(f"[DRY RUN] Would update record with sync_field "
-                       f"{getattr(source_record, 'uuid')} in {model_name}")
+                        f"{getattr(source_record, 'uuid')} in {model_name}")
             return
-        
-        # Get excluded fields from model config
-        model_config = self.SYNC_MODELS[model_name]
-        excluded_fields = model_config.get('excluded_fields', [])
-        pk_type = model_config['pk_type']
         
         # Get source record data
         record_data = self._get_record_data(source_record, pk_type,
@@ -433,14 +474,8 @@ class DatabaseSynchronizer:
             
         data = {}
         for field in record._meta.fields:
+            # Exclude auto-increment primary key.
             if field.name != 'id' or pk_type != 'auto_increment':
-                # Exclude auto-increment primary key.
-                
-                # Exclude auto-managed timestamp fields
-                if ((hasattr(field, 'auto_now') and field.auto_now) or
-                    (hasattr(field, 'auto_now_add') and field.auto_now_add)):
-                    continue
-                    
                 # Exclude specified fields
                 if field.name in excluded_fields:
                     continue
@@ -459,55 +494,106 @@ class DatabaseSynchronizer:
                 original_fk_value = record_data[fk_field]
                 
                 try:
-                    # Step 1: Get the UUID of the referenced record from source DB
-                    try:
-                        referenced_source_record = (
-                            referenced_model.objects.using('source').get(
-                                id=original_fk_value.id
-                            )
+                    # Special handling for Facility foreign keys - use ID directly since it's unique
+                    if referenced_model == Facility:
+                        self._update_facility_foreign_key(
+                            record_data, fk_field, original_fk_value, model_name
                         )
-                        referenced_uuid = getattr(referenced_source_record, 'uuid')
-                        logger.debug(f"Found UUID {referenced_uuid} for "
-                                     f"{referenced_model.__name__} ID "
-                                     f"{original_fk_value} in source DB")
-                    except referenced_model.DoesNotExist:
-                        logger.warning(f"Referenced {referenced_model.__name__} "
-                                       f"with ID {original_fk_value} not found in "
-                                       f"source DB for {model_name}")
-                        continue
-                    
-                    # Step 2: Find the corresponding record in target DB using UUID
-                    try:
-                        referenced_target_record = (
-                            referenced_model.objects.using('target').get(
-                                uuid=referenced_uuid
-                            )
-                        )
-                        logger.debug(f"Found target record {referenced_target_record} "
-                                     f"for UUID {referenced_uuid} in target DB")
-                    except referenced_model.DoesNotExist:
-                        logger.warning(f"Referenced {referenced_model.__name__} "
-                                       f"with UUID {referenced_uuid} not found in "
-                                       f"target DB for {model_name}")
-                        continue
-                    
-                    # Step 3: Update the foreign key value with the model instance
-                    if original_fk_value != referenced_target_record.id:
-                        record_data[fk_field] = referenced_target_record
-                        self.stats['fk_updates'] += 1
-                        logger.info(f"Updated FK {fk_field} in {model_name}: "
-                                    f"{original_fk_value.id} -> "
-                                    f"{referenced_target_record.id} "
-                                    f"(UUID: {referenced_uuid})")
                     else:
-                        logger.debug(f"FK {fk_field} in {model_name} already "
-                                     f"correct: {original_fk_value}")
+                        # Standard UUID-based lookup for other models
+                        self._update_uuid_based_foreign_key(
+                            record_data, fk_field, referenced_model, 
+                            original_fk_value, model_name
+                        )
                         
                 except Exception as e:
                     logger.error(f"Error updating FK {fk_field} in {model_name}: "
                                  f"{e}")
                     continue
+
+    def _update_facility_foreign_key(self, record_data, fk_field, 
+                                    original_fk_value, model_name):
+        """Update facility foreign key using direct ID lookup since facility IDs are unique."""
+        try:
+            # Get the facility ID from the source record
+            facility_id = original_fk_value.id
             
+            # Find the corresponding facility in target DB using ID directly
+            try:
+                target_facility = Facility.objects.using('target').get(id=facility_id)
+                logger.debug(f"Found target facility {target_facility} "
+                             f"for ID {facility_id} in target DB")
+            except Facility.DoesNotExist:
+                logger.warning(f"Facility with ID {facility_id} not found in "
+                               f"target DB for {model_name}")
+                return
+            
+            # Update the foreign key value with the facility instance
+            record_data[fk_field] = target_facility
+            self.stats['fk_reassignments'] += 1
+            logger.info(f"Facility FK {fk_field} in {model_name} already "
+                        f"correct: {original_fk_value.id}. Reassigned "
+                        f"corresponding facility from the target DB "
+                        f"to avoid cross-database references.")
+                
+        except Exception as e:
+            logger.error(f"Error updating facility FK {fk_field} in {model_name}: "
+                         f"{e}")
+            raise
+
+    def _update_uuid_based_foreign_key(self, record_data, fk_field, 
+                                      referenced_model, original_fk_value, model_name):
+        """Update foreign key using UUID-based lookup for non-facility models."""
+        # Step 1: Get the UUID of the referenced record from source DB
+        try:
+            referenced_source_record = (
+                referenced_model.objects.using('source').get(
+                    id=original_fk_value.id
+                )
+            )
+            referenced_uuid = getattr(referenced_source_record, 'uuid')
+            logger.debug(f"Found UUID {referenced_uuid} for "
+                         f"{referenced_model.__name__} ID "
+                         f"{original_fk_value} in source DB")
+        except referenced_model.DoesNotExist:
+            logger.warning(f"Referenced {referenced_model.__name__} "
+                           f"with ID {original_fk_value} not found in "
+                           f"source DB for {model_name}")
+            return
+        
+        # Step 2: Find the corresponding record in target DB using UUID
+        try:
+            referenced_target_record = (
+                referenced_model.objects.using('target').get(
+                    uuid=referenced_uuid
+                )
+            )
+            logger.debug(f"Found target record {referenced_target_record} "
+                         f"for UUID {referenced_uuid} in target DB")
+        except referenced_model.DoesNotExist:
+            logger.warning(f"Referenced {referenced_model.__name__} "
+                           f"with UUID {referenced_uuid} not found in "
+                           f"target DB for {model_name}")
+            return
+        
+        # Step 3: Update the foreign key value with the model instance
+        if original_fk_value.id != referenced_target_record.id:
+            record_data[fk_field] = referenced_target_record
+            self.stats['fk_updates'] += 1
+            logger.info(f"Updated FK {fk_field} in {model_name}: "
+                        f"{original_fk_value.id} -> "
+                        f"{referenced_target_record.id} "
+                        f"(UUID: {referenced_uuid}). Assigned "
+                        f"corresponding record from the target DB "
+                        f"to avoid cross-database references.")
+        else:
+            record_data[fk_field] = referenced_target_record
+            self.stats['fk_reassignments'] += 1
+            logger.info(f"FK {fk_field} in {model_name} already "
+                        f"correct: {original_fk_value}. Reassigned "
+                        f"corresponding record from the target DB "
+                        f"to avoid cross-database references.")
+
     def update_circular_references(self):
         """Update circular references after all records are synced."""
         logger.info("Updating circular references...")
@@ -705,12 +791,14 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f'Synchronization completed successfully! '
-                        f'Inserted: {stats["inserts"]}, Updated: '
-                        f'{stats["updates"]}, Skipped: {stats["skipped"]}, '
-                        f'FK Updates: {stats["fk_updates"]}, '
+                        f'Synchronization completed successfully!\n'
+                        f'Inserted: {stats["inserts"]}\n'
+                        f'Updated: {stats["updates"]}\n'
+                        f'Skipped: {stats["skipped"]}\n'
+                        f'FK Updates: {stats["fk_updates"]}\n'
+                        f'FK Reassignments: {stats["fk_reassignments"]}\n'
                         f'Circular Reference Updates: '
-                        f'{stats["circular_reference_updates"]}, '
+                        f'{stats["circular_reference_updates"]}\n'
                         f'Errors: {stats["errors"]}'
                     )
                 )
