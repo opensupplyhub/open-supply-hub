@@ -56,11 +56,7 @@ class FacilityDownloadLimit(models.Model):
     def register_download(
         self,
         records_to_subtract: int,
-        is_same_contributor: bool = False
     ):
-        if is_same_contributor:
-            return
-
         self.refresh_from_db()
 
         if self.free_download_records >= records_to_subtract:

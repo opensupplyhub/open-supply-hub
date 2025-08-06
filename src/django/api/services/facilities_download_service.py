@@ -108,10 +108,13 @@ class FacilitiesDownloadService:
     def register_download_if_needed(
         limit: FacilityDownloadLimit,
         record_count: int,
-        is_same_contributor: bool
+        is_same_contributor: bool = False
     ):
+        if is_same_contributor:
+            return
+
         if limit:
-            limit.register_download(record_count, is_same_contributor)
+            limit.register_download(record_count)
 
     @staticmethod
     def send_email_if_needed(
