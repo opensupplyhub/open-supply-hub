@@ -19,7 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe schema changes here.*
 
 ### Code/API changes
-* [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled ability for users to download their own data without impacts to free & purchased data download allowances. Introduced `is_same_contributor` field for GET `/api/facilities-downloads` response.
+* [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
 
 ### Architecture/Environment changes
 * *Describe architecture/environment changes here.*
@@ -32,8 +32,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
+  * `migrate`
+  * `reindex_database`
 
 
 ## Release 2.10.0
