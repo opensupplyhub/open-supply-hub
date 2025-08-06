@@ -3,7 +3,7 @@
 
 aws s3 cp s3://oshub-dumps-anonymized-1/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
 
-bastion="$(aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENVIRONMENT" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
+bastion="$(aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENVIRONMENT" "Name=tag:Name,Values=Bastion" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
 
 echo "Bastion: $bastion"
 
