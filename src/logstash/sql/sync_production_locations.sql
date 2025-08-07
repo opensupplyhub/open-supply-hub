@@ -611,7 +611,19 @@ SELECT
       afa.facility_id = af.id
   ) AS historical_os_id_value,
   af.updated_at,
-  afc.updated_at AS claimed_at
+  (
+    SELECT
+      afc3.updated_at
+    FROM
+      api_facilityclaim afc3
+    WHERE
+      afc3.facility_id = af.id
+      AND afc3.status IN ('APPROVED', 'PENDING')
+    ORDER BY
+      afc3.updated_at DESC
+    LIMIT
+      1
+  ) AS claimed_at_value
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id
