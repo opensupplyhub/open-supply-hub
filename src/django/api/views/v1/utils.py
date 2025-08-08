@@ -10,10 +10,12 @@ from api.constants import APIV1CommonErrorMessages, NON_FIELD_ERRORS_KEY
 
 logger = logging.getLogger(__name__)
 
+
 def capitalize_first_only(text):
     if not text:
         return text
     return text[0].upper() + text[1:]
+
 
 def serialize_params(serializer_class, query_params):
     flattened_query_params = {}
@@ -104,7 +106,9 @@ def serialize_params(serializer_class, query_params):
             for error_item in params.errors.get('errors', []):
                 error_response['errors'].append({
                     'field': error_item.get('field', ''),
-                    'detail': capitalize_first_only(error_item.get('detail', ''))
+                    'detail': capitalize_first_only(
+                        error_item.get('detail', '')
+                    )
                 })
 
         return None, error_response
