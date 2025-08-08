@@ -1730,9 +1730,11 @@ export const processDromoResults = (
         return;
     }
 
-    const headers = Object.keys(results[0]).join(',');
-    const rows = results.map(row => Object.values(row).join(','));
-    const csvContent = [headers, ...rows].join('\n');
+    const headers = Object.keys(results[0]);
+    const csvRows = results.map(row =>
+        headers.map(header => escapeCSVValue(row[header])).join(','),
+    );
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
 
     const csvBlob = new Blob([csvContent], { type: 'text/csv' });
     const csvFile = new File([csvBlob], filename.replace(/\.[^/.]+$/, '.csv'), {
