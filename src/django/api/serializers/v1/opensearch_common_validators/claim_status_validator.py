@@ -39,8 +39,8 @@ class ClaimStatusValidator(OpenSearchValidationInterface):
             errors.append({
                 "field": "claim_status",
                 "detail": (
-                    f"Invalid claim status(es) {invalid_statuses}, "
-                    f"allowed values are {allowed_values}."
+                    f"Invalid claim status(es) {invalid_statuses}. "
+                    f"Allowed values are {allowed_values}."
                 )
             })
 

@@ -24,8 +24,8 @@ class StatusValidator(OpenSearchValidationInterface):
             errors.append({
                 "field": "status",
                 "detail": (
-                    f"Invalid status(es) {invalid_statuses}, "
-                    "allowed values are 'PENDING','APPROVED' or 'REJECTED'."
+                    f"Invalid status(es) {invalid_statuses}. "
+                    "Allowed values are 'PENDING','APPROVED' or 'REJECTED'."
                 )
             })
 

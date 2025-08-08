@@ -30,8 +30,8 @@ class RequestTypeValidator(OpenSearchValidationInterface):
             errors.append({
                 "field": "request_type",
                 "detail": (
-                    f"Invalid request type(s) {invalid_request_types}, "
-                    f"allowed values are {allowed_values}."
+                    f"Invalid request type(s) {invalid_request_types}. "
+                    f"Allowed values are {allowed_values}."
                 )
             })
         return errors
