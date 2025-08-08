@@ -259,7 +259,7 @@ class APIV1LocationContributionErrorMessages:
 class APIV1ModerationEventErrorMessages:
     EVENT_NOT_FOUND = 'Moderation event not found.'
     EVENT_NOT_PENDING = 'The moderation event should be in PENDING status.'
-    INVALID_UUID_FORMAT = 'Invalid uuid format.'
+    INVALID_UUID_FORMAT = 'Invalid UUID format.'
     PERMISSION_DENIED = 'You do not have permission to perform this action.'
 
 

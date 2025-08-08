@@ -11,12 +11,6 @@ from api.constants import APIV1CommonErrorMessages, NON_FIELD_ERRORS_KEY
 logger = logging.getLogger(__name__)
 
 
-def capitalize_first_only(text):
-    if not text:
-        return text
-    return text[0].upper() + text[1:]
-
-
 def serialize_params(serializer_class, query_params):
     flattened_query_params = {}
     for key, value in query_params.lists():
@@ -67,7 +61,7 @@ def serialize_params(serializer_class, query_params):
                 if isinstance(error_data, list):
                     error_response['errors'].append({
                         'field': field,
-                        'detail': capitalize_first_only(error_data[0])
+                        'detail': error_data[0].capitalize()
                     })
                 elif isinstance(error_data, dict):
                     error_response['errors'].append({
@@ -88,7 +82,7 @@ def serialize_params(serializer_class, query_params):
                 elif isinstance(error_data, str):
                     error_response['errors'].append({
                         'field': field,
-                        'detail': capitalize_first_only(error_data)
+                        'detail': error_data.capitalize()
                     })
                 else:
                     error_response['errors'].append({
@@ -101,14 +95,12 @@ def serialize_params(serializer_class, query_params):
         # Handle errors that come from serializers
         detail_errors = params.errors.get('detail')
         if detail_errors:
-            error_response['detail'] = capitalize_first_only(detail_errors[0])
+            error_response['detail'] = detail_errors[0].capitalize()
         if 'detail' in params.errors and 'errors' in params.errors:
             for error_item in params.errors.get('errors', []):
                 error_response['errors'].append({
                     'field': error_item.get('field', ''),
-                    'detail': capitalize_first_only(
-                        error_item.get('detail', '')
-                    )
+                    'detail': error_item.get('detail', '').capitalize()
                 })
 
         return None, error_response

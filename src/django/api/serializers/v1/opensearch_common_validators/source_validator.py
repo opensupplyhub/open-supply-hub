@@ -24,8 +24,8 @@ class SourceValidator(OpenSearchValidationInterface):
             errors.append({
                 "field": "source",
                 "detail": (
-                    f"Invalid source(s) {invalid_sources}. "
-                    "Allowed values are 'SLC' or 'API'."
+                    f"Invalid source(s) {invalid_sources}, "
+                    "allowed values are 'SLC' or 'API'."
                 )
             })
 
