@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.11.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 23, 2025
+
+### Bugfix
+* [OSDEV-2133](https://opensupplyhub.atlassian.net/browse/OSDEV-2133) - Implemented a fix to wrap values in double quotes to ensure correct CSV formatting for Dromo results.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.10.0
 
 ## Introduction
