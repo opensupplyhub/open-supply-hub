@@ -5,14 +5,22 @@ from api.views.v1.parameters_list import V1_PARAMETERS_LIST
 
 
 class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
-    def __init__(self):
+    def __init__(self, model_id: str = None):
         self.default_query_body = {
+            '_source': {
+                'exclude': [
+                    'name_embedding',
+                    'address_embedding'
+                ]
+            },
             'track_total_hits': True,
-            'query': {'bool': {'must': []}},
+            'query': {'bool': {'should': []}},
             'sort': []
         }
         self.query_body = copy.deepcopy(self.default_query_body)
         self.default_fuzziness = 2
+        self.default_k = 5
+        self.model_id = model_id
         # Both default sorting and order are needed for add_search_after()
         # Default order is needed for add_sort() and add_search_after()
         self.default_sort = V1_PARAMETERS_LIST.NAME
@@ -27,7 +35,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         return f'{field}.alpha_2'
 
     def __build_number_of_workers(self, field, range_query):
-        self.query_body['query']['bool']['must'].append({
+        self.query_body['query']['bool']['should'].append({
             'bool': {
                 'should': [
                     {
@@ -78,15 +86,42 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
 
         if field == V1_PARAMETERS_LIST.OS_ID:
             self._build_os_id(values)
-
         else:
             terms_field = self.build_options.get(
                 field, lambda x: f'{x}.keyword'
             )(field)
 
-            self.query_body['query']['bool']['must'].append(
+            self.query_body['query']['bool']['should'].append(
                 {'terms': {terms_field: values}}
             )
+
+    def add_filter(self, field, value):
+        if not value:
+            return self.query_body
+
+        self.__init_filter()
+
+        filter_field = self.build_options.get(
+            field, lambda x: f'{x}.keyword'
+        )(field)
+
+        self.query_body['query']['bool']['filter'].append(
+            {'term': {filter_field: value}}
+        )
+
+    def add_neural_match(self, field, value):
+        if not value or not self.model_id:
+            return self.query_body
+
+        self.query_body['query']['bool']['should'].append({
+            "neural": {
+                f"{field}_embedding": {
+                    "query_text": value,
+                    "model_id": self.model_id,
+                    "k": self.default_k,
+                }
+            }
+        })
 
     def add_sort(self, field, order_by=None):
         # If there is sorting, then there should be an order.
@@ -136,7 +171,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
                 }
             }
 
-        self.query_body['query']['bool']['must'].append(multi_match_query)
+        self.query_body['query']['bool']['should'].append(multi_match_query)
 
     def add_aggregations(self, aggregation, geohex_grid_precision=None):
         if aggregation == 'geohex_grid':

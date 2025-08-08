@@ -556,6 +556,39 @@ SELECT
       af.location
     )
   ) AS longitude,
+  (
+    COALESCE(
+      (
+        SELECT (
+            SELECT *
+            FROM jsonb_array_elements(afli.processing_results) AS elem
+            WHERE elem->>'action' = 'geocode'
+              and elem->>'error' = 'false'
+            LIMIT 1
+          )::TEXT as geocode_value
+        FROM api_facilitylistitem afli
+        WHERE afli.id = af.created_from_id
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(afli.processing_results) AS elem
+            WHERE elem->>'action' = 'promote_match'
+          )
+      ),
+      (
+        SELECT (
+            SELECT *
+            FROM jsonb_array_elements(afli.processing_results) AS elem
+            WHERE elem->>'action' = 'geocode'
+              and elem->>'error' = 'false'
+            LIMIT 1
+          )::TEXT as geocode_value
+        FROM api_facilitylistitem afli
+        WHERE afli.facility_id = af.id
+        ORDER BY afli.created_at DESC
+        LIMIT 1
+      )
+    )
+  ) AS geocode_value,
   afc.facility_minimum_order_quantity AS minimum_order_quantity_value,
   afc.facility_average_lead_time AS average_lead_time_value,
   afc.facility_female_workers_percentage AS percent_female_workers_value,

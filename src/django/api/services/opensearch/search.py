@@ -42,6 +42,7 @@ class OpenSearchService(SearchInterface):
             if "_source" in hit:
                 source = self.__rename_lon_field(hit["_source"])
                 clean_source = self.__remove_null_values(source)
+                clean_source["score"] = hit.get("_score", 0)
                 data.append(clean_source)
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
@@ -81,9 +82,10 @@ class OpenSearchService(SearchInterface):
         else:
             return obj
 
-    def search_index(self, index_name, query_body):
+    def search_index(self, index_name, query_body, params={}):
         try:
-            response = self.__client.search(body=query_body, index=index_name)
+            response = self.__client.search(
+                body=query_body, index=index_name, params=params)
             return self.__prepare_opensearch_response(response)
 
         except OpenSearchException as e:
