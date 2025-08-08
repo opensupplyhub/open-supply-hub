@@ -303,7 +303,7 @@ class ModerationEventsTest(BaseAPITest):
 
         error = result['errors'][0]
         self.assertEqual(error['field'], 'country')
-        self.assertEqual(error['detail'], "'usa' is not a valid alpha-2 country code.")
+        self.assertEqual(error['detail'], "'USA' is not a valid alpha-2 country code.")
 
     def test_valid_moderation_id(self):
         valid_moderation_id = '3b50d60f-85b2-4a17-9f8d-5d3e1fc68198'
@@ -330,4 +330,4 @@ class ModerationEventsTest(BaseAPITest):
 
         error = result['errors'][0]
         self.assertEqual(error['field'], 'moderation_id')
-        self.assertEqual(error['detail'], "Invalid uuid(s): 123!.")
+        self.assertEqual(error['detail'], "Invalid UUID(s): 123!.")
