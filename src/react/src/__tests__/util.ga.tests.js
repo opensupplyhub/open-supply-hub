@@ -11,6 +11,7 @@ import {
     acceptGATrackingAndStartTracking,
     clearGATrackingDecision,
     createGADisableKey,
+    trackAccountConfirmation,
 } from '../util/util.ga.js';
 
 beforeEach(() => {
@@ -88,4 +89,48 @@ it('correctly clears a `HAS_ACCEPTED_GA_TRACKING` decision value from localStora
 
     expect(userHasAcceptedGATracking()).toBe(false);
     expect(userHasAcceptedOrRejectedGATracking()).toBe(false);
+});
+
+it('tracks account confirmation when user has accepted GA tracking and gtag is available', () => {
+    // Setup: User has accepted GA tracking
+    acceptGATrackingAndStartTracking();
+    
+    // Mock gtag function
+    window.gtag = jest.fn();
+    
+    const result = trackAccountConfirmation();
+    
+    expect(result).toBe('Account confirmation event tracked');
+    expect(window.gtag).toHaveBeenCalledWith('event', 'ACCOUNT_CONFIRMATION', {
+        hitType: 'event',
+        eventAction: 'ACCOUNT_CONFIRMATION',
+        eventCategory: 'USER_REGISTRATION',
+        eventLabel: 'User successfully confirmed their account',
+        nonInteraction: true,
+        anonymizeIp: true,
+    });
+});
+
+it('does not track account confirmation when user has not accepted GA tracking', () => {
+    // Setup: User has not accepted GA tracking
+    window.localStorage.clear();
+    
+    // Mock gtag function
+    window.gtag = jest.fn();
+    
+    const result = trackAccountConfirmation();
+    
+    expect(result).toBe(null);
+    expect(window.gtag).not.toHaveBeenCalled();
+});
+
+it('does not track account confirmation when gtag is not available', () => {
+    // Setup: User has accepted GA tracking but gtag is not available
+    acceptGATrackingAndStartTracking();
+    
+    // Don't mock gtag (undefined)
+    
+    const result = trackAccountConfirmation();
+    
+    expect(result).toBe(null);
 });
