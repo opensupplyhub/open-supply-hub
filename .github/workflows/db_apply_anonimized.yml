@@ -10,6 +10,7 @@ on:
         options:
           - Test
           - Pre-prod
+          - Rba
         default: Test
 
 jobs:
