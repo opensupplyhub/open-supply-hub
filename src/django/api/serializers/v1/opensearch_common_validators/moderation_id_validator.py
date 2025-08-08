@@ -28,19 +28,19 @@ class ModerationIdValidator(OpenSearchValidationInterface):
             if invalid_ids:
                 errors.append({
                     "field": "moderation_id",
-                    "detail": f"Invalid UUID(s): {', '.join(invalid_ids)}.",
+                    "detail": f"Invalid uuid(s): {', '.join(invalid_ids)}.",
                 })
         elif isinstance(moderation_id, str):
             if not self.is_valid_uuid(moderation_id):
                 errors.append({
                     "field": "moderation_id",
-                    "detail": f"Invalid UUID: {moderation_id}.",
+                    "detail": f"Invalid uuid: {moderation_id}.",
                 })
         else:
             errors.append({
                 "field": "moderation_id",
                 "detail": (
-                    "moderation_id must be a valid UUID or a list of UUIDs."
+                    "moderation_id must be a valid uuid or a list of uuids."
                 )
             })
 
