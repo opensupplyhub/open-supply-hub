@@ -72,7 +72,8 @@ class OpenSearchQueryDirector:
 
         if query_type == "filter":
             value = query_params.get(field)
-            self.__add_filter_query(field, value)
+            if value:
+                self.__add_filter_query(field, value)
             return
 
         if query_type == "range":
@@ -163,6 +164,10 @@ class OpenSearchQueryDirector:
         if aggregation and hasattr(self.__builder, 'add_aggregations'):
             self.__builder.add_aggregations(aggregation, geohex_grid_precision)
 
+    '''
+    TODO mismatch here, we already have a filter method in the builder
+    but we have filter as a query type in the template fields
+    '''
     def __process_filter(self, query_params):
         top = query_params.get(
             V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[top]'
