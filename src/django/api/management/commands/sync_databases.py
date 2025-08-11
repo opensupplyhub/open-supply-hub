@@ -458,7 +458,7 @@ class DatabaseSynchronizer:
         
         # Update the target record
         for field, value in record_data.items():
-            if field not in ['id', 'uuid']:  # Don't update primary key or UUID
+            if field not in ['id', 'uuid']:  # Don't re-update primary key or UUID
                 setattr(target_record, field, value)
         
         try:
@@ -481,8 +481,7 @@ class DatabaseSynchronizer:
                     continue
                     
                 value = getattr(record, field.name)
-                if value is not None or not field.null:
-                    data[field.name] = value
+                data[field.name] = value
         return data
     
     def _update_foreign_keys_in_data(self, record_data, foreign_keys,
@@ -608,11 +607,11 @@ class DatabaseSynchronizer:
         logger.info("Updating FacilityListItem.facility references...")
         
         # Get all facility list items that need facility updated
-        list_items = FacilityListItem.objects.using('target').filter(
-            facility__isnull=True
-        )
+        # This includes both records with no facility and records that might need facility cleared
+        list_items = FacilityListItem.objects.using('target').all()
         
         updated_count = 0
+        cleared_count = 0
         errors_count = 0
         
         for list_item in list_items:
@@ -625,24 +624,34 @@ class DatabaseSynchronizer:
                 )
                 
                 if source_list_item.facility:
-                    # Find the corresponding facility in target DB
+                    # Source has a facility - find the corresponding facility in target DB
                     try:
                         target_facility = Facility.objects.using('target').get(
                             id=source_list_item.facility.id
                         )
-                        list_item.facility = target_facility
-                        list_item.save(using='target')
-                        updated_count += 1
-                        logger.debug(f"Updated FacilityListItem {list_item.id} "
-                                     f"facility to {target_facility.id}")
+                        # Only update if the facility is different
+                        if list_item.facility.id != target_facility.id:
+                            list_item.facility = target_facility
+                            list_item.save(using='target')
+                            updated_count += 1
+                            logger.debug(f"Updated FacilityListItem {list_item.id} "
+                                         f"facility to {target_facility.id}")
                     except Facility.DoesNotExist:
                         logger.warning(f"Could not find Facility with ID "
                                        f"{source_list_item.facility.id} for "
                                        f"FacilityListItem {list_item.id}")
                         errors_count += 1
                 else:
-                    logger.debug(f"FacilityListItem {list_item.id} has no "
-                                 f"facility reference in source DB")
+                    # Source has no facility - clear the facility in target if it exists
+                    if list_item.facility is not None:
+                        list_item.facility = None
+                        list_item.save(using='target')
+                        cleared_count += 1
+                        logger.debug(f"Cleared facility for FacilityListItem {list_item.id} "
+                                     f"(source has no facility)")
+                    else:
+                        logger.debug(f"FacilityListItem {list_item.id} already has no "
+                                     f"facility reference")
                     
             except FacilityListItem.DoesNotExist:
                 logger.warning(f"Could not find source FacilityListItem with "
@@ -650,10 +659,12 @@ class DatabaseSynchronizer:
                 errors_count += 1
         
         # Update stats
-        self.stats['circular_reference_updates'] += updated_count
+        self.stats['circular_reference_updates'] += updated_count + cleared_count
         self.stats['errors'] += errors_count
         
         logger.info(f"Updated facility references for {updated_count} "
+                    f"FacilityListItem records")
+        logger.info(f"Cleared facility references for {cleared_count} "
                     f"FacilityListItem records")
         logger.info(f"Circular reference errors: {errors_count}")
 
