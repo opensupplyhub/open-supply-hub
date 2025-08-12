@@ -2,7 +2,6 @@ import logging
 import stripe
 
 from django.conf import settings
-
 from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
 from datetime import datetime
@@ -63,39 +62,24 @@ class FacilitiesDownloadService:
         )
 
     @staticmethod
-    def enforce_limits(request, total_records, limit):
-        current_page = int(request.query_params.get("page", 1))
-
-        if limit is None:
+    def enforce_limits(qs, limit, is_first_page: bool):
+        """
+        Avoid COUNT(*). On first page, probe up to allowed+1 ids.
+        """
+        if not limit or not is_first_page:
             return
 
-        allowed_records = (
-            limit.free_download_records +
-            limit.paid_download_records
-        )
+        allowed = limit.free_download_records + limit.paid_download_records
 
-        has_exhausted_limit = (
-            current_page == 1 and
-            allowed_records == 0
-        )
-
-        if has_exhausted_limit:
+        if allowed == 0:
             raise ValidationError(
-                'You have reached your annual limit for facility record '
-                'downloads, including both free and paid. Additional '
-                'downloads will be available at the start of the next '
-                'calendar year.'
+                'You have reached your annual limit for facility record downloads...'
             )
 
-        is_blocked = (
-            current_page == 1
-            and total_records > allowed_records
-        )
-
-        if is_blocked:
+        probe = list(qs.order_by("id").values_list("id", flat=True)[:allowed + 1])
+        if len(probe) > allowed:
             raise ValidationError(
-                f'Downloads are supported only for searches '
-                f'resulting in {allowed_records} facilities or less.'
+                f'Downloads are supported only for searches resulting in {allowed} facilities or less.'
             )
 
     @staticmethod
