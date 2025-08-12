@@ -62,10 +62,10 @@ class RecordLinker():
             country_code=country_code,
         )
 
-        if not "full_response" in geocoded_data:
+        if "full_response" not in geocoded_data:
             return None
 
-        if not "results" in geocoded_data["full_response"] or not geocoded_data["full_response"]["results"]:
+        if "results" not in geocoded_data["full_response"] or not geocoded_data["full_response"]["results"]:
             return None
 
         result = geocoded_data["full_response"]["results"][0]
