@@ -5,7 +5,7 @@ from api.services.record_linkage.matchers import (
     AddressMatcher,
     GeocodedLocationTypMatcher,
     DistanceMatcher,
-    OpenSeachScoreMatcher
+    OpenSearchScoreMatcher
 )
 
 
@@ -78,14 +78,14 @@ class ConfidenceCalculator():
             ),
         )
         self.records_df["score_confidence"] = self.records_df["score"].apply(
-            lambda row_score: OpenSeachScoreMatcher.match(
+            lambda row_score: OpenSearchScoreMatcher.match(
                 row_score
             ),
         )
 
     def score(self) -> pd.DataFrame:
-        self.__calculate_confidence_scores()
         self.__calculate_confidence_weights()
+        self.__calculate_confidence_scores()
         self.records_df["confidence_score"] = (
             self.records_df["name_confidence"] * self.name_confidence
             + self.records_df["address_confidence"] * self.address_confidence

@@ -11,11 +11,11 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 class RecordLinker():
-    records: List[Dict[str, any]]
+    records: List[Dict[str, Any]]
     records_index: Dict[str, int]
     records_df: pd.DataFrame
 
-    def __init__(self, records: List[Dict[str, any]]):
+    def __init__(self, records: List[Dict[str, Any]]):
         self.records_index = {}
         self.records = copy.deepcopy(records)
         self.__create_records_df()
@@ -65,10 +65,16 @@ class RecordLinker():
         address: str,
         country_code: str,
     ) -> Optional[Dict[str, Any]]:
-        geocoded_data = geocode_address(
-            address=address,
-            country_code=country_code,
-        )
+        try:
+            geocoded_data = geocode_address(
+                address=address,
+                country_code=country_code,
+            )
+        except Exception as e:
+            # Log the error but don't fail the entire process
+            import logging
+            logging.warning(f"Geocoding failed for address '{address}': {e}")
+            return None
 
         if "full_response" not in geocoded_data:
             return None
@@ -81,6 +87,13 @@ class RecordLinker():
 
         result = geocoded_data["full_response"]["results"][0]
 
+        if not all(key in result for key in ["formatted_address", "geometry"]):
+            return None
+
+        if "location_type" not in result["geometry"]:
+            return None
+
+        # TODO test location type presence
         return {
             "geocoded_address": result["formatted_address"],
             "geocoded_location_type": result["geometry"]["location_type"],
@@ -93,7 +106,7 @@ class RecordLinker():
         name: str,
         address: str,
         country_code: str,
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         geocoding_result = self.__get_geocoding_result(
             address=address,
             country_code=country_code

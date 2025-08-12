@@ -1,5 +1,5 @@
 from django.db import models
-
+from typing import Any
 
 class Settings(models.Model):
     """
@@ -31,12 +31,12 @@ class Settings(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        help_text='Date when the moderation queue entry was created.'
+        help_text='Date when the setting was created.'
     )
 
     updated_at = models.DateTimeField(
         auto_now=True,
-        help_text='Date when the moderation queue entry was last updated.',
+        help_text='Date when the setting was last updated.',
         db_index=True
     )
 
@@ -48,7 +48,7 @@ class Settings(models.Model):
         self.save()
 
     @staticmethod
-    def get(name: str, description: str, value: any = None):
+    def get(name: str, description: str, value: Any = None):
         """
         Get or create a setting with the given name and description.
         """

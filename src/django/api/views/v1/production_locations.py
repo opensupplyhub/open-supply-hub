@@ -143,9 +143,6 @@ class ProductionLocations(ViewSet):
                 )
 
             try:
-                model_id = Settings.objects.filter(
-                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
-                ).get()
                 search_pipeline_id = Settings.objects.filter(
                     name=Settings.Name.OS_SEARCH_PIPELINE_ID,
                 ).get()
@@ -182,14 +179,23 @@ class ProductionLocations(ViewSet):
         )
 
         if record_linkage_enabled:
-            linker = RecordLinker(
-                records=response["data"],
-            )
-            response["data"] = linker.predict(
-                name=request.GET.get("name"),
-                address=request.GET.get("address"),
-                country_code=request.GET.get("country"),
-            )
+            try:
+                linker = RecordLinker(
+                    records=response["data"],
+                )
+                response["data"] = linker.predict(
+                    name=request.GET.get("name"),
+                    address=request.GET.get("address"),
+                    country_code=request.GET.get("country"),
+                )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Record linkage failed: {str(e)}", exc_info=True)
+                response["warning"] = (
+                    "Record linkage processing failed, returning unlinked "
+                    "results"
+                )
 
         return Response(response)
 

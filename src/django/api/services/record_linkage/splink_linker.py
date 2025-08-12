@@ -24,11 +24,11 @@ class SplinkLinker():
         self.__init_linker()
 
     def __init_linker(self):
+        with open(f"{dir_path}/record_linkage_model_beta.json", "r") as f:
+            settings = json.load(f)
         self.linker = Linker(
             self.records_df,
-            settings=json.load(
-                open(f"{dir_path}/record_linkage_model_beta.json", "r")
-            ),
+            settings=settings,
             db_api=DuckDBAPI(),
         )
 
@@ -52,17 +52,26 @@ class SplinkLinker():
             if "geocoded_location_type" in record:
                 geocoded_location_type = record["geocoded_location_type"]
 
+            country_code = record.get("country", {}).get("alpha_2", None)
+            lat = record.get("coordinates", {}).get("lat", None)
+            lng = record.get("coordinates", {}).get("lng", None)
+
+            if not all([country_code, lat, lng]):
+                raise ValueError(
+                    f"Missing required fields in record at index {index}"
+                )
+
             self.records_df.loc[index] = [
                 record["os_id"],
                 record["name"],
                 record["address"],
-                record["country"]["alpha_2"],
+                country_code,
                 geocoded_location_type,
-                record["coordinates"]["lat"],
-                record["coordinates"]["lng"]
+                lat,
+                lng
             ]
             self.records_index[record["os_id"]] = index
-            self.records[index]["match_probability"] = 0.0
+            self.records[index]["confidence_score"] = 0.0
 
     def __get_geocoding_result(
         self,
@@ -110,7 +119,8 @@ class SplinkLinker():
             "country_code": country_code,
             "geocoded_location_type": None,
             "lat": None,
-            "lng": None
+            "lng": None,
+            "confidence_score": 0.0,
         }
 
         if geocoding_result:
@@ -123,16 +133,38 @@ class SplinkLinker():
         matching_df = self.linker.inference.find_matches_to_new_records(
             [record],
             blocking_rules=[],
-        ).as_pandas_dataframe().sort_values(
-            "match_probability",
-            ascending=False,
-        )
+        ).as_pandas_dataframe()
+
+        if not matching_df.empty and (
+            "match_probability" in matching_df.columns
+        ):
+            matching_df = matching_df.rename(
+                columns={"match_probability": "confidence_score"}
+            )
+
+        if not matching_df.empty:
+            matching_df = matching_df.sort_values(
+                "confidence_score",
+                ascending=False,
+            )
+
+        if matching_df.empty:
+            return self.records
+
+        required_columns = ["os_id_l", "confidence_score"]
+        if not all(col in matching_df.columns for col in required_columns):
+            raise ValueError(
+                "Matching DataFrame missing required "
+                f"columns: {required_columns}"
+            )
 
         for _, row in matching_df.iterrows():
             os_id = row["os_id_l"]
+            if os_id not in self.records_index:
+                continue
             index = self.records_index[os_id]
-            self.records[index]["match_probability"] = round(
-                row["match_probability"], 2
+            self.records[index]["confidence_score"] = round(
+                row["confidence_score"], 2
             )
 
         return self.records

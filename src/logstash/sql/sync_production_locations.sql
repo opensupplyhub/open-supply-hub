@@ -557,37 +557,35 @@ SELECT
     )
   ) AS longitude,
   (
-    COALESCE(
-      (
-        SELECT (
-            SELECT *
-            FROM jsonb_array_elements(afli.processing_results) AS elem
-            WHERE elem->>'action' = 'geocode'
-              and elem->>'error' = 'false'
-            LIMIT 1
-          )::TEXT as geocode_value
-        FROM api_facilitylistitem afli
-        WHERE afli.id = af.created_from_id
-          AND EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(afli.processing_results) AS elem
-            WHERE elem->>'action' = 'promote_match'
-          )
-      ),
-      (
-        SELECT (
-            SELECT *
-            FROM jsonb_array_elements(afli.processing_results) AS elem
-            WHERE elem->>'action' = 'geocode'
-              and elem->>'error' = 'false'
-            LIMIT 1
-          )::TEXT as geocode_value
-        FROM api_facilitylistitem afli
-        WHERE afli.facility_id = af.id
-        ORDER BY afli.created_at DESC
-        LIMIT 1
-      )
+    WITH geocode_extractor AS (
+      SELECT 
+        afli.id,
+        afli.facility_id,
+        afli.created_at,
+        (
+          SELECT elem::TEXT
+          FROM jsonb_array_elements(afli.processing_results) AS elem
+          WHERE elem ? 'action' AND elem ? 'error' 
+            AND elem->>'action' = 'geocode'
+            AND elem->>'error' = 'false'
+          LIMIT 1
+        ) as geocode_value,
+        EXISTS (
+          SELECT 1
+          FROM jsonb_array_elements(afli.processing_results) AS elem
+          WHERE elem ? 'action' AND elem->>'action' = 'promote_match'
+        ) as has_promote_match
+      FROM api_facilitylistitem afli
+      WHERE afli.id = af.created_from_id OR afli.facility_id = af.id
     )
+    SELECT 
+      COALESCE(
+        (SELECT ge.geocode_value FROM geocode_extractor ge 
+         WHERE ge.id = af.created_from_id AND ge.has_promote_match),
+        (SELECT ge.geocode_value FROM geocode_extractor ge 
+         WHERE ge.facility_id = af.id 
+         ORDER BY ge.created_at DESC LIMIT 1)
+      )
   ) AS geocode_value,
   afc.facility_minimum_order_quantity AS minimum_order_quantity_value,
   afc.facility_average_lead_time AS average_lead_time_value,

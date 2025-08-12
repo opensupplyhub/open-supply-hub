@@ -72,8 +72,7 @@ class OpenSearchQueryDirector:
 
         if query_type == "filter":
             value = query_params.get(field)
-            if value:
-                self.__add_filter_query(field, value)
+            self.__add_filter_query(field, value)
             return
 
         if query_type == "range":
@@ -102,6 +101,9 @@ class OpenSearchQueryDirector:
         self.__builder.add_terms(field, values)
 
     def __add_filter_query(self, field, value):
+        if not value:
+            return
+
         self.__builder.add_filter(field, value)
 
     def __add_range_query(self, field, query_params):

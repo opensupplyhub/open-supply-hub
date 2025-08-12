@@ -5,6 +5,9 @@ import math
 class AddressMatcher():
     @staticmethod
     def match(address_a: str, address_b: str) -> float:
+        if not address_a or not address_b:
+            return 0.0
+
         return (
             fuzz.token_set_ratio(address_a, address_b)
             + fuzz.token_sort_ratio(address_a, address_b)
@@ -14,6 +17,9 @@ class AddressMatcher():
 class NameMatcher():
     @staticmethod
     def match(name_a: str, name_b: str) -> float:
+        if not name_a or not name_b:
+            return 0.0
+
         return (
             fuzz.token_set_ratio(name_a, name_b) +
             fuzz.token_sort_ratio(name_a, name_b)
@@ -53,12 +59,15 @@ class GeocodedLocationTypMatcher():
         """
         Returns a confidence score based on the location type
         """
+        if not location_type_a or not location_type_b:
+            return 0.0
 
         if location_type_a == location_type_b:
             return 1.0
 
-        if location_type_a == "ROOFTOP":
-            return 1
+        # If one is ROOFTOP and they don't match, confidence should be lower
+        if location_type_a == "ROOFTOP" or location_type_b == "ROOFTOP":
+            return 0.5
 
         return 0.0
 
@@ -66,9 +75,12 @@ class GeocodedLocationTypMatcher():
 TOP_LEVEL_OS_SCORE = 110
 
 
-class OpenSeachScoreMatcher():
+class OpenSearchScoreMatcher():
     @staticmethod
     def match(score: float) -> float:
+        if score < 0:
+            return 0.0
+
         confidence = math.log(score + 1) / math.log(TOP_LEVEL_OS_SCORE + 1)
 
         if confidence > 1:

@@ -1,39 +1,39 @@
 require "json"
 
-def filter(event)
+def safe_parse_geocode(event)
   geocode_value = event.get('geocode_value')
+  return nil if geocode_value.nil? || geocode_value.empty?
 
-  if geocode_value.nil? || geocode_value.empty?
-      return [event]
+  begin
+    JSON.parse(geocode_value)
+  rescue JSON::ParserError
+    nil
   end
+end
 
-  geocode_value_parsed = JSON.parse(geocode_value)
-
-  if geocode_value_parsed.nil? || geocode_value.empty?
-    return [event]
-  end
-
-  if !geocode_value_parsed.key?('data')
-    return [event]
-  end
-
-  data = geocode_value_parsed['data']
-
-  if !data.key?('results')
-    return [event]
-  end
-
+def first_result(parsed)
+  return nil unless parsed&.key?('data')
+  data = parsed['data']
+  return nil unless data&.key?('results')
   results = data['results']
+  return nil if results.nil? || results.empty?
 
-  if results.empty?
-    return [event]
-  end
+  results[0]
+end
 
-  location_type = results[0]['geometry']['location_type']
-  formatted_address = results[0]['formatted_address']
+def filter(event)
+  parsed = safe_parse_geocode(event)
+  return [event] if parsed.nil?
 
-  event.set('geocoded_location_type', location_type)
-  event.set('geocoded_address', formatted_address)
+  result = first_result(parsed)
+  return [event] if result.nil?
 
-  return [event]
+  geometry = result['geometry']
+  location_type = geometry&.dig('location_type') if geometry
+  formatted_address = result['formatted_address']
+
+  event.set('geocoded_location_type', location_type) if location_type
+  event.set('geocoded_address', formatted_address) if formatted_address
+
+  [event]
 end
