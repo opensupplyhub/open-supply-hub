@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any, Optional
 from api.geocoding import geocode_address
 from operator import itemgetter
 from api.services.record_linkage.score import ConfidenceCalculator
@@ -56,7 +56,7 @@ class RecordLinker():
             self.records_index[record["os_id"]] = index
             self.records[index]["confidence_score"] = 0.0
 
-    def __get_geocoding_result(self, address: str, country_code: str) -> Dict[str, any]:
+    def __get_geocoding_result(self, address: str, country_code: str) -> Optional[Dict[str, Any]]:
         geocoded_data = geocode_address(
             address=address,
             country_code=country_code,
