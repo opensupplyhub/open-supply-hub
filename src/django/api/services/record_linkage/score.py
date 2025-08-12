@@ -24,14 +24,13 @@ class ConfidenceCalculator():
         self.record = record
 
     def __calculate_confidence_weights(self):
-        if self.record['geocoded_location_type'] is "ROOFTOP":
+        if self.record['geocoded_location_type'] == "ROOFTOP":
             self.name_confidence = 0.16
             self.address_confidence = 0.2
             self.geocoded_location_type_confidence = 0.02
             self.geocoded_address_confidence = 0.05
             self.distance_confidence = 0.17
             self.score_confidence = 0.4
-            return
 
 
     def __calculate_confidence_scores(self):
