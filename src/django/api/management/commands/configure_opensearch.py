@@ -21,8 +21,19 @@ class Command(BaseCommand):
         """
         opensearch = OpenSearchServiceConnection()
 
-        logger.info(
-            "Setting up OpenSearch cluster settings for Machine Learning!")
+        self._configure_cluster_settings(opensearch)
+
+        model_group_id = self._ensure_model_group(opensearch)
+        model_id = self._ensure_model(opensearch, model_group_id)
+
+        self._deploy_model_if_needed(opensearch, model_id)
+        self._configure_ingestion_pipeline(opensearch, model_id)
+        self._configure_search_pipeline(opensearch)
+
+        logger.info("OpenSearch settings configured successfully!")
+
+    def _configure_cluster_settings(self, opensearch) -> None:
+        logger.info("Setting up OpenSearch cluster settings for Machine Learning!")
         settings_res = opensearch.client.cluster.put_settings(
             body={
                 "persistent": {
@@ -39,132 +50,107 @@ class Command(BaseCommand):
 
         logger.info("Cluster settings configured successfully!")
 
-        model_group_id = Settings.get(
+    def _ensure_model_group(self, opensearch) -> str:
+        model_group_id_setting = Settings.get(
             description="Model group ID for OpenSearch embedding generation model.",
             name=Settings.Name.OS_SENTENCE_TRANSFORMER_GROUP_ID,
         )
 
-        if not model_group_id.value:
-            logger.info(
-                "Creating model group for OpenSearch embedding generation model.")
-            model_reg_res = opensearch.client.plugins.ml.register_model_group(
-                body={
-                    "name": "NLP_Models",
-                    "description": "A model group for NLP models.",
-                },
-            )
-            model_group_id.update(value=model_reg_res["model_group_id"])
-            logger.info(
-                "Model group with ID '%s' created successfully!",
-                model_reg_res["model_group_id"],
-            )
-        else:
-            logger.info("Model group with ID '%s' already exists.",
-                        model_group_id.value)
+        if model_group_id_setting.value:
+            logger.info("Model group with ID '%s' already exists.", model_group_id_setting.value)
+            return model_group_id_setting.value
 
-        model_id = Settings.get(
+        logger.info("Creating model group for OpenSearch embedding generation model.")
+        model_reg_res = opensearch.client.plugins.ml.register_model_group(
+            body={
+                "name": "NLP_Models",
+                "description": "A model group for NLP models.",
+            },
+        )
+        model_group_id_setting.update(value=model_reg_res["model_group_id"])
+        logger.info(
+            "Model group with ID '%s' created successfully!",
+            model_reg_res["model_group_id"],
+        )
+        return model_reg_res["model_group_id"]
+
+    def _ensure_model(self, opensearch, model_group_id: str) -> str:
+        model_id_setting = Settings.get(
             name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
             description="Model ID for OpenSearch embedding generation model.",
         )
 
-        if not model_id.value:
-            logger.info(
-                "Creating model for OpenSearch embedding generation model.")
-            model_name = Settings.get(
-                name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_NAME,
-                description="Model name for OpenSearch embedding generation model.",
-                value="huggingface/sentence-transformers/all-MiniLM-L6-v2",
-            )
-            model_reg_res = opensearch.client.plugins.ml.register_model(
-                body={
-                    "name": model_name.value,
-                    "version": "1.0.1",
-                    "model_group_id": model_group_id.value,
-                    "model_format": "TORCH_SCRIPT",
-                },
-            )
-            logger.info(
-                "Model registration task with ID '%s' created successfully!",
-                model_reg_res["task_id"],
-            )
+        if model_id_setting.value:
+            logger.info("Model with ID '%s' already exists.", model_id_setting.value)
+            return model_id_setting.value
 
-            while True:
-                task_res = opensearch.client.plugins.ml.get_task(
-                    task_id=model_reg_res["task_id"],
-                )
+        logger.info("Creating model for OpenSearch embedding generation model.")
+        model_name = Settings.get(
+            name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_NAME,
+            description="Model name for OpenSearch embedding generation model.",
+            value="huggingface/sentence-transformers/all-MiniLM-L6-v2",
+        )
+        model_reg_res = opensearch.client.plugins.ml.register_model(
+            body={
+                "name": model_name.value,
+                "version": "1.0.1",
+                "model_group_id": model_group_id,
+                "model_format": "TORCH_SCRIPT",
+            },
+        )
+        logger.info(
+            "Model registration task with ID '%s' created successfully!",
+            model_reg_res["task_id"],
+        )
 
-                if task_res["state"] == "COMPLETED":
-                    model_id.update(value=task_res["model_id"])
-                    logger.info(
-                        "Model with ID '%s' created successfully!",
-                        task_res["model_id"],
-                    )
-                    break
+        task_res = self._wait_for_task_completion(
+            opensearch,
+            model_reg_res["task_id"],
+            context_description="model creation to complete",
+            failure_message="Model creation failed!",
+        )
+        model_id_setting.update(value=task_res["model_id"])
+        logger.info(
+            "Model with ID '%s' created successfully!",
+            task_res["model_id"],
+        )
+        return task_res["model_id"]
 
-                if task_res["state"] == "FAILED":
-                    raise RuntimeError(
-                        "Model creation failed!",
-                    )
-
-                logger.info(
-                    "Waiting for model creation to complete! Task state: '%s'",
-                    task_res["state"],
-                )
-
-                time.sleep(2)
-        else:
-            logger.info("Model with ID '%s' already exists.",
-                        model_id.value)
-
+    def _deploy_model_if_needed(self, opensearch, model_id: str) -> None:
         search_models_res = opensearch.client.plugins.ml.search_models(
             body={
                 "query": {
                     "ids": {
                         "values": [
-                            model_id.value,
+                            model_id,
                         ],
                     },
                 },
             },
         )
-
         model = search_models_res["hits"]["hits"][0]["_source"]
 
-        if model["model_state"] != "DEPLOYED":
-            logger.info(
-                "Deploying model with ID '%s'.",
-                model_id.value,
-            )
-            deploy_res = opensearch.client.plugins.ml.deploy_model(
-                model_id=model_id.value,
-            )
+        if model["model_state"] == "DEPLOYED":
+            logger.info("Model with ID '%s' already deployed.", model_id)
+            return
 
-            while True:
-                task_res = opensearch.client.plugins.ml.get_task(
-                    task_id=deploy_res["task_id"],
-                )
+        logger.info(
+            "Deploying model with ID '%s'.",
+            model_id,
+        )
+        deploy_res = opensearch.client.plugins.ml.deploy_model(
+            model_id=model_id,
+        )
 
-                if task_res["state"] == "COMPLETED":
-                    logger.info("Model with ID '%s' deployed successfully!",
-                                model_id.value)
-                    break
+        self._wait_for_task_completion(
+            opensearch,
+            deploy_res["task_id"],
+            context_description=f"model deployment with ID '{model_id}'",
+            failure_message="Model deployment failed!",
+        )
+        logger.info("Model with ID '%s' deployed successfully!", model_id)
 
-                if task_res["state"] == "FAILED":
-                    logger.error(
-                        "Model deployment with ID '%s' failed! Task state: '%s'",
-                        model_id.value,
-                        task_res["state"],
-                    )
-                    raise RuntimeError("Model deployment failed!")
-
-                logger.info(
-                    "Waiting for model deployment with ID '%s'! Task state: '%s'",
-                    model_id.value,
-                    task_res["state"],
-                )
-
-                time.sleep(2)
-
+    def _configure_ingestion_pipeline(self, opensearch, model_id: str) -> None:
         ingestion_pipeline_id = Settings.get(
             name=Settings.Name.OS_INGESTION_PIPELINE_ID,
             description="Ingestion pipeline for OpenSearch embedding generation model.",
@@ -178,7 +164,7 @@ class Command(BaseCommand):
                 "processors": [
                     {
                         "text_embedding": {
-                            "model_id": model_id.value,
+                            "model_id": model_id,
                             "field_map": {
                                 "name": "name_embedding",
                                 "address": "address_embedding",
@@ -191,14 +177,16 @@ class Command(BaseCommand):
 
         if not ingestion_pipeline_res["acknowledged"]:
             logger.error(
-                "Failed to configure ingestion pipeline, update not acknowledged!")
-            raise RuntimeError("Failed to configure ingestion pipeline!")
-        else:
-            logger.info(
-                "Ingestion pipeline with ID '%s' updated successfully!",
-                ingestion_pipeline_id.value,
+                "Failed to configure ingestion pipeline, update not acknowledged!"
             )
+            raise RuntimeError("Failed to configure ingestion pipeline!")
 
+        logger.info(
+            "Ingestion pipeline with ID '%s' updated successfully!",
+            ingestion_pipeline_id.value,
+        )
+
+    def _configure_search_pipeline(self, opensearch) -> None:
         search_pipeline_id = Settings.get(
             name=Settings.Name.OS_SEARCH_PIPELINE_ID,
             description="Search pipeline for OpenSearch hybrid search.",
@@ -226,12 +214,42 @@ class Command(BaseCommand):
 
         if not search_pipeline_res["acknowledged"]:
             logger.error(
-                "Failed to configure search pipeline, update not acknowledged!")
+                "Failed to configure search pipeline, update not acknowledged!"
+            )
             raise RuntimeError("Failed to configure search pipeline!")
-        else:
-            logger.info(
-                "Search pipeline with ID '%s' updated successfully!",
-                search_pipeline_id.value,
+
+        logger.info(
+            "Search pipeline with ID '%s' updated successfully!",
+            search_pipeline_id.value,
+        )
+
+    def _wait_for_task_completion(
+        self,
+        opensearch,
+        task_id: str,
+        context_description: str,
+        failure_message: str,
+    ) -> dict:
+        while True:
+            task_res = opensearch.client.plugins.ml.get_task(
+                task_id=task_id,
             )
 
-        logger.info("OpenSearch settings configured successfully!")
+            if task_res["state"] == "COMPLETED":
+                return task_res
+
+            if task_res["state"] == "FAILED":
+                logger.error(
+                    "%s Task state: '%s'",
+                    failure_message,
+                    task_res["state"],
+                )
+                raise RuntimeError(failure_message)
+
+            logger.info(
+                "Waiting for %s! Task state: '%s'",
+                context_description,
+                task_res["state"],
+            )
+
+            time.sleep(2)
