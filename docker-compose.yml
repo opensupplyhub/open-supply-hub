@@ -29,8 +29,8 @@ services:
     image: opensupplyhub
     env_file: .env
     environment:
-      # - POSTGRES_HOST=private-instance-db
-      - POSTGRES_HOST=database
+      - POSTGRES_HOST=private-instance-db
+      # - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
       - POSTGRES_USER=opensupplyhub
       - POSTGRES_PASSWORD=opensupplyhub
@@ -176,7 +176,8 @@ services:
       - ENV="Local"
       - INSTANCE_SOURCE=os_hub
       - ROLLBAR_SERVER_SIDE_ACCESS_TOKEN=""
-      - POSTGRES_HOST=database
+      - POSTGRES_HOST=private-instance-db
+      # - POSTGRES_HOST=database
       - POSTGRES_PORT=5432
       - POSTGRES_USER=opensupplyhub
       - POSTGRES_PASSWORD=opensupplyhub

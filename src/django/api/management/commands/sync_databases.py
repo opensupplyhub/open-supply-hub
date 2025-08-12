@@ -1,5 +1,6 @@
 import logging
-from collections import defaultdict
+import os
+from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -231,7 +232,8 @@ class DatabaseSynchronizer:
         }
     }
 
-    def __init__(self, source_db_config, target_db_config, dry_run=False):
+    def __init__(self, source_db_config, target_db_config, dry_run=False, 
+                 last_run_path=None):
         """
         Initialize the synchronizer with database configurations.
  
@@ -240,10 +242,16 @@ class DatabaseSynchronizer:
             target_db_config (dict): Configuration for target database (DB B)
             dry_run (bool): If True, don't actually make changes, just log what
                            would be done
+            last_run_path (str): Path to store last run metadata for each model
         """
         self.source_config = source_db_config
         self.target_config = target_db_config
         self.dry_run = dry_run
+        self.last_run_path = last_run_path or "/tmp/sync_databases_last_run"
+        
+        # Ensure the last run directory exists
+        os.makedirs(self.last_run_path, exist_ok=True)
+        
         self.stats = {
             'inserts': 0,
             'updates': 0,
@@ -256,6 +264,38 @@ class DatabaseSynchronizer:
 
         # Set up database connections
         self._setup_database_connections()
+
+    def _get_last_run_timestamp(self, model_name, suffix=""):
+        """Get the last run timestamp for a specific model."""
+        filename = f"{model_name.lower()}_last_run"
+        if suffix:
+            filename += f"_{suffix}"
+        last_run_file = os.path.join(self.last_run_path, filename)
+        
+        if os.path.exists(last_run_file):
+            try:
+                with open(last_run_file, 'r') as f:
+                    timestamp_str = f.read().strip()
+                    return datetime.fromisoformat(timestamp_str)
+            except (ValueError, IOError) as e:
+                logger.warning(f"Could not read last run timestamp for {model_name}: {e}")
+        
+        # Return a very old date if no last run file exists
+        return datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+    def _save_last_run_timestamp(self, model_name, timestamp, suffix=""):
+        """Save the last run timestamp for a specific model."""
+        filename = f"{model_name.lower()}_last_run"
+        if suffix:
+            filename += f"_{suffix}"
+        last_run_file = os.path.join(self.last_run_path, filename)
+        
+        try:
+            with open(last_run_file, 'w') as f:
+                f.write(timestamp.isoformat())
+            logger.debug(f"Saved last run timestamp for {model_name}: {timestamp}")
+        except IOError as e:
+            logger.error(f"Could not save last run timestamp for {model_name}: {e}")
 
     def sync_all(self):
         """Synchronize all configured models in dependency order."""
@@ -357,22 +397,39 @@ class DatabaseSynchronizer:
         logger.info(f"Using sync field: {sync_field}")
         logger.info(f"Foreign keys: {foreign_keys}")
         
+        # Get the last run timestamp for this model
+        last_run = self._get_last_run_timestamp(model_name)
+        logger.info(f"Last run timestamp for {model_name}: {last_run}")
+        
         try:
-            # Get all records from source
-            source_records = list(model_class.objects.using('source').all())
-            logger.info(f"Found {len(source_records)} records in source model "
-                        f"{model_name}")
+            # Get only records updated since last run
+            source_records = list(
+                model_class.objects.using('source')
+                .filter(updated_at__gt=last_run)
+                .order_by('updated_at')
+            )
+            logger.info(f"Found {len(source_records)} records updated since last run "
+                        f"in source model {model_name}")
             
             # Process each record
+            last_processed_timestamp = None
             for source_record in source_records:
                 try:
                     self._process_record(
                         model_class, source_record, sync_field,
                         pk_type, foreign_keys, model_name, excluded_fields
                     )
+                    
+                    # Track the timestamp of the last processed record
+                    last_processed_timestamp = source_record.updated_at
+                        
                 except Exception as e:
                     logger.error(f"Error processing record in {model_name}: {e}")
                     self.stats['errors'] += 1
+            
+            # Save the timestamp of the last successfully processed record
+            if last_processed_timestamp:
+                self._save_last_run_timestamp(model_name, last_processed_timestamp)
             
             logger.info(f"Completed synchronization for model {model_name}")
             
@@ -389,35 +446,22 @@ class DatabaseSynchronizer:
                 **{sync_field: getattr(source_record, sync_field)}
             )
 
-            # Record exists, check if it needs updating
-            if self._needs_update(source_record, existing_record):
-                self._update_record(source_record, existing_record,
-                                    foreign_keys, model_name, excluded_fields,
-                                    pk_type)
-                self.stats['updates'] += 1
-                logger.debug(f"Updated record with {sync_field}="
-                             f"{getattr(source_record, sync_field)} in {model_name}")
-            else:
-                self.stats['skipped'] += 1
+            # Record exists - always update it (since incremental sync already filtered by updated_at)
+            self._update_record(source_record, existing_record,
+                                foreign_keys, model_name, excluded_fields,
+                                pk_type)
+            self.stats['updates'] += 1
+            logger.debug(f"Updated record with {sync_field}="
+                         f"{getattr(source_record, sync_field)} in {model_name}")
+                        
         except model_class.DoesNotExist:
-            # Record doesn't exist, insert it
+            # Record doesn't exist - insert it
             self._insert_record(model_class, source_record, sync_field, pk_type,
                                 foreign_keys, model_name, excluded_fields)
             self.stats['inserts'] += 1
             logger.debug(f"Inserted record with {sync_field}="
                          f"{getattr(source_record, sync_field)} in {model_name}")
 
-    def _needs_update(self, source_record, target_record):
-        """Check if a record needs to be updated based on updated_at field."""
-        if hasattr(source_record, 'updated_at') and hasattr(target_record, 'updated_at'):
-            source_updated = source_record.updated_at
-            target_updated = target_record.updated_at
-            
-            if source_updated and target_updated:
-                return source_updated > target_updated
-        
-        return False
-    
     def _insert_record(self, model_class, source_record, sync_field, pk_type,
                        foreign_keys, model_name, excluded_fields):
         """Insert a new record into the target database."""
@@ -606,57 +650,77 @@ class DatabaseSynchronizer:
         """Update FacilityListItem.facility field using UUID matching."""
         logger.info("Updating FacilityListItem.facility references...")
         
-        # Get all facility list items that need facility updated
-        # This includes both records with no facility and records that might need facility cleared
-        list_items = FacilityListItem.objects.using('target').all()
+        # Use a separate timestamp for facility updates
+        last_run = self._get_last_run_timestamp('FacilityListItem', 'facility_updates')
+        logger.info(f"Last run timestamp for FacilityListItem facility updates: {last_run}")
+        
+        # Get only facility list items that need facility updated and were updated since last run
+        list_items = FacilityListItem.objects.using('target').filter(
+            updated_at__gt=last_run
+        ).order_by('updated_at')
+        
+        logger.info(f"Found {list_items.count()} FacilityListItem records updated since last run")
         
         updated_count = 0
         cleared_count = 0
         errors_count = 0
         
-        for list_item in list_items:
-            # Find the corresponding list item in source DB
-            try:
-                source_list_item = (
-                    FacilityListItem.objects.using('source').get(
-                        uuid=list_item.uuid
-                    )
-                )
-                
-                if source_list_item.facility:
-                    # Source has a facility - find the corresponding facility in target DB
-                    try:
-                        target_facility = Facility.objects.using('target').get(
-                            id=source_list_item.facility.id
+        # Track the timestamp of the last processed record
+        last_processed_timestamp = None
+        
+        try:
+            for list_item in list_items:
+                # Find the corresponding list item in source DB
+                try:
+                    source_list_item = (
+                        FacilityListItem.objects.using('source').get(
+                            uuid=list_item.uuid
                         )
-                        # Only update if the facility is different
-                        if list_item.facility.id != target_facility.id:
-                            list_item.facility = target_facility
-                            list_item.save(using='target')
-                            updated_count += 1
-                            logger.debug(f"Updated FacilityListItem {list_item.id} "
-                                         f"facility to {target_facility.id}")
-                    except Facility.DoesNotExist:
-                        logger.warning(f"Could not find Facility with ID "
-                                       f"{source_list_item.facility.id} for "
-                                       f"FacilityListItem {list_item.id}")
-                        errors_count += 1
-                else:
-                    # Source has no facility - clear the facility in target if it exists
-                    if list_item.facility is not None:
-                        list_item.facility = None
-                        list_item.save(using='target')
-                        cleared_count += 1
-                        logger.debug(f"Cleared facility for FacilityListItem {list_item.id} "
-                                     f"(source has no facility)")
-                    else:
-                        logger.debug(f"FacilityListItem {list_item.id} already has no "
-                                     f"facility reference")
+                    )
                     
-            except FacilityListItem.DoesNotExist:
-                logger.warning(f"Could not find source FacilityListItem with "
-                               f"UUID {list_item.uuid}")
-                errors_count += 1
+                    if source_list_item.facility:
+                        # Source has a facility - find the corresponding facility in target DB
+                        try:
+                            target_facility = Facility.objects.using('target').get(
+                                id=source_list_item.facility.id
+                            )
+                            # Only update if the facility is different
+                            # Handle case where list_item.facility might be None
+                            if (list_item.facility is None or
+                                    list_item.facility.id != target_facility.id):
+                                list_item.facility = target_facility
+                                list_item.save(using='target')
+                                updated_count += 1
+                                logger.debug(f"Updated FacilityListItem {list_item.id} "
+                                             f"facility to {target_facility.id}")
+                        except Facility.DoesNotExist:
+                            logger.warning(f"Could not find Facility with ID "
+                                           f"{source_list_item.facility.id} for "
+                                           f"FacilityListItem {list_item.id}")
+                            errors_count += 1
+                    else:
+                        # Source has no facility - clear the facility in target if it exists
+                        if list_item.facility is not None:
+                            list_item.facility = None
+                            list_item.save(using='target')
+                            cleared_count += 1
+                            logger.debug(f"Cleared facility for FacilityListItem {list_item.id} "
+                                         f"(source has no facility)")
+                        else:
+                            logger.debug(f"FacilityListItem {list_item.id} already has no "
+                                         f"facility reference")
+                    
+                    # Track the timestamp of the last processed record
+                    last_processed_timestamp = list_item.updated_at
+                        
+                except FacilityListItem.DoesNotExist:
+                    logger.warning(f"Could not find source FacilityListItem with "
+                                   f"UUID {list_item.uuid}")
+                    errors_count += 1
+                    
+        except Exception as e:
+            logger.error(f"Error during facility list item facility updates: {e}")
+            self.stats['errors'] += 1
         
         # Update stats
         self.stats['circular_reference_updates'] += updated_count + cleared_count
@@ -667,6 +731,11 @@ class DatabaseSynchronizer:
         logger.info(f"Cleared facility references for {cleared_count} "
                     f"FacilityListItem records")
         logger.info(f"Circular reference errors: {errors_count}")
+        
+        # Save the timestamp of the last successfully processed record
+        if last_processed_timestamp:
+            self._save_last_run_timestamp('FacilityListItem', last_processed_timestamp, 'facility_updates')
+            logger.info(f"Saved facility updates timestamp: {last_processed_timestamp}")
 
 
 class Command(BaseCommand):
@@ -747,6 +816,13 @@ class Command(BaseCommand):
             action='store_true',
             help='Enable verbose logging'
         )
+        parser.add_argument(
+            '--last-run-path',
+            type=str,
+            default='/tmp/sync_databases_last_run',
+            help='Path to store last run metadata for incremental syncs '
+                 '(default: /tmp/sync_databases_last_run)'
+        )
 
     def handle(self, *args, **options):
         # Setup logging.
@@ -776,21 +852,34 @@ class Command(BaseCommand):
         synchronizer = DatabaseSynchronizer(
             source_config,
             target_config,
-            dry_run=options['dry_run']
+            dry_run=options['dry_run'],
+            last_run_path=options['last_run_path']
         )
 
         try:
             stats = synchronizer.sync_all()
 
-            # Reindex the database.
-            logger.info("Starting database reindexing with "
-                        "index_facilities_new...")
-            try:
-                index_facilities_new([])
-                logger.info("Database reindexing completed successfully")
-            except Exception as e:
-                logger.error(f"Database reindexing failed: {e}")
-                raise
+            # Only reindex if there were actual database changes
+            has_changes = (
+                stats.get('inserts', 0) > 0 or 
+                stats.get('updates', 0) > 0 or 
+                stats.get('fk_updates', 0) > 0 or 
+                stats.get('fk_reassignments', 0) > 0 or 
+                stats.get('circular_reference_updates', 0) > 0
+            )
+            
+            if has_changes:
+                # Reindex the database.
+                logger.info("Starting database reindexing with "
+                            "index_facilities_new...")
+                try:
+                    index_facilities_new([])
+                    logger.info("Database reindexing completed successfully")
+                except Exception as e:
+                    logger.error(f"Database reindexing failed: {e}")
+                    raise
+            else:
+                logger.info("No database changes detected, skipping reindexing")
 
             if options['dry_run']:
                 self.stdout.write(
