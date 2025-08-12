@@ -52,8 +52,9 @@ class ProductionLocations(ViewSet):
     swagger_schema = None
 
     @staticmethod
-    def __init_opensearch(model_id: str = None) -> Tuple[OpenSearchService,
-                                                         OpenSearchQueryDirector]:
+    def __init_opensearch(
+        model_id: str = None,
+    ) -> Tuple[OpenSearchService, OpenSearchQueryDirector]:
         opensearch_service = OpenSearchService()
         opensearch_query_builder = ProductionLocationsQueryBuilder(
             model_id=model_id,
@@ -127,27 +128,36 @@ class ProductionLocations(ViewSet):
         if record_linkage_enabled:
             try:
                 model_id = Settings.objects.filter(
-                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID).get()
+                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
+                ).get()
                 os_model_id = model_id.value
             except Settings.DoesNotExist:
                 return Response(
                     data={
-                        "detail": "The OpenSearch model id is not set in the settings.",
+                        "detail": (
+                            "The OpenSearch model id is not set in the "
+                            "settings."
+                        ),
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
             try:
                 model_id = Settings.objects.filter(
-                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID).get()
+                    name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
+                ).get()
                 search_pipeline_id = Settings.objects.filter(
-                    name=Settings.Name.OS_SEARCH_PIPELINE_ID).get()
+                    name=Settings.Name.OS_SEARCH_PIPELINE_ID,
+                ).get()
 
                 os_search_pipeline_id = search_pipeline_id.value
             except Settings.DoesNotExist:
                 return Response(
                     data={
-                        "detail": "The OpenSearch search pipeline id is not set in the settings.",
+                        "detail": (
+                            "The OpenSearch search pipeline id is not set in "
+                            "the settings."
+                        ),
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )

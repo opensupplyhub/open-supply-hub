@@ -32,7 +32,6 @@ class ConfidenceCalculator():
             self.distance_confidence = 0.17
             self.score_confidence = 0.4
 
-
     def __calculate_confidence_scores(self):
         self.records_df["name_confidence"] = self.records_df["name"].apply(
             lambda row_name: NameMatcher.match(
@@ -40,21 +39,27 @@ class ConfidenceCalculator():
                 self.record["name"]
             ),
         )
-        self.records_df["address_confidence"] = self.records_df["address"].apply(
+        self.records_df["address_confidence"] = self.records_df[
+            "address"
+        ].apply(
             lambda row_address: AddressMatcher.match(
                 row_address,
                 self.record["address"]
             ),
         )
-        self.records_df["geocoded_address_confidence"] = self.records_df["geocoded_address"].apply(
+        self.records_df["geocoded_address_confidence"] = self.records_df[
+            "geocoded_address"
+        ].apply(
             lambda row_geocoded_address: AddressMatcher.match(
                 row_geocoded_address,
                 self.record["geocoded_address"]
             )
         )
-        self.records_df["geocoded_location_type_confidence"] = self.records_df["geocoded_location_type"].apply(
-            lambda row_geocoded_location_type: GeocodedLocationTypMatcher.match(
-                row_geocoded_location_type,
+        self.records_df["geocoded_location_type_confidence"] = self.records_df[
+            "geocoded_location_type"
+        ].apply(
+            lambda row_type: GeocodedLocationTypMatcher.match(
+                row_type,
                 self.record["geocoded_location_type"]
             )
         )
@@ -65,7 +70,9 @@ class ConfidenceCalculator():
             ).km,
             axis=1
         )
-        self.records_df["distance_confidence"] = self.records_df["distance_in_km"].apply(
+        self.records_df["distance_confidence"] = self.records_df[
+            "distance_in_km"
+        ].apply(
             lambda row_distance: DistanceMatcher.match(
                 row_distance
             ),
@@ -79,11 +86,19 @@ class ConfidenceCalculator():
     def score(self) -> pd.DataFrame:
         self.__calculate_confidence_scores()
         self.__calculate_confidence_weights()
-        self.records_df["confidence_score"] = self.records_df["name_confidence"] * self.name_confidence + \
-            self.records_df["address_confidence"] * self.address_confidence + \
-            self.records_df["geocoded_location_type_confidence"] * self.geocoded_location_type_confidence + \
-            self.records_df["geocoded_address_confidence"] * self.geocoded_address_confidence + \
-            self.records_df["distance_confidence"] * self.distance_confidence + \
-            self.records_df["score_confidence"] * self.score_confidence
+        self.records_df["confidence_score"] = (
+            self.records_df["name_confidence"] * self.name_confidence
+            + self.records_df["address_confidence"] * self.address_confidence
+            + (
+                self.records_df["geocoded_location_type_confidence"]
+                * self.geocoded_location_type_confidence
+            )
+            + (
+                self.records_df["geocoded_address_confidence"]
+                * self.geocoded_address_confidence
+            )
+            + self.records_df["distance_confidence"] * self.distance_confidence
+            + self.records_df["score_confidence"] * self.score_confidence
+        )
 
         return self.records_df

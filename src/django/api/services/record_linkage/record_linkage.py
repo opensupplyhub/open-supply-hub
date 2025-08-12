@@ -48,7 +48,11 @@ class RecordLinker():
                 record["address"],
                 record["country"]["alpha_2"],
                 geocoded_location_type,
-                record["geocoded_address"] if "geocoded_address" in record else None,
+                (
+                    record["geocoded_address"]
+                    if "geocoded_address" in record
+                    else None
+                ),
                 record["score"] if "score" in record else None,
                 record["coordinates"]["lat"],
                 record["coordinates"]["lng"]
@@ -56,7 +60,11 @@ class RecordLinker():
             self.records_index[record["os_id"]] = index
             self.records[index]["confidence_score"] = 0.0
 
-    def __get_geocoding_result(self, address: str, country_code: str) -> Optional[Dict[str, Any]]:
+    def __get_geocoding_result(
+        self,
+        address: str,
+        country_code: str,
+    ) -> Optional[Dict[str, Any]]:
         geocoded_data = geocode_address(
             address=address,
             country_code=country_code,
@@ -65,7 +73,10 @@ class RecordLinker():
         if "full_response" not in geocoded_data:
             return None
 
-        if "results" not in geocoded_data["full_response"] or not geocoded_data["full_response"]["results"]:
+        if (
+            "results" not in geocoded_data["full_response"]
+            or not geocoded_data["full_response"]["results"]
+        ):
             return None
 
         result = geocoded_data["full_response"]["results"][0]
@@ -77,7 +88,12 @@ class RecordLinker():
             "lng": geocoded_data["geocoded_point"]["lng"],
         }
 
-    def predict(self, name: str, address: str, country_code: str) -> List[Dict[str, any]]:
+    def predict(
+        self,
+        name: str,
+        address: str,
+        country_code: str,
+    ) -> List[Dict[str, any]]:
         geocoding_result = self.__get_geocoding_result(
             address=address,
             country_code=country_code
@@ -94,10 +110,14 @@ class RecordLinker():
         }
 
         if geocoding_result:
-            record["geocoded_location_type"] = geocoding_result["geocoded_location_type"]
+            record["geocoded_location_type"] = geocoding_result[
+                "geocoded_location_type"
+            ]
             record["lat"] = geocoding_result["lat"]
             record["lng"] = geocoding_result["lng"]
-            record["geocoded_address"] = geocoding_result["geocoded_address"]
+            record["geocoded_address"] = geocoding_result[
+                "geocoded_address"
+            ]
 
         self.records_df = ConfidenceCalculator(self.records_df, record).score()
 
@@ -105,7 +125,8 @@ class RecordLinker():
             os_id = row["os_id"]
             index = self.records_index[os_id]
             self.records[index]["confidence_score"] = round(
-                row["confidence_score"], 2)
+                row["confidence_score"], 2
+            )
 
         return sorted(
             self.records,

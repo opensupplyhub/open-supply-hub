@@ -64,7 +64,11 @@ class SplinkLinker():
             self.records_index[record["os_id"]] = index
             self.records[index]["match_probability"] = 0.0
 
-    def __get_geocoding_result(self, address: str, country_code: str) -> Optional[Dict[str, any]]:
+    def __get_geocoding_result(
+        self,
+        address: str,
+        country_code: str,
+    ) -> Optional[Dict[str, any]]:
         geocoded_data = geocode_address(
             address=address,
             country_code=country_code,
@@ -73,7 +77,10 @@ class SplinkLinker():
         if "full_response" not in geocoded_data:
             return None
 
-        if "results" not in geocoded_data["full_response"] or not geocoded_data["full_response"]["results"]:
+        if (
+            "results" not in geocoded_data["full_response"]
+            or not geocoded_data["full_response"]["results"]
+        ):
             return None
 
         result = geocoded_data["full_response"]["results"][0]
@@ -85,7 +92,12 @@ class SplinkLinker():
             "lng": geocoded_data["geocoded_point"]["lng"],
         }
 
-    def predict(self, name: str, address: str, country_code: str) -> List[Dict[str, any]]:
+    def predict(
+        self,
+        name: str,
+        address: str,
+        country_code: str,
+    ) -> List[Dict[str, any]]:
         geocoding_result = self.__get_geocoding_result(
             address=address,
             country_code=country_code
@@ -102,7 +114,9 @@ class SplinkLinker():
         }
 
         if geocoding_result:
-            record["geocoded_location_type"] = geocoding_result["geocoded_location_type"]
+            record["geocoded_location_type"] = geocoding_result[
+                "geocoded_location_type"
+            ]
             record["lat"] = geocoding_result["lat"]
             record["lng"] = geocoding_result["lng"]
 
@@ -118,6 +132,7 @@ class SplinkLinker():
             os_id = row["os_id_l"]
             index = self.records_index[os_id]
             self.records[index]["match_probability"] = round(
-                row["match_probability"], 2)
+                row["match_probability"], 2
+            )
 
         return self.records

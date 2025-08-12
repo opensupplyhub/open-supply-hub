@@ -33,7 +33,9 @@ class Command(BaseCommand):
         logger.info("OpenSearch settings configured successfully!")
 
     def _configure_cluster_settings(self, opensearch) -> None:
-        logger.info("Setting up OpenSearch cluster settings for Machine Learning!")
+        logger.info(
+            "Setting up OpenSearch cluster settings for Machine Learning!"
+        )
         settings_res = opensearch.client.cluster.put_settings(
             body={
                 "persistent": {
@@ -52,15 +54,22 @@ class Command(BaseCommand):
 
     def _ensure_model_group(self, opensearch) -> str:
         model_group_id_setting = Settings.get(
-            description="Model group ID for OpenSearch embedding generation model.",
+            description=(
+                "Model group ID for OpenSearch embedding generation model."
+            ),
             name=Settings.Name.OS_SENTENCE_TRANSFORMER_GROUP_ID,
         )
 
         if model_group_id_setting.value:
-            logger.info("Model group with ID '%s' already exists.", model_group_id_setting.value)
+            logger.info(
+                "Model group with ID '%s' already exists.",
+                model_group_id_setting.value,
+            )
             return model_group_id_setting.value
 
-        logger.info("Creating model group for OpenSearch embedding generation model.")
+        logger.info(
+            "Creating model group for OpenSearch embedding generation model."
+        )
         model_reg_res = opensearch.client.plugins.ml.register_model_group(
             body={
                 "name": "NLP_Models",
@@ -77,17 +86,26 @@ class Command(BaseCommand):
     def _ensure_model(self, opensearch, model_group_id: str) -> str:
         model_id_setting = Settings.get(
             name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
-            description="Model ID for OpenSearch embedding generation model.",
+            description=(
+                "Model ID for OpenSearch embedding generation model."
+            ),
         )
 
         if model_id_setting.value:
-            logger.info("Model with ID '%s' already exists.", model_id_setting.value)
+            logger.info(
+                "Model with ID '%s' already exists.",
+                model_id_setting.value,
+            )
             return model_id_setting.value
 
-        logger.info("Creating model for OpenSearch embedding generation model.")
+        logger.info(
+            "Creating model for OpenSearch embedding generation model."
+        )
         model_name = Settings.get(
             name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_NAME,
-            description="Model name for OpenSearch embedding generation model.",
+            description=(
+                "Model name for OpenSearch embedding generation model."
+            ),
             value="huggingface/sentence-transformers/all-MiniLM-L6-v2",
         )
         model_reg_res = opensearch.client.plugins.ml.register_model(
@@ -153,7 +171,9 @@ class Command(BaseCommand):
     def _configure_ingestion_pipeline(self, opensearch, model_id: str) -> None:
         ingestion_pipeline_id = Settings.get(
             name=Settings.Name.OS_INGESTION_PIPELINE_ID,
-            description="Ingestion pipeline for OpenSearch embedding generation model.",
+            description=(
+                "Ingestion pipeline for OpenSearch embedding generation model."
+            ),
             value=INGESTION_PIPELINE_ID,
         )
 
@@ -177,7 +197,8 @@ class Command(BaseCommand):
 
         if not ingestion_pipeline_res["acknowledged"]:
             logger.error(
-                "Failed to configure ingestion pipeline, update not acknowledged!"
+                "Failed to configure ingestion pipeline, update not "
+                "acknowledged!"
             )
             raise RuntimeError("Failed to configure ingestion pipeline!")
 
