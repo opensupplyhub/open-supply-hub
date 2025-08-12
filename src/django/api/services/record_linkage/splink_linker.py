@@ -1,5 +1,5 @@
 from splink import Linker, DuckDBAPI
-from typing import List, Dict
+from typing import List, Dict, Optional
 from api.geocoding import geocode_address
 import pandas as pd
 import numpy as np
@@ -64,16 +64,16 @@ class SplinkLinker():
             self.records_index[record["os_id"]] = index
             self.records[index]["match_probability"] = 0.0
 
-    def __get_geocoding_result(self, address: str, country_code: str) -> Dict[str, any]:
+    def __get_geocoding_result(self, address: str, country_code: str) -> Optional[Dict[str, any]]:
         geocoded_data = geocode_address(
             address=address,
             country_code=country_code,
         )
 
-        if not "full_response" in geocoded_data:
+        if "full_response" not in geocoded_data:
             return None
 
-        if not "results" in geocoded_data["full_response"] or not geocoded_data["full_response"]["results"]:
+        if "results" not in geocoded_data["full_response"] or not geocoded_data["full_response"]["results"]:
             return None
 
         result = geocoded_data["full_response"]["results"][0]
