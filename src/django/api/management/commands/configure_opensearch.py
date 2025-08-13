@@ -117,7 +117,7 @@ class Command(BaseCommand):
             },
         )
         logger.info(
-            "Model registration task with ID '%s' created successfully!",
+            "Model registration task '%s' created!",
             model_reg_res["task_id"],
         )
 
@@ -148,10 +148,11 @@ class Command(BaseCommand):
         )
         hits = search_models_res.get("hits", {}).get("hits", [])
 
-        # If the configured model_id is not found in OpenSearch, re-register and update
+        # If the configured model_id is not found in OpenSearch,
+        # re-register and update the model_id_setting.
         if not hits:
             logger.warning(
-                "Model with ID '%s' not found in OpenSearch. Re-registering a new model.",
+                "Model with ID '%s' not found. Re-registering a new model.",
                 model_id,
             )
 
@@ -176,8 +177,9 @@ class Command(BaseCommand):
                 value="huggingface/sentence-transformers/all-MiniLM-L6-v2",
             )
 
-            # Do not set value to None to avoid NOT NULL constraint; _ensure_model
-            # will register and persist the new model id into the setting.
+            # Do not set value to None to avoid NOT NULL constraint;
+            # _ensure_model will register and persist the new model id
+            # into the setting.
 
             # Register a new model directly and persist its ID
             model_reg_res = opensearch.client.plugins.ml.register_model(
@@ -196,38 +198,65 @@ class Command(BaseCommand):
                 task_res = self._wait_for_task_completion(
                     opensearch,
                     model_reg_res["task_id"],
-                    context_description="model creation to complete",
-                    failure_message="Model creation failed!",
+                    context_description="model creation to complete (retry)",
+                    failure_message=(
+                        "Model creation failed after retry!"
+                    ),
                 )
             except RuntimeError as e:
-                # If model group is missing in OpenSearch, create a new one and retry once
+                # If model group is missing in OpenSearch,
+                # create a new one and retry once.
                 if "get model group" in str(e).lower():
-                    logger.warning("Model group missing in OpenSearch, creating a new one and retrying registration.")
-                    new_group_res = opensearch.client.plugins.ml.register_model_group(
-                        body={
-                            "name": "NLP_Models",
-                            "description": "A model group for NLP models.",
-                        },
+                    logger.warning(
+                        (
+                            "Model group missing. "
+                            "Creating a new group and retrying."
+                        )
                     )
-                    model_group_id_setting.update(value=new_group_res["model_group_id"])
+                    new_group_res = (
+                        opensearch.client.plugins.ml
+                        .register_model_group(
+                            body={
+                                "name": "NLP_Models",
+                                "description": (
+                                    "A model group for NLP models."
+                                ),
+                            },
+                        )
+                    )
+                    model_group_id_setting.update(
+                        value=new_group_res["model_group_id"]
+                    )
                     # Retry registration with the new group id
-                    model_reg_res = opensearch.client.plugins.ml.register_model(
-                        body={
-                            "name": model_name.value,
-                            "version": "1.0.1",
-                            "model_group_id": new_group_res["model_group_id"],
-                            "model_format": "TORCH_SCRIPT",
-                        },
+                    model_reg_res = (
+                        opensearch.client.plugins.ml
+                        .register_model(
+                            body={
+                                "name": model_name.value,
+                                "version": "1.0.1",
+                                "model_group_id": (
+                                    new_group_res["model_group_id"]
+                                ),
+                                "model_format": "TORCH_SCRIPT",
+                            },
+                        )
                     )
                     logger.info(
-                        "Model registration task with ID '%s' created successfully (retry)!",
+                        (
+                            "Model registration task with ID '%s' created "
+                            "successfully (retry)!"
+                        ),
                         model_reg_res["task_id"],
                     )
                     task_res = self._wait_for_task_completion(
                         opensearch,
                         model_reg_res["task_id"],
-                        context_description="model creation to complete (retry)",
-                        failure_message="Model creation failed after retry!",
+                        context_description=(
+                            "model creation to complete (retry)"
+                        ),
+                        failure_message=(
+                            "Model creation failed after retry!"
+                        ),
                     )
                 else:
                     raise
@@ -248,11 +277,14 @@ class Command(BaseCommand):
 
             if not hits:
                 logger.error(
-                    "Failed to find the newly registered model with ID '%s' in OpenSearch.",
+                    (
+                        "Failed to find newly registered model '%s' in "
+                        "OpenSearch."
+                    ),
                     model_id,
                 )
                 raise RuntimeError(
-                    "Model registration lookup failed; cannot proceed with deployment."
+                    "Model registration lookup failed; cannot proceed."
                 )
 
         model = hits[0]["_source"]
