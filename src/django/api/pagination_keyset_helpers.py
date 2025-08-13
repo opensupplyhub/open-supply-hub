@@ -14,7 +14,7 @@ def _bm_key(h: str, page: int) -> str:
     return f"dl:{h}:p:{page}"
 
 def get_bm(h: str, page: int) -> Optional[int]:
-    return cache.get(_bm_key(h, page))  # last_id or None
+    return cache.get(_bm_key(h, page))
 
 def set_bm(h: str, page: int, last_id: Optional[int], ttl: int = 1800) -> None:
     if last_id is not None:
