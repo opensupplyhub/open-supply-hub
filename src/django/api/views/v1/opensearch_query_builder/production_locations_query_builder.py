@@ -14,7 +14,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
                 ]
             },
             'track_total_hits': True,
-            'query': {'bool': {'should': []}},
+            'query': {'bool': {'should': [], 'must': []}},
             'sort': []
         }
         self.query_body = copy.deepcopy(self.default_query_body)
