@@ -25,7 +25,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * *Describe architecture/environment changes here.*
 
 ### Bugfix
-* *Describe bugfix here.*
+* Enhanced the `./src/anon-tools/do_restore.sh` script to use more precise filtering when looking up the bastion host, improving reliability and reducing potential for incorrect host selection. The *bastion* filter now ensures that only an instance tagged with both the correct environment and the specific "Bastion" name is selected.
+* [OSDEV-2133](https://opensupplyhub.atlassian.net/browse/OSDEV-2133) - Implemented a fix to wrap values in double quotes to ensure correct CSV formatting for Dromo results.
 
 ### What's new
 * *Describe what's new here. The changes that can impact user experience should be listed in this section.*
