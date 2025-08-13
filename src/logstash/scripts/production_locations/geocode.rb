@@ -2,11 +2,19 @@ require "json"
 
 def safe_parse_geocode(event)
   geocode_value = event.get('geocode_value')
-  return nil if geocode_value.nil? || geocode_value.empty?
+
+  # Guard nil
+  return nil if geocode_value.nil?
+  # If already parsed (Hash-like), accept as-is
+  return geocode_value if geocode_value.respond_to?(:key?)
+  # Ignore empty strings
+  return nil if geocode_value.respond_to?(:empty?) && geocode_value.empty?
+  # Only attempt to parse strings
+  return nil unless geocode_value.is_a?(String)
 
   begin
     JSON.parse(geocode_value)
-  rescue JSON::ParserError
+  rescue JSON::ParserError, TypeError
     nil
   end
 end

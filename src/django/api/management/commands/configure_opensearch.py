@@ -26,7 +26,7 @@ class Command(BaseCommand):
         model_group_id = self._ensure_model_group(opensearch)
         model_id = self._ensure_model(opensearch, model_group_id)
 
-        self._deploy_model_if_needed(opensearch, model_id)
+        model_id = self._deploy_model_if_needed(opensearch, model_id)
         self._configure_ingestion_pipeline(opensearch, model_id)
         self._configure_search_pipeline(opensearch)
 
@@ -134,7 +134,7 @@ class Command(BaseCommand):
         )
         return task_res["model_id"]
 
-    def _deploy_model_if_needed(self, opensearch, model_id: str) -> None:
+    def _deploy_model_if_needed(self, opensearch, model_id: str) -> str:
         search_models_res = opensearch.client.plugins.ml.search_models(
             body={
                 "query": {
@@ -146,11 +146,120 @@ class Command(BaseCommand):
                 },
             },
         )
-        model = search_models_res["hits"]["hits"][0]["_source"]
+        hits = search_models_res.get("hits", {}).get("hits", [])
+
+        # If the configured model_id is not found in OpenSearch, re-register and update
+        if not hits:
+            logger.warning(
+                "Model with ID '%s' not found in OpenSearch. Re-registering a new model.",
+                model_id,
+            )
+
+            # Retrieve settings objects to update values
+            model_group_id_setting = Settings.get(
+                description=(
+                    "Model group ID for OpenSearch embedding generation model."
+                ),
+                name=Settings.Name.OS_SENTENCE_TRANSFORMER_GROUP_ID,
+            )
+            model_id_setting = Settings.get(
+                name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
+                description=(
+                    "Model ID for OpenSearch embedding generation model."
+                ),
+            )
+            model_name = Settings.get(
+                name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_NAME,
+                description=(
+                    "Model name for OpenSearch embedding generation model."
+                ),
+                value="huggingface/sentence-transformers/all-MiniLM-L6-v2",
+            )
+
+            # Do not set value to None to avoid NOT NULL constraint; _ensure_model
+            # will register and persist the new model id into the setting.
+
+            # Register a new model directly and persist its ID
+            model_reg_res = opensearch.client.plugins.ml.register_model(
+                body={
+                    "name": model_name.value,
+                    "version": "1.0.1",
+                    "model_group_id": model_group_id_setting.value,
+                    "model_format": "TORCH_SCRIPT",
+                },
+            )
+            logger.info(
+                "Model registration task with ID '%s' created successfully!",
+                model_reg_res["task_id"],
+            )
+            try:
+                task_res = self._wait_for_task_completion(
+                    opensearch,
+                    model_reg_res["task_id"],
+                    context_description="model creation to complete",
+                    failure_message="Model creation failed!",
+                )
+            except RuntimeError as e:
+                # If model group is missing in OpenSearch, create a new one and retry once
+                if "get model group" in str(e).lower():
+                    logger.warning("Model group missing in OpenSearch, creating a new one and retrying registration.")
+                    new_group_res = opensearch.client.plugins.ml.register_model_group(
+                        body={
+                            "name": "NLP_Models",
+                            "description": "A model group for NLP models.",
+                        },
+                    )
+                    model_group_id_setting.update(value=new_group_res["model_group_id"])
+                    # Retry registration with the new group id
+                    model_reg_res = opensearch.client.plugins.ml.register_model(
+                        body={
+                            "name": model_name.value,
+                            "version": "1.0.1",
+                            "model_group_id": new_group_res["model_group_id"],
+                            "model_format": "TORCH_SCRIPT",
+                        },
+                    )
+                    logger.info(
+                        "Model registration task with ID '%s' created successfully (retry)!",
+                        model_reg_res["task_id"],
+                    )
+                    task_res = self._wait_for_task_completion(
+                        opensearch,
+                        model_reg_res["task_id"],
+                        context_description="model creation to complete (retry)",
+                        failure_message="Model creation failed after retry!",
+                    )
+                else:
+                    raise
+            model_id = task_res["model_id"]
+            model_id_setting.update(value=model_id)
+
+            # Search again for the newly created model
+            search_models_res = opensearch.client.plugins.ml.search_models(
+                body={
+                    "query": {
+                        "ids": {
+                            "values": [model_id],
+                        },
+                    },
+                },
+            )
+            hits = search_models_res.get("hits", {}).get("hits", [])
+
+            if not hits:
+                logger.error(
+                    "Failed to find the newly registered model with ID '%s' in OpenSearch.",
+                    model_id,
+                )
+                raise RuntimeError(
+                    "Model registration lookup failed; cannot proceed with deployment."
+                )
+
+        model = hits[0]["_source"]
 
         if model["model_state"] == "DEPLOYED":
             logger.info("Model with ID '%s' already deployed.", model_id)
-            return
+            return model_id
 
         logger.info(
             "Deploying model with ID '%s'.",
@@ -167,6 +276,7 @@ class Command(BaseCommand):
             failure_message="Model deployment failed!",
         )
         logger.info("Model with ID '%s' deployed successfully!", model_id)
+        return model_id
 
     def _configure_ingestion_pipeline(self, opensearch, model_id: str) -> None:
         ingestion_pipeline_id = Settings.get(
@@ -265,7 +375,8 @@ class Command(BaseCommand):
                     failure_message,
                     task_res["state"],
                 )
-                raise RuntimeError(failure_message)
+                error_detail = task_res.get("error")
+                raise RuntimeError(f"{failure_message} Error: {error_detail}")
 
             logger.info(
                 "Waiting for %s! Task state: '%s'",
