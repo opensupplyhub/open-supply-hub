@@ -21,18 +21,18 @@ class Command(BaseCommand):
         """
         opensearch = OpenSearchServiceConnection()
 
-        self._configure_cluster_settings(opensearch)
+        self.__configure_cluster_settings(opensearch)
 
-        model_group_id = self._ensure_model_group(opensearch)
-        model_id = self._ensure_model(opensearch, model_group_id)
+        model_group_id = self.__ensure_model_group(opensearch)
+        model_id = self.__ensure_model(opensearch, model_group_id)
 
-        model_id = self._deploy_model_if_needed(opensearch, model_id)
-        self._configure_ingestion_pipeline(opensearch, model_id)
-        self._configure_search_pipeline(opensearch)
+        model_id = self.__deploy_model_if_needed(opensearch, model_id)
+        self.__configure_ingestion_pipeline(opensearch, model_id)
+        self.__configure_search_pipeline(opensearch)
 
         logger.info("OpenSearch settings configured successfully!")
 
-    def _configure_cluster_settings(self, opensearch) -> None:
+    def __configure_cluster_settings(self, opensearch) -> None:
         logger.info(
             "Setting up OpenSearch cluster settings for Machine Learning!"
         )
@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
         logger.info("Cluster settings configured successfully!")
 
-    def _ensure_model_group(self, opensearch) -> str:
+    def __ensure_model_group(self, opensearch) -> str:
         model_group_id_setting = Settings.get(
             description=(
                 "Model group ID for OpenSearch embedding generation model."
@@ -83,7 +83,7 @@ class Command(BaseCommand):
         )
         return model_reg_res["model_group_id"]
 
-    def _ensure_model(self, opensearch, model_group_id: str) -> str:
+    def __ensure_model(self, opensearch, model_group_id: str) -> str:
         model_id_setting = Settings.get(
             name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_ID,
             description=(
@@ -121,7 +121,7 @@ class Command(BaseCommand):
             model_reg_res["task_id"],
         )
 
-        task_res = self._wait_for_task_completion(
+        task_res = self.__wait_for_task_completion(
             opensearch,
             model_reg_res["task_id"],
             context_description="model creation to complete",
@@ -134,7 +134,7 @@ class Command(BaseCommand):
         )
         return task_res["model_id"]
 
-    def _deploy_model_if_needed(self, opensearch, model_id: str) -> str:
+    def __deploy_model_if_needed(self, opensearch, model_id: str) -> str:
         search_models_res = opensearch.client.plugins.ml.search_models(
             body={
                 "query": {
@@ -310,7 +310,11 @@ class Command(BaseCommand):
         logger.info("Model with ID '%s' deployed successfully!", model_id)
         return model_id
 
-    def _configure_ingestion_pipeline(self, opensearch, model_id: str) -> None:
+    def __configure_ingestion_pipeline(
+        self,
+        opensearch,
+        model_id: str,
+    ) -> None:
         ingestion_pipeline_id = Settings.get(
             name=Settings.Name.OS_INGESTION_PIPELINE_ID,
             description=(
@@ -349,7 +353,7 @@ class Command(BaseCommand):
             ingestion_pipeline_id.value,
         )
 
-    def _configure_search_pipeline(self, opensearch) -> None:
+    def __configure_search_pipeline(self, opensearch) -> None:
         search_pipeline_id = Settings.get(
             name=Settings.Name.OS_SEARCH_PIPELINE_ID,
             description="Search pipeline for OpenSearch hybrid search.",
@@ -386,7 +390,7 @@ class Command(BaseCommand):
             search_pipeline_id.value,
         )
 
-    def _wait_for_task_completion(
+    def __wait_for_task_completion(
         self,
         opensearch,
         task_id: str,
