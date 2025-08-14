@@ -1,4 +1,7 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import (
+    BaseCommand,
+    CommandError,
+)
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from api.models.settings import Settings
 import logging
@@ -13,7 +16,7 @@ SEARCH_PIPELINE_ID = "nlp_search_pipeline"
 class Command(BaseCommand):
     help = "Configure OpenSearch settings for the application."
 
-    def handle(self):
+    def handle(self, *args, **options):
         """
         Entry point for configuring OpenSearch settings.
         """
@@ -76,9 +79,9 @@ class Command(BaseCommand):
         except Exception as e:
             step = completed_steps[-1] if completed_steps else "initialization"
             logger.error("Configuration failed at step: %s", step)
-            logger.error("Error: %s", e)
+            logger.exception("Error during OpenSearch configuration")
             logger.info("Completed steps before failure: %s", completed_steps)
-            raise
+            raise CommandError(f"Configuration failed at step: {step}") from e
         return context
 
     def __configure_cluster_settings(self, opensearch) -> None:
@@ -150,38 +153,12 @@ class Command(BaseCommand):
         logger.info(
             "Creating model for OpenSearch embedding generation model."
         )
-        model_name = Settings.get(
-            name=Settings.Name.OS_SENTENCE_TRANSFORMER_MODEL_NAME,
-            description=(
-                "Model name for OpenSearch embedding generation model."
-            ),
-            value="huggingface/sentence-transformers/all-MiniLM-L6-v2",
-        )
-        model_reg_res = opensearch.client.plugins.ml.register_model(
-            body={
-                "name": model_name.value,
-                "version": "1.0.1",
-                "model_group_id": model_group_id,
-                "model_format": "TORCH_SCRIPT",
-            },
-        )
-        logger.info(
-            "Model registration task '%s' created!",
-            model_reg_res["task_id"],
-        )
-
-        task_res = self.__wait_for_task_completion(
-            opensearch,
-            model_reg_res["task_id"],
-            context_description="model creation to complete",
-            failure_message="Model creation failed!",
-        )
-        model_id_setting.update(value=task_res["model_id"])
+        model_id = self.__register_model_and_update_settings(opensearch)
         logger.info(
             "Model with ID '%s' created successfully!",
-            task_res["model_id"],
+            model_id,
         )
-        return task_res["model_id"]
+        return model_id
 
     def __register_model_and_update_settings(self, opensearch) -> str:
         model_group_id_setting = Settings.get(
