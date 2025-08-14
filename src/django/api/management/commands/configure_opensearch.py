@@ -13,24 +13,41 @@ SEARCH_PIPELINE_ID = "nlp_search_pipeline"
 class Command(BaseCommand):
     help = "Configure OpenSearch settings for the application."
 
-    def handle(self, *args, **options):
-        """
-        Configures OpenSearch settings for the application.
-        This command sets up the necessary configurations for OpenSearch
-        to ensure proper functionality and integration with the application.
-        """
-        opensearch = OpenSearchServiceConnection()
 
+def handle(self, *args, **options):
+    """
+    Configures OpenSearch settings for the application.
+    """
+    opensearch = OpenSearchServiceConnection()
+    completed_steps = []
+
+    try:
         self.__configure_cluster_settings(opensearch)
+        completed_steps.append('cluster_settings')
 
         model_group_id = self.__ensure_model_group(opensearch)
+        completed_steps.append('model_group')
+
         model_id = self.__ensure_model(opensearch, model_group_id)
+        completed_steps.append('model')
 
         model_id = self.__deploy_model_if_needed(opensearch, model_id)
+        completed_steps.append('model_deployment')
+
         self.__configure_ingestion_pipeline(opensearch, model_id)
+        completed_steps.append('ingestion_pipeline')
+
         self.__configure_search_pipeline(opensearch)
+        completed_steps.append('search_pipeline')
 
         logger.info("OpenSearch settings configured successfully!")
+    except Exception as e:
+        step = completed_steps[-1] if completed_steps else "initialization"
+        logger.error("Configuration failed at step: %s", step)
+        logger.error(f"Error: {e}")
+        # Log which steps were completed for manual cleanup if needed
+        logger.info(f"Completed steps before failure: {completed_steps}")
+        raise
 
     def __configure_cluster_settings(self, opensearch) -> None:
         logger.info(
@@ -195,7 +212,7 @@ class Command(BaseCommand):
                 model_reg_res["task_id"],
             )
             try:
-                task_res = self._wait_for_task_completion(
+                task_res = self.__wait_for_task_completion(
                     opensearch,
                     model_reg_res["task_id"],
                     context_description="model creation to complete (retry)",
@@ -204,9 +221,16 @@ class Command(BaseCommand):
                     ),
                 )
             except RuntimeError as e:
-                # If model group is missing in OpenSearch,
-                # create a new one and retry once.
-                if "get model group" in str(e).lower():
+                # If the ML task failed because the model group doesn’t exist,
+                # parse its error.reason and retry once.
+                error_detail = e.args[0] if e.args else str(e)
+                # Normalize the plugin’s error object to extract its “reason”
+                reason = (
+                    error_detail.get("reason", "")
+                    if isinstance(error_detail, dict)
+                    else str(error_detail)
+                ).lower()
+                if "model group not found" in reason:
                     logger.warning(
                         (
                             "Model group missing. "
@@ -248,7 +272,7 @@ class Command(BaseCommand):
                         ),
                         model_reg_res["task_id"],
                     )
-                    task_res = self._wait_for_task_completion(
+                    task_res = self.__wait_for_task_completion(
                         opensearch,
                         model_reg_res["task_id"],
                         context_description=(
@@ -301,7 +325,7 @@ class Command(BaseCommand):
             model_id=model_id,
         )
 
-        self._wait_for_task_completion(
+        self.__wait_for_task_completion(
             opensearch,
             deploy_res["task_id"],
             context_description=f"model deployment with ID '{model_id}'",
@@ -315,6 +339,13 @@ class Command(BaseCommand):
         opensearch,
         model_id: str,
     ) -> None:
+        if not model_id:
+            logger.error(
+                "Invalid model_id provided "
+                "for ingestion pipeline configuration"
+            )
+            raise ValueError("model_id cannot be None or empty")
+
         ingestion_pipeline_id = Settings.get(
             name=Settings.Name.OS_INGESTION_PIPELINE_ID,
             description=(
