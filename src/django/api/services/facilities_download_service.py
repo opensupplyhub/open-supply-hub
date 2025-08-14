@@ -2,11 +2,11 @@ import logging
 import stripe
 
 from django.conf import settings
-
 from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
 from datetime import datetime
 from django.utils.timezone import make_aware
+from urllib.parse import urlencode
 
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
@@ -19,6 +19,14 @@ from api.mail import (
     send_ddl_near_annual_limit_email,
     send_ddl_reach_annual_limit_email,
     send_ddl_reach_paid_limit_email
+)
+
+from api.pagination_keyset_helpers import (
+    qhash,
+    get_bm,
+    set_bm,
+    keyset_page_id,
+    advance_blocks_id
 )
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -52,7 +60,7 @@ class FacilitiesDownloadService:
     def get_filtered_queryset(request):
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params
-        ).order_by('name', 'address', 'id')
+        ).order_by('id')
 
     @staticmethod
     def get_download_limit(request):
@@ -63,39 +71,21 @@ class FacilitiesDownloadService:
         )
 
     @staticmethod
-    def enforce_limits(request, total_records, limit):
-        current_page = int(request.query_params.get("page", 1))
-
-        if limit is None:
+    def enforce_limits(qs, limit, is_first_page):
+        if not limit or not is_first_page:
             return
 
-        allowed_records = (
-            limit.free_download_records +
-            limit.paid_download_records
-        )
+        allowed = limit.free_download_records + limit.paid_download_records
 
-        has_exhausted_limit = (
-            current_page == 1 and
-            allowed_records == 0
-        )
-
-        if has_exhausted_limit:
+        if allowed == 0:
             raise ValidationError(
-                'You have reached your annual limit for facility record '
-                'downloads, including both free and paid. Additional '
-                'downloads will be available at the start of the next '
-                'calendar year.'
+                'You have reached your annual limit for facility record downloads...'
             )
 
-        is_blocked = (
-            current_page == 1
-            and total_records > allowed_records
-        )
-
-        if is_blocked:
+        probe = list(qs.order_by("id").values_list("id", flat=True)[:allowed + 1])
+        if len(probe) > allowed:
             raise ValidationError(
-                f'Downloads are supported only for searches '
-                f'resulting in {allowed_records} facilities or less.'
+                f'Downloads are supported only for searches resulting in {allowed} facilities or less.'
             )
 
     @staticmethod
@@ -197,3 +187,70 @@ class FacilitiesDownloadService:
             raise ServiceUnavailableException(
                 "Payment service temporarily unavailable"
             )
+
+    @staticmethod
+    def locate_prev_last_id(base_qs, request, page: int, page_size: int, block: int = 10):
+        if page == 1:
+            return None
+
+        qh = qhash(request, page_size)
+        prev_last_id = get_bm(qh, page - 1)
+        if prev_last_id is not None:
+            return prev_last_id
+
+        nearest = page - 1
+        while nearest > 1 and get_bm(qh, nearest) is None:
+            nearest -= 1
+
+        start_after = get_bm(qh, nearest) if nearest > 1 else None
+        steps = (page - 1) - (nearest if nearest > 1 else 0)
+
+        if start_after is None and nearest == 1:
+            _, first_last, _ = keyset_page_id(base_qs, page_size, None)
+            set_bm(qh, 1, first_last)
+            start_after, steps = first_last, steps - 1
+            nearest = 1
+
+        if steps > 0 and start_after is not None:
+            start_after = advance_blocks_id(
+                base_qs,
+                page_size,
+                start_after,
+                steps,
+                block=block,
+                densify=lambda p, lid: set_bm(qh, p, lid),
+                start_from_page=nearest,
+            )
+
+        return start_after
+
+    @staticmethod
+    def fetch_page_and_cache(base_qs, request, page: int, page_size: int, block: int = 10):
+        prev_last_id = FacilitiesDownloadService.locate_prev_last_id(
+            base_qs, request, page, page_size, block=block
+        )
+
+        if page > 1 and prev_last_id is None:
+            return [], True
+
+        items, last_id, is_last_page = keyset_page_id(base_qs, page_size, prev_last_id)
+
+        if page >= 1:
+            set_bm(qhash(request, page_size), page, last_id)
+
+        return items, is_last_page
+
+
+    @staticmethod
+    def build_page_links(request, page: int, page_size: int, is_last_page: bool):
+        base_qs_params = request.query_params.copy()
+
+        def make_link(p):
+            q = base_qs_params.copy()
+            q['page'] = p
+            q['pageSize'] = page_size
+            return request.build_absolute_uri('?' + urlencode(q, doseq=True))
+
+        next_link = None if is_last_page else make_link(page + 1)
+        prev_link = make_link(page - 1) if page > 1 else None
+        return next_link, prev_link
