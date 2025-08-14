@@ -60,8 +60,12 @@ class Settings(models.Model):
         if value is not None:
             defaults["value"] = value
 
-        setting, _ = Settings.objects.filter(name=name).get_or_create(
-            defaults=defaults,
+        setting, _ = Settings.objects.get_or_create(
+            name=name,
+            defaults={
+                "description": description,
+                "value": value if value is not None else "",
+            }
         )
 
         return setting

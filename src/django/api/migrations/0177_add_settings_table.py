@@ -4,12 +4,15 @@ from django.db import migrations, models
 
 def create_enable_record_linkage_switch(apps, schema_editor):
     Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.create(name='enable_record_linkage', active=False)
+    Switch.objects.update_or_create(
+        name='enable_record_linkage',
+        defaults={'active': False},
+    )
 
 
 def delete_enable_record_linkage_switch(apps, schema_editor):
     Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.get(name='enable_record_linkage').delete()
+    Switch.objects.filter(name='enable_record_linkage').delete()
 
 
 class Migration(migrations.Migration):

@@ -13,41 +13,73 @@ SEARCH_PIPELINE_ID = "nlp_search_pipeline"
 class Command(BaseCommand):
     help = "Configure OpenSearch settings for the application."
 
-
-def handle(self, *args, **options):
-    """
-    Configures OpenSearch settings for the application.
-    """
-    opensearch = OpenSearchServiceConnection()
-    completed_steps = []
-
-    try:
-        self.__configure_cluster_settings(opensearch)
-        completed_steps.append('cluster_settings')
-
-        model_group_id = self.__ensure_model_group(opensearch)
-        completed_steps.append('model_group')
-
-        model_id = self.__ensure_model(opensearch, model_group_id)
-        completed_steps.append('model')
-
-        model_id = self.__deploy_model_if_needed(opensearch, model_id)
-        completed_steps.append('model_deployment')
-
-        self.__configure_ingestion_pipeline(opensearch, model_id)
-        completed_steps.append('ingestion_pipeline')
-
-        self.__configure_search_pipeline(opensearch)
-        completed_steps.append('search_pipeline')
-
+    def handle(self):
+        """
+        Entry point for configuring OpenSearch settings.
+        """
+        opensearch = OpenSearchServiceConnection()
+        self._execute_configuration_steps(opensearch)
         logger.info("OpenSearch settings configured successfully!")
-    except Exception as e:
-        step = completed_steps[-1] if completed_steps else "initialization"
-        logger.error("Configuration failed at step: %s", step)
-        logger.error(f"Error: {e}")
-        # Log which steps were completed for manual cleanup if needed
-        logger.info(f"Completed steps before failure: {completed_steps}")
-        raise
+
+    def _build_configuration_steps(self, opensearch):
+        def step_cluster_settings(context):
+            self.__configure_cluster_settings(opensearch)
+            return context
+
+        def step_model_group(context):
+            context["model_group_id"] = self.__ensure_model_group(opensearch)
+            return context
+
+        def step_model(context):
+            context["model_id"] = self.__ensure_model(
+                opensearch,
+                context["model_group_id"],
+            )
+            return context
+
+        def step_model_deployment(context):
+            context["model_id"] = self.__deploy_model_if_needed(
+                opensearch,
+                context["model_id"],
+            )
+            return context
+
+        def step_ingestion_pipeline(context):
+            self.__configure_ingestion_pipeline(
+                opensearch,
+                context["model_id"],
+            )
+            return context
+
+        def step_search_pipeline(context):
+            self.__configure_search_pipeline(opensearch)
+            return context
+
+        return [
+            ("cluster_settings", step_cluster_settings),
+            ("model_group", step_model_group),
+            ("model", step_model),
+            ("model_deployment", step_model_deployment),
+            ("ingestion_pipeline", step_ingestion_pipeline),
+            ("search_pipeline", step_search_pipeline),
+        ]
+
+    def _execute_configuration_steps(self, opensearch):
+        completed_steps = []
+        context = {}
+        try:
+            for step_name, step_func in (
+                self._build_configuration_steps(opensearch)
+            ):
+                context = step_func(context)
+                completed_steps.append(step_name)
+        except Exception as e:
+            step = completed_steps[-1] if completed_steps else "initialization"
+            logger.error("Configuration failed at step: %s", step)
+            logger.error("Error: %s", e)
+            logger.info("Completed steps before failure: %s", completed_steps)
+            raise
+        return context
 
     def __configure_cluster_settings(self, opensearch) -> None:
         logger.info(

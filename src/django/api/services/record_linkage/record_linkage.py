@@ -93,7 +93,6 @@ class RecordLinker():
         if "location_type" not in result["geometry"]:
             return None
 
-        # TODO test location type presence
         return {
             "geocoded_address": result["formatted_address"],
             "geocoded_location_type": result["geometry"]["location_type"],
