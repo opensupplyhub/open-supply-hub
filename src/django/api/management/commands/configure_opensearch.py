@@ -20,7 +20,14 @@ class Command(BaseCommand):
         """
         Entry point for configuring OpenSearch settings.
         """
-        opensearch = OpenSearchServiceConnection()
+        try:
+            opensearch = OpenSearchServiceConnection()
+        except Exception as e:
+            logger.exception("Failed to initialize OpenSearch connection")
+            raise CommandError(
+                "Failed to initialize OpenSearch connection"
+            ) from e
+
         self._execute_configuration_steps(opensearch)
         logger.info("OpenSearch settings configured successfully!")
 
@@ -70,18 +77,20 @@ class Command(BaseCommand):
     def _execute_configuration_steps(self, opensearch):
         completed_steps = []
         context = {}
+        current_step = "initialization"
         try:
-            for step_name, step_func in (
-                self._build_configuration_steps(opensearch)
+            for step_name, step_func in self._build_configuration_steps(
+                opensearch
             ):
+                current_step = step_name
                 context = step_func(context)
                 completed_steps.append(step_name)
         except Exception as e:
-            step = completed_steps[-1] if completed_steps else "initialization"
-            logger.error("Configuration failed at step: %s", step)
             logger.exception("Error during OpenSearch configuration")
             logger.info("Completed steps before failure: %s", completed_steps)
-            raise CommandError(f"Configuration failed at step: {step}") from e
+            raise CommandError(
+                f"Configuration failed at step: {current_step}"
+            ) from e
         return context
 
     def __configure_cluster_settings(self, opensearch) -> None:
@@ -362,6 +371,14 @@ class Command(BaseCommand):
                             },
                         },
                     },
+                ],
+                "on_failure": [
+                    {
+                        "set": {
+                            "field": "ml_embedding.error",
+                            "value": "embedding_failed"
+                        }
+                    }
                 ],
             },
         )
