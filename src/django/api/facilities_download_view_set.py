@@ -31,7 +31,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         FacilitiesDownloadService.validate_query_params(request)
         FacilitiesDownloadService.log_request(request)
 
-        base_qs = FacilitiesDownloadService.get_filtered_queryset(request).order_by("id")
+        base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
         limit = None
         if not switch_is_active('private_instance') and not self.__is_embed_mode():
@@ -46,7 +46,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         )
 
         items, is_last_page = FacilitiesDownloadService.fetch_page_and_cache(
-            base_qs, request, page, page_size, block=10
+            base_qs, request, page, page_size, block=50
         )
         next_link, prev_link = FacilitiesDownloadService.build_page_links(
             request, page, page_size, is_last_page

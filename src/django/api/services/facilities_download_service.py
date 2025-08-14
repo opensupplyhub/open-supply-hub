@@ -60,7 +60,7 @@ class FacilitiesDownloadService:
     def get_filtered_queryset(request):
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params
-        ).order_by('name', 'address', 'id')
+        ).order_by('id')
 
     @staticmethod
     def get_download_limit(request):
@@ -206,12 +206,21 @@ class FacilitiesDownloadService:
         steps = (page - 1) - (nearest if nearest > 1 else 0)
 
         if start_after is None and nearest == 1:
-            _, first_last = keyset_page_id(base_qs, page_size, None)
+            _, first_last, _ = keyset_page_id(base_qs, page_size, None)
             set_bm(qh, 1, first_last)
             start_after, steps = first_last, steps - 1
+            nearest = 1
 
         if steps > 0 and start_after is not None:
-            start_after = advance_blocks_id(base_qs, page_size, start_after, steps, block=block)
+            start_after = advance_blocks_id(
+                base_qs,
+                page_size,
+                start_after,
+                steps,
+                block=block,
+                densify=lambda p, lid: set_bm(qh, p, lid),
+                start_from_page=nearest,
+            )
 
         return start_after
 
@@ -220,11 +229,17 @@ class FacilitiesDownloadService:
         prev_last_id = FacilitiesDownloadService.locate_prev_last_id(
             base_qs, request, page, page_size, block=block
         )
-        items, last_id = keyset_page_id(base_qs, page_size, prev_last_id)
+
+        if page > 1 and prev_last_id is None:
+            return [], True
+
+        items, last_id, is_last_page = keyset_page_id(base_qs, page_size, prev_last_id)
+
         if page >= 1:
             set_bm(qhash(request, page_size), page, last_id)
-        is_last_page = len(items) < page_size
+
         return items, is_last_page
+
 
     @staticmethod
     def build_page_links(request, page: int, page_size: int, is_last_page: bool):
