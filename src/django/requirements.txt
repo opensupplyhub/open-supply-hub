@@ -45,4 +45,3 @@ google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.1
 django-bleach==2.0.0
 stripe==12.2.0
-

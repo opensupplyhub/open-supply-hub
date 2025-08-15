@@ -4,6 +4,7 @@ __pycache__/
 .csv
 .xlsx
 
+
 # Terraform
 .terraform
 .terraform/
@@ -40,6 +41,7 @@ src/dedupe-hub/api/coverage
 ## Test artifacts
 src/django/*.csv
 src/django/*.xlsx
+
 
 # macOS
 .DS_Store
@@ -96,4 +98,3 @@ dumps
 # Backup and temporary files
 *.~
 *.bak
-
