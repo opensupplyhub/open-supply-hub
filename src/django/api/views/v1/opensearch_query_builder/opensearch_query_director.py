@@ -6,11 +6,11 @@ class OpenSearchQueryDirector:
         self.__builder = builder
         self.__opensearch_template_fields = {
             V1_PARAMETERS_LIST.DESCRIPTION: 'match',
-            V1_PARAMETERS_LIST.ADDRESS: 'hybrid_match',
-            V1_PARAMETERS_LIST.NAME: 'hybrid_match',
+            V1_PARAMETERS_LIST.ADDRESS: 'match',
+            V1_PARAMETERS_LIST.NAME: 'match',
             V1_PARAMETERS_LIST.OS_ID: 'terms',
             V1_PARAMETERS_LIST.LOCAL_NAME: 'match',
-            V1_PARAMETERS_LIST.COUNTRY: 'filter',
+            V1_PARAMETERS_LIST.COUNTRY: 'terms',
             V1_PARAMETERS_LIST.SECTOR: 'terms',
             V1_PARAMETERS_LIST.PRODUCT_TYPE: 'terms',
             V1_PARAMETERS_LIST.PROCESSING_TYPE: 'terms',
@@ -59,20 +59,9 @@ class OpenSearchQueryDirector:
             self.__add_match_query(field, value)
             return
 
-        if query_type == "hybrid_match":
-            value = query_params.get(field)
-            self.__add_match_query(field, value)
-            self.__add_neural_match_query(field, value)
-            return
-
         if query_type == "terms":
             values = query_params.getlist(field)
             self.__add_terms_query(field, values)
-            return
-
-        if query_type == "filter":
-            value = query_params.get(field)
-            self.__add_filter_query(field, value)
             return
 
         if query_type == "range":
@@ -93,18 +82,8 @@ class OpenSearchQueryDirector:
             else:
                 self.__builder.add_match(field, value, fuzziness=2)
 
-    def __add_neural_match_query(self, field, value):
-        if value:
-            self.__builder.add_neural_match(field, value)
-
     def __add_terms_query(self, field, values):
         self.__builder.add_terms(field, values)
-
-    def __add_filter_query(self, field, value):
-        if not value:
-            return
-
-        self.__builder.add_filter(field, value)
 
     def __add_range_query(self, field, query_params):
         self.__builder.add_range(field, query_params)
@@ -166,10 +145,6 @@ class OpenSearchQueryDirector:
         if aggregation and hasattr(self.__builder, 'add_aggregations'):
             self.__builder.add_aggregations(aggregation, geohex_grid_precision)
 
-    '''
-    TODO mismatch here, we already have a filter method in the builder
-    but we have filter as a query type in the template fields
-    '''
     def __process_filter(self, query_params):
         top = query_params.get(
             V1_PARAMETERS_LIST.GEO_BOUNDING_BOX + '[top]'
@@ -192,6 +167,5 @@ class OpenSearchQueryDirector:
             )
 
         geo_polygon = query_params.getlist(V1_PARAMETERS_LIST.GEO_POLYGON)
-
         if geo_polygon and hasattr(self.__builder, 'add_geo_polygon'):
             self.__builder.add_geo_polygon(geo_polygon)

@@ -42,7 +42,6 @@ class OpenSearchService(SearchInterface):
             if "_source" in hit:
                 source = self.__rename_lon_field(hit["_source"])
                 clean_source = self.__remove_null_values(source)
-                clean_source["score"] = hit.get("_score", 0)
                 data.append(clean_source)
             else:
                 logger.warning(f"Missing '_source' in hit: {hit}")
