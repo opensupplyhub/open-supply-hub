@@ -19,7 +19,7 @@
         "dromo-uploader-react": "^2.1.10",
         "file-saver": "2.0.0",
         "formik": "2.4.6",
-        "http-proxy-middleware": "^0.19.1",
+        "http-proxy-middleware": "0.19.1",
         "immutability-helper": "2.9.0",
         "leaflet": "1.5.1",
         "leaflet-draw": "^1.0.4",

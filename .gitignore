@@ -97,6 +97,3 @@ dumps
 *.~
 *.bak
 
-# Production Locations test files
-production_locations_ds.csv
-notebooks/splink-configuration/*.csv
