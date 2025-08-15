@@ -1,226 +1,225 @@
 {
-    "index_patterns": [
-      "production-locations*"
-    ],
-    "template": {
-      "settings": {
-        "number_of_shards": 1,
-        "number_of_replicas": 1,
-        "analysis": {
-          "analyzer": {
-            "custom_asciifolding_analyzer": {
-              "tokenizer": "lowercase",
-              "filter": [
-                "custom_asciifolding_filter"
-              ]
-            }
-          },
-          "filter": {
-            "custom_asciifolding_filter": {
-              "type": "asciifolding",
-              "preserve_original": true
-            }
+  "index_patterns": [
+    "production-locations*"
+  ],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "analysis": {
+        "analyzer": {
+          "custom_asciifolding_analyzer": {
+            "tokenizer": "lowercase",
+            "filter": [
+              "custom_asciifolding_filter"
+            ]
+          }
+        },
+        "filter": {
+          "custom_asciifolding_filter": {
+            "type": "asciifolding",
+            "preserve_original": true
           }
         }
-      },
-      "mappings": {
-        "properties": {
-          "os_id": {
-            "type": "keyword"
-          },
-          "name": {
-            "type": "text",
-            "analyzer": "custom_asciifolding_analyzer",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "os_id": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "text",
+          "analyzer": "custom_asciifolding_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
             }
-          },
-          "local_name": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "description": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "address": {
-            "type": "text",
-            "analyzer": "custom_asciifolding_analyzer",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "geocoded_location_type": {
-            "type": "keyword"
-          },
-          "geocoded_address": {
-            "type": "text",
-            "analyzer": "custom_asciifolding_analyzer",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "business_url": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "sector": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "parent_company": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "product_type": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "location_type": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "processing_type": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "number_of_workers": {
-            "properties": {
-              "min": {
-                "type": "integer"
-              },
-              "max": {
-                "type": "integer"
-              }
-            }
-          },
-          "coordinates": {
-            "type": "geo_point"
-          },
-          "minimum_order_quantity": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "average_lead_time": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "percent_female_workers": {
-            "type": "integer",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "affiliations": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "certifications_standards_regulations": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "country": {
-            "properties": {
-              "name": {
-                "type": "keyword"
-              },
-              "alpha_2": {
-                "type": "keyword"
-              },
-              "alpha_3": {
-                "type": "keyword"
-              },
-              "numeric": {
-                "type": "keyword"
-              }
-            }
-          },
-          "claim_status": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "claimed_at": {
-            "type": "date"
-          },
-          "historical_os_id": {
-            "type": "text",
-            "fields": {
-              "keyword": {
-                "type": "keyword"
-              }
-            }
-          },
-          "rba_id": {
-            "type": "keyword"
-          },
-          "duns_id": {
-            "type": "keyword"
-          },
-          "lei_id": {
-            "type": "keyword"
           }
+        },
+        "local_name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "description": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "address": {
+          "type": "text",
+          "analyzer": "custom_asciifolding_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "geocoded_location_type": {
+          "type": "keyword"
+        },
+        "geocoded_address": {
+          "type": "text",
+          "analyzer": "custom_asciifolding_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "business_url": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "sector": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "parent_company": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "product_type": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "location_type": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "processing_type": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "number_of_workers": {
+          "properties": {
+            "min": {
+              "type": "integer"
+            },
+            "max": {
+              "type": "integer"
+            }
+          }
+        },
+        "coordinates": {
+          "type": "geo_point"
+        },
+        "minimum_order_quantity": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "average_lead_time": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "percent_female_workers": {
+          "type": "integer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "affiliations": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "certifications_standards_regulations": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "country": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "alpha_2": {
+              "type": "keyword"
+            },
+            "alpha_3": {
+              "type": "keyword"
+            },
+            "numeric": {
+              "type": "keyword"
+            }
+          }
+        },
+        "claim_status": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "claimed_at": {
+          "type": "date"
+        },
+        "historical_os_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "rba_id": {
+          "type": "keyword"
+        },
+        "duns_id": {
+          "type": "keyword"
+        },
+        "lei_id": {
+          "type": "keyword"
         }
       }
     }
   }
-  
+}
