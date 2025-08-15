@@ -23,7 +23,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         expected = {'match': {'name': {'query': 'test', 'fuzziness': 1}}}
         self.assertIn(
             expected,
-            self.builder.query_body['query']['bool']['must']
+            self.builder.query_body['query']['bool']['should']
         )
 
     def test_add_match_phrase(self):
