@@ -63,7 +63,16 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         rows = [f['row'] for f in list_serializer.data]
         headers = list_serializer.child.get_headers()
-        data = {'rows': rows, 'headers': headers}
+
+        is_same_contributor = self.__check_all_contributor_facilities(
+            queryset, request
+        )
+
+        data = {
+            'rows': rows,
+            'headers': headers,
+            'is_same_contributor': is_same_contributor
+        }
 
         response = self.get_paginated_response(data)
 
@@ -82,7 +91,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
             FacilitiesDownloadService.register_download_if_needed(
                 facility_download_limit,
-                total_records
+                total_records,
+                is_same_contributor
             )
             FacilitiesDownloadService.send_email_if_needed(
                 request,
@@ -92,3 +102,30 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             )
 
         return response
+
+    def __check_all_contributor_facilities(self, queryset, request):
+        """
+        Ensures the current user's contributor is involved in all
+        facilities.
+        """
+        if not queryset or queryset.count() == 0:
+            return False
+
+        current_user_contributor_id = None
+        if hasattr(request.user, 'contributor') and request.user.contributor:
+            current_user_contributor_id = request.user.contributor.id
+        else:
+            return False
+
+        for facility in queryset:
+            facility_contributor_ids = [
+                c.get('id') for c in facility.contributors
+                if c.get('id') is not None
+            ]
+            if (
+                current_user_contributor_id
+                and current_user_contributor_id not in facility_contributor_ids
+            ):
+                return False
+
+        return True

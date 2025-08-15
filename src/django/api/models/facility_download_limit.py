@@ -53,7 +53,10 @@ class FacilityDownloadLimit(models.Model):
     objects = FacilityDownloadLimitManager()
 
     @transaction.atomic
-    def register_download(self, records_to_subtract):
+    def register_download(
+        self,
+        records_to_subtract: int,
+    ):
         self.refresh_from_db()
 
         if self.free_download_records >= records_to_subtract:
