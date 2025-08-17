@@ -1042,6 +1042,15 @@ export const makeUserProfileURL = userID => `/user-profile/${userID}/`;
 export const escapeCSVValue = value =>
     replace(replace(value, /"/g, '""'), /\n/g, ' ');
 
+export const formatCSVField = value => {
+    if (value === null || value === undefined) return '';
+    const strValue = String(value).replace(/"/g, '""').replace(/\n/g, ' ');
+    if (/[",\n]/.test(strValue)) {
+        return `"${strValue}"`;
+    }
+    return strValue;
+};
+
 export const joinDataIntoCSVString = data =>
     data.reduce((csvAccumulator, nextRow) => {
         const joinedColumns = nextRow.reduce((rowAccumulator, nextColumn) => {
@@ -1730,9 +1739,11 @@ export const processDromoResults = (
         return;
     }
 
-    const headers = Object.keys(results[0]).join(',');
-    const rows = results.map(row => Object.values(row).join(','));
-    const csvContent = [headers, ...rows].join('\n');
+    const headers = Object.keys(results[0]);
+    const csvRows = results.map(row =>
+        headers.map(header => formatCSVField(row[header])).join(','),
+    );
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
 
     const csvBlob = new Blob([csvContent], { type: 'text/csv' });
     const csvFile = new File([csvBlob], filename.replace(/\.[^/.]+$/, '.csv'), {
