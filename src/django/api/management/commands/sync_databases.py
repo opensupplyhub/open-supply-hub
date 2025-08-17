@@ -870,8 +870,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        current_level = logger.level
-        print(f'Current logger level: {current_level}')
         # Setup logging.
         if options['verbose']:
             logger.setLevel(logging.DEBUG)
