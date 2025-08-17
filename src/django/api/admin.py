@@ -15,6 +15,7 @@ from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 
 from api import models
+from api.models.facility.claims_reason import ClaimsReason
 
 from api.reports import get_report_names, run_report
 
@@ -239,6 +240,14 @@ class SectorGroupAdmin(admin.ModelAdmin):
         return ['name']
 
 
+class ClaimsReasonAdmin(admin.ModelAdmin):
+    list_display = ('text', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('text',)
+    list_editable = ('is_active',)
+    ordering = ('text',)
+
+
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -261,3 +270,4 @@ admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
+admin_site.register(ClaimsReason, ClaimsReasonAdmin)

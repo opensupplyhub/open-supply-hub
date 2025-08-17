@@ -106,6 +106,24 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         validators=[validate_files]
     )
+    claim_reason = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True
+    )
+
+    def validate_claim_reason(self, value):
+        from api.models.facility.claims_reason import ClaimsReason
+        
+        if value and value.strip():
+            value = value.strip()
+            # Allow "Other" or any valid claim reason from the database
+            if value != 'Other':
+                if not ClaimsReason.objects.filter(text=value, is_active=True).exists():
+                    raise serializers.ValidationError(
+                        "Invalid claim reason. Please select from available options or use 'Other'."
+                    )
+        return value
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)

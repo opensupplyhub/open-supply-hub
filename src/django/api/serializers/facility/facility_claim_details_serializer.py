@@ -37,7 +37,7 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                   'contributor', 'facility', 'status_change', 'notes',
                   'facility_parent_company', 'job_title', 'linkedin_profile',
                   'attachments', 'facility_website', 'sector',
-                  'facility_workers_count', 'facility_name_native_language')
+                  'facility_workers_count', 'facility_name_native_language', 'claim_reason')
 
     def get_contributor(self, claim):
         return UserProfileSerializer(claim.contributor.admin).data

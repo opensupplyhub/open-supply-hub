@@ -144,6 +144,10 @@ function DashboardClaimsDetails({
                     value={data.contact_person}
                 />
                 <InfoSection label="Claimant Title" value={data.job_title} />
+                <InfoSection
+                    label="Claim Reason"
+                    value={data.claim_reason || 'Not specified'}
+                />
                 <InfoSection label="Account Email" value={data.email} />
                 <InfoSection
                     label="Claimant's Website"

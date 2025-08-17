@@ -14,6 +14,11 @@ import {
     updateClaimAFacilityYourBusinessWebsite,
     updateClaimAFacilityBusinessWebsite,
     updateClaimAFacilityBusinessLinkedinProfile,
+    updateClaimAFacilityClaimReason,
+    updateClaimAFacilityClaimReasonOther,
+    startFetchClaimsReasons,
+    failFetchClaimsReasons,
+    completeFetchClaimsReasons,
     updateClaimASector,
     updateClaimANumberOfWorkers,
     updateClaimALocalLanguageName,
@@ -37,6 +42,8 @@ const initialState = Object.freeze({
             yourBusinessWebsite: '',
             businessWebsite: '',
             businessLinkedinProfile: '',
+            claimReason: '',
+            claimReasonOther: '',
             sectors: null,
             numberOfWorkers: '',
             localLanguageName: '',
@@ -46,6 +53,11 @@ const initialState = Object.freeze({
         error: null,
     }),
     parentCompanyOptions: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    claimsReasons: Object.freeze({
         data: null,
         fetching: false,
         error: null,
@@ -125,6 +137,22 @@ export default createReducer(
                     },
                 },
             }),
+        [updateClaimAFacilityClaimReason]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        claimReason: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimAFacilityClaimReasonOther]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        claimReasonOther: { $set: payload },
+                    },
+                },
+            }),
         [updateClaimASector]: (state, sectors) =>
             update(state, {
                 claimData: {
@@ -185,6 +213,28 @@ export default createReducer(
             update(state, {
                 claimData: {
                     fetching: { $set: false },
+                },
+            }),
+        [startFetchClaimsReasons]: state =>
+            update(state, {
+                claimsReasons: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchClaimsReasons]: (state, error) =>
+            update(state, {
+                claimsReasons: {
+                    fetching: { $set: false },
+                    error: { $set: error },
+                },
+            }),
+        [completeFetchClaimsReasons]: (state, data) =>
+            update(state, {
+                claimsReasons: {
+                    data: { $set: data.results || data },
+                    fetching: { $set: false },
+                    error: { $set: null },
                 },
             }),
         [clearClaimFacilityDataAndForm]: () => initialState,

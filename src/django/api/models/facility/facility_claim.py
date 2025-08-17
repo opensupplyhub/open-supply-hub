@@ -410,6 +410,13 @@ class FacilityClaim(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
+    claim_reason = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='claim reason',
+        help_text='The reason why the organization is claiming this facility'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

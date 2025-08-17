@@ -20,14 +20,17 @@ import {
 import {
     fetchCountryOptions,
     fetchClaimStatusOptions,
+    fetchClaimReasonOptions as fetchClaimReasonOptionsAction,
 } from '../actions/filterOptions';
 
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
+import ClaimReasonFilter from './Filters/ClaimReasonFilter';
 import {
     updateClaimStatusFilter,
     updateCountryFilter,
     clearCountryFilter,
+    updateClaimReasonFilter,
 } from './../actions/filters';
 
 import {
@@ -80,20 +83,26 @@ const DashboardClaims = ({
     },
     fetchClaimStatus,
     fetchCountries,
+    fetchClaimReasons,
     updateClaimStatus,
     updateCountry,
     clearCountry,
+    updateClaimReason,
     countriesData,
+    claimReasons,
     downloadClaims,
     downloadClaimsError,
 }) => {
-    const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
-        search,
-    );
+    const {
+        countries,
+        statuses,
+        claimReasons: urlClaimReasons,
+    } = getDashboardClaimsListParamsFromQueryString(search);
 
     useEffect(() => {
         fetchCountries();
         fetchClaimStatus();
+        fetchClaimReasons();
 
         // Always keep default PENDING status in the search bar
         if (statuses && statuses.length > 0) {
@@ -106,6 +115,7 @@ const DashboardClaims = ({
                 makeDashboardClaimListLink({
                     statuses,
                     countries,
+                    claimReasons: urlClaimReasons,
                 }),
             );
         }
@@ -117,6 +127,14 @@ const DashboardClaims = ({
             }));
             updateCountry(countriesSerialized);
         }
+        // If claim reasons are present in URL, set them in filter field automatically
+        if (urlClaimReasons && urlClaimReasons.length > 0) {
+            const claimReasonsSerialized = map(urlClaimReasons, reason => ({
+                value: reason,
+                label: reason,
+            }));
+            updateClaimReason(claimReasonsSerialized);
+        }
 
         return () => {
             clearCountry();
@@ -126,6 +144,7 @@ const DashboardClaims = ({
 
     useEffect(() => {
         const finalCountries = map(countriesData, 'value');
+        const finalClaimReasons = map(claimReasons, 'value');
         let finalStatuses = statuses;
 
         if (countriesData.length > 0) {
@@ -140,15 +159,17 @@ const DashboardClaims = ({
             makeDashboardClaimListLink({
                 statuses: finalStatuses,
                 countries: finalCountries,
+                claimReasons: finalClaimReasons,
             }),
         );
-    }, [countriesData]);
+    }, [countriesData, claimReasons]);
 
     const onClaimStatusUpdate = (s, c) => {
         push(
             makeDashboardClaimListLink({
                 countries: map(c, 'value'),
                 statuses: map(s, 'value'),
+                claimReasons: map(claimReasons, 'value'),
             }),
         );
     };
@@ -175,6 +196,25 @@ const DashboardClaims = ({
                         isDisabled={fetching}
                     />
                     <CountryNameFilter isDisabled={fetching} />
+                    <ClaimReasonFilter
+                        isDisabled={fetching}
+                        handleClaimReasonUpdate={reasons => {
+                            // Update Redux filters state so API requests include the selected claim reasons
+                            updateClaimReason(reasons);
+
+                            // Reflect selection in the URL for shareability/back navigation
+                            push(
+                                makeDashboardClaimListLink({
+                                    countries: map(countriesData, 'value'),
+                                    statuses: map(claimStatuses, 'value'),
+                                    claimReasons: map(reasons, 'value'),
+                                }),
+                            );
+
+                            // Fetch claims with updated filters
+                            getClaims();
+                        }}
+                    />
                     <Grid item className={classes.numberResults}>
                         {claimsCount} results
                     </Grid>
@@ -198,6 +238,7 @@ DashboardClaims.defaultProps = {
     data: null,
     error: null,
     countriesData: null,
+    claimReasons: [],
     downloadClaimsError: null,
 };
 
@@ -207,6 +248,9 @@ DashboardClaims.propTypes = {
     fetchCountries: func.isRequired,
     countriesData: countryOptionsPropType,
     fetchClaimStatus: func.isRequired,
+    fetchClaimReasons: func.isRequired,
+    claimReasons: arrayOf(shape({})),
+    updateClaimReason: func.isRequired,
     error: arrayOf(string),
     getClaims: func.isRequired,
     clearClaims: func.isRequired,
@@ -228,7 +272,7 @@ function mapStateToProps({
         list: { data, fetching, error },
         facilityClaimsDownloadStatus: { error: downloadClaimsError },
     },
-    filters: { claimStatuses, countries: countriesData },
+    filters: { claimStatuses, countries: countriesData, claimReasons },
 }) {
     return {
         data,
@@ -236,6 +280,7 @@ function mapStateToProps({
         error,
         claimStatuses,
         countriesData,
+        claimReasons,
         downloadClaimsError,
     };
 }
@@ -247,10 +292,12 @@ function mapDispatchToProps(dispatch) {
         sortClaims: sortedData => dispatch(sortFacilityClaims(sortedData)),
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchClaimStatus: () => dispatch(fetchClaimStatusOptions()),
+        fetchClaimReasons: () => dispatch(fetchClaimReasonOptionsAction()),
         updateClaimStatus: claimStatuses =>
             dispatch(updateClaimStatusFilter(claimStatuses)),
         updateCountry: v => dispatch(updateCountryFilter(v)),
         clearCountry: () => dispatch(clearCountryFilter()),
+        updateClaimReason: v => dispatch(updateClaimReasonFilter(v)),
         downloadClaims: facilityClaims =>
             dispatch(downloadFacilityClaims(facilityClaims)),
     };

@@ -117,6 +117,16 @@ export const completeFetchClaimStatusOption = createAction(
     'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
 );
 
+export const startFetchClaimReasonOptions = createAction(
+    'START_FETCH_CLAIM_REASON_OPTIONS',
+);
+export const failFetchClaimReasonOptions = createAction(
+    'FAIL_FETCH_CLAIM_REASON_OPTIONS',
+);
+export const completeFetchClaimReasonOptions = createAction(
+    'COMPLETE_FETCH_CLAIM_REASON_OPTIONS',
+);
+
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
 
 export function fetchContributorOptions() {
@@ -340,6 +350,33 @@ export function fetchClaimStatusOptions() {
                         err,
                         'An error prevented fetching of claim status options',
                         failFetchClaimStatusOption,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchClaimReasonOptions() {
+    return dispatch => {
+        dispatch(startFetchClaimReasonOptions());
+
+        return apiRequest
+            .get('/api/claims-reasons/')
+            .then(({ data }) =>
+                data.results.map(reason => ({
+                    value: reason.text,
+                    label: reason.text,
+                })),
+            )
+            .then(data => {
+                dispatch(completeFetchClaimReasonOptions(data));
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching of claim reason options',
+                        failFetchClaimReasonOptions,
                     ),
                 ),
             );

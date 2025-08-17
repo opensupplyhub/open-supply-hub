@@ -21,6 +21,8 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
+from api.views.facility.claims_reason_view_set \
+     import ClaimsReasonViewSet
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -55,6 +57,7 @@ router.register('facilities-downloads', FacilitiesDownloadViewSet,
                 'facilities-downloads')
 router.register('moderation-events', views.ModerationEventsViewSet,
                 'moderation-event')
+router.register('claims-reasons', ClaimsReasonViewSet, 'claims-reason')
 
 v1_router = routers.DefaultRouter()
 v1_router.register(
