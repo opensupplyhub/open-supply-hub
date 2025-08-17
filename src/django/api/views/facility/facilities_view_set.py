@@ -54,7 +54,8 @@ from api.models import (
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
-    Version
+    Version,
+    ClaimsReason
 )
 from api.constants import (
     FeatureGroups,
@@ -875,6 +876,19 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_claim.sector = sectors
 
             facility_claim.save()
+
+            # If a claim_reason was provided and it doesn't exist as a ClaimsReason,
+            # create a new ClaimsReason entry (for "Other" custom reasons)
+            claim_reason = validated_data.get("claim_reason")
+            if claim_reason and claim_reason.strip():
+                # Check if this reason already exists in ClaimsReason table
+                if not ClaimsReason.objects.filter(text=claim_reason.strip()).exists():
+                    # Create a new ClaimsReason entry for this custom reason
+                    # Set is_active=False so admins can review and approve it
+                    ClaimsReason.objects.create(
+                        text=claim_reason.strip(),
+                        is_active=False
+                    )
 
             for file in files:
                 self.__handle_file_upload(
