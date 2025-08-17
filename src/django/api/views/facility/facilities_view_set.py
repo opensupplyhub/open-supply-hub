@@ -238,15 +238,13 @@ class FacilitiesViewSet(ListModelMixin,
         order_list = []
 
         if (sort_by is None) or (sort_by == 'contributors_desc'):
-            order_list = ['-contributors_count', 'name']
+            queryset = queryset.order_by('-contributors_count', 'name')
         elif (sort_by == 'name_asc'):
-            order_list = ['name']
+            queryset = queryset.order_by('name')
         elif (sort_by == 'name_desc'):
-            order_list = ['-name']
+            queryset = queryset.order_by('-name')
         elif (sort_by == 'contributors_asc'):
-            order_list = ['contributors_count', 'name']
-
-        queryset = queryset.extra(order_by=order_list)
+            queryset = queryset.order_by('contributors_count', 'name')
 
         page_queryset = self.paginate_queryset(queryset)
 
@@ -869,6 +867,7 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_workers_count=validated_data.get(
                     "number_of_workers"
                 ),
+                claim_reason=validated_data.get("claim_reason"),
             )
 
             sectors = validated_data.get("sectors")

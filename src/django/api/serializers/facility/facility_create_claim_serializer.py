@@ -113,16 +113,17 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
     )
 
     def validate_claim_reason(self, value):
-        from api.models.facility.claims_reason import ClaimsReason
-        
-        if value and value.strip():
+        # Claim reason validation is flexible:
+        # - Allow any predefined reason from ClaimsReason model
+        # - Allow custom text when "Other" is selected (frontend sends the custom text)
+        # - Allow empty/blank values (optional field)
+        if value:
             value = value.strip()
-            # Allow "Other" or any valid claim reason from the database
-            if value != 'Other':
-                if not ClaimsReason.objects.filter(text=value, is_active=True).exists():
-                    raise serializers.ValidationError(
-                        "Invalid claim reason. Please select from available options or use 'Other'."
-                    )
+            # Basic length validation (field has max_length=100)
+            if len(value) > 100:
+                raise serializers.ValidationError(
+                    "Claim reason cannot exceed 100 characters."
+                )
         return value
 
     def validate_your_business_website(self, value):
