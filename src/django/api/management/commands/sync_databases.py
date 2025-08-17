@@ -515,7 +515,7 @@ class DatabaseSynchronizer:
         # Create a fake email format: hash@anonymized.com.
         anonymized_email = f'{hashed}@anonymized.com'
 
-        logger.debug(f'Anonymized email: {email} -> {anonymized_email}.')
+        logger.debug('Anonymized email generated.')
         return anonymized_email
 
     def __update_foreign_keys_in_data(
@@ -562,10 +562,10 @@ class DatabaseSynchronizer:
             try:
                 target_facility = Facility.objects.get(id=facility_id)
                 logger.debug(f'Found target facility {target_facility} '
-                             f'for ID {facility_id} in target DB')
+                             f'for ID {facility_id} in target DB.')
             except Facility.DoesNotExist:
                 logger.warning(f'Facility with ID {facility_id} not found in '
-                               f'target DB for {model_name}')
+                               f'target DB for {model_name}.')
                 return
 
             # Update the foreign key value with the facility instance.
@@ -597,11 +597,11 @@ class DatabaseSynchronizer:
             referenced_uuid = getattr(referenced_source_record, 'uuid')
             logger.debug(f'Found UUID {referenced_uuid} for '
                          f'{referenced_model.__name__} ID '
-                         f'{original_fk_value} in source DB')
+                         f'{original_fk_value} in source DB.')
         except referenced_model.DoesNotExist:
             logger.warning(f'Referenced {referenced_model.__name__} '
                            f'with ID {original_fk_value} not found in '
-                           f'source DB for {model_name}')
+                           f'source DB for {model_name}.')
             return
 
         # Step 2: Find the corresponding record in target DB using UUID.
@@ -612,11 +612,11 @@ class DatabaseSynchronizer:
                 )
             )
             logger.debug(f'Found target record {referenced_target_record} '
-                         f'for UUID {referenced_uuid} in target DB')
+                         f'for UUID {referenced_uuid} in target DB.')
         except referenced_model.DoesNotExist:
             logger.warning(f'Referenced {referenced_model.__name__} '
                            f'with UUID {referenced_uuid} not found in '
-                           f'target DB for {model_name}')
+                           f'target DB for {model_name}.')
             return
 
         # Step 3: Update the foreign key value with the model instance.
