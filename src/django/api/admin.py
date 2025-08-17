@@ -15,7 +15,6 @@ from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 
 from api import models
-from api.models.facility.claims_reason import ClaimsReason
 
 from api.reports import get_report_names, run_report
 
@@ -270,4 +269,4 @@ admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
-admin_site.register(ClaimsReason, ClaimsReasonAdmin)
+admin_site.register(models.ClaimsReason, ClaimsReasonAdmin)
