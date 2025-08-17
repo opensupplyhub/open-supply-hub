@@ -330,8 +330,6 @@ class DatabaseSynchronizer:
         logger.info(f'Errors: {self.__stats["errors"]}')
         logger.info('=' * 60)
 
-        return self.__stats, duration
-
     def __sync_model(self, model_name, model_config):
         '''Synchronize a single model from source to target.'''
         model_class = model_config['model']
@@ -344,12 +342,12 @@ class DatabaseSynchronizer:
         logger.info(f'Using sync field: {sync_field}')
         logger.info(f'Foreign keys: {foreign_keys}')
 
-        # Get the last run timestamp for this model
+        # Get the last run timestamp for this model.
         last_run = self.__get_last_run_timestamp(model_name)
         logger.info(f'Last run timestamp for {model_name}: {last_run}')
 
         try:
-            # Get only records updated since last run
+            # Get only records updated since last run.
             source_records = list(
                 model_class.objects.using('source')
                 .filter(updated_at__gt=last_run)
@@ -367,26 +365,32 @@ class DatabaseSynchronizer:
                         pk_type, foreign_keys, model_name, excluded_fields
                     )
 
-                    # Track the timestamp of the last processed record
+                    # Track the timestamp of the last processed record.
                     last_processed_timestamp = source_record.updated_at
 
                 except Exception as e:
-                    logger.error(f'Error processing record in {model_name}: {e}')
+                    logger.error(f'Error processing record in {model_name}: '
+                                 f'{e}.')
                     self.__stats['errors'] += 1
 
-            # Save the timestamp of the last successfully processed record
+            # Save the timestamp of the last successfully processed record.
             if last_processed_timestamp:
-                self.__save_last_run_timestamp(model_name,
-                                              last_processed_timestamp)
+                if self.__dry_run:
+                    logger.info(f'[DRY RUN] Would save last run timestamp '
+                                f'for {model_name}: '
+                                f'{last_processed_timestamp}.')
+                else:
+                    self.__save_last_run_timestamp(model_name,
+                                                   last_processed_timestamp)
 
-            logger.info(f'Completed synchronization for model {model_name}')
+            logger.info(f'Completed synchronization for model {model_name}.')
 
         except Exception as e:
-            logger.error(f'Error synchronizing model {model_name}: {e}')
+            logger.error(f'Error synchronizing model {model_name}: {e}.')
             self.__stats['errors'] += 1
 
     def __process_record(self, model_class, source_record, sync_field, pk_type,
-                        foreign_keys, model_name, excluded_fields):
+                         foreign_keys, model_name, excluded_fields):
         '''Process a single record for synchronization.'''
         # Check if record exists in target by sync field
         try:
@@ -401,37 +405,45 @@ class DatabaseSynchronizer:
                                 pk_type)
             self.__stats['updates'] += 1
             logger.debug(f'Updated record with {sync_field}='
-                         f'{getattr(source_record, sync_field)} in {model_name}')
+                         f'{getattr(source_record, sync_field)} in '
+                         f'{model_name}.')
 
         except model_class.DoesNotExist:
             # Record doesn't exist - insert it.
-            self.__insert_record(model_class, source_record, sync_field, pk_type,
-                                foreign_keys, model_name, excluded_fields)
+            self.__insert_record(model_class, source_record, sync_field,
+                                 pk_type, foreign_keys, model_name,
+                                 excluded_fields)
             self.__stats['inserts'] += 1
             logger.debug(f'Inserted record with {sync_field}='
-                         f'{getattr(source_record, sync_field)} in {model_name}')
+                         f'{getattr(source_record, sync_field)} in '
+                         f'{model_name}.')
 
     def __insert_record(self, model_class, source_record, sync_field, pk_type,
-                       foreign_keys, model_name, excluded_fields):
+                        foreign_keys, model_name, excluded_fields):
         '''Insert a new record into the target database.'''
         if self.__dry_run:
             logger.info(f'[DRY RUN] Would insert record with {sync_field} '
-                        f'{getattr(source_record, sync_field)} into {model_name}')
+                        f'{getattr(source_record, sync_field)} into '
+                        f'{model_name}.')
             return
 
         # Create a copy of the source record data.
-        record_data = self.__get_record_data(source_record, pk_type, excluded_fields)
+        record_data = self.__get_record_data(
+            source_record, pk_type,
+            excluded_fields
+        )
 
         # Update foreign key references.
-        self.__update_foreign_keys_in_data(record_data, foreign_keys, model_name)
+        self.__update_foreign_keys_in_data(
+            record_data, foreign_keys, model_name
+        )
 
         # Create and save the record.
         try:
-            logger.info(f'Record data: {record_data}')
             new_record = model_class(**record_data)
             new_record.save()
         except Exception as e:
-            logger.error(f'Error inserting record in {model_name}: {e}')
+            logger.error(f'Error inserting record in {model_name}: {e}.')
             raise
 
     def _update_record(self, source_record, target_record,
@@ -439,25 +451,31 @@ class DatabaseSynchronizer:
         '''Update an existing record in the target database.'''
         if self.__dry_run:
             logger.info(f'[DRY RUN] Would update record with sync_field '
-                        f'{getattr(source_record, "uuid")} in {model_name}')
+                        f'{getattr(source_record, "uuid")} in {model_name}.')
             return
 
         # Get source record data.
-        record_data = self.__get_record_data(source_record, pk_type,
-                                            excluded_fields)
+        record_data = self.__get_record_data(
+            source_record, pk_type, excluded_fields
+        )
 
         # Update foreign key references.
-        self.__update_foreign_keys_in_data(record_data, foreign_keys, model_name)
+        self.__update_foreign_keys_in_data(
+            record_data,
+            foreign_keys,
+            model_name
+        )
 
         # Update the target record.
         for field, value in record_data.items():
-            if field not in ['id', 'uuid']:  # Don't re-update primary key or UUID.
+            # Don't re-update primary key or UUID.
+            if field not in ['id', 'uuid']:
                 setattr(target_record, field, value)
 
         try:
             target_record.save()
         except Exception as e:
-            logger.error(f'Error updating record in {model_name}: {e}')
+            logger.error(f'Error updating record in {model_name}: {e}.')
             raise
 
     def __get_record_data(self, record, pk_type, excluded_fields=None):
@@ -495,11 +513,11 @@ class DatabaseSynchronizer:
         # Create a fake email format: hash@anonymized.com.
         anonymized_email = f'{hashed}@anonymized.com'
 
-        logger.debug(f'Anonymized email: {email} -> {anonymized_email}')
+        logger.debug(f'Anonymized email: {email} -> {anonymized_email}.')
         return anonymized_email
 
-    def __update_foreign_keys_in_data(self, record_data, foreign_keys,
-                                     model_name):
+    def __update_foreign_keys_in_data(
+            self, record_data, foreign_keys, model_name):
         '''
         Update foreign key references by looking up UUIDs and finding
         corresponding IDs in target DB.
@@ -509,25 +527,27 @@ class DatabaseSynchronizer:
                 original_fk_value = record_data[fk_field]
 
                 try:
-                    # Special handling for Facility foreign keys - use ID directly since it's unique
+                    # Special handling for Facility foreign keys - use ID
+                    # directly since it's unique.
                     if referenced_model == Facility:
                         self.__update_facility_foreign_key(
-                            record_data, fk_field, original_fk_value, model_name
+                            record_data, fk_field, original_fk_value,
+                            model_name
                         )
                     else:
-                        # Standard UUID-based lookup for other models
+                        # Standard UUID-based lookup for other models.
                         self.__update_uuid_based_foreign_key(
                             record_data, fk_field, referenced_model,
                             original_fk_value, model_name
                         )
 
                 except Exception as e:
-                    logger.error(f'Error updating FK {fk_field} in {model_name}: '
-                                 f'{e}')
+                    logger.error(f'Error updating FK {fk_field} in '
+                                 f'{model_name}: {e}.')
                     continue
 
-    def __update_facility_foreign_key(self, record_data, fk_field, 
-                                    original_fk_value, model_name):
+    def __update_facility_foreign_key(
+            self, record_data, fk_field, original_fk_value, model_name):
         '''
         Update facility foreign key using direct ID lookup since facility IDs
         are unique.
@@ -555,12 +575,13 @@ class DatabaseSynchronizer:
                         f'to avoid cross-database references.')
 
         except Exception as e:
-            logger.error(f'Error updating facility FK {fk_field} in {model_name}: '
-                         f'{e}')
+            logger.error(f'Error updating facility FK {fk_field} in '
+                         f'{model_name}: {e}.')
             raise
 
-    def __update_uuid_based_foreign_key(self, record_data, fk_field, 
-                                      referenced_model, original_fk_value, model_name):
+    def __update_uuid_based_foreign_key(
+            self, record_data, fk_field, referenced_model, original_fk_value,
+            model_name):
         '''
         Update foreign key using UUID-based lookup for non-facility models.
         '''
@@ -581,7 +602,7 @@ class DatabaseSynchronizer:
                            f'source DB for {model_name}')
             return
 
-        # Step 2: Find the corresponding record in target DB using UUID
+        # Step 2: Find the corresponding record in target DB using UUID.
         try:
             referenced_target_record = (
                 referenced_model.objects.get(
@@ -596,7 +617,7 @@ class DatabaseSynchronizer:
                            f'target DB for {model_name}')
             return
 
-        # Step 3: Update the foreign key value with the model instance
+        # Step 3: Update the foreign key value with the model instance.
         if original_fk_value.id != referenced_target_record.id:
             record_data[fk_field] = referenced_target_record
             self.__stats['fk_updates'] += 1
@@ -616,6 +637,7 @@ class DatabaseSynchronizer:
 
     def __update_circular_references(self):
         '''Update circular references after all records are synced.'''
+
         logger.info('Updating circular references...')
 
         # Update FacilityListItem.facility references.
@@ -625,29 +647,38 @@ class DatabaseSynchronizer:
 
     def __update_facility_list_item_facility(self):
         '''Update FacilityListItem.facility field using UUID matching.'''
+        if self.__dry_run:
+            logger.info('[DRY RUN] Would update FacilityListItem.facility '
+                        'circular references.')
+            return
+
         logger.info('Updating FacilityListItem.facility references...')
 
         # Use a separate timestamp for facility updates.
-        last_run = self.__get_last_run_timestamp('FacilityListItem', 'facility_updates')
-        logger.info(f'Last run timestamp for FacilityListItem facility updates: {last_run}')
+        last_run = self.__get_last_run_timestamp(
+            'FacilityListItem', 'facility_updates'
+        )
+        logger.info('Last run timestamp for FacilityListItem facility '
+                    f'updates: {last_run}')
 
         # Get only facility list items that were not updated since last run.
         list_items = FacilityListItem.objects.filter(
             updated_at__gt=last_run
         ).order_by('updated_at')
 
-        logger.info(f'Found {list_items.count()} FacilityListItem records updated since last run')
+        logger.info(f'Found {list_items.count()} FacilityListItem records '
+                    'updated since last run.')
 
         updated_count = 0
         cleared_count = 0
         errors_count = 0
 
-        # Track the timestamp of the last processed record
+        # Track the timestamp of the last processed record.
         last_processed_timestamp = None
 
         try:
             for list_item in list_items:
-                # Find the corresponding list item in source DB
+                # Find the corresponding list item in source DB.
                 try:
                     source_list_item = (
                         FacilityListItem.objects.using('source').get(
@@ -656,51 +687,61 @@ class DatabaseSynchronizer:
                     )
 
                     if source_list_item.facility:
-                        # Source has a facility - find the corresponding facility in target DB
+                        # Source has a facility - find the corresponding
+                        # facility in target DB.
                         try:
                             target_facility = Facility.objects.get(
                                 id=source_list_item.facility.id
                             )
-                            # Only update if the facility is different
-                            # Handle case where list_item.facility might be None
+                            # Only update if the facility is different.
+                            # Handle case where list_item.facility might be
+                            # None.
                             if (list_item.facility is None or
-                                    list_item.facility.id != target_facility.id):
+                                    list_item.facility.id !=
+                                    target_facility.id):
                                 list_item.facility = target_facility
                                 list_item.save()
                                 updated_count += 1
-                                logger.debug(f'Updated FacilityListItem {list_item.id} '
-                                             f'facility to {target_facility.id}')
+                                logger.debug('Updated FacilityListItem '
+                                             f'{list_item.id} facility to '
+                                             f'{target_facility.id}')
                         except Facility.DoesNotExist:
-                            logger.warning(f'Could not find Facility with ID '
-                                           f'{source_list_item.facility.id} for '
-                                           f'FacilityListItem {list_item.id}')
+                            logger.warning('Could not find Facility with ID '
+                                           f'{source_list_item.facility.id} '
+                                           'for FacilityListItem '
+                                           f'{list_item.id}')
                             errors_count += 1
                     else:
-                        # Source has no facility - clear the facility in target if it exists
+                        # Source has no facility - clear the facility in
+                        # target if it exists.
                         if list_item.facility is not None:
                             list_item.facility = None
                             list_item.save()
                             cleared_count += 1
-                            logger.debug(f'Cleared facility for FacilityListItem {list_item.id} '
-                                         f'(source has no facility)')
+                            logger.debug('Cleared facility for '
+                                         f'FacilityListItem {list_item.id} '
+                                         '(source has no facility)')
                         else:
-                            logger.debug(f'FacilityListItem {list_item.id} already has no '
-                                         f'facility reference')
+                            logger.debug(f'FacilityListItem {list_item.id} '
+                                         'already has no facility reference')
 
-                    # Track the timestamp of the last processed record
+                    # Track the timestamp of the last processed record.
                     last_processed_timestamp = list_item.updated_at
 
                 except FacilityListItem.DoesNotExist:
-                    logger.warning(f'Could not find source FacilityListItem with '
-                                   f'UUID {list_item.uuid}')
+                    logger.warning('Could not find source FacilityListItem '
+                                   f'with UUID {list_item.uuid}')
                     errors_count += 1
 
         except Exception as e:
-            logger.error(f'Error during facility list item facility updates: {e}')
+            logger.error('Error during facility list item facility updates: '
+                         f'{e}.')
             self.__stats['errors'] += 1
 
         # Update statistics.
-        self.__stats['circular_reference_updates'] += updated_count + cleared_count
+        self.__stats['circular_reference_updates'] += (
+            updated_count + cleared_count
+        )
         self.__stats['errors'] += errors_count
 
         logger.info(f'Updated facility references for {updated_count} '
@@ -711,8 +752,13 @@ class DatabaseSynchronizer:
 
         # Save the timestamp of the last successfully processed record.
         if last_processed_timestamp:
-            self.__save_last_run_timestamp('FacilityListItem', last_processed_timestamp, 'facility_updates')
-            logger.info(f'Saved facility updates timestamp: {last_processed_timestamp}')
+            self.__save_last_run_timestamp(
+                'FacilityListItem',
+                last_processed_timestamp,
+                'facility_updates'
+            )
+            logger.info('Saved facility updates timestamp: '
+                        f'{last_processed_timestamp}.')
 
     def __setup_source_database_connection(self):
         '''Set up database connection for source.'''
@@ -768,6 +814,10 @@ class Command(BaseCommand):
         'Synchronize data from OS Hub to the DB of the private instance '
         'using Django ORM. This is a one-way sync, so the data in the '
         'private instance will be updated, but not the data in OS Hub.'
+        'To run this command, you need to provide the source database '
+        'credentials, the database from which the data is being synced '
+        'from. The private instance database credentials will be taken '
+        'automatically from settings.DATABASES["default"].'
     )
 
     def add_arguments(self, parser):
