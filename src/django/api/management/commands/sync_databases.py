@@ -400,9 +400,9 @@ class DatabaseSynchronizer:
 
             # Record exists - always update it (since incremental sync already
             # filtered by updated_at).
-            self._update_record(source_record, existing_record,
-                                foreign_keys, model_name, excluded_fields,
-                                pk_type)
+            self.__update_record(source_record, existing_record,
+                                 foreign_keys, model_name, excluded_fields,
+                                 pk_type, sync_field)
             self.__stats['updates'] += 1
             logger.debug(f'Updated record with {sync_field}='
                          f'{getattr(source_record, sync_field)} in '
@@ -446,12 +446,14 @@ class DatabaseSynchronizer:
             logger.error(f'Error inserting record in {model_name}: {e}.')
             raise
 
-    def _update_record(self, source_record, target_record,
-                       foreign_keys, model_name, excluded_fields, pk_type):
+    def __update_record(self, source_record, target_record,
+                        foreign_keys, model_name, excluded_fields, pk_type,
+                        sync_field):
         '''Update an existing record in the target database.'''
         if self.__dry_run:
             logger.info(f'[DRY RUN] Would update record with sync_field '
-                        f'{getattr(source_record, "uuid")} in {model_name}.')
+                        f'{getattr(source_record, sync_field)} in '
+                        f'{model_name}.')
             return
 
         # Get source record data.
@@ -661,13 +663,15 @@ class DatabaseSynchronizer:
         logger.info('Last run timestamp for FacilityListItem facility '
                     f'updates: {last_run}')
 
-        # Get only facility list items that were not updated since last run.
-        list_items = FacilityListItem.objects.filter(
-            updated_at__gt=last_run
-        ).order_by('updated_at')
+        # Query source records by updated_at.
+        source_list_items = (
+            FacilityListItem.objects.using('source')
+            .filter(updated_at__gt=last_run)
+            .order_by('updated_at')
+        )
 
-        logger.info(f'Found {list_items.count()} FacilityListItem records '
-                    'updated since last run.')
+        logger.info(f'Found {source_list_items.count()} source '
+                    'FacilityListItem records updated since last run.')
 
         updated_count = 0
         cleared_count = 0
@@ -677,13 +681,11 @@ class DatabaseSynchronizer:
         last_processed_timestamp = None
 
         try:
-            for list_item in list_items:
-                # Find the corresponding list item in source DB.
+            for source_list_item in source_list_items:
+                # Find the corresponding list item in target DB by UUID.
                 try:
-                    source_list_item = (
-                        FacilityListItem.objects.using('source').get(
-                            uuid=list_item.uuid
-                        )
+                    target_list_item = FacilityListItem.objects.get(
+                        uuid=source_list_item.uuid
                     )
 
                     if source_list_item.facility:
@@ -694,43 +696,43 @@ class DatabaseSynchronizer:
                                 id=source_list_item.facility.id
                             )
                             # Only update if the facility is different.
-                            # Handle case where list_item.facility might be
-                            # None.
-                            if (list_item.facility is None or
-                                    list_item.facility.id !=
+                            if (target_list_item.facility is None or
+                                    target_list_item.facility.id !=
                                     target_facility.id):
-                                list_item.facility = target_facility
-                                list_item.save()
+                                target_list_item.facility = target_facility
+                                target_list_item.save()
                                 updated_count += 1
                                 logger.debug('Updated FacilityListItem '
-                                             f'{list_item.id} facility to '
-                                             f'{target_facility.id}')
+                                             f'{target_list_item.id} facility '
+                                             f'to {target_facility.id}.')
                         except Facility.DoesNotExist:
                             logger.warning('Could not find Facility with ID '
                                            f'{source_list_item.facility.id} '
                                            'for FacilityListItem '
-                                           f'{list_item.id}')
+                                           f'{target_list_item.id}.')
                             errors_count += 1
                     else:
                         # Source has no facility - clear the facility in
                         # target if it exists.
-                        if list_item.facility is not None:
-                            list_item.facility = None
-                            list_item.save()
+                        if target_list_item.facility is not None:
+                            target_list_item.facility = None
+                            target_list_item.save()
                             cleared_count += 1
                             logger.debug('Cleared facility for '
-                                         f'FacilityListItem {list_item.id} '
-                                         '(source has no facility)')
+                                         f'FacilityListItem '
+                                         f'{target_list_item.id} '
+                                         '(source has no facility).')
                         else:
-                            logger.debug(f'FacilityListItem {list_item.id} '
-                                         'already has no facility reference')
+                            logger.debug(f'FacilityListItem '
+                                         f'{target_list_item.id} '
+                                         'already has no facility reference.')
 
                     # Track the timestamp of the last processed record.
-                    last_processed_timestamp = list_item.updated_at
+                    last_processed_timestamp = source_list_item.updated_at
 
                 except FacilityListItem.DoesNotExist:
-                    logger.warning('Could not find source FacilityListItem '
-                                   f'with UUID {list_item.uuid}')
+                    logger.warning('Could not find target FacilityListItem '
+                                   f'with UUID {source_list_item.uuid}.')
                     errors_count += 1
 
         except Exception as e:
