@@ -61,7 +61,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             .check_pagination(self.paginate_queryset(queryset))
         list_serializer = self.get_serializer(page_queryset)
 
-        rows = [f['row'] for f in list_serializer.data]
+        rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
 
         is_same_contributor = self.__check_all_contributor_facilities(
@@ -119,8 +119,8 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         for facility in queryset:
             facility_contributor_ids = [
-                c.get('id') for c in facility.contributors
-                if c.get('id') is not None
+                contributor.get('id') for contributor in facility.contributors
+                if contributor.get('id') is not None
             ]
             if (
                 current_user_contributor_id
