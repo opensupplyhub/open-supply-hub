@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 import hashlib
-import random
+import hmac
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -306,7 +306,7 @@ class DatabaseSynchronizer:
                 model_config = self.SYNC_MODELS[model_name]
                 self.__sync_model(model_name, model_config)
             except Exception as e:
-                logger.error(f'Failed to sync model {model_name}: {e}.')
+                logger.exception(f'Failed to sync model {model_name}: {e}.')
                 self.__stats['errors'] += 1
 
         # Phase 2: Update circular references.
@@ -369,8 +369,8 @@ class DatabaseSynchronizer:
                     last_processed_timestamp = source_record.updated_at
 
                 except Exception as e:
-                    logger.error(f'Error processing record in {model_name}: '
-                                 f'{e}.')
+                    logger.exception('Error processing record in '
+                                     f'{model_name}: {e}.')
                     self.__stats['errors'] += 1
 
             # Save the timestamp of the last successfully processed record.
@@ -386,7 +386,7 @@ class DatabaseSynchronizer:
             logger.info(f'Completed synchronization for model {model_name}.')
 
         except Exception as e:
-            logger.error(f'Error synchronizing model {model_name}: {e}.')
+            logger.exception(f'Error synchronizing model {model_name}: {e}.')
             self.__stats['errors'] += 1
 
     def __process_record(self, model_class, source_record, sync_field, pk_type,
@@ -443,7 +443,7 @@ class DatabaseSynchronizer:
             new_record = model_class(**record_data)
             new_record.save()
         except Exception as e:
-            logger.error(f'Error inserting record in {model_name}: {e}.')
+            logger.exception(f'Error inserting record in {model_name}: {e}.')
             raise
 
     def __update_record(self, source_record, target_record,
@@ -477,7 +477,7 @@ class DatabaseSynchronizer:
         try:
             target_record.save()
         except Exception as e:
-            logger.error(f'Error updating record in {model_name}: {e}.')
+            logger.exception(f'Error updating record in {model_name}: {e}.')
             raise
 
     def __get_record_data(self, record, pk_type, excluded_fields=None):
@@ -503,20 +503,30 @@ class DatabaseSynchronizer:
         return data
 
     def __anonymize_email(self, email):
-        '''Anonymize an email address using MD5 hash of random text.'''
-
+        '''
+        Anonymize email using deterministic HMAC-SHA256.
+        Same input always produces same output, preserving data stability.
+        '''
         if not email or not isinstance(email, str):
             return email
 
-        # Generate MD5 hash of random text.
-        random_text = str(random.random()) + str(random.randint(1, 1000000))
-        hashed = hashlib.md5(random_text.encode()).hexdigest()
+        # Use Django secret key as salt for consistency
+        secret = getattr(settings, 'EMAIL_ANONYMIZATION_SECRET')
+        if not secret:
+            raise ValueError('EMAIL_ANONYMIZATION_SECRET must be configured.')
 
-        # Create a fake email format: hash@anonymized.com.
-        anonymized_email = f'{hashed}@anonymized.com'
+        # Normalize email to lowercase for consistency.
+        normalized_email = email.lower().strip()
 
-        logger.debug('Anonymized email generated.')
-        return anonymized_email
+        # Generate deterministic hash using HMAC-SHA256.
+        hashed = hmac.new(
+            secret.encode('utf-8'),
+            normalized_email.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        # Use consistent domain and truncate hash for readability.
+        return f'{hashed[:32]}@anonymized.example'
 
     def __update_foreign_keys_in_data(
             self, record_data, foreign_keys, model_name):
@@ -544,8 +554,9 @@ class DatabaseSynchronizer:
                         )
 
                 except Exception as e:
-                    logger.error(f'Error updating FK {fk_field} in '
-                                 f'{model_name}: {e}.')
+                    logger.exception(
+                        f'Error updating FK {fk_field} in {model_name}: {e}.'
+                    )
                     continue
 
     def __update_facility_foreign_key(
@@ -577,8 +588,9 @@ class DatabaseSynchronizer:
                         f'to avoid cross-database references.')
 
         except Exception as e:
-            logger.error(f'Error updating facility FK {fk_field} in '
-                         f'{model_name}: {e}.')
+            logger.exception(
+                f'Error updating facility FK {fk_field} in {model_name}: {e}.'
+            )
             raise
 
     def __update_uuid_based_foreign_key(
@@ -736,8 +748,9 @@ class DatabaseSynchronizer:
                     errors_count += 1
 
         except Exception as e:
-            logger.error('Error during facility list item facility updates: '
-                         f'{e}.')
+            logger.exception(
+                f'Error during facility list item facility updates: {e}.'
+            )
             self.__stats['errors'] += 1
 
         # Update statistics.
@@ -807,8 +820,9 @@ class DatabaseSynchronizer:
             logger.debug(f'Saved last run timestamp '
                          f'for {model_name}: {timestamp}.')
         except IOError as e:
-            logger.error(f'Could not save last run timestamp '
-                         f'for {model_name}: {e}.')
+            logger.exception(
+                f'Could not save last run timestamp for {model_name}: {e}.'
+            )
 
 
 class Command(BaseCommand):
