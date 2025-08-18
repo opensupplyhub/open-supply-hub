@@ -97,7 +97,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Tests that ensure the component is properly hidden for anonymous users, in embed mode, when the `private_instance` flag is active, or when facilities count is within the user's allowed download limit.
     * Tests for the `DownloadLimitInfo` component to ensure it renders correct text content and link attributes for informing users about download limits and purchasing additional downloads.
     * Refactored the filter sidebar header into a separate `FilterSidebarHeader` component to improve code organization and maintainability.
-* [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to the Open Supply Hub site. Both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don't execute JavaScript) were enabled.
+* [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to the Open Supply Hub site. Both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don’t execute JavaScript) were enabled.
 
 ### Architecture/Environment changes
 * [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard. 
