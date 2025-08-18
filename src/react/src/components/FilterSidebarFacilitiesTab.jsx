@@ -205,6 +205,8 @@ function FilterSidebarFacilitiesTab({
     updateTargetOSID,
     fetchTargetFacility,
     classes,
+    contributors,
+    combineContributors,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
         false,
@@ -333,6 +335,32 @@ function FilterSidebarFacilitiesTab({
         ? (get(downloadData, 'results.rows', []).length * 100) / facilitiesCount
         : 0;
 
+    const userContributorId = get(user, 'contributor_id', null);
+    const selectedContributorIds = Array.isArray(contributors)
+        ? contributors.map(option =>
+              option && typeof option === 'object' && 'value' in option
+                  ? option.value
+                  : option,
+          )
+        : [];
+    const userContributorIdStr =
+        userContributorId !== null && userContributorId !== undefined
+            ? String(userContributorId)
+            : null;
+    const selectedContributorIdStrs = selectedContributorIds.map(id =>
+        id !== null && id !== undefined ? String(id) : id,
+    );
+    const isAllUserContributed =
+        !embed &&
+        !user.isAnon &&
+        !!userContributorIdStr &&
+        selectedContributorIdStrs.length > 0 &&
+        ((selectedContributorIdStrs.length === 1 &&
+            selectedContributorIdStrs[0] === userContributorIdStr) ||
+            (selectedContributorIdStrs.length > 1 &&
+                combineContributors === 'AND' &&
+                selectedContributorIdStrs.includes(userContributorIdStr)));
+
     const listHeaderInsetComponent = (
         <Grid
             container
@@ -360,6 +388,7 @@ function FilterSidebarFacilitiesTab({
                                 }
                                 upgrade={
                                     !embed &&
+                                    !isAllUserContributed &&
                                     facilitiesCount >
                                         user.allowed_records_number
                                 }
@@ -669,7 +698,6 @@ FilterSidebarFacilitiesTab.propTypes = {
     updateToMergeOSID: func.isRequired,
     fetchToMergeFacility: func.isRequired,
     updateTargetOSID: func.isRequired,
-    fetchTargetFacility: func.isRequired,
 };
 
 function mapStateToProps({
@@ -693,6 +721,7 @@ function mapStateToProps({
         facilities: { data: downloadData },
     },
     embeddedMap: { embed },
+    filters: { contributors, combineContributors },
 }) {
     return {
         user,
@@ -708,6 +737,8 @@ function mapStateToProps({
         facilityToMergeOSID,
         scrollTop,
         embed: !!embed,
+        contributors,
+        combineContributors,
     };
 }
 

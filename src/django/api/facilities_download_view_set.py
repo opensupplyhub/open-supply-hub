@@ -45,9 +45,14 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
         facility_download_limit = None
 
+        is_same_contributor = self.__check_all_contributor_facilities(
+            queryset, request
+        )
+
         if (
             not switch_is_active('private_instance')
             and not self.__is_embed_mode()
+            and not is_same_contributor
         ):
             facility_download_limit = FacilitiesDownloadService \
                 .get_download_limit(request)
@@ -63,10 +68,6 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
 
         rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
-
-        is_same_contributor = self.__check_all_contributor_facilities(
-            queryset, request
-        )
 
         data = {
             'rows': rows,
