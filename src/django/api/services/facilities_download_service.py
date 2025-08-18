@@ -243,13 +243,16 @@ class FacilitiesDownloadService:
         if page > 1 and prev_last_id is None:
             return [], True
 
-        items, last_id, is_last_page = keyset_page_id(base_qs, page_size, prev_last_id)
+        items, last_id, is_last_page = keyset_page_id(
+            base_qs,
+            page_size,
+            prev_last_id
+        )
 
         if page >= 1:
             set_bm(qhash(request, page_size), page, last_id)
 
         return items, is_last_page
-
 
     @staticmethod
     def build_page_links(

@@ -11,7 +11,10 @@ from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
 
 
-class FacilitiesDownloadViewSet(mixins.ListModelMixin,viewsets.GenericViewSet):
+class FacilitiesDownloadViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     """
     Get facilities in array format, suitable for CSV/XLSX download.
     """
@@ -57,12 +60,19 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,viewsets.GenericViewSet):
 
         items, is_last_page = FacilitiesDownloadService.\
             fetch_page_and_cache(
-            base_qs, request, page, page_size, block=50
-        )
+                base_qs,
+                request,
+                page,
+                page_size,
+                block=50
+            )
         next_link, prev_link = FacilitiesDownloadService.\
             build_page_links(
-            request, page, page_size, is_last_page
-        )
+                request,
+                page,
+                page_size,
+                is_last_page
+            )
 
         list_serializer = self.get_serializer(items)
         rows = [f['row'] for f in list_serializer.data]
@@ -84,7 +94,15 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,viewsets.GenericViewSet):
             total_records = (page - 1) * page_size + len(items)
             prev_free = getattr(limit, 'free_download_records', 0)
             prev_paid = getattr(limit, 'paid_download_records', 0)
-            FacilitiesDownloadService.register_download_if_needed(limit, total_records)
-            FacilitiesDownloadService.send_email_if_needed(request, limit, prev_free, prev_paid)
+            FacilitiesDownloadService.register_download_if_needed(
+                limit,
+                total_records
+            )
+            FacilitiesDownloadService.send_email_if_needed(
+                request,
+                limit,
+                prev_free,
+                prev_paid
+            )
 
         return Response(payload)
