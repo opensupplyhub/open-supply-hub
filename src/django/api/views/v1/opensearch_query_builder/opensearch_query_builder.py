@@ -19,7 +19,7 @@ class OpenSearchQueryBuilder(ABC):
         match_query = {
             'match': {field: {'query': value, 'fuzziness': fuzziness}}
         }
-        self.query_body['query']['bool']['should'].append(match_query)
+        self.query_body['query']['bool']['must'].append(match_query)
 
     def add_match_phrase(self, field, value, slop):
         match_query = {
