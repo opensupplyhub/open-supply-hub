@@ -419,7 +419,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         user = self.create_user()
         self.login_user(user)
 
-        response = self.get_facility_downloads({"countries": "IN"})
+        response = self.get_facility_downloads({"countries": ["IN"]})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [
@@ -543,7 +543,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             mock_get_queryset.return_value = mock_queryset
 
             response = self.get_facility_downloads(
-                {'contributors': str(contributor.id)}
+                {'contributors': [str(contributor.id)]}
             )
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -578,7 +578,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             mock_get_queryset.return_value = mock_queryset
 
             response = self.get_facility_downloads(
-                {'contributors': str(contributor.id)}
+                {'contributors': [str(contributor.id)]}
             )
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -590,7 +590,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         user = self.create_user()
         self.login_user(user)
 
-        response = self.get_facility_downloads({'contributors': '123'})
+        response = self.get_facility_downloads({'contributors': ['123']})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(
@@ -652,7 +652,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             mock_get_queryset.return_value = mock_queryset
 
             response = self.get_facility_downloads(
-                {'contributors': str(contributor.id)}
+                {'contributors': [str(contributor.id)]}
             )
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)

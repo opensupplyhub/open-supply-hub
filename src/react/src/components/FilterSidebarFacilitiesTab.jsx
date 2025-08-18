@@ -5,10 +5,6 @@ import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogActions from '@material-ui/core/DialogActions';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
@@ -24,7 +20,6 @@ import noop from 'lodash/noop';
 
 import CopySearch from './CopySearch';
 import FeatureFlag from './FeatureFlag';
-import DownloadFacilitiesButton from './DownloadFacilitiesButton';
 import ShowOnly from './ShowOnly';
 
 import {
@@ -44,16 +39,13 @@ import {
 
 import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
-import {
-    REPORT_A_FACILITY,
-    authLoginFormRoute,
-    authRegisterFormRoute,
-    PRIVATE_INSTANCE,
-    FACILITIES_DOWNLOAD_LIMIT,
-} from '../util/constants';
+import { REPORT_A_FACILITY } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
-import { useMergeButtonClickHandler } from '../util/hooks';
+import {
+    useMergeButtonClickHandler,
+    useIsAllUserContributed,
+} from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
 
@@ -61,6 +53,8 @@ import { filterSidebarStyles } from '../util/styles';
 import BadgeClaimed from './BadgeClaimed';
 import CopyLinkIcon from './CopyLinkIcon';
 import { useResultListHeight } from '../util/useHeightSubtract';
+import DownloadButtonWithFlags from './DownloadButtonWithFlags';
+import LoginRequiredDialog from './LoginRequiredDialog';
 
 const makeFacilitiesTabStyles = theme => ({
     noResultsTextStyles: Object.freeze({
@@ -212,6 +206,13 @@ function FilterSidebarFacilitiesTab({
         false,
     );
 
+    const isAllUserContributed = useIsAllUserContributed(
+        user,
+        contributors,
+        combineContributors,
+        embed,
+    );
+
     const [hasScrolled, setHasScrolled] = useState(false);
     const scrollElements = Array.from(
         document.getElementsByClassName('infinite-scroll'),
@@ -326,40 +327,9 @@ function FilterSidebarFacilitiesTab({
 
     const facilitiesCount = get(data, 'count', null);
 
-    const LoginLink = props => <Link to={authLoginFormRoute} {...props} />;
-    const RegisterLink = props => (
-        <Link to={authRegisterFormRoute} {...props} />
-    );
-
     const progress = facilitiesCount
         ? (get(downloadData, 'results.rows', []).length * 100) / facilitiesCount
         : 0;
-
-    const userContributorId = get(user, 'contributor_id', null);
-    const selectedContributorIds = Array.isArray(contributors)
-        ? contributors.map(option =>
-              option && typeof option === 'object' && 'value' in option
-                  ? option.value
-                  : option,
-          )
-        : [];
-    const userContributorIdStr =
-        userContributorId !== null && userContributorId !== undefined
-            ? String(userContributorId)
-            : null;
-    const selectedContributorIdStrs = selectedContributorIds.map(id =>
-        id !== null && id !== undefined ? String(id) : id,
-    );
-    const isAllUserContributed =
-        !embed &&
-        !user.isAnon &&
-        !!userContributorIdStr &&
-        selectedContributorIdStrs.length > 0 &&
-        ((selectedContributorIdStrs.length === 1 &&
-            selectedContributorIdStrs[0] === userContributorIdStr) ||
-            (selectedContributorIdStrs.length > 1 &&
-                combineContributors === 'AND' &&
-                selectedContributorIdStrs.includes(userContributorIdStr)));
 
     const listHeaderInsetComponent = (
         <Grid
@@ -378,38 +348,15 @@ function FilterSidebarFacilitiesTab({
                         />
                     </div>
                 ) : (
-                    <FeatureFlag
-                        flag={PRIVATE_INSTANCE}
-                        alternative={
-                            <DownloadFacilitiesButton
-                                disabled={
-                                    embed &&
-                                    facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
-                                }
-                                upgrade={
-                                    !embed &&
-                                    !isAllUserContributed &&
-                                    facilitiesCount >
-                                        user.allowed_records_number
-                                }
-                                userAllowedRecords={user.allowed_records_number}
-                                setLoginRequiredDialogIsOpen={
-                                    setLoginRequiredDialogIsOpen
-                                }
-                                facilitiesCount={facilitiesCount}
-                            />
+                    <DownloadButtonWithFlags
+                        embed={!!embed}
+                        facilitiesCount={facilitiesCount}
+                        isAllUserContributed={isAllUserContributed}
+                        userAllowedRecords={user.allowed_records_number}
+                        setLoginRequiredDialogIsOpen={
+                            setLoginRequiredDialogIsOpen
                         }
-                    >
-                        <DownloadFacilitiesButton
-                            disabled={
-                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
-                            }
-                            userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
-                            setLoginRequiredDialogIsOpen={
-                                setLoginRequiredDialogIsOpen
-                            }
-                        />
-                    </FeatureFlag>
+                    />
                 )}
                 <CopySearch>
                     <Button
@@ -624,52 +571,10 @@ function FilterSidebarFacilitiesTab({
                     />
                 </List>
             </div>
-            <Dialog open={loginRequiredDialogIsOpen}>
-                {loginRequiredDialogIsOpen ? (
-                    <>
-                        <DialogTitle>Log In To Download</DialogTitle>
-                        <DialogContent>
-                            <Typography>
-                                You must log in with an Open Supply Hub account
-                                before downloading your search results.
-                            </Typography>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button
-                                variant="outlined"
-                                color="secondary"
-                                onClick={() =>
-                                    setLoginRequiredDialogIsOpen(false)
-                                }
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() =>
-                                    setLoginRequiredDialogIsOpen(false)
-                                }
-                                component={RegisterLink}
-                            >
-                                Register
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() =>
-                                    setLoginRequiredDialogIsOpen(false)
-                                }
-                                component={LoginLink}
-                            >
-                                Log In
-                            </Button>
-                        </DialogActions>
-                    </>
-                ) : (
-                    <div style={{ display: 'none' }} />
-                )}
-            </Dialog>
+            <LoginRequiredDialog
+                open={loginRequiredDialogIsOpen}
+                onClose={() => setLoginRequiredDialogIsOpen(false)}
+            />
         </>
     );
 }

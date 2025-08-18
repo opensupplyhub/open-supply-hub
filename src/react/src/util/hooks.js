@@ -401,3 +401,40 @@ export const useSingleLocationContributionForm = onSubmit =>
         onSubmit,
         validateOnMount: true,
     });
+
+export const useIsAllUserContributed = (
+    user,
+    contributors,
+    combineContributors,
+    embed,
+) => {
+    const userContributorId = get(user, 'contributor_id', null);
+    const selectedContributorIds = Array.isArray(contributors)
+        ? contributors.map(option =>
+              option && typeof option === 'object' && 'value' in option
+                  ? option.value
+                  : option,
+          )
+        : [];
+    const userContributorIdStr =
+        userContributorId !== null && userContributorId !== undefined
+            ? String(userContributorId)
+            : null;
+    const selectedContributorIdStrs = selectedContributorIds.map(id =>
+        id !== null && id !== undefined ? String(id) : id,
+    );
+
+    const isAllUserContributed =
+        !embed &&
+        user &&
+        !user.isAnon &&
+        !!userContributorIdStr &&
+        selectedContributorIdStrs.length > 0 &&
+        ((selectedContributorIdStrs.length === 1 &&
+            selectedContributorIdStrs[0] === userContributorIdStr) ||
+            (selectedContributorIdStrs.length > 1 &&
+                combineContributors === 'AND' &&
+                selectedContributorIdStrs.includes(userContributorIdStr)));
+
+    return isAllUserContributed;
+};
