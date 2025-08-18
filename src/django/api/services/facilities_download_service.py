@@ -79,20 +79,18 @@ class FacilitiesDownloadService:
 
         if allowed == 0:
             raise ValidationError(
-                'You have reached your annual limit for facility record downloads...'
+                "You have reached your annual limit "
+                "for facility record downloads..."
             )
 
-        probe = list(qs.order_by("id").values_list("id", flat=True)[:allowed + 1])
+        probe = list(
+            qs.order_by("id").values_list("id", flat=True)[:allowed + 1]
+        )
         if len(probe) > allowed:
             raise ValidationError(
-                f'Downloads are supported only for searches resulting in {allowed} facilities or less.'
+                "Downloads are supported only for searches resulting in "
+                f"{allowed} facilities or less."
             )
-
-    @staticmethod
-    def check_pagination(page_queryset):
-        if page_queryset is None:
-            raise ValidationError("Invalid pageSize parameter")
-        return page_queryset
 
     @staticmethod
     def register_download_if_needed(limit, record_count):
@@ -189,7 +187,13 @@ class FacilitiesDownloadService:
             )
 
     @staticmethod
-    def locate_prev_last_id(base_qs, request, page: int, page_size: int, block: int = 10):
+    def locate_prev_last_id(
+        base_qs,
+        request,
+        page: int,
+        page_size: int,
+        block: int = 10
+    ):
         if page == 1:
             return None
 
@@ -225,7 +229,13 @@ class FacilitiesDownloadService:
         return start_after
 
     @staticmethod
-    def fetch_page_and_cache(base_qs, request, page: int, page_size: int, block: int = 10):
+    def fetch_page_and_cache(
+        base_qs,
+        request,
+        page: int,
+        page_size: int,
+        block: int = 10
+    ):
         prev_last_id = FacilitiesDownloadService.locate_prev_last_id(
             base_qs, request, page, page_size, block=block
         )
@@ -242,7 +252,12 @@ class FacilitiesDownloadService:
 
 
     @staticmethod
-    def build_page_links(request, page: int, page_size: int, is_last_page: bool):
+    def build_page_links(
+        request,
+        page: int,
+        page_size: int,
+        is_last_page: bool
+    ):
         base_qs_params = request.query_params.copy()
 
         def make_link(p):

@@ -3,12 +3,15 @@ from rest_framework.response import Response
 from waffle import switch_is_active
 
 from api.models.facility.facility_index import FacilityIndex
-from api.serializers.facility.facility_download_serializer import FacilityDownloadSerializer
-from api.serializers.facility.facility_download_serializer_embed_mode import FacilityDownloadSerializerEmbedMode
+from api.serializers.facility.facility_download_serializer import \
+    FacilityDownloadSerializer
+from api.serializers.facility.facility_download_serializer_embed_mode import \
+    FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
 
-class FacilitiesDownloadViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+
+class FacilitiesDownloadViewSet(mixins.ListModelMixin,viewsets.GenericViewSet):
     """
     Get facilities in array format, suitable for CSV/XLSX download.
     """
@@ -23,7 +26,11 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             contributor_id = get_embed_contributor_id_from_query_params(
                 self.request.query_params
             )
-            return FacilityDownloadSerializerEmbedMode(objs, many=True, contributor_id=contributor_id)
+            return FacilityDownloadSerializerEmbedMode(
+                objs,
+                many=True,
+                contributor_id=contributor_id
+            )
         return FacilityDownloadSerializer(objs, many=True)
 
     def list(self, request):
@@ -34,7 +41,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
         limit = None
-        if not switch_is_active('private_instance') and not self.__is_embed_mode():
+        if (
+            not switch_is_active('private_instance')
+            and not self.__is_embed_mode()
+        ):
             limit = FacilitiesDownloadService.get_download_limit(request)
 
         page = int(request.query_params.get('page', 1) or 1)
@@ -45,16 +55,18 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             qs=base_qs, limit=limit, is_first_page=is_first_page
         )
 
-        items, is_last_page = FacilitiesDownloadService.fetch_page_and_cache(
+        items, is_last_page = FacilitiesDownloadService.\
+            fetch_page_and_cache(
             base_qs, request, page, page_size, block=50
         )
-        next_link, prev_link = FacilitiesDownloadService.build_page_links(
+        next_link, prev_link = FacilitiesDownloadService.\
+            build_page_links(
             request, page, page_size, is_last_page
         )
 
-        ser = self.get_serializer(items)
-        rows = [f['row'] for f in ser.data]
-        headers = ser.child.get_headers()
+        list_serializer = self.get_serializer(items)
+        rows = [f['row'] for f in list_serializer.data]
+        headers = list_serializer.child.get_headers()
         data = {'rows': rows, 'headers': headers}
 
         payload = {

@@ -1,7 +1,9 @@
-import hashlib, json
+import hashlib
+import json
 from typing import Optional, Callable
 from math import ceil
 from django.core.cache import cache
+
 
 def qhash(request, page_size: int) -> str:
     parts = {
@@ -11,15 +13,19 @@ def qhash(request, page_size: int) -> str:
     }
     return hashlib.sha1(json.dumps(parts, sort_keys=True).encode()).hexdigest()
 
+
 def _bm_key(h: str, page: int) -> str:
     return f"dl:{h}:p:{page}"
+
 
 def get_bm(h: str, page: int) -> Optional[int]:
     return cache.get(_bm_key(h, page))
 
+
 def set_bm(h: str, page: int, last_id: Optional[int], ttl: int = 1800) -> None:
     if last_id is not None:
         cache.set(_bm_key(h, page), last_id, ttl)
+
 
 def keyset_page_id(qs, page_size: int, after_id: Optional[int]):
     q = qs.filter(id__gt=after_id) if after_id else qs
@@ -32,6 +38,7 @@ def keyset_page_id(qs, page_size: int, after_id: Optional[int]):
     is_last_page = not has_next
 
     return items, last_id, is_last_page
+
 
 def advance_blocks_id(
     qs,
