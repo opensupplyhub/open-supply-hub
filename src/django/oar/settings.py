@@ -619,5 +619,5 @@ STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID')
 DARK_VISITORS_PROJECT_KEY = os.getenv('DARK_VISITORS_PROJECT_KEY', '')
 DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
 
-# Email anonymization secret
+# Email anonymization secret for the sync_databases management command.
 EMAIL_ANONYMIZATION_SECRET = os.getenv('EMAIL_ANONYMIZATION_SECRET', '')
