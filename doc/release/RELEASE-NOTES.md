@@ -3,6 +3,28 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.12.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: September 6, 2025
+
+### Architecture/Environment changes
+* [OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Introduced automated database synchronization script (`sync_databases.py`) for private instance deployment. The script enables efficient, incremental data transfer from OS Hub to private instance databases using Django ORM. Key features include:
+    * **Incremental Synchronization**: Only processes records modified since last run using `updated_at` timestamps, reducing sync time from hours to minutes on subsequent runs.
+    * **Smart Dependency Management**: Automatic model dependency ordering (User → Contributor → FacilityList → etc.) with two-phase sync approach.
+    * **Data Privacy**: Automatic email anonymization using MD5 hashing for GDPR compliance.
+    * **Circular Reference Handling**: Automatic resolution of circular dependencies between models.
+    * **Progress Tracking**: Maintains separate timestamp files for each model to enable resumable operations.
+    * **Dry Run Mode**: Preview synchronization changes without making database modifications.
+    * **Comprehensive Logging**: Detailed logging with configurable verbosity levels for monitoring and debugging.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.11.0
 
 ## Introduction
