@@ -157,7 +157,7 @@ class OpenSearchQueryBuilder(ABC):
 
     def _build_os_id(self, values):
         # Build a query to search in both os_id and historical_os_id.keyword
-        self.query_body['query']['bool']['should'].append(
+        self.query_body['query']['bool']['must'].append(
             {
                 'bool': {
                     'should': [
