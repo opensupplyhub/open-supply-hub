@@ -884,3 +884,17 @@ variable "vpn_ec2_ami" {
   type        = string
   description = "VPN EC2 AMI"
 }
+
+# RBA data sync variables
+
+variable "rba_data_sync_enabled" {
+  type        = bool
+  default     = false
+  description = "Whether to enable the RBA data sync scheduled job"
+}
+
+variable "rba_data_sync_schedule_expression" {
+  type        = string
+  default     = "cron(0 7 * * ? *)"
+  description = "The schedule expression for the RBA data sync job (7:00 AM UTC by default)"
+}

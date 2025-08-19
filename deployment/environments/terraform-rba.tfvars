@@ -72,3 +72,6 @@ export_csv_enabled = false
 instance_source= "rba"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+rba_data_sync_enabled = true
+rba_data_sync_schedule_expression = "cron(0 7 * * ? *)" # (7:00 AM UTC)
