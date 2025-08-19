@@ -55,6 +55,7 @@ services:
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_SSL=False
       - OPENSEARCH_SSL_CERT_VERIFICATION=False
+      - EMAIL_ANONYMIZATION_SECRET=secret
     build:
       context: ./src/django
       dockerfile: Dockerfile
