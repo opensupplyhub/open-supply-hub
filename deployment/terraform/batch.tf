@@ -497,7 +497,7 @@ resource "aws_cloudwatch_event_rule" "rba_data_sync_schedule" {
 
 resource "aws_cloudwatch_event_target" "rba_data_sync" {
   rule     = aws_cloudwatch_event_rule.rba_data_sync_schedule.name
-  arn      = aws_batch_job_queue.rba_data_sync.arn # TODO define arn
+  arn      = aws_batch_job_queue.rba_data_sync.arn
   role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
 
   batch_target {
