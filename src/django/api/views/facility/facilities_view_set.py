@@ -90,6 +90,7 @@ from api.serializers import (
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
 from api.throttles import DataUploadThrottle
+from api.serializers.facility.utils import is_same_contributor_for_queryset
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
 
@@ -272,14 +273,27 @@ class FacilitiesViewSet(ListModelMixin,
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
-            response = self.get_paginated_response(serializer.data)
-            response.data['extent'] = extent
-            return response
 
-        response_data = FacilityIndexSerializer(queryset, many=True,
-                                                context=context).data
-        response_data['extent'] = extent
-        return Response(response_data)
+            is_same_contributor = is_same_contributor_for_queryset(page_queryset, request)
+
+            page = self.get_paginated_response(serializer.data)
+            page.data['extent'] = extent
+            page.data['params'] = params.validated_data
+            page.data['is_same_contributor'] = is_same_contributor
+            return page
+
+        # Non-paginated response
+        is_same_contributor = is_same_contributor_for_queryset(queryset, request)
+
+        response = {
+            'type': 'FeatureCollection',
+            'features': serializer.data,
+            'is_same_contributor': is_same_contributor,
+        }
+        if extent is not None:
+            response['extent'] = extent
+        response['params'] = params.validated_data
+        return Response(response)
 
     @swagger_auto_schema(manual_parameters=facility_parameters)
     def retrieve(self, request, pk=None):

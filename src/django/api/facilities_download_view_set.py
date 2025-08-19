@@ -8,6 +8,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
+from api.serializers.facility.utils import is_same_contributor_for_queryset
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -45,9 +46,7 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
         facility_download_limit = None
 
-        is_same_contributor = self.__check_all_contributor_facilities(
-            queryset, request
-        )
+        is_same_contributor = is_same_contributor_for_queryset(queryset, request)
 
         if (
             not switch_is_active('private_instance')
@@ -103,30 +102,3 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             )
 
         return response
-
-    def __check_all_contributor_facilities(self, queryset, request):
-        """
-        Ensures the current user's contributor is involved in all
-        facilities.
-        """
-        if not queryset or queryset.count() == 0:
-            return False
-
-        current_user_contributor_id = None
-        if hasattr(request.user, 'contributor') and request.user.contributor:
-            current_user_contributor_id = request.user.contributor.id
-        else:
-            return False
-
-        for facility in queryset:
-            facility_contributor_ids = [
-                contributor.get('id') for contributor in facility.contributors
-                if contributor.get('id') is not None
-            ]
-            if (
-                current_user_contributor_id
-                and current_user_contributor_id not in facility_contributor_ids
-            ):
-                return False
-
-        return True
