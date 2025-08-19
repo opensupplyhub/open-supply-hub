@@ -42,10 +42,7 @@ import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 import { REPORT_A_FACILITY } from '../util/constants';
 
 import { makeFacilityDetailLink } from '../util/util';
-import {
-    useMergeButtonClickHandler,
-    useIsAllUserContributed,
-} from '../util/hooks';
+import { useMergeButtonClickHandler } from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
 
@@ -199,18 +196,10 @@ function FilterSidebarFacilitiesTab({
     updateTargetOSID,
     fetchTargetFacility,
     classes,
-    contributors,
-    combineContributors,
+    isSameContributor,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
         false,
-    );
-
-    const isAllUserContributed = useIsAllUserContributed(
-        user,
-        contributors,
-        combineContributors,
-        embed,
     );
 
     const [hasScrolled, setHasScrolled] = useState(false);
@@ -351,7 +340,7 @@ function FilterSidebarFacilitiesTab({
                     <DownloadButtonWithFlags
                         embed={!!embed}
                         facilitiesCount={facilitiesCount}
-                        isAllUserContributed={isAllUserContributed}
+                        isSameContributor={!!isSameContributor}
                         userAllowedRecords={user.allowed_records_number}
                         setLoginRequiredDialogIsOpen={
                             setLoginRequiredDialogIsOpen
@@ -585,6 +574,7 @@ FilterSidebarFacilitiesTab.defaultProps = {
     },
     data: null,
     error: null,
+    isSameContributor: false,
 };
 
 FilterSidebarFacilitiesTab.propTypes = {
@@ -603,6 +593,7 @@ FilterSidebarFacilitiesTab.propTypes = {
     updateToMergeOSID: func.isRequired,
     fetchToMergeFacility: func.isRequired,
     updateTargetOSID: func.isRequired,
+    isSameContributor: bool,
 };
 
 function mapStateToProps({
@@ -628,6 +619,40 @@ function mapStateToProps({
     embeddedMap: { embed },
     filters: { contributors, combineContributors },
 }) {
+    const serverIsSame = get(downloadData, 'results.is_same_contributor', null);
+
+    const userContributorId = get(user, 'contributor_id', null);
+    const selectedContributorIds = Array.isArray(contributors)
+        ? contributors.map(option =>
+              option && typeof option === 'object' && 'value' in option
+                  ? option.value
+                  : option,
+          )
+        : [];
+    const selectedContributorIdStrs = selectedContributorIds.map(id =>
+        id !== null && id !== undefined ? String(id) : id,
+    );
+    const userContributorIdStr =
+        userContributorId !== null && userContributorId !== undefined
+            ? String(userContributorId)
+            : null;
+    const includesUser = selectedContributorIdStrs.includes(
+        userContributorIdStr,
+    );
+
+    const clientIsSame =
+        !embed &&
+        user &&
+        !user.isAnon &&
+        !!userContributorIdStr &&
+        selectedContributorIdStrs.length > 0 &&
+        ((selectedContributorIdStrs.length === 1 && includesUser) ||
+            (selectedContributorIdStrs.length > 1 &&
+                combineContributors === 'AND' &&
+                includesUser));
+
+    const effectiveIsSame = serverIsSame === null ? clientIsSame : serverIsSame;
+
     return {
         user,
         data,
@@ -642,8 +667,7 @@ function mapStateToProps({
         facilityToMergeOSID,
         scrollTop,
         embed: !!embed,
-        contributors,
-        combineContributors,
+        isSameContributor: !!effectiveIsSame,
     };
 }
 

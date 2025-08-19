@@ -7,7 +7,7 @@ import { PRIVATE_INSTANCE, FACILITIES_DOWNLOAD_LIMIT } from '../util/constants';
 function DownloadButtonWithFlags({
     embed,
     facilitiesCount,
-    isAllUserContributed,
+    isSameContributor,
     userAllowedRecords,
     setLoginRequiredDialogIsOpen,
 }) {
@@ -21,7 +21,7 @@ function DownloadButtonWithFlags({
                     }
                     upgrade={
                         !embed &&
-                        !isAllUserContributed &&
+                        !isSameContributor &&
                         facilitiesCount > userAllowedRecords
                     }
                     userAllowedRecords={userAllowedRecords}
@@ -42,14 +42,14 @@ function DownloadButtonWithFlags({
 DownloadButtonWithFlags.propTypes = {
     embed: bool.isRequired,
     facilitiesCount: number,
-    isAllUserContributed: bool,
+    isSameContributor: bool,
     userAllowedRecords: number.isRequired,
     setLoginRequiredDialogIsOpen: func.isRequired,
 };
 
 DownloadButtonWithFlags.defaultProps = {
     facilitiesCount: 0,
-    isAllUserContributed: false,
+    isSameContributor: false,
 };
 
 export default DownloadButtonWithFlags;
