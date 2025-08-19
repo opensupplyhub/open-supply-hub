@@ -46,7 +46,10 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
         facility_download_limit = None
 
-        is_same_contributor = is_same_contributor_for_queryset(queryset, request)
+        is_same_contributor = is_same_contributor_for_queryset(
+            queryset,
+            request
+        )
 
         if (
             not switch_is_active('private_instance')

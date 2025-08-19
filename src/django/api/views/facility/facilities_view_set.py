@@ -274,7 +274,10 @@ class FacilitiesViewSet(ListModelMixin,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
 
-            is_same_contributor = is_same_contributor_for_queryset(page_queryset, request)
+            is_same_contributor = is_same_contributor_for_queryset(
+                page_queryset,
+                request
+            )
 
             page = self.get_paginated_response(serializer.data)
             page.data['extent'] = extent
@@ -283,7 +286,10 @@ class FacilitiesViewSet(ListModelMixin,
             return page
 
         # Non-paginated response
-        is_same_contributor = is_same_contributor_for_queryset(queryset, request)
+        is_same_contributor = is_same_contributor_for_queryset(
+            queryset,
+            request
+        )
 
         should_serialize_details = params.validated_data['detail']
         should_serialize_number_of_public_contributors = \
