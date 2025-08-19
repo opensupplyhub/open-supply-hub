@@ -16,6 +16,44 @@ variable "environment" {
   default = "Staging"
 }
 
+# VPC Peering Configuration
+variable "requester_environment" {
+  description = "The name of the environment that will be the requester (e.g., 'Rba')"
+  type        = string
+  default     = null
+}
+
+variable "accepter_environment" {
+  description = "The name of the environment that will be the accepter (e.g., 'Production')"
+  type        = string
+  default     = null
+}
+
+# Accepter VPC Configuration (for cross-environment communication)
+variable "accepter_vpc_id" {
+  description = "VPC ID of the accepter environment"
+  type        = string
+  default     = null
+}
+
+variable "accepter_vpc_cidr" {
+  description = "CIDR block of the accepter VPC"
+  type        = string
+  default     = null
+}
+
+variable "accepter_private_route_table_ids" {
+  description = "List of private route table IDs in the accepter VPC"
+  type        = list(string)
+  default     = []
+}
+
+variable "accepter_rds_security_group_id" {
+  description = "Security group ID of the RDS instance in the accepter VPC"
+  type        = string
+  default     = null
+}
+
 variable "aws_region" {
   default = "eu-west-1"
 }
