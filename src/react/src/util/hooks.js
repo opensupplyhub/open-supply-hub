@@ -401,4 +401,3 @@ export const useSingleLocationContributionForm = onSubmit =>
         onSubmit,
         validateOnMount: true,
     });
-
