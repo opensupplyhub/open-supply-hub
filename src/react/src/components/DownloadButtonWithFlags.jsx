@@ -27,6 +27,7 @@ function DownloadButtonWithFlags({
                     userAllowedRecords={userAllowedRecords}
                     setLoginRequiredDialogIsOpen={setLoginRequiredDialogIsOpen}
                     facilitiesCount={facilitiesCount}
+                    isSameContributor={isSameContributor}
                 />
             }
         >
@@ -34,6 +35,7 @@ function DownloadButtonWithFlags({
                 disabled={facilitiesCount > FACILITIES_DOWNLOAD_LIMIT}
                 userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
                 setLoginRequiredDialogIsOpen={setLoginRequiredDialogIsOpen}
+                isSameContributor={isSameContributor}
             />
         </FeatureFlag>
     );

@@ -325,45 +325,7 @@ function mapStateToProps({
         user: { user },
     },
     embeddedMap: { embed },
-    facilitiesDownload: {
-        facilities: { data: downloadData },
-    },
-    filters: { contributors, combineContributors },
 }) {
-    const serverIsSame = get(downloadData, 'results.is_same_contributor', null);
-
-    const userContributorId = get(user, 'contributor_id', null);
-    const selectedContributorIds = Array.isArray(contributors)
-        ? contributors.map(option =>
-              option && typeof option === 'object' && 'value' in option
-                  ? option.value
-                  : option,
-          )
-        : [];
-    const selectedContributorIdStrs = selectedContributorIds.map(id =>
-        id !== null && id !== undefined ? String(id) : id,
-    );
-    const userContributorIdStr =
-        userContributorId !== null && userContributorId !== undefined
-            ? String(userContributorId)
-            : null;
-    const includesUser = selectedContributorIdStrs.includes(
-        userContributorIdStr,
-    );
-
-    const clientIsSame =
-        !embed &&
-        user &&
-        !user.isAnon &&
-        !!userContributorIdStr &&
-        selectedContributorIdStrs.length > 0 &&
-        ((selectedContributorIdStrs.length === 1 && includesUser) ||
-            (selectedContributorIdStrs.length > 1 &&
-                combineContributors === 'AND' &&
-                includesUser));
-
-    const effectiveIsSame = serverIsSame === null ? clientIsSame : serverIsSame;
-
     return {
         user,
         data,
@@ -372,7 +334,7 @@ function mapStateToProps({
         filterText,
         windowHeight,
         embed: !!embed,
-        isSameContributor: !!effectiveIsSame,
+        isSameContributor: get(data, 'is_same_contributor', false),
     };
 }
 

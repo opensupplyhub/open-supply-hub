@@ -72,6 +72,7 @@ const DownloadFacilitiesButton = ({
     classes,
     theme,
     facilitiesCount,
+    isSameContributor,
 }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const isPrivateInstance = includes(activeFeatureFlags, PRIVATE_INSTANCE);
@@ -132,6 +133,7 @@ const DownloadFacilitiesButton = ({
                 upgrade,
                 classes,
                 facilitiesCount,
+                isSameContributor,
             }),
         [
             user,
@@ -141,6 +143,7 @@ const DownloadFacilitiesButton = ({
             upgrade,
             classes,
             facilitiesCount,
+            isSameContributor,
         ],
     );
 
@@ -198,6 +201,7 @@ DownloadFacilitiesButton.defaultProps = {
     logDownloadError: null,
     checkoutUrl: null,
     checkoutUrlError: null,
+    isSameContributor: false,
 };
 
 DownloadFacilitiesButton.propTypes = {
@@ -213,6 +217,7 @@ DownloadFacilitiesButton.propTypes = {
     classes: object.isRequired,
     activeFeatureFlags: arrayOf(string).isRequired,
     facilitiesCount: number.isRequired,
+    isSameContributor: bool,
 };
 
 function mapStateToProps({
