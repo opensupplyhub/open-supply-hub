@@ -6,15 +6,10 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import { Link } from 'react-router-dom';
+import RouterLink from './RouterLink';
 import { authLoginFormRoute, authRegisterFormRoute } from '../util/constants';
 
 function LoginRequiredDialog({ open, onClose }) {
-    const LoginLink = props => <Link to={authLoginFormRoute} {...props} />;
-    const RegisterLink = props => (
-        <Link to={authRegisterFormRoute} {...props} />
-    );
-
     return (
         <Dialog open={open}>
             {open ? (
@@ -38,7 +33,8 @@ function LoginRequiredDialog({ open, onClose }) {
                             variant="outlined"
                             color="primary"
                             onClick={onClose}
-                            component={RegisterLink}
+                            component={RouterLink}
+                            to={authRegisterFormRoute}
                         >
                             Register
                         </Button>
@@ -46,7 +42,8 @@ function LoginRequiredDialog({ open, onClose }) {
                             variant="outlined"
                             color="primary"
                             onClick={onClose}
-                            component={LoginLink}
+                            component={RouterLink}
+                            to={authLoginFormRoute}
                         >
                             Log In
                         </Button>
