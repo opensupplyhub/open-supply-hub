@@ -16,6 +16,77 @@ variable "environment" {
   default = "Staging"
 }
 
+# VPC Peering Configuration
+variable "requester_environment" {
+  description = "The name of the environment that will be the requester (e.g., 'Rba')"
+  type        = string
+  default     = null
+}
+
+variable "accepter_environment" {
+  description = "The name of the environment that will be the accepter (e.g., 'Production')"
+  type        = string
+  default     = null
+}
+
+variable "is_vpc_peering_requester" {
+  description = "Whether the current environment is the requester."
+  type        = bool
+  default     = false
+}
+
+variable "is_vpc_peering_accepter" {
+  description = "Whether the current environment is the accepter."
+  type        = bool
+  default     = false
+}
+
+# Accepter VPC Configuration (for cross-environment communication)
+variable "accepter_vpc_id" {
+  description = "VPC ID of the accepter environment"
+  sensitive   = true
+  type        = string
+  default     = null
+}
+
+variable "accepter_vpc_cidr" {
+  description = "CIDR block of the accepter VPC"
+  type        = string
+  default     = null
+}
+
+variable "accepter_private_route_table_ids" {
+  description = "List of private route table IDs in the accepter VPC"
+  type        = list(string)
+  default     = []
+}
+
+variable "accepter_rds_security_group_id" {
+  description = "Security group ID of the RDS instance in the accepter VPC"
+  type        = string
+  default     = null
+}
+
+# Requester VPC Configuration (for accepter environment to reference)
+variable "requester_vpc_cidr" {
+  description = "CIDR block of the requester VPC (needed for accepter environment routing)"
+  type        = string
+  default     = null
+}
+
+variable "requester_vpc_id" {
+  description = "VPC ID of the requester environment (needed for accepter environment to find peering connection)"
+  type        = string
+  default     = null
+}
+
+# Service Configuration
+variable "rds_port" {
+  description = "Port number for RDS PostgreSQL (default: 5432)"
+  type        = number
+  default     = 5432
+}
+
 variable "aws_region" {
   default = "eu-west-1"
 }
