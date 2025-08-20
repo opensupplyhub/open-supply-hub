@@ -255,21 +255,21 @@ class FacilitiesViewSet(ListModelMixin,
 
         context = {'request': request}
 
+        should_serialize_details = params.validated_data['detail']
+        should_serialize_number_of_public_contributors = \
+            params.validated_data["number_of_public_contributors"]
+        exclude_fields = []
+
+        if not should_serialize_details:
+            exclude_fields.extend([
+                'contributor_fields',
+                'extended_fields',
+                'contributors',
+                'sector'])
+        if not should_serialize_number_of_public_contributors:
+            exclude_fields.extend(['number_of_public_contributors'])
+
         if page_queryset is not None:
-            should_serialize_details = params.validated_data['detail']
-            should_serialize_number_of_public_contributors = \
-                params.validated_data["number_of_public_contributors"]
-            exclude_fields = []
-
-            if not should_serialize_details:
-                exclude_fields.extend([
-                    'contributor_fields',
-                    'extended_fields',
-                    'contributors',
-                    'sector'])
-            if not should_serialize_number_of_public_contributors:
-                exclude_fields.extend(['number_of_public_contributors'])
-
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
@@ -290,20 +290,6 @@ class FacilitiesViewSet(ListModelMixin,
             queryset,
             request
         )
-
-        should_serialize_details = params.validated_data['detail']
-        should_serialize_number_of_public_contributors = \
-            params.validated_data["number_of_public_contributors"]
-        exclude_fields = []
-
-        if not should_serialize_details:
-            exclude_fields.extend([
-                'contributor_fields',
-                'extended_fields',
-                'contributors',
-                'sector'])
-        if not should_serialize_number_of_public_contributors:
-            exclude_fields.extend(['number_of_public_contributors'])
 
         serializer = FacilityIndexSerializer(queryset, many=True,
                                              context=context,

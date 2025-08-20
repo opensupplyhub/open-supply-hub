@@ -11,6 +11,7 @@ function DownloadButtonWithFlags({
     userAllowedRecords,
     setLoginRequiredDialogIsOpen,
 }) {
+
     const count = facilitiesCount ?? 0;
 
     return (
