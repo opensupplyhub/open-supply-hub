@@ -405,3 +405,117 @@ resource "aws_batch_job_definition" "direct_data_load" {
     attempts = 2
   }
 }
+
+# AWS Batch for Database Sync
+
+resource "aws_batch_compute_environment" "db_sync" {
+  count = var.environment == "Rba" ? 1 : 0
+  
+  depends_on = [aws_iam_role_policy_attachment.batch_policy]
+
+  compute_environment_name_prefix = "batch${local.short}DbSyncComputeEnvironment"
+  type                            = "MANAGED"
+  state                           = "ENABLED"
+  service_role                    = aws_iam_role.container_instance_batch.arn
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  compute_resources {
+    type                = "SPOT"
+    allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
+    bid_percentage      = var.batch_default_ce_spot_fleet_bid_percentage
+    ec2_key_pair        = var.aws_key_name
+    image_id            = var.batch_ami_id
+
+    min_vcpus     = 0
+    desired_vcpus = 0
+    max_vcpus     = 8
+
+    launch_template {
+      launch_template_id = aws_launch_template.batch_worker.id
+      version            = "$Latest"
+    }
+
+    spot_iam_fleet_role = aws_iam_role.container_instance_spot_fleet.arn
+    instance_role       = aws_iam_instance_profile.container_instance.arn
+
+    instance_type = var.batch_default_ce_instance_types
+
+    security_group_ids = [
+      aws_security_group.batch.id,
+    ]
+
+    subnets = module.vpc.private_subnet_ids
+
+    tags = {
+      Name               = "BatchWorker"
+      ComputeEnvironment = "DbSync"
+      Project            = var.project
+      Environment        = var.environment
+    }
+  }
+}
+
+resource "aws_batch_job_queue" "db_sync" {
+  count = var.environment == "Rba" ? 1 : 0
+  
+  name                 = "queue${local.short}DbSync"
+  priority             = 1
+  state                = "ENABLED"
+  compute_environments = [aws_batch_compute_environment.db_sync[0].arn]
+}
+
+data "template_file" "db_sync_job_definition" {
+  count = var.environment == "Rba" ? 1 : 0
+  
+  template = file("job-definitions/db_sync.json")
+
+  vars = {
+    image_url                        = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
+    postgres_host                    = aws_route53_record.database.name
+    postgres_port                    = module.database_enc.port
+    postgres_user                    = var.rds_database_username
+    postgres_password                = var.rds_database_password
+    postgres_db                      = var.rds_database_name
+    environment                      = var.environment
+    django_secret_key                = var.django_secret_key
+    google_server_side_api_key       = var.google_server_side_api_key
+    oar_client_key                   = var.oar_client_key
+    external_domain                  = local.domain_name
+    batch_job_queue_name             = "queue${local.short}DbSync"
+    batch_job_def_name               = "job${local.short}DbSync"
+    log_group_name                   = "log${local.short}Batch"
+    instance_source                  = var.instance_source
+    email_anonymization_secret       = var.email_anonymization_secret
+    aws_region                       = var.aws_region
+    efs_file_system_id               = aws_efs_file_system.efs_db_sync[0].id
+    efs_access_point_id              = aws_efs_access_point.efs_db_sync_user[0].id
+    source_db_host                   = var.source_db_host
+    source_db_port                   = var.source_db_port
+    source_db_name                   = var.source_db_name
+    source_db_user                   = var.source_db_user
+    source_db_password               = var.source_db_password
+  }
+}
+
+resource "aws_batch_job_definition" "db_sync" {
+  count = var.environment == "Rba" ? 1 : 0
+  
+  name           = "job${local.short}DbSync"
+  type           = "container"
+  propagate_tags = true
+
+  platform_capabilities = ["EC2"]
+
+  container_properties = data.template_file.db_sync_job_definition[0].rendered
+
+  retry_strategy {
+    attempts = var.db_sync_max_retries
+  }
+
+  timeout {
+    attempt_duration_seconds = var.db_sync_timeout_minutes * 60
+  }
+}
