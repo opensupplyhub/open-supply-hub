@@ -104,6 +104,41 @@ export const updateClaimAFacilityBusinessLinkedinProfile = createAction(
     'UPDATE_CLAIM_A_FACILITY_YOUR_BUSINESS_LINKEDIN_PROFILE',
 );
 
+export const updateClaimAFacilityClaimReason = createAction(
+    'UPDATE_CLAIM_A_FACILITY_CLAIM_REASON',
+);
+
+export const updateClaimAFacilityClaimReasonOther = createAction(
+    'UPDATE_CLAIM_A_FACILITY_CLAIM_REASON_OTHER',
+);
+
+export const startFetchClaimsReasons = createAction(
+    'START_FETCH_CLAIMS_REASONS',
+);
+export const failFetchClaimsReasons = createAction('FAIL_FETCH_CLAIMS_REASONS');
+export const completeFetchClaimsReasons = createAction(
+    'COMPLETE_FETCH_CLAIMS_REASONS',
+);
+
+export function fetchClaimsReasons() {
+    return dispatch => {
+        dispatch(startFetchClaimsReasons());
+
+        return apiRequest
+            .get('/api/claims-reasons/')
+            .then(({ data }) => dispatch(completeFetchClaimsReasons(data)))
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching claims reasons',
+                        failFetchClaimsReasons,
+                    ),
+                ),
+            );
+    };
+}
+
 export const updateClaimASector = createAction('UPDATE_CLAIM_A_SECTOR');
 export const updateClaimANumberOfWorkers = createAction(
     'UPDATE_CLAIM_A_NUMBER_OF_WORKERS',
@@ -138,6 +173,15 @@ export function submitClaimAFacilityData(osID) {
                 if (value !== null) {
                     postData.append(formattedKey, value);
                 }
+            } else if (formattedKey === 'claim_reason') {
+                // Handle claim reason: use dropdown selection or "Other" text
+                const claimReasonValue =
+                    value === 'Other' ? formData.claimReasonOther : value;
+                if (claimReasonValue) {
+                    postData.append('claim_reason', claimReasonValue);
+                }
+            } else if (formattedKey === 'claim_reason_other') {
+                // Skip - handled in claim_reason logic above
             } else {
                 postData.append(formattedKey, value);
             }

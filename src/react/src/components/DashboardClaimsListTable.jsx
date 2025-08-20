@@ -163,7 +163,7 @@ function DashboardClaimsListTable({
             {loading || fetching ? (
                 <TableBody>
                     <TableRow>
-                        <TableCell colSpan={8}>
+                        <TableCell colSpan={9}>
                             <CircularProgress
                                 size={25}
                                 className={classes.loaderStyle}
@@ -181,6 +181,22 @@ function DashboardClaimsListTable({
                             className={classes.rowStyles}
                         >
                             <TableCell padding="dense">{claim.id}</TableCell>
+                            <TableCell
+                                padding="dense"
+                                title={claim.claim_reason || ''}
+                            >
+                                {(() => {
+                                    if (!claim.claim_reason)
+                                        return EMPTY_PLACEHOLDER;
+                                    if (claim.claim_reason.length > 30) {
+                                        return `${claim.claim_reason.substring(
+                                            0,
+                                            30,
+                                        )}...`;
+                                    }
+                                    return claim.claim_reason;
+                                })()}
+                            </TableCell>
                             <TableCell>
                                 <Link
                                     to={makeFacilityDetailLink(claim.os_id)}

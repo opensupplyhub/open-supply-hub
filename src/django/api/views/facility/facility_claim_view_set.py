@@ -72,12 +72,17 @@ class FacilityClaimViewSet(ModelViewSet):
 
         statuses = params.validated_data.get('statuses')
         countries = params.validated_data.get('countries')
+        claim_reasons = params.validated_data.get('claim_reasons')
 
-        queryset = FacilityClaim.objects.all().order_by('-id')
+        queryset = FacilityClaim.objects.select_related(
+            'facility', 'contributor', 'contributor__admin'
+        ).all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)
         if countries:
             queryset = queryset.filter(facility__country_code__in=countries)
+        if claim_reasons:
+            queryset = queryset.filter(claim_reason__in=claim_reasons)
 
         response_data = FacilityClaimSerializer(queryset, many=True).data
 
