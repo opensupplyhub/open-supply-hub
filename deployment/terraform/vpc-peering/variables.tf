@@ -16,6 +16,7 @@ variable "is_vpc_peering_accepter" {
 # Requester VPC Configuration
 variable "requester_vpc_id" {
   description = "VPC ID of the requester environment (needed for accepter environment to find peering connection)."
+  sensitive   = true
   type        = string
   default     = null
 }
@@ -41,6 +42,7 @@ variable "requester_vpc_id" {
 # Accepter VPC Configuration
 variable "accepter_vpc_id" {
   description = "VPC ID of the accepter environment"
+  sensitive   = true
   type        = string
   default     = null
 }

@@ -44,6 +44,7 @@ variable "is_vpc_peering_accepter" {
 # Accepter VPC Configuration (for cross-environment communication)
 variable "accepter_vpc_id" {
   description = "VPC ID of the accepter environment"
+  sensitive   = true
   type        = string
   default     = null
 }
