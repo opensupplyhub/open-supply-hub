@@ -935,3 +935,10 @@ variable "db_sync_max_retries" {
   type        = number
   default     = 3
 }
+
+variable "email_anonymization_secret" {
+  description = "Secret key for email anonymization in database sync"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

@@ -433,11 +433,6 @@ resource "aws_batch_compute_environment" "db_sync" {
     desired_vcpus = 0
     max_vcpus     = 8
 
-    launch_template {
-      launch_template_id = aws_launch_template.batch_worker.id
-      version            = "$Latest"
-    }
-
     spot_iam_fleet_role = aws_iam_role.container_instance_spot_fleet.arn
     instance_role       = aws_iam_instance_profile.container_instance.arn
 
