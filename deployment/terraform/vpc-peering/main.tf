@@ -20,7 +20,7 @@
 
 # VPC Peering Connection.
 resource "aws_vpc_peering_connection" "to_accepter" {
-  count = var.is_requester ? 1 : 0
+  count = var.is_vpc_peering_requester ? 1 : 0
 
   vpc_id      = var.requester_vpc_id
   peer_vpc_id = var.accepter_vpc_id

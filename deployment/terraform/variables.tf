@@ -29,6 +29,18 @@ variable "accepter_environment" {
   default     = null
 }
 
+variable "is_vpc_peering_requester" {
+  description = "Whether the current environment is the requester."
+  type        = bool
+  default     = false
+}
+
+variable "is_vpc_peering_accepter" {
+  description = "Whether the current environment is the accepter."
+  type        = bool
+  default     = false
+}
+
 # Accepter VPC Configuration (for cross-environment communication)
 variable "accepter_vpc_id" {
   description = "VPC ID of the accepter environment"

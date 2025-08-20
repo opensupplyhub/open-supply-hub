@@ -3,12 +3,12 @@ variable "environment" {
   type        = string
 }
 
-variable "is_requester" {
+variable "is_vpc_peering_requester" {
   description = "Whether the current environment is the requester."
   type        = bool
 }
 
-variable "is_accepter" {
+variable "is_vpc_peering_accepter" {
   description = "Whether the current environment is the accepter."
   type        = bool
 }
