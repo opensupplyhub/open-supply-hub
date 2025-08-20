@@ -8,6 +8,10 @@ Purchase additional downloads for immediate access when you reach your limit.
 
 {{ purchase_url }}
 
+If you're interested in a <a href="https://info.opensupplyhub.org/premium-data-downloads-analysis">bulk or custom download</a>, you can fill out <a href="https://share.hsforms.com/1eLsrTVNORKS2m0Wk1gWzlQbujql">this form</a> and a member of our team will be in touch.
+
+If you are from a civil society organization or research institution, you may qualify for discounted or unlimited free download access. <a href="https://info.opensupplyhub.org/governance-policies">Learn more and apply</a>.
+
 Best Regards,
 
 {% include "mail/signature_block.txt" %}
