@@ -54,6 +54,26 @@ variable "accepter_rds_security_group_id" {
   default     = null
 }
 
+# Requester VPC Configuration (for accepter environment to reference)
+variable "requester_vpc_cidr" {
+  description = "CIDR block of the requester VPC (needed for accepter environment routing)"
+  type        = string
+  default     = null
+}
+
+variable "requester_vpc_id" {
+  description = "VPC ID of the requester environment (needed for accepter environment to find peering connection)"
+  type        = string
+  default     = null
+}
+
+# Service Configuration
+variable "rds_port" {
+  description = "Port number for RDS PostgreSQL (default: 5432)"
+  type        = number
+  default     = 5432
+}
+
 variable "aws_region" {
   default = "eu-west-1"
 }
