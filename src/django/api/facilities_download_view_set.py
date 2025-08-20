@@ -8,6 +8,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode \
     import FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
+from api.serializers.facility.utils import is_same_contributor_for_queryset
 
 
 class FacilitiesDownloadViewSet(mixins.ListModelMixin,
@@ -45,9 +46,15 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
         total_records = queryset.count()
         facility_download_limit = None
 
+        is_same_contributor = is_same_contributor_for_queryset(
+            queryset,
+            request
+        )
+
         if (
             not switch_is_active('private_instance')
             and not self.__is_embed_mode()
+            and not is_same_contributor
         ):
             facility_download_limit = FacilitiesDownloadService \
                 .get_download_limit(request)
@@ -61,9 +68,14 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             .check_pagination(self.paginate_queryset(queryset))
         list_serializer = self.get_serializer(page_queryset)
 
-        rows = [f['row'] for f in list_serializer.data]
+        rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
-        data = {'rows': rows, 'headers': headers}
+
+        data = {
+            'rows': rows,
+            'headers': headers,
+            'is_same_contributor': is_same_contributor
+        }
 
         response = self.get_paginated_response(data)
 
@@ -80,15 +92,21 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 0
             )
 
-            FacilitiesDownloadService.register_download_if_needed(
-                facility_download_limit,
-                total_records
-            )
-            FacilitiesDownloadService.send_email_if_needed(
-                request,
-                facility_download_limit,
-                prev_free_amount,
-                prev_paid_amount
-            )
+            # Cap the registered count to remaining quota to prevent overdrafts
+            remaining_quota = (prev_free_amount or 0) + (prev_paid_amount or 0)
+            to_register = min(total_records, remaining_quota)
+
+            if to_register > 0:
+                FacilitiesDownloadService.register_download_if_needed(
+                    facility_download_limit,
+                    to_register,
+                    is_same_contributor
+                )
+                FacilitiesDownloadService.send_email_if_needed(
+                    request,
+                    facility_download_limit,
+                    prev_free_amount,
+                    prev_paid_amount
+                )
 
         return response

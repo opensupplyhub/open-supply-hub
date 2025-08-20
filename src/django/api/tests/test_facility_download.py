@@ -416,6 +416,9 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
     def get_headers(self, response):
         return response.data["results"]["headers"]
 
+    def get_is_same_contributor(self, response):
+        return response.data["results"].get("is_same_contributor")
+
     def test_download_is_fetched(self):
         response = self.get_facility_download()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -427,6 +430,8 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         headers = self.get_headers(response)
         expected_headers = self.default_headers
         self.assertEqual(headers, expected_headers)
+        # Ensure flag is present at top-level results for UI logic
+        self.assertIn("is_same_contributor", response.data["results"])
 
     def test_embed_headers_exclude_contributor(self):
         params = "embed=1&contributors={}".format(self.contributor.id)
@@ -478,6 +483,8 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
         self.assertEqual(base_row, expected_base_row)
+        # Assert the flag exists and is boolean
+        self.assertIsInstance(self.get_is_same_contributor(response), bool)
 
     def test_contrib_rows_are_created_for_no_contrib_values(self):
         params = "embed=1&contributors={}&q={}".format(
@@ -627,6 +634,8 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
 
         headers = self.get_headers(response)
         self.assertEqual(headers, self.default_headers)
+        # Flag should exist regardless of headers
+        self.assertIn("is_same_contributor", response.data["results"])
 
         rows = self.get_rows(response)
 

@@ -18,7 +18,7 @@ describe('DownloadLimitInfo component', () => {
         ).toBeInTheDocument();
         expect(
             getByText(
-                /This search includes more production locations than you have available for download. You may purchase additional downloads to continue\./
+                /This search includes more production locations than you have available for download\. You may purchase additional downloads to continue\./
             )
         ).toBeInTheDocument();
         expect(

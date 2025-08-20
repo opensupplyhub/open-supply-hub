@@ -105,7 +105,14 @@ class FacilitiesDownloadService:
         return page_queryset
 
     @staticmethod
-    def register_download_if_needed(limit, record_count):
+    def register_download_if_needed(
+        limit: FacilityDownloadLimit,
+        record_count: int,
+        is_same_contributor: bool = False
+    ):
+        if is_same_contributor:
+            return
+
         if limit:
             limit.register_download(record_count)
 
