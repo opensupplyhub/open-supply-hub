@@ -11,31 +11,26 @@ function DownloadButtonWithFlags({
     userAllowedRecords,
     setLoginRequiredDialogIsOpen,
 }) {
+    const count = facilitiesCount ?? 0;
+
     return (
         <FeatureFlag
             flag={PRIVATE_INSTANCE}
             alternative={
                 <DownloadFacilitiesButton
-                    disabled={
-                        embed && facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
-                    }
-                    upgrade={
-                        !embed &&
-                        !isSameContributor &&
-                        facilitiesCount > userAllowedRecords
-                    }
+                    disabled={embed && count > FACILITIES_DOWNLOAD_LIMIT}
+                    upgrade={!embed && !isSameContributor && count > userAllowedRecords}
                     userAllowedRecords={userAllowedRecords}
                     setLoginRequiredDialogIsOpen={setLoginRequiredDialogIsOpen}
-                    facilitiesCount={facilitiesCount}
-                    isSameContributor={isSameContributor}
+                    facilitiesCount={count}
                 />
             }
         >
             <DownloadFacilitiesButton
-                disabled={facilitiesCount > FACILITIES_DOWNLOAD_LIMIT}
+                disabled={count > FACILITIES_DOWNLOAD_LIMIT}
                 userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
                 setLoginRequiredDialogIsOpen={setLoginRequiredDialogIsOpen}
-                isSameContributor={isSameContributor}
+                facilitiesCount={count}
             />
         </FeatureFlag>
     );

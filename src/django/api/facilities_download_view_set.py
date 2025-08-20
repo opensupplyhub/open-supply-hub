@@ -92,16 +92,21 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
                 0
             )
 
-            FacilitiesDownloadService.register_download_if_needed(
-                facility_download_limit,
-                total_records,
-                is_same_contributor
-            )
-            FacilitiesDownloadService.send_email_if_needed(
-                request,
-                facility_download_limit,
-                prev_free_amount,
-                prev_paid_amount
-            )
+            # Cap the registered count to remaining quota to prevent overdrafts
+            remaining_quota = (prev_free_amount or 0) + (prev_paid_amount or 0)
+            to_register = min(total_records, remaining_quota)
+
+            if to_register > 0:
+                FacilitiesDownloadService.register_download_if_needed(
+                    facility_download_limit,
+                    to_register,
+                    is_same_contributor
+                )
+                FacilitiesDownloadService.send_email_if_needed(
+                    request,
+                    facility_download_limit,
+                    prev_free_amount,
+                    prev_paid_amount
+                )
 
         return response

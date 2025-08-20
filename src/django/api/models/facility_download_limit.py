@@ -59,14 +59,28 @@ class FacilityDownloadLimit(models.Model):
     ):
         self.refresh_from_db()
 
-        if self.free_download_records >= records_to_subtract:
-            self.free_download_records -= records_to_subtract
+        # Prevent overdrafts by capping to remaining quota
+        remaining_quota = (self.free_download_records or 0) + \
+            (self.paid_download_records or 0)
+        to_subtract = min(
+            max(records_to_subtract, 0),
+            remaining_quota
+        )
+
+        if to_subtract == 0:
+            return
+
+        if self.free_download_records >= to_subtract:
+            self.free_download_records -= to_subtract
         else:
             remaining_records = (
-                records_to_subtract - self.free_download_records
+                to_subtract - self.free_download_records
             )
             self.free_download_records = 0
-            self.paid_download_records -= remaining_records
+            self.paid_download_records = max(
+                self.paid_download_records - remaining_records,
+                0
+            )
 
         self.save()
 
