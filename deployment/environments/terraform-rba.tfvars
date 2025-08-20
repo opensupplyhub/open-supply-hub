@@ -69,13 +69,13 @@ app_logstash_fargate_memory = 2048
 
 export_csv_enabled = false
 
-source_db_host = ""
+source_db_host = "test"
 source_db_port = 5432
-source_db_name = ""
-source_db_user = ""
-source_db_password = ""
+source_db_name = "test"
+source_db_user = "test"
+source_db_password = "test"
 
-email_anonymization_secret = ""
+email_anonymization_secret = "test"
 
 db_sync_timeout_minutes = 120
 db_sync_batch_size = 1000
