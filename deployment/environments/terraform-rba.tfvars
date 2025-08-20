@@ -75,6 +75,8 @@ source_db_name = ""
 source_db_user = ""
 source_db_password = ""
 
+email_anonymization_secret = ""
+
 db_sync_timeout_minutes = 120
 db_sync_batch_size = 1000
 db_sync_max_retries = 3
