@@ -19,6 +19,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **Dry Run Mode**: Preview synchronization changes without making database modifications.
     * **Comprehensive Logging**: Detailed logging with configurable verbosity levels for monitoring and debugging.
 
+### What's new
+* [OSDEV-2156](https://opensupplyhub.atlassian.net/browse/OSDEV-2156) - Updated the copy for Premium Data Downloads email templates to include information about all other available options to obtain data (link to bulk download inquiry form and link to Free Premium Feature access policy for Civil Society Organizations).
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
