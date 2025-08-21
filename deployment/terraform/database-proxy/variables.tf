@@ -37,6 +37,12 @@ variable "db_password" {
   type        = string
 }
 
+variable "db_port" {
+  description = "Port of the database"
+  type        = number
+}
+
+
 # Connection pool configuration
 variable "connection_borrow_timeout" {
   description = "The number of seconds for a proxy to wait for a connection from the connection pool"
@@ -75,4 +81,11 @@ variable "allowed_security_group_id" {
   type        = string
   default     = ""
 }
+
+variable "database_security_group_id" {
+  description = "Security group ID of the database"
+  type        = string
+}
+
+
 
