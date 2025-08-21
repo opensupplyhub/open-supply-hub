@@ -485,6 +485,7 @@ data "template_file" "db_sync_job_definition" {
     instance_source                  = var.instance_source
     email_anonymization_secret       = var.email_anonymization_secret
     aws_region                       = var.aws_region
+    aws_storage_bucket_name          = local.files_bucket_name
     efs_file_system_id               = aws_efs_file_system.efs_db_sync[0].id
     efs_access_point_id              = aws_efs_access_point.efs_db_sync_user[0].id
     source_db_host                   = var.source_db_host
