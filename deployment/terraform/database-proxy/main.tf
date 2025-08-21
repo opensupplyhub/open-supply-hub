@@ -83,6 +83,20 @@ resource "aws_security_group_rule" "proxy_egress" {
   description              = "Allow all outbound traffic"
 }
 
+# Security group rules for bastion
+# TODO: change to NLB security group. Test with bastion first.
+resource "aws_security_group_rule" "bastion_egress" {
+  type                     = "egress"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  cidr_blocks              = ["0.0.0.0/0"]
+
+  security_group_id        = var.allowed_security_group_id
+  source_security_group_id = aws_security_group.proxy.id
+  description              = "Allow bastion to connect to the database proxy"
+}
+
 # Security group rules for RDS instance
 resource "aws_security_group_rule" "db_ingress" {
   type                     = "ingress"
