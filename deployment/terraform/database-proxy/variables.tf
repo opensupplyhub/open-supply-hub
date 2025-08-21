@@ -47,13 +47,13 @@ variable "connection_borrow_timeout" {
 variable "max_connections_percent" {
   description = "The maximum size of the connection pool for each target in a target group"
   type        = number
-  default     = 10
+  default     = 30
 }
 
 variable "max_idle_connections_percent" {
   description = "Controls how actively the proxy closes idle database connections in the connection pool"
   type        = number
-  default     = 30
+  default     = 10
 }
 
 # Proxy configuration
@@ -66,7 +66,7 @@ variable "debug_logging" {
 variable "idle_client_timeout" {
   description = "The number of seconds that a connection to the proxy can be inactive before the proxy disconnects it"
   type        = number
-  default     = 1800
+  default     = 300
 }
 
 # Security Configuration
