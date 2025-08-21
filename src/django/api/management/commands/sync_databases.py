@@ -893,33 +893,48 @@ class Command(BaseCommand):
             logger.setLevel(logging.INFO)
 
         # Build database configurations.
-        source_config = {
-            'HOST': options['source_host'],
-            'PORT': options['source_port'],
-            'NAME': options['source_name'],
-            'USER': options['source_user'],
-            'PASSWORD': options['source_password']
-        }
+        # source_config = {
+        #     'HOST': options['source_host'],
+        #     'PORT': options['source_port'],
+        #     'NAME': options['source_name'],
+        #     'USER': options['source_user'],
+        #     'PASSWORD': options['source_password']
+        # }
+
+        last_run_path = '/tmp/sync_databases_last_run'
+
+        os.makedirs(last_run_path, exist_ok=True) 
+
+        filename = f'test_last_run'
+        last_run_file = os.path.join(last_run_path, filename)
 
         try:
-            # Create and run synchronizer.
-            synchronizer = DatabaseSynchronizer(
-                source_config,
-                dry_run=options['dry_run'],
-                last_run_path=options['last_run_path']
+            with open(last_run_file, 'w') as f:
+                f.write('TEST')
+        except IOError as e:
+            logger.exception(
+                f'Could not save to file: {e}.'
             )
-            synchronizer.sync_all()
 
-            if options['dry_run']:
-                self.stdout.write(
-                    self.style.WARNING(
-                        'DRY RUN COMPLETED - No changes were made to the '
-                        'database.'
-                    )
-                )
+        # try:
+        #     # Create and run synchronizer.
+        #     synchronizer = DatabaseSynchronizer(
+        #         source_config,
+        #         dry_run=options['dry_run'],
+        #         last_run_path=options['last_run_path']
+        #     )
+        #     synchronizer.sync_all()
 
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f'Synchronization failed: {e}')
-            )
-            raise CommandError(f'Synchronization failed: {e}')
+        #     if options['dry_run']:
+        #         self.stdout.write(
+        #             self.style.WARNING(
+        #                 'DRY RUN COMPLETED - No changes were made to the '
+        #                 'database.'
+        #             )
+        #         )
+
+        # except Exception as e:
+        #     self.stdout.write(
+        #         self.style.ERROR(f'Synchronization failed: {e}')
+        #     )
+        #     raise CommandError(f'Synchronization failed: {e}')
