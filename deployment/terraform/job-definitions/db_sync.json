@@ -2,7 +2,6 @@
   "image": "${image_url}",
   "vcpus": 4,
   "memory": 8192,
-  "jobRoleArn": "${job_role_arn}",
   "command": [
     "python", 
     "manage.py", 
@@ -50,8 +49,7 @@
               "rootDirectory": "/",
               "transitEncryption": "ENABLED",
               "authorizationConfig": {
-                  "accessPointId": "${efs_access_point_id}",
-                  "iam": "ENABLED"
+                  "accessPointId": "${efs_access_point_id}"
               }
           }
       }
