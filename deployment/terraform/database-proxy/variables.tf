@@ -7,6 +7,11 @@ variable "env_identifier" {
   type        = string
 }
 
+variable "project_identifier" {
+  description = "Project identifier"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "VPC ID where the RDS proxy will be created"
   type        = string

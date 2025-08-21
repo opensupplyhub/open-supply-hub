@@ -2,10 +2,16 @@
 # RDS Proxy Module
 #------------------------------------------------------------------------------
 
+# Create a name for the database proxy
+locals {
+  env_id_short = "${replace(var.project_identifier, " ", "")}${var.env_identifier}"
+  proxy_name = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
+}
+
 
 # Proxy for the database
 resource "aws_db_proxy" "main_db" {
-  name                   = "database${var.env_identifier}Proxy"
+  name                   = local.proxy_name
   debug_logging          = var.debug_logging
   engine_family          = "POSTGRESQL"
   idle_client_timeout    = var.idle_client_timeout
@@ -45,7 +51,7 @@ resource "aws_db_proxy_target" "main" {
 
 # Security Group for RDS Proxy
 resource "aws_security_group" "proxy" {
-  name = "sg${var.env_identifier}DatabaseProxy"
+  name = "sg${local.env_id_short}DatabaseProxy"
   description = "Security group for RDS proxy"
   vpc_id      = var.vpc_id
 
@@ -79,7 +85,7 @@ resource "aws_security_group_rule" "proxy_egress" {
 
 # Secret for RDS proxy
 resource "aws_secretsmanager_secret" "proxy_secret" {
-  name = "database${var.env_identifier}ProxySecret"
+  name = "database${local.env_id_short}ProxySecret"
   recovery_window_in_days = 0
 
   tags = {
@@ -98,7 +104,7 @@ resource "aws_secretsmanager_secret_version" "proxy_secret_version" {
 
 # IAM role for RDS proxy
 resource "aws_iam_role" "proxy_role" {
-  name = "database${var.env_identifier}ProxyRole"
+  name = "database${local.env_id_short}ProxyRole"
 
   assume_role_policy = data.aws_iam_policy_document.proxy_assume_role_policy.json
 
@@ -119,7 +125,7 @@ data "aws_iam_policy_document" "proxy_assume_role_policy" {
 
 # IAM policy for RDS proxy
 resource "aws_iam_role_policy" "proxy_policy" {
-  name = "database${var.env_identifier}ProxyPolicy"
+  name = "database${local.env_id_short}ProxyPolicy"
   role = aws_iam_role.proxy_role.id
 
   policy = data.aws_iam_policy_document.proxy_policy.json
