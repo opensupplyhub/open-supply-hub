@@ -8,7 +8,9 @@ module "database_proxy" {
 
   db_username = var.rds_database_username
   db_password = var.rds_database_password
+  db_port = module.database_enc.port
   # TODO: change to NLB security group. Test with bastion first.
   allowed_security_group_id = module.vpc.bastion_security_group_id
+  database_security_group_id = module.database_enc.database_security_group_id
   debug_logging = true
 }

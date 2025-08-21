@@ -63,8 +63,8 @@ resource "aws_security_group" "proxy" {
 # Security group rules for RDS proxy
 resource "aws_security_group_rule" "proxy_ingress" {
   type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
+  from_port                = var.db_port
+  to_port                  = var.db_port
   protocol                 = "tcp"
 
   source_security_group_id = var.allowed_security_group_id
@@ -81,6 +81,18 @@ resource "aws_security_group_rule" "proxy_egress" {
 
   security_group_id        = aws_security_group.proxy.id
   description              = "Allow all outbound traffic"
+}
+
+# Security group rules for RDS instance
+resource "aws_security_group_rule" "db_ingress" {
+  type                     = "ingress"
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+
+  security_group_id        = var.database_security_group_id
+  source_security_group_id = aws_security_group.proxy.id
+  description              = "Allow RDS proxy to connect to the database"
 }
 
 # Secret for RDS proxy
