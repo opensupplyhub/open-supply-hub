@@ -2,7 +2,7 @@ module "database_proxy" {
   source = "./database-proxy"
   vpc_id = module.vpc.id
   subnet_ids = module.vpc.private_subnet_ids
-  db_instance_identifier = module.database_enc.id
+  db_instance_identifier = var.rds_database_identifier
   env_identifier = var.environment
   project_identifier = var.project
 
