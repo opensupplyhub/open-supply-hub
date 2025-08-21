@@ -2,6 +2,7 @@
   "image": "${image_url}",
   "vcpus": 4,
   "memory": 8192,
+  "jobRoleArn": "${job_role_arn}",
   "command": [
     "python", 
     "manage.py", 
