@@ -503,6 +503,7 @@ resource "aws_batch_job_definition" "db_sync" {
   propagate_tags = true
 
   platform_capabilities = ["EC2"]
+  job_role_arn         = aws_iam_role.container_instance_batch.arn
 
   container_properties = data.template_file.db_sync_job_definition[0].rendered
 

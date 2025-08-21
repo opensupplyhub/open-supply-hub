@@ -210,6 +210,27 @@ resource "aws_iam_role_policy_attachment" "batch_policy" {
   policy_arn = var.batch_service_role_policy_arn
 }
 
+# EFS permissions for batch jobs
+resource "aws_iam_role_policy" "batch_efs_policy" {
+  name = "batch${local.short}EfsPolicy"
+  role = aws_iam_role.container_instance_batch.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRootAccess"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 #
 # Spot Fleet IAM resources
 #
