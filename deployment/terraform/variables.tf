@@ -86,12 +86,15 @@ variable "rds_storage_type" {
 }
 
 variable "rds_database_identifier" {
+  sensitive = true
 }
 
 variable "rds_database_name" {
+  sensitive = true
 }
 
 variable "rds_database_username" {
+  sensitive = true
 }
 
 variable "rds_database_password" {
