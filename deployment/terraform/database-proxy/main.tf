@@ -93,7 +93,6 @@ resource "aws_security_group_rule" "bastion_egress" {
   cidr_blocks              = ["0.0.0.0/0"]
 
   security_group_id        = var.allowed_security_group_id
-  source_security_group_id = aws_security_group.proxy.id
   description              = "Allow bastion to connect to the database proxy"
 }
 
