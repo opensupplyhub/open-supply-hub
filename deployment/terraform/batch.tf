@@ -344,12 +344,12 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
       "batch:DescribeJobQueues",
       "batch:DescribeJobs",
     ]
-    resources = [
+    resources = compact([
       aws_batch_job_definition.export_csv.arn,
       aws_batch_job_queue.export_csv.arn,
-      aws_batch_job_definition.rba_data_sync.arn,
-      aws_batch_job_queue.rba_data_sync.arn,
-    ]
+      var.environment == "Rba" ? aws_batch_job_definition.rba_data_sync[0].arn : "",
+      var.environment == "Rba" ? aws_batch_job_queue.rba_data_sync[0].arn : "",
+    ])
   }
 }
 
@@ -409,6 +409,7 @@ resource "aws_batch_job_definition" "direct_data_load" {
 }
 
 resource "aws_batch_compute_environment" "rba_data_sync" {
+  count      = var.environment == "Rba" ? 1 : 0
   depends_on = [aws_iam_role_policy_attachment.batch_policy]
 
   compute_environment_name_prefix = "batch${local.short}RBADataSyncComputeEnvironment"
@@ -432,7 +433,7 @@ resource "aws_batch_compute_environment" "rba_data_sync" {
     instance_type = var.batch_default_ce_instance_types
 
     security_group_ids = [aws_security_group.batch.id]
-    subnets = module.vpc.private_subnet_ids
+    subnets            = module.vpc.private_subnet_ids
 
     tags = {
       Name               = "BatchWorker"
@@ -448,10 +449,11 @@ resource "aws_batch_compute_environment" "rba_data_sync" {
 }
 
 resource "aws_batch_job_queue" "rba_data_sync" {
-  name                 = "queue${local.short}RBADataSync"
-  priority             = 1
-  state                = "ENABLED"
-  compute_environments = [aws_batch_compute_environment.rba_data_sync.arn]
+  count               = var.environment == "Rba" ? 1 : 0
+  name                = "queue${local.short}RBADataSync"
+  priority            = 1
+  state               = "ENABLED"
+  compute_environments = [aws_batch_compute_environment.rba_data_sync[0].arn]
   
   tags = {
     Project     = var.project
@@ -460,6 +462,7 @@ resource "aws_batch_job_queue" "rba_data_sync" {
 }
 
 data "template_file" "rba_data_sync_job_definition" {
+  count    = var.environment == "Rba" ? 1 : 0
   template = file("job-definitions/rba_data_sync.json")
 
   vars = {
@@ -473,15 +476,23 @@ data "template_file" "rba_data_sync_job_definition" {
     environment      = var.environment
     django_secret_key = var.django_secret_key
     log_group_name   = "log${local.short}Batch"
+    # Source DB for sync job
+    source_db_host   = var.rba_source_db_host
+    source_db_port   = var.rba_source_db_port
+    source_db_name   = var.rba_source_db_name
+    source_db_user   = var.rba_source_db_user
+    source_db_password = var.rba_source_db_password
+    email_anonymization_secret = var.email_anonymization_secret
   }
 }
 
 resource "aws_batch_job_definition" "rba_data_sync" {
+  count          = var.environment == "Rba" ? 1 : 0
   name           = "job${local.short}RBADataSync"
   type           = "container"
   propagate_tags = true
 
-  container_properties = data.template_file.rba_data_sync_job_definition.rendered
+  container_properties = data.template_file.rba_data_sync_job_definition[0].rendered
 
   retry_strategy {
     attempts = 2
@@ -489,6 +500,7 @@ resource "aws_batch_job_definition" "rba_data_sync" {
 }
 
 resource "aws_cloudwatch_event_rule" "rba_data_sync_schedule" {
+  count               = var.environment == "Rba" ? 1 : 0
   name                = "rule${local.short}RBADataSyncSchedule"
   description         = "Runs the rba_data_sync job on a schedule"
   schedule_expression = var.rba_data_sync_schedule_expression
@@ -496,12 +508,13 @@ resource "aws_cloudwatch_event_rule" "rba_data_sync_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "rba_data_sync" {
-  rule     = aws_cloudwatch_event_rule.rba_data_sync_schedule.name
-  arn      = aws_batch_job_queue.rba_data_sync.arn
+  count   = var.environment == "Rba" ? 1 : 0
+  rule     = aws_cloudwatch_event_rule.rba_data_sync_schedule[0].name
+  arn      = aws_batch_job_queue.rba_data_sync[0].arn
   role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
 
   batch_target {
-    job_definition = aws_batch_job_definition.rba_data_sync.arn
+    job_definition = aws_batch_job_definition.rba_data_sync[0].arn
     job_name       = "job${local.short}RBADataSync"
   }
 }

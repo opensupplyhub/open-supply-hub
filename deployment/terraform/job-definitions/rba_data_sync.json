@@ -2,7 +2,16 @@
     "image": "${image_url}",
     "vcpus": 2,
     "memory": 4096,
-    "command": [ "python", "manage.py", "sync_databases" ],
+    "command": [
+        "python",
+        "manage.py",
+        "sync_databases",
+        "--source-host", "${source_db_host}",
+        "--source-port", "${source_db_port}",
+        "--source-name", "${source_db_name}",
+        "--source-user", "${source_db_user}",
+        "--source-password", "${source_db_password}"
+    ],
     "environment": [
         { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
         { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
@@ -12,7 +21,8 @@
         { "name": "POSTGRES_DB", "value": "${postgres_db}" },
         { "name": "BATCH_MODE", "value": "True" },
         { "name": "DJANGO_ENV", "value": "${environment}" },
-        { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" }
+        { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
+        { "name": "EMAIL_ANONYMIZATION_SECRET", "value": "${email_anonymization_secret}" }
     ],
     "logConfiguration": {
         "logDriver": "awslogs",

@@ -898,3 +898,36 @@ variable "rba_data_sync_schedule_expression" {
   default     = "cron(0 7 * * ? *)"
   description = "The schedule expression for the RBA data sync job (7:00 AM UTC by default)"
 }
+
+variable "rba_source_db_host" {
+  type        = string
+  description = "Hostname for the source database used by the RBA data sync job"
+}
+
+variable "rba_source_db_port" {
+  type        = number
+  default     = 5432
+  description = "Port for the source database used by the RBA data sync job"
+}
+
+variable "rba_source_db_name" {
+  type        = string
+  description = "Database name for the source database used by the RBA data sync job"
+}
+
+variable "rba_source_db_user" {
+  type        = string
+  description = "Username for the source database used by the RBA data sync job"
+}
+
+variable "rba_source_db_password" {
+  type        = string
+  sensitive   = true
+  description = "Password for the source database used by the RBA data sync job"
+}
+
+variable "email_anonymization_secret" {
+  type        = string
+  sensitive   = true
+  description = "Secret used for email anonymization in the RBA data sync job"
+}
