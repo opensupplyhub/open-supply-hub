@@ -347,8 +347,8 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
     resources = compact([
       aws_batch_job_definition.export_csv.arn,
       aws_batch_job_queue.export_csv.arn,
-      var.environment == "Rba" ? aws_batch_job_definition.rba_data_sync[0].arn : "",
-      var.environment == "Rba" ? aws_batch_job_queue.rba_data_sync[0].arn : "",
+      contains(["Rba", "Test"], var.environment) ? aws_batch_job_definition.rba_data_sync[0].arn : "",
+      contains(["Rba", "Test"], var.environment) ? aws_batch_job_queue.rba_data_sync[0].arn : "",
     ])
   }
 }
@@ -409,7 +409,7 @@ resource "aws_batch_job_definition" "direct_data_load" {
 }
 
 resource "aws_batch_compute_environment" "rba_data_sync" {
-  count      = var.environment == "Rba" ? 1 : 0
+  count      = contains(["Rba", "Test"], var.environment) ? 1 : 0
   depends_on = [aws_iam_role_policy_attachment.batch_policy]
 
   compute_environment_name_prefix = "batch${local.short}RBADataSyncComputeEnvironment"
@@ -449,10 +449,10 @@ resource "aws_batch_compute_environment" "rba_data_sync" {
 }
 
 resource "aws_batch_job_queue" "rba_data_sync" {
-  count               = var.environment == "Rba" ? 1 : 0
-  name                = "queue${local.short}RBADataSync"
-  priority            = 1
-  state               = "ENABLED"
+  count                = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  name                 = "queue${local.short}RBADataSync"
+  priority             = 1
+  state                = "ENABLED"
   compute_environments = [aws_batch_compute_environment.rba_data_sync[0].arn]
   
   tags = {
@@ -462,7 +462,7 @@ resource "aws_batch_job_queue" "rba_data_sync" {
 }
 
 data "template_file" "rba_data_sync_job_definition" {
-  count    = var.environment == "Rba" ? 1 : 0
+  count    = contains(["Rba", "Test"], var.environment) ? 1 : 0
   template = file("job-definitions/rba_data_sync.json")
 
   vars = {
@@ -487,7 +487,7 @@ data "template_file" "rba_data_sync_job_definition" {
 }
 
 resource "aws_batch_job_definition" "rba_data_sync" {
-  count          = var.environment == "Rba" ? 1 : 0
+  count          = contains(["Rba", "Test"], var.environment) ? 1 : 0
   name           = "job${local.short}RBADataSync"
   type           = "container"
   propagate_tags = true
@@ -500,7 +500,7 @@ resource "aws_batch_job_definition" "rba_data_sync" {
 }
 
 resource "aws_cloudwatch_event_rule" "rba_data_sync_schedule" {
-  count               = var.environment == "Rba" ? 1 : 0
+  count               = contains(["Rba", "Test"], var.environment) ? 1 : 0
   name                = "rule${local.short}RBADataSyncSchedule"
   description         = "Runs the rba_data_sync job on a schedule"
   schedule_expression = var.rba_data_sync_schedule_expression
@@ -508,7 +508,7 @@ resource "aws_cloudwatch_event_rule" "rba_data_sync_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "rba_data_sync" {
-  count   = var.environment == "Rba" ? 1 : 0
+  count   = contains(["Rba", "Test"], var.environment) ? 1 : 0
   rule     = aws_cloudwatch_event_rule.rba_data_sync_schedule[0].name
   arn      = aws_batch_job_queue.rba_data_sync[0].arn
   role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
