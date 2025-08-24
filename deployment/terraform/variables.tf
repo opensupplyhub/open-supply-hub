@@ -885,49 +885,60 @@ variable "vpn_ec2_ami" {
   description = "VPN EC2 AMI"
 }
 
-# RBA data sync variables
+# DB Sync variables
 
-variable "rba_data_sync_enabled" {
-  type        = bool
-  default     = false
-  description = "Whether to enable the RBA data sync scheduled job"
-}
-
-variable "rba_data_sync_schedule_expression" {
+variable "source_db_host" {
+  description = "Source database host (OS Hub database)"
   type        = string
-  default     = "cron(0 7 * * ? *)"
-  description = "The schedule expression for the RBA data sync job (7:00 AM UTC by default)"
+  default     = ""
 }
 
-variable "rba_source_db_host" {
-  type        = string
-  description = "Hostname for the source database used by the RBA data sync job"
-}
-
-variable "rba_source_db_port" {
+variable "source_db_port" {
+  description = "Source database port"
   type        = number
   default     = 5432
-  description = "Port for the source database used by the RBA data sync job"
 }
 
-variable "rba_source_db_name" {
+variable "source_db_name" {
+  description = "Source database name"
   type        = string
-  description = "Database name for the source database used by the RBA data sync job"
+  default     = ""
 }
 
-variable "rba_source_db_user" {
+variable "source_db_user" {
+  description = "Source database user"
   type        = string
-  description = "Username for the source database used by the RBA data sync job"
+  default     = ""
 }
 
-variable "rba_source_db_password" {
+variable "source_db_password" {
+  description = "Source database password"
   type        = string
+  default     = ""
   sensitive   = true
-  description = "Password for the source database used by the RBA data sync job"
+}
+
+variable "db_sync_timeout_minutes" {
+  description = "Timeout for database sync job in minutes"
+  type        = number
+  default     = 120
+}
+
+variable "db_sync_batch_size" {
+  description = "Batch size for database sync operations"
+  type        = number
+  default     = 1000
+}
+
+variable "db_sync_max_retries" {
+  description = "Maximum number of retries for failed sync operations"
+  type        = number
+  default     = 3
 }
 
 variable "email_anonymization_secret" {
+  description = "Secret key for email anonymization in database sync"
   type        = string
+  default     = ""
   sensitive   = true
-  description = "Secret used for email anonymization in the RBA data sync job"
 }
