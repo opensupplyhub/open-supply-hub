@@ -74,7 +74,7 @@ instance_source= "rba"
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 db_sync_enabled = true
-db_sync_schedule_expression = "cron(15 12 * * ? *)" # 12:15 PM UTC daily
+db_sync_schedule_expression = "cron(0 7 * * ? *)" # (7:00 AM UTC)
 
 source_db_host     = ""
 source_db_port     = 5432

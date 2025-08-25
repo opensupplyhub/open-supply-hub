@@ -3,16 +3,9 @@
     "vcpus": 4,
     "memory": 8192,
     "command": [
-      "python", 
-      "manage.py", 
-      "sync_databases",
-      "--source-host", "${source_db_host}",
-      "--source-port", "${source_db_port}",
-      "--source-name", "${source_db_name}",
-      "--source-user", "${source_db_user}",
-      "--source-password", "${source_db_password}",
-      "--last-run-path", "/db-sync",
-      "--verbose"
+      "sh",
+      "-lc",
+      "python manage.py sync_databases --source-host ${source_db_host} --source-port ${source_db_port} --source-name ${source_db_name} --source-user ${source_db_user} --source-password ${source_db_password} --last-run-path /db-sync --verbose\nif [ -f /db-sync/test_last_run ]; then\n  echo '[DB_SYNC] file written: /db-sync/test_last_run'\n  echo '[DB_SYNC] file content:'\n  cat /db-sync/test_last_run\nelse\n  echo '[DB_SYNC] file not found' >&2\nfi\nls -la /db-sync"
     ],
     "environment": [
         { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
