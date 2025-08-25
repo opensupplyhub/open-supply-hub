@@ -347,8 +347,8 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
     resources = compact([
       aws_batch_job_definition.export_csv.arn,
       aws_batch_job_queue.export_csv.arn,
-      contains(["Rba", "Test"], var.environment) ? aws_batch_job_definition.rba_data_sync[0].arn : "",
-      contains(["Rba", "Test"], var.environment) ? aws_batch_job_queue.rba_data_sync[0].arn : "",
+      # contains(["Rba", "Test"], var.environment) ? aws_batch_job_definition.rba_data_sync[0].arn : "",
+      # contains(["Rba", "Test"], var.environment) ? aws_batch_job_queue.rba_data_sync[0].arn : "",
     ])
   }
 }
