@@ -884,3 +884,74 @@ variable "vpn_ec2_ami" {
   type        = string
   description = "VPN EC2 AMI"
 }
+
+# DB Sync variables
+
+variable "source_db_host" {
+  description = "Source database host (OS Hub database)"
+  type        = string
+  default     = ""
+}
+
+variable "source_db_port" {
+  description = "Source database port"
+  type        = number
+  default     = 5432
+}
+
+variable "source_db_name" {
+  description = "Source database name"
+  type        = string
+  default     = ""
+}
+
+variable "source_db_user" {
+  description = "Source database user"
+  type        = string
+  default     = ""
+}
+
+variable "source_db_password" {
+  description = "Source database password"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "db_sync_timeout_minutes" {
+  description = "Timeout for database sync job in minutes"
+  type        = number
+  default     = 120
+}
+
+variable "db_sync_batch_size" {
+  description = "Batch size for database sync operations"
+  type        = number
+  default     = 1000
+}
+
+variable "db_sync_max_retries" {
+  description = "Maximum number of retries for failed sync operations"
+  type        = number
+  default     = 3
+}
+
+variable "email_anonymization_secret" {
+  description = "Secret key for email anonymization in database sync"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# DB Sync EventBridge variables
+variable "db_sync_enabled" {
+  description = "Whether to enable the database sync scheduled job"
+  type        = bool
+  default     = false
+}
+
+variable "db_sync_schedule_expression" {
+  description = "Schedule for db sync (test default: every 30 minutes)"
+  type        = string
+  default     = "rate(30 minutes)"
+}
