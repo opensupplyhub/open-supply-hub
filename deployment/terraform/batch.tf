@@ -347,8 +347,8 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
     resources = compact([
       aws_batch_job_definition.export_csv.arn,
       aws_batch_job_queue.export_csv.arn,
-      # contains(["Rba", "Test"], var.environment) ? aws_batch_job_definition.rba_data_sync[0].arn : "",
-      # contains(["Rba", "Test"], var.environment) ? aws_batch_job_queue.rba_data_sync[0].arn : "",
+      contains(["Rba", "Test"], var.environment) ? aws_batch_job_definition.db_sync[0].arn : "",
+      contains(["Rba", "Test"], var.environment) ? aws_batch_job_queue.db_sync[0].arn : "",
     ])
   }
 }
@@ -408,118 +408,7 @@ resource "aws_batch_job_definition" "direct_data_load" {
   }
 }
 
-/*
-resource "aws_batch_compute_environment" "rba_data_sync" {
-  count      = contains(["Rba", "Test"], var.environment) ? 1 : 0
-  depends_on = [aws_iam_role_policy_attachment.batch_policy]
-
-  compute_environment_name_prefix = "batch${local.short}RBADataSyncComputeEnvironment"
-  type                            = "MANAGED"
-  state                           = "ENABLED"
-  service_role                    = aws_iam_role.container_instance_batch.arn
-
-  compute_resources {
-    type           = "SPOT"
-    bid_percentage = var.batch_default_ce_spot_fleet_bid_percentage
-    ec2_key_pair   = var.aws_key_name
-    image_id       = var.batch_ami_id
-
-    min_vcpus     = 0
-    desired_vcpus = 0
-    max_vcpus     = 16
-
-    spot_iam_fleet_role = aws_iam_role.container_instance_spot_fleet.arn
-    instance_role       = aws_iam_instance_profile.container_instance.arn
-
-    instance_type = var.batch_default_ce_instance_types
-
-    security_group_ids = [aws_security_group.batch.id]
-    subnets            = module.vpc.private_subnet_ids
-
-    tags = {
-      Name               = "BatchWorker"
-      ComputeEnvironment = "RBADataSync"
-      Project            = var.project
-      Environment        = var.environment
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_batch_job_queue" "rba_data_sync" {
-  count                = contains(["Rba", "Test"], var.environment) ? 1 : 0
-  name                 = "queue${local.short}RBADataSync"
-  priority             = 1
-  state                = "ENABLED"
-  compute_environments = [aws_batch_compute_environment.rba_data_sync[0].arn]
-  
-  tags = {
-    Project     = var.project
-    Environment = var.environment
-  }
-}
-
-data "template_file" "rba_data_sync_job_definition" {
-  count    = contains(["Rba", "Test"], var.environment) ? 1 : 0
-  template = file("job-definitions/rba_data_sync.json")
-
-  vars = {
-    image_url        = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
-    aws_region       = var.aws_region
-    postgres_host    = aws_route53_record.database.name
-    postgres_port    = module.database_enc.port
-    postgres_user    = var.rds_database_username
-    postgres_password = var.rds_database_password
-    postgres_db      = var.rds_database_name
-    environment      = var.environment
-    django_secret_key = var.django_secret_key
-    log_group_name   = "log${local.short}Batch"
-    # Source DB for sync job
-    source_db_host   = var.rba_source_db_host
-    source_db_port   = var.rba_source_db_port
-    source_db_name   = var.rba_source_db_name
-    source_db_user   = var.rba_source_db_user
-    source_db_password = var.rba_source_db_password
-    email_anonymization_secret = var.email_anonymization_secret
-  }
-}
-
-resource "aws_batch_job_definition" "rba_data_sync" {
-  count          = contains(["Rba", "Test"], var.environment) ? 1 : 0
-  name           = "job${local.short}RBADataSync"
-  type           = "container"
-  propagate_tags = true
-
-  container_properties = data.template_file.rba_data_sync_job_definition[0].rendered
-
-  retry_strategy {
-    attempts = 2
-  }
-}
-
-resource "aws_cloudwatch_event_rule" "rba_data_sync_schedule" {
-  count               = contains(["Rba", "Test"], var.environment) ? 1 : 0
-  name                = "rule${local.short}RBADataSyncSchedule"
-  description         = "Runs the rba_data_sync job on a schedule"
-  schedule_expression = var.rba_data_sync_schedule_expression
-  is_enabled          = var.rba_data_sync_enabled
-}
-
-resource "aws_cloudwatch_event_target" "rba_data_sync" {
-  count   = contains(["Rba", "Test"], var.environment) ? 1 : 0
-  rule     = aws_cloudwatch_event_rule.rba_data_sync_schedule[0].name
-  arn      = aws_batch_job_queue.rba_data_sync[0].arn
-  role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
-
-  batch_target {
-    job_definition = aws_batch_job_definition.rba_data_sync[0].arn
-    job_name       = "job${local.short}RBADataSync"
-  }
-}
-*/
+ 
 
 # AWS Batch for Database Sync
 
@@ -628,5 +517,27 @@ resource "aws_batch_job_definition" "db_sync" {
 
   timeout {
     attempt_duration_seconds = var.db_sync_timeout_minutes * 60
+  }
+}
+
+# EventBridge Rule for DB Sync Schedule
+resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
+  count               = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  name                = "rule${local.short}DbSyncSchedule"
+  description         = "Runs the database sync job on a schedule"
+  schedule_expression = var.db_sync_schedule_expression
+  is_enabled          = var.db_sync_enabled
+}
+
+# EventBridge Target for DB Sync
+resource "aws_cloudwatch_event_target" "db_sync" {
+  count   = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  rule     = aws_cloudwatch_event_rule.db_sync_schedule[0].name
+  arn      = aws_batch_job_queue.db_sync[0].arn
+  role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
+
+  batch_target {
+    job_definition = aws_batch_job_definition.db_sync[0].arn
+    job_name       = "job${local.short}DbSync"
   }
 }

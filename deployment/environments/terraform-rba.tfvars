@@ -73,12 +73,12 @@ instance_source= "rba"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
-rba_data_sync_enabled = true
-rba_data_sync_schedule_expression = "cron(0 7 * * ? *)" # (7:00 AM UTC)
+db_sync_enabled = true
+db_sync_schedule_expression = "cron(15 12 * * ? *)" # 12:15 PM UTC daily
 
-rba_source_db_host     = ""
-rba_source_db_port     = 5432
-rba_source_db_name     = ""
-rba_source_db_user     = ""
-rba_source_db_password = "" # TODO: set in CI/CD secrets or tfvars-secure
+source_db_host     = ""
+source_db_port     = 5432
+source_db_name     = ""
+source_db_user     = ""
+source_db_password = "" # TODO: set in CI/CD secrets or tfvars-secure
 email_anonymization_secret = "" # TODO: set via secrets

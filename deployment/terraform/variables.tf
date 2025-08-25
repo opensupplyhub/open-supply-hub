@@ -942,3 +942,16 @@ variable "email_anonymization_secret" {
   default     = ""
   sensitive   = true
 }
+
+# DB Sync EventBridge variables
+variable "db_sync_enabled" {
+  description = "Whether to enable the database sync scheduled job"
+  type        = bool
+  default     = false
+}
+
+variable "db_sync_schedule_expression" {
+  description = "Schedule for db sync (test default: every 30 minutes)"
+  type        = string
+  default     = "rate(30 minutes)"
+}
