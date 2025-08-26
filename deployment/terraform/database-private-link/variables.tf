@@ -87,5 +87,9 @@ variable "database_security_group_id" {
   type        = string
 }
 
-
-
+# NLB
+# TODO: Rework this to get the IP addresses via Lambda function
+variable "db_proxy_ips" {
+  description = "List of IP addresses of the database proxy"
+  type        = list(string)
+}

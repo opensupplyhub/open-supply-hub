@@ -1,5 +1,5 @@
-module "database_proxy" {
-  source = "./database-proxy"
+module "database_private_link" {
+  source = "./database-private-link"
   vpc_id = module.vpc.id
   subnet_ids = module.vpc.private_subnet_ids
   db_instance_identifier = var.rds_database_identifier
@@ -13,4 +13,6 @@ module "database_proxy" {
   allowed_security_group_id = module.vpc.bastion_security_group_id
   database_security_group_id = module.database_enc.database_security_group_id
   debug_logging = true
+
+  db_proxy_ips = ["1.0.0.1", "1.0.0.2"]
 }

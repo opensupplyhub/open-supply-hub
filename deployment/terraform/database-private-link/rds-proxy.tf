@@ -1,10 +1,9 @@
 #------------------------------------------------------------------------------
-# RDS Proxy Module
+# RDS Proxy
 #------------------------------------------------------------------------------
 
 # Create a name for the database proxy
 locals {
-  env_id_short = "${replace(var.project_identifier, " ", "")}${var.env_identifier}"
   proxy_name = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
 }
 
@@ -23,7 +22,7 @@ resource "aws_db_proxy" "main_db" {
   auth {
     auth_scheme = "SECRETS"
     iam_auth    = "DISABLED"
-    # secret_arn  = aws_secretsmanager_secret.proxy_secret.arn
+    secret_arn  = aws_secretsmanager_secret.proxy_secret.arn
   }
 
   tags = {
