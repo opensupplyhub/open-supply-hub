@@ -2,16 +2,11 @@
 # RDS Proxy
 #------------------------------------------------------------------------------
 
-# Create a name for the database proxy
-locals {
-  proxy_name = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
-}
+# RDS proxy for the database
 
-
-# Proxy for the database
 resource "aws_db_proxy" "main_db" {
-  name                   = local.proxy_name
-  debug_logging          = var.debug_logging
+  name                   = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
+  debug_logging          = var.db_proxy_debug_logging
   engine_family          = "POSTGRESQL"
   idle_client_timeout    = var.idle_client_timeout
   require_tls            = true
@@ -31,6 +26,7 @@ resource "aws_db_proxy" "main_db" {
 }
 
 # RDS proxy default target group
+
 resource "aws_db_proxy_default_target_group" "default" {
   db_proxy_name = aws_db_proxy.main_db.name
 
@@ -42,6 +38,7 @@ resource "aws_db_proxy_default_target_group" "default" {
 }
 
 # RDS proxy target group association
+
 resource "aws_db_proxy_target" "main" {
   db_instance_identifier = var.db_instance_identifier
   db_proxy_name          = aws_db_proxy.main_db.name
@@ -49,6 +46,7 @@ resource "aws_db_proxy_target" "main" {
 }
 
 # Security group for RDS proxy
+
 resource "aws_security_group" "proxy" {
   name = "sg${local.env_id_short}DatabaseProxy"
   description = "Security group for RDS proxy"
@@ -60,18 +58,6 @@ resource "aws_security_group" "proxy" {
 }
 
 # Security group rules for RDS proxy
-
-# # TODO: Check whether we can only specify database as source
-# resource "aws_security_group_rule" "proxy_egress" {
-#   type                     = "egress"
-#   from_port                = 0
-#   to_port                  = 0
-#   protocol                 = "-1"
-#   cidr_blocks              = ["0.0.0.0/0"]
-
-#   security_group_id        = aws_security_group.proxy.id
-#   description              = "Allow all outbound traffic from RDS proxy"
-# }
 
 resource "aws_security_group_rule" "proxy_database_egress" {
   type                     = "egress"
@@ -96,6 +82,7 @@ resource "aws_security_group_rule" "nlb_proxy_ingress" {
 }
 
 # Security group rules for RDS instance
+
 resource "aws_security_group_rule" "proxy_db_ingress" {
   type                     = "ingress"
   from_port                = var.db_port
@@ -108,6 +95,7 @@ resource "aws_security_group_rule" "proxy_db_ingress" {
 }
 
 # Secret for RDS proxy
+
 resource "aws_secretsmanager_secret" "proxy_secret" {
   name = "database${local.env_id_short}ProxySecret"
   recovery_window_in_days = 0
@@ -118,6 +106,7 @@ resource "aws_secretsmanager_secret" "proxy_secret" {
 }
 
 # Secret version for RDS proxy
+
 resource "aws_secretsmanager_secret_version" "proxy_secret_version" {
   secret_id = aws_secretsmanager_secret.proxy_secret.id
   secret_string = jsonencode({
@@ -127,6 +116,7 @@ resource "aws_secretsmanager_secret_version" "proxy_secret_version" {
 }
 
 # IAM role for RDS proxy
+
 resource "aws_iam_role" "proxy_role" {
   name = "database${local.env_id_short}ProxyRole"
 
@@ -148,6 +138,7 @@ data "aws_iam_policy_document" "proxy_assume_role_policy" {
 }
 
 # IAM policy for RDS proxy
+
 resource "aws_iam_role_policy" "proxy_policy" {
   name = "database${local.env_id_short}ProxyPolicy"
   role = aws_iam_role.proxy_role.id

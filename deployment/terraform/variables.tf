@@ -951,3 +951,23 @@ variable "db_sync_schedule_expression" {
   type        = string
   default     = "cron(0 7 * * ? *)"
 }
+
+# Database private link variables
+
+variable "is_database_private_link_provider" {
+  type        = bool
+  description = "Whether the current account is the provider of the database private link"
+  default     = false
+}
+
+variable "is_database_private_link_consumer" {
+  type        = bool
+  description = "Whether the current account is the consumer of the database private link"
+  default     = false
+}
+
+variable "database_private_link_vpc_endpoint_service_name" {
+  type        = string
+  description = "The name of the VPC endpoint service in the provider VPC"
+  default     = ""
+}

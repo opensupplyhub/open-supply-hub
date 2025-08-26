@@ -22,6 +22,8 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
+# Database configuration
+
 variable "db_instance_identifier" {
   description = "Identifier of the RDS instance to connect to the proxy"
   type        = string
@@ -46,7 +48,8 @@ variable "db_port" {
 }
 
 
-# Connection pool configuration
+# Connection pool configuration for RDS proxy
+
 variable "connection_borrow_timeout" {
   description = "The number of seconds for a proxy to wait for a connection from the connection pool"
   type        = number
@@ -66,7 +69,8 @@ variable "max_idle_connections_percent" {
 }
 
 # Proxy configuration
-variable "debug_logging" {
+
+variable "db_proxy_debug_logging" {
   description = "Whether the proxy includes detailed information about SQL statements in its logs"
   type        = bool
   default     = false
@@ -78,12 +82,7 @@ variable "idle_client_timeout" {
   default     = 300
 }
 
-# Security Configuration
-variable "allowed_security_group_id" {
-  description = "Security group ID that is allowed to connect to the RDS Proxy"
-  type        = string
-  default     = ""
-}
+# Security configuration
 
 variable "database_security_group_id" {
   description = "Security group ID of the database"
