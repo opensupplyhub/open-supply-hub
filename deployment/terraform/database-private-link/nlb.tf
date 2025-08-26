@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 
 locals {
-  proxy_nlb_name = lower("proxy-${var.project_identifier}-${var.env_identifier}-nlb")
+  proxy_nlb_name = lower("proxy-oshub-${var.env_identifier}-nlb")
 }
 
 resource "aws_lb" "database_proxy_nlb" {
@@ -19,7 +19,7 @@ resource "aws_lb" "database_proxy_nlb" {
 }
 
 resource "aws_lb_target_group" "database_proxy_nlb_tg" {
-  name = "tg${local.env_id_short}DatabaseProxyNlb"
+  name = "tgOshub${var.project_identifier}DbProxyNlb"
   vpc_id = var.vpc_id
   port = var.db_port
   protocol = "TCP"
@@ -51,3 +51,5 @@ resource "aws_lb_listener" "database_proxy_nlb_listener" {
     Name = "databaseProxyNetworkLoadBalancerListener"
   }
 }
+
+# Security group for NLB

@@ -4,6 +4,7 @@
 
 # Create a name for the database proxy
 locals {
+  env_id_short = "${replace(var.project_identifier, " ", "")}${var.env_identifier}"
   proxy_name = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
 }
 
@@ -30,7 +31,7 @@ resource "aws_db_proxy" "main_db" {
   }
 }
 
-# RDS Proxy Default Target Group
+# RDS proxy default target group
 resource "aws_db_proxy_default_target_group" "default" {
   db_proxy_name = aws_db_proxy.main_db.name
 
@@ -41,14 +42,14 @@ resource "aws_db_proxy_default_target_group" "default" {
   }
 }
 
-# RDS Proxy Target Group Association
+# RDS proxy target group association
 resource "aws_db_proxy_target" "main" {
   db_instance_identifier = var.db_instance_identifier
   db_proxy_name          = aws_db_proxy.main_db.name
   target_group_name      = aws_db_proxy_default_target_group.default.name
 }
 
-# Security Group for RDS Proxy
+# Security group for RDS proxy
 resource "aws_security_group" "proxy" {
   name = "sg${local.env_id_short}DatabaseProxy"
   description = "Security group for RDS proxy"
