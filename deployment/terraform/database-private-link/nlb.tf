@@ -59,3 +59,15 @@ resource "aws_security_group" "database_proxy_nlb_sg" {
     Name = "databaseProxyNlbSecurityGroup"
   }
 }
+
+# Security group rules for NLB
+resource "aws_security_group_rule" "nlb_proxy_egress" {
+  type                     = "egress"
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+
+  security_group_id        = aws_security_group.database_proxy_nlb_sg.id
+  source_security_group_id = aws_security_group.proxy.id
+  description              = "Allow NLB to connect to RDS proxy"
+}
