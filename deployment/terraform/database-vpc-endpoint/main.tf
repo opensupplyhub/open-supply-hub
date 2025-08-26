@@ -11,9 +11,7 @@ resource "aws_vpc_endpoint" "database_vpc_endpoint" {
   subnet_ids        = var.subnet_ids
   service_name      = var.vpc_endpoint_service_name
   vpc_endpoint_type = "Interface"
-  security_group_ids = []
-  private_dns_enabled = true
-  auto_accept = true
+  security_group_ids = [aws_security_group.database_vpc_endpoint_sg.id]
 
   tags = {
     Name = "databaseVpcEndpoint"
