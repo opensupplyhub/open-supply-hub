@@ -78,7 +78,6 @@ source_db_password = "test"
 email_anonymization_secret = "test"
 
 db_sync_timeout_minutes = 120
-db_sync_batch_size = 1000
 db_sync_max_retries = 3
 
 instance_source= "rba"

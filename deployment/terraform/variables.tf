@@ -924,12 +924,6 @@ variable "db_sync_timeout_minutes" {
   default     = 120
 }
 
-variable "db_sync_batch_size" {
-  description = "Batch size for database sync operations"
-  type        = number
-  default     = 1000
-}
-
 variable "db_sync_max_retries" {
   description = "Maximum number of retries for failed sync operations"
   type        = number
