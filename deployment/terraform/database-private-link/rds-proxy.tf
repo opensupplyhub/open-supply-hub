@@ -61,16 +61,27 @@ resource "aws_security_group" "proxy" {
 
 # Security group rules for RDS proxy
 
-# TODO: Check whether we can only specify database as source
-resource "aws_security_group_rule" "proxy_egress" {
-  type                     = "egress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  cidr_blocks              = ["0.0.0.0/0"]
+# # TODO: Check whether we can only specify database as source
+# resource "aws_security_group_rule" "proxy_egress" {
+#   type                     = "egress"
+#   from_port                = 0
+#   to_port                  = 0
+#   protocol                 = "-1"
+#   cidr_blocks              = ["0.0.0.0/0"]
 
+#   security_group_id        = aws_security_group.proxy.id
+#   description              = "Allow all outbound traffic from RDS proxy"
+# }
+
+resource "aws_security_group_rule" "proxy_database_egress" {
+  type                     = "egress"
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+  
   security_group_id        = aws_security_group.proxy.id
-  description              = "Allow all outbound traffic from RDS proxy"
+  source_security_group_id = var.database_security_group_id
+  description              = "Allow outgoing traffic from RDS proxy to the database"
 }
 
 resource "aws_security_group_rule" "nlb_proxy_ingress" {
