@@ -437,7 +437,7 @@ resource "aws_security_group_rule" "batch_msk_egress" {
 }
 
 resource "aws_security_group_rule" "batch_db_sync_egress" {
-  count = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   type      = "egress"
   from_port = 2049

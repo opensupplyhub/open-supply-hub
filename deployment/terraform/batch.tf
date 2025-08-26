@@ -409,7 +409,7 @@ resource "aws_batch_job_definition" "direct_data_load" {
 # AWS Batch for Database Sync
 
 resource "aws_batch_compute_environment" "db_sync" {
-  count = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
   
   depends_on = [aws_iam_role_policy_attachment.batch_policy]
 
@@ -454,7 +454,7 @@ resource "aws_batch_compute_environment" "db_sync" {
 }
 
 resource "aws_batch_job_queue" "db_sync" {
-  count = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
   
   name                 = "queue${local.short}DbSync"
   priority             = 1
@@ -463,7 +463,7 @@ resource "aws_batch_job_queue" "db_sync" {
 }
 
 data "template_file" "db_sync_job_definition" {
-  count = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
   
   template = file("job-definitions/db_sync.json")
 
@@ -497,7 +497,7 @@ data "template_file" "db_sync_job_definition" {
 }
 
 resource "aws_batch_job_definition" "db_sync" {
-  count = contains(["Rba", "Test"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
   
   name           = "job${local.short}DbSync"
   type           = "container"
