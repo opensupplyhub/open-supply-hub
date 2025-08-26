@@ -8,9 +8,10 @@ resource "aws_lb" "database_proxy_nlb" {
   load_balancer_type = "network"
   subnets = var.subnet_ids
   enable_cross_zone_load_balancing = true
+  security_groups = [aws_security_group.database_proxy_nlb_sg.id]
 
   tags = {
-    Name = "databaseProxyNetworkLoadBalancer"
+    Name = "databaseProxyNlb"
   }
 }
 
@@ -44,8 +45,17 @@ resource "aws_lb_listener" "database_proxy_nlb_listener" {
   }
 
   tags = {
-    Name = "databaseProxyNetworkLoadBalancerListener"
+    Name = "databaseProxyNlbListener"
   }
 }
 
 # Security group for NLB
+resource "aws_security_group" "database_proxy_nlb_sg" {
+  name = "sg${local.env_id_short}DbProxyNlb"
+  description = "Security group for NLB"
+  vpc_id = var.vpc_id
+
+  tags = {
+    Name = "databaseProxyNlbSecurityGroup"
+  }
+}

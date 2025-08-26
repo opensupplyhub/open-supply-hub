@@ -4,7 +4,6 @@
 
 # Create a name for the database proxy
 locals {
-  env_id_short = "${replace(var.project_identifier, " ", "")}${var.env_identifier}"
   proxy_name = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
 }
 
@@ -61,7 +60,8 @@ resource "aws_security_group" "proxy" {
 }
 
 # Security group rules for RDS proxy
-resource "aws_security_group_rule" "proxy_ingress" {
+# TODO: Remove this rule.
+resource "aws_security_group_rule" "allowed_instance_proxy_ingress" {
   type                     = "ingress"
   from_port                = var.db_port
   to_port                  = var.db_port
@@ -69,9 +69,10 @@ resource "aws_security_group_rule" "proxy_ingress" {
 
   source_security_group_id = var.allowed_security_group_id
   security_group_id        = aws_security_group.proxy.id
-  description              = "Allow PostgreSQL access from specified security groups"
+  description              = "Allow PostgreSQL access from allowed security group"
 }
 
+# TODO: Check whether we can only specify database as source
 resource "aws_security_group_rule" "proxy_egress" {
   type                     = "egress"
   from_port                = 0
@@ -81,6 +82,17 @@ resource "aws_security_group_rule" "proxy_egress" {
 
   security_group_id        = aws_security_group.proxy.id
   description              = "Allow all outbound traffic"
+}
+
+resource "aws_security_group_rule" "nlb_proxy_ingress" {
+  type                     = "ingress"
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+
+  security_group_id        = aws_security_group.proxy.id
+  source_security_group_id = aws_security_group.database_proxy_nlb_sg.id
+  description              = "Allow NLB to connect to the database proxy"
 }
 
 # Security group rules for bastion
