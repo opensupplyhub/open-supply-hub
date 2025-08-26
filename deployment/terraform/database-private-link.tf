@@ -14,5 +14,5 @@ module "database_private_link" {
   database_security_group_id = module.database_enc.database_security_group_id
   debug_logging = true
 
-  db_proxy_ips = ["10.0.3.111", "10.0.1.124"]
+  db_proxy_ips = ["10.0.1.92", "10.0.3.251"]
 }
