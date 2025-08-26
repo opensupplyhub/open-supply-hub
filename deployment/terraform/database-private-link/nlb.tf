@@ -69,5 +69,29 @@ resource "aws_security_group_rule" "nlb_proxy_egress" {
 
   security_group_id        = aws_security_group.database_proxy_nlb_sg.id
   source_security_group_id = aws_security_group.proxy.id
-  description              = "Allow NLB to connect to RDS proxy"
+  description              = "Allow outgoing traffic from NLB to RDS proxy"
+}
+
+# TODO: Remove this rule. It is for bastion.
+resource "aws_security_group_rule" "bastion_nlb_ingress" {
+  type                     = "ingress"
+  from_port                = var.db_port
+  to_port                  = var.db_port
+  protocol                 = "tcp"
+
+  security_group_id        = aws_security_group.database_proxy_nlb_sg.id
+  source_security_group_id = var.allowed_security_group_id
+  description              = "Allow incoming traffic from bastion to NLB"
+}
+
+# TODO: remove it. It is for bastion, for testing.
+resource "aws_security_group_rule" "bastion_egress" {
+  type                     = "egress"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  cidr_blocks              = ["0.0.0.0/0"]
+
+  security_group_id        = var.allowed_security_group_id
+  description              = "Allow outgoing traffic from bastion to all, for testing"
 }

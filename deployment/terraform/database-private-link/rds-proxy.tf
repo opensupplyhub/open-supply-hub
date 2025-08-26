@@ -60,17 +60,6 @@ resource "aws_security_group" "proxy" {
 }
 
 # Security group rules for RDS proxy
-# TODO: Remove this rule.
-resource "aws_security_group_rule" "allowed_instance_proxy_ingress" {
-  type                     = "ingress"
-  from_port                = var.db_port
-  to_port                  = var.db_port
-  protocol                 = "tcp"
-
-  source_security_group_id = var.allowed_security_group_id
-  security_group_id        = aws_security_group.proxy.id
-  description              = "Allow PostgreSQL access from allowed security group"
-}
 
 # TODO: Check whether we can only specify database as source
 resource "aws_security_group_rule" "proxy_egress" {
@@ -81,7 +70,7 @@ resource "aws_security_group_rule" "proxy_egress" {
   cidr_blocks              = ["0.0.0.0/0"]
 
   security_group_id        = aws_security_group.proxy.id
-  description              = "Allow all outbound traffic"
+  description              = "Allow all outbound traffic from RDS proxy"
 }
 
 resource "aws_security_group_rule" "nlb_proxy_ingress" {
@@ -92,24 +81,11 @@ resource "aws_security_group_rule" "nlb_proxy_ingress" {
 
   security_group_id        = aws_security_group.proxy.id
   source_security_group_id = aws_security_group.database_proxy_nlb_sg.id
-  description              = "Allow NLB to connect to the database proxy"
-}
-
-# Security group rules for bastion
-# TODO: change to NLB security group. Test with bastion first.
-resource "aws_security_group_rule" "bastion_egress" {
-  type                     = "egress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  cidr_blocks              = ["0.0.0.0/0"]
-
-  security_group_id        = var.allowed_security_group_id
-  description              = "Allow bastion to connect to the database proxy"
+  description              = "Allow incoming traffic from NLB to the database proxy"
 }
 
 # Security group rules for RDS instance
-resource "aws_security_group_rule" "db_ingress" {
+resource "aws_security_group_rule" "proxy_db_ingress" {
   type                     = "ingress"
   from_port                = var.db_port
   to_port                  = var.db_port
@@ -117,7 +93,7 @@ resource "aws_security_group_rule" "db_ingress" {
 
   security_group_id        = var.database_security_group_id
   source_security_group_id = aws_security_group.proxy.id
-  description              = "Allow RDS proxy to connect to the database"
+  description              = "Allow incoming traffic from RDS proxy to the database"
 }
 
 # Secret for RDS proxy
