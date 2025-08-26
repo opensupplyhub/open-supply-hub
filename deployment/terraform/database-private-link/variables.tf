@@ -15,19 +15,16 @@ variable "project_identifier" {
 variable "vpc_id" {
   description = "VPC ID where the RDS proxy will be created"
   type        = string
-  sensitive   = true
 }
 
 variable "subnet_ids" {
   description = "List of subnet IDs where the RDS proxy will be created"
   type        = list(string)
-  sensitive   = true
 }
 
 variable "db_instance_identifier" {
   description = "Identifier of the RDS instance to connect to the proxy"
   type        = string
-  sensitive   = true
 }
 
 variable "db_username" {
@@ -85,14 +82,12 @@ variable "idle_client_timeout" {
 variable "allowed_security_group_id" {
   description = "Security group ID that is allowed to connect to the RDS Proxy"
   type        = string
-  sensitive   = true
   default     = ""
 }
 
 variable "database_security_group_id" {
   description = "Security group ID of the database"
   type        = string
-  sensitive   = true
 }
 
 # NLB
@@ -100,5 +95,4 @@ variable "database_security_group_id" {
 variable "db_proxy_ips" {
   description = "List of IP addresses of the database proxy"
   type        = list(string)
-  sensitive   = true
 }
