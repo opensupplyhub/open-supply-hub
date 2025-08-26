@@ -23,7 +23,7 @@ resource "aws_db_proxy" "main_db" {
   auth {
     auth_scheme = "SECRETS"
     iam_auth    = "DISABLED"
-    secret_arn  = aws_secretsmanager_secret.proxy_secret.arn
+    # secret_arn  = aws_secretsmanager_secret.proxy_secret.arn
   }
 
   tags = {
