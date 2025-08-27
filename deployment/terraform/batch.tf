@@ -516,7 +516,6 @@ resource "aws_batch_job_definition" "db_sync" {
   }
 }
 
-# EventBridge Rule for DB Sync Schedule
 resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
   count               = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
   name                = "rule${local.short}DbSyncSchedule"
@@ -525,7 +524,6 @@ resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
   is_enabled          = var.db_sync_enabled
 }
 
-# EventBridge Target for DB Sync
 resource "aws_cloudwatch_event_target" "db_sync" {
   count   = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
   rule     = aws_cloudwatch_event_rule.db_sync_schedule[0].name
