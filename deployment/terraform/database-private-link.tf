@@ -13,7 +13,7 @@ module "database_private_link" {
   db_port = module.database_enc.port
   database_security_group_id = module.database_enc.database_security_group_id
   db_proxy_debug_logging = true
-  db_proxy_ips = ["10.0.1.36", "10.0.3.151"]
+  db_proxy_ips = ["10.0.1.98", "10.0.3.146"]
 
   # TODO: Remove this variable
   bastion_security_group_id = module.vpc.bastion_security_group_id
