@@ -2,7 +2,7 @@
 # RDS Proxy
 #------------------------------------------------------------------------------
 
-# RDS proxy for the database
+# RDS proxy for the source database
 
 resource "aws_db_proxy" "main_db" {
   name                   = lower("database-${var.project_identifier}-${var.env_identifier}-proxy")
@@ -25,7 +25,7 @@ resource "aws_db_proxy" "main_db" {
   }
 }
 
-# DNS A record for the RDS proxy
+# Data source for the DNS A record of the RDS proxy
 
 data "dns_a_record_set" "db_proxy" {
   host = aws_db_proxy.main_db.endpoint

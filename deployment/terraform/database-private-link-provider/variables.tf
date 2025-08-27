@@ -1,6 +1,4 @@
-#------------------------------------------------------------------------------
-# RDS Proxy Module Variables
-#------------------------------------------------------------------------------
+# General variables
 
 variable "env_identifier" {
   description = "Environment identifier"

@@ -1,10 +1,12 @@
-# ----------------------------------------------------------------------------------------------------------------------
-# VPC Endpoint to connect to the source database for the synchronization job
-# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# VPC Endpoint
+# ------------------------------------------------------------------------------
 
 locals {
   env_id_short = "${replace(var.project_identifier, " ", "")}${var.env_identifier}"
 }
+
+# VPC endpoint to connect to the source database for the synchronization job
 
 resource "aws_vpc_endpoint" "database_vpc_endpoint" {
   vpc_id            = var.vpc_id

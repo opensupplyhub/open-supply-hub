@@ -1,7 +1,7 @@
-module "database_private_link" {
+module "database_private_link_provider" {
   count = var.is_database_private_link_provider ? 1 : 0
 
-  source = "./database-private-link"
+  source = "./database-private-link-provider"
 
   env_identifier = var.environment
   project_identifier = var.project

@@ -1,7 +1,7 @@
-module "database_vpc_endpoint" {
+module "database_private_link_consumer" {
   count = var.is_database_private_link_consumer ? 1 : 0
 
-  source = "./database-vpc-endpoint"
+  source = "./database-private-link-consumer"
 
   env_identifier = var.environment
   project_identifier = var.project

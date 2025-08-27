@@ -1,3 +1,5 @@
+# General variables
+
 variable "env_identifier" {
   type        = string
   description = "Environment identifier"
