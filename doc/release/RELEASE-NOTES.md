@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **Progress Tracking**: Maintains separate timestamp files for each model to enable resumable operations.
     * **Dry Run Mode**: Preview synchronization changes without making database modifications.
     * **Comprehensive Logging**: Detailed logging with configurable verbosity levels for monitoring and debugging.
+* [OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Set up `AWS Batch` infrastructure for database synchronization, including compute environment, job queue, job definition, and `EFS` integration for persistent storage. Added required variables and RBA environment configuration to support secure database connectivity and reliable sync execution.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
