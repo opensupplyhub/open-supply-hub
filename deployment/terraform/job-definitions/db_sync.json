@@ -4,7 +4,12 @@
   "memory": 8192,
   "command": [
     "bash",
-    "/scripts/run_sync_databases.sh"
+    "/scripts/run_sync_databases.sh",
+    "${source_db_host}",
+    "${source_db_port}",
+    "${source_db_name}",
+    "${source_db_user}",
+    "${source_db_password}"
   ],
   "environment": [
       { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
@@ -26,17 +31,16 @@
       { "name": "EMAIL_ANONYMIZATION_SECRET", "value": "${email_anonymization_secret}" },
       { "name": "DJANGO_LOG_LEVEL", "value": "INFO" },
       { "name": "PYTHONUNBUFFERED", "value": "1" },
-      { "name": "TZ", "value": "UTC" },
-      { "name": "source_db_host", "value": "${source_db_host}" },
-      { "name": "source_db_port", "value": "${source_db_port}" },
-      { "name": "source_db_name", "value": "${source_db_name}" },
-      { "name": "source_db_user", "value": "${source_db_user}" },
-      { "name": "source_db_password", "value": "${source_db_password}" }
+      { "name": "TZ", "value": "UTC" }
   ],
   "mountPoints": [
       {
           "containerPath": "/db-sync",
           "sourceVolume": "efs-db-sync-storage"
+      },
+      {
+        "containerPath": "/scripts",
+        "sourceVolume": "scripts-volume"
       }
   ],
   "volumes": [
@@ -50,6 +54,12 @@
                   "accessPointId": "${efs_access_point_id}"
               }
           }
+      },
+      {
+        "name": "scripts-volume",
+        "host": {
+          "sourcePath": "/scripts"
+        }
       }
   ],
   "logConfiguration": {
