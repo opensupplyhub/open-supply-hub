@@ -31,16 +31,16 @@ resource "aws_security_group" "database_vpc_endpoint_sg" {
 
 # Security group rules for the VPC endpoint
 
-resource "aws_security_group_rule" "target_consumer_database_vpc_endpoint_ingress" {
-  type                     = "ingress"
-  from_port                = var.db_port
-  to_port                  = var.db_port
-  protocol                 = "tcp"
+# resource "aws_security_group_rule" "target_consumer_database_vpc_endpoint_ingress" {
+#   type                     = "ingress"
+#   from_port                = var.db_port
+#   to_port                  = var.db_port
+#   protocol                 = "tcp"
 
-  security_group_id        = aws_security_group.database_vpc_endpoint_sg.id
-  source_security_group_id = var.target_consumer_security_group_id
-  description              = "Allow incoming traffic to the VPC endpoint from the target consumer"
-}
+#   security_group_id        = aws_security_group.database_vpc_endpoint_sg.id
+#   source_security_group_id = var.target_consumer_security_group_id
+#   description              = "Allow incoming traffic to the VPC endpoint from the target consumer"
+# }
 
 resource "aws_security_group_rule" "database_vpc_endpoint_egress" {
   type                     = "egress"
