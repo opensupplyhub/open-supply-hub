@@ -3,9 +3,10 @@ import json
 from typing import Optional, Callable
 from math import ceil
 from django.core.cache import cache
+from api.constants import PaginationConfig
 
 
-def qhash(request, page_size: int) -> str:
+def create_query_hash(request, page_size: int) -> str:
     parts = {
         "qp": sorted(request.query_params.items()),
         "uid": getattr(request.user, "id", None),
@@ -14,20 +15,29 @@ def qhash(request, page_size: int) -> str:
     return hashlib.sha1(json.dumps(parts, sort_keys=True).encode()).hexdigest()
 
 
-def _bm_key(h: str, page: int) -> str:
+def _get_bookmark_key(h: str, page: int) -> str:
     return f"dl:{h}:p:{page}"
 
 
-def get_bm(h: str, page: int) -> Optional[int]:
-    return cache.get(_bm_key(h, page))
+def get_page_bookmark(h: str, page: int) -> Optional[int]:
+    return cache.get(_get_bookmark_key(h, page))
 
 
-def set_bm(h: str, page: int, last_id: Optional[int], ttl: int = 1800) -> None:
+def set_page_bookmark(
+    h: str,
+    page: int,
+    last_id: Optional[int],
+    ttl: int = PaginationConfig.CACHE_TTL_SECONDS
+) -> None:
     if last_id is not None:
-        cache.set(_bm_key(h, page), last_id, ttl)
+        cache.set(_get_bookmark_key(h, page), last_id, ttl)
 
 
-def keyset_page_id(qs, page_size: int, after_id: Optional[int]):
+def get_paginated_items_after_id(
+    qs,
+    page_size: int,
+    after_id: Optional[int]
+):
     q = qs.filter(id__gt=after_id) if after_id else qs
     batch = list(q.order_by("id")[: page_size + 1])
 
@@ -40,12 +50,12 @@ def keyset_page_id(qs, page_size: int, after_id: Optional[int]):
     return items, last_id, is_last_page
 
 
-def advance_blocks_id(
+def move_to_next_block_id(
     qs,
     page_size: int,
     start_after: Optional[int],
     steps: int,
-    block: int = 10,
+    block: int,
     densify: Optional[Callable[[int, int], None]] = None,
     start_from_page: Optional[int] = None,
 ) -> Optional[int]:

@@ -21,12 +21,14 @@ from api.mail import (
     send_ddl_reach_paid_limit_email
 )
 
+from api.services.keyset_pagination_service import (
+    KeysetPaginationService
+)
+
 from api.pagination_keyset_helpers import (
-    qhash,
-    get_bm,
-    set_bm,
-    keyset_page_id,
-    advance_blocks_id
+    create_query_hash,
+    set_page_bookmark,
+    get_paginated_items_after_id
 )
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -187,70 +189,35 @@ class FacilitiesDownloadService:
             )
 
     @staticmethod
-    def locate_prev_last_id(
-        base_qs,
-        request,
-        page: int,
-        page_size: int,
-        block: int = 10
-    ):
-        if page == 1:
-            return None
-
-        qh = qhash(request, page_size)
-        prev_last_id = get_bm(qh, page - 1)
-        if prev_last_id is not None:
-            return prev_last_id
-
-        nearest = page - 1
-        while nearest > 1 and get_bm(qh, nearest) is None:
-            nearest -= 1
-
-        start_after = get_bm(qh, nearest) if nearest > 1 else None
-        steps = (page - 1) - (nearest if nearest > 1 else 0)
-
-        if start_after is None and nearest == 1:
-            _, first_last, _ = keyset_page_id(base_qs, page_size, None)
-            set_bm(qh, 1, first_last)
-            start_after, steps = first_last, steps - 1
-            nearest = 1
-
-        if steps > 0 and start_after is not None:
-            start_after = advance_blocks_id(
-                base_qs,
-                page_size,
-                start_after,
-                steps,
-                block=block,
-                densify=lambda p, lid: set_bm(qh, p, lid),
-                start_from_page=nearest,
-            )
-
-        return start_after
-
-    @staticmethod
     def fetch_page_and_cache(
         base_qs,
         request,
         page: int,
         page_size: int,
-        block: int = 10
+        block: int,
     ):
-        prev_last_id = FacilitiesDownloadService.locate_prev_last_id(
-            base_qs, request, page, page_size, block=block
+        keyset_pag_service = KeysetPaginationService(base_qs, block)
+        prev_last_id = keyset_pag_service.get_page_cursor(
+            request,
+            page,
+            page_size
         )
 
         if page > 1 and prev_last_id is None:
             return [], True
 
-        items, last_id, is_last_page = keyset_page_id(
+        items, last_id, is_last_page = get_paginated_items_after_id(
             base_qs,
             page_size,
             prev_last_id
         )
 
         if page >= 1:
-            set_bm(qhash(request, page_size), page, last_id)
+            set_page_bookmark(
+                create_query_hash(request, page_size),
+                page,
+                last_id
+            )
 
         return items, is_last_page
 

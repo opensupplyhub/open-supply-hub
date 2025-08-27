@@ -9,6 +9,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode import \
     FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
+from api.constants import PaginationConfig
 
 
 class FacilitiesDownloadViewSet(
@@ -51,7 +52,9 @@ class FacilitiesDownloadViewSet(
             limit = FacilitiesDownloadService.get_download_limit(request)
 
         page = int(request.query_params.get('page', 1) or 1)
-        page_size = int(request.query_params.get('pageSize', 250) or 250)
+        page_size = int(request.query_params.get(
+            'pageSize', PaginationConfig.MAX_PAGE_SIZE
+        ) or PaginationConfig.MAX_PAGE_SIZE)
         is_first_page = (page == 1)
 
         FacilitiesDownloadService.enforce_limits(
@@ -64,7 +67,7 @@ class FacilitiesDownloadViewSet(
                 request,
                 page,
                 page_size,
-                block=50
+                block=PaginationConfig.DEFAULT_BLOCK_SIZE
             )
         next_link, prev_link = FacilitiesDownloadService.\
             build_page_links(
