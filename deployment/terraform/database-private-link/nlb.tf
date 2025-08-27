@@ -93,3 +93,13 @@ resource "aws_security_group_rule" "nlb_ingress" {
   security_group_id = aws_security_group.database_proxy_nlb_sg.id
   description = "Allow incoming traffic to NLB from anywhere"
 }
+
+resource "aws_security_group_rule" "bastion_nlb_egress" {
+  type      = "egress"
+  from_port = 0
+  to_port = 0
+  protocol = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = var.bastion_security_group_id
+  description = "Allow outgoing traffic from bastion to NLB"
+}
