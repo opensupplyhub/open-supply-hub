@@ -57,7 +57,8 @@ class KeysetPaginationService:
             nearest -= 1
 
         start_after = get_page_bookmark(
-            query_hash, nearest
+            query_hash,
+            nearest
         ) if nearest > 1 else None
         steps = target_page - (nearest if nearest > 1 else 0)
 
