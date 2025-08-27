@@ -74,13 +74,13 @@ resource "aws_security_group_rule" "nlb_proxy_egress" {
   description              = "Allow outgoing traffic from NLB to RDS proxy"
 }
 
-# TODO: Change to db port
 resource "aws_security_group_rule" "nlb_ingress" {
   type      = "ingress"
-  from_port = 0
-  to_port = 0
-  protocol = "-1"
+  from_port = var.db_port
+  to_port = var.db_port
+  protocol = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
+
   security_group_id = aws_security_group.database_proxy_nlb_sg.id
   description = "Allow incoming traffic to NLB from anywhere"
 }
