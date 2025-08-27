@@ -924,12 +924,6 @@ variable "db_sync_timeout_minutes" {
   default     = 120
 }
 
-variable "db_sync_batch_size" {
-  description = "Batch size for database sync operations"
-  type        = number
-  default     = 1000
-}
-
 variable "db_sync_max_retries" {
   description = "Maximum number of retries for failed sync operations"
   type        = number
@@ -943,7 +937,6 @@ variable "email_anonymization_secret" {
   sensitive   = true
 }
 
-# DB Sync EventBridge variables
 variable "db_sync_enabled" {
   description = "Whether to enable the database sync scheduled job"
   type        = bool
@@ -951,7 +944,7 @@ variable "db_sync_enabled" {
 }
 
 variable "db_sync_schedule_expression" {
-  description = "Schedule for db sync (test default: every 30 minutes)"
+  description = "Schedule for db sync (7:00 AM UTC)"
   type        = string
-  default     = "rate(30 minutes)"
+  default     = "cron(0 7 * * ? *)"
 }
