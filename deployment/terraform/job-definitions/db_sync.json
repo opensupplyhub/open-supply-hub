@@ -4,7 +4,7 @@
   "memory": 8192,
   "command": [
     "bash",
-    "/scripts/run_sync_databases.sh",
+    "/scripts/run_db_sync.sh",
     "${source_db_host}",
     "${source_db_port}",
     "${source_db_name}",
