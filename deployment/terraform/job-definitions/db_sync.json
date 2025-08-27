@@ -3,13 +3,16 @@
   "vcpus": 4,
   "memory": 8192,
   "command": [
-    "bash",
-    "/scripts/run_db_sync.sh",
-    "${source_db_host}",
-    "${source_db_port}",
-    "${source_db_name}",
-    "${source_db_user}",
-    "${source_db_password}"
+    "python",
+    "manage.py",
+    "sync_databases",
+    "--source-host", "${source_db_host}",
+    "--source-port", "${source_db_port}",
+    "--source-name", "${source_db_name}",
+    "--source-user", "${source_db_user}",
+    "--source-password", "${source_db_password}",
+    "--last-run-path", "/db-sync",
+    "--verbose"
   ],
   "environment": [
       { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
@@ -37,10 +40,6 @@
       {
           "containerPath": "/db-sync",
           "sourceVolume": "efs-db-sync-storage"
-      },
-      {
-        "containerPath": "/scripts",
-        "sourceVolume": "scripts-volume"
       }
   ],
   "volumes": [
@@ -54,12 +53,6 @@
                   "accessPointId": "${efs_access_point_id}"
               }
           }
-      },
-      {
-        "name": "scripts-volume",
-        "host": {
-          "sourcePath": "/scripts"
-        }
       }
   ],
   "logConfiguration": {
