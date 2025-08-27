@@ -30,13 +30,6 @@ resource "aws_lb_target_group" "database_proxy_nlb_tg" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "database_proxy_nlb_tg_attachment" {
-    for_each = toset(data.dns_a_record_set.db_proxy.addrs)
-    target_group_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
-    target_id = each.value
-    port = var.db_port
-}
-
 resource "aws_lb_listener" "database_proxy_nlb_listener" {
   load_balancer_arn = aws_lb.database_proxy_nlb.arn
   port = var.db_port

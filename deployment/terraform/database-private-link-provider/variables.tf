@@ -50,7 +50,6 @@ variable "database_security_group_id" {
   type        = string
 }
 
-
 # Connection pool configuration for RDS proxy
 
 variable "connection_borrow_timeout" {
