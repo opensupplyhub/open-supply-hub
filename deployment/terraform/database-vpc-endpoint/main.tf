@@ -60,6 +60,7 @@ resource "aws_security_group_rule" "target_consumer_database_vpc_endpoint_egress
   from_port                = var.db_port
   to_port                  = var.db_port
   protocol                 = "tcp"
+
   security_group_id        = var.target_consumer_security_group_id
   source_security_group_id = aws_security_group.database_vpc_endpoint_sg.id
   description              = "Allow outgoing traffic to the VPC endpoint from the target consumer"
