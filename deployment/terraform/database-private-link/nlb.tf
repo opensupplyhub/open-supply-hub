@@ -74,16 +74,6 @@ resource "aws_security_group" "database_proxy_nlb_sg" {
 #   description              = "Allow outgoing traffic from NLB to RDS proxy"
 # }
 
-resource "aws_security_group_rule" "nlb_egress" {
-  type      = "egress"
-  from_port = 0
-  to_port = 0
-  protocol = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.database_proxy_nlb_sg.id
-  description = "Allow outgoing traffic from NLB to anywhere"
-}
-
 resource "aws_security_group_rule" "nlb_ingress" {
   type      = "ingress"
   from_port = 0

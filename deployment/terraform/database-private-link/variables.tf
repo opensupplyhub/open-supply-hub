@@ -95,9 +95,3 @@ variable "db_proxy_ips" {
   description = "List of IP addresses of the database proxy"
   type        = list(string)
 }
-
-# TODO: Remove this variable
-variable "bastion_security_group_id" {
-  description = "Security group ID of the bastion"
-  type        = string
-}
