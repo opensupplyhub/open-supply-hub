@@ -97,7 +97,7 @@ resource "aws_security_group_rule" "proxy_db_ingress" {
 # Secret for RDS proxy
 
 resource "aws_secretsmanager_secret" "proxy_secret" {
-  name = "database${local.env_id_short}ProxySecret"
+  name = "db${local.env_id_short}ProxySecret"
   recovery_window_in_days = 0
 
   tags = {
