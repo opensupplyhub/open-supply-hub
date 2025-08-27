@@ -408,13 +408,10 @@ resource "aws_batch_job_definition" "direct_data_load" {
   }
 }
 
- 
-
 # AWS Batch for Database Sync
 
 resource "aws_batch_compute_environment" "db_sync" {
   count = contains(["Rba", "Test"], var.environment) ? 1 : 0
-
   depends_on = [aws_iam_role_policy_attachment.batch_policy]
 
   compute_environment_name_prefix = "batch${local.short}DbSyncComputeEnvironment"
@@ -468,7 +465,6 @@ resource "aws_batch_job_queue" "db_sync" {
 
 data "template_file" "db_sync_job_definition" {
   count = contains(["Rba", "Test"], var.environment) ? 1 : 0
-
   template = file("job-definitions/db_sync.json")
 
   vars = {

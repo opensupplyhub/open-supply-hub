@@ -69,6 +69,9 @@ app_logstash_fargate_memory = 2048
 
 export_csv_enabled = false
 
+db_sync_timeout_minutes = 120
+db_sync_max_retries = 3
+
 instance_source= "rba"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
