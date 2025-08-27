@@ -2,6 +2,8 @@
 # NLB
 #------------------------------------------------------------------------------
 
+# NLB for the database proxy
+
 resource "aws_lb" "database_proxy_nlb" {
   name = "dbProxyOsHub${var.env_identifier}Nlb"
   internal = true
@@ -29,7 +31,7 @@ resource "aws_lb_target_group" "database_proxy_nlb_tg" {
 }
 
 resource "aws_lb_target_group_attachment" "database_proxy_nlb_tg_attachment" {
-    for_each = toset(var.db_proxy_ips)
+    for_each = toset(data.dns_a_record_set.db_proxy.addrs)
     target_group_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
     target_id = each.value
     port = var.db_port

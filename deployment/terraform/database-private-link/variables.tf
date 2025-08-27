@@ -47,6 +47,11 @@ variable "db_port" {
   sensitive   = true
 }
 
+variable "database_security_group_id" {
+  description = "Security group ID of the database"
+  type        = string
+}
+
 
 # Connection pool configuration for RDS proxy
 
@@ -80,18 +85,4 @@ variable "idle_client_timeout" {
   description = "The number of seconds that a connection to the proxy can be inactive before the proxy disconnects it"
   type        = number
   default     = 300
-}
-
-# Security configuration
-
-variable "database_security_group_id" {
-  description = "Security group ID of the database"
-  type        = string
-}
-
-# NLB
-# TODO: Rework this to get the IP addresses via Lambda function
-variable "db_proxy_ips" {
-  description = "List of IP addresses of the database proxy"
-  type        = list(string)
 }

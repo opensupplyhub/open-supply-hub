@@ -25,6 +25,12 @@ resource "aws_db_proxy" "main_db" {
   }
 }
 
+# DNS A record for the RDS proxy
+
+data "dns_a_record_set" "db_proxy" {
+  host = aws_db_proxy.main_db.endpoint
+}
+
 # RDS proxy default target group
 
 resource "aws_db_proxy_default_target_group" "default" {
