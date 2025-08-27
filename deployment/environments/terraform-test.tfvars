@@ -78,4 +78,4 @@ instance_source= "os_hub"
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 is_database_private_link_consumer = true
-database_private_link_vpc_endpoint_service_name = "com.amazonaws.vpce.eu-west-1.vpce-svc-09e4f7999a51fa44d"
+database_private_link_vpc_endpoint_service_name = "com.amazonaws.vpce.eu-west-1.vpce-svc-0fc72b9cdc3d23e6f"
