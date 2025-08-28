@@ -229,6 +229,34 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
         self.assertEqual(result, expected_result)
         mock_logger.warning.assert_not_called()
 
+    @patch('api.services.opensearch.search.logger')
+    def test_preserves_geocode_fields(self, mock_logger):
+        response = {
+            "hits": {
+                "total": {"value": 1},
+                "hits": [
+                    {
+                        "_source": {
+                            "os_id": "CN2021250D1DTN7",
+                            "name": "location1",
+                            "geocoded_location_type": "ROOFTOP",
+                            "geocoded_address": "123 Main St, City, Country",
+                            "coordinates": {"lat": 10.0, "lon": 20.0},
+                        }
+                    }
+                ]
+            }
+        }
+        result = self.service. \
+            _OpenSearchService__prepare_opensearch_response(response)
+        self.assertEqual(result.get("count"), 1)
+        item = result.get("data")[0]
+        self.assertEqual(item.get("geocoded_location_type"), "ROOFTOP")
+        self.assertEqual(
+            item.get("geocoded_address"), "123 Main St, City, Country"
+        )
+        self.assertEqual(item.get("coordinates", {}).get("lng"), 20.0)
+
 
 if __name__ == '__main__':
     unittest.main()
