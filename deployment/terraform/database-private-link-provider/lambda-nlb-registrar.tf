@@ -23,8 +23,6 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
 
   depends_on = [
     aws_cloudwatch_log_group.nlb_targets_registrar,
-    aws_iam_role_policy_attachment.lambda_nlb_registrar_elb_access_policy,
-    aws_iam_role_policy_attachment.lambda_nlb_registrar_logging_policy,
   ]
 
   tags = {
@@ -120,4 +118,9 @@ data "aws_lambda_invocation" "nlb_targets_registrar" {
     db_port = var.db_port
     timeout = local.lambda_nlb_registrar_timeout
   })
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_nlb_registrar_elb_access_policy,
+    aws_iam_role_policy_attachment.lambda_nlb_registrar_logging_policy,
+  ]
 }
