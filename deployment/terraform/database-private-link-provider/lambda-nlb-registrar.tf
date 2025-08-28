@@ -23,7 +23,8 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
 
   depends_on = [
     aws_cloudwatch_log_group.nlb_targets_registrar,
-    aws_iam_role.lambda_nlb_registrar
+    aws_iam_role_policy_attachment.lambda_nlb_registrar_elb_access_policy,
+    aws_iam_role_policy_attachment.lambda_nlb_registrar_logging_policy,
   ]
 
   tags = {
@@ -66,7 +67,6 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_logging_policy" {
     ]
     resources = [
       aws_cloudwatch_log_group.nlb_targets_registrar.arn,
-      # "${aws_cloudwatch_log_group.nlb_targets_registrar.arn}:log-stream:*"
     ]
   }
 }
