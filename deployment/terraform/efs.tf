@@ -98,7 +98,7 @@ resource "aws_security_group_rule" "efs_db_sync_ingress" {
 }
 
 resource "aws_efs_mount_target" "efs_db_sync" {
-  count = contains(["Rba", "Preprod"], var.environment) ? length(module.vpc.private_subnet_ids) : 0
+  count = var.environment == "Rba" ? length(module.vpc.private_subnet_ids) : 0
 
   file_system_id  = aws_efs_file_system.efs_db_sync[0].id
   subnet_id       = module.vpc.private_subnet_ids[count.index]
