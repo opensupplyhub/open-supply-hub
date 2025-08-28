@@ -25,12 +25,6 @@ resource "aws_db_proxy" "main_db" {
   }
 }
 
-# Data source for the DNS A record of the RDS proxy
-
-data "dns_a_record_set" "db_proxy" {
-  host = aws_db_proxy.main_db.endpoint
-}
-
 # RDS proxy default target group
 
 resource "aws_db_proxy_default_target_group" "default" {
@@ -125,7 +119,6 @@ resource "aws_secretsmanager_secret_version" "proxy_secret_version" {
 
 resource "aws_iam_role" "proxy_role" {
   name = "database${local.env_id_short}ProxyRole"
-
   assume_role_policy = data.aws_iam_policy_document.proxy_assume_role_policy.json
 
   tags = {
