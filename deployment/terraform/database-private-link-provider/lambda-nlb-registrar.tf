@@ -126,7 +126,7 @@ data "aws_lambda_invocation" "nlb_targets_registrar" {
     rds_proxy_endpoint = aws_db_proxy.main_db.endpoint
     nlb_target_group_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
     db_port = var.db_port
-    # timeout = local.lambda_nlb_registrar_timeout
+    timeout = local.lambda_nlb_registrar_timeout
   })
 
   depends_on = [
