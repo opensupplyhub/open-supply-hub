@@ -79,7 +79,3 @@ data "aws_lambda_invocation" "nlb_targets_registrar" {
     tg_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
   })
 }
-
-output "registrar_result" {
-  value = jsondecode(data.aws_lambda_invocation.nlb_targets_registrar.result)
-}
