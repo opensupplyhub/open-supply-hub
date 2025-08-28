@@ -20,6 +20,7 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
   publish = true
   source_code_hash = filebase64sha256("${path.module}/lambda-nlb-registrar/register_nlb_targets.zip")
   timeout = local.lambda_nlb_registrar_timeout
+  memory_size = 256
 
   depends_on = [
     aws_cloudwatch_log_group.nlb_targets_registrar,
