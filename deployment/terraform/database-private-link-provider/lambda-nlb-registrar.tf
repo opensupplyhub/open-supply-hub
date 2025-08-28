@@ -9,7 +9,7 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
   function_name = "func${local.env_id_short}NlbTargetsRegistrar"
   role = aws_iam_role.lambda_nlb_registrar.arn
   handler = "register_nlb_targets.handler"
-  runtime = "python3.13"
+  runtime = "python3.10"
   filename = data.archive_file.lambda_nlb_registrar_zip.output_path
   publish = true
   source_code_hash = data.archive_file.lambda_nlb_registrar_zip.output_base64sha256
@@ -71,6 +71,10 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_general_policy" {
 resource "aws_cloudwatch_log_group" "nlb_targets_registrar" {
   name              = "/aws/lambda/func${local.env_id_short}NlbTargetsRegistrar"
   retention_in_days = 14
+
+  tags = {
+    Name = "logGroupNlbTargetsRegistrar"
+  }
 }
 
 # Invoke the Lambda function
