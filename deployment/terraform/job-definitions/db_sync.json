@@ -3,8 +3,8 @@
   "vcpus": 4,
   "memory": 8192,
   "command": [
-    "python", 
-    "manage.py", 
+    "python",
+    "manage.py",
     "sync_databases",
     "--source-host", "${source_db_host}",
     "--source-port", "${source_db_port}",
@@ -30,7 +30,6 @@
       { "name": "GOOGLE_SERVER_SIDE_API_KEY", "value": "${google_server_side_api_key}" },
       { "name": "OAR_CLIENT_KEY", "value": "${oar_client_key}" },
       { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
-      { "name": "BATCH_MODE", "value": "True" },
       { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
       { "name": "EMAIL_ANONYMIZATION_SECRET", "value": "${email_anonymization_secret}" },
       { "name": "DJANGO_LOG_LEVEL", "value": "INFO" },

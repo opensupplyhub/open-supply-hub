@@ -344,10 +344,12 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
       "batch:DescribeJobQueues",
       "batch:DescribeJobs",
     ]
-    resources = [
+    resources = compact([
       aws_batch_job_definition.export_csv.arn,
       aws_batch_job_queue.export_csv.arn,
-    ]
+      var.environment == "Rba" ? aws_batch_job_definition.db_sync[0].arn : "",
+      var.environment == "Rba" ? aws_batch_job_queue.db_sync[0].arn : "",
+    ])
   }
 }
 
@@ -410,7 +412,7 @@ resource "aws_batch_job_definition" "direct_data_load" {
 
 resource "aws_batch_compute_environment" "db_sync" {
   count = var.environment == "Rba" ? 1 : 0
-  
+
   depends_on = [aws_iam_role_policy_attachment.batch_policy]
 
   compute_environment_name_prefix = "batch${local.short}DbSyncComputeEnvironment"
@@ -455,7 +457,7 @@ resource "aws_batch_compute_environment" "db_sync" {
 
 resource "aws_batch_job_queue" "db_sync" {
   count = var.environment == "Rba" ? 1 : 0
-  
+
   name                 = "queue${local.short}DbSync"
   priority             = 1
   state                = "ENABLED"
@@ -464,7 +466,7 @@ resource "aws_batch_job_queue" "db_sync" {
 
 data "template_file" "db_sync_job_definition" {
   count = var.environment == "Rba" ? 1 : 0
-  
+
   template = file("job-definitions/db_sync.json")
 
   vars = {
@@ -498,7 +500,7 @@ data "template_file" "db_sync_job_definition" {
 
 resource "aws_batch_job_definition" "db_sync" {
   count = var.environment == "Rba" ? 1 : 0
-  
+
   name           = "job${local.short}DbSync"
   type           = "container"
   propagate_tags = true
@@ -513,5 +515,25 @@ resource "aws_batch_job_definition" "db_sync" {
 
   timeout {
     attempt_duration_seconds = var.db_sync_timeout_minutes * 60
+  }
+}
+
+resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
+  count               = var.environment == "Rba" ? 1 : 0
+  name                = "rule${local.short}DbSyncSchedule"
+  description         = "Runs the database sync job on a schedule"
+  schedule_expression = var.db_sync_schedule_expression
+  is_enabled          = var.db_sync_enabled
+}
+
+resource "aws_cloudwatch_event_target" "db_sync" {
+  count   = var.environment == "Rba" ? 1 : 0
+  rule     = aws_cloudwatch_event_rule.db_sync_schedule[0].name
+  arn      = aws_batch_job_queue.db_sync[0].arn
+  role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
+
+  batch_target {
+    job_definition = aws_batch_job_definition.db_sync[0].arn
+    job_name       = "job${local.short}DbSync"
   }
 }

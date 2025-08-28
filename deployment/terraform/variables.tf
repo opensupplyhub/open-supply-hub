@@ -936,3 +936,15 @@ variable "email_anonymization_secret" {
   default     = ""
   sensitive   = true
 }
+
+variable "db_sync_enabled" {
+  description = "Whether to enable the database sync scheduled job"
+  type        = bool
+  default     = false
+}
+
+variable "db_sync_schedule_expression" {
+  description = "Schedule for db sync (7:00 AM UTC)"
+  type        = string
+  default     = "cron(0 7 * * ? *)"
+}
