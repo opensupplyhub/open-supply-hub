@@ -74,38 +74,38 @@ resource "aws_iam_role_policy_attachment" "lambda_nlb_registrar_logging_policy" 
   policy_arn = aws_iam_policy.lambda_nlb_registrar_logging_policy.arn
 }
 
-# resource "aws_iam_policy" "lambda_nlb_registrar_elb_access_policy" {
-#   name = "policy${local.env_id_short}NlbTargetsRegistrarElbAccess"
-#   policy = data.aws_iam_policy_document.lambda_nlb_registrar_elb_access_policy.json
-# }
+resource "aws_iam_policy" "lambda_nlb_registrar_elb_access_policy" {
+  name = "policy${local.env_id_short}NlbTargetsRegistrarElbAccess"
+  policy = data.aws_iam_policy_document.lambda_nlb_registrar_elb_access_policy.json
+}
 
-# data "aws_iam_policy_document" "lambda_nlb_registrar_elb_access_policy" {
-#   statement {
-#     sid     = "RegisterTargetsSpecificTg"
-#     actions = [
-#       "elasticloadbalancing:RegisterTargets",
-#     ]
-#     resources = [
-#       aws_lb_target_group.database_proxy_nlb_tg.arn,
-#     ]
-#   }
+data "aws_iam_policy_document" "lambda_nlb_registrar_elb_access_policy" {
+  statement {
+    sid     = "RegisterTargetsSpecificTg"
+    actions = [
+      "elasticloadbalancing:RegisterTargets",
+    ]
+    resources = [
+      aws_lb_target_group.database_proxy_nlb_tg.arn,
+    ]
+  }
 
-#   statement {
-#     sid     = "DescribeTargetHealthReadOnly"
-#     actions = [
-#       "elasticloadbalancing:DescribeTargetHealth",
-#       "elasticloadbalancing:DescribeTargetGroups",
-#     ]
-#     resources = [
-#       "*",
-#     ]
-#   }
-# }
+  statement {
+    sid     = "DescribeTargetHealthReadOnly"
+    actions = [
+      "elasticloadbalancing:DescribeTargetHealth",
+      "elasticloadbalancing:DescribeTargetGroups",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+}
 
-# resource "aws_iam_role_policy_attachment" "lambda_nlb_registrar_elb_access_policy" {
-#   role = aws_iam_role.lambda_nlb_registrar.name
-#   policy_arn = aws_iam_policy.lambda_nlb_registrar_elb_access_policy.arn
-# }
+resource "aws_iam_role_policy_attachment" "lambda_nlb_registrar_elb_access_policy" {
+  role = aws_iam_role.lambda_nlb_registrar.name
+  policy_arn = aws_iam_policy.lambda_nlb_registrar_elb_access_policy.arn
+}
 
 # Create a CloudWatch log group for the Lambda function
 
@@ -120,17 +120,17 @@ resource "aws_cloudwatch_log_group" "nlb_targets_registrar" {
 
 # Invoke the Lambda function
 
-# data "aws_lambda_invocation" "nlb_targets_registrar" {
-#   function_name = aws_lambda_function.nlb_targets_registrar.function_name
-#   input = jsonencode({
-#     rds_proxy_endpoint = aws_db_proxy.main_db.endpoint
-#     nlb_target_group_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
-#     db_port = var.db_port
-#     timeout = local.lambda_nlb_registrar_timeout
-#   })
+data "aws_lambda_invocation" "nlb_targets_registrar" {
+  function_name = aws_lambda_function.nlb_targets_registrar.function_name
+  input = jsonencode({
+    rds_proxy_endpoint = aws_db_proxy.main_db.endpoint
+    nlb_target_group_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
+    db_port = var.db_port
+    timeout = local.lambda_nlb_registrar_timeout
+  })
 
-#   depends_on = [
-#     aws_iam_role_policy_attachment.lambda_nlb_registrar_elb_access_policy,
-#     aws_iam_role_policy_attachment.lambda_nlb_registrar_logging_policy,
-#   ]
-# }
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_nlb_registrar_elb_access_policy,
+    aws_iam_role_policy_attachment.lambda_nlb_registrar_logging_policy,
+  ]
+}
