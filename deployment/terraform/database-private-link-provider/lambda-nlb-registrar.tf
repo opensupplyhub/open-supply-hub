@@ -2,6 +2,11 @@
 # Lambda Registrar
 # ------------------------------------------------------------------------------
 
+locals {
+  lambda_nlb_registrar_timeout = 60
+}
+
+
 # Lambda function to register the targets for the NLB after resolution of the
 # RDS proxy endpoint
 
@@ -14,7 +19,7 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
   filename = "${path.module}/lambda-nlb-registrar/register_nlb_targets.zip"
   publish = true
   source_code_hash = filebase64sha256("${path.module}/lambda-nlb-registrar/register_nlb_targets.zip")
-  timeout = 60
+  timeout = local.lambda_nlb_registrar_timeout
 
   depends_on = [
     aws_cloudwatch_log_group.nlb_targets_registrar,
@@ -81,7 +86,9 @@ resource "aws_cloudwatch_log_group" "nlb_targets_registrar" {
 data "aws_lambda_invocation" "nlb_targets_registrar" {
   function_name = aws_lambda_function.nlb_targets_registrar.function_name
   input = jsonencode({
-    host = aws_db_proxy.main_db.endpoint
-    tg_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
+    rds_proxy_endpoint = aws_db_proxy.main_db.endpoint
+    nlb_target_group_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
+    db_port = var.db_port
+    timeout = local.lambda_nlb_registrar_timeout
   })
 }
