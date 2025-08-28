@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 
 locals {
-  lambda_nlb_registrar_timeout = 60
+  lambda_nlb_registrar_timeout = 180
 }
 
 
