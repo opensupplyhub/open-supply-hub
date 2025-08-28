@@ -61,8 +61,6 @@ resource "aws_efs_access_point" "efs_app_logstash_user" {
   }
 }
 
-# EFS for Database Sync Timestamps
-
 resource "aws_efs_file_system" "efs_db_sync" {
   count = var.environment == "Rba" ? 1 : 0
 
@@ -107,7 +105,6 @@ resource "aws_efs_mount_target" "efs_db_sync" {
   security_groups = [aws_security_group.efs_db_sync[0].id]
 }
 
-# Set EFS access point permissions for database sync batch jobs
 resource "aws_efs_access_point" "efs_db_sync_user" {
   count = var.environment == "Rba" ? 1 : 0
 
