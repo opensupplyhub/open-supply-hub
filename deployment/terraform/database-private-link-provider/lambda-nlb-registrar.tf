@@ -10,9 +10,9 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
   role = aws_iam_role.lambda_nlb_registrar.arn
   handler = "register_nlb_targets.handler"
   runtime = "python3.10"
-  filename = "lambda-nlb-registrar/register_nlb_targets.zip"
+  filename = "${path.module}/lambda-nlb-registrar/register_nlb_targets.zip"
   publish = true
-  source_code_hash = filebase64sha256("lambda-nlb-registrar/register_nlb_targets.zip")
+  source_code_hash = filebase64sha256("${path.module}/lambda-nlb-registrar/register_nlb_targets.zip")
   timeout = 60
 
   tags = {
