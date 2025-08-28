@@ -51,13 +51,12 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_assume_role" {
   }
 }
 
-resource "aws_iam_role_policy" "lambda_nlb_registrar_general_policy" {
-  name = "policy${local.env_id_short}NlbTargetsRegistrar"
-  role = aws_iam_role.lambda_nlb_registrar.name
-  policy = data.aws_iam_policy_document.lambda_nlb_registrar_general_policy.json
+resource "aws_iam_policy" "lambda_nlb_registrar_logging_policy" {
+  name = "policy${local.env_id_short}NlbTargetsRegistrarLogging"
+  policy = data.aws_iam_policy_document.lambda_nlb_registrar_logging_policy.json
 }
 
-data "aws_iam_policy_document" "lambda_nlb_registrar_general_policy" {
+data "aws_iam_policy_document" "lambda_nlb_registrar_logging_policy" {
   statement {
     actions = [
       "logs:CreateLogGroup",
@@ -65,9 +64,38 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_general_policy" {
       "logs:PutLogEvents",
     ]
     resources = [
-      "arn:aws:logs:*:*:*"
+      aws_cloudwatch_log_group.nlb_targets_registrar.arn,
+      "${aws_cloudwatch_log_group.nlb_targets_registrar.arn}:log-stream:*"
     ]
   }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_nlb_registrar_logging_policy" {
+  role = aws_iam_role.lambda_nlb_registrar.name
+  policy_arn = aws_iam_policy.lambda_nlb_registrar_logging_policy.arn
+}
+
+resource "aws_iam_policy" "lambda_nlb_registrar_elb_access_policy" {
+  name = "policy${local.env_id_short}NlbTargetsRegistrarElbAccess"
+  policy = data.aws_iam_policy_document.lambda_nlb_registrar_elb_access_policy.json
+}
+
+data "aws_iam_policy_document" "lambda_nlb_registrar_elb_access_policy" {
+  statement {
+    actions = [
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:DescribeTargetHealth",
+    ]
+    resources = [
+      aws_lb_target_group.database_proxy_nlb_tg.arn,
+      "${aws_lb_target_group.database_proxy_nlb_tg.arn}:targetgroup/*",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_nlb_registrar_elb_access_policy" {
+  role = aws_iam_role.lambda_nlb_registrar.name
+  policy_arn = aws_iam_policy.lambda_nlb_registrar_elb_access_policy.arn
 }
 
 # Create a CloudWatch log group for the Lambda function
