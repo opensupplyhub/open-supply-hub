@@ -24,7 +24,7 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
 
 data "archive_file" "lambda_nlb_registrar_zip" {
   type        = "zip"
-  source_dir = "${path.module}/lambda-nlb-registrar"
+  source_file = "${path.module}/lambda-nlb-registrar/register_nlb_targets.py"
   output_path = "${path.module}/lambda-nlb-registrar/register_nlb_targets.zip"
 }
 
