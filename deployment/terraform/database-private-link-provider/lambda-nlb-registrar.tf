@@ -28,8 +28,8 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
 
 data "archive_file" "lambda_nlb_registrar_zip" {
   type        = "zip"
-  source_dir = "${path.module}/lambda-nlb-registrar/"
-  output_path = "${path.module}/lambda-nlb-registrar/register_nlb_targets.zip"
+  source_dir = "./lambda-nlb-registrar"
+  output_path = "./lambda-nlb-registrar/register_nlb_targets.zip"
 }
 
 # IAM role for the Lambda function
