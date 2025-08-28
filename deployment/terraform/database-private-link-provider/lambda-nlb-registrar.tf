@@ -16,6 +16,12 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
   source_code_hash = filebase64sha256("${path.module}/lambda-nlb-registrar/register_nlb_targets.zip")
   timeout = 60
 
+  environment {
+    variables = {
+      AWS_LAMBDA_LOG_GROUP_NAME = aws_cloudwatch_log_group.nlb_targets_registrar.name
+    }
+  }
+
   tags = {
     Name = "functionNlbTargetsRegistrar"
   }
@@ -55,7 +61,9 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_general_policy" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = [aws_cloudwatch_log_group.nlb_targets_registrar.arn]
+    resources = [
+      "arn:aws:logs:*:*:*"
+    ]
   }
 }
 
