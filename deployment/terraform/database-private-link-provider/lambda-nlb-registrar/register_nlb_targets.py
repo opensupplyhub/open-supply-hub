@@ -2,6 +2,10 @@ import json
 import time
 import socket
 import boto3
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 ELB = boto3.client('elbv2')
 
@@ -31,13 +35,8 @@ def handler(event: dict, context: dict) -> dict:
     timeout = event.get('timeout')
 
     if not all([rds_proxy_endpoint, nlb_target_group_arn, db_port]):
-        return {
-            'statusCode': 400,
-            'body': json.dumps({
-                'error': ('rds_proxy_endpoint, nlb_target_group_arn, '
-                          'and db_port are required.')
-            })
-        }
+        raise ValueError('rds_proxy_endpoint, nlb_target_group_arn, '
+                         'db_port and timeout are required.')
 
     ips = resolve_rds_proxy_ips(rds_proxy_endpoint, timeout)
     targets = get_targets(ips, db_port)
@@ -49,18 +48,9 @@ def handler(event: dict, context: dict) -> dict:
     }
     wait_healthy(nlb_target_group_arn, desired_targets, timeout)
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'rds_proxy_endpoint': rds_proxy_endpoint,
-            'nlb_target_group_arn': nlb_target_group_arn,
-            'db_port': db_port,
-            'rds_proxy_ips': ips,
-            'nlb_target_group_targets': targets,
-            'nlb_target_group_health': describe_target_health(
-                nlb_target_group_arn)
-        })
-    }
+    logger.info(
+        f'Successfully registered NLB targets: {targets} for the RDS proxy '
+        f'endpoint: {rds_proxy_endpoint}.')
 
 
 def resolve_rds_proxy_ips(
