@@ -64,7 +64,7 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_logging_policy" {
       "logs:PutLogEvents",
     ]
     resources = [
-      aws_cloudwatch_log_group.nlb_targets_registrar.arn,
+      "arn:aws:logs:*:*:*"
     ]
   }
 }

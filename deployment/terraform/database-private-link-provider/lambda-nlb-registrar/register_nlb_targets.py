@@ -34,7 +34,7 @@ def handler(event: dict, context: dict) -> dict:
     db_port = event.get('db_port')
     timeout = event.get('timeout')
 
-    if not all([rds_proxy_endpoint, nlb_target_group_arn, db_port]):
+    if not all([rds_proxy_endpoint, nlb_target_group_arn, db_port, timeout]):
         raise ValueError('rds_proxy_endpoint, nlb_target_group_arn, '
                          'db_port and timeout are required.')
 
