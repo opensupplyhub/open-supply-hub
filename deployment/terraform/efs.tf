@@ -61,6 +61,8 @@ resource "aws_efs_access_point" "efs_app_logstash_user" {
   }
 }
 
+# EFS for Database Sync Timestamps
+
 resource "aws_efs_file_system" "efs_db_sync" {
   count = var.environment == "Rba" ? 1 : 0
 

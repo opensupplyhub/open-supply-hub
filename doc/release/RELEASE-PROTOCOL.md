@@ -71,12 +71,11 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v2.8.0 | July 4, 2025 | July 12, 2025 | @Roman Stolar |
 | v2.9.0 | July 18, 2025 | July 26, 2025 | @Vlad Shapik |
 | v2.10.0 | August 1, 2025 | August 9, 2025 | @Vlad Shapik |
-| v2.11.0 | August 15, 2025 | August 23, 2025 | @Vadim Kovalenko |
-| v2.12.0 | August 29, 2025 | September 6, 2025 | @Vadim Kovalenko |
-| v2.13.0 | September 12, 2025 | September 20, 2025 | @Roman Stolar |
-| v2.14.0 | September 26, 2025 | October 4, 2025 | @Roman Stolar |
-| v2.15.0 | October 10, 2025 | October 18, 2025 | @Vlad Shapik |
-| v2.16.0 | October 24, 2025 | November 1, 2025 | @Vlad Shapik |
+| v2.11.0 | August 29, 2025 | September 6, 2025 | @Vlad Shapik |
+| v2.12.0 | September 12, 2025 | September 20, 2025 | @Vadim Kovalenko |
+| v2.13.0 | September 26, 2025 | October 4, 2025 | @Vadim Kovalenko |
+| v2.14.0 | October 10, 2025 | October 18, 2025 | @Vadim Kovalenko |
+| v2.15.0 | October 24, 2025 | November 1, 2025 | @Roman Stolar |
 
 ## General Information
 
