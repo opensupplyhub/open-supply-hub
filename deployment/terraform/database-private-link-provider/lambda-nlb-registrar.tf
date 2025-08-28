@@ -7,6 +7,7 @@
 
 resource "aws_lambda_function" "nlb_targets_registrar" {
   function_name = "func${local.env_id_short}NlbTargetsRegistrar"
+  description = "Lambda function to register the targets for the NLB after resolution of the RDS proxy endpoint"
   role = aws_iam_role.lambda_nlb_registrar.arn
   handler = "register_nlb_targets.handler"
   runtime = "python3.10"
@@ -77,4 +78,8 @@ data "aws_lambda_invocation" "nlb_targets_registrar" {
     host = aws_db_proxy.main_db.endpoint
     tg_arn = aws_lb_target_group.database_proxy_nlb_tg.arn
   })
+}
+
+output "registrar_result" {
+  value = jsondecode(data.aws_lambda_invocation.nlb_targets_registrar.result)
 }
