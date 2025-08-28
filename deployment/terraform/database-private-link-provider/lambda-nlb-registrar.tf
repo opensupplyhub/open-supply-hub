@@ -23,6 +23,7 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
 
   depends_on = [
     aws_cloudwatch_log_group.nlb_targets_registrar,
+    aws_iam_role.lambda_nlb_registrar
   ]
 
   tags = {
@@ -65,7 +66,7 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_logging_policy" {
     ]
     resources = [
       aws_cloudwatch_log_group.nlb_targets_registrar.arn,
-      "${aws_cloudwatch_log_group.nlb_targets_registrar.arn}:log-stream:*"
+      # "${aws_cloudwatch_log_group.nlb_targets_registrar.arn}:log-stream:*"
     ]
   }
 }
@@ -88,7 +89,7 @@ data "aws_iam_policy_document" "lambda_nlb_registrar_elb_access_policy" {
     ]
     resources = [
       aws_lb_target_group.database_proxy_nlb_tg.arn,
-      "${aws_lb_target_group.database_proxy_nlb_tg.arn}:targetgroup/*",
+      # "${aws_lb_target_group.database_proxy_nlb_tg.arn}:targetgroup/*",
     ]
   }
 }
