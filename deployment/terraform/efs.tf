@@ -64,7 +64,7 @@ resource "aws_efs_access_point" "efs_app_logstash_user" {
 # EFS for Database Sync Timestamps
 
 resource "aws_efs_file_system" "efs_db_sync" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   creation_token = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-efs-db-sync"
 
@@ -76,7 +76,7 @@ resource "aws_efs_file_system" "efs_db_sync" {
 }
 
 resource "aws_security_group" "efs_db_sync" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   vpc_id = module.vpc.id
 
@@ -88,7 +88,7 @@ resource "aws_security_group" "efs_db_sync" {
 }
 
 resource "aws_security_group_rule" "efs_db_sync_ingress" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   type             = "ingress"
   from_port        = 2049
@@ -109,7 +109,7 @@ resource "aws_efs_mount_target" "efs_db_sync" {
 
 # Set EFS access point permissions for database sync batch jobs
 resource "aws_efs_access_point" "efs_db_sync_user" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   file_system_id = aws_efs_file_system.efs_db_sync[0].id
   posix_user {

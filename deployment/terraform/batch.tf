@@ -347,8 +347,8 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
     resources = compact([
       aws_batch_job_definition.export_csv.arn,
       aws_batch_job_queue.export_csv.arn,
-      contains(["Rba", "Preprod"], var.environment) ? aws_batch_job_definition.db_sync[0].arn : "",
-      contains(["Rba", "Preprod"], var.environment) ? aws_batch_job_queue.db_sync[0].arn : "",
+      var.environment == "Rba" ? aws_batch_job_definition.db_sync[0].arn : "",
+      var.environment == "Rba" ? aws_batch_job_queue.db_sync[0].arn : "",
     ])
   }
 }
@@ -411,7 +411,7 @@ resource "aws_batch_job_definition" "direct_data_load" {
 # AWS Batch for Database Sync
 
 resource "aws_batch_compute_environment" "db_sync" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
   depends_on = [aws_iam_role_policy_attachment.batch_policy]
 
   compute_environment_name_prefix = "batch${local.short}DbSyncComputeEnvironment"
@@ -455,7 +455,7 @@ resource "aws_batch_compute_environment" "db_sync" {
 }
 
 resource "aws_batch_job_queue" "db_sync" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   name                 = "queue${local.short}DbSync"
   priority             = 1
@@ -464,7 +464,7 @@ resource "aws_batch_job_queue" "db_sync" {
 }
 
 data "template_file" "db_sync_job_definition" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
   template = file("job-definitions/db_sync.json")
 
   vars = {
@@ -497,7 +497,7 @@ data "template_file" "db_sync_job_definition" {
 }
 
 resource "aws_batch_job_definition" "db_sync" {
-  count = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   name           = "job${local.short}DbSync"
   type           = "container"
@@ -517,7 +517,7 @@ resource "aws_batch_job_definition" "db_sync" {
 }
 
 resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
-  count               = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count               = var.environment == "Rba" ? 1 : 0
   name                = "rule${local.short}DbSyncSchedule"
   description         = "Runs the database sync job on a schedule"
   schedule_expression = var.db_sync_schedule_expression
@@ -525,7 +525,7 @@ resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "db_sync" {
-  count   = contains(["Rba", "Preprod"], var.environment) ? 1 : 0
+  count   = var.environment == "Rba" ? 1 : 0
   rule     = aws_cloudwatch_event_rule.db_sync_schedule[0].name
   arn      = aws_batch_job_queue.db_sync[0].arn
   role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
