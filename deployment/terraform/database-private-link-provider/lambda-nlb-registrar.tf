@@ -81,13 +81,23 @@ resource "aws_iam_policy" "lambda_nlb_registrar_elb_access_policy" {
 
 data "aws_iam_policy_document" "lambda_nlb_registrar_elb_access_policy" {
   statement {
+    sid     = "RegisterTargetsSpecificTg"
     actions = [
       "elasticloadbalancing:RegisterTargets",
-      "elasticloadbalancing:DescribeTargetHealth",
     ]
     resources = [
       aws_lb_target_group.database_proxy_nlb_tg.arn,
-      # "${aws_lb_target_group.database_proxy_nlb_tg.arn}:targetgroup/*",
+    ]
+  }
+
+  statement {
+    sid     = "DescribeTargetHealthReadOnly"
+    actions = [
+      "elasticloadbalancing:DescribeTargetHealth",
+      "elasticloadbalancing:DescribeTargetGroups",
+    ]
+    resources = [
+      "*",
     ]
   }
 }
