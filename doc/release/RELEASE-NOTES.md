@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: September 6, 2025
 
+### Code/API changes
+* [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
+
 ### Architecture/Environment changes
 * [OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Introduced automated database synchronization script (`sync_databases.py`) for private instance deployment. The script enables efficient, incremental data transfer from OS Hub to private instance databases using Django ORM. Key features include:
     * **Incremental Synchronization**: Only processes records modified since last run using `updated_at` timestamps, reducing sync time from hours to minutes on subsequent runs.

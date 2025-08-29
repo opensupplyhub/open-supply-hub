@@ -227,6 +227,12 @@ class CoordinateLimits:
     LNG_MAX = 180
 
 
+class PaginationConfig:
+    DEFAULT_BLOCK_SIZE = 50
+    CACHE_TTL_SECONDS = 1800
+    MAX_PAGE_SIZE = 250
+
+
 # API v1
 class APIV1CommonErrorMessages:
     COMMON_REQ_BODY_ERROR = 'The request body is invalid.'
