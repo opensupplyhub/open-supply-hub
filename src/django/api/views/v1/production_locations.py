@@ -8,7 +8,6 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from waffle import switch_is_active
-from waffle import flag_is_active
 
 from api.views.v1.utils import (
     serialize_params,
@@ -236,7 +235,9 @@ class ProductionLocations(ViewSet):
         os = Facility.objects.get(id=pk)
 
         payload = dict(request.data)
-        if getattr(request.user, 'can_partially_update_production_location', False):
+        if getattr(request.user,
+                   'can_partially_update_production_location',
+                   False):
             if 'name' not in payload:
                 payload['name'] = os.name
             if 'address' not in payload:

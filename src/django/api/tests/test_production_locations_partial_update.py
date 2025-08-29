@@ -567,7 +567,10 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         response_body_dict = json.loads(response.content)
         self.assertIn('moderation_id', response_body_dict)
         self.assertIn('cleaned_data', response_body_dict)
-        self.assertEqual(response_body_dict.get('os_id'), self.production_location.id)
+        self.assertEqual(
+            response_body_dict.get('os_id'),
+            self.production_location.id
+        )
         self.assertEqual(len(response_body_dict), 5)
 
     @patch('api.geocoding.requests.get')
@@ -592,7 +595,10 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             content_type='application/json'
         )
 
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
         response_body_dict = json.loads(response.content)
         self.assertIn('detail', response_body_dict)
         self.assertIn('errors', response_body_dict)
