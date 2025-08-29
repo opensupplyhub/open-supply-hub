@@ -9,6 +9,5 @@ module "database_private_link_consumer" {
   subnet_ids = module.vpc.private_subnet_ids
   vpc_endpoint_service_name = var.database_private_link_vpc_endpoint_service_name
   db_port = module.database_enc.port
-  # TODO: Replace the bastion security group ID with the batch job security group ID
-  target_consumer_security_group_id = module.vpc.bastion_security_group_id
+  target_consumer_security_group_id = aws_security_group.batch.id
 }
