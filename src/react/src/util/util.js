@@ -1739,7 +1739,9 @@ export const processDromoResults = (
         return;
     }
 
-    const headers = Object.keys(results[0]);
+    const headers = Object.keys(results[0]).filter(
+        header => header !== 'is_same_contributor',
+    );
     const csvRows = results.map(row =>
         headers.map(header => formatCSVField(row[header])).join(','),
     );

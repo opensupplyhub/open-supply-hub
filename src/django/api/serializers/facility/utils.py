@@ -1,4 +1,4 @@
-from typing import Union
+from typing import (Iterable, Union)
 from itertools import groupby
 
 from api.constants import FacilityClaimStatuses
@@ -346,3 +346,22 @@ def add_http_prefix_to_url(value: str) -> str:
     ):
         value = f"https://{value}"
     return value
+
+
+def is_same_contributor_for_queryset(queryset: Iterable, request) -> bool:
+    contributor = getattr(request.user, 'contributor', None)
+    if not contributor:
+        return False
+    current_user_contributor_id = contributor.id
+
+    found_any_facility = False
+    for facility in queryset:
+        found_any_facility = True
+        facility_contributor_ids = [
+            contributor.get('id') for contributor in facility.contributors
+            if contributor.get('id') is not None
+        ]
+        if current_user_contributor_id not in facility_contributor_ids:
+            return False
+
+    return found_any_facility
