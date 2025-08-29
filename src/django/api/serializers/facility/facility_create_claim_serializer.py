@@ -106,6 +106,25 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         validators=[validate_files]
     )
+    claim_reason = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True
+    )
+
+    def validate_claim_reason(self, value):
+        # Claim reason validation is flexible:
+        # - Allow any predefined reason from ClaimsReason model
+        # - Allow custom text when "Other" is selected (frontend sends the custom text)
+        # - Allow empty/blank values (optional field)
+        if value:
+            value = value.strip()
+            # Basic length validation (field has max_length=100)
+            if len(value) > 100:
+                raise serializers.ValidationError(
+                    "Claim reason cannot exceed 100 characters."
+                )
+        return value
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)

@@ -19,7 +19,7 @@ class FacilityClaimSerializer(ModelSerializer):
         model = FacilityClaim
         fields = ('id', 'created_at', 'updated_at', 'contributor_id', 'os_id',
                   'contributor_name', 'facility_name', 'facility_address',
-                  'facility_country_name', 'status', 'claim_decision')
+                  'facility_country_name', 'status', 'claim_decision', 'claim_reason')
 
     def get_facility_name(self, claim):
         return claim.facility.name

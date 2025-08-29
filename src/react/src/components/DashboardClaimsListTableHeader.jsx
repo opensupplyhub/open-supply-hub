@@ -14,6 +14,12 @@ const claimsListHeadCells = [
         label: 'Claim ID',
     },
     {
+        id: 'claim_reason',
+        numeric: false,
+        disablePadding: true,
+        label: 'Claim Reason',
+    },
+    {
         id: 'facility_name',
         numeric: false,
         disablePadding: true,
