@@ -76,6 +76,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
+          ref: 'OSDEV-2077-update-the-configs-for-the-sync-script'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
 
@@ -135,6 +136,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
+          ref: 'OSDEV-2077-update-the-configs-for-the-sync-script'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
 
