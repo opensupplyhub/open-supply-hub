@@ -26,6 +26,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Enhanced the `./src/anon-tools/do_restore.sh` script to use more precise filtering when looking up the bastion host, improving reliability and reducing potential for incorrect host selection. The *bastion* filter now ensures that only an instance tagged with both the correct environment and the specific "Bastion" name is selected.
 * [OSDEV-2133](https://opensupplyhub.atlassian.net/browse/OSDEV-2133) - Implemented a fix to wrap values in double quotes to ensure correct CSV formatting for Dromo results.
 
+### What's new
+* [OSDEV-2156](https://opensupplyhub.atlassian.net/browse/OSDEV-2156) - Updated the copy for Premium Data Downloads email templates to include information about all other available options to obtain data (link to bulk download inquiry form and link to Free Premium Feature access policy for Civil Society Organizations).
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
