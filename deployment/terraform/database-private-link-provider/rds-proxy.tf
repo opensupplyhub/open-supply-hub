@@ -48,7 +48,7 @@ resource "aws_db_proxy_target" "main" {
 # Security group for RDS proxy
 
 resource "aws_security_group" "proxy" {
-  name = "sg${local.env_id_short}DatabaseProxy"
+  name        = "sg${local.env_id_short}DatabaseProxy"
   description = "Security group for RDS proxy"
   vpc_id      = var.vpc_id
 
@@ -60,21 +60,21 @@ resource "aws_security_group" "proxy" {
 # Security group rules for RDS proxy
 
 resource "aws_security_group_rule" "proxy_database_egress" {
-  type                     = "egress"
-  from_port                = var.db_port
-  to_port                  = var.db_port
-  protocol                 = "tcp"
-  
+  type      = "egress"
+  from_port = var.db_port
+  to_port   = var.db_port
+  protocol  = "tcp"
+
   security_group_id        = aws_security_group.proxy.id
   source_security_group_id = var.database_security_group_id
   description              = "Allow outgoing traffic from RDS proxy to the database"
 }
 
 resource "aws_security_group_rule" "nlb_proxy_ingress" {
-  type                     = "ingress"
-  from_port                = var.db_port
-  to_port                  = var.db_port
-  protocol                 = "tcp"
+  type      = "ingress"
+  from_port = var.db_port
+  to_port   = var.db_port
+  protocol  = "tcp"
 
   security_group_id        = aws_security_group.proxy.id
   source_security_group_id = aws_security_group.database_proxy_nlb_sg.id
@@ -84,10 +84,10 @@ resource "aws_security_group_rule" "nlb_proxy_ingress" {
 # Security group rules for RDS instance
 
 resource "aws_security_group_rule" "proxy_db_ingress" {
-  type                     = "ingress"
-  from_port                = var.db_port
-  to_port                  = var.db_port
-  protocol                 = "tcp"
+  type      = "ingress"
+  from_port = var.db_port
+  to_port   = var.db_port
+  protocol  = "tcp"
 
   security_group_id        = var.database_security_group_id
   source_security_group_id = aws_security_group.proxy.id
@@ -97,7 +97,7 @@ resource "aws_security_group_rule" "proxy_db_ingress" {
 # Secret for RDS proxy
 
 resource "aws_secretsmanager_secret" "proxy_secret" {
-  name = "db${local.env_id_short}ProxySecret"
+  name                    = "db${local.env_id_short}ProxySecret"
   recovery_window_in_days = 0
 
   tags = {
@@ -118,7 +118,7 @@ resource "aws_secretsmanager_secret_version" "proxy_secret_version" {
 # IAM role for RDS proxy
 
 resource "aws_iam_role" "proxy_role" {
-  name = "database${local.env_id_short}ProxyRole"
+  name               = "database${local.env_id_short}ProxyRole"
   assume_role_policy = data.aws_iam_policy_document.proxy_assume_role_policy.json
 
   tags = {
@@ -147,8 +147,8 @@ resource "aws_iam_role_policy" "proxy_policy" {
 
 data "aws_iam_policy_document" "proxy_policy" {
   statement {
-    effect = "Allow"
-    actions = ["secretsmanager:GetSecretValue"]
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
     resources = [aws_secretsmanager_secret.proxy_secret.arn]
   }
 }
