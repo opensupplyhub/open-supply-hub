@@ -30,7 +30,6 @@ variable "db_instance_identifier" {
 variable "db_username" {
   description = "Username for the database"
   type        = string
-  sensitive   = true
 }
 
 variable "db_password" {
@@ -42,7 +41,6 @@ variable "db_password" {
 variable "db_port" {
   description = "Port of the database"
   type        = number
-  sensitive   = true
 }
 
 variable "database_security_group_id" {

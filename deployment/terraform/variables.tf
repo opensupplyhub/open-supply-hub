@@ -86,15 +86,12 @@ variable "rds_storage_type" {
 }
 
 variable "rds_database_identifier" {
-  sensitive = true
 }
 
 variable "rds_database_name" {
-  sensitive = true
 }
 
 variable "rds_database_username" {
-  sensitive = true
 }
 
 variable "rds_database_password" {
@@ -962,6 +959,7 @@ variable "is_database_private_link_consumer" {
 
 variable "database_private_link_vpc_endpoint_service_name" {
   type        = string
+  sensitive   = true
   description = "The name of the VPC endpoint service in the provider VPC"
   default     = ""
 }

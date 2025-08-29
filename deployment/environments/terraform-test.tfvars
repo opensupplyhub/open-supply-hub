@@ -79,4 +79,3 @@ vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 db_sync_enabled = true
 is_database_private_link_consumer = true
-database_private_link_vpc_endpoint_service_name = "com.amazonaws.vpce.eu-west-1.vpce-svc-00dcb7df647b41196"

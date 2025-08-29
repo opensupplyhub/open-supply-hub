@@ -20,9 +20,12 @@ variable "subnet_ids" {
   description = "Subnet IDs of the VPC where the VPC endpoint will be created"
 }
 
+# VPC endpoint service configuration
+
 variable "vpc_endpoint_service_name" {
   type        = string
   description = "The name of the VPC endpoint service in the provider VPC"
+  sensitive   = true
 }
 
 # Database configuration
