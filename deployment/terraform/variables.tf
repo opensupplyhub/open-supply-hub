@@ -890,12 +890,6 @@ variable "vpn_ec2_ami" {
 
 # DB Sync variables
 
-variable "source_db_host" {
-  description = "Source database host (OS Hub database)"
-  type        = string
-  default     = ""
-}
-
 variable "source_db_port" {
   description = "Source database port"
   type        = number

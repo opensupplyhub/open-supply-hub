@@ -3,6 +3,8 @@
 # ------------------------------------------------------------------------------
 
 locals {
+  # Configured to be 3 minutes since it requires a little more than 1 minute to
+  # register the NLB targets.
   lambda_nlb_registrar_timeout = 180
 }
 

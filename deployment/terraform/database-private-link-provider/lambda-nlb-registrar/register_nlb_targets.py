@@ -62,7 +62,8 @@ def resolve_rds_proxy_ips(
     ENI IPs.
     '''
     sleep_time = 2
-    attempts = int(timeout / sleep_time)
+    # To quit before the Lambda timeout, 1 is subtracted from the attempts.
+    attempts = int(timeout / sleep_time) - 1
     for _ in range(attempts):
         infos = socket.getaddrinfo(
             rds_proxy_endpoint, None, socket.AF_INET, socket.SOCK_STREAM)
@@ -96,7 +97,8 @@ def wait_healthy(
     Optionally wait until all desired (ip, port) are healthy in the TG.
     '''
     sleep_time = 2
-    attempts = int(timeout // sleep_time)
+    # To quit before the Lambda timeout, 1 is subtracted from the attempts.
+    attempts = int(timeout // sleep_time) - 1
     for _ in range(attempts):
         descriptions = describe_target_health(target_group_arn)
         healthy_targets = {
