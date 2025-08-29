@@ -8,6 +8,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from waffle import switch_is_active
+from waffle import flag_is_active
 
 from api.views.v1.utils import (
     serialize_params,
@@ -232,6 +233,17 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        os = Facility.objects.get(id=pk)
+
+        payload = dict(request.data)
+        if getattr(request.user, 'can_partially_update_production_location', False):
+            if 'name' not in payload:
+                payload['name'] = os.name
+            if 'address' not in payload:
+                payload['address'] = os.address
+            if 'country' not in payload:
+                payload['country'] = os.country_code
+
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
@@ -239,7 +251,7 @@ class ProductionLocations(ViewSet):
         event_dto = CreateModerationEventDTO(
             contributor=request.user.contributor,
             os=Facility.objects.get(id=pk),
-            raw_data=request.data,
+            raw_data=payload,
             request_type=ModerationEvent.RequestType.UPDATE.value
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
