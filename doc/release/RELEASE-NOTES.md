@@ -21,7 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Set up `AWS Batch` infrastructure for database synchronization, including compute environment, job queue, job definition, and `EFS` integration for persistent storage. Added required variables and RBA environment configuration to support secure database connectivity and reliable sync execution.
 * [OSDEV-2078](https://opensupplyhub.atlassian.net/browse/OSDEV-2078) - Setup AWS EventBridge to trigger database sync every day at 7:00 AM UTC.
 * [OSDEV-2160](https://opensupplyhub.atlassian.net/browse/OSDEV-2160) - Migrate to the `bitnamilegacy/kafka` image instead of `bitnami/kafka`, as Bitnami is deprecating support for non-hardened, Debian-based images in its free tier and will gradually remove these tags from the public catalog.
-* [OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Implemented Database Private Link infrastructure to enable secure cross-account database access from AWS Batch jobs in the RBA environment to the main OS Hub database. The solution includes:
+* [OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Implemented Database Private Link infrastructure to enable secure cross-VPC database access from AWS Batch jobs in the RBA environment to the main OS Hub database. The solution includes:
     * **Provider Module**: RDS Proxy, Network Load Balancer (NLB), VPC Endpoint Service, and Lambda function for automatic target registration
     * **Consumer Module**: VPC Endpoint in the consumer VPC with proper security group rules
     * **Security**: All components deployed in private subnets with encrypted communication and security group rules
@@ -43,7 +43,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     2. **Second**: Manually retrieve the VPC Endpoint Service name from AWS Console (VPC → Endpoint Services)
     3. **Third**: Update the `database_private_link_vpc_endpoint_service_name` variable in the secrets repository and merge the changes
     4. **Fourth**: Deploy to RBA environment to provision the consumer infrastructure (VPC Endpoint)
-    
+
     *Note: The RBA environment deployment will fail if the VPC Endpoint Service name is not properly configured in the secrets repository.*
 
 
