@@ -156,6 +156,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text="The environment value where instance running"
     )
 
+    can_partially_update_production_location = models.BooleanField(
+        default=False,
+        help_text=(
+            'User can omit name, address and country fields while '
+            'updating production location by OS ID'
+        )
+    )
+
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
         super().save(*args, **kwargs)
