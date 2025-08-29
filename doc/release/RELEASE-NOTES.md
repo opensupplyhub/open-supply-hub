@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **Comprehensive Logging**: Detailed logging with configurable verbosity levels for monitoring and debugging.
 * [OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Set up `AWS Batch` infrastructure for database synchronization, including compute environment, job queue, job definition, and `EFS` integration for persistent storage. Added required variables and RBA environment configuration to support secure database connectivity and reliable sync execution.
 * [OSDEV-2078](https://opensupplyhub.atlassian.net/browse/OSDEV-2078) - Setup AWS EventBridge to trigger database sync every day at 7:00 AM UTC.
+* [OSDEV-2160](https://opensupplyhub.atlassian.net/browse/OSDEV-2160) - Migrate to the `bitnamilegacy/kafka` image instead of `bitnami/kafka`, as Bitnami is deprecating support for non-hardened, Debian-based images in its free tier and will gradually remove these tags from the public catalog.
 
 ### Bugfix
 * Enhanced the `./src/anon-tools/do_restore.sh` script to use more precise filtering when looking up the bastion host, improving reliability and reducing potential for incorrect host selection. The *bastion* filter now ensures that only an instance tagged with both the correct environment and the specific "Bastion" name is selected.
