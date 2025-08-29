@@ -490,7 +490,7 @@ data "template_file" "db_sync_job_definition" {
     aws_storage_bucket_name          = local.files_bucket_name
     efs_file_system_id               = aws_efs_file_system.efs_db_sync[0].id
     efs_access_point_id              = aws_efs_access_point.efs_db_sync_user[0].id
-    source_db_host                   = var.source_db_host
+    source_db_host                   = module.database_private_link_consumer[0].vpc_endpoint_dns_name
     source_db_port                   = var.source_db_port
     source_db_name                   = var.source_db_name
     source_db_user                   = var.source_db_user
