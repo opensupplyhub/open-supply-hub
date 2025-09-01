@@ -22,13 +22,13 @@ class KeysetPaginationService:
         if page == 1:
             return None
 
-        qh = create_query_hash(request, page_size)
-        prev_last_id = get_page_bookmark(qh, page - 1)
+        query_hash = create_query_hash(request, page_size)
+        prev_last_id = get_page_bookmark(query_hash, page - 1)
         if prev_last_id is not None:
             return prev_last_id
 
         start_after, steps, nearest = self.find_nearest_cached_page(
-            qh,
+            query_hash,
             page - 1,
             page_size
         )
@@ -40,7 +40,9 @@ class KeysetPaginationService:
                 start_after,
                 steps,
                 block=self.block,
-                densify=lambda p, lid: set_page_bookmark(qh, p, lid),
+                densify=lambda page, lid: set_page_bookmark(
+                    query_hash, page, lid
+                ),
                 start_from_page=nearest,
             )
 

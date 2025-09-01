@@ -15,22 +15,22 @@ def create_query_hash(request, page_size: int) -> str:
     return hashlib.sha1(json.dumps(parts, sort_keys=True).encode()).hexdigest()
 
 
-def _get_bookmark_key(h: str, page: int) -> str:
-    return f"dl:{h}:p:{page}"
+def _get_bookmark_key(hash: str, page: int) -> str:
+    return f"dl:{hash}:p:{page}"
 
 
-def get_page_bookmark(h: str, page: int) -> Optional[int]:
-    return cache.get(_get_bookmark_key(h, page))
+def get_page_bookmark(hash: str, page: int) -> Optional[int]:
+    return cache.get(_get_bookmark_key(hash, page))
 
 
 def set_page_bookmark(
-    h: str,
+    hash: str,
     page: int,
     last_id: Optional[int],
     ttl: int = PaginationConfig.CACHE_TTL_SECONDS
 ) -> None:
     if last_id is not None:
-        cache.set(_get_bookmark_key(h, page), last_id, ttl)
+        cache.set(_get_bookmark_key(hash, page), last_id, ttl)
 
 
 def get_paginated_items_after_id(
@@ -38,8 +38,8 @@ def get_paginated_items_after_id(
     page_size: int,
     after_id: Optional[int]
 ):
-    q = qs.filter(id__gt=after_id) if after_id else qs
-    batch = list(q.order_by("id")[: page_size + 1])
+    query = qs.filter(id__gt=after_id) if after_id else qs
+    batch = list(query.order_by("id")[: page_size + 1])
 
     items = batch[:page_size]
     last_id = items[-1].id if items else None
