@@ -78,6 +78,11 @@ class OarUserAdmin(UserAdmin):
             is_verified = (contributor is not None and contributor.is_verified)
             # Editable only for verified contributors; otherwise disabled
             form.base_fields[field_name].disabled = not is_verified
+            if not is_verified:
+                existing_style = form.base_fields[field_name].widget.attrs.get('style', '')
+                form.base_fields[field_name].widget.attrs['style'] = (
+                    (existing_style + '; cursor: not-allowed').strip('; ')
+                )
             if not obj:
                 form.base_fields[field_name].initial = False
 
