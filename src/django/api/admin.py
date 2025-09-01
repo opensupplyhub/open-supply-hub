@@ -58,6 +58,31 @@ class OarUserAdmin(UserAdmin):
     search_fields = ('email',)
     list_display = ('email', 'is_active')
 
+    def get_readonly_fields(self, request, obj=None):
+        # Keep default readonly behavior; we will render a disabled checkbox
+        # for unverified contributors via get_form instead of making it readonly
+        return list(super().get_readonly_fields(request, obj))
+
+    def get_fields(self, request, obj=None):
+        fields = list(super().get_fields(request, obj))
+        if 'can_partially_update_production_location' not in fields:
+            fields.append('can_partially_update_production_location')
+        return fields
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+
+        field_name = 'can_partially_update_production_location'
+        if field_name in form.base_fields:
+            contributor = getattr(obj, 'contributor', None) if obj is not None else None
+            is_verified = (contributor is not None and contributor.is_verified)
+            # Editable only for verified contributors; otherwise disabled
+            form.base_fields[field_name].disabled = not is_verified
+            if not obj:
+                form.base_fields[field_name].initial = False
+
+        return form
+
 
 class FacilityHistoryAdmin(SimpleHistoryAdmin):
     history_list_display = ('name', 'address', 'location')
