@@ -230,11 +230,13 @@ class FacilitiesDownloadService:
     ):
         base_qs_params = request.query_params.copy()
 
-        def make_link(p):
-            q = base_qs_params.copy()
-            q['page'] = p
-            q['pageSize'] = page_size
-            return request.build_absolute_uri('?' + urlencode(q, doseq=True))
+        def make_link(target_page):
+            query = base_qs_params.copy()
+            query['page'] = target_page
+            query['pageSize'] = page_size
+            return request.build_absolute_uri(
+                '?' + urlencode(query, doseq=True)
+            )
 
         next_link = None if is_last_page else make_link(page + 1)
         prev_link = make_link(page - 1) if page > 1 else None
