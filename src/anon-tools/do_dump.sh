@@ -3,7 +3,7 @@
 bastion="$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD \
            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD \
            AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_PROD \
-           aws ec2 describe-instances --filters "Name=tag:Environment,Values=Production" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
+           aws ec2 describe-instances --filters "Name=tag:Environment,Values=Rba" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
 
 echo "Bastion: $bastion"
 ssh-keyscan $bastion > ~/.ssh/known_hosts
@@ -74,4 +74,4 @@ echo "Finished anonymization"
 AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST \
     AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST \
     AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_TEST \
-    aws s3 cp /dumps/osh_prod_large_anonymized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
+    aws s3 cp /dumps/osh_prod_large_anonymized.dump s3://oshub-dumps-anonymized/osh_rba_large_anon.dump
