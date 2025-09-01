@@ -3,7 +3,7 @@
 bastion="$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD \
            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD \
            AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_PROD \
-           aws ec2 describe-instances --filters "Name=tag:Environment,Values=Rba" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
+           aws ec2 describe-instances --filters "Name=tag:Environment,Values=Rba" "Name=tag:Name,Values=Bastion" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
 
 echo "Bastion: $bastion"
 ssh-keyscan $bastion > ~/.ssh/known_hosts
