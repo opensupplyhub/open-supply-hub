@@ -46,7 +46,7 @@ class FacilitiesDownloadViewSet(
         base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
         is_same_contributor = is_same_contributor_for_queryset(
-            queryset,
+            base_qs,
             request
         )
 
