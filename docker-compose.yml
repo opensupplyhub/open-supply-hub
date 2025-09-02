@@ -104,7 +104,7 @@ services:
       - proxynet
 
   zookeeper:
-    image: "bitnami/zookeeper:3.9"
+    image: "bitnamilegacy/zookeeper:3.9"
     ports:
       - "2181:2181"
     environment:
