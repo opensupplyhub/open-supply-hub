@@ -1,73 +1,91 @@
-from waffle import switch_is_active
 from rest_framework import viewsets, mixins
-from api.pagination import PageAndSizePagination
+from rest_framework.response import Response
+from waffle import switch_is_active
+
 from api.models.facility.facility_index import FacilityIndex
-from api.serializers.facility.facility_download_serializer \
-    import FacilityDownloadSerializer
-from api.serializers.facility.facility_download_serializer_embed_mode \
-    import FacilityDownloadSerializerEmbedMode
+from api.serializers.facility.facility_download_serializer import \
+    FacilityDownloadSerializer
+from api.serializers.facility.facility_download_serializer_embed_mode import \
+    FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
 from api.serializers.facility.utils import is_same_contributor_for_queryset
+from api.constants import PaginationConfig
 
 
-class FacilitiesDownloadViewSet(mixins.ListModelMixin,
-                                viewsets.GenericViewSet):
+class FacilitiesDownloadViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
     """
     Get facilities in array format, suitable for CSV/XLSX download.
     """
     queryset = FacilityIndex.objects.all()
-    pagination_class = PageAndSizePagination
+    pagination_class = None
 
-    def get_serializer(self, page_queryset):
+    def __is_embed_mode(self):
+        return self.request.query_params.get('embed') == '1'
+
+    def get_serializer(self, objs):
         if self.__is_embed_mode():
             contributor_id = get_embed_contributor_id_from_query_params(
                 self.request.query_params
             )
             return FacilityDownloadSerializerEmbedMode(
-                page_queryset, many=True, contributor_id=contributor_id
+                objs,
+                many=True,
+                contributor_id=contributor_id
             )
-
-        return FacilityDownloadSerializer(page_queryset, many=True)
-
-    def __is_embed_mode(self):
-        return self.request.query_params.get('embed') == '1'
+        return FacilityDownloadSerializer(objs, many=True)
 
     def list(self, request):
-        """
-        Returns a list of facilities in array format for a given query.
-        (Maximum of 250 facilities per page.)
-        """
         FacilitiesDownloadService.check_if_downloads_are_blocked()
         FacilitiesDownloadService.validate_query_params(request)
         FacilitiesDownloadService.log_request(request)
 
-        queryset = FacilitiesDownloadService.get_filtered_queryset(request)
-        total_records = queryset.count()
-        facility_download_limit = None
+        base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
         is_same_contributor = is_same_contributor_for_queryset(
             queryset,
             request
         )
 
+        limit = None
+
         if (
             not switch_is_active('private_instance')
             and not self.__is_embed_mode()
             and not is_same_contributor
         ):
-            facility_download_limit = FacilitiesDownloadService \
-                .get_download_limit(request)
+            limit = FacilitiesDownloadService.get_download_limit(request)
+
+        page = int(request.query_params.get('page', 1) or 1)
+        page_size = int(request.query_params.get(
+            'pageSize', PaginationConfig.MAX_PAGE_SIZE
+        ) or PaginationConfig.MAX_PAGE_SIZE)
+        is_first_page = (page == 1)
+
         FacilitiesDownloadService.enforce_limits(
-            request,
-            total_records,
-            facility_download_limit
+            qs=base_qs, limit=limit, is_first_page=is_first_page
         )
 
-        page_queryset = FacilitiesDownloadService \
-            .check_pagination(self.paginate_queryset(queryset))
-        list_serializer = self.get_serializer(page_queryset)
+        items, is_last_page = FacilitiesDownloadService.\
+            fetch_page_and_cache(
+                base_qs,
+                request,
+                page,
+                page_size,
+                block=PaginationConfig.DEFAULT_BLOCK_SIZE
+            )
+        next_link, prev_link = FacilitiesDownloadService.\
+            build_page_links(
+                request,
+                page,
+                page_size,
+                is_last_page
+            )
 
+        list_serializer = self.get_serializer(items)
         rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
 
@@ -77,36 +95,34 @@ class FacilitiesDownloadViewSet(mixins.ListModelMixin,
             'is_same_contributor': is_same_contributor
         }
 
-        response = self.get_paginated_response(data)
+        payload = {
+            'next': next_link,
+            'previous': prev_link,
+            'page': page,
+            'pageSize': page_size,
+            'results': data,
+        }
 
-        paginator = self.paginator
-        if paginator.page.number == paginator.page.paginator.num_pages:
-            prev_free_amount = getattr(
-                facility_download_limit,
-                'free_download_records',
-                0
-            )
-            prev_paid_amount = getattr(
-                facility_download_limit,
-                'paid_download_records',
-                0
-            )
+        if is_first_page:
+            payload['count'] = base_qs.count()
 
-            # Cap the registered count to remaining quota to prevent overdrafts
-            remaining_quota = (prev_free_amount or 0) + (prev_paid_amount or 0)
-            to_register = min(total_records, remaining_quota)
+        if is_last_page and limit:
+            total_records = (page - 1) * page_size + len(items)
 
-            if to_register > 0:
+            prev_free_amount = getattr(limit, 'free_download_records', 0)
+            prev_paid_amount = getattr(limit, 'paid_download_records', 0)
+
+            if total_records > 0:
                 FacilitiesDownloadService.register_download_if_needed(
-                    facility_download_limit,
-                    to_register,
+                    limit,
+                    total_records,
                     is_same_contributor
                 )
                 FacilitiesDownloadService.send_email_if_needed(
                     request,
-                    facility_download_limit,
+                    limit,
                     prev_free_amount,
                     prev_paid_amount
                 )
 
-        return response
+        return Response(payload)

@@ -113,7 +113,7 @@ services:
       - proxynet
 
   kafka:
-    image: "bitnami/kafka:3.9.0"
+    image: "bitnamilegacy/kafka:3.9.0"
     ports:
       - "9092:9092"
     environment:

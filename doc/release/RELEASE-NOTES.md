@@ -7,17 +7,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: September 6, 2025
+* Release date: September 20, 2025
 
-### Architecture/Environment changes
-* [OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Introduced automated database synchronization script (`sync_databases.py`) for private instance deployment. The script enables efficient, incremental data transfer from OS Hub to private instance databases using Django ORM. Key features include:
-    * **Incremental Synchronization**: Only processes records modified since last run using `updated_at` timestamps, reducing sync time from hours to minutes on subsequent runs.
-    * **Smart Dependency Management**: Automatic model dependency ordering (User → Contributor → FacilityList → etc.) with two-phase sync approach.
-    * **Data Privacy**: Automatic email anonymization using MD5 hashing for GDPR compliance.
-    * **Circular Reference Handling**: Automatic resolution of circular dependencies between models.
-    * **Progress Tracking**: Maintains separate timestamp files for each model to enable resumable operations.
-    * **Dry Run Mode**: Preview synchronization changes without making database modifications.
-    * **Comprehensive Logging**: Detailed logging with configurable verbosity levels for monitoring and debugging.
+### Code/API changes
+* [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
+* [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
+
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -29,19 +24,44 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: August 23, 2025
+* Release date: September 6, 2025
 
-### Code/API changes
-* [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
+### Architecture/Environment changes
+* [OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Introduced automated database synchronization script (`sync_databases.py`) for private instance deployment. The script enables efficient, incremental data transfer from OS Hub to private instance databases using Django ORM. Key features include:
+    * **Incremental Synchronization**: Only processes records modified since last run using `updated_at` timestamps, reducing sync time from hours to minutes on subsequent runs.
+    * **Smart Dependency Management**: Automatic model dependency ordering (User → Contributor → FacilityList → etc.) with two-phase sync approach.
+    * **Data Privacy**: Automatic email anonymization using MD5 hashing for GDPR compliance.
+    * **Circular Reference Handling**: Automatic resolution of circular dependencies between models.
+    * **Progress Tracking**: Maintains separate timestamp files for each model to enable resumable operations.
+    * **Dry Run Mode**: Preview synchronization changes without making database modifications.
+    * **Comprehensive Logging**: Detailed logging with configurable verbosity levels for monitoring and debugging.
+* [OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Set up `AWS Batch` infrastructure for database synchronization, including compute environment, job queue, job definition, and `EFS` integration for persistent storage. Added required variables and RBA environment configuration to support secure database connectivity and reliable sync execution.
+* [OSDEV-2078](https://opensupplyhub.atlassian.net/browse/OSDEV-2078) - Setup AWS EventBridge to trigger database sync every day at 7:00 AM UTC.
+* [OSDEV-2160](https://opensupplyhub.atlassian.net/browse/OSDEV-2160) - Migrate to the `bitnamilegacy/kafka` image instead of `bitnami/kafka`, as Bitnami is deprecating support for non-hardened, Debian-based images in its free tier and will gradually remove these tags from the public catalog.
+* [OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Implemented Database Private Link infrastructure to enable secure cross-VPC database access from AWS Batch jobs in the RBA environment to the main OS Hub database. The solution includes:
+    * **Provider Module**: RDS Proxy, Network Load Balancer (NLB), VPC Endpoint Service, and Lambda function for automatic target registration
+    * **Consumer Module**: VPC Endpoint in the consumer VPC with proper security group rules
+    * **Security**: All components deployed in private subnets with encrypted communication and security group rules
+    * **Environment Configuration**: Production configured as provider, RBA as consumer, with conditional deployment via Terraform variables
 
 ### Bugfix
 * Enhanced the `./src/anon-tools/do_restore.sh` script to use more precise filtering when looking up the bastion host, improving reliability and reducing potential for incorrect host selection. The *bastion* filter now ensures that only an instance tagged with both the correct environment and the specific "Bastion" name is selected.
 * [OSDEV-2133](https://opensupplyhub.atlassian.net/browse/OSDEV-2133) - Implemented a fix to wrap values in double quotes to ensure correct CSV formatting for Dromo results.
 
+### What's new
+* [OSDEV-2156](https://opensupplyhub.atlassian.net/browse/OSDEV-2156) - Updated the copy for Premium Data Downloads email templates to include information about all other available options to obtain data (link to bulk download inquiry form and link to Free Premium Feature access policy for Civil Society Organizations).
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
-  * `migrate`
-  * `reindex_database`
+    * `migrate`
+    * `reindex_database`
+* To properly deploy the Database Private Link infrastructure([OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077)):
+    1. **First**: Deploy to Production environment to provision the provider infrastructure (RDS Proxy, NLB, VPC Endpoint Service)
+    2. **Second**: Manually retrieve the VPC Endpoint Service name from AWS Console (VPC → Endpoint Services)
+    3. **Third**: Update the `database_private_link_vpc_endpoint_service_name` variable in the secrets repository and merge the changes
+    4. **Fourth**: Deploy to RBA environment to provision the consumer infrastructure (VPC Endpoint)
+
+    *Note: The RBA environment deployment will fail if the VPC Endpoint Service name is not properly configured in the secrets repository.*
 
 
 ## Release 2.10.0
