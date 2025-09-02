@@ -76,3 +76,7 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+db_sync_enabled                   = true
+db_sync_schedule_expression       = "cron(0 7 * * ? *)" # (7:00 AM UTC)
+is_database_private_link_consumer = true
