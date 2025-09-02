@@ -606,7 +606,7 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         self.assertIn('errors', response_body_dict)
 
     @patch('api.geocoding.requests.get')
-    def test_flagged_but_unverified_omitting_core_fields_gets_422(self, mock_get):
+    def test_flagged_but_unverified_contributor_gets_422(self, mock_get):
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = geocoding_data
 
@@ -629,7 +629,10 @@ class TestProductionLocationsPartialUpdate(APITestCase):
             minimal_req_body,
             content_type='application/json'
         )
-        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
         body = json.loads(response.content)
         self.assertIn('detail', body)
         self.assertIn('errors', body)

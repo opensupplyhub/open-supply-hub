@@ -160,7 +160,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text=(
             'User can omit name, address and country fields while '
-            'updating production location by OS ID (only for verified contributors)'
+            'updating production location by OS ID '
+            '(only for verified contributors)'
         )
     )
 
