@@ -108,8 +108,6 @@ class FacilitiesDownloadService:
     ):
         if is_same_contributor:
             return
-
-    def register_download_if_needed(limit, record_count):
         if limit:
             limit.register_download(record_count)
 
