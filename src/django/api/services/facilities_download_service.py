@@ -2,11 +2,11 @@ import logging
 import stripe
 
 from django.conf import settings
-
 from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
 from datetime import datetime
 from django.utils.timezone import make_aware
+from urllib.parse import urlencode
 
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
@@ -19,6 +19,16 @@ from api.mail import (
     send_ddl_near_annual_limit_email,
     send_ddl_reach_annual_limit_email,
     send_ddl_reach_paid_limit_email
+)
+
+from api.services.keyset_pagination_service import (
+    KeysetPaginationService
+)
+
+from api.pagination_keyset_helpers import (
+    create_query_hash,
+    set_page_bookmark,
+    get_paginated_items_after_id
 )
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -52,7 +62,7 @@ class FacilitiesDownloadService:
     def get_filtered_queryset(request):
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params
-        ).order_by('name', 'address', 'id')
+        ).order_by('id')
 
     @staticmethod
     def get_download_limit(request):
@@ -63,46 +73,26 @@ class FacilitiesDownloadService:
         )
 
     @staticmethod
-    def enforce_limits(request, total_records, limit):
-        current_page = int(request.query_params.get("page", 1))
-
-        if limit is None:
+    def enforce_limits(qs, limit, is_first_page):
+        if not limit or not is_first_page:
             return
 
-        allowed_records = (
-            limit.free_download_records +
-            limit.paid_download_records
-        )
+        allowed = limit.free_download_records + limit.paid_download_records
 
-        has_exhausted_limit = (
-            current_page == 1 and
-            allowed_records == 0
-        )
-
-        if has_exhausted_limit:
+        if allowed == 0:
             raise ValidationError(
-                'You have reached your annual limit for facility record '
-                'downloads, including both free and paid. Additional '
-                'downloads will be available at the start of the next '
-                'calendar year.'
+                "You have reached your annual limit "
+                "for facility record downloads..."
             )
 
-        is_blocked = (
-            current_page == 1
-            and total_records > allowed_records
+        probe = list(
+            qs.order_by("id").values_list("id", flat=True)[:allowed + 1]
         )
-
-        if is_blocked:
+        if len(probe) > allowed:
             raise ValidationError(
-                f'Downloads are supported only for searches '
-                f'resulting in {allowed_records} facilities or less.'
+                "Downloads are supported only for searches resulting in "
+                f"{allowed} facilities or less."
             )
-
-    @staticmethod
-    def check_pagination(page_queryset):
-        if page_queryset is None:
-            raise ValidationError("Invalid pageSize parameter")
-        return page_queryset
 
     @staticmethod
     def register_download_if_needed(limit, record_count):
@@ -197,3 +187,57 @@ class FacilitiesDownloadService:
             raise ServiceUnavailableException(
                 "Payment service temporarily unavailable"
             )
+
+    @staticmethod
+    def fetch_page_and_cache(
+        base_qs,
+        request,
+        page: int,
+        page_size: int,
+        block: int,
+    ):
+        keyset_pag_service = KeysetPaginationService(base_qs, block)
+        prev_last_id = keyset_pag_service.get_page_cursor(
+            request,
+            page,
+            page_size
+        )
+
+        if page > 1 and prev_last_id is None:
+            return [], True
+
+        items, last_id, is_last_page = get_paginated_items_after_id(
+            base_qs,
+            page_size,
+            prev_last_id
+        )
+
+        if page >= 1:
+            set_page_bookmark(
+                create_query_hash(request, page_size),
+                page,
+                last_id
+            )
+
+        return items, is_last_page
+
+    @staticmethod
+    def build_page_links(
+        request,
+        page: int,
+        page_size: int,
+        is_last_page: bool
+    ):
+        base_qs_params = request.query_params.copy()
+
+        def make_link(target_page):
+            query = base_qs_params.copy()
+            query['page'] = target_page
+            query['pageSize'] = page_size
+            return request.build_absolute_uri(
+                '?' + urlencode(query, doseq=True)
+            )
+
+        next_link = None if is_last_page else make_link(page + 1)
+        prev_link = make_link(page - 1) if page > 1 else None
+        return next_link, prev_link

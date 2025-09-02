@@ -436,6 +436,18 @@ resource "aws_security_group_rule" "batch_msk_egress" {
   source_security_group_id = aws_security_group.msk.id
 }
 
+resource "aws_security_group_rule" "batch_db_sync_egress" {
+  count = var.environment == "Rba" ? 1 : 0
+
+  type      = "egress"
+  from_port = 2049
+  to_port   = 2049
+  protocol  = "tcp"
+
+  security_group_id        = aws_security_group.batch.id
+  source_security_group_id = aws_security_group.efs_db_sync[0].id
+}
+
 resource "aws_security_group_rule" "logstash_opensearch_ingress" {
   type      = "ingress"
   from_port = var.opensearch_port
