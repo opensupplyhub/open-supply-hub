@@ -548,6 +548,8 @@ class TestProductionLocationsPartialUpdate(APITestCase):
 
         self.user.can_partially_update_production_location = True
         self.user.save()
+        self.user.contributor.is_verified = True
+        self.user.contributor.save()
 
         self.production_location.country_code = 'US'
         self.production_location.save()
@@ -602,3 +604,32 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         response_body_dict = json.loads(response.content)
         self.assertIn('detail', response_body_dict)
         self.assertIn('errors', response_body_dict)
+
+    @patch('api.geocoding.requests.get')
+    def test_flagged_but_unverified_omitting_core_fields_gets_422(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        self.user.can_partially_update_production_location = True
+        self.user.save()
+
+        self.user.contributor.is_verified = False
+        self.user.contributor.save()
+
+        self.production_location.country_code = 'US'
+        self.production_location.save()
+
+        minimal_req_body = json.dumps({
+            'location_type': 'Coating',
+            'product_type': ['flagged-unverified-unique']
+        })
+
+        response = self.client.patch(
+            self.url,
+            minimal_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        body = json.loads(response.content)
+        self.assertIn('detail', body)
+        self.assertIn('errors', body)
