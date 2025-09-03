@@ -84,7 +84,9 @@ class OpenSearchService(SearchInterface):
     def search_index(self, index_name, query_body, params=None):
         try:
             safe_params = {
-                k: v for k, v in (params or {}).items() if v is not None
+                param_key: param_value
+                for param_key, param_value in (params or {}).items()
+                if param_value is not None
             }
             response = self.__client.search(
                 body=query_body, index=index_name, params=safe_params
