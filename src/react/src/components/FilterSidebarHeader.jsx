@@ -19,6 +19,7 @@ const FilterSidebarHeader = ({
     classes,
     embed,
     user,
+    isSameContributor,
 }) => (
     <div className={`${classes.header} results-height-subtract`}>
         <h1 className={classes.headerText}>
@@ -43,6 +44,7 @@ const FilterSidebarHeader = ({
         >
             <FeatureFlag
                 flag={PRIVATE_INSTANCE}
+                isSameContributor={isSameContributor}
                 alternative={<DownloadLimitInfo />}
             >
                 <></>
@@ -57,6 +59,7 @@ FilterSidebarHeader.propTypes = {
     embed: string.isRequired,
     classes: object.isRequired,
     user: userPropType.isRequired,
+    isSameContributor: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -71,6 +74,7 @@ const mapStateToProps = ({
     embed,
     facilitiesCount: get(facilities, 'count', null),
     user,
+    isSameContributor: get(facilities, 'is_same_contributor', false),
 });
 
 export default withStyles(filterSidebarHeaderStyles)(

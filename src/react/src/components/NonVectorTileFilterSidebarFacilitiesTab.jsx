@@ -3,10 +3,6 @@ import { arrayOf, bool, func, number, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogActions from '@material-ui/core/DialogActions';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
@@ -20,8 +16,6 @@ import includes from 'lodash/includes';
 import lowerCase from 'lodash/lowerCase';
 
 import ControlledTextInput from './ControlledTextInput';
-import DownloadFacilitiesButton from './DownloadFacilitiesButton';
-import FeatureFlag from './FeatureFlag';
 
 import {
     toggleFilterModal,
@@ -30,18 +24,13 @@ import {
 
 import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
-import {
-    authLoginFormRoute,
-    authRegisterFormRoute,
-    PRIVATE_INSTANCE,
-    FACILITIES_DOWNLOAD_LIMIT,
-} from '../util/constants';
-
 import { makeFacilityDetailLink, getValueFromEvent } from '../util/util';
 
 import COLOURS from '../util/COLOURS';
 
 import { filterSidebarStyles } from '../util/styles';
+import DownloadButtonWithFlags from './DownloadButtonWithFlags';
+import LoginRequiredDialog from './LoginRequiredDialog';
 
 const SEARCH_TERM_INPUT = 'SEARCH_TERM_INPUT';
 
@@ -111,6 +100,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
     updateFilterText,
     classes,
     user,
+    isSameContributor,
 }) {
     const [loginRequiredDialogIsOpen, setLoginRequiredDialogIsOpen] = useState(
         false,
@@ -215,47 +205,20 @@ function NonVectorTileFilterSidebarFacilitiesTab({
             ? `Displaying ${filteredFacilities.length} facilities of ${facilitiesCount} results`
             : `Displaying ${filteredFacilities.length} facilities`;
 
-    const LoginLink = props => <Link to={authLoginFormRoute} {...props} />;
-    const RegisterLink = props => (
-        <Link to={authRegisterFormRoute} {...props} />
-    );
-
     const listHeaderInsetComponent = (
         <div className={`${classes.listHeaderStyles} results-height-subtract`}>
             <Typography variant="subheading" align="center">
                 <div className={classes.titleRowStyles}>
                     {headerDisplayString}
-                    <FeatureFlag
-                        flag={PRIVATE_INSTANCE}
-                        alternative={
-                            <DownloadFacilitiesButton
-                                disabled={
-                                    embed &&
-                                    facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
-                                }
-                                upgrade={
-                                    !embed &&
-                                    facilitiesCount >
-                                        user.allowed_records_number
-                                }
-                                userAllowedRecords={user.allowed_records_number}
-                                setLoginRequiredDialogIsOpen={
-                                    setLoginRequiredDialogIsOpen
-                                }
-                                facilitiesCount={facilitiesCount}
-                            />
+                    <DownloadButtonWithFlags
+                        embed={!!embed}
+                        facilitiesCount={facilitiesCount}
+                        isSameContributor={!!isSameContributor}
+                        userAllowedRecords={user.allowed_records_number}
+                        setLoginRequiredDialogIsOpen={
+                            setLoginRequiredDialogIsOpen
                         }
-                    >
-                        <DownloadFacilitiesButton
-                            disabled={
-                                facilitiesCount > FACILITIES_DOWNLOAD_LIMIT
-                            }
-                            userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
-                            setLoginRequiredDialogIsOpen={
-                                setLoginRequiredDialogIsOpen
-                            }
-                        />
-                    </FeatureFlag>
+                    />
                 </div>
             </Typography>
             <div className={classes.listHeaderTextSearchStyles}>
@@ -322,52 +285,10 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                     />
                 </List>
             </div>
-            <Dialog open={loginRequiredDialogIsOpen}>
-                {loginRequiredDialogIsOpen ? (
-                    <>
-                        <DialogTitle>Log In To Download</DialogTitle>
-                        <DialogContent>
-                            <Typography>
-                                You must log in with an Open Supply Hub account
-                                before downloading your search results.
-                            </Typography>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button
-                                variant="outlined"
-                                color="secondary"
-                                onClick={() =>
-                                    setLoginRequiredDialogIsOpen(false)
-                                }
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() =>
-                                    setLoginRequiredDialogIsOpen(false)
-                                }
-                                component={RegisterLink}
-                            >
-                                Register
-                            </Button>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() =>
-                                    setLoginRequiredDialogIsOpen(false)
-                                }
-                                component={LoginLink}
-                            >
-                                Log In
-                            </Button>
-                        </DialogActions>
-                    </>
-                ) : (
-                    <div style={{ display: 'none' }} />
-                )}
-            </Dialog>
+            <LoginRequiredDialog
+                open={loginRequiredDialogIsOpen}
+                onClose={() => setLoginRequiredDialogIsOpen(false)}
+            />
         </Fragment>
     );
 }
@@ -376,6 +297,7 @@ NonVectorTileFilterSidebarFacilitiesTab.defaultProps = {
     data: null,
     error: null,
     user: null,
+    isSameContributor: false,
 };
 
 NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
@@ -388,6 +310,7 @@ NonVectorTileFilterSidebarFacilitiesTab.propTypes = {
     updateFilterText: func.isRequired,
     embed: bool.isRequired,
     user: userPropType,
+    isSameContributor: bool,
 };
 
 function mapStateToProps({
@@ -411,6 +334,7 @@ function mapStateToProps({
         filterText,
         windowHeight,
         embed: !!embed,
+        isSameContributor: get(data, 'is_same_contributor', false),
     };
 }
 

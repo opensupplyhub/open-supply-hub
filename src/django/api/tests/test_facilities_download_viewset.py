@@ -2,9 +2,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth.models import Group
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from api.models.user import User
+from api.models.contributor.contributor import Contributor
 from api.constants import FeatureGroups
 from api.models.facility_download_limit import FacilityDownloadLimit
 from django.utils import timezone
@@ -418,7 +419,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         user = self.create_user()
         self.login_user(user)
 
-        response = self.get_facility_downloads({"countries": "IN"})
+        response = self.get_facility_downloads({"countries": ["IN"]})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         expected_data = [
@@ -483,9 +484,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(limit.updated_at.date(), current_date.date())
 
     def test_old_user_has_release_date_in_updated_at(self):
-        # The record has been added to FacilityDownloadLimit.
         user = self.create_user()
-        # Simulation old user.
         FacilityDownloadLimit.objects.filter(user=user).delete()
         self.login_user(user)
         release_date = make_aware(datetime(2025, 7, 12))
@@ -518,8 +517,287 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         user = self.create_user(is_api_user=True)
         self.login_user(user)
 
-        # Make multiple downloads that would exceed the limit for regular
-        # users.
         for _ in range(5):
             response = self.get_facility_downloads()
             self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_is_same_contributor_true_when_all_facilities_belong_to_user(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="Test Contributor",
+            contrib_type="Brand / Retailer"
+        )
+
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.get_filtered_queryset'
+        ) as mock_get_queryset:
+            mock_queryset = MagicMock()
+            mock_facility = MagicMock()
+            mock_facility.contributors = [{'id': contributor.id}]
+            mock_queryset.__iter__.return_value = [mock_facility]
+            mock_queryset.count.return_value = 1
+            mock_get_queryset.return_value = mock_queryset
+
+            response = self.get_facility_downloads(
+                {'contributors': [str(contributor.id)]}
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertTrue(
+                response.data['results']['is_same_contributor']
+            )
+
+    def test_is_same_contributor_false_when_mixed_contributors(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="Test Contributor",
+            contrib_type="Brand / Retailer"
+        )
+
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.get_filtered_queryset'
+        ) as mock_get_queryset:
+            mock_queryset = MagicMock()
+            mock_facility1 = MagicMock()
+            mock_facility1.contributors = [{'id': contributor.id}]
+            mock_facility2 = MagicMock()
+            mock_facility2.contributors = [{'id': 999}]
+            mock_queryset.__iter__.return_value = [
+                mock_facility1,
+                mock_facility2
+            ]
+            mock_queryset.count.return_value = 2
+            mock_get_queryset.return_value = mock_queryset
+
+            response = self.get_facility_downloads(
+                {'contributors': [str(contributor.id)]}
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertFalse(
+                response.data['results']['is_same_contributor']
+            )
+
+    def test_is_same_contributor_false_when_user_has_no_contributor(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        response = self.get_facility_downloads({'contributors': ['123']})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            response.data['results']['is_same_contributor']
+        )
+
+    def test_is_same_contributor_with_combine_contributors_and_logic(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="Test Contributor",
+            contrib_type="Brand / Retailer"
+        )
+
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.get_filtered_queryset'
+        ) as mock_get_queryset:
+            mock_queryset = MagicMock()
+            mock_facility = MagicMock()
+            mock_facility.contributors = [
+                {'id': contributor.id},
+                {'id': 456}
+            ]
+            mock_queryset.__iter__.return_value = [mock_facility]
+            mock_queryset.count.return_value = 1
+            mock_get_queryset.return_value = mock_queryset
+
+            response = self.get_facility_downloads({
+                'contributors': [str(contributor.id), '456'],
+                'combine_contributors': 'AND'
+            })
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertTrue(
+                response.data['results']['is_same_contributor']
+            )
+
+    def test_multi_page_download_decrements_free_by_total_count(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        limit = FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=20,
+            paid_download_records=0,
+        )
+
+        # Request first page to get the total count from the payload
+        resp_page1 = self.get_facility_downloads({"pageSize": 10, "page": 1})
+        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
+        total_count = resp_page1.data.get("count")
+        self.assertIsNotNone(total_count)
+
+        # Quotas should remain unchanged after first page
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 20)
+        self.assertEqual(limit.paid_download_records, 0)
+
+        # Request last page to trigger quota registration using total_count
+        # Patch email/checkout to avoid external calls during tests
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.send_email_if_needed',
+            return_value=None
+        ):
+            resp_page2 = self.get_facility_downloads({
+                "pageSize": 10,
+                "page": 2
+            })
+        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+
+        limit.refresh_from_db()
+        expected_free = max(20 - total_count, 0)
+        self.assertEqual(limit.free_download_records, expected_free)
+        self.assertEqual(limit.paid_download_records, 0)
+
+    def test_multi_page_download_consumes_paid_when_free_insufficient(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        limit = FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=5,
+            paid_download_records=20,
+        )
+
+        resp_page1 = self.get_facility_downloads({"pageSize": 10, "page": 1})
+        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
+        total_count = resp_page1.data.get("count")
+        self.assertIsNotNone(total_count)
+
+        # Trigger decrement on last page
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.send_email_if_needed',
+            return_value=None
+        ):
+            resp_page2 = self.get_facility_downloads({
+                "pageSize": 10,
+                "page": 2
+            })
+        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 0)
+        expected_paid = max(20 - max(total_count - 5, 0), 0)
+        self.assertEqual(limit.paid_download_records, expected_paid)
+
+    def test_is_same_contributor_with_empty_queryset(self):
+        """Test is_same_contributor with empty queryset."""
+        user = self.create_user()
+        self.login_user(user)
+
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="Test Contributor",
+            contrib_type="Brand / Retailer"
+        )
+
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.get_filtered_queryset'
+        ) as mock_get_queryset:
+            mock_queryset = MagicMock()
+            mock_queryset.__iter__.return_value = []
+            mock_queryset.count.return_value = 0
+            mock_get_queryset.return_value = mock_queryset
+
+            response = self.get_facility_downloads(
+                {'contributors': [str(contributor.id)]}
+            )
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertFalse(
+                response.data['results']['is_same_contributor']
+            )
+
+    def test_is_same_contributor_with_multiple_contributors_or_logic(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="Test Contributor",
+            contrib_type="Brand / Retailer"
+        )
+
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.get_filtered_queryset'
+        ) as mock_get_queryset:
+            mock_queryset = MagicMock()
+            mock_facility = MagicMock()
+            mock_facility.contributors = [
+                {'id': contributor.id},
+                {'id': 456},
+                {'id': 789}
+            ]
+            mock_queryset.__iter__.return_value = [mock_facility]
+            mock_queryset.count.return_value = 1
+            mock_get_queryset.return_value = mock_queryset
+
+            response = self.get_facility_downloads({
+                'contributors': [str(contributor.id), '456']
+            })
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertTrue(
+                response.data['results']['is_same_contributor']
+            )
+
+
+def test_exhausted_quota_all_mine_still_allowed(self):
+    user = self.create_user()
+    self.login_user(user)
+
+    contributor = Contributor.objects.create(
+        admin=user,
+        name="Test Contributor",
+        contrib_type="Brand / Retailer"
+    )
+
+    limit = FacilityDownloadLimit.objects.create(
+        user=user,
+        free_download_records=0,
+        paid_download_records=0,
+    )
+
+    with patch(
+        'api.services.facilities_download_service.'
+        'FacilitiesDownloadService.get_filtered_queryset'
+    ) as mock_get_queryset:
+        mock_queryset = MagicMock()
+        mock_facility = MagicMock()
+        mock_facility.contributors = [{'id': contributor.id}]
+        mock_queryset.__iter__.return_value = [mock_facility]
+        mock_queryset.count.return_value = 1
+        mock_get_queryset.return_value = mock_queryset
+
+        resp = self.get_facility_downloads({
+            'contributors': [str(contributor.id)]
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        # Quotas must remain unchanged since it's an own-data download
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 0)
+        self.assertEqual(limit.paid_download_records, 0)
