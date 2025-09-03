@@ -107,17 +107,17 @@ class FacilitiesDownloadViewSet(
             payload['count'] = base_qs.count()
 
         if is_last_page and limit:
-            total_records = (page - 1) * page_size + len(items)
+            returned_count = len(items)
 
             prev_free_amount = getattr(limit, 'free_download_records', 0)
             prev_paid_amount = getattr(limit, 'paid_download_records', 0)
 
-            if total_records > 0:
-                FacilitiesDownloadService.register_download_if_needed(
-                    limit,
-                    total_records,
-                    is_same_contributor
-                )
+            FacilitiesDownloadService.register_download_if_needed(
+                limit,
+                returned_count,
+                is_same_contributor
+            )
+            if returned_count:
                 FacilitiesDownloadService.send_email_if_needed(
                     request,
                     limit,
