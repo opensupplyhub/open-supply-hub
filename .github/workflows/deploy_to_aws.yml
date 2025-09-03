@@ -530,7 +530,7 @@ jobs:
                        --query "DomainStatusList[].Endpoints.vpc" --output text)
           EFS_ID=$(aws \
                        efs describe-file-systems \
-                       --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{ vars.ENV_NAME }}']].FileSystemId" \
+                       --query "FileSystems[?Tags[?Key=='Environment' && Value=='${{ vars.ENV_NAME }}'] && Tags[?Key=='Name' && Value=='efsAppLogstash']].FileSystemId" \
                        --output text)
           EFS_AP_ID=$(aws \
                           efs describe-access-points \
