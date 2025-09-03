@@ -764,3 +764,40 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             self.assertTrue(
                 response.data['results']['is_same_contributor']
             )
+
+
+def test_exhausted_quota_all_mine_still_allowed(self):
+    user = self.create_user()
+    self.login_user(user)
+
+    contributor = Contributor.objects.create(
+        admin=user,
+        name="Test Contributor",
+        contrib_type="Brand / Retailer"
+    )
+
+    limit = FacilityDownloadLimit.objects.create(
+        user=user,
+        free_download_records=0,
+        paid_download_records=0,
+    )
+
+    with patch(
+        'api.services.facilities_download_service.'
+        'FacilitiesDownloadService.get_filtered_queryset'
+    ) as mock_get_queryset:
+        mock_queryset = MagicMock()
+        mock_facility = MagicMock()
+        mock_facility.contributors = [{'id': contributor.id}]
+        mock_queryset.__iter__.return_value = [mock_facility]
+        mock_queryset.count.return_value = 1
+        mock_get_queryset.return_value = mock_queryset
+
+        resp = self.get_facility_downloads({
+            'contributors': [str(contributor.id)]
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        # Quotas must remain unchanged since it's an own-data download
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 0)
+        self.assertEqual(limit.paid_download_records, 0)
