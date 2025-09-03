@@ -69,7 +69,7 @@ app_logstash_fargate_memory = 2048
 
 export_csv_enabled = false
 
-db_sync_timeout_minutes = 120
+db_sync_timeout_minutes = 1440
 db_sync_max_retries     = 3
 
 instance_source = "rba"
