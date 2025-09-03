@@ -653,7 +653,13 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(limit.paid_download_records, 0)
 
         # Request last page to trigger quota registration using total_count
-        resp_page2 = self.get_facility_downloads({"pageSize": 10, "page": 2})
+        # Patch email/checkout to avoid external calls during tests
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.send_email_if_needed',
+            return_value=None
+        ):
+            resp_page2 = self.get_facility_downloads({"pageSize": 10, "page": 2})
         self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
 
         limit.refresh_from_db()
@@ -677,7 +683,12 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertIsNotNone(total_count)
 
         # Trigger decrement on last page
-        resp_page2 = self.get_facility_downloads({"pageSize": 10, "page": 2})
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.send_email_if_needed',
+            return_value=None
+        ):
+            resp_page2 = self.get_facility_downloads({"pageSize": 10, "page": 2})
         self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
 
         limit.refresh_from_db()
