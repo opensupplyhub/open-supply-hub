@@ -107,7 +107,8 @@ class FacilitiesDownloadViewSet(
             payload['count'] = base_qs.count()
 
         if is_last_page and limit:
-            returned_count = len(items)
+            # Charge for the full result set, not just the last page size
+            returned_count = base_qs.count()
 
             prev_free_amount = getattr(limit, 'free_download_records', 0)
             prev_paid_amount = getattr(limit, 'paid_download_records', 0)

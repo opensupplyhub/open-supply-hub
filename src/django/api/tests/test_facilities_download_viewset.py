@@ -631,6 +631,60 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 response.data['results']['is_same_contributor']
             )
 
+    def test_multi_page_download_decrements_free_by_total_count(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        limit = FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=20,
+            paid_download_records=0,
+        )
+
+        # Request first page to get the total count from the payload
+        resp_page1 = self.get_facility_downloads({"pageSize": 10, "page": 1})
+        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
+        total_count = resp_page1.data.get("count")
+        self.assertIsNotNone(total_count)
+
+        # Quotas should remain unchanged after first page
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 20)
+        self.assertEqual(limit.paid_download_records, 0)
+
+        # Request last page to trigger quota registration using total_count
+        resp_page2 = self.get_facility_downloads({"pageSize": 10, "page": 2})
+        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+
+        limit.refresh_from_db()
+        expected_free = max(20 - total_count, 0)
+        self.assertEqual(limit.free_download_records, expected_free)
+        self.assertEqual(limit.paid_download_records, 0)
+
+    def test_multi_page_download_consumes_paid_when_free_insufficient(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        limit = FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=5,
+            paid_download_records=20,
+        )
+
+        resp_page1 = self.get_facility_downloads({"pageSize": 10, "page": 1})
+        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
+        total_count = resp_page1.data.get("count")
+        self.assertIsNotNone(total_count)
+
+        # Trigger decrement on last page
+        resp_page2 = self.get_facility_downloads({"pageSize": 10, "page": 2})
+        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 0)
+        expected_paid = max(20 - max(total_count - 5, 0), 0)
+        self.assertEqual(limit.paid_download_records, expected_paid)
+
     def test_is_same_contributor_with_empty_queryset(self):
         """Test is_same_contributor with empty queryset."""
         user = self.create_user()
