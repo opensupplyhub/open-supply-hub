@@ -235,6 +235,7 @@ class ProductionLocations(ViewSet):
         os = Facility.objects.get(id=pk)
 
         payload = dict(request.data)
+        '''
         if getattr(request.user,
                    'can_partially_update_production_location',
                    False):
@@ -244,6 +245,7 @@ class ProductionLocations(ViewSet):
                 payload['address'] = os.address
             if 'country' not in payload:
                 payload['country'] = os.country_code
+        '''
 
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(

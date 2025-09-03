@@ -15,8 +15,6 @@ from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_location import FacilityLocation
 from api.models.facility.facility_alias import FacilityAlias
 from api.models.moderation_event import ModerationEvent
-from api.models.contributor.contributor import Contributor
-from api.models.user import User
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -123,19 +121,3 @@ for model in [
     FacilityLocation
 ]:
     post_save.connect(set_origin_source_on_create, sender=model)
-
-
-@receiver(post_save, sender=Contributor)
-def sync_user_flag_with_contributor_verification(instance, **kwargs):
-    try:
-        user = instance.admin
-        if not instance.is_verified:
-            if user.can_partially_update_production_location:
-                User.objects.filter(pk=user.pk).update(
-                    can_partially_update_production_location=False
-                )
-    except Exception as exc:
-        log.error(
-            '[User field update] Failed to sync user partial update flag with '
-            f'contributor verification change: {exc}'
-        )
