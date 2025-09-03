@@ -11,6 +11,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
+* [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
+
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

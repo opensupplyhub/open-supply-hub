@@ -1,7 +1,6 @@
 import React from 'react';
 import { arrayOf, bool, node } from 'prop-types';
 import { connect } from 'react-redux';
-import includes from 'lodash/includes';
 
 import { featureFlagPropType } from '../util/propTypes';
 
@@ -16,20 +15,21 @@ function FeatureFlag({
     alternative,
     activeFeatureFlags,
     fetching,
+    isSameContributor,
 }) {
     if (fetching) {
         return null;
     }
 
-    if (!includes(activeFeatureFlags, flag)) {
-        return alternative;
-    }
+    const shouldRenderChildren =
+        isSameContributor || activeFeatureFlags.includes(flag);
 
-    return <>{children}</>;
+    return shouldRenderChildren ? <>{children}</> : alternative;
 }
 
 FeatureFlag.defaultProps = {
     alternative: null,
+    isSameContributor: false,
 };
 
 FeatureFlag.propTypes = {
@@ -38,6 +38,7 @@ FeatureFlag.propTypes = {
     alternative: node,
     activeFeatureFlags: arrayOf(featureFlagPropType).isRequired,
     fetching: bool.isRequired,
+    isSameContributor: bool,
 };
 
 function mapStateToProps({
