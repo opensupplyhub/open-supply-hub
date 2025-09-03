@@ -79,3 +79,22 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             raise serializers.ValidationError(errors)
 
         return data
+
+
+class ProductionLocationPostSchemaSerializer(ProductionLocationSchemaSerializer):
+    pass
+
+
+class ProductionLocationPatchSchemaSerializer(ProductionLocationSchemaSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in ('name', 'address', 'country'):
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+
+    def validate(self, data):
+        if not data:
+            raise serializers.ValidationError([
+                {'field': 'non_field_errors', 'detail': 'No fields provided.'}
+            ])
+        return super().validate(data)

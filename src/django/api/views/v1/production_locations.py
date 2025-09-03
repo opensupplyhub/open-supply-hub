@@ -232,7 +232,7 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        os = Facility.objects.get(id=pk)
+        # os = Facility.objects.get(id=pk)
 
         payload = dict(request.data)
         '''
@@ -246,8 +246,10 @@ class ProductionLocations(ViewSet):
             if 'country' not in payload:
                 payload['country'] = os.country_code
         '''
+        print('payload', payload)
 
         location_contribution_strategy = LocationContribution()
+        print('location_contribution_strategy', location_contribution_strategy)
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
         )

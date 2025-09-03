@@ -17,8 +17,12 @@ from api.constants import (
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY
 )
+from api.models.moderation_event import ModerationEvent
 from api.serializers.v1.production_location_schema_serializer \
-    import ProductionLocationSchemaSerializer
+    import (
+        ProductionLocationPostSchemaSerializer,
+        ProductionLocationPatchSchemaSerializer,
+    )
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import ErrorDetail
 
@@ -35,7 +39,15 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             event_dto.raw_data
         )
 
-        serializer = ProductionLocationSchemaSerializer(data=cc_ready_data)
+        # Choose serializer per request type (POST vs PATCH)
+        if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
+            serializer = ProductionLocationPostSchemaSerializer(
+                data=cc_ready_data
+            )
+        else:
+            serializer = ProductionLocationPatchSchemaSerializer(
+                data=cc_ready_data
+            )
 
         try:
             serializer.is_valid(raise_exception=True)
