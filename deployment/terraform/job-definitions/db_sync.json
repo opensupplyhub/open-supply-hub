@@ -11,6 +11,7 @@
     "--source-name", "${source_db_name}",
     "--source-user", "${source_db_user}",
     "--source-password", "${source_db_password}",
+    "--chunk-size", "${chunk_size}",
     "--last-run-path", "/db-sync",
     "--verbose"
   ],

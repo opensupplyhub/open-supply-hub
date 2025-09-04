@@ -912,6 +912,12 @@ variable "source_db_password" {
   sensitive   = true
 }
 
+variable "db_sync_chunk_size" {
+  description = "Chunk size for a table in source database for database sync"
+  type        = number
+  default     = 1000
+}
+
 variable "db_sync_timeout_minutes" {
   description = "Timeout for database sync job in minutes"
   type        = number

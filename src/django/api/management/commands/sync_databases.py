@@ -234,19 +234,22 @@ class DatabaseSynchronizer:
         }
     }
 
-    def __init__(self, source_db_config, dry_run=False,
-                 last_run_path=None):
+    def __init__(self, source_db_config, chunk_size=1000,
+                 dry_run=False, last_run_path=None):
         '''
         Initialize the synchronizer with database configurations.
 
         Args:
             source_db_config (dict): Configuration for source database.
+            chunk_size (int): Chunk size for processing records from
+                a table in source database.
             dry_run (bool): If True, don't actually make changes, just log what
                 would be done.
             last_run_path (str): Path to store last run metadata for each
                 model.
         '''
         self.__source_config = source_db_config
+        self.__chunk_size = chunk_size
         self.__dry_run = dry_run
         self.__last_run_path = last_run_path or '/tmp/sync_databases_last_run'
 
@@ -348,13 +351,13 @@ class DatabaseSynchronizer:
 
         try:
             # Get only records updated since last run.
-            source_records = list(
-                model_class.objects.using('source')
-                .filter(updated_at__gt=last_run)
-                .order_by('updated_at')
-            )
-            logger.info(f'Found {len(source_records)} records updated since '
-                        f'last run in source model {model_name}')
+            source_records = model_class.objects.using('source').filter(
+                updated_at__gt=last_run
+            ).order_by('updated_at').iterator(
+                chunk_size=self.__chunk_size)
+
+            logger.info(f'Created iterator for {model_name} with chunk size '
+                        f'{self.__chunk_size}.')
 
             # Process each record.
             last_processed_timestamp = None
@@ -394,6 +397,9 @@ class DatabaseSynchronizer:
         '''Process a single record for synchronization.'''
         # Check if record exists in target by sync field
         try:
+            logger.debug(f'Starting processing record with {sync_field}='
+                         f'{getattr(source_record, sync_field)} in '
+                         f'{model_name}.')
             existing_record = model_class.objects.get(
                 **{sync_field: getattr(source_record, sync_field)}
             )
@@ -676,14 +682,12 @@ class DatabaseSynchronizer:
                     f'updates: {last_run}')
 
         # Query source records by updated_at.
-        source_list_items = (
-            FacilityListItem.objects.using('source')
-            .filter(updated_at__gt=last_run)
-            .order_by('updated_at')
-        )
+        source_list_items = FacilityListItem.objects.using('source').filter(
+            updated_at__gt=last_run
+        ).order_by('updated_at').iterator(chunk_size=self.__chunk_size)
 
-        logger.info(f'Found {source_list_items.count()} source '
-                    'FacilityListItem records updated since last run.')
+        logger.info('Created iterator for FacilityListItem facility updates '
+                    f'with chunk_size={self.__chunk_size}.')
 
         updated_count = 0
         cleared_count = 0
@@ -868,6 +872,13 @@ class Command(BaseCommand):
             help='Source database password'
         )
         parser.add_argument(
+            '--chunk-size',
+            type=int,
+            default=1000,
+            help='Chunk size for processing records from a table in source '
+                 'database (default: 1000)'
+        )
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Show what would be done without making changes'
@@ -905,6 +916,7 @@ class Command(BaseCommand):
             # Create and run synchronizer.
             synchronizer = DatabaseSynchronizer(
                 source_config,
+                chunk_size=options['chunk_size'],
                 dry_run=options['dry_run'],
                 last_run_path=options['last_run_path']
             )
