@@ -118,7 +118,9 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             default_required_fields = fetch_required_fields(event_dto.os.id)
             for field in ('name', 'address', 'country'):
                 if field not in cc_ready_data or not cc_ready_data.get(field):
-                    cc_ready_data[field] = default_required_fields.get(field, '')
+                    cc_ready_data[field] = (
+                        default_required_fields.get(field, '')
+                    )
 
         return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
 
