@@ -18,6 +18,7 @@ from api.constants import (
     NON_FIELD_ERRORS_KEY
 )
 from api.models.moderation_event import ModerationEvent
+from api.services.production_locations_lookup import fetch_required_fields
 from api.serializers.v1.production_location_schema_serializer \
     import (
         ProductionLocationPostSchemaSerializer,
@@ -39,15 +40,26 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             event_dto.raw_data
         )
 
-        # Choose serializer per request type (POST vs PATCH)
+        # Choose serializer per request type (POST vs PATCH) to handle required fields
         if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
             serializer = ProductionLocationPostSchemaSerializer(
                 data=cc_ready_data
             )
         else:
-            serializer = ProductionLocationPatchSchemaSerializer(
-                data=cc_ready_data
-            )
+            # Perform lookup for required fields for PATCH requests
+            if event_dto.os:
+                default_required_fields = \
+                    fetch_required_fields(event_dto.os.id)
+                for field in ('name', 'address', 'country'):
+                    if (
+                        field not in cc_ready_data or
+                        not cc_ready_data.get(field)
+                    ):
+                        cc_ready_data[field] = \
+                            default_required_fields.get(field, '')
+                serializer = ProductionLocationPatchSchemaSerializer(
+                    data=cc_ready_data
+                )
 
         try:
             serializer.is_valid(raise_exception=True)

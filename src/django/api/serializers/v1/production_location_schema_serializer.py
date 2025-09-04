@@ -81,11 +81,15 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         return data
 
 
-class ProductionLocationPostSchemaSerializer(ProductionLocationSchemaSerializer):
+class ProductionLocationPostSchemaSerializer(
+    ProductionLocationSchemaSerializer
+):
     pass
 
 
-class ProductionLocationPatchSchemaSerializer(ProductionLocationSchemaSerializer):
+class ProductionLocationPatchSchemaSerializer(
+    ProductionLocationSchemaSerializer
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in ('name', 'address', 'country'):
