@@ -57,7 +57,6 @@ class ContriCleaner:
     def process_data(self) -> ListDTO:
         try:
             parsed_rows = self.__parse_data()
-            print('@@@ parsed_rows', parsed_rows)
         except ParsingError as err:
             return ListDTO(errors=[{
                 'message': str(err),
@@ -98,7 +97,6 @@ class ContriCleaner:
         return parsing_executor
 
     def __setup_handlers(self) -> ListRowHandler:
-        print('@@@ setting up handlers')
         handlers = (
             PreValidationHandler(),
             SerializationHandler(
