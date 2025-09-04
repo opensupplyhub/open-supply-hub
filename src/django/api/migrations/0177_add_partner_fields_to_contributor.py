@@ -1,6 +1,5 @@
 from django.db import migrations, models
 import uuid
-from api.models.partner_field import TYPES
 
 class Migration(migrations.Migration):
     """
