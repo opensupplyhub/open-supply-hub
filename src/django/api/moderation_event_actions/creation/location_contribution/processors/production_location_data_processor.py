@@ -40,7 +40,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             event_dto.raw_data
         )
 
-        # Choose serializer per request type (POST vs PATCH) to handle required fields
+        # Choose serializer per request type (POST vs PATCH) 
+        # to handle required fields
         if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
             serializer = ProductionLocationPostSchemaSerializer(
                 data=cc_ready_data
