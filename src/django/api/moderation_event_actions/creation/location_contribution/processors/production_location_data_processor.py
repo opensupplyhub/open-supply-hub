@@ -41,26 +41,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         )
 
         # Choose serializer per request type (POST vs PATCH)
-        # to handle required fields
-        if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
-            serializer = ProductionLocationPostSchemaSerializer(
-                data=cc_ready_data
-            )
-        else:
-            # Perform lookup for required fields for PATCH requests
-            if event_dto.os:
-                default_required_fields = \
-                    fetch_required_fields(event_dto.os.id)
-                for field in ('name', 'address', 'country'):
-                    if (
-                        field not in cc_ready_data or
-                        not cc_ready_data.get(field)
-                    ):
-                        cc_ready_data[field] = \
-                            default_required_fields.get(field, '')
-                serializer = ProductionLocationPatchSchemaSerializer(
-                    data=cc_ready_data
-                )
+        serializer = self.__prepare_serializer(cc_ready_data, event_dto)
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -124,6 +105,22 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         event_dto.cleaned_data = dict(processed_location_object._asdict())
 
         return super().process(event_dto)
+
+    @staticmethod
+    def __prepare_serializer(cc_ready_data: Dict,
+                             event_dto: CreateModerationEventDTO):
+        """Builds an appropriate serializer and applies PATCH backfill."""
+        if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
+            return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
+
+        # Perform lookup for required fields for PATCH requests
+        if event_dto.os:
+            default_required_fields = fetch_required_fields(event_dto.os.id)
+            for field in ('name', 'address', 'country'):
+                if field not in cc_ready_data or not cc_ready_data.get(field):
+                    cc_ready_data[field] = default_required_fields.get(field, '')
+
+        return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
 
     @staticmethod
     def __extract_data_for_contri_cleaner(input_raw_data: Dict) -> Dict:
