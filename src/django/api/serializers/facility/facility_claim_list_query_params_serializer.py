@@ -20,3 +20,7 @@ class FacilityClaimListQueryParamsSerializer(Serializer):
         child=CharField(required=False),
         required=False,
     )
+    claim_reasons = ListField(
+        child=CharField(required=False),
+        required=False,
+    )

@@ -54,7 +54,8 @@ from api.models import (
     FacilityLocation,
     FacilityMatch,
     ExtendedField,
-    Version
+    Version,
+    ClaimsReason
 )
 from api.constants import (
     FeatureGroups,
@@ -239,15 +240,13 @@ class FacilitiesViewSet(ListModelMixin,
         order_list = []
 
         if (sort_by is None) or (sort_by == 'contributors_desc'):
-            order_list = ['-contributors_count', 'name']
+            queryset = queryset.order_by('-contributors_count', 'name')
         elif (sort_by == 'name_asc'):
-            order_list = ['name']
+            queryset = queryset.order_by('name')
         elif (sort_by == 'name_desc'):
-            order_list = ['-name']
+            queryset = queryset.order_by('-name')
         elif (sort_by == 'contributors_asc'):
-            order_list = ['contributors_count', 'name']
-
-        queryset = queryset.extra(order_by=order_list)
+            queryset = queryset.order_by('contributors_count', 'name')
 
         page_queryset = self.paginate_queryset(queryset)
 
@@ -893,6 +892,7 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_workers_count=validated_data.get(
                     "number_of_workers"
                 ),
+                claim_reason=validated_data.get("claim_reason"),
             )
 
             sectors = validated_data.get("sectors")
@@ -900,6 +900,19 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_claim.sector = sectors
 
             facility_claim.save()
+
+            # If a claim_reason was provided and it doesn't exist as a ClaimsReason,
+            # create a new ClaimsReason entry (for "Other" custom reasons)
+            claim_reason = validated_data.get("claim_reason")
+            if claim_reason and claim_reason.strip():
+                # Check if this reason already exists in ClaimsReason table
+                if not ClaimsReason.objects.filter(text=claim_reason.strip()).exists():
+                    # Create a new ClaimsReason entry for this custom reason
+                    # Set is_active=False so admins can review and approve it
+                    ClaimsReason.objects.create(
+                        text=claim_reason.strip(),
+                        is_active=False
+                    )
 
             for file in files:
                 self.__handle_file_upload(
