@@ -130,39 +130,47 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                             default_required_fields.get(field, '')
                         )
             else:
-                required_fields = ('name', 'address', 'country')
-
-                def _provided(v):
-                    return v is not None and v != ''
-
-                # Enforce coupling on the CLIENT payload (no backfill yet)
-                provided = [f for f in required_fields if (
-                    _provided(event_dto.raw_data.get(f))
-                )]
-                missing = [f for f in required_fields if f not in provided]
-
-                # If some (but not all) core fields are provided, raise a 422
-                if 0 < len(provided) < len(required_fields):
-                    verb = 'is' if len(provided) == 1 else 'are'
-                    provided_list = ', '.join(provided)
-                    raise HandleAllRequiredFields(
-                        detail={
-                            "detail": (
-                                APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                            ),
-                            "errors": [
-                                {
-                                    "field": m,
-                                    "detail": (
-                                        f"Field {m} is required when "
-                                        f"{provided_list} {verb} provided."
-                                    ),
-                                }
-                                for m in missing
-                            ]
-                        })
+                ProductionLocationDataProcessor. \
+                    __handle_all_required_fields_errors(event_dto)
 
         return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
+
+    @staticmethod
+    def __handle_all_required_fields_errors(
+        event_dto: CreateModerationEventDTO
+    ):
+
+        required_fields = ('name', 'address', 'country')
+
+        def _provided(v):
+            return v is not None and v != ''
+
+        # Enforce coupling on the CLIENT payload (no backfill yet)
+        provided = [field for field in required_fields if (
+            _provided(event_dto.raw_data.get(field))
+        )]
+        missing = [field for field in required_fields if field not in provided]
+
+        # If some (but not all) core fields are provided, raise a 422
+        if 0 < len(provided) < len(required_fields):
+            verb = 'is' if len(provided) == 1 else 'are'
+            provided_list = ', '.join(provided)
+            raise HandleAllRequiredFields(
+                detail={
+                    "detail": (
+                        APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    ),
+                    "errors": [
+                        {
+                            "field": m,
+                            "detail": (
+                                f"Field {m} is required when "
+                                f"{provided_list} {verb} provided."
+                            ),
+                        }
+                        for m in missing
+                    ]
+                })
 
     @staticmethod
     def __extract_data_for_contri_cleaner(input_raw_data: Dict) -> Dict:
