@@ -1,4 +1,3 @@
-# api/services/production_location_defaults.py
 from typing import Dict
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
