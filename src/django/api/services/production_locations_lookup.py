@@ -1,10 +1,6 @@
-import logging
-
 from typing import Dict
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
-
-log = logging.getLogger(__name__)
 
 
 def fetch_required_fields(os_id: str) -> Dict[str, str]:
@@ -18,7 +14,6 @@ def fetch_required_fields(os_id: str) -> Dict[str, str]:
         .first()
     )
     if promoted and promoted.name:
-        log.info(f"[Production locations lookup] Found promoted match for {os_id}: {promoted.name}")
         return {
             'name': promoted.name,
             'address': promoted.address or '',
@@ -32,7 +27,6 @@ def fetch_required_fields(os_id: str) -> Dict[str, str]:
         .first()
     )
     if latest:
-        log.info(f"[Production locations lookup] Found latest list item for {os_id}: {latest.name}")
         return {
             'name': latest.name or '',
             'address': latest.address or '',
@@ -40,9 +34,15 @@ def fetch_required_fields(os_id: str) -> Dict[str, str]:
         }
 
     os = Facility.objects.get(id=os_id)
-    log.info(f"[Production locations lookup] Found facility for {os_id}: {os.name}")
     return {
         'name': os.name,
         'address': os.address,
         'country': os.country_code,
     }
+
+
+def is_required_field_missing(data: Dict) -> bool:
+    return all(
+        not data.get(field)
+        for field in ('name', 'address', 'country')
+    )
