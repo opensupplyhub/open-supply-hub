@@ -234,19 +234,22 @@ class DatabaseSynchronizer:
         }
     }
 
-    def __init__(self, source_db_config, dry_run=False,
-                 last_run_path=None):
+    def __init__(self, source_db_config, chunk_size=1000,
+                 dry_run=False, last_run_path=None):
         '''
         Initialize the synchronizer with database configurations.
 
         Args:
             source_db_config (dict): Configuration for source database.
+            chunk_size (int): Chunk size for processing records from
+                a table in source database.
             dry_run (bool): If True, don't actually make changes, just log what
                 would be done.
             last_run_path (str): Path to store last run metadata for each
                 model.
         '''
         self.__source_config = source_db_config
+        self.__chunk_size = chunk_size
         self.__dry_run = dry_run
         self.__last_run_path = last_run_path or '/tmp/sync_databases_last_run'
 
@@ -348,13 +351,13 @@ class DatabaseSynchronizer:
 
         try:
             # Get only records updated since last run.
-            source_records = list(
-                model_class.objects.using('source')
-                .filter(updated_at__gt=last_run)
-                .order_by('updated_at')
-            )
-            logger.info(f'Found {len(source_records)} records updated since '
-                        f'last run in source model {model_name}')
+            source_records = model_class.objects.using('source').filter(
+                updated_at__gt=last_run
+            ).order_by('updated_at').iterator(
+                chunk_size=self.__chunk_size)
+
+            logger.info(f'Created iterator for {model_name} with chunk size '
+                        f'{self.__chunk_size}.')
 
             # Process each record.
             last_processed_timestamp = None
@@ -394,6 +397,9 @@ class DatabaseSynchronizer:
         '''Process a single record for synchronization.'''
         # Check if record exists in target by sync field
         try:
+            logger.info(f'Starting processing record with {sync_field}='
+                        f'{getattr(source_record, sync_field)} in '
+                        f'{model_name}.')
             existing_record = model_class.objects.get(
                 **{sync_field: getattr(source_record, sync_field)}
             )
@@ -404,9 +410,9 @@ class DatabaseSynchronizer:
                                  foreign_keys, model_name, excluded_fields,
                                  pk_type, sync_field)
             self.__stats['updates'] += 1
-            logger.debug(f'Updated record with {sync_field}='
-                         f'{getattr(source_record, sync_field)} in '
-                         f'{model_name}.')
+            logger.info(f'Updated record with {sync_field}='
+                        f'{getattr(source_record, sync_field)} in '
+                        f'{model_name}.')
 
         except model_class.DoesNotExist:
             # Record doesn't exist - insert it.
@@ -414,9 +420,9 @@ class DatabaseSynchronizer:
                                  pk_type, foreign_keys, model_name,
                                  excluded_fields)
             self.__stats['inserts'] += 1
-            logger.debug(f'Inserted record with {sync_field}='
-                         f'{getattr(source_record, sync_field)} in '
-                         f'{model_name}.')
+            logger.info(f'Inserted record with {sync_field}='
+                        f'{getattr(source_record, sync_field)} in '
+                        f'{model_name}.')
 
     def __insert_record(self, model_class, source_record, sync_field, pk_type,
                         foreign_keys, model_name, excluded_fields):
@@ -572,8 +578,8 @@ class DatabaseSynchronizer:
             # Find the corresponding facility in target DB using ID directly.
             try:
                 target_facility = Facility.objects.get(id=facility_id)
-                logger.debug(f'Found target facility {target_facility} '
-                             f'for ID {facility_id} in target DB.')
+                logger.info(f'Found target facility {target_facility} '
+                            f'for ID {facility_id} in target DB.')
             except Facility.DoesNotExist:
                 logger.warning(f'Facility with ID {facility_id} not found in '
                                f'target DB for {model_name}.')
@@ -607,9 +613,9 @@ class DatabaseSynchronizer:
                 )
             )
             referenced_uuid = getattr(referenced_source_record, 'uuid')
-            logger.debug(f'Found UUID {referenced_uuid} for '
-                         f'{referenced_model.__name__} ID '
-                         f'{original_fk_value} in source DB.')
+            logger.info(f'Found UUID {referenced_uuid} for '
+                        f'{referenced_model.__name__} ID '
+                        f'{original_fk_value} in source DB.')
         except referenced_model.DoesNotExist:
             logger.warning(f'Referenced {referenced_model.__name__} '
                            f'with ID {original_fk_value} not found in '
@@ -623,8 +629,8 @@ class DatabaseSynchronizer:
                     uuid=referenced_uuid
                 )
             )
-            logger.debug(f'Found target record {referenced_target_record} '
-                         f'for UUID {referenced_uuid} in target DB.')
+            logger.info(f'Found target record {referenced_target_record} '
+                        f'for UUID {referenced_uuid} in target DB.')
         except referenced_model.DoesNotExist:
             logger.warning(f'Referenced {referenced_model.__name__} '
                            f'with UUID {referenced_uuid} not found in '
@@ -676,14 +682,12 @@ class DatabaseSynchronizer:
                     f'updates: {last_run}')
 
         # Query source records by updated_at.
-        source_list_items = (
-            FacilityListItem.objects.using('source')
-            .filter(updated_at__gt=last_run)
-            .order_by('updated_at')
-        )
+        source_list_items = FacilityListItem.objects.using('source').filter(
+            updated_at__gt=last_run
+        ).order_by('updated_at').iterator(chunk_size=self.__chunk_size)
 
-        logger.info(f'Found {source_list_items.count()} source '
-                    'FacilityListItem records updated since last run.')
+        logger.info('Created iterator for FacilityListItem facility updates '
+                    f'with chunk_size={self.__chunk_size}.')
 
         updated_count = 0
         cleared_count = 0
@@ -714,9 +718,9 @@ class DatabaseSynchronizer:
                                 target_list_item.facility = target_facility
                                 target_list_item.save()
                                 updated_count += 1
-                                logger.debug('Updated FacilityListItem '
-                                             f'{target_list_item.id} facility '
-                                             f'to {target_facility.id}.')
+                                logger.info('Updated FacilityListItem '
+                                            f'{target_list_item.id} facility '
+                                            f'to {target_facility.id}.')
                         except Facility.DoesNotExist:
                             logger.warning('Could not find Facility with ID '
                                            f'{source_list_item.facility.id} '
@@ -730,14 +734,14 @@ class DatabaseSynchronizer:
                             target_list_item.facility = None
                             target_list_item.save()
                             cleared_count += 1
-                            logger.debug('Cleared facility for '
-                                         f'FacilityListItem '
-                                         f'{target_list_item.id} '
-                                         '(source has no facility).')
+                            logger.info('Cleared facility for '
+                                        f'FacilityListItem '
+                                        f'{target_list_item.id} '
+                                        '(source has no facility).')
                         else:
-                            logger.debug(f'FacilityListItem '
-                                         f'{target_list_item.id} '
-                                         'already has no facility reference.')
+                            logger.info(f'FacilityListItem '
+                                        f'{target_list_item.id} '
+                                        'already has no facility reference.')
 
                     # Track the timestamp of the last processed record.
                     last_processed_timestamp = source_list_item.updated_at
@@ -817,8 +821,8 @@ class DatabaseSynchronizer:
         try:
             with open(last_run_file, 'w') as f:
                 f.write(timestamp.isoformat())
-            logger.debug(f'Saved last run timestamp '
-                         f'for {model_name}: {timestamp}.')
+            logger.info(f'Saved last run timestamp '
+                        f'for {model_name}: {timestamp}.')
         except IOError as e:
             logger.exception(
                 f'Could not save last run timestamp for {model_name}: {e}.'
@@ -868,14 +872,16 @@ class Command(BaseCommand):
             help='Source database password'
         )
         parser.add_argument(
+            '--chunk-size',
+            type=int,
+            default=1000,
+            help='Chunk size for processing records from a table in source '
+                 'database (default: 1000)'
+        )
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Show what would be done without making changes'
-        )
-        parser.add_argument(
-            '--verbose',
-            action='store_true',
-            help='Enable verbose logging'
         )
         parser.add_argument(
             '--last-run-path',
@@ -886,12 +892,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # Setup logging.
-        if options['verbose']:
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.INFO)
-
         # Build database configurations.
         source_config = {
             'HOST': options['source_host'],
@@ -905,6 +905,7 @@ class Command(BaseCommand):
             # Create and run synchronizer.
             synchronizer = DatabaseSynchronizer(
                 source_config,
+                chunk_size=options['chunk_size'],
                 dry_run=options['dry_run'],
                 last_run_path=options['last_run_path']
             )
