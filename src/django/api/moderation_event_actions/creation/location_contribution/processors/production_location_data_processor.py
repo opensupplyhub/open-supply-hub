@@ -141,6 +141,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
     ):
 
         required_fields = ('name', 'address', 'country')
+        coords_present = bool(event_dto.raw_data.get('coordinates'))
 
         def _provided(v):
             return v is not None and v != ''
@@ -151,7 +152,27 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         )]
         missing = [field for field in required_fields if field not in provided]
 
-        # If some (but not all) core fields are provided, raise a 422
+        # If coordinates are provided but not all
+        # required fields are present, raise 422
+        # TODO: this should be done in the upper level because if no fields at all, we passes needs_backfill
+        if coords_present and len(provided) < len(required_fields):
+            raise HandleAllRequiredFields(
+                detail={
+                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    "errors": [
+                        {
+                            "field": m,
+                            "detail": (
+                                "Field {0} is required when coordinates are "
+                                "provided."
+                            ).format(m),
+                        }
+                        for m in missing
+                    ]
+                }
+            )
+
+        # If some (but not all) required fields are provided, raise a 422
         if 0 < len(provided) < len(required_fields):
             verb = 'is' if len(provided) == 1 else 'are'
             provided_list = ', '.join(provided)
