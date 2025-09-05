@@ -918,12 +918,6 @@ variable "db_sync_chunk_size" {
   default     = 1000
 }
 
-variable "db_sync_timeout_minutes" {
-  description = "Timeout for database sync job in minutes"
-  type        = number
-  default     = 120
-}
-
 variable "db_sync_max_retries" {
   description = "Maximum number of retries for failed sync operations"
   type        = number

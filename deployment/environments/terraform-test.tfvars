@@ -16,7 +16,7 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "256"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
-rds_instance_type = "db.m6in.4xlarge"
+rds_instance_type = "db.t3.2xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
@@ -76,9 +76,3 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
-
-db_sync_enabled                   = true
-db_sync_schedule_expression       = "cron(0 7 * * ? *)" # (7:00 AM UTC)
-is_database_private_link_consumer = true
-db_sync_timeout_minutes = 25200
-db_sync_chunk_size = 50000

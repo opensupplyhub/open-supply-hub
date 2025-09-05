@@ -437,7 +437,7 @@ resource "aws_security_group_rule" "batch_msk_egress" {
 }
 
 resource "aws_security_group_rule" "batch_db_sync_egress" {
-  count = var.environment == "Test" ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   type      = "egress"
   from_port = 2049
@@ -449,7 +449,7 @@ resource "aws_security_group_rule" "batch_db_sync_egress" {
 }
 
 resource "aws_security_group_rule" "bastion_efs_db_sync_egress" {
-  count = var.environment == "Test" ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   type      = "egress"
   from_port = 2049
@@ -461,7 +461,7 @@ resource "aws_security_group_rule" "bastion_efs_db_sync_egress" {
 }
 
 resource "aws_security_group_rule" "bastion_efs_db_sync_ingress" {
-  count = var.environment == "Test" ? 1 : 0
+  count = var.environment == "Rba" ? 1 : 0
 
   type      = "ingress"
   from_port = 2049
