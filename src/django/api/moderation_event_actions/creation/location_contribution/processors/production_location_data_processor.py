@@ -121,10 +121,9 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
 
         # Handle v1 PATCH requests
-        if event_dto.os:
-            ProductionLocationDataProcessor.__validate_and_backfill_patch_data(
-                cc_ready_data, event_dto
-            )
+        ProductionLocationDataProcessor.__validate_and_backfill_patch_data(
+            cc_ready_data, event_dto
+        )
 
         return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
 
@@ -141,6 +140,11 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # If all required fields are missing, perform backfill
         if not has_all_required_fields(cc_ready_data):
+            if not event_dto.os:
+                ProductionLocationDataProcessor. \
+                    __handle_all_required_fields_errors(event_dto)
+                return
+
             default_required_fields = fetch_required_fields(event_dto.os.id)
 
             for field in ('name', 'address', 'country'):
