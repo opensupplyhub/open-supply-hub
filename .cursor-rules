@@ -5,14 +5,16 @@
 When generating Python code, ALWAYS follow these flake8 compliance rules:
 
 ### Flake8 Validation Command
-**ALWAYS validate code using the project's flake8 command:**
+**ALWAYS validate Python code (.py files) using the project's flake8 command:**
 ```bash
-# macOS/Linux
-docker-compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings.py, manage.py, *.pyc, api/migrations'
+# macOS/Linux - Only run on Python files that have been modified
+docker-compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings.py, manage.py, *.pyc, api/migrations' path/to/modified/file.py
 
-# Ubuntu (newer docker compose)
-docker compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings.py, manage.py, *.pyc, api/migrations'
+# Ubuntu (newer docker compose) - Only run on Python files that have been modified
+docker compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings.py, manage.py, *.pyc, api/migrations' path/to/modified/file.py
 ```
+
+**Note**: Only run flake8 on Python files (`.py` extension) that have been modified. Do not run flake8 on markdown files, configuration files, or other non-Python files.
 
 ### Line Length Rules
 - NEVER exceed 79 characters per line
@@ -28,9 +30,9 @@ if (is_coordinates_without_all_required_fields(cc_ready_data) or
         has_some_required_fields(cc_ready_data)):
     do_something()
 
-# ✅ CORRECT - Break long method calls
-ProductionLocationDataProcessor. \
-    __handle_all_required_fields_errors(event_dto)
+# ✅ CORRECT - Break long method calls (use instance methods)
+processor = ProductionLocationDataProcessor()
+processor.handle_all_required_fields_errors(event_dto)
 
 # ✅ CORRECT - Break long strings
 error_message = (
@@ -96,6 +98,25 @@ from api.services.production_locations_lookup import (
 data = {'name': 'Test', 'address': '123 Main St'}
 if field not in cc_ready_data or not cc_ready_data.get(field):
     do_something()
+```
+
+### Method Call Rules
+- ALWAYS use instance methods or single-underscore methods in examples
+- NEVER use name-mangled dunder methods (__method__) in example code
+- PREFER public methods over private methods when possible
+- ALWAYS instantiate classes before calling instance methods
+
+**Example of proper method calls:**
+```python
+# ✅ CORRECT - Instance method call
+processor = ProductionLocationDataProcessor()
+processor.handle_all_required_fields_errors(event_dto)
+
+# ✅ CORRECT - Single underscore method
+processor._validate_and_backfill_patch_data(data, event_dto)
+
+# ❌ INCORRECT - Dunder method call (avoid in examples)
+ProductionLocationDataProcessor.__handle_all_required_fields_errors(event_dto)
 ```
 
 ### Blank Line Rules
@@ -171,7 +192,7 @@ Before generating ANY Python code, ensure:
 7. ✅ Descriptive variable names
 8. ✅ Meaningful docstrings
 9. ✅ Consistent formatting
-10. ✅ **Run flake8 validation using the docker command above**
+10. ✅ **Run flake8 validation on modified Python files (.py) using the docker command above**
 
 ## Common Patterns to ALWAYS Use
 
@@ -187,9 +208,9 @@ result = some_function(
 
 ### Long Method Chains
 ```python
-# ✅ ALWAYS use this pattern
-ProductionLocationDataProcessor. \
-    __handle_all_required_fields_errors(event_dto)
+# ✅ ALWAYS use this pattern (instance methods)
+processor = ProductionLocationDataProcessor()
+processor.handle_all_required_fields_errors(event_dto)
 ```
 
 ### Long Conditionals
@@ -220,11 +241,11 @@ def test_is_coordinates_without_all_required_fields_coords_missing(self):
 ```
 
 ## Enforcement Rules
-- ALL generated code MUST pass flake8 validation using the docker command above
+- ALL generated Python code (.py files) MUST pass flake8 validation using the docker command above
 - FIX any flake8 errors immediately
 - USE these patterns consistently
 - REFERENCE this guide for all Python code generation
-- **ALWAYS run the flake8 command before considering code complete**
+- **ALWAYS run the flake8 command on modified Python files before considering code complete**
 
 ## Error Prevention
 - ALWAYS check line length before writing
@@ -232,6 +253,6 @@ def test_is_coordinates_without_all_required_fields_coords_missing(self):
 - ALWAYS format imports correctly
 - ALWAYS use descriptive names
 - ALWAYS add proper docstrings
-- **ALWAYS validate with the project's flake8 command**
+- **ALWAYS validate modified Python files (.py) with the project's flake8 command**
 
-This ensures all generated code is immediately flake8-compliant and follows Python best practices.
+This ensures all generated Python code is immediately flake8-compliant and follows Python best practices.
