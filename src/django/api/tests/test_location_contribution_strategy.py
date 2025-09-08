@@ -985,10 +985,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        with self.assertRaises(Exception) as context:
-            self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
 
-        self.assertIn('HandleAllRequiredFields', str(type(context.exception)))
+        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
 
     def test_patch_some_required_fields_provided(self):
         existing_facility = self._create_existing_facility()
@@ -1006,10 +1009,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        with self.assertRaises(Exception) as context:
-            self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
 
-        self.assertIn('HandleAllRequiredFields', str(type(context.exception)))
+        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
 
     def test_patch_all_required_fields_provided(self):
         existing_facility = self._create_existing_facility()
@@ -1089,10 +1095,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        with self.assertRaises(Exception) as context:
-            self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
 
-        self.assertIn('HandleAllRequiredFields', str(type(context.exception)))
+        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
 
     def test_patch_no_coords_partial_fields_fails(self):
         existing_facility = self._create_existing_facility()
@@ -1110,10 +1119,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        with self.assertRaises(Exception) as context:
-            self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
 
-        self.assertIn('HandleAllRequiredFields', str(type(context.exception)))
+        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
 
     def test_patch_coords_all_fields_succeeds(self):
         existing_facility = self._create_existing_facility()

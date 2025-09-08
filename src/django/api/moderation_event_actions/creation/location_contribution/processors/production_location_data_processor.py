@@ -49,7 +49,12 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         )
 
         # Choose serializer per request type (POST vs PATCH)
-        serializer = self.__prepare_serializer(cc_ready_data, event_dto)
+        try:
+            serializer = self.__prepare_serializer(cc_ready_data, event_dto)
+        except HandleAllRequiredFields as e:
+            event_dto.errors = e.detail
+            event_dto.status_code = e.status_code
+            return event_dto
 
         try:
             serializer.is_valid(raise_exception=True)
