@@ -495,6 +495,7 @@ data "template_file" "db_sync_job_definition" {
     source_db_name                   = var.source_db_name
     source_db_user                   = var.source_db_user
     source_db_password               = var.source_db_password
+    chunk_size                       = var.db_sync_chunk_size
   }
 }
 
@@ -511,10 +512,6 @@ resource "aws_batch_job_definition" "db_sync" {
 
   retry_strategy {
     attempts = var.db_sync_max_retries
-  }
-
-  timeout {
-    attempt_duration_seconds = var.db_sync_timeout_minutes * 60
   }
 }
 

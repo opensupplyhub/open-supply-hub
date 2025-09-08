@@ -72,7 +72,7 @@ describe('DownloadFacilitiesButton component', () => {
       <MuiThemeProvider theme={theme}>
         <Provider store={createMockStore(customState)}>
           <DownloadFacilitiesButton {...defaultProps} {...props} />
-        </Provider>,
+        </Provider>
       </MuiThemeProvider>,
       { container }
     );
@@ -286,6 +286,63 @@ describe('DownloadFacilitiesButton component', () => {
     const button = getByRole('button', { name: 'Download' });
     expect(button).toBeDisabled();
 
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
+    );
+  });
+
+  test('shows same-contributor tooltip when isSameContributor is true for logged-in users', async () => {
+    const props = {
+      disabled: false,
+      userAllowedRecords: 1000,
+      isSameContributor: true,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: false,
+          },
+        },
+      },
+      embeddedMap: { embed: false },
+    };
+
+    const expectedTooltipText = 'You are downloading data for the same contributor as your account. Downloading data for the same contributor is free.';
+
+    const { getByRole } = renderComponent(props, customState);
+    const button = getByRole('button', { name: 'Download' });
+    fireEvent.mouseOver(button);
+
+    await waitFor(() =>
+      expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
+    );
+  });
+
+  test('anonymous users see anonymous tooltip even when isSameContributor is true', async () => {
+    const props = {
+      disabled: true,
+      userAllowedRecords: 1000,
+      isSameContributor: true,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: true,
+          },
+        },
+      },
+      embeddedMap: { embed: false },
+    };
+
+    const expectedTooltipText = 'Log in or sign up to download this dataset.';
+
+    const { getByRole } = renderComponent(props, customState);
+    const button = getByRole('button', { name: 'Download' });
+    expect(button).toBeDisabled();
     fireEvent.mouseOver(button);
 
     await waitFor(() =>

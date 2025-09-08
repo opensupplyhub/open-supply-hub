@@ -13,6 +13,7 @@ const getTooltipForFacilitiesDownload = ({
     upgrade,
     classes,
     facilitiesCount,
+    isSameContributor,
 }) => {
     const tooltipTexts = {
         availableDownloads: `Registered users can download up to ${FREE_FACILITIES_DOWNLOAD_LIMIT} production
@@ -25,6 +26,8 @@ const getTooltipForFacilitiesDownload = ({
         continue.`,
         anonymousUser: 'Log in or sign up to download this dataset.',
         embeddedOrPrivateInstance: `Downloads are supported for searches resulting in ${FACILITIES_DOWNLOAD_LIMIT} production locations or less.`,
+        sameContributor:
+            'You are downloading data for the same contributor as your account. Downloading data for the same contributor is free.',
     };
 
     // Determine base tooltip.
@@ -32,6 +35,8 @@ const getTooltipForFacilitiesDownload = ({
 
     if (isEmbedded || isPrivateInstance) {
         tooltipText = tooltipTexts.embeddedOrPrivateInstance;
+    } else if (isSameContributor) {
+        tooltipText = tooltipTexts.sameContributor;
     } else if (upgrade) {
         tooltipText =
             userAllowedRecords === 0

@@ -9,6 +9,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode import \
     FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
+from api.serializers.facility.utils import is_same_contributor_for_queryset
 from api.constants import PaginationConfig
 
 
@@ -44,10 +45,17 @@ class FacilitiesDownloadViewSet(
 
         base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
+        is_same_contributor = is_same_contributor_for_queryset(
+            base_qs,
+            request
+        )
+
         limit = None
+
         if (
             not switch_is_active('private_instance')
             and not self.__is_embed_mode()
+            and not is_same_contributor
         ):
             limit = FacilitiesDownloadService.get_download_limit(request)
 
@@ -78,9 +86,14 @@ class FacilitiesDownloadViewSet(
             )
 
         list_serializer = self.get_serializer(items)
-        rows = [f['row'] for f in list_serializer.data]
+        rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
-        data = {'rows': rows, 'headers': headers}
+
+        data = {
+            'rows': rows,
+            'headers': headers,
+            'is_same_contributor': is_same_contributor
+        }
 
         payload = {
             'next': next_link,
@@ -94,18 +107,23 @@ class FacilitiesDownloadViewSet(
             payload['count'] = base_qs.count()
 
         if is_last_page and limit:
-            total_records = (page - 1) * page_size + len(items)
-            prev_free = getattr(limit, 'free_download_records', 0)
-            prev_paid = getattr(limit, 'paid_download_records', 0)
+            # Charge for the full result set, not just the last page size
+            returned_count = base_qs.count()
+
+            prev_free_amount = getattr(limit, 'free_download_records', 0)
+            prev_paid_amount = getattr(limit, 'paid_download_records', 0)
+
             FacilitiesDownloadService.register_download_if_needed(
                 limit,
-                total_records
+                returned_count,
+                is_same_contributor
             )
-            FacilitiesDownloadService.send_email_if_needed(
-                request,
-                limit,
-                prev_free,
-                prev_paid
-            )
+            if returned_count:
+                FacilitiesDownloadService.send_email_if_needed(
+                    request,
+                    limit,
+                    prev_free_amount,
+                    prev_paid_amount
+                )
 
         return Response(payload)
