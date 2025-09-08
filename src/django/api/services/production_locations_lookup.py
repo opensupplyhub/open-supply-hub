@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 
@@ -41,15 +41,23 @@ def fetch_required_fields(os_id: str) -> Dict[str, str]:
     }
 
 
-def is_only_coordinates_present(data: Dict) -> bool:
-    return (data.get('coordinates') and not all(
-        data.get(field)
-        for field in ('name', 'address', 'country')
-    ))
+def has_coordinates(data: Dict) -> bool:
+    return bool(data.get('coordinates'))
 
 
-def is_required_field_missing(data: Dict) -> bool:
-    return all(
-        not data.get(field)
-        for field in ('name', 'address', 'country')
-    )
+def get_missing_required_fields(data: Dict) -> List[str]:
+    required_fields = ('name', 'address', 'country')
+    return [field for field in required_fields if not data.get(field)]
+
+
+def has_all_required_fields(data: Dict) -> bool:
+    return len(get_missing_required_fields(data)) == 0
+
+
+def has_some_required_fields(data: Dict) -> bool:
+    missing_count = len(get_missing_required_fields(data))
+    return 0 < missing_count < 3
+
+
+def is_coordinates_without_all_required_fields(data: Dict) -> bool:
+    return has_coordinates(data) and not has_all_required_fields(data)

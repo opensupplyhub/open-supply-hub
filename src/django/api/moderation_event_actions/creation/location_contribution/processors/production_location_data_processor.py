@@ -22,8 +22,10 @@ from api.models.moderation_event import ModerationEvent
 from api.services.production_locations_lookup \
     import (
         fetch_required_fields,
-        is_required_field_missing,
-        is_only_coordinates_present,
+        get_missing_required_fields,
+        has_all_required_fields,
+        has_some_required_fields,
+        is_coordinates_without_all_required_fields,
     )
 from api.serializers.v1.production_location_schema_serializer \
     import (
@@ -115,91 +117,104 @@ class ProductionLocationDataProcessor(ContributionProcessor):
     @staticmethod
     def __prepare_serializer(cc_ready_data: Dict,
                              event_dto: CreateModerationEventDTO):
-        """Builds an appropriate serializer and applies PATCH backfill."""
         if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
             return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
 
-        # Perform lookup for required fields for PATCH requests
+        # Handle v1 PATCH requests
         if event_dto.os:
-            if is_only_coordinates_present(cc_ready_data):
-                ProductionLocationDataProcessor. \
-                    __handle_all_required_fields_errors(event_dto)
-
-            needs_backfill = is_required_field_missing(cc_ready_data)
-            if needs_backfill:
-                log.info(f'@@@ backfill data {event_dto.raw_data}')
-                default_required_fields = fetch_required_fields(
-                    event_dto.os.id
-                )
-                for field in ('name', 'address', 'country'):
-                    if field not in cc_ready_data or (
-                        not cc_ready_data.get(field)
-                    ):
-                        cc_ready_data[field] = (
-                            default_required_fields.get(field, '')
-                        )
-            else:
-                ProductionLocationDataProcessor. \
-                    __handle_all_required_fields_errors(event_dto)
+            ProductionLocationDataProcessor.__validate_and_backfill_patch_data(
+                cc_ready_data, event_dto
+            )
 
         return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
+
+    @staticmethod
+    def __validate_and_backfill_patch_data(
+        cc_ready_data: Dict,
+        event_dto: CreateModerationEventDTO
+    ):
+        if (is_coordinates_without_all_required_fields(cc_ready_data) or
+                has_some_required_fields(cc_ready_data)):
+            ProductionLocationDataProcessor. \
+                __handle_all_required_fields_errors(event_dto)
+            return
+
+        # If all required fields are missing, perform backfill
+        if not has_all_required_fields(cc_ready_data):
+            default_required_fields = fetch_required_fields(event_dto.os.id)
+
+            for field in ('name', 'address', 'country'):
+                if (field not in cc_ready_data or
+                        not cc_ready_data.get(field)):
+                    cc_ready_data[field] = default_required_fields.get(
+                        field, ''
+                    )
 
     @staticmethod
     def __handle_all_required_fields_errors(
         event_dto: CreateModerationEventDTO
     ):
+        raw_data = event_dto.raw_data
+        missing_fields = get_missing_required_fields(raw_data)
 
+        if not missing_fields:
+            return
+
+        if is_coordinates_without_all_required_fields(raw_data):
+            ProductionLocationDataProcessor. \
+                __raise_coordinates_validation_error(missing_fields)
+
+        if has_some_required_fields(raw_data):
+            ProductionLocationDataProcessor. \
+                __raise_partial_fields_validation_error(
+                    raw_data, missing_fields
+                )
+
+    @staticmethod
+    def __raise_coordinates_validation_error(missing_fields: List[str]):
+        raise HandleAllRequiredFields(
+            detail={
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                "errors": [
+                    {
+                        "field": field,
+                        "detail": (
+                            f"Field {field} is required when coordinates "
+                            f"are provided."
+                        ),
+                    }
+                    for field in missing_fields
+                ]
+            }
+        )
+
+    @staticmethod
+    def __raise_partial_fields_validation_error(
+        raw_data: Dict, missing_fields: List[str]
+    ):
         required_fields = ('name', 'address', 'country')
-        coords_present = bool(event_dto.raw_data.get('coordinates'))
+        provided_fields = [
+            field for field in required_fields if raw_data.get(field)
+        ]
 
-        def _provided(v):
-            return v is not None and v != ''
+        verb = 'is' if len(provided_fields) == 1 else 'are'
+        provided_list = ', '.join(provided_fields)
 
-        # Enforce coupling on the CLIENT payload (no backfill yet)
-        provided = [field for field in required_fields if (
-            _provided(event_dto.raw_data.get(field))
-        )]
-        missing = [field for field in required_fields if field not in provided]
-
-        # If coordinates are provided but not all
-        # required fields are present, raise 422
-        if coords_present and len(provided) < len(required_fields):
-            raise HandleAllRequiredFields(
-                detail={
-                    "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    "errors": [
-                        {
-                            "field": m,
-                            "detail": (
-                                "Field {0} is required when coordinates are "
-                                "provided."
-                            ).format(m),
-                        }
-                        for m in missing
-                    ]
-                }
-            )
-
-        # If some (but not all) required fields are provided, raise a 422
-        if 0 < len(provided) < len(required_fields):
-            verb = 'is' if len(provided) == 1 else 'are'
-            provided_list = ', '.join(provided)
-            raise HandleAllRequiredFields(
-                detail={
-                    "detail": (
-                        APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    ),
-                    "errors": [
-                        {
-                            "field": m,
-                            "detail": (
-                                f"Field {m} is required when "
-                                f"{provided_list} {verb} provided."
-                            ),
-                        }
-                        for m in missing
-                    ]
-                })
+        raise HandleAllRequiredFields(
+            detail={
+                "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                "errors": [
+                    {
+                        "field": field,
+                        "detail": (
+                            f"Field {field} is required when {provided_list} "
+                            f"{verb} provided."
+                        ),
+                    }
+                    for field in missing_fields
+                ]
+            }
+        )
 
     @staticmethod
     def __extract_data_for_contri_cleaner(input_raw_data: Dict) -> Dict:
