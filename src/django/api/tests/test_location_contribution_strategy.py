@@ -985,9 +985,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        result = self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
 
-        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
         self.assertIsNone(result.moderation_event)
         self.assertIn('errors', result.__dict__)
         self.assertIn('detail', result.errors)
@@ -1009,9 +1013,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        result = self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
 
-        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
         self.assertIsNone(result.moderation_event)
         self.assertIn('errors', result.__dict__)
         self.assertIn('detail', result.errors)
@@ -1095,9 +1103,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        result = self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
 
-        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
         self.assertIsNone(result.moderation_event)
         self.assertIn('errors', result.__dict__)
         self.assertIn('detail', result.errors)
@@ -1119,9 +1131,13 @@ class TestLocationContributionStrategy(APITestCase):
             os=existing_facility
         )
 
-        result = self.moderation_event_creator.perform_event_creation(event_dto)
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
 
-        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
         self.assertIsNone(result.moderation_event)
         self.assertIn('errors', result.__dict__)
         self.assertIn('detail', result.errors)
