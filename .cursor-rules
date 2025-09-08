@@ -1,0 +1,237 @@
+# Cursor AI Code Generation Rules
+
+## Flake8 Compliance Rules for AI Code Generation
+
+When generating Python code, ALWAYS follow these flake8 compliance rules:
+
+### Flake8 Validation Command
+**ALWAYS validate code using the project's flake8 command:**
+```bash
+# macOS/Linux
+docker-compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings.py, manage.py, *.pyc, api/migrations'
+
+# Ubuntu (newer docker compose)
+docker compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings.py, manage.py, *.pyc, api/migrations'
+```
+
+### Line Length Rules
+- NEVER exceed 79 characters per line
+- ALWAYS break long lines using parentheses for function calls and conditions
+- ALWAYS use backslash continuation for method chaining
+- ALWAYS break strings at logical points
+- **CRITICAL**: Method names and docstrings must also be ≤ 79 characters
+
+**Example of proper line breaking:**
+```python
+# ✅ CORRECT - Break long conditions
+if (is_coordinates_without_all_required_fields(cc_ready_data) or
+        has_some_required_fields(cc_ready_data)):
+    do_something()
+
+# ✅ CORRECT - Break long method calls
+ProductionLocationDataProcessor. \
+    __handle_all_required_fields_errors(event_dto)
+
+# ✅ CORRECT - Break long strings
+error_message = (
+    f"Field {field} is required when coordinates "
+    f"are provided."
+)
+```
+
+### Indentation Rules
+- ALWAYS use 4 spaces for indentation (never tabs)
+- ALWAYS align continuation lines with opening delimiter or use 4-space indent
+- ALWAYS break function parameters after comma, align with opening parenthesis
+
+**Example of proper indentation:**
+```python
+# ✅ CORRECT - Function parameters
+def long_function_name(
+    parameter_one: str,
+    parameter_two: Dict[str, Any],
+    parameter_three: Optional[List[int]] = None
+) -> bool:
+    pass
+
+# ✅ CORRECT - Conditional statements
+if (field not in cc_ready_data or
+        not cc_ready_data.get(field)):
+    do_something()
+```
+
+### Import Rules
+- ALWAYS use one import per line
+- ALWAYS group imports: standard library, third-party, local imports
+- ALWAYS sort imports alphabetically within groups
+- ALWAYS use proper import formatting for long import lists
+
+**Example of proper imports:**
+```python
+# ✅ CORRECT - Standard library first
+from typing import Dict, List
+from django.test import TestCase
+
+# ✅ CORRECT - Third-party imports
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+
+# ✅ CORRECT - Local imports
+from api.models.facility.facility import Facility
+from api.services.production_locations_lookup import (
+    fetch_required_fields,
+    has_coordinates,
+    get_missing_required_fields,
+)
+```
+
+### Whitespace Rules
+- ALWAYS use one space around operators
+- NEVER use spaces inside brackets
+- ALWAYS use proper spacing around function calls
+
+**Example of proper whitespace:**
+```python
+# ✅ CORRECT - Proper spacing
+data = {'name': 'Test', 'address': '123 Main St'}
+if field not in cc_ready_data or not cc_ready_data.get(field):
+    do_something()
+```
+
+### Blank Line Rules
+- ALWAYS use two blank lines before top-level function/class definitions
+- ALWAYS use one blank line before method definitions
+- NEVER use extra blank lines inside functions
+
+**Example of proper blank lines:**
+```python
+# ✅ CORRECT - Class definition
+class TestClass(TestCase):
+    """Test class docstring."""
+
+    def test_method(self):
+        """Test method docstring."""
+        pass
+
+
+def top_level_function():
+    """Top-level function docstring."""
+    pass
+```
+
+### String and Comment Rules
+- ALWAYS break long strings at logical points
+- ALWAYS use f-string formatting for readability
+- ALWAYS use two spaces before inline comments
+- ALWAYS use one space after #
+
+**Example of proper strings and comments:**
+```python
+# ✅ CORRECT - String breaking
+error_message = (
+    f"Field {field} is required when coordinates "
+    f"are provided."
+)
+
+# ✅ CORRECT - Comments
+data = {'name': 'Test'}  # This is a comment
+```
+
+### Naming Rules
+- ALWAYS use descriptive variable names
+- ALWAYS use snake_case for variables and functions
+- ALWAYS use PascalCase for classes
+- NEVER use single-letter variables except for loop counters
+- **CRITICAL**: Keep method names ≤ 79 characters
+
+**Example of proper naming:**
+```python
+# ✅ CORRECT - Descriptive names
+def get_missing_required_fields(data: Dict) -> List[str]:
+    missing_fields = []
+    for field in required_fields:
+        if not data.get(field):
+            missing_fields.append(field)
+    return missing_fields
+
+# ✅ CORRECT - Short method names
+def test_is_coordinates_without_all_required_fields_coords_missing(self):
+    pass
+```
+
+## Code Generation Checklist
+Before generating ANY Python code, ensure:
+
+1. ✅ All lines ≤ 79 characters
+2. ✅ Proper indentation (4 spaces)
+3. ✅ One import per line
+4. ✅ Proper import grouping and sorting
+5. ✅ Appropriate whitespace around operators
+6. ✅ Proper blank line usage
+7. ✅ Descriptive variable names
+8. ✅ Meaningful docstrings
+9. ✅ Consistent formatting
+10. ✅ **Run flake8 validation using the docker command above**
+
+## Common Patterns to ALWAYS Use
+
+### Long Function Calls
+```python
+# ✅ ALWAYS use this pattern
+result = some_function(
+    parameter_one,
+    parameter_two,
+    parameter_three
+)
+```
+
+### Long Method Chains
+```python
+# ✅ ALWAYS use this pattern
+ProductionLocationDataProcessor. \
+    __handle_all_required_fields_errors(event_dto)
+```
+
+### Long Conditionals
+```python
+# ✅ ALWAYS use this pattern
+if (condition_one and
+        condition_two and
+        condition_three):
+    do_something()
+```
+
+### Long Strings
+```python
+# ✅ ALWAYS use this pattern
+message = (
+    f"Field {field} is required when coordinates "
+    f"are provided."
+)
+```
+
+### Long Method Names (CRITICAL)
+```python
+# ❌ BAD - Too long
+def test_is_coordinates_without_all_required_fields_with_coordinates_and_missing_fields(self):
+
+# ✅ GOOD - Shortened
+def test_is_coordinates_without_all_required_fields_coords_missing(self):
+```
+
+## Enforcement Rules
+- ALL generated code MUST pass flake8 validation using the docker command above
+- FIX any flake8 errors immediately
+- USE these patterns consistently
+- REFERENCE this guide for all Python code generation
+- **ALWAYS run the flake8 command before considering code complete**
+
+## Error Prevention
+- ALWAYS check line length before writing
+- ALWAYS use proper indentation patterns
+- ALWAYS format imports correctly
+- ALWAYS use descriptive names
+- ALWAYS add proper docstrings
+- **ALWAYS validate with the project's flake8 command**
+
+This ensures all generated code is immediately flake8-compliant and follows Python best practices.
