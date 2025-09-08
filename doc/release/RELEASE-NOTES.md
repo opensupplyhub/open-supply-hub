@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
 * [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
-
+* [OSDEV-2122](https://opensupplyhub.atlassian.net/browse/OSDEV-2122) - Enhanced PATCH `/api/v1/production-locations/{os_id}/` endpoint validation to enforce required field constraints when coordinates are provided. Implemented automatic backfill of missing required fields (name, address, country) from existing facility data when no required fields are provided in PATCH requests.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -77,7 +77,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0176_introduce_enable_dromo_uploading_switch.py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
 
 ### Code/API changes
-* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters: 
+* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters:
     * `claim_status` - filter by the claim status (`claimed`, `unclaimed`, `pending`).
     * `claimed_at_gt` - starting date to filter by production location claim timestamp.
     * `claimed_at_lt` - ending date to filter by production location claim timestamp.
@@ -132,7 +132,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to the Open Supply Hub site. Both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don’t execute JavaScript) were enabled.
 
 ### Architecture/Environment changes
-* [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard. 
+* [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard.
 
 ### What's new
 * [OSDEV-1881](https://opensupplyhub.atlassian.net/browse/OSDEV-1881) - Implemented automated email notifications for registered users in three scenarios: when nearing the 5,000-record annual download limit, upon reaching that limit, and after exhausting all purchased downloads.
