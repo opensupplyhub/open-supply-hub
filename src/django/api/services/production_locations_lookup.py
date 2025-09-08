@@ -41,6 +41,13 @@ def fetch_required_fields(os_id: str) -> Dict[str, str]:
     }
 
 
+def is_only_coordinates_present(data: Dict) -> bool:
+    return (data.get('coordinates') and not all(
+        data.get(field)
+        for field in ('name', 'address', 'country')
+    ))
+
+
 def is_required_field_missing(data: Dict) -> bool:
     return all(
         not data.get(field)

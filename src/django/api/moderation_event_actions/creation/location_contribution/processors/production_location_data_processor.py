@@ -20,7 +20,11 @@ from api.constants import (
 )
 from api.models.moderation_event import ModerationEvent
 from api.services.production_locations_lookup \
-    import fetch_required_fields, is_required_field_missing
+    import (
+        fetch_required_fields,
+        is_required_field_missing,
+        is_only_coordinates_present,
+    )
 from api.serializers.v1.production_location_schema_serializer \
     import (
         ProductionLocationPostSchemaSerializer,
@@ -117,8 +121,13 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # Perform lookup for required fields for PATCH requests
         if event_dto.os:
+            if is_only_coordinates_present(cc_ready_data):
+                ProductionLocationDataProcessor. \
+                    __handle_all_required_fields_errors(event_dto)
+
             needs_backfill = is_required_field_missing(cc_ready_data)
             if needs_backfill:
+                log.info(f'@@@ backfill data {event_dto.raw_data}')
                 default_required_fields = fetch_required_fields(
                     event_dto.os.id
                 )
@@ -154,7 +163,6 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # If coordinates are provided but not all
         # required fields are present, raise 422
-        # TODO: this should be done in the upper level because if no fields at all, we passes needs_backfill
         if coords_present and len(provided) < len(required_fields):
             raise HandleAllRequiredFields(
                 detail={
