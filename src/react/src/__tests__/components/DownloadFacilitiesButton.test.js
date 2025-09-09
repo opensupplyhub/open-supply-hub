@@ -18,8 +18,8 @@ jest.mock('@material-ui/core/Popper', () => (props) => {
   }
   return props.children;
 });
-jest.mock('../../components/DownloadMenu', () => ({ onSelectFormat, onClose, ...props }) => (
-    <button data-testid="mock-download-menu" onClick={() => onSelectFormat('csv')}>menu</button>
+jest.mock('../../components/DownloadMenu', () => ({ onSelectFormat }) => (
+    <button type="button" data-testid="mock-download-menu" onClick={() => onSelectFormat('csv')}>menu</button>
 ));
 jest.mock('../../actions/downloadFacilities', () => jest.fn(() => ({ type: 'TEST_DOWNLOAD' })));
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
@@ -375,7 +375,7 @@ describe('DownloadFacilitiesButton component', () => {
     const button = getByRole('button', { name: 'Download' });
     fireEvent.click(button);
     fireEvent.click(getByTestId('mock-download-menu'));
-    const downloadFacilities = require('../../actions/downloadFacilities').default || require('../../actions/downloadFacilities');
+    const downloadFacilities = jest.requireMock('../../actions/downloadFacilities');
     expect(downloadFacilities).toHaveBeenCalledWith('csv', { isEmbedded: false, isSameContributor: true });
   });
 });
