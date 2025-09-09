@@ -1,4 +1,4 @@
-from typing import (Iterable, Union)
+from typing import (Union)
 from itertools import groupby
 
 from api.constants import FacilityClaimStatuses
@@ -357,10 +357,10 @@ def is_same_contributor_for_queryset(queryset, request) -> bool:
     facilities_without_contributor_count = queryset.exclude(
         contributors_id__contains=[current_user_contributor_id]
     ).exists()
-    
+
     if facilities_without_contributor_count:
         return False
-    
+
     return queryset.exists()
 
 
