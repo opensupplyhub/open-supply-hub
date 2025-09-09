@@ -73,8 +73,8 @@ class FacilitiesDownloadService:
         )
 
     @staticmethod
-    def enforce_limits(qs, limit, is_first_page):
-        if not limit or not is_first_page:
+    def enforce_limits(count, limit):
+        if not limit:
             return
 
         allowed = limit.free_download_records + limit.paid_download_records
@@ -85,10 +85,7 @@ class FacilitiesDownloadService:
                 "for facility record downloads..."
             )
 
-        probe = list(
-            qs.order_by("id").values_list("id", flat=True)[:allowed + 1]
-        )
-        if len(probe) > allowed:
+        if count > allowed:
             raise ValidationError(
                 "Downloads are supported only for searches resulting in "
                 f"{allowed} facilities or less."
