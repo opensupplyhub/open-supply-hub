@@ -144,7 +144,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         cc_ready_data: Dict,
         event_dto: CreateModerationEventDTO
     ) -> Dict:
-        # Check original raw_data for validation, not cleaned data
+        # Check original raw_data to decide on backfill strategy
         raw_data = event_dto.raw_data
 
         if (is_coordinates_without_all_required_fields(raw_data) or
@@ -158,27 +158,37 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             if not event_dto.os:
                 ProductionLocationDataProcessor. \
                     __handle_all_required_fields_errors(event_dto)
-                return cc_ready_data  # Return original data if validation fails
+                # Return original data if validation fails
+                return cc_ready_data
 
             # Create a deep copy to avoid mutating the original data
             backfilled_data = copy.deepcopy(cc_ready_data)
             default_required_fields = fetch_required_fields(event_dto.os.id)
 
-            # Debug: Print what we're backfilling
-            print(f"\nDEBUG BACKFILL: os_id={event_dto.os.id}")
-            print(f"DEBUG BACKFILL: default_required_fields={default_required_fields}")
-            print(f"DEBUG BACKFILL: cc_ready_data before={cc_ready_data}")
-
-            # Add the required fields directly (before ContriCleaner processing)
+            # Add the required fields directly
+            # (before ContriCleaner processing)
             for field in ('name', 'address', 'country'):
                 if (field not in backfilled_data or
                         not backfilled_data.get(field)):
                     backfilled_data[field] = default_required_fields.get(
                         field, ''
                     )
-                    print(f"DEBUG BACKFILL: Added {field}={default_required_fields.get(field, '')}")
 
-            print(f"DEBUG BACKFILL: backfilled_data after={backfilled_data}")
+            # After backfill, validate the backfilled data
+            # for any remaining issues
+            if (is_coordinates_without_all_required_fields(backfilled_data) or
+                    has_some_required_fields(backfilled_data)):
+                # Create temporary event_dto with backfilled data
+                # for error handling
+                temp_event_dto = CreateModerationEventDTO(
+                    contributor=event_dto.contributor,
+                    raw_data=backfilled_data,
+                    request_type=event_dto.request_type,
+                    os=event_dto.os
+                )
+                ProductionLocationDataProcessor.\
+                    __handle_all_required_fields_errors(temp_event_dto)
+
             return backfilled_data
 
         # Return original data if no backfill is needed
