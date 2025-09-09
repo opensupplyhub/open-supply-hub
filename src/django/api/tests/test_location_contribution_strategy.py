@@ -1145,7 +1145,6 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertEqual(result.moderation_event.request_type, 'UPDATE')
         self.assertEqual(result.moderation_event.os.id, existing_facility.id)
 
-
     def _create_existing_facility(self):
         existing_user = User.objects.create(email='existing@example.com')
         existing_user.set_password('password123')
