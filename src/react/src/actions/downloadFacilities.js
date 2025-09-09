@@ -73,7 +73,7 @@ export function fetchNextPageOfDownloadFacilities() {
 
 export default function downloadFacilities(
     format,
-    { isEmbedded, isSameContributor = false },
+    { isEmbedded, isSameContributor = false } = {},
 ) {
     return (dispatch, getState) => {
         const detail = true;
@@ -114,14 +114,15 @@ export default function downloadFacilities(
             .then(({ data }) => {
                 const recordsLimit = getRecordsLimit();
                 const recordsNumber = isSameContributor
-                    ? user.allowed_records_number
+                    ? recordsLimit
                     : calcRecordsNumberLeft(recordsLimit, data.count);
+                const clampedRecordsNumber = Math.max(0, recordsNumber);
 
                 dispatch(completeFetchDownloadFacilities(data));
                 dispatch(logDownload(format, { isEmbedded }));
                 dispatch(
                     completeSubmitLoginForm({
-                        allowed_records_number: recordsNumber,
+                        allowed_records_number: clampedRecordsNumber,
                     }),
                 );
             })
