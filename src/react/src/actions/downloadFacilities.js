@@ -71,7 +71,10 @@ export function fetchNextPageOfDownloadFacilities() {
     };
 }
 
-export default function downloadFacilities(format, { isEmbedded }) {
+export default function downloadFacilities(
+    format,
+    { isEmbedded, isSameContributor = false },
+) {
     return (dispatch, getState) => {
         const detail = true;
         const pageSize = FACILITIES_DOWNLOAD_REQUEST_PAGE_SIZE;
@@ -110,10 +113,9 @@ export default function downloadFacilities(format, { isEmbedded }) {
             .get(makeGetFacilitiesDownloadURLWithQueryString(qs, pageSize))
             .then(({ data }) => {
                 const recordsLimit = getRecordsLimit();
-                const recordsNumber = calcRecordsNumberLeft(
-                    recordsLimit,
-                    data.count,
-                );
+                const recordsNumber = isSameContributor
+                    ? user.allowed_records_number
+                    : calcRecordsNumberLeft(recordsLimit, data.count);
 
                 dispatch(completeFetchDownloadFacilities(data));
                 dispatch(logDownload(format, { isEmbedded }));

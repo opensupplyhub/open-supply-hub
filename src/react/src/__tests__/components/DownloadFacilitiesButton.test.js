@@ -349,4 +349,33 @@ describe('DownloadFacilitiesButton component', () => {
       expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
   });
+
+  test('should not decrement counter for same contributor downloads', () => {
+    const props = {
+      disabled: false,
+      userAllowedRecords: 1000,
+      isSameContributor: true,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: false,
+            allowed_records_number: 1000,
+          },
+        },
+      },
+      embeddedMap: { embed: false },
+    };
+
+    const { getByRole } = renderComponent(props, customState);
+    const button = getByRole('button', { name: 'Download' });
+
+    expect(button).toBeEnabled();
+
+    fireEvent.click(button);
+
+    expect(button).toBeEnabled();
+    expect(button).not.toHaveAttribute('disabled');
+  });
 });
