@@ -137,14 +137,16 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         cc_ready_data: Dict,
         event_dto: CreateModerationEventDTO
     ):
-        if (is_coordinates_without_all_required_fields(cc_ready_data) or
-                has_some_required_fields(cc_ready_data)):
+        raw_data = event_dto.raw_data
+
+        if (is_coordinates_without_all_required_fields(raw_data) or
+                has_some_required_fields(raw_data)):
             ProductionLocationDataProcessor. \
                 __handle_all_required_fields_errors(event_dto)
             return
 
         # If all required fields are missing, perform backfill
-        if not has_all_required_fields(cc_ready_data):
+        if not has_all_required_fields(raw_data):
             if not event_dto.os:
                 ProductionLocationDataProcessor. \
                     __handle_all_required_fields_errors(event_dto)
