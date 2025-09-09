@@ -959,6 +959,7 @@ class TestLocationContributionStrategy(APITestCase):
                 ]
             }
         ]
+
         serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
