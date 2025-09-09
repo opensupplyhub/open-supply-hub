@@ -18,8 +18,8 @@ jest.mock('@material-ui/core/Popper', () => (props) => {
   }
   return props.children;
 });
-jest.mock('../../components/DownloadMenu', () => ({ onSelectFormat }) => (
-    <button type="button" data-testid="mock-download-menu" onClick={() => onSelectFormat('csv')}>menu</button>
+jest.mock('../../components/DownloadMenu', () => (props) => (
+    <button type="button" data-testid="mock-download-menu" onClick={() => props.onSelectFormat('csv')}>menu</button>
 ));
 jest.mock('../../actions/downloadFacilities', () => jest.fn(() => ({ type: 'TEST_DOWNLOAD' })));
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
