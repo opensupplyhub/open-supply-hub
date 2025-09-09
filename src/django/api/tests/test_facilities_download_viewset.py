@@ -537,9 +537,13 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         ) as mock_get_queryset:
             mock_queryset = MagicMock()
             mock_facility = MagicMock()
+            excluded_qs = MagicMock()
+            excluded_qs.exists.return_value = False
             mock_facility.contributors = [{'id': contributor.id}]
-            mock_queryset.__iter__.return_value = [mock_facility]
+            mock_queryset.__iter__.return_value = iter(mock_facility)
             mock_queryset.count.return_value = 1
+            mock_queryset.exists.return_value = True
+            mock_queryset.exclude.return_value = excluded_qs
             mock_get_queryset.return_value = mock_queryset
 
             response = self.get_facility_downloads(
@@ -613,12 +617,16 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         ) as mock_get_queryset:
             mock_queryset = MagicMock()
             mock_facility = MagicMock()
+            excluded_qs = MagicMock()
+            excluded_qs.exists.return_value = False
             mock_facility.contributors = [
                 {'id': contributor.id},
                 {'id': 456}
             ]
-            mock_queryset.__iter__.return_value = [mock_facility]
+            mock_queryset.__iter__.return_value = iter(mock_facility)
             mock_queryset.count.return_value = 1
+            mock_queryset.exists.return_value = True
+            mock_queryset.exclude.return_value = excluded_qs
             mock_get_queryset.return_value = mock_queryset
 
             response = self.get_facility_downloads({
@@ -747,13 +755,17 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         ) as mock_get_queryset:
             mock_queryset = MagicMock()
             mock_facility = MagicMock()
+            excluded_qs = MagicMock()
+            excluded_qs.exists.return_value = False
             mock_facility.contributors = [
                 {'id': contributor.id},
                 {'id': 456},
                 {'id': 789}
             ]
-            mock_queryset.__iter__.return_value = [mock_facility]
+            mock_queryset.__iter__.return_value = iter(mock_facility)
             mock_queryset.count.return_value = 1
+            mock_queryset.exists.return_value = True
+            mock_queryset.exclude.return_value = excluded_qs
             mock_get_queryset.return_value = mock_queryset
 
             response = self.get_facility_downloads({
