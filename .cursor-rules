@@ -1,8 +1,8 @@
 # Cursor AI Code Generation Rules
 
-## Flake8 Compliance Rules for AI Code Generation
+## Python Development Rules for AI Code Generation
 
-When generating Python code, ALWAYS follow these flake8 compliance rules:
+When generating Python code, ALWAYS follow these compliance rules:
 
 ### Flake8 Validation Command
 **ALWAYS validate Python code (.py files) using the project's flake8 command:**
@@ -15,6 +15,23 @@ docker compose run --rm --no-deps --entrypoint flake8 django --exclude 'settings
 ```
 
 **Note**: Only run flake8 on Python files (`.py` extension) that have been modified. Do not run flake8 on markdown files, configuration files, or other non-Python files.
+
+### Python Test Execution
+**ALWAYS run Python tests using the Docker container:**
+```bash
+# Enter the Django container shell
+docker exec -it open-supply-hub-django-1 bash
+
+# Then run tests from inside the container
+python ./manage.py test <test_path>
+
+# Examples:
+python ./manage.py test api.tests.test_location_contribution_strategy
+python ./manage.py test api.tests.test_location_contribution_strategy.TestLocationContributionStrategy.test_patch_no_required_fields_backfills
+python ./manage.py test api.tests.test_production_locations_lookup
+```
+
+**Important**: Never use `docker-compose run` for tests. Always use `docker exec -it open-supply-hub-django-1 bash` first, then run tests from inside the container.
 
 ### Line Length Rules
 - NEVER exceed 79 characters per line
@@ -193,6 +210,7 @@ Before generating ANY Python code, ensure:
 8. ✅ Meaningful docstrings
 9. ✅ Consistent formatting
 10. ✅ **Run flake8 validation on modified Python files (.py) using the docker command above**
+11. ✅ **Run Python tests using `docker exec -it open-supply-hub-django-1 bash` then `python ./manage.py test <test_path>`**
 
 ## Common Patterns to ALWAYS Use
 
@@ -242,10 +260,13 @@ def test_is_coordinates_without_all_required_fields_coords_missing(self):
 
 ## Enforcement Rules
 - ALL generated Python code (.py files) MUST pass flake8 validation using the docker command above
+- ALL Python tests MUST be run using the Docker container method
 - FIX any flake8 errors immediately
+- FIX any test failures immediately
 - USE these patterns consistently
 - REFERENCE this guide for all Python code generation
 - **ALWAYS run the flake8 command on modified Python files before considering code complete**
+- **ALWAYS run tests using `docker exec -it open-supply-hub-django-1 bash` then `python ./manage.py test <test_path>`**
 
 ## Error Prevention
 - ALWAYS check line length before writing
@@ -254,5 +275,6 @@ def test_is_coordinates_without_all_required_fields_coords_missing(self):
 - ALWAYS use descriptive names
 - ALWAYS add proper docstrings
 - **ALWAYS validate modified Python files (.py) with the project's flake8 command**
+- **ALWAYS run tests using the Docker container method to ensure functionality**
 
 This ensures all generated Python code is immediately flake8-compliant and follows Python best practices.

@@ -48,6 +48,17 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             event_dto.raw_data
         )
 
+        # Handle PATCH request backfill BEFORE ContriCleaner validation
+        if event_dto.request_type == ModerationEvent.RequestType.UPDATE.value:
+            try:
+                cc_ready_data = self.__validate_and_backfill_patch_data(
+                    cc_ready_data, event_dto
+                )
+            except HandleAllRequiredFields as e:
+                event_dto.errors = e.detail
+                event_dto.status_code = e.status_code
+                return event_dto
+
         # Choose serializer per request type (POST vs PATCH)
         try:
             serializer = self.__prepare_serializer(cc_ready_data, event_dto)
@@ -125,41 +136,53 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
             return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
 
-        # Handle v1 PATCH requests
-        ProductionLocationDataProcessor.__validate_and_backfill_patch_data(
-            cc_ready_data, event_dto
-        )
-
+        # Handle v1 PATCH requests (backfill already happened earlier)
         return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
 
     @staticmethod
     def __validate_and_backfill_patch_data(
         cc_ready_data: Dict,
         event_dto: CreateModerationEventDTO
-    ):
+    ) -> Dict:
+        # Check original raw_data for validation, not cleaned data
         raw_data = event_dto.raw_data
 
         if (is_coordinates_without_all_required_fields(raw_data) or
                 has_some_required_fields(raw_data)):
             ProductionLocationDataProcessor. \
                 __handle_all_required_fields_errors(event_dto)
-            return
+            return cc_ready_data  # Return original data if validation fails
 
         # If all required fields are missing, perform backfill
         if not has_all_required_fields(raw_data):
             if not event_dto.os:
                 ProductionLocationDataProcessor. \
                     __handle_all_required_fields_errors(event_dto)
-                return
+                return cc_ready_data  # Return original data if validation fails
 
+            # Create a deep copy to avoid mutating the original data
+            backfilled_data = copy.deepcopy(cc_ready_data)
             default_required_fields = fetch_required_fields(event_dto.os.id)
 
+            # Debug: Print what we're backfilling
+            print(f"\nDEBUG BACKFILL: os_id={event_dto.os.id}")
+            print(f"DEBUG BACKFILL: default_required_fields={default_required_fields}")
+            print(f"DEBUG BACKFILL: cc_ready_data before={cc_ready_data}")
+
+            # Add the required fields directly (before ContriCleaner processing)
             for field in ('name', 'address', 'country'):
-                if (field not in cc_ready_data or
-                        not cc_ready_data.get(field)):
-                    cc_ready_data[field] = default_required_fields.get(
+                if (field not in backfilled_data or
+                        not backfilled_data.get(field)):
+                    backfilled_data[field] = default_required_fields.get(
                         field, ''
                     )
+                    print(f"DEBUG BACKFILL: Added {field}={default_required_fields.get(field, '')}")
+
+            print(f"DEBUG BACKFILL: backfilled_data after={backfilled_data}")
+            return backfilled_data
+
+        # Return original data if no backfill is needed
+        return cc_ready_data
 
     @staticmethod
     def __handle_all_required_fields_errors(
