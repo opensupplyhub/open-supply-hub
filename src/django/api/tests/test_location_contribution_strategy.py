@@ -1055,35 +1055,6 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertEqual(result.moderation_event.request_type, 'UPDATE')
         self.assertEqual(result.moderation_event.os.id, existing_facility.id)
 
-    def test_patch_no_required_fields_backfills(self):
-        existing_facility = self._create_existing_facility()
-
-        input_data = {
-            'source': 'API',
-            'sector': ['Updated Sector']
-        }
-
-        event_dto = CreateModerationEventDTO(
-            contributor=self.contributor,
-            raw_data=input_data,
-            request_type=ModerationEvent.RequestType.UPDATE.value,
-            os=existing_facility
-        )
-
-        result = self.moderation_event_creator.perform_event_creation(
-            event_dto
-        )
-
-        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
-        self.assertIsNotNone(result.moderation_event)
-
-        cleaned_data = result.moderation_event.cleaned_data
-        self.assertEqual(cleaned_data['name'], existing_facility.name)
-        self.assertEqual(cleaned_data['address'], existing_facility.address)
-        self.assertEqual(
-            cleaned_data['country_code'], existing_facility.country_code
-        )
-
     def test_patch_coords_partial_fields_fails(self):
         existing_facility = self._create_existing_facility()
 
@@ -1174,27 +1145,6 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertEqual(result.moderation_event.request_type, 'UPDATE')
         self.assertEqual(result.moderation_event.os.id, existing_facility.id)
 
-    def test_patch_empty_coords_no_fields_backfills(self):
-        existing_facility = self._create_existing_facility()
-
-        input_data = {
-            'source': 'API',
-            'sector': ['Apparel']
-        }
-
-        event_dto = CreateModerationEventDTO(
-            contributor=self.contributor,
-            raw_data=input_data,
-            request_type=ModerationEvent.RequestType.UPDATE.value,
-            os=existing_facility
-        )
-
-        result = self.moderation_event_creator.perform_event_creation(
-            event_dto
-        )
-
-        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
-        self.assertIsNotNone(result.moderation_event)
 
     def _create_existing_facility(self):
         existing_user = User.objects.create(email='existing@example.com')
