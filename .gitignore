@@ -98,3 +98,7 @@ dumps
 # Backup and temporary files
 *.~
 *.bak
+
+
+# Cursor
+.cursor-rules
