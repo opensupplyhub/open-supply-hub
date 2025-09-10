@@ -15,7 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
 
 ### What's new
-* [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits interface of the Django admin panel.
+* [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
