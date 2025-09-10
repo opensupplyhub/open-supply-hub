@@ -45,29 +45,10 @@ class FacilitiesDownloadViewSet(
 
         base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
-        is_same_contributor = is_same_contributor_for_queryset(
-            base_qs,
-            request
-        )
-
-        limit = None
-
-        if (
-            not switch_is_active('private_instance')
-            and not self.__is_embed_mode()
-            and not is_same_contributor
-        ):
-            limit = FacilitiesDownloadService.get_download_limit(request)
-
         page = int(request.query_params.get('page', 1) or 1)
         page_size = int(request.query_params.get(
             'pageSize', PaginationConfig.MAX_PAGE_SIZE
         ) or PaginationConfig.MAX_PAGE_SIZE)
-        is_first_page = (page == 1)
-
-        FacilitiesDownloadService.enforce_limits(
-            qs=base_qs, limit=limit, is_first_page=is_first_page
-        )
 
         items, is_last_page = FacilitiesDownloadService.\
             fetch_page_and_cache(
@@ -84,6 +65,23 @@ class FacilitiesDownloadViewSet(
                 page_size,
                 is_last_page
             )
+
+        is_first_page = (page == 1)
+        limit = None
+        is_same_contributor = False
+
+        if is_first_page or is_last_page:
+            is_same_contributor = is_same_contributor_for_queryset(
+                base_qs,
+                request
+            )
+
+            if (
+                not switch_is_active('private_instance')
+                and not self.__is_embed_mode()
+                and not is_same_contributor
+            ):
+                limit = FacilitiesDownloadService.get_download_limit(request)
 
         list_serializer = self.get_serializer(items)
         rows = [facility_data['row'] for facility_data in list_serializer.data]
@@ -104,9 +102,19 @@ class FacilitiesDownloadViewSet(
         }
 
         if is_first_page:
-            payload['count'] = base_qs.count()
+            count = base_qs.count()
+            payload['count'] = count
 
-        if is_last_page and limit:
+            FacilitiesDownloadService.enforce_limits(
+                count,
+                limit
+            )
+
+        if (
+            is_last_page
+            and limit
+            and not is_same_contributor
+        ):
             # Charge for the full result set, not just the last page size
             returned_count = base_qs.count()
 
