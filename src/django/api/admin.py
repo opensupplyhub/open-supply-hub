@@ -180,7 +180,7 @@ class FacilityDownloadLimitAdmin(admin.ModelAdmin):
                     'updated_at',
                     'purchase_date',
                     )
-    search_fields = ('user__username',)
+    search_fields = ('user__email', 'user__contributor__name')
     autocomplete_fields = ('user',)
 
     def get_ordering(self, request):
