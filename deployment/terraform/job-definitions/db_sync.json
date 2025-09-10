@@ -11,8 +11,8 @@
     "--source-name", "${source_db_name}",
     "--source-user", "${source_db_user}",
     "--source-password", "${source_db_password}",
-    "--last-run-path", "/db-sync",
-    "--verbose"
+    "--chunk-size", "${chunk_size}",
+    "--last-run-path", "/db-sync"
   ],
   "environment": [
       { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
