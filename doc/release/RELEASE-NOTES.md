@@ -14,6 +14,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
 * [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
 
+### What's new
+* [OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Added permission system to control which partner data fields contributors can submit.
+Created new `PartnerField` model for categorizing partner-specific fields. Enhanced `Contributor` model with `partner_fields` relationship.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
