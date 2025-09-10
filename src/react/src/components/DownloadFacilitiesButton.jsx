@@ -112,7 +112,7 @@ const DownloadFacilitiesButton = ({
     };
     const handleClose = () => setAnchorEl(null);
     const handleDownload = format => {
-        dispatch(downloadFacilities(format, { isEmbedded }));
+        dispatch(downloadFacilities(format, { isEmbedded, isSameContributor }));
     };
     const selectFormatAndDownload = format => {
         if (!user.isAnon || isEmbedded) {
