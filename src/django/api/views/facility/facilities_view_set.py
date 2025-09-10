@@ -90,7 +90,10 @@ from api.serializers import (
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
 from api.throttles import DataUploadThrottle
-from api.serializers.facility.utils import is_same_contributor_for_queryset
+from api.serializers.facility.utils import (
+    is_same_contributor_for_queryset,
+    is_same_contributor_for_list
+)
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
 
@@ -274,7 +277,7 @@ class FacilitiesViewSet(ListModelMixin,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
 
-            is_same_contributor = is_same_contributor_for_queryset(
+            is_same_contributor = is_same_contributor_for_list(
                 page_queryset,
                 request
             )
