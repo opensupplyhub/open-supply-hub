@@ -988,7 +988,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         partner_field = PartnerField.objects.create(
             name='custom_partner_field',
-            type='string'
+            type=PartnerField.STRING
         )
 
         existing_location_contributor = Contributor.objects.create(
@@ -1103,7 +1103,7 @@ class TestLocationContributionStrategy(APITestCase):
 
         _ = PartnerField.objects.create(
             name='custom_partner_field',
-            type='string'
+            type=PartnerField.STRING
         )
 
         existing_location_contributor = Contributor.objects.create(
