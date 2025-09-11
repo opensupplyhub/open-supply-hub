@@ -1141,7 +1141,8 @@ class TestLocationContributionStrategy(APITestCase):
             'detail': 'The request body is invalid.',
             'errors': [{
                 'field': 'custom_partner_field',
-                'detail': 'You do not have permission to contribute to this field.'
+                'detail': 'You do not have permission '
+                'to contribute to this field.'
             }]
         }
 
