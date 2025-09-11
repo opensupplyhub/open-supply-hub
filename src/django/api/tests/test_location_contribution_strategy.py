@@ -1030,12 +1030,18 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'custom_partner_field': 'test'
+            'custom_partner_field': 'test',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         expected_raw_data = deepcopy(input_data)
         expected_cleaned_data = {
             'raw_json': {
+                'lat': 51.078389,
+                'lng': 16.978477,
                 'name': 'Blue Horizon Facility',
                 'address': '990 Spring Garden St., Philadelphia PA 19123',
                 'country': 'US',
@@ -1049,7 +1055,9 @@ class TestLocationContributionStrategy(APITestCase):
             'sector': ['Unspecified'],
             'fields': {
                 'country': 'US',
-                'custom_partner_field': 'test'
+                'custom_partner_field': 'test',
+                'lat': 51.078389,
+                'lng': 16.978477
             },
             'errors': []
         }
@@ -1134,7 +1142,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'custom_partner_field': 'test'
+            'custom_partner_field': 'test',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         expected_errors = {
