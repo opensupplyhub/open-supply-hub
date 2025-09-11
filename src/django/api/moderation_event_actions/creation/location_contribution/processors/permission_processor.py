@@ -44,6 +44,8 @@ class PermissionProcessor(ContributionProcessor):
                     event_dto.errors = validation_errors
                     event_dto.status_code = status.HTTP_403_FORBIDDEN
 
+                    return event_dto
+
         return super().process(event_dto)
 
     @staticmethod
