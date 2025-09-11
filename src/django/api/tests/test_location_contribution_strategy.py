@@ -1,5 +1,5 @@
 import re
-from uuid import UUID
+from uuid import UUID, uuid4
 from copy import deepcopy
 
 from unittest.mock import Mock, patch
@@ -45,7 +45,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         user_email = 'test@example.com'
-        user_password = 'example123'
+        user_password = uuid4().hex
         user = User.objects.create(email=user_email)
         user.set_password(user_password)
         user.save()
@@ -64,9 +64,10 @@ class TestLocationContributionStrategy(APITestCase):
     def is_valid_uuid(self, value: UUID) -> bool:
         try:
             UUID(str(value), version=4)
-            return True
         except ValueError:
             return False
+        else:
+            return True
 
     def is_valid_date_with_microseconds(self, value: str) -> bool:
         # Regular expression to match datetime with microseconds and
@@ -429,6 +430,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         expected_raw_data = deepcopy(input_data)
+
         expected_cleaned_data = {
             'raw_json': {
                 'lat': 51.078389,
@@ -509,7 +511,7 @@ class TestLocationContributionStrategy(APITestCase):
         # already exists in the system while processing the location
         # contribution.
         existing_location_user_email = 'test2@example.com'
-        existing_location_user_password = '4567test'
+        existing_location_user_password = uuid4().hex
         existing_location_user = User.objects.create(
             email=existing_location_user_email
         )
@@ -571,6 +573,7 @@ class TestLocationContributionStrategy(APITestCase):
         }
 
         expected_raw_data = deepcopy(input_data)
+
         expected_cleaned_data = {
             'raw_json': {
                 'lat': 51.078389,
@@ -971,7 +974,7 @@ class TestLocationContributionStrategy(APITestCase):
 
     def test_moderation_event_creation_with_valid_partner_field(self):
         existing_location_user_email = 'test2@example.com'
-        existing_location_user_password = '4567test'
+        existing_location_user_password = uuid4().hex
         existing_location_user = User.objects.create(
             email=existing_location_user_email
         )
@@ -1078,7 +1081,7 @@ class TestLocationContributionStrategy(APITestCase):
 
     def test_moderation_event_creation_with_invalid_partner_field(self):
         existing_location_user_email = 'test2@example.com'
-        existing_location_user_password = '4567test'
+        existing_location_user_password = uuid4().hex
         existing_location_user = User.objects.create(
             email=existing_location_user_email
         )
@@ -1158,3 +1161,117 @@ class TestLocationContributionStrategy(APITestCase):
 
         self.assertEqual(result.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(result.errors, expected_errors)
+
+class AdditionalLocationContributionStrategyTests(TestLocationContributionStrategy):
+    """
+    Additional edge-case tests complementing the PR diff focus areas:
+    - Geocoding HTTP failure handling
+    - Case sensitivity of 'source' values
+    These reuse setUp and helper methods from TestLocationContributionStrategy.
+    """
+
+    @patch('api.geocoding.requests.get')
+    def test_geocoding_http_error_results_in_internal_error(self, mock_get):
+        """
+        When the geocoding service responds with a non-200/ok=False status,
+        the creation flow should surface a server error with the generic
+        unexpected-error payload, and no ModerationEvent should be created.
+        """
+        # Simulate HTTP 500 from upstream geocoder
+
+        mock_get.return_value = Mock(ok=False, status_code=500)
+        # Some backends also inspect .json()—ensure it won't break if called.
+        mock_get.return_value.json.return_value = {"status": "ERROR"}
+
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Ocean',
+            'address': '123 Failing Address',
+            'country': 'US',
+        }
+
+        expected_error_result = {
+            'detail': (
+                'An unexpected error occurred while processing the request.'
+            )
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
+
+        # Align with existing internal-error expectations in this test module
+        self.assertEqual(result.status_code, 500)
+        self.assertIsNone(result.moderation_event)
+        self.assertEqual(result.errors, expected_error_result)
+
+    def test_source_lowercase_value_is_rejected(self):
+        """
+        The 'source' field should be one of the exact accepted values: API, SLC.
+        Lowercased variants should be rejected with a 422 and the same
+        validation message used elsewhere in the suite.
+        """
+        invalid_input_data = {
+            'source': 'api',  # lowercased -> invalid
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+        }
+
+        expected_error_result = {
+            'detail': 'The request body is invalid.',
+            'errors': [
+                {
+                    'field': 'source',
+                    'detail': ('The source value should be one of the '
+                               'following: API, SLC.')
+                }
+            ]
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=invalid_input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
+
+        self.assertEqual(result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        self.assertEqual(result.errors, expected_error_result)
+        self.assertIsNone(result.moderation_event)
+
+    @patch('api.geocoding.requests.get')
+    def test_geocoding_raises_request_exception(self, mock_get):
+        """
+        If requests.get raises an exception (e.g., network error),
+        the flow should return a 500 with the generic unexpected error payload.
+        """
+        from requests import RequestException
+        mock_get.side_effect = RequestException("Network down")
+
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Ocean',
+            'address': 'Atlantis, Ocean, Underwater',
+            'country': 'US',
+        }
+
+        expected_error_result = {
+            'detail': (
+                'An unexpected error occurred while processing the request.'
+            )
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(event_dto)
+
+        self.assertEqual(result.status_code, 500)
+        self.assertIsNone(result.moderation_event)
+        self.assertEqual(result.errors, expected_error_result)
