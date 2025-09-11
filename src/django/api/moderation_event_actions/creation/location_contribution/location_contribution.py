@@ -35,6 +35,16 @@ class LocationContribution(EventCreationStrategy):
 
     @staticmethod
     def __setup_location_data_processors() -> ContributionProcessor:
+        """
+        Create and link the chain of location data processors and return the chain head.
+        
+        Constructs the processing chain used for location contribution handling in the following order:
+        PermissionProcessor -> SourceProcessor -> ProductionLocationDataProcessor -> GeocodingProcessor.
+        Each processor is linked to the next using its set_next method. The function is stateless and returns the first processor in the chain.
+        
+        Returns:
+            ContributionProcessor: The head of the linked processor chain (PermissionProcessor).
+        """
         location_data_processors = (
             PermissionProcessor(),
             SourceProcessor(),

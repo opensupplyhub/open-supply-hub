@@ -117,6 +117,11 @@ class ContributorAdmin(SimpleHistoryAdmin):
     filter_horizontal = ('partner_fields',)
 
     def get_ordering(self, request):
+        """
+        Return the default ordering for the admin changelist.
+        
+        Returns a list of model field names to order by (here, ['name']).
+        """
         return ['name']
 
 
@@ -238,6 +243,11 @@ class SectorGroupAdmin(admin.ModelAdmin):
         return super().has_delete_permission(request, obj)
 
     def get_ordering(self, request):
+        """
+        Return the default ordering for the admin changelist.
+        
+        Returns a list of model field names to order by (here, ['name']).
+        """
         return ['name']
 
 

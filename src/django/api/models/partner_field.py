@@ -43,4 +43,10 @@ class PartnerField(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """
+        Return the partner field's name.
+        
+        Returns:
+            str: The model's `name` value used as its string representation.
+        """
         return self.name
