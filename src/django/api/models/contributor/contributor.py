@@ -145,6 +145,12 @@ class Contributor(models.Model):
     )
 
     def __str__(self):
+        """
+        Return a human-readable identifier for the contributor.
+        
+        Returns:
+            str: A string formatted as "<name> (<id>)" using the instance's `name` and `id`.
+        """
         return '{name} ({id})'.format(**self.__dict__)
 
     @classmethod

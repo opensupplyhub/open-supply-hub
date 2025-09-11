@@ -16,7 +16,18 @@ class PermissionProcessor(ContributionProcessor):
             self,
             event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
 
-        partner_fields = PartnerField.objects.all()
+        """
+            Validate that the contributor is allowed to modify any partner-specific fields in the event DTO; if not, attach validation errors and set a 403 status, otherwise continue processing via the superclass.
+            
+            If `event_dto.raw_data` is a dict, the method compares its keys against all PartnerField names. For any keys that correspond to partner fields but are not in the contributor's allowed partner_fields, the method populates `event_dto.errors` with a structured validation payload, sets `event_dto.status_code` to HTTP 403 Forbidden, and returns the DTO immediately. If no unauthorized partner fields are found (or `raw_data` is absent/not a dict), the DTO is passed to `super().process()`.
+            
+            Parameters:
+                event_dto (CreateModerationEventDTO): DTO for the moderation event; may be mutated (errors and status_code) when unauthorized fields are detected.
+            
+            Returns:
+                CreateModerationEventDTO: The original DTO, possibly modified with errors and a 403 status when permission violations are found; otherwise the result of `super().process(event_dto)`.
+            """
+            partner_fields = PartnerField.objects.all()
         partner_field_names = [field.name for field in partner_fields]
 
         if event_dto.raw_data and isinstance(event_dto.raw_data, dict):
@@ -50,6 +61,17 @@ class PermissionProcessor(ContributionProcessor):
 
     @staticmethod
     def __transform_fields_errors(fields_errors: List[str]) -> Dict:
+        """
+        Build a validation error payload listing fields the contributor is not permitted to modify.
+        
+        Parameters:
+            fields_errors (List[str]): Names of partner fields for which the contributor lacks permission.
+        
+        Returns:
+            Dict: Validation error dictionary with keys:
+                - 'detail' (str): General request body error message.
+                - 'errors' (List[Dict[str, str]]): One entry per field with 'field' and 'detail' describing the permission error.
+        """
         validation_errors = {
             'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             'errors': []

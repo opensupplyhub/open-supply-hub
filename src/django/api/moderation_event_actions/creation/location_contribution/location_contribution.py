@@ -35,6 +35,15 @@ class LocationContribution(EventCreationStrategy):
 
     @staticmethod
     def __setup_location_data_processors() -> ContributionProcessor:
+        """
+        Builds and links the chain of processors used to validate, extract, and geocode location data.
+        
+        The chain order is: PermissionProcessor -> SourceProcessor -> ProductionLocationDataProcessor -> GeocodingProcessor.
+        Each processor's `set_next` is called to link it to the following processor.
+        
+        Returns:
+            ContributionProcessor: The head processor of the chain (PermissionProcessor).
+        """
         location_data_processors = (
             PermissionProcessor(),
             SourceProcessor(),

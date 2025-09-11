@@ -43,4 +43,12 @@ class PartnerField(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """
+        Return the partner field's name as its string representation.
+        
+        This is used by Django (e.g., admin and shell) whenever the model instance is converted to a string.
+        
+        Returns:
+            str: The value of the `name` field.
+        """
         return self.name
