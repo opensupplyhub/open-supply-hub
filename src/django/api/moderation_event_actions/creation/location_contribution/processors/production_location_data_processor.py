@@ -145,6 +145,13 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         cc_ready_data: Dict,
         event_dto: CreateModerationEventDTO
     ) -> Dict:
+
+        '''
+        If the client provided no updatable fields, do not backfill here;
+        let the PATCH serializer enforce "No fields provided.
+        '''
+        if not cc_ready_data:
+            return cc_ready_data
         # Check original raw_data to decide on backfill strategy.
         raw_data = event_dto.raw_data
 
