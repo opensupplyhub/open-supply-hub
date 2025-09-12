@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: September 20, 2025
 
+### Database changes
+
+#### Migrations
+* 0177_add_partner_fields_to_contributor.py - This migration introduces a new table called `Partner Field`, enhanced `Contributor` model with `partner_fields` relationship `ManyToMany`.
+
 ### Code/API changes
 * [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
 * [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
