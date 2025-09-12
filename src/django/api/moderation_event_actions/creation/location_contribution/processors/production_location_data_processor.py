@@ -9,7 +9,7 @@ from api.os_id_lookup import OSIDLookup
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
-from api.exceptions import HandleAllRequiredFields
+from api.exceptions import MissingRequiredFieldsException
 from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
@@ -48,21 +48,21 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             event_dto.raw_data
         )
 
-        # Handle PATCH request backfill BEFORE ContriCleaner validation
+        # Handle PATCH request backfill BEFORE ContriCleaner validation.
         if event_dto.request_type == ModerationEvent.RequestType.UPDATE.value:
             try:
                 cc_ready_data = self.__validate_and_backfill_patch_data(
                     cc_ready_data, event_dto
                 )
-            except HandleAllRequiredFields as e:
+            except MissingRequiredFieldsException as e:
                 event_dto.errors = e.detail
                 event_dto.status_code = e.status_code
                 return event_dto
 
-        # Choose serializer per request type (POST vs PATCH)
+        # Choose serializer per request type (POST vs PATCH).
         try:
             serializer = self.__prepare_serializer(cc_ready_data, event_dto)
-        except HandleAllRequiredFields as e:
+        except MissingRequiredFieldsException as e:
             event_dto.errors = e.detail
             event_dto.status_code = e.status_code
             return event_dto
@@ -124,8 +124,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
             return event_dto
 
-        # Save the cleaned data in case of successful ContriCleaner
-        # serialization.
+        # Save the cleaned data in case of successful
+        # ContriCleaner serialization.
         event_dto.cleaned_data = dict(processed_location_object._asdict())
 
         return super().process(event_dto)
@@ -136,7 +136,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
             return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
 
-        # Handle v1 PATCH requests (backfill already happened earlier)
+        # Handle v1 PATCH requests (backfill already happened earlier).
         return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
 
     @staticmethod
@@ -144,29 +144,21 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         cc_ready_data: Dict,
         event_dto: CreateModerationEventDTO
     ) -> Dict:
-        # Check original raw_data to decide on backfill strategy
+        # Check original raw_data to decide on backfill strategy.
         raw_data = event_dto.raw_data
 
-        if (is_coordinates_without_all_required_fields(raw_data) or
-                has_some_required_fields(raw_data)):
-            ProductionLocationDataProcessor. \
-                __handle_all_required_fields_errors(event_dto)
-            return cc_ready_data  # Return original data if validation fails
+        ProductionLocationDataProcessor.__handle_all_required_fields_errors(
+            raw_data
+        )
 
-        # If all required fields are missing, perform backfill
+        # If all required fields are missing, perform backfill.
         if not has_all_required_fields(raw_data):
-            if not event_dto.os:
-                ProductionLocationDataProcessor. \
-                    __handle_all_required_fields_errors(event_dto)
-                # Return original data if validation fails
-                return cc_ready_data
-
-            # Create a deep copy to avoid mutating the original data
+            # Create a deep copy to avoid mutating the original data.
             backfilled_data = copy.deepcopy(cc_ready_data)
             default_required_fields = fetch_required_fields(event_dto.os.id)
 
             # Add the required fields directly
-            # (before ContriCleaner processing)
+            # (before ContriCleaner processing).
             for field in ('name', 'address', 'country'):
                 if (field not in backfilled_data or
                         not backfilled_data.get(field)):
@@ -174,31 +166,13 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                         field, ''
                     )
 
-            # After backfill, validate the backfilled data
-            # for any remaining issues
-            if (is_coordinates_without_all_required_fields(backfilled_data) or
-                    has_some_required_fields(backfilled_data)):
-                # Create temporary event_dto with backfilled data
-                # for error handling
-                temp_event_dto = CreateModerationEventDTO(
-                    contributor=event_dto.contributor,
-                    raw_data=backfilled_data,
-                    request_type=event_dto.request_type,
-                    os=event_dto.os
-                )
-                ProductionLocationDataProcessor.\
-                    __handle_all_required_fields_errors(temp_event_dto)
-
             return backfilled_data
 
-        # Return original data if no backfill is needed
+        # Return original data if no backfill is needed.
         return cc_ready_data
 
     @staticmethod
-    def __handle_all_required_fields_errors(
-        event_dto: CreateModerationEventDTO
-    ):
-        raw_data = event_dto.raw_data
+    def __handle_all_required_fields_errors(raw_data: Dict):
         missing_fields = get_missing_required_fields(raw_data)
 
         if not missing_fields:
@@ -216,7 +190,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
     @staticmethod
     def __raise_coordinates_validation_error(missing_fields: List[str]):
-        raise HandleAllRequiredFields(
+        raise MissingRequiredFieldsException(
             detail={
                 "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
                 "errors": [
@@ -244,7 +218,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         verb = 'is' if len(provided_fields) == 1 else 'are'
         provided_list = ', '.join(provided_fields)
 
-        raise HandleAllRequiredFields(
+        raise MissingRequiredFieldsException(
             detail={
                 "detail": APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
                 "errors": [

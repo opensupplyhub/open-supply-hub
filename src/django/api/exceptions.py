@@ -29,7 +29,7 @@ class ServiceUnavailableException(APIException):
     default_code = 'service_unavailable'
 
 
-class HandleAllRequiredFields(APIException):
+class MissingRequiredFieldsException(APIException):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
     default_detail = 'The request body is invalid.'
     default_code = 'unprocessable_entity'
