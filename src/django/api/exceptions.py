@@ -27,3 +27,9 @@ class ServiceUnavailableException(APIException):
     default_detail = ('Service is temporarily unavailable due to maintenance'
                       'work. Please try again later.')
     default_code = 'service_unavailable'
+
+
+class MissingRequiredFieldsException(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    default_detail = 'The request body is invalid.'
+    default_code = 'unprocessable_entity'
