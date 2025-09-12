@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0176_introduce_enable_dromo_uploading_switch'),
+        ('api', '0177_add_new_certifications'),
     ]
 
     operations = [
