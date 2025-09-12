@@ -27,11 +27,10 @@ from api.services.production_locations_lookup \
         has_some_required_fields,
         is_coordinates_without_all_required_fields,
     )
-from api.serializers.v1.production_location_schema_serializer \
-    import (
-        ProductionLocationPostSchemaSerializer,
-        ProductionLocationPatchSchemaSerializer,
-    )
+from api.serializers.v1.production_location_post_schema_serializer \
+    import ProductionLocationPostSchemaSerializer
+from api.serializers.v1.production_location_patch_schema_serializer \
+    import ProductionLocationPatchSchemaSerializer
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import ErrorDetail
 

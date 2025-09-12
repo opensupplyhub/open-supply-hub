@@ -31,8 +31,8 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
-from api.serializers.v1.production_location_schema_serializer \
-    import ProductionLocationSchemaSerializer
+from api.serializers.v1.production_location_post_schema_serializer \
+    import ProductionLocationPostSchemaSerializer
 
 
 class TestLocationContributionStrategy(APITestCase):
@@ -843,7 +843,7 @@ class TestLocationContributionStrategy(APITestCase):
             "number_of_workers": {"min": 100},
             "coordinates": []
             }
-        serializer = ProductionLocationSchemaSerializer(data=input_data)
+        serializer = ProductionLocationPostSchemaSerializer(data=input_data)
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
@@ -863,7 +863,9 @@ class TestLocationContributionStrategy(APITestCase):
             "detail": "Field name must be a string, not a number."
         }]
 
-        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=input_wrong_data
+        )
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
@@ -906,7 +908,9 @@ class TestLocationContributionStrategy(APITestCase):
             }
         ]
 
-        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=input_wrong_data
+        )
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
@@ -960,7 +964,9 @@ class TestLocationContributionStrategy(APITestCase):
             }
         ]
 
-        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=input_wrong_data
+        )
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
