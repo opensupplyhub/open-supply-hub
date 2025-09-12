@@ -142,6 +142,10 @@ class Certifications:
     SAB8000 = 'SA8000'
     GREEN_BUTTON = 'Green Button'
     FAIRTRADE_USA = 'Fairtrade USA'
+    ABVTEX = 'ABVTEX'
+    EMPRESA_B = 'Empresa B'
+    ORIGEM_SUSTENTAVEL = 'Origem Sustentável'
+    SELO_ABR = 'Selo ABR'
 
 
 class LogDownloadQueryParams:

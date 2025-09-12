@@ -62,6 +62,18 @@
             }
           }
         },
+        "geocoded_location_type": {
+          "type": "keyword"
+        },
+        "geocoded_address": {
+          "type": "text",
+          "analyzer": "custom_asciifolding_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
         "business_url": {
           "type": "text",
           "fields": {
