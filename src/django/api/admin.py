@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
+from api.models.partner_field import PartnerField
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
@@ -113,6 +114,7 @@ class FacilityMatchAdmin(SimpleHistoryAdmin):
 class ContributorAdmin(SimpleHistoryAdmin):
     history_list_display = ('is_verified', 'verification_notes')
     search_fields = ('name', 'admin__email')
+    filter_horizontal = ('partner_fields',)
 
     def get_ordering(self, request):
         return ['name']
@@ -239,6 +241,12 @@ class SectorGroupAdmin(admin.ModelAdmin):
         return ['name']
 
 
+class PartnerFieldAdmin(admin.ModelAdmin):
+    list_display = ('name', 'type', 'created_at')
+    search_fields = ('name', 'type')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -261,3 +269,4 @@ admin_site.register(models.ApiLimit, ApiLimitAdmin)
 admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
+admin_site.register(PartnerField, PartnerFieldAdmin)
