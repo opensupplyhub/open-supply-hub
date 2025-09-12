@@ -60,7 +60,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # Choose serializer per request type (POST vs PATCH).
         try:
-            serializer = self.__prepare_serializer(cc_ready_data, event_dto)
+            serializer = self.__prepare_serializer(cc_ready_data, event_dto.request_type)
         except MissingRequiredFieldsException as e:
             event_dto.errors = e.detail
             event_dto.status_code = e.status_code
@@ -130,9 +130,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         return super().process(event_dto)
 
     @staticmethod
-    def __prepare_serializer(cc_ready_data: Dict,
-                             event_dto: CreateModerationEventDTO):
-        if event_dto.request_type == ModerationEvent.RequestType.CREATE.value:
+    def __prepare_serializer(cc_ready_data: Dict, request_type: str):
+        if request_type == ModerationEvent.RequestType.CREATE.value:
             return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
 
         # Handle v1 PATCH requests (backfill already happened earlier).
