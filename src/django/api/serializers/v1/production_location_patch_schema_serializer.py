@@ -8,7 +8,7 @@ class ProductionLocationPatchSchemaSerializer(
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_core_required(False)
+        self._set_core_required(False)
 
     def validate(self, data):
         if not data:

@@ -59,15 +59,10 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                 return event_dto
 
         # Choose serializer per request type (POST vs PATCH).
-        try:
-            serializer = self.__prepare_serializer(
-                cc_ready_data,
-                event_dto.request_type
-            )
-        except MissingRequiredFieldsException as e:
-            event_dto.errors = e.detail
-            event_dto.status_code = e.status_code
-            return event_dto
+        serializer = self.__prepare_serializer(
+            cc_ready_data,
+            event_dto.request_type
+        )
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -148,7 +143,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         '''
         If the client provided no updatable fields, do not backfill here;
-        let the PATCH serializer enforce "No fields provided.
+        let the PATCH serializer enforce "No fields provided".
         '''
         if not cc_ready_data:
             return cc_ready_data

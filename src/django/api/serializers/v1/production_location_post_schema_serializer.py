@@ -7,4 +7,4 @@ class ProductionLocationPostSchemaSerializer(
 ):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_core_required(True)
+        self._set_core_required(True)

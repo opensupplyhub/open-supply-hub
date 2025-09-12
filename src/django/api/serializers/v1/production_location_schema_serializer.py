@@ -7,7 +7,6 @@ from rest_framework import serializers
 
 
 class ProductionLocationSchemaSerializer(serializers.Serializer):
-    abstract = True
     core_fields = ('name', 'address', 'country')
 
     name = serializers.CharField(
@@ -64,10 +63,10 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
                 ' use a concrete subclass.'
             )
 
-    def set_core_required(self, required: bool) -> None:
-        for f in self.core_fields:
-            if f in self.fields:
-                self.fields[f].required = required
+    def _set_core_required(self, required: bool) -> None:
+        for field in self.core_fields:
+            if field in self.fields:
+                self.fields[field].required = required
 
     def _validate_string_field(self, data, field_name):
         if (
@@ -83,8 +82,8 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
 
     def validate(self, data):
         errors = []
-        for f in self.core_fields:
-            err = self._validate_string_field(data, f)
+        for field in self.core_fields:
+            err = self._validate_string_field(data, field)
             if err:
                 errors.append(err)
 
