@@ -5,6 +5,7 @@ import Button from '@material-ui/core/Button';
 import ArrowBack from '@material-ui/icons/ArrowBackIos';
 
 import FacilityDetailsContent from './FacilityDetailsContent';
+import ErrorBoundary from './ErrorBoundary';
 
 import { resetSingleFacility } from '../actions/facilities';
 import { facilitiesRoute } from '../util/constants';
@@ -34,7 +35,7 @@ const facilityDetailsStyles = theme => ({
     },
 });
 
-function FacilityDetails({ classes, clearFacility, history: { push } }) {
+function FacilityDetails({ classes, clearFacility, history: { push }, user }) {
     return (
         <div className={classes.container}>
             <div className={classes.buttonContainer}>
@@ -50,13 +51,21 @@ function FacilityDetails({ classes, clearFacility, history: { push } }) {
                     Back to search results
                 </Button>
             </div>
-            <FacilityDetailsContent />
+            <ErrorBoundary user={user}>
+                <FacilityDetailsContent />
+            </ErrorBoundary>
         </div>
     );
 }
 
-function mapStateToProps({ filters, embeddedMap: { embed } }) {
-    return { filters, embedded: !!embed };
+function mapStateToProps({
+    filters,
+    embeddedMap: { embed },
+    auth: {
+        user: { user },
+    },
+}) {
+    return { filters, embedded: !!embed, user };
 }
 
 function mapDispatchToProps(dispatch) {

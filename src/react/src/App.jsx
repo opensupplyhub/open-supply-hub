@@ -6,6 +6,7 @@ import Routes from './Routes';
 import { fetchEmbedConfig } from './actions/embeddedMap';
 import { OARColor, OARSecondaryColor, OARActionColor } from './util/constants';
 import EmbeddedMapUnauthorized from './components/EmbeddedMapUnauthorized';
+import { useGlobalErrorHandler } from './util/hooks';
 import 'typeface-darker-grotesque';
 
 import './App.css';
@@ -21,8 +22,13 @@ function App({
     config,
     embedError,
     embedLoading,
+    user,
 }) {
     const contributorId = contributor?.value;
+
+    // Set up global error handlers to catch errors from third-party libraries
+    useGlobalErrorHandler(user);
+
     useEffect(() => {
         if (embed && contributorId) {
             getEmbedConfig(contributorId);
@@ -95,6 +101,9 @@ function App({
 function mapStateToProps({
     embeddedMap: { embed, config, error, loading },
     filters,
+    auth: {
+        user: { user },
+    },
 }) {
     return {
         embed: !!embed,
@@ -102,6 +111,7 @@ function mapStateToProps({
         config,
         embedError: error,
         embedLoading: loading,
+        user,
     };
 }
 

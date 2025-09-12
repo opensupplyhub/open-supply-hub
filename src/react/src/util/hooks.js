@@ -6,6 +6,8 @@ import last from 'lodash/last';
 import delay from 'lodash/delay';
 import L from 'leaflet';
 
+import { logErrorToRollbar, slcValidationSchema } from './util';
+
 import {
     detailsZoomLevel,
     initialZoom,
@@ -14,8 +16,6 @@ import {
 } from './constants.facilitiesMap';
 
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
-
-import { slcValidationSchema } from './util';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -401,3 +401,51 @@ export const useSingleLocationContributionForm = onSubmit =>
         onSubmit,
         validateOnMount: true,
     });
+
+/**
+ * Hook to set up global error handlers for
+ * catching errors outside of React components
+ * This catches errors from third-party libraries like Leaflet.js
+ */
+export const useGlobalErrorHandler = user => {
+    useEffect(() => {
+        // Handle global JavaScript errors
+        const handleGlobalError = event => {
+            const { error, message, filename, lineno, colno } = event;
+
+            // Create error object if it doesn't exist
+            const errorObj = error || new Error(message);
+            errorObj.filename = filename;
+            errorObj.lineno = lineno;
+            errorObj.colno = colno;
+
+            // Log to Rollbar with filtering
+            logErrorToRollbar(window, errorObj, user);
+        };
+
+        // Handle unhandled promise rejections
+        const handleUnhandledRejection = event => {
+            const error = event.reason;
+
+            // Create error object from rejection reason
+            const errorObj =
+                error instanceof Error ? error : new Error(String(error));
+
+            // Log to Rollbar with filtering
+            logErrorToRollbar(window, errorObj, user);
+        };
+
+        // Add event listeners
+        window.addEventListener('error', handleGlobalError);
+        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+        // Cleanup function
+        return () => {
+            window.removeEventListener('error', handleGlobalError);
+            window.removeEventListener(
+                'unhandledrejection',
+                handleUnhandledRejection,
+            );
+        };
+    }, [user]);
+};
