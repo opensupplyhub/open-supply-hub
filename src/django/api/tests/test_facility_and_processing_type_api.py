@@ -195,16 +195,15 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
     def test_recruitment_agency_present_in_facility_processing_types(self):
         url = "/api/facility-processing-types/"
         response = self.client.get(url)
-        expected_data = {
-            "facilityType": "Recruitment Agency",
-            "processingTypes": ["Recruitment Agency"]
-        }
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        recruitment_agency = next(
+        office_hq = next(
             (item for item in data
-             if item["facilityType"].lower() == "recruitment agency".lower()),
+             if item["facilityType"].lower() == "office / hq".lower()),
             None
         )
-        self.assertEqual(recruitment_agency, expected_data)
+        
+        self.assertIsNotNone(office_hq)
+        self.assertIn("Recruitment Agency", office_hq["processingTypes"])
+        self.assertIn("Union Headquarters/Office", office_hq["processingTypes"])
