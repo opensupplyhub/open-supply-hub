@@ -60,7 +60,10 @@ class ProductionLocationDataProcessor(ContributionProcessor):
 
         # Choose serializer per request type (POST vs PATCH).
         try:
-            serializer = self.__prepare_serializer(cc_ready_data, event_dto.request_type)
+            serializer = self.__prepare_serializer(
+                cc_ready_data,
+                event_dto.request_type
+            )
         except MissingRequiredFieldsException as e:
             event_dto.errors = e.detail
             event_dto.status_code = e.status_code
