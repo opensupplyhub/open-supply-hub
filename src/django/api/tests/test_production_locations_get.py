@@ -45,3 +45,49 @@ class TestProductionLocationsViewSet(APITestCase):
         detail = {"detail": "The location with the given id was not found."}
         self.assertEqual(api_res.data, detail)
         self.assertEqual(api_res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_production_locations_includes_geocode_fields(self):
+        response_with_geocode = {
+            "count": 1,
+            "data": [
+                {
+                    "os_id": self.os_id,
+                    "name": "location1",
+                    "geocoded_location_type": "ROOFTOP",
+                    "geocoded_address": "123 Main St, City, Country",
+                }
+            ],
+        }
+        self.search_index_mock.return_value = response_with_geocode
+        api_res = self.client.get("/api/v1/production-locations/")
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+        self.assertIn("data", api_res.data)
+        self.assertEqual(len(api_res.data["data"]), 1)
+        item = api_res.data["data"][0]
+        self.assertEqual(item.get("geocoded_location_type"), "ROOFTOP")
+        self.assertEqual(
+            item.get("geocoded_address"), "123 Main St, City, Country"
+        )
+
+    def test_get_single_production_location_includes_geocode_fields(self):
+        response_with_geocode = {
+            "count": 1,
+            "data": [
+                {
+                    "os_id": self.os_id,
+                    "name": "location1",
+                    "geocoded_location_type": "RANGE_INTERPOLATED",
+                    "geocoded_address": "456 Side Rd, Town, Country",
+                }
+            ],
+        }
+        self.search_index_mock.return_value = response_with_geocode
+        url = f"/api/v1/production-locations/{self.os_id}/"
+        api_res = self.client.get(url)
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            api_res.data.get("geocoded_location_type"), "RANGE_INTERPOLATED"
+        )
+        self.assertEqual(
+            api_res.data.get("geocoded_address"), "456 Side Rd, Town, Country"
+        )

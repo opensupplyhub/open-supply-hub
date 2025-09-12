@@ -18,7 +18,14 @@ jest.mock('@material-ui/core/Popper', () => (props) => {
   }
   return props.children;
 });
-jest.mock('../../components/DownloadMenu', () => () => <div data-testid="mock-download-menu" />);
+jest.mock('../../components/DownloadMenu', () => {
+  const MockDownloadMenu = (props) => (
+    <button type="button" data-testid="mock-download-menu" onClick={() => props.onSelectFormat('csv')}>menu</button>
+  );
+  MockDownloadMenu.propTypes = {};
+  return MockDownloadMenu;
+});
+jest.mock('../../actions/downloadFacilities', () => jest.fn(() => ({ type: 'TEST_DOWNLOAD' })));
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
 
 
@@ -348,5 +355,31 @@ describe('DownloadFacilitiesButton component', () => {
     await waitFor(() =>
       expect(screen.getByText(expectedTooltipText)).toBeInTheDocument()
     );
+  });
+
+  test('should not decrement counter for same contributor downloads', () => {
+    const props = {
+      disabled: false,
+      userAllowedRecords: 1000,
+      isSameContributor: true,
+    };
+    const customState = {
+      auth: {
+        user: {
+          user: {
+            isAnon: false,
+            allowed_records_number: 1000,
+          },
+        },
+      },
+      embeddedMap: { embed: false },
+    };
+
+    const { getByRole, getByTestId } = renderComponent(props, customState);
+    const button = getByRole('button', { name: 'Download' });
+    fireEvent.click(button);
+    fireEvent.click(getByTestId('mock-download-menu'));
+    const downloadFacilities = jest.requireMock('../../actions/downloadFacilities');
+    expect(downloadFacilities).toHaveBeenCalledWith('csv', { isEmbedded: false, isSameContributor: true });
   });
 });
