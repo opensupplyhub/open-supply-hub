@@ -16,21 +16,18 @@ class PermissionProcessor(ContributionProcessor):
             self,
             event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
 
-        partner_fields = PartnerField.objects.all()
-        partner_field_names = [field.name for field in partner_fields]
+        partner_field_names = PartnerField.objects \
+            .values_list('name', flat=True)
 
-        if event_dto.raw_data and isinstance(event_dto.raw_data, dict):
+        if event_dto.raw_data:
             matching_partner_field_names = [
                 key for key in event_dto.raw_data.keys()
                 if key in partner_field_names
             ]
 
             if matching_partner_field_names:
-                contributor_partner_fields = event_dto.contributor \
-                    .partner_fields.all()
-                contributor_partner_field_names = [
-                    field.name for field in contributor_partner_fields
-                ]
+                contributor_partner_field_names = event_dto.contributor \
+                    .partner_fields.values_list('name', flat=True)
 
                 unauthorized_partner_fields = [
                     name for name in matching_partner_field_names

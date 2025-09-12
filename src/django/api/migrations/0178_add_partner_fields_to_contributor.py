@@ -30,6 +30,7 @@ class Migration(migrations.Migration):
             name='partner_fields',
             field=models.ManyToManyField(
                 blank=True,
+                null=True,
                 help_text='Partner fields that this contributor can access',
                 to='api.partnerfield'
             ),
