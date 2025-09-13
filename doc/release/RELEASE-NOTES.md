@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: September 20, 2025
 
+### Database changes
+
+#### Migrations
+* 0177_add_new_certifications.py - This migration introduces new certifications for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
+
 ### Code/API changes
 * [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
 * [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
@@ -16,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
+* [OSDEV-2044](https://opensupplyhub.atlassian.net/browse/OSDEV-2044) - Added additional certifications to `Certifications/Standards/Regulations` on `Claim Profile`.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

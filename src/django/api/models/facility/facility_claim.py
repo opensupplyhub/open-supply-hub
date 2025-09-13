@@ -121,6 +121,10 @@ class FacilityClaim(models.Model):
             Certifications.RESPONSIBLE_DOWN_STANDARD,
             Certifications.RESPONSIBLE_WOOL_STANDARD,
             Certifications.SAB8000,
+            Certifications.ABVTEX,
+            Certifications.EMPRESA_B,
+            Certifications.ORIGEM_SUSTENTAVEL,
+            Certifications.SELO_ABR,
         ]
     ]
 
