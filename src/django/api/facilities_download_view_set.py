@@ -9,7 +9,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode import \
     FacilityDownloadSerializerEmbedMode
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
-from api.serializers.facility.utils import is_same_contributor_for_queryset
+from api.serializers.facility.utils import is_same_contributor_from_url_param
 from api.constants import PaginationConfig
 
 
@@ -68,14 +68,9 @@ class FacilitiesDownloadViewSet(
 
         is_first_page = (page == 1)
         limit = None
-        is_same_contributor = False
+        is_same_contributor = is_same_contributor_from_url_param(request)
 
         if is_first_page or is_last_page:
-            is_same_contributor = is_same_contributor_for_queryset(
-                base_qs,
-                request
-            )
-
             if (
                 not switch_is_active('private_instance')
                 and not self.__is_embed_mode()
