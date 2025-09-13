@@ -91,8 +91,7 @@ from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
 from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
-    is_same_contributor_for_queryset,
-    is_same_contributor_for_list
+    is_same_contributor_from_url_param,
 )
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -272,15 +271,14 @@ class FacilitiesViewSet(ListModelMixin,
         if not should_serialize_number_of_public_contributors:
             exclude_fields.extend(['number_of_public_contributors'])
 
+        is_same_contributor = is_same_contributor_from_url_param(
+            request
+        )
+
         if page_queryset is not None:
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
-
-            is_same_contributor = is_same_contributor_for_list(
-                page_queryset,
-                request
-            )
 
             page = self.get_paginated_response(serializer.data)
             page.data['extent'] = extent
@@ -289,11 +287,6 @@ class FacilitiesViewSet(ListModelMixin,
             return page
 
         # Non-paginated response
-        is_same_contributor = is_same_contributor_for_queryset(
-            queryset,
-            request
-        )
-
         serializer = FacilityIndexSerializer(queryset, many=True,
                                              context=context,
                                              exclude_fields=exclude_fields)
