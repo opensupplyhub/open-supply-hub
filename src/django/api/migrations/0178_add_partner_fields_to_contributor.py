@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PartnerField',
             fields=[
-                ('name', models.CharField(help_text='The partner field name.', max_length=200, unique=True, null=True, serialize=False)),
+                ('name', models.CharField(help_text='The partner field name.', max_length=200, unique=True, null=False, serialize=False)),
                 ('uuid', models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False, help_text='Unique identifier for the partner field.')),
                 ('type', models.CharField(help_text='The partner field type.', max_length=200, blank=False, null=False, choices=[('int','int'),('float','float'),('string','string'),('object','object')])),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
