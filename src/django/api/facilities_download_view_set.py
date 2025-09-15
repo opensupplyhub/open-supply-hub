@@ -70,13 +70,14 @@ class FacilitiesDownloadViewSet(
         limit = None
         is_same_contributor = is_same_contributor_from_url_param(request)
 
-        if is_first_page or is_last_page:
-            if (
-                not switch_is_active('private_instance')
-                and not self.__is_embed_mode()
-                and not is_same_contributor
-            ):
-                limit = FacilitiesDownloadService.get_download_limit(request)
+        if (
+            is_first_page or is_last_page
+        ) and (
+            not switch_is_active('private_instance')
+            and not self.__is_embed_mode()
+            and not is_same_contributor
+        ):
+            limit = FacilitiesDownloadService.get_download_limit(request)
 
         list_serializer = self.get_serializer(items)
         rows = [facility_data['row'] for facility_data in list_serializer.data]
