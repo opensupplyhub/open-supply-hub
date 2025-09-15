@@ -94,7 +94,8 @@ class DatabaseSynchronizer:
                 'embed_config',
                 'embed_level',
                 'created_at',
-                'updated_at'
+                'updated_at',
+                'partner_fields'
             ]
         },
         'FacilityList': {

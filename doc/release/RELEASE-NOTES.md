@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0177_add_new_certifications.py - This migration introduces new certifications for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
+* 0178_add_partner_fields_to_contributor.py - This migration introduces a new table called `Partner Field`, enhanced `Contributor` model with `partner_fields` relationship `ManyToMany`.
 
 ### Code/API changes
 * [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
@@ -22,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
 * [OSDEV-2044](https://opensupplyhub.atlassian.net/browse/OSDEV-2044) - Added additional certifications to `Certifications/Standards/Regulations` on `Claim Profile`.
+* [OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Added permission system to control which partner data fields contributors can submit for `POST v1/production-locations/` & `PATCH v1/production-locations/{os_id}` endpoints. Created new `PartnerField` model for categorizing partner-specific fields. Enhanced `Contributor` model with `partner_fields` relationship.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
