@@ -379,16 +379,21 @@ def is_same_contributor_from_url_param(request) -> bool:
     current_contributor_id = current_contributor.id
     is_current_contributor = current_contributor_id in contributors_from_url
 
-    only_current_contributor = len(
-        contributors_from_url
-    ) == 1 and is_current_contributor
-    current_contributor_and_combined = (
-        len(contributors_from_url) > 0
-        and is_current_contributor
-        and combine_contributors == 'AND'
-    )
+    def check_only_current_contributor() -> bool:
+        return (
+            len(contributors_from_url) == 1
+            and is_current_contributor
+        )
+
+    def check_current_contributor_and_combined() -> bool:
+        return (
+            len(contributors_from_url) > 0
+            and is_current_contributor
+            and combine_contributors == 'AND'
+        )
+
     return (
-        only_current_contributor
+        check_only_current_contributor()
         or
-        current_contributor_and_combined
+        check_current_contributor_and_combined()
     )
