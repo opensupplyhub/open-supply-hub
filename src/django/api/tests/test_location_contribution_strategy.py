@@ -32,8 +32,8 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
-from api.serializers.v1.production_location_schema_serializer \
-    import ProductionLocationSchemaSerializer
+from api.serializers.v1.production_location_post_schema_serializer \
+    import ProductionLocationPostSchemaSerializer
 
 
 class TestLocationContributionStrategy(APITestCase):
@@ -844,7 +844,7 @@ class TestLocationContributionStrategy(APITestCase):
             "number_of_workers": {"min": 100},
             "coordinates": []
             }
-        serializer = ProductionLocationSchemaSerializer(data=input_data)
+        serializer = ProductionLocationPostSchemaSerializer(data=input_data)
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
@@ -864,7 +864,9 @@ class TestLocationContributionStrategy(APITestCase):
             "detail": "Field name must be a string, not a number."
         }]
 
-        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=input_wrong_data
+        )
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
@@ -907,7 +909,9 @@ class TestLocationContributionStrategy(APITestCase):
             }
         ]
 
-        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=input_wrong_data
+        )
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
@@ -961,13 +965,193 @@ class TestLocationContributionStrategy(APITestCase):
             }
         ]
 
-        serializer = ProductionLocationSchemaSerializer(data=input_wrong_data)
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=input_wrong_data
+        )
         with self.assertRaises(ValidationError) as cm:
             serializer.is_valid(raise_exception=True)
         error_details = cm.exception.detail
         transformed_errors = ProductionLocationDataProcessor.\
             _transform_errors(error_details)
         self.assertEqual(transformed_errors, expected_response_structure)
+
+    def test_patch_coords_missing_required_fields(self):
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
+
+    def test_patch_some_required_fields_provided(self):
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'name': 'Updated Facility Name',
+            'address': 'Updated Address'
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
+
+    def test_patch_all_required_fields_provided(self):
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'name': 'Updated Facility Name',
+            'address': 'Updated Address',
+            'country': 'US',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+        self.assertEqual(result.moderation_event.request_type, 'UPDATE')
+        self.assertEqual(result.moderation_event.os.id, existing_facility.id)
+
+    def test_patch_coords_partial_fields_fails(self):
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'name': 'Updated Name',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
+
+    def test_patch_no_coords_partial_fields_fails(self):
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'name': 'Updated Name',
+            'address': 'Updated Address'
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIsNone(result.moderation_event)
+        self.assertIn('errors', result.__dict__)
+        self.assertIn('detail', result.errors)
+        self.assertIn('errors', result.errors)
+
+    def test_patch_coords_all_fields_succeeds(self):
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'name': 'Updated Facility Name',
+            'address': 'Updated Address',
+            'country': 'US',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            },
+            'sector': ['Updated Sector']
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+        self.assertEqual(result.moderation_event.request_type, 'UPDATE')
+        self.assertEqual(result.moderation_event.os.id, existing_facility.id)
 
     def test_moderation_event_creation_with_valid_partner_field(self):
         existing_location_user_email = 'test2@example.com'
@@ -1170,3 +1354,46 @@ class TestLocationContributionStrategy(APITestCase):
 
         self.assertEqual(result.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(result.errors, expected_errors)
+
+    def _create_existing_facility(self):
+        existing_user = User.objects.create(email='existing@example.com')
+        existing_user.set_password('password123')
+        existing_user.save()
+
+        existing_contributor = Contributor.objects.create(
+            admin=existing_user,
+            name='Existing Contributor',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        facility_list = FacilityList.objects.create(
+            header='Existing Header',
+            file_name='existing.csv',
+            name='Existing List'
+        )
+
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=facility_list,
+            contributor=existing_contributor
+        )
+
+        list_item = FacilityListItem.objects.create(
+            name='Existing Facility Name',
+            address='Existing Address',
+            country_code='US',
+            sector=['Existing Sector'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+
+        facility = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        return facility
