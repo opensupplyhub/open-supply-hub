@@ -22,15 +22,15 @@ class PartnerField(models.Model):
         verbose_name_plural = "partner field"
 
     uuid = models.UUIDField(
-        null=False,
         default=uuid.uuid4,
-        unique=True,
+        primary_key=True,
         editable=False,
         help_text='Unique identifier for the partner field.'
     )
     name = models.CharField(
         max_length=200,
-        primary_key=True,
+        unique=True,
+        null=False,
         help_text=('The partner field name.'))
     type = models.CharField(
         max_length=200,
