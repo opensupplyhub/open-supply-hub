@@ -450,6 +450,26 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             expected_data
         )
 
+    def test_query_multi_param_next_page(self):
+        user = self.create_user()
+        self.login_user(user)
+
+        response = self.get_facility_downloads(
+            {
+                "countries": ["IN", "US"],
+                "pageSize": 2
+            }
+        )
+
+        expected_root = "http://testserver/api/facilities-downloads/"
+        expected_query = "?countries=IN&countries=US&pageSize=2&page=2"
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data.get("next", ""),
+            expected_root + expected_query
+        )
+
     @patch(
         'api.constants.FacilitiesDownloadSettings.'
         'FREE_FACILITIES_DOWNLOAD_LIMIT',
