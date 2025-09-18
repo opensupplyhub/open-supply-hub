@@ -20,6 +20,7 @@ class PermissionProcessor(ContributionProcessor):
             .values_list('name', flat=True)
 
         if event_dto.raw_data:
+            # Permission validation
             matching_partner_field_names = [
                 key for key in event_dto.raw_data.keys()
                 if key in partner_field_names
@@ -43,41 +44,37 @@ class PermissionProcessor(ContributionProcessor):
 
                     return event_dto
 
-                validation_errors = {
-                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
-                    'errors': []
+                # Type validation
+                partner_fields = {
+                    pf.name: pf.type 
+                    for pf in PartnerField.objects.filter(
+                        name__in=matching_partner_field_names
+                    )
                 }
 
-                for field_name in matching_partner_field_names:
-                    value = event_dto.raw_data.get(field_name)
-                    field_type = PartnerField.objects.get(name=field_name).type
+                type_validators = {
+                    'int': lambda v: self.__safe_convert(v, int),
+                    'float': lambda v: self.__safe_convert(v, float),
+                    'string': lambda v: self.__safe_convert(v, str),
+                    'object': lambda v: isinstance(v, (dict, list)),
+                }
 
-                    try:
-                        if field_type == 'int':
-                            int(value)
-                        elif field_type == 'float':
-                            float(value)
-                        elif field_type == 'string':
-                            str(value)
-                        elif field_type == 'object':
-                            if not isinstance(value, (dict, list)):
-                                validation_errors['errors'].append(
-                                    self.__transform_type_error(
-                                        field_name,
-                                        field_type,
-                                        value
-                                    )
-                                )
-                    except (ValueError, TypeError):
-                        validation_errors['errors'].append(
-                            self.__transform_type_error(
-                                field_name,
-                                field_type,
-                                value
+                invalid_type_fields = []
+
+                for name, field_type in partner_fields.items():
+                    value = event_dto.raw_data.get(name)
+
+                    if value is not None and field_type in type_validators:
+                        if not type_validators[field_type](value):
+                            invalid_type_fields.append(
+                                (name, field_type, value)
                             )
-                        )
-                
-                if len(validation_errors['errors']) > 0:
+
+                if invalid_type_fields:
+                    validation_errors = self.__transform_type_errors(
+                        invalid_type_fields
+                    )
+
                     event_dto.errors = validation_errors
                     event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -102,13 +99,29 @@ class PermissionProcessor(ContributionProcessor):
             )
 
         return validation_errors
-    
+
     @staticmethod
-    def __transform_type_error(name: str, type: str, value) -> Dict:
-        validation_error = {
-            'field': name,
-            'detail': f'Field "{name}" must be of type {type}, '
-            f'but received {type(value).__name__}'
+    def __transform_type_errors(invalid_type_fields: List[tuple]) -> Dict:
+        validation_errors = {
+            'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+            'errors': []
         }
 
-        return validation_error
+        for name, field_type, value in invalid_type_fields:
+            validation_errors['errors'].append(
+                {
+                    'field': name,
+                    'detail': f'Field "{name}" must be of type {field_type}, '
+                    f'but received {type(value).__name__}'
+                }
+            )
+
+        return validation_errors
+
+    @staticmethod
+    def __safe_convert(value, convert_func):
+        try:
+            convert_func(value)
+            return True
+        except (ValueError, TypeError):
+            return False
