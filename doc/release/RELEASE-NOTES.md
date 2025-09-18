@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 2.13
+## Release 2.13.0
 
 ## Introduction
 * Product name: Open Supply Hub
@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows to switch to the v1 claims flow.
+* 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
