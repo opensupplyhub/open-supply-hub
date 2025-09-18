@@ -46,19 +46,21 @@ class PermissionProcessor(ContributionProcessor):
 
                 # Type validation
                 partner_fields = {
-                    pf.name: pf.type
-                    for pf in PartnerField.objects.filter(
+                    partner_field.name: partner_field.type
+                    for partner_field in PartnerField.objects.filter(
                         name__in=matching_partner_field_names
                     )
                 }
 
                 type_validators = {
-                    'int': lambda v: isinstance(v, int)
-                    and not isinstance(v, bool),
-                    'float': lambda v: isinstance(v, float)
-                    and not isinstance(v, bool),
-                    'string': lambda v: isinstance(v, str),
-                    'object': lambda v: isinstance(v, (dict, list)),
+                    'int': lambda value: isinstance(value, int)
+                    and not isinstance(value, bool),
+                    'float': lambda value: isinstance(value, float)
+                    and not isinstance(value, bool),
+                    'string': lambda value: isinstance(value, str),
+                    'object': lambda value: isinstance(
+                        value, (dict, list)
+                    ),
                 }
 
                 invalid_type_fields = []

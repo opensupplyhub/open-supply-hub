@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
-* [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Update v1 production locations `POST/PATCH` endpoints to include partner fields
+* [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
     * Added `unit` field to `PartnerField` model
     * Added type validation for submitted partner fields
 
