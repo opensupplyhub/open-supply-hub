@@ -2,13 +2,16 @@ from django.db import migrations
 
 
 def create_enable_v1_claims_flow_switch(apps, schema_editor):
-    switch = apps.get_model('waffle', 'Switch')
-    switch.objects.create(name='enable_v1_claims_flow', active=False)
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.get_or_create(
+        name='enable_v1_claims_flow',
+        defaults={'active': False},
+    )
 
 
 def delete_enable_v1_claims_flow_switch(apps, schema_editor):
-    switch = apps.get_model('waffle', 'Switch')
-    switch.objects.get(name='enable_v1_claims_flow').delete()
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.filter(name='enable_v1_claims_flow').delete()
 
 
 class Migration(migrations.Migration):
