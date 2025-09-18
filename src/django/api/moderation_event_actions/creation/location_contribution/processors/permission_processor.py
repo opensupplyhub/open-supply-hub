@@ -53,9 +53,9 @@ class PermissionProcessor(ContributionProcessor):
                 }
 
                 type_validators = {
-                    'int': lambda v: self.__safe_convert(v, int),
-                    'float': lambda v: self.__safe_convert(v, float),
-                    'string': lambda v: self.__safe_convert(v, str),
+                    'int': lambda v: isinstance(v, int),
+                    'float': lambda v: isinstance(v, float),
+                    'string': lambda v: isinstance(v, str),
                     'object': lambda v: isinstance(v, (dict, list)),
                 }
 
@@ -111,17 +111,9 @@ class PermissionProcessor(ContributionProcessor):
             validation_errors['errors'].append(
                 {
                     'field': name,
-                    'detail': f'Field "{name}" must be of type {field_type}, '
+                    'detail': f'Field {name} must be of type {field_type}, '
                     f'but received {type(value).__name__}'
                 }
             )
 
         return validation_errors
-
-    @staticmethod
-    def __safe_convert(value, convert_func):
-        try:
-            convert_func(value)
-            return True
-        except (ValueError, TypeError):
-            return False
