@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0178_add_partner_fields_to_contributor'),
+        ('api', '0179_introduce_enable_v1_claims_flow'),
     ]
 
     operations = [
