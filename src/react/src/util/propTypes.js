@@ -32,6 +32,7 @@ import {
     SHOW_ADDITIONAL_IDENTIFIERS,
     PRIVATE_INSTANCE,
     ENABLE_DROMO_UPLOADING,
+    ENABLE_V1_CLAIMS_FLOW,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -361,6 +362,7 @@ export const featureFlagPropType = oneOf([
     SHOW_ADDITIONAL_IDENTIFIERS,
     PRIVATE_INSTANCE,
     ENABLE_DROMO_UPLOADING,
+    ENABLE_V1_CLAIMS_FLOW,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
