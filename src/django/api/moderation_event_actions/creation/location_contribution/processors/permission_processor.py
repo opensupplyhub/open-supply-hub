@@ -46,7 +46,7 @@ class PermissionProcessor(ContributionProcessor):
 
                 # Type validation
                 partner_fields = {
-                    pf.name: pf.type 
+                    pf.name: pf.type
                     for pf in PartnerField.objects.filter(
                         name__in=matching_partner_field_names
                     )
@@ -76,7 +76,8 @@ class PermissionProcessor(ContributionProcessor):
                     )
 
                     event_dto.errors = validation_errors
-                    event_dto.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+                    event_dto.status_code = status \
+                        .HTTP_422_UNPROCESSABLE_ENTITY
 
                     return event_dto
 
