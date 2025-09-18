@@ -53,8 +53,10 @@ class PermissionProcessor(ContributionProcessor):
                 }
 
                 type_validators = {
-                    'int': lambda v: isinstance(v, int),
-                    'float': lambda v: isinstance(v, float),
+                    'int': lambda v: isinstance(v, int)
+                    and not isinstance(v, bool),
+                    'float': lambda v: isinstance(v, float)
+                    and not isinstance(v, bool),
                     'string': lambda v: isinstance(v, str),
                     'object': lambda v: isinstance(v, (dict, list)),
                 }
