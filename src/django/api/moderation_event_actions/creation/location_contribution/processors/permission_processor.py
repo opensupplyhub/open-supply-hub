@@ -36,7 +36,7 @@ class PermissionProcessor(ContributionProcessor):
 
         partner_fields_qs = PartnerField.objects \
             .filter(name__in=incoming_keys) \
-                .values_list("name", "type")
+            .values_list("name", "type")
         partner_fields: Dict[str, str] = {
             name: ftype
             for name, ftype in partner_fields_qs
@@ -50,7 +50,8 @@ class PermissionProcessor(ContributionProcessor):
             event_dto.contributor.partner_fields.values_list("name", flat=True)
         )
         requested_partner_field_names: set[str] = set(partner_fields.keys())
-        unauthorized: set[str] = requested_partner_field_names - contributor_allowed
+        unauthorized: set[str] = requested_partner_field_names \
+            - contributor_allowed
 
         if unauthorized:
             event_dto.errors = self.__transform_permission_errors(unauthorized)
@@ -106,7 +107,7 @@ class PermissionProcessor(ContributionProcessor):
                 for name, expected, value in invalid_type_fields
             ],
         }
-    
+
     @staticmethod
     def __collect_invalid_type_fields(
         raw: Mapping[str, object],
