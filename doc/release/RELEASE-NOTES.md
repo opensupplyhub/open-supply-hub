@@ -13,7 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
-* 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model & updated `partner_fields` field in `Contributor` model.
+* 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
