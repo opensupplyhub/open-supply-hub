@@ -37,10 +37,7 @@ class PermissionProcessor(ContributionProcessor):
         partner_fields_qs = PartnerField.objects \
             .filter(name__in=incoming_keys) \
             .values_list("name", "type")
-        partner_fields: Dict[str, str] = {
-            name: ftype
-            for name, ftype in partner_fields_qs
-        }
+        partner_fields: Dict[str, str] = dict(partner_fields_qs)
 
         if not partner_fields:
             return super().process(event_dto)
