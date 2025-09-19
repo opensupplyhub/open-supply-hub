@@ -152,7 +152,7 @@ const steps = Object.freeze([
 
 const InvisibleDiv = constant(<div style={{ display: 'none ' }} />);
 
-function ClaimFacilityStepper({
+const ClaimFacilityStepper = ({
     fetching,
     submitClaimForm,
     formData,
@@ -161,7 +161,7 @@ function ClaimFacilityStepper({
     match: {
         params: { osID },
     },
-}) {
+}) => {
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
 
@@ -377,7 +377,7 @@ function ClaimFacilityStepper({
             {controlsSection}
         </div>
     );
-}
+};
 
 ClaimFacilityStepper.defaultProps = {
     error: null,
@@ -394,30 +394,26 @@ ClaimFacilityStepper.propTypes = {
     error: arrayOf(string),
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     claimFacility: {
         claimData: { fetching, formData, error },
     },
-}) {
-    return {
-        fetching,
-        formData,
-        error,
-    };
-}
+}) => ({
+    fetching,
+    formData,
+    error,
+});
 
-function mapDispatchToProps(
+const mapDispatchToProps = (
     dispatch,
     {
         match: {
             params: { osID },
         },
     },
-) {
-    return {
-        submitClaimForm: () => dispatch(submitClaimAFacilityData(osID)),
-    };
-}
+) => ({
+    submitClaimForm: () => dispatch(submitClaimAFacilityData(osID)),
+});
 
 export default connect(
     mapStateToProps,
