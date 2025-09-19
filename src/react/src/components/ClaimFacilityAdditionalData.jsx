@@ -32,6 +32,7 @@ import {
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
 import InputErrorText from '../components/Contribute/InputErrorText';
+import FreeEmissionsEstimate from '../components/FreeEmissionsEstimate';
 
 const {
     sectorsForm,
@@ -156,6 +157,7 @@ function ClaimFacilityAdditionalData({
                     disabled={fetching}
                 />
             </div>
+            <FreeEmissionsEstimate />
         </>
     );
 }
