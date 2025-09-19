@@ -12,7 +12,7 @@ from api.constants import APIV1CommonErrorMessages
 
 class PermissionProcessor(ContributionProcessor):
 
-    TYPE_VALIDATORDS = {
+    TYPE_VALIDATORS = {
         'int': lambda value: isinstance(value, int)
         and not isinstance(value, bool),
         'float': lambda value: isinstance(value, float)
@@ -62,7 +62,7 @@ class PermissionProcessor(ContributionProcessor):
         invalid_type_fields = self.__collect_invalid_type_fields(
             raw,
             partner_fields,
-            self.TYPE_VALIDATORDS
+            self.TYPE_VALIDATORS
         )
 
         if invalid_type_fields:
