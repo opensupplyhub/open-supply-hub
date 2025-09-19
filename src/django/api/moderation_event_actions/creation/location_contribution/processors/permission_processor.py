@@ -115,7 +115,7 @@ class PermissionProcessor(ContributionProcessor):
         validators: Mapping[str, callable],
     ) -> List[Tuple[str, str, object]]:
 
-        invalid_fields = List[Tuple[str, str, object]] = []
+        invalid_fields: List[Tuple[str, str, object]] = []
 
         for name, field_type in partner_fields.items():
             value = raw.get(name)
