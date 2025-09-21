@@ -38,6 +38,10 @@ class PartnerField(models.Model):
         blank=False,
         choices=TYPE_CHOICES,
         help_text=('The partner field type.'))
+    unit = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=('The partner field unit.'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
