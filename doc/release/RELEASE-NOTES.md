@@ -45,6 +45,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
 * [OSDEV-2122](https://opensupplyhub.atlassian.net/browse/OSDEV-2122) - Enhanced PATCH `/api/v1/production-locations/{os_id}/` endpoint validation to enforce required field constraints when coordinates are provided. Implemented automatic backfill of missing required fields (name, address, country) from existing facility data when no required fields are provided in PATCH requests.
 
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Disabled the RBA synchronization script trigger via the `db_sync_enabled` Terraform variable due to the temporary unnecessity of synchronization.
+
 ### What's new
 * [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
 * [OSDEV-2044](https://opensupplyhub.atlassian.net/browse/OSDEV-2044) - Added additional certifications to `Certifications/Standards/Regulations` on `Claim Profile`.
