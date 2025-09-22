@@ -13,9 +13,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
+* 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
+* [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
+    * Added `unit` field to `PartnerField` model
+    * Added type validation for submitted partner fields
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -40,6 +44,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
 * [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
 * [OSDEV-2122](https://opensupplyhub.atlassian.net/browse/OSDEV-2122) - Enhanced PATCH `/api/v1/production-locations/{os_id}/` endpoint validation to enforce required field constraints when coordinates are provided. Implemented automatic backfill of missing required fields (name, address, country) from existing facility data when no required fields are provided in PATCH requests.
+
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Disabled the RBA synchronization script trigger via the `db_sync_enabled` Terraform variable due to the temporary unnecessity of synchronization.
 
 ### What's new
 * [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
