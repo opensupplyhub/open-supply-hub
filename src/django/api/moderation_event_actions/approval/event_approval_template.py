@@ -83,7 +83,11 @@ class EventApprovalTemplate(ABC):
             f'created. Id: {item.id}'
         )
 
-        create_extendedfields_for_single_item(item, data["fields"])
+        create_extendedfields_for_single_item(
+            item,
+            data["fields"],
+            True
+        )
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
             'created.'
