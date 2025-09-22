@@ -1,5 +1,15 @@
 import { useFormik } from 'formik';
+import { useEffect } from 'react';
 import { freeEmissionsEstimateValidationSchema } from './utils.js';
+
+// Custom hook to sync form field with Redux store.
+export const useFormFieldSync = (formValue, storeValue, updateAction) => {
+    useEffect(() => {
+        if (formValue !== storeValue) {
+            updateAction(formValue);
+        }
+    }, [formValue, storeValue, updateAction]);
+};
 
 export const useFreeEmissionsEstimateForm = (initialValues, onSubmit) =>
     useFormik({

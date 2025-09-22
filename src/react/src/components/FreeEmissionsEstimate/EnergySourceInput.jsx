@@ -11,16 +11,17 @@ import { energySourceInputStyles } from './styles.js';
 
 const EnergySourceInput = ({
     source,
-    formik,
+    freeEmissionsEstimateForm,
     enabledFieldName,
     valueFieldName,
     disabled,
     classes,
 }) => {
-    const enabled = formik.values[enabledFieldName];
-    const value = formik.values[valueFieldName];
+    const enabled = freeEmissionsEstimateForm.values[enabledFieldName];
+    const value = freeEmissionsEstimateForm.values[valueFieldName];
     const hasError =
-        formik.touched[valueFieldName] && formik.errors[valueFieldName];
+        freeEmissionsEstimateForm.touched[valueFieldName] &&
+        freeEmissionsEstimateForm.errors[valueFieldName];
 
     return (
         <div className={classes.energyInputContainer}>
@@ -31,7 +32,7 @@ const EnergySourceInput = ({
                         id={source.id}
                         name={enabledFieldName}
                         checked={enabled}
-                        onChange={formik.handleChange}
+                        onChange={freeEmissionsEstimateForm.handleChange}
                         disabled={disabled}
                     />
                 }
@@ -45,12 +46,16 @@ const EnergySourceInput = ({
                 value={value}
                 placeholder={source.placeholder}
                 disabled={disabled || !enabled}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
+                onChange={freeEmissionsEstimateForm.handleChange}
+                onBlur={freeEmissionsEstimateForm.handleBlur}
                 error={hasError}
                 helperText={
                     hasError && (
-                        <InputErrorText text={formik.errors[valueFieldName]} />
+                        <InputErrorText
+                            text={
+                                freeEmissionsEstimateForm.errors[valueFieldName]
+                            }
+                        />
                     )
                 }
                 InputProps={{
@@ -69,7 +74,7 @@ const EnergySourceInput = ({
 
 EnergySourceInput.propTypes = {
     source: object.isRequired,
-    formik: object.isRequired,
+    freeEmissionsEstimateForm: object.isRequired,
     enabledFieldName: string.isRequired,
     valueFieldName: string.isRequired,
     disabled: bool.isRequired,

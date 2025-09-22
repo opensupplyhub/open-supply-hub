@@ -18,7 +18,7 @@ export const freeEmissionsEstimateFormFields = Object.freeze({
     }),
     annualThroughputForm: Object.freeze({
         id: 'annual-throughput',
-        label: 'Estimated Annual Throughput',
+        label: 'Actual Annual Throughput',
         placeholder: 'e.g., 10,000 kg/year',
     }),
     energyConsumptionLabel: Object.freeze({
@@ -81,3 +81,51 @@ export const freeEmissionsEstimateFormFields = Object.freeze({
         }),
     }),
 });
+
+export const energySourcesData = Object.freeze([
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.coal,
+        enabledFieldName: 'energyCoalEnabled',
+        valueFieldName: 'energyCoal',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.naturalGas,
+        enabledFieldName: 'energyNaturalGasEnabled',
+        valueFieldName: 'energyNaturalGas',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.diesel,
+        enabledFieldName: 'energyDieselEnabled',
+        valueFieldName: 'energyDiesel',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.kerosene,
+        enabledFieldName: 'energyKeroseneEnabled',
+        valueFieldName: 'energyKerosene',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.biomass,
+        enabledFieldName: 'energyBiomassEnabled',
+        valueFieldName: 'energyBiomass',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.charcoal,
+        enabledFieldName: 'energyCharcoalEnabled',
+        valueFieldName: 'energyCharcoal',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.animalWaste,
+        enabledFieldName: 'energyAnimalWasteEnabled',
+        valueFieldName: 'energyAnimalWaste',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.electricity,
+        enabledFieldName: 'energyElectricityEnabled',
+        valueFieldName: 'energyElectricity',
+    }),
+    Object.freeze({
+        source: freeEmissionsEstimateFormFields.energySources.other,
+        enabledFieldName: 'energyOtherEnabled',
+        valueFieldName: 'energyOther',
+    }),
+]);

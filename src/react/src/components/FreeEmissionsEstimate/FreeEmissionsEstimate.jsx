@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { bool, func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -35,8 +35,11 @@ import {
 } from '../../actions/claimFacility.js';
 
 import { freeEmissionsEstimateStyles } from './styles.js';
-import { useFreeEmissionsEstimateForm } from './hooks.js';
-import { freeEmissionsEstimateFormFields } from './constants.js';
+import { useFreeEmissionsEstimateForm, useFormFieldSync } from './hooks.js';
+import {
+    freeEmissionsEstimateFormFields,
+    energySourcesData,
+} from './constants.js';
 
 const {
     title,
@@ -45,14 +48,13 @@ const {
     closingDateForm,
     annualThroughputForm,
     energyConsumptionLabel,
-    energySources,
 } = freeEmissionsEstimateFormFields;
 
 const FreeEmissionsEstimate = ({
-    // Redux state values
+    // Redux state values.
     formData,
     fetching,
-    // Redux dispatch functions
+    // Redux dispatch functions.
     updateOpeningDate,
     updateClosingDate,
     updateAnnualThroughput,
@@ -74,279 +76,141 @@ const FreeEmissionsEstimate = ({
     updateEnergyAnimalWasteEnabled,
     updateEnergyElectricityEnabled,
     updateEnergyOtherEnabled,
-    // Other props
+    // Other props.
     classes,
 }) => {
-    // Initialize Formik form
-    const formik = useFreeEmissionsEstimateForm(formData);
+    // Initialize the form.
+    const freeEmissionsEstimateForm = useFreeEmissionsEstimateForm(formData);
 
-    // Sync Formik values with Redux store
-    useEffect(() => {
-        if (formik.values.openingDate !== formData.openingDate) {
-            updateOpeningDate(formik.values.openingDate);
-        }
-    }, [formik.values.openingDate, formData.openingDate, updateOpeningDate]);
+    /*
+    Sync the form values, specifically the Formik form values,
+    with the Redux store. It is necessary to sync the form values
+    with the Redux store because the form values are not
+    automatically updated in the Redux store when the form values
+    are changed. And also because after form submission the
+    function that handles the whole form takes the values from the
+    Redux store.
+    */
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.openingDate,
+        formData.openingDate,
+        updateOpeningDate,
+    );
 
-    useEffect(() => {
-        if (formik.values.closingDate !== formData.closingDate) {
-            updateClosingDate(formik.values.closingDate);
-        }
-    }, [formik.values.closingDate, formData.closingDate, updateClosingDate]);
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.closingDate,
+        formData.closingDate,
+        updateClosingDate,
+    );
 
-    useEffect(() => {
-        if (formik.values.annualThroughput !== formData.annualThroughput) {
-            updateAnnualThroughput(formik.values.annualThroughput);
-        }
-    }, [
-        formik.values.annualThroughput,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.annualThroughput,
         formData.annualThroughput,
         updateAnnualThroughput,
-    ]);
+    );
 
-    // Energy sources sync effects
-    useEffect(() => {
-        if (formik.values.energyCoal !== formData.energyCoal) {
-            updateEnergyCoal(formik.values.energyCoal);
-        }
-    }, [formik.values.energyCoal, formData.energyCoal, updateEnergyCoal]);
-
-    useEffect(() => {
-        if (formik.values.energyCoalEnabled !== formData.energyCoalEnabled) {
-            updateEnergyCoalEnabled(formik.values.energyCoalEnabled);
-        }
-    }, [
-        formik.values.energyCoalEnabled,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyCoal,
+        formData.energyCoal,
+        updateEnergyCoal,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyCoalEnabled,
         formData.energyCoalEnabled,
         updateEnergyCoalEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyNaturalGas !== formData.energyNaturalGas) {
-            updateEnergyNaturalGas(formik.values.energyNaturalGas);
-        }
-    }, [
-        formik.values.energyNaturalGas,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyNaturalGas,
         formData.energyNaturalGas,
         updateEnergyNaturalGas,
-    ]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyNaturalGasEnabled !==
-            formData.energyNaturalGasEnabled
-        ) {
-            updateEnergyNaturalGasEnabled(
-                formik.values.energyNaturalGasEnabled,
-            );
-        }
-    }, [
-        formik.values.energyNaturalGasEnabled,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyNaturalGasEnabled,
         formData.energyNaturalGasEnabled,
         updateEnergyNaturalGasEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyDiesel !== formData.energyDiesel) {
-            updateEnergyDiesel(formik.values.energyDiesel);
-        }
-    }, [formik.values.energyDiesel, formData.energyDiesel, updateEnergyDiesel]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyDieselEnabled !== formData.energyDieselEnabled
-        ) {
-            updateEnergyDieselEnabled(formik.values.energyDieselEnabled);
-        }
-    }, [
-        formik.values.energyDieselEnabled,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyDiesel,
+        formData.energyDiesel,
+        updateEnergyDiesel,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyDieselEnabled,
         formData.energyDieselEnabled,
         updateEnergyDieselEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyKerosene !== formData.energyKerosene) {
-            updateEnergyKerosene(formik.values.energyKerosene);
-        }
-    }, [
-        formik.values.energyKerosene,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyKerosene,
         formData.energyKerosene,
         updateEnergyKerosene,
-    ]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyKeroseneEnabled !==
-            formData.energyKeroseneEnabled
-        ) {
-            updateEnergyKeroseneEnabled(formik.values.energyKeroseneEnabled);
-        }
-    }, [
-        formik.values.energyKeroseneEnabled,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyKeroseneEnabled,
         formData.energyKeroseneEnabled,
         updateEnergyKeroseneEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyBiomass !== formData.energyBiomass) {
-            updateEnergyBiomass(formik.values.energyBiomass);
-        }
-    }, [
-        formik.values.energyBiomass,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyBiomass,
         formData.energyBiomass,
         updateEnergyBiomass,
-    ]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyBiomassEnabled !== formData.energyBiomassEnabled
-        ) {
-            updateEnergyBiomassEnabled(formik.values.energyBiomassEnabled);
-        }
-    }, [
-        formik.values.energyBiomassEnabled,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyBiomassEnabled,
         formData.energyBiomassEnabled,
         updateEnergyBiomassEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyCharcoal !== formData.energyCharcoal) {
-            updateEnergyCharcoal(formik.values.energyCharcoal);
-        }
-    }, [
-        formik.values.energyCharcoal,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyCharcoal,
         formData.energyCharcoal,
         updateEnergyCharcoal,
-    ]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyCharcoalEnabled !==
-            formData.energyCharcoalEnabled
-        ) {
-            updateEnergyCharcoalEnabled(formik.values.energyCharcoalEnabled);
-        }
-    }, [
-        formik.values.energyCharcoalEnabled,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyCharcoalEnabled,
         formData.energyCharcoalEnabled,
         updateEnergyCharcoalEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyAnimalWaste !== formData.energyAnimalWaste) {
-            updateEnergyAnimalWaste(formik.values.energyAnimalWaste);
-        }
-    }, [
-        formik.values.energyAnimalWaste,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyAnimalWaste,
         formData.energyAnimalWaste,
         updateEnergyAnimalWaste,
-    ]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyAnimalWasteEnabled !==
-            formData.energyAnimalWasteEnabled
-        ) {
-            updateEnergyAnimalWasteEnabled(
-                formik.values.energyAnimalWasteEnabled,
-            );
-        }
-    }, [
-        formik.values.energyAnimalWasteEnabled,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyAnimalWasteEnabled,
         formData.energyAnimalWasteEnabled,
         updateEnergyAnimalWasteEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyElectricity !== formData.energyElectricity) {
-            updateEnergyElectricity(formik.values.energyElectricity);
-        }
-    }, [
-        formik.values.energyElectricity,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyElectricity,
         formData.energyElectricity,
         updateEnergyElectricity,
-    ]);
-
-    useEffect(() => {
-        if (
-            formik.values.energyElectricityEnabled !==
-            formData.energyElectricityEnabled
-        ) {
-            updateEnergyElectricityEnabled(
-                formik.values.energyElectricityEnabled,
-            );
-        }
-    }, [
-        formik.values.energyElectricityEnabled,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyElectricityEnabled,
         formData.energyElectricityEnabled,
         updateEnergyElectricityEnabled,
-    ]);
+    );
 
-    useEffect(() => {
-        if (formik.values.energyOther !== formData.energyOther) {
-            updateEnergyOther(formik.values.energyOther);
-        }
-    }, [formik.values.energyOther, formData.energyOther, updateEnergyOther]);
-
-    useEffect(() => {
-        if (formik.values.energyOtherEnabled !== formData.energyOtherEnabled) {
-            updateEnergyOtherEnabled(formik.values.energyOtherEnabled);
-        }
-    }, [
-        formik.values.energyOtherEnabled,
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyOther,
+        formData.energyOther,
+        updateEnergyOther,
+    );
+    useFormFieldSync(
+        freeEmissionsEstimateForm.values.energyOtherEnabled,
         formData.energyOtherEnabled,
         updateEnergyOtherEnabled,
-    ]);
-
-    const energySourcesData = [
-        {
-            source: energySources.coal,
-            enabledFieldName: 'energyCoalEnabled',
-            valueFieldName: 'energyCoal',
-        },
-        {
-            source: energySources.naturalGas,
-            enabledFieldName: 'energyNaturalGasEnabled',
-            valueFieldName: 'energyNaturalGas',
-        },
-        {
-            source: energySources.diesel,
-            enabledFieldName: 'energyDieselEnabled',
-            valueFieldName: 'energyDiesel',
-        },
-        {
-            source: energySources.kerosene,
-            enabledFieldName: 'energyKeroseneEnabled',
-            valueFieldName: 'energyKerosene',
-        },
-        {
-            source: energySources.biomass,
-            enabledFieldName: 'energyBiomassEnabled',
-            valueFieldName: 'energyBiomass',
-        },
-        {
-            source: energySources.charcoal,
-            enabledFieldName: 'energyCharcoalEnabled',
-            valueFieldName: 'energyCharcoal',
-        },
-        {
-            source: energySources.animalWaste,
-            enabledFieldName: 'energyAnimalWasteEnabled',
-            valueFieldName: 'energyAnimalWaste',
-        },
-        {
-            source: energySources.electricity,
-            enabledFieldName: 'energyElectricityEnabled',
-            valueFieldName: 'energyElectricity',
-        },
-        {
-            source: energySources.other,
-            enabledFieldName: 'energyOtherEnabled',
-            valueFieldName: 'energyOther',
-        },
-    ];
+    );
 
     const annualThroughputHasError =
-        formik.touched.annualThroughput && formik.errors.annualThroughput;
+        freeEmissionsEstimateForm.touched.annualThroughput &&
+        freeEmissionsEstimateForm.errors.annualThroughput;
 
     return (
         <div className={classes.emissionsSection}>
@@ -357,15 +221,18 @@ const FreeEmissionsEstimate = ({
                 {description.label}
             </Typography>
 
-            <form onSubmit={formik.handleSubmit}>
+            <form onSubmit={freeEmissionsEstimateForm.handleSubmit}>
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                         <DatePicker
                             label={openingDateForm.label}
                             name="openingDate"
-                            value={formik.values.openingDate}
+                            value={freeEmissionsEstimateForm.values.openingDate}
                             onChange={value =>
-                                formik.setFieldValue('openingDate', value)
+                                freeEmissionsEstimateForm.setFieldValue(
+                                    'openingDate',
+                                    value,
+                                )
                             }
                             disabled={fetching}
                             placeholder={openingDateForm.placeholder}
@@ -378,9 +245,12 @@ const FreeEmissionsEstimate = ({
                         <DatePicker
                             label={closingDateForm.label}
                             name="closingDate"
-                            value={formik.values.closingDate}
+                            value={freeEmissionsEstimateForm.values.closingDate}
                             onChange={value =>
-                                formik.setFieldValue('closingDate', value)
+                                freeEmissionsEstimateForm.setFieldValue(
+                                    'closingDate',
+                                    value,
+                                )
                             }
                             disabled={fetching}
                             placeholder={closingDateForm.placeholder}
@@ -405,16 +275,21 @@ const FreeEmissionsEstimate = ({
                         variant="outlined"
                         size="small"
                         fullWidth
-                        value={formik.values.annualThroughput}
+                        value={
+                            freeEmissionsEstimateForm.values.annualThroughput
+                        }
                         placeholder={annualThroughputForm.placeholder}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
+                        onChange={freeEmissionsEstimateForm.handleChange}
+                        onBlur={freeEmissionsEstimateForm.handleBlur}
                         disabled={fetching}
                         error={annualThroughputHasError}
                         helperText={
                             annualThroughputHasError && (
                                 <InputErrorText
-                                    text={formik.errors.annualThroughput}
+                                    text={
+                                        freeEmissionsEstimateForm.errors
+                                            .annualThroughput
+                                    }
                                 />
                             )
                         }
@@ -434,7 +309,9 @@ const FreeEmissionsEstimate = ({
                         <EnergySourceInput
                             key={energyData.source.id}
                             source={energyData.source}
-                            formik={formik}
+                            freeEmissionsEstimateForm={
+                                freeEmissionsEstimateForm
+                            }
                             enabledFieldName={energyData.enabledFieldName}
                             valueFieldName={energyData.valueFieldName}
                             disabled={fetching}
