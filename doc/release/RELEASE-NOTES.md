@@ -15,6 +15,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
 * 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
+### Code/API changes
+* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at` and `closed_at` fields to GET `/api/v1/production-locations/{os_id}/` endpoint.
+
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
 * [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
@@ -25,7 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-
+* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at` and `closed_at`.
 
 ## Release 2.12.0
 

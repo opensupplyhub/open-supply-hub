@@ -1,5 +1,6 @@
 SELECT
   af.id AS os_id,
+  af.created_at AS opened_at,
   (
     SELECT
       COALESCE(
@@ -654,7 +655,11 @@ SELECT
       afc3.updated_at DESC
     LIMIT
       1
-  ) AS claimed_at_value
+  ) AS claimed_at_value,
+  CASE
+    WHEN af.is_closed = TRUE THEN af.updated_at
+    ELSE NULL
+  END AS closed_at
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id

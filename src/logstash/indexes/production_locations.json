@@ -218,6 +218,12 @@
         },
         "lei_id": {
           "type": "keyword"
+        },
+        "opened_at": {
+          "type": "date"
+        },
+        "closed_at": {
+          "type": "date"
         }
       }
     }
