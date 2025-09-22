@@ -93,7 +93,6 @@ const claimFacilityStepperStyles = Object.freeze({
         display: 'none',
     }),
     formContainerStyles: Object.freeze({
-        width: '100%',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
@@ -103,7 +102,6 @@ const claimFacilityStepperStyles = Object.freeze({
     }),
     paperStyles: Object.freeze({
         padding: '0 50px 50px 50px',
-        width: '100%',
     }),
 });
 

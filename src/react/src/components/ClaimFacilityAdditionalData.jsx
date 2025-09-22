@@ -48,7 +48,7 @@ const mergedStyles = {
     ...claimedFacilitiesDetailsStyles(),
 };
 
-function ClaimFacilityAdditionalData({
+const ClaimFacilityAdditionalData = ({
     sectors,
     updateSectors,
     numberOfWorkers,
@@ -59,7 +59,7 @@ function ClaimFacilityAdditionalData({
     fetchSectors,
     fetching,
     classes,
-}) {
+}) => {
     useEffect(() => {
         if (!sectorOptions) {
             fetchSectors();
@@ -160,7 +160,7 @@ function ClaimFacilityAdditionalData({
             <FreeEmissionsEstimate />
         </>
     );
-}
+};
 
 ClaimFacilityAdditionalData.defaultProps = {
     sectors: [],

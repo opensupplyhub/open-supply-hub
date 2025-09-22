@@ -1795,74 +1795,83 @@ export const freeEmissionsEstimateValidationSchema = objectYup({
     ),
     energyCoal: stringYup().when('energyCoalEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyNaturalGas: stringYup().when('energyNaturalGasEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyDiesel: stringYup().when('energyDieselEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyKerosene: stringYup().when('energyKeroseneEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyBiomass: stringYup().when('energyBiomassEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyCharcoal: stringYup().when('energyCharcoalEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyAnimalWaste: stringYup().when('energyAnimalWasteEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyElectricity: stringYup().when('energyElectricityEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
     energyOther: stringYup().when('energyOtherEnabled', {
         is: true,
-        then: stringYup().test(
-            'valid-energy',
-            'Please enter a valid positive number.',
-            value => !value || isValidEnergyValue(value),
-        ),
+        then: schema =>
+            schema.test(
+                'valid-energy',
+                'Please enter a valid positive number.',
+                value => !value || isValidEnergyValue(value),
+            ),
     }),
 });
