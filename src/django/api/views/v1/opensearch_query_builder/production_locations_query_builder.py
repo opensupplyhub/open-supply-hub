@@ -1,4 +1,5 @@
 import copy
+from typing import List
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
@@ -8,6 +9,9 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
     def __init__(self):
         self.default_query_body = {
             'track_total_hits': True,
+            "_source": {
+                "excludes": []
+            },
             'query': {'bool': {'must': []}},
             'sort': []
         }
@@ -188,3 +192,8 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         }
 
         self.query_body["query"]["bool"]["filter"].append(geo_polygon)
+
+    def exclude_from_search(self, exclude_fields: List[str]):
+        for field in exclude_fields:
+            if isinstance(field, str):
+                self.query_body['_source']['excludes'].append(field)

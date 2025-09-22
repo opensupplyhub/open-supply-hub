@@ -35,7 +35,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.DATE_LT: 'range',
         }
 
-    def build_query(self, query_params):
+    def build_query(self, query_params, exclude_fields=[]):
         self.__builder.reset()
 
         self.__process_template_fields(query_params)
@@ -46,6 +46,9 @@ class OpenSearchQueryDirector:
         self.__process_multi_match(query_params)
         self.__process_aggregation(query_params)
         self.__process_filter(query_params)
+
+        if (isinstance(exclude_fields, list) and len(exclude_fields) > 0):
+            self.__builder.exclude_from_search(exclude_fields)
 
         return self.__builder.get_final_query_body()
 

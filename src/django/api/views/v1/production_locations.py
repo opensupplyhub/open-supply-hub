@@ -120,6 +120,7 @@ class ProductionLocations(ViewSet):
             self.__init_opensearch()
         query_body = opensearch_query_director.build_query(
             request.GET,
+            ["opened_at", "closed_at"]
         )
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
