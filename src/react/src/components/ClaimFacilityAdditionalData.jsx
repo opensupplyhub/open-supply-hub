@@ -32,7 +32,7 @@ import {
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
 import InputErrorText from '../components/Contribute/InputErrorText';
-import FreeEmissionsEstimate from '../components/FreeEmissionsEstimate';
+import FreeEmissionsEstimate from './FreeEmissionsEstimate/FreeEmissionsEstimate.jsx';
 
 const {
     sectorsForm,

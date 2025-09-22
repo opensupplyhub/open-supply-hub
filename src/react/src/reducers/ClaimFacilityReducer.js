@@ -22,27 +22,27 @@ import {
     completeSubmitClaimAFacilityData,
     updateClaimAFacilityUploadFiles,
     updateClaimAFacilityBusinessUploadFiles,
-    updateClaimAOpeningDate,
-    updateClaimAClosingDate,
-    updateClaimAAnnualThroughput,
-    updateClaimAEnergyCoal,
-    updateClaimAEnergyNaturalGas,
-    updateClaimAEnergyDiesel,
-    updateClaimAEnergyKerosene,
-    updateClaimAEnergyBiomass,
-    updateClaimAEnergyCharcoal,
-    updateClaimAEnergyAnimalWaste,
-    updateClaimAEnergyElectricity,
-    updateClaimAEnergyOther,
-    updateClaimAEnergyCoalEnabled,
-    updateClaimAEnergyNaturalGasEnabled,
-    updateClaimAEnergyDieselEnabled,
-    updateClaimAEnergyKeroseneEnabled,
-    updateClaimAEnergyBiomassEnabled,
-    updateClaimAEnergyCharcoalEnabled,
-    updateClaimAEnergyAnimalWasteEnabled,
-    updateClaimAEnergyElectricityEnabled,
-    updateClaimAEnergyOtherEnabled,
+    updateClaimOpeningDate,
+    updateClaimClosingDate,
+    updateClaimAnnualThroughput,
+    updateClaimEnergyCoal,
+    updateClaimEnergyNaturalGas,
+    updateClaimEnergyDiesel,
+    updateClaimEnergyKerosene,
+    updateClaimEnergyBiomass,
+    updateClaimEnergyCharcoal,
+    updateClaimEnergyAnimalWaste,
+    updateClaimEnergyElectricity,
+    updateClaimEnergyOther,
+    updateClaimEnergyCoalEnabled,
+    updateClaimEnergyNaturalGasEnabled,
+    updateClaimEnergyDieselEnabled,
+    updateClaimEnergyKeroseneEnabled,
+    updateClaimEnergyBiomassEnabled,
+    updateClaimEnergyCharcoalEnabled,
+    updateClaimEnergyAnimalWasteEnabled,
+    updateClaimEnergyElectricityEnabled,
+    updateClaimEnergyOtherEnabled,
 } from '../actions/claimFacility';
 
 const initialState = Object.freeze({
@@ -231,7 +231,7 @@ export default createReducer(
                 },
             }),
         // Free Emissions Estimate reducers
-        [updateClaimAOpeningDate]: (state, payload) =>
+        [updateClaimOpeningDate]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -239,7 +239,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAClosingDate]: (state, payload) =>
+        [updateClaimClosingDate]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -247,7 +247,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAAnnualThroughput]: (state, payload) =>
+        [updateClaimAnnualThroughput]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -255,7 +255,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyCoal]: (state, payload) =>
+        [updateClaimEnergyCoal]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -263,7 +263,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyNaturalGas]: (state, payload) =>
+        [updateClaimEnergyNaturalGas]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -271,7 +271,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyDiesel]: (state, payload) =>
+        [updateClaimEnergyDiesel]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -279,7 +279,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyKerosene]: (state, payload) =>
+        [updateClaimEnergyKerosene]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -287,7 +287,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyBiomass]: (state, payload) =>
+        [updateClaimEnergyBiomass]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -295,7 +295,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyCharcoal]: (state, payload) =>
+        [updateClaimEnergyCharcoal]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -303,7 +303,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyAnimalWaste]: (state, payload) =>
+        [updateClaimEnergyAnimalWaste]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -311,7 +311,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyElectricity]: (state, payload) =>
+        [updateClaimEnergyElectricity]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -319,7 +319,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyOther]: (state, payload) =>
+        [updateClaimEnergyOther]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -327,7 +327,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyCoalEnabled]: (state, payload) =>
+        [updateClaimEnergyCoalEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -335,7 +335,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyNaturalGasEnabled]: (state, payload) =>
+        [updateClaimEnergyNaturalGasEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -343,7 +343,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyDieselEnabled]: (state, payload) =>
+        [updateClaimEnergyDieselEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -351,7 +351,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyKeroseneEnabled]: (state, payload) =>
+        [updateClaimEnergyKeroseneEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -359,7 +359,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyBiomassEnabled]: (state, payload) =>
+        [updateClaimEnergyBiomassEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -367,7 +367,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyCharcoalEnabled]: (state, payload) =>
+        [updateClaimEnergyCharcoalEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -375,7 +375,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyAnimalWasteEnabled]: (state, payload) =>
+        [updateClaimEnergyAnimalWasteEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -383,7 +383,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyElectricityEnabled]: (state, payload) =>
+        [updateClaimEnergyElectricityEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
@@ -391,7 +391,7 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAEnergyOtherEnabled]: (state, payload) =>
+        [updateClaimEnergyOtherEnabled]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {

@@ -6,28 +6,8 @@ import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputAdornment from '@material-ui/core/InputAdornment';
-import InputErrorText from './Contribute/InputErrorText';
-
-const energySourceInputStyles = {
-    energyInputContainer: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '12px',
-    },
-    energyCheckbox: {
-        minWidth: '140px',
-    },
-    energyInput: {
-        flex: 1,
-        marginLeft: '12px',
-    },
-    unitText: {
-        minWidth: '50px',
-        marginLeft: '8px',
-        fontSize: '14px',
-        color: '#64748b',
-    },
-};
+import InputErrorText from '../Contribute/InputErrorText';
+import { energySourceInputStyles } from './styles.js';
 
 const EnergySourceInput = ({
     source,

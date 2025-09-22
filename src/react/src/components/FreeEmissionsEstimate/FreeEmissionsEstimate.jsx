@@ -6,40 +6,37 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import Grid from '@material-ui/core/Grid';
-import DatePicker from './DatePicker';
+import DatePicker from '../DatePicker.jsx';
+import InputErrorText from '../Contribute/InputErrorText.jsx';
+import EnergySourceInput from './EnergySourceInput.jsx';
 
 import {
-    updateClaimAOpeningDate,
-    updateClaimAClosingDate,
-    updateClaimAAnnualThroughput,
-    updateClaimAEnergyCoal,
-    updateClaimAEnergyNaturalGas,
-    updateClaimAEnergyDiesel,
-    updateClaimAEnergyKerosene,
-    updateClaimAEnergyBiomass,
-    updateClaimAEnergyCharcoal,
-    updateClaimAEnergyAnimalWaste,
-    updateClaimAEnergyElectricity,
-    updateClaimAEnergyOther,
-    updateClaimAEnergyCoalEnabled,
-    updateClaimAEnergyNaturalGasEnabled,
-    updateClaimAEnergyDieselEnabled,
-    updateClaimAEnergyKeroseneEnabled,
-    updateClaimAEnergyBiomassEnabled,
-    updateClaimAEnergyCharcoalEnabled,
-    updateClaimAEnergyAnimalWasteEnabled,
-    updateClaimAEnergyElectricityEnabled,
-    updateClaimAEnergyOtherEnabled,
-} from '../actions/claimFacility.js';
+    updateClaimOpeningDate,
+    updateClaimClosingDate,
+    updateClaimAnnualThroughput,
+    updateClaimEnergyCoal,
+    updateClaimEnergyNaturalGas,
+    updateClaimEnergyDiesel,
+    updateClaimEnergyKerosene,
+    updateClaimEnergyBiomass,
+    updateClaimEnergyCharcoal,
+    updateClaimEnergyAnimalWaste,
+    updateClaimEnergyElectricity,
+    updateClaimEnergyOther,
+    updateClaimEnergyCoalEnabled,
+    updateClaimEnergyNaturalGasEnabled,
+    updateClaimEnergyDieselEnabled,
+    updateClaimEnergyKeroseneEnabled,
+    updateClaimEnergyBiomassEnabled,
+    updateClaimEnergyCharcoalEnabled,
+    updateClaimEnergyAnimalWasteEnabled,
+    updateClaimEnergyElectricityEnabled,
+    updateClaimEnergyOtherEnabled,
+} from '../../actions/claimFacility.js';
 
-import { freeEmissionsEstimateFormFields } from '../util/constants';
-import { useFreeEmissionsEstimateForm } from '../util/hooks';
-import {
-    claimedFacilitiesDetailsStyles,
-    textFieldErrorStyles,
-} from '../util/styles';
-import InputErrorText from './Contribute/InputErrorText';
-import EnergySourceInput from './EnergySourceInput';
+import { freeEmissionsEstimateStyles } from './styles.js';
+import { useFreeEmissionsEstimateForm } from './hooks.js';
+import { freeEmissionsEstimateFormFields } from './constants.js';
 
 const {
     title,
@@ -50,31 +47,6 @@ const {
     energyConsumptionLabel,
     energySources,
 } = freeEmissionsEstimateFormFields;
-
-const mergedStyles = {
-    ...textFieldErrorStyles(),
-    ...claimedFacilitiesDetailsStyles(),
-    emissionsSection: {
-        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-        padding: '24px',
-        borderRadius: '8px',
-        border: '1px solid #bae6fd',
-        marginTop: '16px',
-    },
-    sectionTitle: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px',
-        fontSize: '18px',
-        fontWeight: 600,
-    },
-    sectionDescription: {
-        marginBottom: '24px',
-        color: '#64748b',
-        fontSize: '14px',
-        lineHeight: '1.5',
-    },
-};
 
 const FreeEmissionsEstimate = ({
     // Redux state values
@@ -540,47 +512,46 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
-        updateOpeningDate: date => dispatch(updateClaimAOpeningDate(date)),
-        updateClosingDate: date => dispatch(updateClaimAClosingDate(date)),
+        updateOpeningDate: date => dispatch(updateClaimOpeningDate(date)),
+        updateClosingDate: date => dispatch(updateClaimClosingDate(date)),
         updateAnnualThroughput: value =>
-            dispatch(updateClaimAAnnualThroughput(value)),
-        updateEnergyCoal: value => dispatch(updateClaimAEnergyCoal(value)),
+            dispatch(updateClaimAnnualThroughput(value)),
+        updateEnergyCoal: value => dispatch(updateClaimEnergyCoal(value)),
         updateEnergyNaturalGas: value =>
-            dispatch(updateClaimAEnergyNaturalGas(value)),
-        updateEnergyDiesel: value => dispatch(updateClaimAEnergyDiesel(value)),
+            dispatch(updateClaimEnergyNaturalGas(value)),
+        updateEnergyDiesel: value => dispatch(updateClaimEnergyDiesel(value)),
         updateEnergyKerosene: value =>
-            dispatch(updateClaimAEnergyKerosene(value)),
-        updateEnergyBiomass: value =>
-            dispatch(updateClaimAEnergyBiomass(value)),
+            dispatch(updateClaimEnergyKerosene(value)),
+        updateEnergyBiomass: value => dispatch(updateClaimEnergyBiomass(value)),
         updateEnergyCharcoal: value =>
-            dispatch(updateClaimAEnergyCharcoal(value)),
+            dispatch(updateClaimEnergyCharcoal(value)),
         updateEnergyAnimalWaste: value =>
-            dispatch(updateClaimAEnergyAnimalWaste(value)),
+            dispatch(updateClaimEnergyAnimalWaste(value)),
         updateEnergyElectricity: value =>
-            dispatch(updateClaimAEnergyElectricity(value)),
-        updateEnergyOther: value => dispatch(updateClaimAEnergyOther(value)),
+            dispatch(updateClaimEnergyElectricity(value)),
+        updateEnergyOther: value => dispatch(updateClaimEnergyOther(value)),
         updateEnergyCoalEnabled: enabled =>
-            dispatch(updateClaimAEnergyCoalEnabled(enabled)),
+            dispatch(updateClaimEnergyCoalEnabled(enabled)),
         updateEnergyNaturalGasEnabled: enabled =>
-            dispatch(updateClaimAEnergyNaturalGasEnabled(enabled)),
+            dispatch(updateClaimEnergyNaturalGasEnabled(enabled)),
         updateEnergyDieselEnabled: enabled =>
-            dispatch(updateClaimAEnergyDieselEnabled(enabled)),
+            dispatch(updateClaimEnergyDieselEnabled(enabled)),
         updateEnergyKeroseneEnabled: enabled =>
-            dispatch(updateClaimAEnergyKeroseneEnabled(enabled)),
+            dispatch(updateClaimEnergyKeroseneEnabled(enabled)),
         updateEnergyBiomassEnabled: enabled =>
-            dispatch(updateClaimAEnergyBiomassEnabled(enabled)),
+            dispatch(updateClaimEnergyBiomassEnabled(enabled)),
         updateEnergyCharcoalEnabled: enabled =>
-            dispatch(updateClaimAEnergyCharcoalEnabled(enabled)),
+            dispatch(updateClaimEnergyCharcoalEnabled(enabled)),
         updateEnergyAnimalWasteEnabled: enabled =>
-            dispatch(updateClaimAEnergyAnimalWasteEnabled(enabled)),
+            dispatch(updateClaimEnergyAnimalWasteEnabled(enabled)),
         updateEnergyElectricityEnabled: enabled =>
-            dispatch(updateClaimAEnergyElectricityEnabled(enabled)),
+            dispatch(updateClaimEnergyElectricityEnabled(enabled)),
         updateEnergyOtherEnabled: enabled =>
-            dispatch(updateClaimAEnergyOtherEnabled(enabled)),
+            dispatch(updateClaimEnergyOtherEnabled(enabled)),
     };
 }
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(mergedStyles)(FreeEmissionsEstimate));
+)(withStyles(freeEmissionsEstimateStyles)(FreeEmissionsEstimate));

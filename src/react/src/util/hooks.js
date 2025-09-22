@@ -15,10 +15,7 @@ import {
 
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
 
-import {
-    slcValidationSchema,
-    freeEmissionsEstimateValidationSchema,
-} from './util';
+import { slcValidationSchema } from './util';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -403,36 +400,4 @@ export const useSingleLocationContributionForm = onSubmit =>
         validationSchema: slcValidationSchema,
         onSubmit,
         validateOnMount: true,
-    });
-
-export const useFreeEmissionsEstimateForm = (initialValues, onSubmit) =>
-    useFormik({
-        initialValues: {
-            openingDate: '',
-            closingDate: '',
-            annualThroughput: '',
-            energyCoal: '',
-            energyNaturalGas: '',
-            energyDiesel: '',
-            energyKerosene: '',
-            energyBiomass: '',
-            energyCharcoal: '',
-            energyAnimalWaste: '',
-            energyElectricity: '',
-            energyOther: '',
-            energyCoalEnabled: false,
-            energyNaturalGasEnabled: false,
-            energyDieselEnabled: false,
-            energyKeroseneEnabled: false,
-            energyBiomassEnabled: false,
-            energyCharcoalEnabled: false,
-            energyAnimalWasteEnabled: false,
-            energyElectricityEnabled: false,
-            energyOtherEnabled: false,
-            ...initialValues,
-        },
-        validationSchema: freeEmissionsEstimateValidationSchema,
-        onSubmit: onSubmit || (() => {}),
-        validateOnMount: false,
-        enableReinitialize: true,
     });
