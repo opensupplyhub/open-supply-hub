@@ -21,7 +21,7 @@ const freeEmissionsEstimateFormConfig = Object.freeze({
     estimatedAnnualThroughputField: Object.freeze({
         id: 'estimated-annual-throughput',
         label: 'Estimated Annual Throughput',
-        placeholder: 'e.g., 10,000 kg/year',
+        placeholder: 'Enter value in kg/year',
         valueFieldName: 'estimatedAnnualThroughput',
     }),
     energyConsumptionLabel: Object.freeze({

@@ -49,8 +49,17 @@ const EnergySourceInput = ({
                     value={value}
                     placeholder={source.placeholder}
                     disabled={disabled || !enabled}
-                    onChange={freeEmissionsEstimateForm.handleChange}
-                    onBlur={freeEmissionsEstimateForm.handleBlur}
+                    onChange={event => {
+                        freeEmissionsEstimateForm.setFieldValue(
+                            valueFieldName,
+                            event.target.value,
+                        );
+                        freeEmissionsEstimateForm.setFieldTouched(
+                            valueFieldName,
+                            true,
+                            false,
+                        );
+                    }}
                     error={hasError}
                     helperText={
                         hasError && (

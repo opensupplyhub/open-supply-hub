@@ -1,78 +1,58 @@
 import { string as stringYup, object as objectYup } from 'yup';
-import { isEmpty } from 'lodash';
 
-// Free Emissions Estimate validation utilities
-export const isValidEnergyValue = value => {
-    if (isEmpty(value)) {
-        return true;
-    }
-
-    const numericValue = parseFloat(value);
-    return !Number.isNaN(numericValue) && numericValue >= 0;
-};
-
-export const isValidEstimatedAnnualThroughput = value => {
-    if (isEmpty(value)) {
-        return true;
-    }
-
-    // Allow formats like "10,000 kg/year", "5000 tons/month", etc.
-    const cleanValue = value.replace(/[,\s]/g, '');
-    const numericPart = cleanValue.match(/^\d+(\.\d+)?/);
-
-    return numericPart !== null;
-};
-
-// Helper function to parse and compare dates
-const parseDateForComparison = (dateString, isClosingDate = false) => {
+const parseDate = dateString => {
     if (!dateString) return null;
 
-    // Handle month/year format (e.g., "12/2024" or "1/2024")
-    if (dateString.includes('/')) {
-        const [month, year] = dateString
-            .split('/')
-            .map(part => parseInt(part, 10));
-        return new Date(year, month - 1); // month is 0-indexed in Date constructor
-    }
+    // Create Date object from ISO string (YYYY-MM-DD).
+    const date = new Date(dateString);
 
-    // Handle year-only format (e.g., "2024")
-    const year = parseInt(dateString, 10);
-    if (Number.isNaN(year)) return null;
-
-    // For opening date (year only), assume January 1st
-    // For closing date (if year only), assume December 31st
-    return new Date(year, isClosingDate ? 11 : 0, isClosingDate ? 31 : 1);
+    // Check if the date is valid.
+    return Number.isNaN(date.getTime()) ? null : date;
 };
 
-// Shared date comparison validation function
 const createDateComparisonValidator = (otherFieldName, comparisonFn) =>
     function (value) {
         const otherValue = this.parent[otherFieldName];
 
-        // If either date is empty, skip validation
+        // If either date is empty, skip validation.
         if (!value || !otherValue) {
             return true;
         }
 
-        const currentFieldIsClosing = otherFieldName === 'openingDate';
-        const currentDateParsed = parseDateForComparison(
-            value,
-            currentFieldIsClosing,
-        );
-        const otherDateParsed = parseDateForComparison(
-            otherValue,
-            !currentFieldIsClosing,
-        );
+        const currentDate = parseDate(value);
+        const otherDate = parseDate(otherValue);
 
-        if (!currentDateParsed || !otherDateParsed) {
-            return true; // Skip validation if parsing fails
-        }
-
-        return comparisonFn(currentDateParsed, otherDateParsed);
+        return comparisonFn(currentDate, otherDate);
     };
 
-// Free Emissions Estimate Formik validation schema
-export const freeEmissionsEstimateValidationSchema = objectYup({
+const isValidPositiveInteger = value => {
+    const numericValue = parseInt(value, 10);
+    return (
+        !Number.isNaN(numericValue) &&
+        numericValue > 0 &&
+        value === numericValue.toString()
+    );
+};
+
+const createEnergyFieldValidation = enabledField =>
+    stringYup()
+        .test(
+            'is-trimmed',
+            'Remove spaces at start and end of the provided value.',
+            value => value == null || value === value.trim(),
+        )
+        .when(enabledField, {
+            is: true,
+            then: schema =>
+                schema.test(
+                    'valid-positive-integer',
+                    'Please enter a positive integer.',
+                    value => !value || isValidPositiveInteger(value),
+                ),
+        });
+
+// Free missions estimate Yup validation schema.
+const freeEmissionsEstimateValidationSchema = objectYup({
     openingDate: stringYup().test(
         'opening-before-closing',
         'Opening date must be before or equal to closing date.',
@@ -89,90 +69,26 @@ export const freeEmissionsEstimateValidationSchema = objectYup({
             (closing, opening) => closing >= opening,
         ),
     ),
-    estimatedAnnualThroughput: stringYup().test(
-        'valid-throughput',
-        'Please enter a valid throughput value (e.g., "10,000 kg/year").',
-        value => !value || isValidEstimatedAnnualThroughput(value),
-    ),
-    energyCoal: stringYup().when('energyCoalEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyNaturalGas: stringYup().when('energyNaturalGasEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyDiesel: stringYup().when('energyDieselEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyKerosene: stringYup().when('energyKeroseneEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyBiomass: stringYup().when('energyBiomassEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyCharcoal: stringYup().when('energyCharcoalEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyAnimalWaste: stringYup().when('energyAnimalWasteEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyElectricity: stringYup().when('energyElectricityEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
-    energyOther: stringYup().when('energyOtherEnabled', {
-        is: true,
-        then: schema =>
-            schema.test(
-                'valid-energy',
-                'Please enter a valid positive number.',
-                value => !value || isValidEnergyValue(value),
-            ),
-    }),
+    estimatedAnnualThroughput: stringYup()
+        .test(
+            'is-trimmed',
+            'Remove spaces at start and end of the provided value.',
+            value => value == null || value === value.trim(),
+        )
+        .test(
+            'valid-positive-integer',
+            'Please enter a positive integer.',
+            value => !value || isValidPositiveInteger(value),
+        ),
+    energyCoal: createEnergyFieldValidation('energyCoalEnabled'),
+    energyNaturalGas: createEnergyFieldValidation('energyNaturalGasEnabled'),
+    energyDiesel: createEnergyFieldValidation('energyDieselEnabled'),
+    energyKerosene: createEnergyFieldValidation('energyKeroseneEnabled'),
+    energyBiomass: createEnergyFieldValidation('energyBiomassEnabled'),
+    energyCharcoal: createEnergyFieldValidation('energyCharcoalEnabled'),
+    energyAnimalWaste: createEnergyFieldValidation('energyAnimalWasteEnabled'),
+    energyElectricity: createEnergyFieldValidation('energyElectricityEnabled'),
+    energyOther: createEnergyFieldValidation('energyOtherEnabled'),
 });
+
+export default freeEmissionsEstimateValidationSchema;

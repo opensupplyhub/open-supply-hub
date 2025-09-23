@@ -208,7 +208,15 @@ const FreeEmissionsEstimate = ({
 
     const estimatedAnnualThroughputHasError =
         freeEmissionsEstimateForm.touched.estimatedAnnualThroughput &&
-        freeEmissionsEstimateForm.errors.estimatedAnnualThroughput;
+        !!freeEmissionsEstimateForm.errors.estimatedAnnualThroughput;
+
+    const openingDateHasError =
+        freeEmissionsEstimateForm.touched.openingDate &&
+        !!freeEmissionsEstimateForm.errors.openingDate;
+
+    const closingDateHasError =
+        freeEmissionsEstimateForm.touched.closingDate &&
+        !!freeEmissionsEstimateForm.errors.closingDate;
 
     return (
         <div className={classes.emissionsSection}>
@@ -224,15 +232,31 @@ const FreeEmissionsEstimate = ({
                         label={openingDateField.label}
                         name={openingDateField.id}
                         value={freeEmissionsEstimateForm.values.openingDate}
-                        onChange={value =>
+                        onChange={value => {
                             freeEmissionsEstimateForm.setFieldValue(
                                 openingDateField.valueFieldName,
                                 value,
-                            )
-                        }
+                            );
+                            freeEmissionsEstimateForm.setFieldTouched(
+                                openingDateField.valueFieldName,
+                                true,
+                                false,
+                            );
+                        }}
                         disabled={fetching}
                         placeholder={openingDateField.placeholder}
                         fullWidth
+                        error={openingDateHasError}
+                        helperText={
+                            openingDateHasError && (
+                                <InputErrorText
+                                    text={
+                                        freeEmissionsEstimateForm.errors
+                                            .openingDate
+                                    }
+                                />
+                            )
+                        }
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -240,15 +264,31 @@ const FreeEmissionsEstimate = ({
                         label={closingDateField.label}
                         name={closingDateField.id}
                         value={freeEmissionsEstimateForm.values.closingDate}
-                        onChange={value =>
+                        onChange={value => {
                             freeEmissionsEstimateForm.setFieldValue(
                                 closingDateField.valueFieldName,
                                 value,
-                            )
-                        }
+                            );
+                            freeEmissionsEstimateForm.setFieldTouched(
+                                closingDateField.valueFieldName,
+                                true,
+                                false,
+                            );
+                        }}
                         disabled={fetching}
                         placeholder={closingDateField.placeholder}
                         fullWidth
+                        error={closingDateHasError}
+                        helperText={
+                            closingDateHasError && (
+                                <InputErrorText
+                                    text={
+                                        freeEmissionsEstimateForm.errors
+                                            .closingDate
+                                    }
+                                />
+                            )
+                        }
                     />
                 </Grid>
             </Grid>
@@ -274,8 +314,17 @@ const FreeEmissionsEstimate = ({
                                 .estimatedAnnualThroughput
                         }
                         placeholder={estimatedAnnualThroughputField.placeholder}
-                        onChange={freeEmissionsEstimateForm.handleChange}
-                        onBlur={freeEmissionsEstimateForm.handleBlur}
+                        onChange={event => {
+                            freeEmissionsEstimateForm.setFieldValue(
+                                estimatedAnnualThroughputField.valueFieldName,
+                                event.target.value,
+                            );
+                            freeEmissionsEstimateForm.setFieldTouched(
+                                estimatedAnnualThroughputField.valueFieldName,
+                                true,
+                                false,
+                            );
+                        }}
                         disabled={fetching}
                         error={estimatedAnnualThroughputHasError}
                         helperText={
@@ -319,10 +368,10 @@ const FreeEmissionsEstimate = ({
 };
 
 FreeEmissionsEstimate.propTypes = {
-    // Redux state
+    // Redux state.
     formData: object.isRequired,
     fetching: bool.isRequired,
-    // Redux dispatch functions
+    // Redux dispatch functions.
     updateOpeningDate: func.isRequired,
     updateClosingDate: func.isRequired,
     updateEstimatedAnnualThroughput: func.isRequired,
@@ -344,7 +393,7 @@ FreeEmissionsEstimate.propTypes = {
     updateEnergyAnimalWasteEnabled: func.isRequired,
     updateEnergyElectricityEnabled: func.isRequired,
     updateEnergyOtherEnabled: func.isRequired,
-    // Other props
+    // Other props.
     classes: object.isRequired,
 };
 
