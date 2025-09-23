@@ -38,8 +38,14 @@ class ExtendedField(models.Model):
         (DUNS_ID, DUNS_ID),
         (LEI_ID, LEI_ID),
         (RBA_ID, RBA_ID),
-        (ESTIMATED_EMISSIONS_ACTIVITY, ESTIMATED_EMISSIONS_ACTIVITY),
-        (ESTIMATED_ANNUAL_ENERGY_CONSUMPTION, ESTIMATED_ANNUAL_ENERGY_CONSUMPTION)
+        (
+            ESTIMATED_EMISSIONS_ACTIVITY,
+            ESTIMATED_EMISSIONS_ACTIVITY
+        ),
+        (
+            ESTIMATED_ANNUAL_ENERGY_CONSUMPTION,
+            ESTIMATED_ANNUAL_ENERGY_CONSUMPTION
+        )
     )
 
     uuid = models.UUIDField(
