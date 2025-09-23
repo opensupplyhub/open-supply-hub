@@ -24,7 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
     * Integrated partner field creation into the moderation event approval workflow
     * Added `label` field to `PartnerField` model
-    * Added support to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
+    * Added functionality to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
