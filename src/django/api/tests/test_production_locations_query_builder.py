@@ -288,9 +288,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
         final_query = self.builder.get_final_query_body()
         expected = {
             'track_total_hits': True,
-            "_source": {
-                "excludes": []
-            },
+            "_source": [],
             'query': {'bool': {'must': []}},
             'sort': []
         }
@@ -425,13 +423,13 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['filter'][0]
         )
 
-    def test_exclude_from_search(self):
-        exclude_fields = [
+    def test_include_into_search(self):
+        include_fields = [
             "opened_at",
             "closed_at",
         ]
 
-        self.builder.exclude_from_search(exclude_fields)
+        self.builder.include_into_search(include_fields)
 
         self.assertEqual(
             ["opened_at", "closed_at"],

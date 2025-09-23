@@ -1,6 +1,5 @@
 SELECT
   af.id AS os_id,
-  af.created_at AS opened_at,
   (
     SELECT
       COALESCE(
@@ -656,10 +655,48 @@ SELECT
     LIMIT
       1
   ) AS claimed_at_value,
-  CASE
-    WHEN af.is_closed = TRUE THEN af.updated_at
-    ELSE NULL
-  END AS closed_at
+  (
+    SELECT 
+      ARRAY_AGG(afc2.opened_at)
+    FROM 
+      api_facilityclaim afc2
+    WHERE 
+      afc2.facility_id = af.id
+  ) AS opened_at_value,
+  (
+    SELECT 
+      ARRAY_AGG(afc2.closed_at)
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+  ) AS closed_at_value,
+  (
+    SELECT
+      afc2.estimated_annual_throughput
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.estimated_annual_throughput IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS estimated_annual_throughput_value,
+  (
+    SELECT
+      afc2.actual_annual_energy_consumption
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.actual_annual_energy_consumption IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS actual_annual_energy_consumption_value
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id

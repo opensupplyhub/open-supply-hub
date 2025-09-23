@@ -1,0 +1,42 @@
+# Refer to src/logstash/indexes/production_locations.json for the fields
+# that are returned by the production locations index
+class ProductionLocationsResponseMapping:
+    PRODUCTION_LOCATIONS = [
+        "os_id",
+        "name",
+        "local_name",
+        "description",
+        "address",
+        "geocoded_location_type",
+        "geocoded_address",
+        "business_url",
+        "sector",
+        "parent_company",
+        "product_type",
+        "location_type",
+        "processing_type",
+        "number_of_workers.min",
+        "number_of_workers.max",
+        "coordinates",
+        "minimum_order_quantity",
+        "average_lead_time",
+        "percent_female_workers",
+        "affiliations",
+        "certifications_standards_regulations",
+        "country.name",
+        "country.alpha_2",
+        "country.alpha_3",
+        "country.numeric",
+        "claim_status",
+        "claimed_at",
+        "historical_os_id",
+        "rba_id",
+        "duns_id",
+        "lei_id",
+    ]
+    PRODUCTION_LOCATION_BY_OS_ID = PRODUCTION_LOCATIONS + [
+        "opened_at",
+        "closed_at",
+        "estimated_annual_throughput",
+        "actual_annual_energy_consumption",
+    ]

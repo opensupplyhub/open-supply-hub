@@ -44,6 +44,8 @@ from api.mail import (
     send_slc_new_location_confirmation_email,
     send_slc_additional_info_confirmation_email
 )
+from api.views.v1.response_mappings.production_locations_response import \
+    ProductionLocationsResponseMapping
 
 
 class ProductionLocations(ViewSet):
@@ -120,7 +122,7 @@ class ProductionLocations(ViewSet):
             self.__init_opensearch()
         query_body = opensearch_query_director.build_query(
             request.GET,
-            ["opened_at", "closed_at"]
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATIONS
         )
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
@@ -135,10 +137,13 @@ class ProductionLocations(ViewSet):
 
         opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
-        query_body = opensearch_query_director.build_query(query_params)
+        query_body = opensearch_query_director.build_query(
+            query_params,
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID
+        )
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-            query_body,
+            query_body
         )
         locations = response.get("data", [])
 

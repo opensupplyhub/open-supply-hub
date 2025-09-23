@@ -224,6 +224,22 @@
         },
         "closed_at": {
           "type": "date"
+        },
+        "estimated_annual_throughput": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "actual_annual_energy_consumption": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
         }
       }
     }

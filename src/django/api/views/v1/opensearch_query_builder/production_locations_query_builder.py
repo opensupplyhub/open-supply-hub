@@ -9,9 +9,6 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
     def __init__(self):
         self.default_query_body = {
             'track_total_hits': True,
-            "_source": {
-                "excludes": []
-            },
             'query': {'bool': {'must': []}},
             'sort': []
         }
@@ -193,7 +190,6 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
 
         self.query_body["query"]["bool"]["filter"].append(geo_polygon)
 
-    def exclude_from_search(self, exclude_fields: List[str]):
-        for field in exclude_fields:
-            if isinstance(field, str):
-                self.query_body['_source']['excludes'].append(field)
+    def include_into_search(self, include_fields: List[str]):
+        if include_fields:
+            self.query_body['_source'] = include_fields
