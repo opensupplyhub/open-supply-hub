@@ -13,7 +13,7 @@ import EnergySourceInput from './EnergySourceInput.jsx';
 import {
     updateClaimOpeningDate,
     updateClaimClosingDate,
-    updateClaimAnnualThroughput,
+    updateClaimEstimatedAnnualThroughput,
     updateClaimEnergyCoal,
     updateClaimEnergyNaturalGas,
     updateClaimEnergyDiesel,
@@ -36,19 +36,17 @@ import {
 
 import { freeEmissionsEstimateStyles } from './styles.js';
 import { useFreeEmissionsEstimateForm, useFormFieldSync } from './hooks.js';
-import {
-    freeEmissionsEstimateFormFields,
-    energySourcesData,
-} from './constants.js';
+import freeEmissionsEstimateFormConfig from './constants.js';
 
 const {
     title,
     description,
-    openingDateForm,
-    closingDateForm,
-    annualThroughputForm,
+    openingDateField,
+    closingDateField,
+    estimatedAnnualThroughputField,
     energyConsumptionLabel,
-} = freeEmissionsEstimateFormFields;
+    energySourcesData,
+} = freeEmissionsEstimateFormConfig;
 
 const FreeEmissionsEstimate = ({
     // Redux state values.
@@ -57,7 +55,7 @@ const FreeEmissionsEstimate = ({
     // Redux dispatch functions.
     updateOpeningDate,
     updateClosingDate,
-    updateAnnualThroughput,
+    updateEstimatedAnnualThroughput,
     updateEnergyCoal,
     updateEnergyNaturalGas,
     updateEnergyDiesel,
@@ -104,9 +102,9 @@ const FreeEmissionsEstimate = ({
     );
 
     useFormFieldSync(
-        freeEmissionsEstimateForm.values.annualThroughput,
-        formData.annualThroughput,
-        updateAnnualThroughput,
+        freeEmissionsEstimateForm.values.estimatedAnnualThroughput,
+        formData.estimatedAnnualThroughput,
+        updateEstimatedAnnualThroughput,
     );
 
     useFormFieldSync(
@@ -208,9 +206,9 @@ const FreeEmissionsEstimate = ({
         updateEnergyOtherEnabled,
     );
 
-    const annualThroughputHasError =
-        freeEmissionsEstimateForm.touched.annualThroughput &&
-        freeEmissionsEstimateForm.errors.annualThroughput;
+    const estimatedAnnualThroughputHasError =
+        freeEmissionsEstimateForm.touched.estimatedAnnualThroughput &&
+        freeEmissionsEstimateForm.errors.estimatedAnnualThroughput;
 
     return (
         <div className={classes.emissionsSection}>
@@ -220,94 +218,91 @@ const FreeEmissionsEstimate = ({
             <Typography className={classes.sectionDescription}>
                 {description.label}
             </Typography>
-
-            <form onSubmit={freeEmissionsEstimateForm.handleSubmit}>
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                        <DatePicker
-                            label={openingDateForm.label}
-                            name="openingDate"
-                            value={freeEmissionsEstimateForm.values.openingDate}
-                            onChange={value =>
-                                freeEmissionsEstimateForm.setFieldValue(
-                                    'openingDate',
-                                    value,
-                                )
-                            }
-                            disabled={fetching}
-                            placeholder={openingDateForm.placeholder}
-                            fullWidth
-                            size="small"
-                        />
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                        <DatePicker
-                            label={closingDateForm.label}
-                            name="closingDate"
-                            value={freeEmissionsEstimateForm.values.closingDate}
-                            onChange={value =>
-                                freeEmissionsEstimateForm.setFieldValue(
-                                    'closingDate',
-                                    value,
-                                )
-                            }
-                            disabled={fetching}
-                            placeholder={closingDateForm.placeholder}
-                            fullWidth
-                            size="small"
-                        />
-                    </Grid>
+            <Grid container spacing={8}>
+                <Grid item xs={12} md={6}>
+                    <DatePicker
+                        label={openingDateField.label}
+                        name={openingDateField.id}
+                        value={freeEmissionsEstimateForm.values.openingDate}
+                        onChange={value =>
+                            freeEmissionsEstimateForm.setFieldValue(
+                                openingDateField.valueFieldName,
+                                value,
+                            )
+                        }
+                        disabled={fetching}
+                        placeholder={openingDateField.placeholder}
+                        fullWidth
+                    />
                 </Grid>
-
-                <div className={classes.inputGroupStyles}>
-                    <InputLabel htmlFor="annualThroughput">
+                <Grid item xs={12} md={6}>
+                    <DatePicker
+                        label={closingDateField.label}
+                        name={closingDateField.id}
+                        value={freeEmissionsEstimateForm.values.closingDate}
+                        onChange={value =>
+                            freeEmissionsEstimateForm.setFieldValue(
+                                closingDateField.valueFieldName,
+                                value,
+                            )
+                        }
+                        disabled={fetching}
+                        placeholder={closingDateField.placeholder}
+                        fullWidth
+                    />
+                </Grid>
+            </Grid>
+            <Grid container spacing={8}>
+                <Grid item xs={12}>
+                    <InputLabel htmlFor={estimatedAnnualThroughputField.id}>
                         <Typography
-                            variant="subtitle1"
-                            style={{ fontWeight: 500 }}
+                            variant="subheading"
+                            className={classes.fieldLabel}
                         >
-                            {annualThroughputForm.label}
+                            {estimatedAnnualThroughputField.label}
                         </Typography>
                     </InputLabel>
+                </Grid>
+                <Grid item xs={12}>
                     <TextField
-                        id="annualThroughput"
-                        name="annualThroughput"
+                        id={estimatedAnnualThroughputField.id}
+                        name={estimatedAnnualThroughputField.valueFieldName}
                         variant="outlined"
-                        size="small"
                         fullWidth
                         value={
-                            freeEmissionsEstimateForm.values.annualThroughput
+                            freeEmissionsEstimateForm.values
+                                .estimatedAnnualThroughput
                         }
-                        placeholder={annualThroughputForm.placeholder}
+                        placeholder={estimatedAnnualThroughputField.placeholder}
                         onChange={freeEmissionsEstimateForm.handleChange}
                         onBlur={freeEmissionsEstimateForm.handleBlur}
                         disabled={fetching}
-                        error={annualThroughputHasError}
+                        error={estimatedAnnualThroughputHasError}
                         helperText={
-                            annualThroughputHasError && (
+                            estimatedAnnualThroughputHasError && (
                                 <InputErrorText
                                     text={
                                         freeEmissionsEstimateForm.errors
-                                            .annualThroughput
+                                            .estimatedAnnualThroughput
                                     }
                                 />
                             )
                         }
-                        style={{ marginTop: '8px' }}
                     />
-                </div>
-
-                <div className={classes.inputGroupStyles}>
+                </Grid>
+            </Grid>
+            <Grid container spacing={8}>
+                <Grid item xs={12}>
                     <Typography
-                        variant="subtitle1"
-                        style={{ fontWeight: 500, marginBottom: '16px' }}
+                        variant="subheading"
+                        className={classes.energyConsumptionTitle}
                     >
                         {energyConsumptionLabel.label}
                     </Typography>
-
-                    {energySourcesData.map(energyData => (
+                </Grid>
+                {energySourcesData.map(energyData => (
+                    <Grid item xs={12} key={energyData.source.id}>
                         <EnergySourceInput
-                            key={energyData.source.id}
                             source={energyData.source}
                             freeEmissionsEstimateForm={
                                 freeEmissionsEstimateForm
@@ -315,11 +310,10 @@ const FreeEmissionsEstimate = ({
                             enabledFieldName={energyData.enabledFieldName}
                             valueFieldName={energyData.valueFieldName}
                             disabled={fetching}
-                            classes={classes}
                         />
-                    ))}
-                </div>
-            </form>
+                    </Grid>
+                ))}
+            </Grid>
         </div>
     );
 };
@@ -331,7 +325,7 @@ FreeEmissionsEstimate.propTypes = {
     // Redux dispatch functions
     updateOpeningDate: func.isRequired,
     updateClosingDate: func.isRequired,
-    updateAnnualThroughput: func.isRequired,
+    updateEstimatedAnnualThroughput: func.isRequired,
     updateEnergyCoal: func.isRequired,
     updateEnergyNaturalGas: func.isRequired,
     updateEnergyDiesel: func.isRequired,
@@ -354,79 +348,73 @@ FreeEmissionsEstimate.propTypes = {
     classes: object.isRequired,
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     claimFacility: {
         claimData: { formData, fetching },
     },
-}) {
-    return {
-        formData: {
-            openingDate: formData.openingDate,
-            closingDate: formData.closingDate,
-            annualThroughput: formData.annualThroughput,
-            energyCoal: formData.energyCoal,
-            energyNaturalGas: formData.energyNaturalGas,
-            energyDiesel: formData.energyDiesel,
-            energyKerosene: formData.energyKerosene,
-            energyBiomass: formData.energyBiomass,
-            energyCharcoal: formData.energyCharcoal,
-            energyAnimalWaste: formData.energyAnimalWaste,
-            energyElectricity: formData.energyElectricity,
-            energyOther: formData.energyOther,
-            energyCoalEnabled: formData.energyCoalEnabled,
-            energyNaturalGasEnabled: formData.energyNaturalGasEnabled,
-            energyDieselEnabled: formData.energyDieselEnabled,
-            energyKeroseneEnabled: formData.energyKeroseneEnabled,
-            energyBiomassEnabled: formData.energyBiomassEnabled,
-            energyCharcoalEnabled: formData.energyCharcoalEnabled,
-            energyAnimalWasteEnabled: formData.energyAnimalWasteEnabled,
-            energyElectricityEnabled: formData.energyElectricityEnabled,
-            energyOtherEnabled: formData.energyOtherEnabled,
-        },
-        fetching,
-    };
-}
+}) => ({
+    formData: {
+        openingDate: formData.openingDate,
+        closingDate: formData.closingDate,
+        estimatedAnnualThroughput: formData.estimatedAnnualThroughput,
+        energyCoal: formData.energyCoal,
+        energyNaturalGas: formData.energyNaturalGas,
+        energyDiesel: formData.energyDiesel,
+        energyKerosene: formData.energyKerosene,
+        energyBiomass: formData.energyBiomass,
+        energyCharcoal: formData.energyCharcoal,
+        energyAnimalWaste: formData.energyAnimalWaste,
+        energyElectricity: formData.energyElectricity,
+        energyOther: formData.energyOther,
+        energyCoalEnabled: formData.energyCoalEnabled,
+        energyNaturalGasEnabled: formData.energyNaturalGasEnabled,
+        energyDieselEnabled: formData.energyDieselEnabled,
+        energyKeroseneEnabled: formData.energyKeroseneEnabled,
+        energyBiomassEnabled: formData.energyBiomassEnabled,
+        energyCharcoalEnabled: formData.energyCharcoalEnabled,
+        energyAnimalWasteEnabled: formData.energyAnimalWasteEnabled,
+        energyElectricityEnabled: formData.energyElectricityEnabled,
+        energyOtherEnabled: formData.energyOtherEnabled,
+    },
+    fetching,
+});
 
-function mapDispatchToProps(dispatch) {
-    return {
-        updateOpeningDate: date => dispatch(updateClaimOpeningDate(date)),
-        updateClosingDate: date => dispatch(updateClaimClosingDate(date)),
-        updateAnnualThroughput: value =>
-            dispatch(updateClaimAnnualThroughput(value)),
-        updateEnergyCoal: value => dispatch(updateClaimEnergyCoal(value)),
-        updateEnergyNaturalGas: value =>
-            dispatch(updateClaimEnergyNaturalGas(value)),
-        updateEnergyDiesel: value => dispatch(updateClaimEnergyDiesel(value)),
-        updateEnergyKerosene: value =>
-            dispatch(updateClaimEnergyKerosene(value)),
-        updateEnergyBiomass: value => dispatch(updateClaimEnergyBiomass(value)),
-        updateEnergyCharcoal: value =>
-            dispatch(updateClaimEnergyCharcoal(value)),
-        updateEnergyAnimalWaste: value =>
-            dispatch(updateClaimEnergyAnimalWaste(value)),
-        updateEnergyElectricity: value =>
-            dispatch(updateClaimEnergyElectricity(value)),
-        updateEnergyOther: value => dispatch(updateClaimEnergyOther(value)),
-        updateEnergyCoalEnabled: enabled =>
-            dispatch(updateClaimEnergyCoalEnabled(enabled)),
-        updateEnergyNaturalGasEnabled: enabled =>
-            dispatch(updateClaimEnergyNaturalGasEnabled(enabled)),
-        updateEnergyDieselEnabled: enabled =>
-            dispatch(updateClaimEnergyDieselEnabled(enabled)),
-        updateEnergyKeroseneEnabled: enabled =>
-            dispatch(updateClaimEnergyKeroseneEnabled(enabled)),
-        updateEnergyBiomassEnabled: enabled =>
-            dispatch(updateClaimEnergyBiomassEnabled(enabled)),
-        updateEnergyCharcoalEnabled: enabled =>
-            dispatch(updateClaimEnergyCharcoalEnabled(enabled)),
-        updateEnergyAnimalWasteEnabled: enabled =>
-            dispatch(updateClaimEnergyAnimalWasteEnabled(enabled)),
-        updateEnergyElectricityEnabled: enabled =>
-            dispatch(updateClaimEnergyElectricityEnabled(enabled)),
-        updateEnergyOtherEnabled: enabled =>
-            dispatch(updateClaimEnergyOtherEnabled(enabled)),
-    };
-}
+const mapDispatchToProps = dispatch => ({
+    updateOpeningDate: date => dispatch(updateClaimOpeningDate(date)),
+    updateClosingDate: date => dispatch(updateClaimClosingDate(date)),
+    updateEstimatedAnnualThroughput: value =>
+        dispatch(updateClaimEstimatedAnnualThroughput(value)),
+    updateEnergyCoal: value => dispatch(updateClaimEnergyCoal(value)),
+    updateEnergyNaturalGas: value =>
+        dispatch(updateClaimEnergyNaturalGas(value)),
+    updateEnergyDiesel: value => dispatch(updateClaimEnergyDiesel(value)),
+    updateEnergyKerosene: value => dispatch(updateClaimEnergyKerosene(value)),
+    updateEnergyBiomass: value => dispatch(updateClaimEnergyBiomass(value)),
+    updateEnergyCharcoal: value => dispatch(updateClaimEnergyCharcoal(value)),
+    updateEnergyAnimalWaste: value =>
+        dispatch(updateClaimEnergyAnimalWaste(value)),
+    updateEnergyElectricity: value =>
+        dispatch(updateClaimEnergyElectricity(value)),
+    updateEnergyOther: value => dispatch(updateClaimEnergyOther(value)),
+    updateEnergyCoalEnabled: enabled =>
+        dispatch(updateClaimEnergyCoalEnabled(enabled)),
+    updateEnergyNaturalGasEnabled: enabled =>
+        dispatch(updateClaimEnergyNaturalGasEnabled(enabled)),
+    updateEnergyDieselEnabled: enabled =>
+        dispatch(updateClaimEnergyDieselEnabled(enabled)),
+    updateEnergyKeroseneEnabled: enabled =>
+        dispatch(updateClaimEnergyKeroseneEnabled(enabled)),
+    updateEnergyBiomassEnabled: enabled =>
+        dispatch(updateClaimEnergyBiomassEnabled(enabled)),
+    updateEnergyCharcoalEnabled: enabled =>
+        dispatch(updateClaimEnergyCharcoalEnabled(enabled)),
+    updateEnergyAnimalWasteEnabled: enabled =>
+        dispatch(updateClaimEnergyAnimalWasteEnabled(enabled)),
+    updateEnergyElectricityEnabled: enabled =>
+        dispatch(updateClaimEnergyElectricityEnabled(enabled)),
+    updateEnergyOtherEnabled: enabled =>
+        dispatch(updateClaimEnergyOtherEnabled(enabled)),
+});
 
 export default connect(
     mapStateToProps,

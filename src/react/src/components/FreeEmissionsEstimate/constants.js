@@ -1,131 +1,124 @@
-export const freeEmissionsEstimateFormFields = Object.freeze({
+const freeEmissionsEstimateFormConfig = Object.freeze({
     title: Object.freeze({
         label: '🌍 Free Emissions Estimates',
     }),
     description: Object.freeze({
         label:
-            'Complete these fields and Open Supply Hub will partner with Climate TRACE to provide you with a free emissions estimate for this location.',
+            'Fill in these fields, and Open Supply Hub—together with Climate TRACE—will provide a free emissions estimate for this location. This also helps your partners calculate emissions across their entire value chain.',
     }),
-    openingDateForm: Object.freeze({
+    openingDateField: Object.freeze({
         id: 'opening-date',
         label: 'Opening Date',
         placeholder: 'Select year',
+        valueFieldName: 'openingDate',
     }),
-    closingDateForm: Object.freeze({
+    closingDateField: Object.freeze({
         id: 'closing-date',
         label: 'Closing Date',
         placeholder: 'Select month/year',
+        valueFieldName: 'closingDate',
     }),
-    annualThroughputForm: Object.freeze({
-        id: 'annual-throughput',
-        label: 'Actual Annual Throughput',
+    estimatedAnnualThroughputField: Object.freeze({
+        id: 'estimated-annual-throughput',
+        label: 'Estimated Annual Throughput',
         placeholder: 'e.g., 10,000 kg/year',
+        valueFieldName: 'estimatedAnnualThroughput',
     }),
     energyConsumptionLabel: Object.freeze({
         label: 'Actual Annual Energy Consumption',
     }),
-    energySources: Object.freeze({
-        coal: Object.freeze({
-            id: 'energy-coal',
-            label: 'Coal',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+    energySourcesData: Object.freeze([
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-coal',
+                label: 'Coal',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyCoalEnabled',
+            valueFieldName: 'energyCoal',
         }),
-        naturalGas: Object.freeze({
-            id: 'energy-natural-gas',
-            label: 'Natural Gas',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-natural-gas',
+                label: 'Natural Gas',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyNaturalGasEnabled',
+            valueFieldName: 'energyNaturalGas',
         }),
-        diesel: Object.freeze({
-            id: 'energy-diesel',
-            label: 'Diesel',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-diesel',
+                label: 'Diesel',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyDieselEnabled',
+            valueFieldName: 'energyDiesel',
         }),
-        kerosene: Object.freeze({
-            id: 'energy-kerosene',
-            label: 'Kerosene',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-kerosene',
+                label: 'Kerosene',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyKeroseneEnabled',
+            valueFieldName: 'energyKerosene',
         }),
-        biomass: Object.freeze({
-            id: 'energy-biomass',
-            label: 'Biomass',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-biomass',
+                label: 'Biomass',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyBiomassEnabled',
+            valueFieldName: 'energyBiomass',
         }),
-        charcoal: Object.freeze({
-            id: 'energy-charcoal',
-            label: 'Charcoal',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-charcoal',
+                label: 'Charcoal',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyCharcoalEnabled',
+            valueFieldName: 'energyCharcoal',
         }),
-        animalWaste: Object.freeze({
-            id: 'energy-animal-waste',
-            label: 'Animal Waste',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-animal-waste',
+                label: 'Animal Waste',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyAnimalWasteEnabled',
+            valueFieldName: 'energyAnimalWaste',
         }),
-        electricity: Object.freeze({
-            id: 'energy-electricity',
-            label: 'Electricity',
-            unit: 'MWh',
-            placeholder: 'Enter value in MWh',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-electricity',
+                label: 'Electricity',
+                unit: 'MWh',
+                placeholder: 'Enter value in MWh',
+            }),
+            enabledFieldName: 'energyElectricityEnabled',
+            valueFieldName: 'energyElectricity',
         }),
-        other: Object.freeze({
-            id: 'energy-other',
-            label: 'Other',
-            unit: 'J',
-            placeholder: 'Enter value in J',
+        Object.freeze({
+            source: Object.freeze({
+                id: 'energy-other',
+                label: 'Other',
+                unit: 'J',
+                placeholder: 'Enter value in J',
+            }),
+            enabledFieldName: 'energyOtherEnabled',
+            valueFieldName: 'energyOther',
         }),
-    }),
+    ]),
 });
 
-export const energySourcesData = Object.freeze([
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.coal,
-        enabledFieldName: 'energyCoalEnabled',
-        valueFieldName: 'energyCoal',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.naturalGas,
-        enabledFieldName: 'energyNaturalGasEnabled',
-        valueFieldName: 'energyNaturalGas',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.diesel,
-        enabledFieldName: 'energyDieselEnabled',
-        valueFieldName: 'energyDiesel',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.kerosene,
-        enabledFieldName: 'energyKeroseneEnabled',
-        valueFieldName: 'energyKerosene',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.biomass,
-        enabledFieldName: 'energyBiomassEnabled',
-        valueFieldName: 'energyBiomass',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.charcoal,
-        enabledFieldName: 'energyCharcoalEnabled',
-        valueFieldName: 'energyCharcoal',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.animalWaste,
-        enabledFieldName: 'energyAnimalWasteEnabled',
-        valueFieldName: 'energyAnimalWaste',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.electricity,
-        enabledFieldName: 'energyElectricityEnabled',
-        valueFieldName: 'energyElectricity',
-    }),
-    Object.freeze({
-        source: freeEmissionsEstimateFormFields.energySources.other,
-        enabledFieldName: 'energyOtherEnabled',
-        valueFieldName: 'energyOther',
-    }),
-]);
+export default freeEmissionsEstimateFormConfig;

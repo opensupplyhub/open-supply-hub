@@ -11,7 +11,7 @@ export const isValidEnergyValue = value => {
     return !Number.isNaN(numericValue) && numericValue >= 0;
 };
 
-export const isValidAnnualThroughput = value => {
+export const isValidEstimatedAnnualThroughput = value => {
     if (isEmpty(value)) {
         return true;
     }
@@ -89,10 +89,10 @@ export const freeEmissionsEstimateValidationSchema = objectYup({
             (closing, opening) => closing >= opening,
         ),
     ),
-    annualThroughput: stringYup().test(
+    estimatedAnnualThroughput: stringYup().test(
         'valid-throughput',
         'Please enter a valid throughput value (e.g., "10,000 kg/year").',
-        value => !value || isValidAnnualThroughput(value),
+        value => !value || isValidEstimatedAnnualThroughput(value),
     ),
     energyCoal: stringYup().when('energyCoalEnabled', {
         is: true,

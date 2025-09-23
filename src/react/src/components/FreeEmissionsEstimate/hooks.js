@@ -11,12 +11,12 @@ export const useFormFieldSync = (formValue, storeValue, updateAction) => {
     }, [formValue, storeValue, updateAction]);
 };
 
-export const useFreeEmissionsEstimateForm = (initialValues, onSubmit) =>
+export const useFreeEmissionsEstimateForm = initialValues =>
     useFormik({
         initialValues: {
             openingDate: '',
             closingDate: '',
-            annualThroughput: '',
+            estimatedAnnualThroughput: '',
             energyCoal: '',
             energyNaturalGas: '',
             energyDiesel: '',
@@ -38,7 +38,6 @@ export const useFreeEmissionsEstimateForm = (initialValues, onSubmit) =>
             ...initialValues,
         },
         validationSchema: freeEmissionsEstimateValidationSchema,
-        onSubmit: onSubmit || (() => {}),
         validateOnMount: false,
         enableReinitialize: true,
     });

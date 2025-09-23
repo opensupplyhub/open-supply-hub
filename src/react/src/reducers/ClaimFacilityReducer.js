@@ -24,7 +24,7 @@ import {
     updateClaimAFacilityBusinessUploadFiles,
     updateClaimOpeningDate,
     updateClaimClosingDate,
-    updateClaimAnnualThroughput,
+    updateClaimEstimatedAnnualThroughput,
     updateClaimEnergyCoal,
     updateClaimEnergyNaturalGas,
     updateClaimEnergyDiesel,
@@ -65,7 +65,7 @@ const initialState = Object.freeze({
             // Free Emissions Estimate fields
             openingDate: '',
             closingDate: '',
-            annualThroughput: '',
+            estimatedAnnualThroughput: '',
             energyCoal: '',
             energyNaturalGas: '',
             energyDiesel: '',
@@ -247,11 +247,11 @@ export default createReducer(
                     },
                 },
             }),
-        [updateClaimAnnualThroughput]: (state, payload) =>
+        [updateClaimEstimatedAnnualThroughput]: (state, payload) =>
             update(state, {
                 claimData: {
                     formData: {
-                        annualThroughput: { $set: payload },
+                        estimatedAnnualThroughput: { $set: payload },
                     },
                 },
             }),

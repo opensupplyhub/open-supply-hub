@@ -7,10 +7,10 @@ export const freeEmissionsEstimateStyles = {
     ...textFieldErrorStyles(),
     ...claimedFacilitiesDetailsStyles(),
     emissionsSection: {
-        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+        background: 'linear-gradient(to right, #f0fdf4, #eff6ff)',
         padding: '24px',
         borderRadius: '8px',
-        border: '1px solid #bae6fd',
+        border: '1px solid #bbf7d0',
         marginTop: '16px',
     },
     sectionTitle: {
@@ -26,20 +26,18 @@ export const freeEmissionsEstimateStyles = {
         fontSize: '14px',
         lineHeight: '1.5',
     },
+    fieldLabel: {
+        fontWeight: 500,
+    },
+    energyConsumptionTitle: {
+        fontWeight: 500,
+        marginBottom: '16px',
+    },
 };
 
 export const energySourceInputStyles = {
-    energyInputContainer: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '12px',
-    },
     energyCheckbox: {
         minWidth: '140px',
-    },
-    energyInput: {
-        flex: 1,
-        marginLeft: '12px',
     },
     unitText: {
         minWidth: '50px',

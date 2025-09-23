@@ -6,6 +6,7 @@ import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import Grid from '@material-ui/core/Grid';
 import InputErrorText from '../Contribute/InputErrorText';
 import { energySourceInputStyles } from './styles.js';
 
@@ -24,51 +25,56 @@ const EnergySourceInput = ({
         freeEmissionsEstimateForm.errors[valueFieldName];
 
     return (
-        <div className={classes.energyInputContainer}>
-            <FormControlLabel
-                className={classes.energyCheckbox}
-                control={
-                    <Checkbox
-                        id={source.id}
-                        name={enabledFieldName}
-                        checked={enabled}
-                        onChange={freeEmissionsEstimateForm.handleChange}
-                        disabled={disabled}
-                    />
-                }
-                label={`${source.label}:`}
-            />
-            <TextField
-                className={classes.energyInput}
-                variant="outlined"
-                size="small"
-                name={valueFieldName}
-                value={value}
-                placeholder={source.placeholder}
-                disabled={disabled || !enabled}
-                onChange={freeEmissionsEstimateForm.handleChange}
-                onBlur={freeEmissionsEstimateForm.handleBlur}
-                error={hasError}
-                helperText={
-                    hasError && (
-                        <InputErrorText
-                            text={
-                                freeEmissionsEstimateForm.errors[valueFieldName]
-                            }
+        <Grid container alignItems="center">
+            <Grid item xs={12} sm={4} md={3}>
+                <FormControlLabel
+                    className={classes.energyCheckbox}
+                    control={
+                        <Checkbox
+                            id={source.id}
+                            name={enabledFieldName}
+                            checked={enabled}
+                            onChange={freeEmissionsEstimateForm.handleChange}
+                            disabled={disabled}
                         />
-                    )
-                }
-                InputProps={{
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <Typography className={classes.unitText}>
-                                {source.unit}
-                            </Typography>
-                        </InputAdornment>
-                    ),
-                }}
-            />
-        </div>
+                    }
+                    label={`${source.label}:`}
+                />
+            </Grid>
+            <Grid item xs={12} sm={8} md={9}>
+                <TextField
+                    variant="outlined"
+                    fullWidth
+                    name={valueFieldName}
+                    value={value}
+                    placeholder={source.placeholder}
+                    disabled={disabled || !enabled}
+                    onChange={freeEmissionsEstimateForm.handleChange}
+                    onBlur={freeEmissionsEstimateForm.handleBlur}
+                    error={hasError}
+                    helperText={
+                        hasError && (
+                            <InputErrorText
+                                text={
+                                    freeEmissionsEstimateForm.errors[
+                                        valueFieldName
+                                    ]
+                                }
+                            />
+                        )
+                    }
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <Typography className={classes.unitText}>
+                                    {source.unit}
+                                </Typography>
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+            </Grid>
+        </Grid>
     );
 };
 
