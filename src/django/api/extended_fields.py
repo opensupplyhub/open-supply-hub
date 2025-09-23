@@ -150,7 +150,7 @@ def create_partner_extendedfield(
             field_value = {
                 'raw_values': field_value,
             }
-        else: 
+        else:
             field_value = {
                 'raw_value': field_value,
             }
