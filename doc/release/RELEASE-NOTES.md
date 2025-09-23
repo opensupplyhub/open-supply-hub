@@ -18,6 +18,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at` and `closed_at` fields to GET `/api/v1/production-locations/{os_id}/` endpoint.
 
+### Architecture/Environment changes
+* [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
 * [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
