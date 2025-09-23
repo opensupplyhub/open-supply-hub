@@ -150,7 +150,7 @@ def create_partner_extendedfield(
             field_value = {
                 'raw_values': field_value,
             }
-        else:    
+        else: 
             field_value = {
                 'raw_value': field_value,
             }
@@ -199,7 +199,7 @@ def create_partner_extendedfields_for_single_item(
     contributor = item.source.contributor
 
     for partner_field in item.source.contributor \
-        .partner_fields.all():
+            .partner_fields.all():
         field = partner_field.name
         field_type = partner_field.type
         field_value = raw_data.get(field)
