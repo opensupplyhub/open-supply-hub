@@ -134,6 +134,9 @@ def create_extendedfield(field, field_value, item, contributor):
         )
 
 
+OBJECT_FIELD_TYPE = "object"
+
+
 def create_partner_extendedfield(
         field,
         field_value,
@@ -143,7 +146,7 @@ def create_partner_extendedfield(
 ):
     if field_value is not None and field_value != "" \
             and not all_values_empty(field_value):
-        if field_type == "object":
+        if field_type == OBJECT_FIELD_TYPE:
             field_value = {
                 'raw_values': field_value,
             }
@@ -176,8 +179,7 @@ RAW_DATA_FIELDS = (
 
 def create_extendedfields_for_single_item(
         item,
-        raw_data,
-        v1_endpoint = False
+        raw_data
 ):
     if item.id is None:
         return False
@@ -186,21 +188,29 @@ def create_extendedfields_for_single_item(
     for field in RAW_DATA_FIELDS:
         field_value = raw_data.get(field)
         create_extendedfield(field, field_value, item, contributor)
-   
-    if v1_endpoint:
-        for partner_field in item.source.contributor \
-            .partner_fields.all():
-            field = partner_field.name
-            field_type = partner_field.type
-            field_value = raw_data.get(field)
 
-            create_partner_extendedfield(
-                field,
-                field_value,
-                field_type,
-                item,
-                contributor
-            )
+
+def create_partner_extendedfields_for_single_item(
+    item,
+    raw_data
+):
+    if item.id is None:
+        return False
+    contributor = item.source.contributor
+
+    for partner_field in item.source.contributor \
+        .partner_fields.all():
+        field = partner_field.name
+        field_type = partner_field.type
+        field_value = raw_data.get(field)
+
+        create_partner_extendedfield(
+            field,
+            field_value,
+            field_type,
+            item,
+            contributor
+        )
 
 
 def update_extendedfields_for_list_item(list_item):

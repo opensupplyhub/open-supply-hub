@@ -12,6 +12,7 @@ from api.constants import (
 )
 from api.extended_fields import (
     create_extendedfields_for_single_item,
+    create_partner_extendedfields_for_single_item,
     update_extendedfields_for_list_item,
 )
 from api.models.contributor.contributor import Contributor
@@ -85,12 +86,20 @@ class EventApprovalTemplate(ABC):
 
         create_extendedfields_for_single_item(
             item,
-            data["fields"],
-            True
+            data["fields"]
         )
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
             'created.'
+        )
+
+        create_partner_extendedfields_for_single_item(
+            item,
+            data["fields"]
+        )
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Partner extended '
+            'fields created.'
         )
 
         self.__set_geocoded_location(item, data, self.__event)
