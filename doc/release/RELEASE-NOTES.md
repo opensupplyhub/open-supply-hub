@@ -20,6 +20,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
     * Added `unit` field to `PartnerField` model
     * Added type validation for submitted partner fields
+    * Added `create_partner_extendedfields_for_single_item()` function for bulk partner field processing
+    * Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
+    * Integrated partner field creation into the moderation event approval workflow
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
