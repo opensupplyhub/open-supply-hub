@@ -1,6 +1,11 @@
-# Refer to src/logstash/indexes/production_locations.json for the fields
-# that are returned by the production locations index
 class ProductionLocationsResponseMapping:
+    '''
+    This class defines the fields that should be included in the API response for
+    production locations. The fields correspond to the data stored in OpenSearch
+    under the production-locations index. PRODUCTION_LOCATIONS contains the base
+    fields returned for all endpoints, while PRODUCTION_LOCATION_BY_OS_ID adds
+    additional fields for single location lookups.
+    '''
     PRODUCTION_LOCATIONS = [
         "os_id",
         "name",
