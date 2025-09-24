@@ -657,19 +657,28 @@ SELECT
   ) AS claimed_at_value,
   (
     SELECT 
-      ARRAY_AGG(afc2.opened_at)
+      afc2.opened_at
     FROM 
       api_facilityclaim afc2
     WHERE 
       afc2.facility_id = af.id
+      AND afc2.opened_at IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
   ) AS opened_at_value,
   (
     SELECT 
-      ARRAY_AGG(afc2.closed_at)
+      afc2.closed_at
     FROM
       api_facilityclaim afc2
     WHERE
       afc2.facility_id = af.id
+      AND afc2.closed_at IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT 1
   ) AS closed_at_value,
   (
     SELECT
@@ -686,7 +695,7 @@ SELECT
   ) AS estimated_annual_throughput_value,
   (
     SELECT
-      afc2.actual_annual_energy_consumption
+      afc2.actual_annual_energy_consumption::text
     FROM
       api_facilityclaim afc2
     WHERE

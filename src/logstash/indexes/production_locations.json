@@ -226,18 +226,16 @@
           "type": "date"
         },
         "estimated_annual_throughput": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword"
-            }
-          }
+          "type": "float"
         },
         "actual_annual_energy_consumption": {
-          "type": "text",
-          "fields": {
-            "keyword": {
+          "type": "nested",
+          "properties": {
+            "source": {
               "type": "keyword"
+            },
+            "amount": {
+              "type": "float"
             }
           }
         }
