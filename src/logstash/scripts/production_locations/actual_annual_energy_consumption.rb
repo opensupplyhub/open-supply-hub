@@ -1,3 +1,5 @@
+require 'json'
+
 def filter(event)
     actual_annual_energy_consumption_value = event.get('actual_annual_energy_consumption_value')
 

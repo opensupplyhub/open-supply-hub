@@ -95,7 +95,6 @@ class TestProductionLocationsViewSet(APITestCase):
         )
 
     def test_production_locations_response_mapping(self):
-        self.search_index_mock.reset_mock()
         self.search_index_mock.return_value = {"count": 0, "data": []}
 
         api_res = self.client.get("/api/v1/production-locations/")
@@ -111,7 +110,6 @@ class TestProductionLocationsViewSet(APITestCase):
         )
 
     def test_single_production_location_response_mapping(self):
-        self.search_index_mock.reset_mock()
         self.search_index_mock.return_value = {
             "count": 1,
             "data": [
