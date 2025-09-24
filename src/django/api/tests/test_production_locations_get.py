@@ -1,6 +1,8 @@
 import unittest.mock
 from rest_framework.test import APITestCase
 from rest_framework import status
+from api.views.v1.response_mappings.production_locations_response \
+    import ProductionLocationsResponseMapping
 
 
 OPEN_SEARCH_SERVICE = "api.views.v1.production_locations.OpenSearchService"
@@ -90,4 +92,45 @@ class TestProductionLocationsViewSet(APITestCase):
         )
         self.assertEqual(
             api_res.data.get("geocoded_address"), "456 Side Rd, Town, Country"
+        )
+
+    def test_production_locations_response_mapping(self):
+        self.search_index_mock.reset_mock()
+        self.search_index_mock.return_value = {"count": 0, "data": []}
+
+        api_res = self.client.get("/api/v1/production-locations/")
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+
+        args = self.search_index_mock.call_args[0]
+        self.assertEqual(len(args), 2)
+        query_body = args[1]
+        self.assertIn("_source", query_body)
+        self.assertListEqual(
+            query_body["_source"],
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATIONS,
+        )
+
+    def test_single_production_location_response_mapping(self):
+        self.search_index_mock.reset_mock()
+        self.search_index_mock.return_value = {
+            "count": 1,
+            "data": [
+                {
+                    "os_id": self.os_id,
+                    "name": "location1",
+                }
+            ],
+        }
+
+        url = f"/api/v1/production-locations/{self.os_id}/"
+        api_res = self.client.get(url)
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+
+        args = self.search_index_mock.call_args[0]
+        self.assertEqual(len(args), 2)
+        query_body = args[1]
+        self.assertIn("_source", query_body)
+        self.assertListEqual(
+            query_body["_source"],
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
         )
