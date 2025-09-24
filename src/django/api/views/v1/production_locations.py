@@ -143,7 +143,7 @@ class ProductionLocations(ViewSet):
         )
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
-            query_body
+            query_body,
         )
         locations = response.get("data", [])
 
