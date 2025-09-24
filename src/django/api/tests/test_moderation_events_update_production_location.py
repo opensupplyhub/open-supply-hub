@@ -326,9 +326,9 @@ class ModerationEventsUpdateProductionLocationTest(
             partner_field_2
         )
 
-        self.moderation_event.cleaned_data['fields'] \
+        self.moderation_event.cleaned_data['fields']\
             ['estimated_emissions_activity'] = 200.75
-        self.moderation_event.cleaned_data['fields'] \
+        self.moderation_event.cleaned_data['fields']\
             ['estimated_annual_energy_consumption'] = 1500
         self.moderation_event.save()
 
