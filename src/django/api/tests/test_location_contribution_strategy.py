@@ -1460,7 +1460,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'string_field': 'valid_string'
+            'string_field': 'valid_string',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1479,7 +1483,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'string_field': 123
+            'string_field': 123,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1564,7 +1572,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'int_field': 42
+            'int_field': 42,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1584,7 +1596,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'int_field': 'not_a_number'
+            'int_field': 'not_a_number',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1669,7 +1685,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'float_field': 3.14
+            'float_field': 3.14,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1689,7 +1709,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'float_field': 'not_a_float'
+            'float_field': 'not_a_float',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1774,7 +1798,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'object_field': {'key': 'value', 'number': 123}
+            'object_field': {'key': 'value', 'number': 123},
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1794,7 +1822,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'object_field': ['item1', 'item2', 'item3']
+            'object_field': ['item1', 'item2', 'item3'],
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
@@ -1814,7 +1846,11 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            'object_field': 'not_an_object'
+            'object_field': 'not_an_object',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
         }
 
         event_dto = CreateModerationEventDTO(
