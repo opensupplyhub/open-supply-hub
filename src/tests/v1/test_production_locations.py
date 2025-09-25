@@ -774,7 +774,6 @@ class ProductionLocationsTest(BaseAPITest):
         sorted_claimed_ats = sorted(claimed_ats, reverse=True)
         self.assertEqual(claimed_ats[:len(sorted_claimed_ats)], sorted_claimed_ats)
 
-    '''
     def test_claim_date_gte_greater_than_claim_date_lt(self):
         wrong_date_gte = '2024-11-01T13:49:51.141Z'
         wrong_date_lt = '2024-10-18T13:49:51.141Z'
@@ -794,4 +793,3 @@ class ProductionLocationsTest(BaseAPITest):
             error['detail'],
             "The 'claimed_at_gt' must be less than or equal to 'claimed_at_lt'."
         )
-    '''
