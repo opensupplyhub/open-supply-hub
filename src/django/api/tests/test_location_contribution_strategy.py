@@ -1506,7 +1506,7 @@ class TestLocationContributionStrategy(APITestCase):
         )
         detail = result.errors['errors'][0]['detail']
         self.assertIn(
-            'Field string_field must be a string, not a int.',
+            'Field string_field must be string, not int.',
             detail
         )
 
@@ -1619,7 +1619,7 @@ class TestLocationContributionStrategy(APITestCase):
         )
         detail = result.errors['errors'][0]['detail']
         self.assertIn(
-            'Field int_field must be a int, not a str.',
+            'Field int_field must be int, not str.',
             detail
         )
 
@@ -1732,7 +1732,7 @@ class TestLocationContributionStrategy(APITestCase):
         )
         detail = result.errors['errors'][0]['detail']
         self.assertIn(
-            'Field float_field must be a float, not a str.',
+            'Field float_field must be float, not str.',
             detail
         )
 
@@ -1869,6 +1869,6 @@ class TestLocationContributionStrategy(APITestCase):
         )
         detail = result.errors['errors'][0]['detail']
         self.assertIn(
-            'Field object_field must be a object, not a str.',
+            'Field object_field must be object, not str.',
             detail
         )
