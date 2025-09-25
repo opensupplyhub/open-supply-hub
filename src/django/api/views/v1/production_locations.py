@@ -2,6 +2,7 @@ from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
+from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
@@ -30,6 +31,8 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
+from api.models.partner_field import PartnerField
+from api.models.extended_field import ExtendedField
 from api.throttles import (
     DataUploadThrottle,
     DuplicateThrottle
@@ -135,6 +138,31 @@ class ProductionLocations(ViewSet):
         query_params = QueryDict("", mutable=True)
         query_params.update({"os_id": pk})
 
+        cache_key = 'partner_field_names'
+        partner_field_names = cache.get(cache_key)
+        if partner_field_names is None:
+            if PartnerField.objects.exists():
+                partner_field_names = list(
+                    PartnerField.objects.values_list('name', flat=True)
+                )
+                cache.set(cache_key, partner_field_names, 60 * 60)
+            else:
+                partner_field_names = []
+                cache.set(cache_key, partner_field_names, 60 * 60)
+
+        partner_extended_fields = []
+        partner_field_values = []
+        if partner_field_names:
+            partner_field_values = ExtendedField.objects.filter(
+                facility__id=pk,
+                field_name__in=partner_field_names
+            ).values('field_name', 'value')
+
+        for field in partner_field_values:
+            partner_extended_fields.append({
+                field['field_name']: field['value']['raw_value']
+            })
+
         opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
         query_body = opensearch_query_director.build_query(
@@ -147,13 +175,9 @@ class ProductionLocations(ViewSet):
         )
         locations = response.get("data", [])
 
-        if len(locations) == 0:
-            return Response(
-                data={
-                    "detail": "The location with the given id was not found.",
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        if len(partner_extended_fields) > 0:
+            for partner_field in partner_extended_fields:
+                locations[0].update(partner_field)
 
         return Response(locations[0])
 
