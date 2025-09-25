@@ -1,8 +1,9 @@
 import requests
 from .base_api_test \
     import BaseAPITest
+import logging
 
-
+logger = logging.getLogger(__name__)
 class ProductionLocationsTest(BaseAPITest):
 
     def test_production_locations_status(self):
@@ -59,6 +60,7 @@ class ProductionLocationsTest(BaseAPITest):
             )
 
         result = response.json()
+        logger.info('result for test_production_locations_country:', result)
         country = result['data'][0]['country']
 
         self.assertIsNotNone(country['name'])
@@ -278,6 +280,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
 
         result = response.json()
+        logger.info('result for test_production_locations_with_more_than_hundred_points:', result)
         self.assertIsNotNone(result['data'])
         self.assertGreater(len(result['data']), 0)
 
