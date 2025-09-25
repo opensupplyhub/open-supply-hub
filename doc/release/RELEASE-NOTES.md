@@ -16,7 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
 ### Code/API changes
-* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at` and `closed_at` fields to GET `/api/v1/production-locations/{os_id}/` endpoint.
+* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` fields to GET `/api/v1/production-locations/{os_id}/` endpoint.
 
 ### Architecture/Environment changes
 * [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
@@ -31,7 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at` and `closed_at`.
+* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption`.
 
 ## Release 2.12.0
 
