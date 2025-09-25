@@ -81,17 +81,9 @@ def get_product_type_extendedfield_value(field_value):
 def all_values_empty(value):
     if value is not None:
         if isinstance(value, list):
-            values = [
-                v for v in value
-                if v is not None and v != ""
-            ]
-            return len(values) == 0
+            return all(v in (None, "") for v in value)
         if isinstance(value, dict):
-            values = [
-                v for v in value.values()
-                if v is not None and v != ""
-            ]
-            return len(values) == 0
+            return all(v in (None, "") for v in value.values())
 
     return False
 
@@ -196,6 +188,7 @@ def create_partner_extendedfields_for_single_item(
 ):
     if item.id is None:
         return False
+
     contributor = item.source.contributor
 
     for partner_field in item.source.contributor \
