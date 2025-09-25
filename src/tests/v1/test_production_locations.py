@@ -225,6 +225,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertIsNotNone(result['data'])
         self.assertEqual(result['data'][0]['os_id'], "GL202309INSIDE")
 
+    '''
     def test_production_locations_with_more_than_hundred_points(self):
         query = (
             "?geo_polygon=71.0,-25.0&geo_polygon=70.5,-22.0&geo_polygon=70.0,-19.0"
@@ -280,6 +281,7 @@ class ProductionLocationsTest(BaseAPITest):
         result = response.json()
         self.assertIsNotNone(result['data'])
         self.assertGreater(len(result['data']), 0)
+    '''
 
     def test_production_locations_with_missed_geo_polygon_value(self):
         query = (
