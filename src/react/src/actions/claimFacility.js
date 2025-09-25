@@ -112,6 +112,63 @@ export const updateClaimALocalLanguageName = createAction(
     'UPDATE_CLAIM_A_LOCAL_LANGUAGE_NAME',
 );
 
+// Free Emissions Estimate actions
+export const updateClaimOpeningDate = createAction('UPDATE_CLAIM_OPENING_DATE');
+export const updateClaimClosingDate = createAction('UPDATE_CLAIM_CLOSING_DATE');
+export const updateClaimEstimatedAnnualThroughput = createAction(
+    'UPDATE_CLAIM_ESTIMATED_ANNUAL_THROUGHPUT',
+);
+export const updateClaimEnergyCoal = createAction('UPDATE_CLAIM_ENERGY_COAL');
+export const updateClaimEnergyNaturalGas = createAction(
+    'UPDATE_CLAIM_ENERGY_NATURAL_GAS',
+);
+export const updateClaimEnergyDiesel = createAction(
+    'UPDATE_CLAIM_ENERGY_DIESEL',
+);
+export const updateClaimEnergyKerosene = createAction(
+    'UPDATE_CLAIM_ENERGY_KEROSENE',
+);
+export const updateClaimEnergyBiomass = createAction(
+    'UPDATE_CLAIM_ENERGY_BIOMASS',
+);
+export const updateClaimEnergyCharcoal = createAction(
+    'UPDATE_CLAIM_ENERGY_CHARCOAL',
+);
+export const updateClaimEnergyAnimalWaste = createAction(
+    'UPDATE_CLAIM_ENERGY_ANIMAL_WASTE',
+);
+export const updateClaimEnergyElectricity = createAction(
+    'UPDATE_CLAIM_ENERGY_ELECTRICITY',
+);
+export const updateClaimEnergyOther = createAction('UPDATE_CLAIM_ENERGY_OTHER');
+export const updateClaimEnergyCoalEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_COAL_ENABLED',
+);
+export const updateClaimEnergyNaturalGasEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_NATURAL_GAS_ENABLED',
+);
+export const updateClaimEnergyDieselEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_DIESEL_ENABLED',
+);
+export const updateClaimEnergyKeroseneEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_KEROSENE_ENABLED',
+);
+export const updateClaimEnergyBiomassEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_BIOMASS_ENABLED',
+);
+export const updateClaimEnergyCharcoalEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_CHARCOAL_ENABLED',
+);
+export const updateClaimEnergyAnimalWasteEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_ANIMAL_WASTE_ENABLED',
+);
+export const updateClaimEnergyElectricityEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_ELECTRICITY_ENABLED',
+);
+export const updateClaimEnergyOtherEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_OTHER_ENABLED',
+);
+
 export function submitClaimAFacilityData(osID) {
     return (dispatch, getState) => {
         const {

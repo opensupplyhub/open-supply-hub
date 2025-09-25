@@ -32,6 +32,7 @@ import {
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
 import InputErrorText from '../components/Contribute/InputErrorText';
+import FreeEmissionsEstimate from './FreeEmissionsEstimate/FreeEmissionsEstimate.jsx';
 
 const {
     sectorsForm,
@@ -47,7 +48,7 @@ const mergedStyles = {
     ...claimedFacilitiesDetailsStyles(),
 };
 
-function ClaimFacilityAdditionalData({
+const ClaimFacilityAdditionalData = ({
     sectors,
     updateSectors,
     numberOfWorkers,
@@ -58,7 +59,7 @@ function ClaimFacilityAdditionalData({
     fetchSectors,
     fetching,
     classes,
-}) {
+}) => {
     useEffect(() => {
         if (!sectorOptions) {
             fetchSectors();
@@ -156,9 +157,10 @@ function ClaimFacilityAdditionalData({
                     disabled={fetching}
                 />
             </div>
+            <FreeEmissionsEstimate />
         </>
     );
-}
+};
 
 ClaimFacilityAdditionalData.defaultProps = {
     sectors: [],

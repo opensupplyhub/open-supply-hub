@@ -22,6 +22,27 @@ import {
     completeSubmitClaimAFacilityData,
     updateClaimAFacilityUploadFiles,
     updateClaimAFacilityBusinessUploadFiles,
+    updateClaimOpeningDate,
+    updateClaimClosingDate,
+    updateClaimEstimatedAnnualThroughput,
+    updateClaimEnergyCoal,
+    updateClaimEnergyNaturalGas,
+    updateClaimEnergyDiesel,
+    updateClaimEnergyKerosene,
+    updateClaimEnergyBiomass,
+    updateClaimEnergyCharcoal,
+    updateClaimEnergyAnimalWaste,
+    updateClaimEnergyElectricity,
+    updateClaimEnergyOther,
+    updateClaimEnergyCoalEnabled,
+    updateClaimEnergyNaturalGasEnabled,
+    updateClaimEnergyDieselEnabled,
+    updateClaimEnergyKeroseneEnabled,
+    updateClaimEnergyBiomassEnabled,
+    updateClaimEnergyCharcoalEnabled,
+    updateClaimEnergyAnimalWasteEnabled,
+    updateClaimEnergyElectricityEnabled,
+    updateClaimEnergyOtherEnabled,
 } from '../actions/claimFacility';
 
 const initialState = Object.freeze({
@@ -41,6 +62,28 @@ const initialState = Object.freeze({
             numberOfWorkers: '',
             localLanguageName: '',
             agreement: 'no',
+            // Free Emissions Estimate fields
+            openingDate: '',
+            closingDate: '',
+            estimatedAnnualThroughput: '',
+            energyCoal: '',
+            energyNaturalGas: '',
+            energyDiesel: '',
+            energyKerosene: '',
+            energyBiomass: '',
+            energyCharcoal: '',
+            energyAnimalWaste: '',
+            energyElectricity: '',
+            energyOther: '',
+            energyCoalEnabled: false,
+            energyNaturalGasEnabled: false,
+            energyDieselEnabled: false,
+            energyKeroseneEnabled: false,
+            energyBiomassEnabled: false,
+            energyCharcoalEnabled: false,
+            energyAnimalWasteEnabled: false,
+            energyElectricityEnabled: false,
+            energyOtherEnabled: false,
         }),
         fetching: false,
         error: null,
@@ -185,6 +228,175 @@ export default createReducer(
             update(state, {
                 claimData: {
                     fetching: { $set: false },
+                },
+            }),
+        // Free Emissions Estimate reducers
+        [updateClaimOpeningDate]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        openingDate: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimClosingDate]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        closingDate: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEstimatedAnnualThroughput]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        estimatedAnnualThroughput: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyCoal]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyCoal: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyNaturalGas]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyNaturalGas: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyDiesel]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyDiesel: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyKerosene]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyKerosene: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyBiomass]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyBiomass: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyCharcoal]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyCharcoal: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyAnimalWaste]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyAnimalWaste: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyElectricity]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyElectricity: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyOther]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyOther: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyCoalEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyCoalEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyNaturalGasEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyNaturalGasEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyDieselEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyDieselEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyKeroseneEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyKeroseneEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyBiomassEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyBiomassEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyCharcoalEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyCharcoalEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyAnimalWasteEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyAnimalWasteEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyElectricityEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyElectricityEnabled: { $set: payload },
+                    },
+                },
+            }),
+        [updateClaimEnergyOtherEnabled]: (state, payload) =>
+            update(state, {
+                claimData: {
+                    formData: {
+                        energyOtherEnabled: { $set: payload },
+                    },
                 },
             }),
         [clearClaimFacilityDataAndForm]: () => initialState,
