@@ -6,7 +6,8 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import InputLabel from '@material-ui/core/InputLabel';
 import Grid from '@material-ui/core/Grid';
-import DatePicker from '../DatePicker.jsx';
+import InfiniteScrollYearDropdown from './InfiniteScrollYearDropdown.jsx';
+import MonthYearPicker from './MonthYearPicker.jsx';
 import InputErrorText from '../Contribute/InputErrorText.jsx';
 import EnergySourceInput from './EnergySourceInput.jsx';
 
@@ -36,7 +37,7 @@ import {
 
 import { freeEmissionsEstimateStyles } from './styles.js';
 import { useFreeEmissionsEstimateForm, useFormFieldSync } from './hooks.js';
-import freeEmissionsEstimateFormConfig from './constants.js';
+import { freeEmissionsEstimateFormConfig } from './constants.js';
 
 const {
     title,
@@ -228,9 +229,9 @@ const FreeEmissionsEstimate = ({
             </Typography>
             <Grid container spacing={8}>
                 <Grid item xs={12} md={6}>
-                    <DatePicker
+                    <InfiniteScrollYearDropdown
                         label={openingDateField.label}
-                        name={openingDateField.id}
+                        name={openingDateField.valueFieldName}
                         value={freeEmissionsEstimateForm.values.openingDate}
                         onChange={value => {
                             freeEmissionsEstimateForm.setFieldValue(
@@ -245,7 +246,6 @@ const FreeEmissionsEstimate = ({
                         }}
                         disabled={fetching}
                         placeholder={openingDateField.placeholder}
-                        fullWidth
                         error={openingDateHasError}
                         helperText={
                             openingDateHasError && (
@@ -260,9 +260,9 @@ const FreeEmissionsEstimate = ({
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <DatePicker
+                    <MonthYearPicker
                         label={closingDateField.label}
-                        name={closingDateField.id}
+                        name={closingDateField.valueFieldName}
                         value={freeEmissionsEstimateForm.values.closingDate}
                         onChange={value => {
                             freeEmissionsEstimateForm.setFieldValue(
@@ -277,7 +277,6 @@ const FreeEmissionsEstimate = ({
                         }}
                         disabled={fetching}
                         placeholder={closingDateField.placeholder}
-                        fullWidth
                         error={closingDateHasError}
                         helperText={
                             closingDateHasError && (

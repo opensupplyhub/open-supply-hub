@@ -46,3 +46,39 @@ export const energySourceInputStyles = {
         color: '#64748b',
     },
 };
+
+export const monthYearPickerStyles = {
+    monthYearPickerLabel: {
+        marginBottom: '8px',
+        fontWeight: 500,
+    },
+};
+
+export const infiniteScrollYearDropdownStyles = {
+    loadingItem: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '12px 16px',
+        minHeight: '48px',
+    },
+    loadingSpinner: {
+        marginRight: '8px',
+    },
+    loadingText: {
+        color: '#64748b',
+        fontStyle: 'italic',
+    },
+    endItem: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '12px 16px',
+        backgroundColor: '#f8fafc',
+    },
+    endText: {
+        color: '#64748b',
+        fontStyle: 'italic',
+        fontSize: '12px',
+    },
+};

@@ -221,7 +221,7 @@ const ClaimFacilityStepper = ({
                     >
                         {error
                             ? 'An error prevented submitting the form'
-                            : 'Some required fields are missing or invalid.'}
+                            : 'Some required fields are missing or some fields are invalid.'}
                     </Typography>
                 ) : null}
                 <div

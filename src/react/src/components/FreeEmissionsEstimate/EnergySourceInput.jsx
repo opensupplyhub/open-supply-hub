@@ -22,7 +22,7 @@ const EnergySourceInput = ({
     const value = freeEmissionsEstimateForm.values[valueFieldName];
     const hasError =
         freeEmissionsEstimateForm.touched[valueFieldName] &&
-        freeEmissionsEstimateForm.errors[valueFieldName];
+        !!freeEmissionsEstimateForm.errors[valueFieldName];
 
     return (
         <Grid container alignItems="center">

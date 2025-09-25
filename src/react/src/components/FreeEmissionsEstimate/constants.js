@@ -1,4 +1,4 @@
-const freeEmissionsEstimateFormConfig = Object.freeze({
+export const freeEmissionsEstimateFormConfig = Object.freeze({
     title: Object.freeze({
         label: '🌍 Free Emissions Estimates',
     }),
@@ -121,4 +121,31 @@ const freeEmissionsEstimateFormConfig = Object.freeze({
     ]),
 });
 
-export default freeEmissionsEstimateFormConfig;
+export const MONTHS = Object.freeze([
+    Object.freeze({ value: 1, label: 'January' }),
+    Object.freeze({ value: 2, label: 'February' }),
+    Object.freeze({ value: 3, label: 'March' }),
+    Object.freeze({ value: 4, label: 'April' }),
+    Object.freeze({ value: 5, label: 'May' }),
+    Object.freeze({ value: 6, label: 'June' }),
+    Object.freeze({ value: 7, label: 'July' }),
+    Object.freeze({ value: 8, label: 'August' }),
+    Object.freeze({ value: 9, label: 'September' }),
+    Object.freeze({ value: 10, label: 'October' }),
+    Object.freeze({ value: 11, label: 'November' }),
+    Object.freeze({ value: 12, label: 'December' }),
+]);
+
+// Generate dynamic year options from 1000 to current year.
+export const generateYearOptions = () => {
+    const currentYear = new Date().getFullYear();
+    const minYear = 1500;
+    const years = [];
+
+    // Generate years in descending order (current year first).
+    for (let year = currentYear; year >= minYear; year -= 1) {
+        years.push(Object.freeze({ value: year, label: year.toString() }));
+    }
+
+    return Object.freeze(years);
+};
