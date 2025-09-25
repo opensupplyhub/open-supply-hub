@@ -98,8 +98,10 @@ class PermissionProcessor(ContributionProcessor):
             'errors': [
                 {
                     'field': name,
-                    'detail': f'Field {name} must be of type {expected}, '
-                    f'but received {type(value).__name__}',
+                    'detail': (
+                        f'Field {name} must be {expected}, '
+                        f'not {type(value).__name__}.'
+                    ),
                 }
                 for name, expected, value in invalid_type_fields
             ],

@@ -6,17 +6,17 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0179_introduce_enable_v1_claims_flow'),
+        ('api', '0180_add_unit_to_partner_field'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='partnerfield',
-            name='unit',
+            name='label',
             field=models.CharField(
                 max_length=200,
                 blank=True,
-                help_text=('The partner field unit.')
+                help_text=('The partner field label.')
             ),
         ),
     ]

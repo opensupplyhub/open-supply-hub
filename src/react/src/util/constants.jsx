@@ -1123,6 +1123,16 @@ export const EXTENDED_FIELD_TYPES = [
         fieldName: 'parent_company_os_id',
         formatValue: value => value.raw_values,
     },
+    {
+        label: 'Estimated Emissions Activity',
+        fieldName: 'estimated_emissions_activity',
+        formatValue: value => value.raw_value,
+    },
+    {
+        label: 'Estimated Annual Energy Consumption',
+        fieldName: 'estimated_annual_energy_consumption',
+        formatValue: value => value.raw_value,
+    },
 ];
 
 export const ADDITIONAL_IDENTIFIERS = Object.freeze([

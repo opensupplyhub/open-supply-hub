@@ -10,6 +10,8 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.source import Source
+from api.models.partner_field import PartnerField
+from api.models.extended_field import ExtendedField
 from api.tests.base_moderation_events_production_location_test import (
     BaseModerationEventsProductionLocationTest,
 )
@@ -269,3 +271,63 @@ class ModerationEventsAddProductionLocationTest(
         )
 
         self.assert_processing_error(response)
+
+    def test_add_production_location_with_valid_partner_fields(self):
+        partner_field_1 = PartnerField.objects.create(
+            name='estimated_emissions_activity',
+            type='float',
+            unit='kg CO2e',
+            label='Estimated Emissions Activity'
+        )
+        partner_field_2 = PartnerField.objects.create(
+            name='estimated_annual_energy_consumption',
+            type='int',
+            unit='kWh',
+            label='Estimated Annual Energy Consumption'
+        )
+
+        self.contributor.partner_fields.add(
+            partner_field_1,
+            partner_field_2
+        )
+
+        key_one = 'estimated_emissions_activity'
+        key_two = 'estimated_annual_energy_consumption'
+
+        self.moderation_event.cleaned_data['fields'][key_one] = 150.5
+        self.moderation_event.cleaned_data['fields'][key_two] = 1000
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assert_success_response(response, 201, 'NEW_LOCATION')
+
+        partner_extended_fields = ExtendedField.objects.filter(
+            facility_list_item__source__contributor=self.contributor,
+            field_name__in=[
+                'estimated_emissions_activity',
+                'estimated_annual_energy_consumption'
+            ]
+        )
+        self.assertEqual(partner_extended_fields.count(), 2)
+
+        emissions_field = partner_extended_fields.get(
+            field_name='estimated_emissions_activity'
+        )
+        energy_field = partner_extended_fields.get(
+            field_name='estimated_annual_energy_consumption'
+        )
+
+        self.assertEqual(
+            emissions_field.value,
+            {"raw_value": 150.5}
+        )
+        self.assertEqual(
+            energy_field.value,
+            {"raw_value": 1000}
+        )
