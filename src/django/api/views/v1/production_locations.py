@@ -138,30 +138,6 @@ class ProductionLocations(ViewSet):
         query_params = QueryDict("", mutable=True)
         query_params.update({"os_id": pk})
 
-        cache_key = 'partner_field_names'
-        partner_field_names = cache.get(cache_key)
-        if partner_field_names is None:
-            if PartnerField.objects.exists():
-                partner_field_names = list(
-                    PartnerField.objects.values_list('name', flat=True)
-                )
-                cache.set(cache_key, partner_field_names, 60 * 60)
-            else:
-                partner_field_names = []
-                cache.set(cache_key, partner_field_names, 60 * 60)
-
-        partner_extended_fields = []
-        partner_field_values = []
-        if partner_field_names:
-            partner_field_values = ExtendedField.objects.filter(
-                facility__id=pk,
-                field_name__in=partner_field_names
-            ).values('field_name', 'value')
-
-        for field in partner_field_values:
-            partner_extended_fields.append({
-                field['field_name']: field['value']['raw_value']
-            })
 
         opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
@@ -174,6 +150,8 @@ class ProductionLocations(ViewSet):
             query_body,
         )
         locations = response.get("data", [])
+
+        partner_extended_fields = self.__check_partner_fields(pk)
 
         if len(partner_extended_fields) > 0:
             for partner_field in partner_extended_fields:
@@ -294,3 +272,32 @@ class ProductionLocations(ViewSet):
             },
             status=result.status_code
         )
+
+    def __check_partner_fields(self, pk):
+        cache_key = 'partner_field_names'
+        partner_field_names = cache.get(cache_key)
+        if partner_field_names is None:
+            if PartnerField.objects.exists():
+                partner_field_names = list(
+                    PartnerField.objects.values_list('name', flat=True)
+                )
+                cache.set(cache_key, partner_field_names, 60 * 60)
+            else:
+                partner_field_names = []
+                cache.set(cache_key, partner_field_names, 60 * 60)
+
+        # TODO: Define proper partner field values, blocked by OSDEV-2065 now
+        partner_extended_fields = []
+        partner_field_values = []
+        if partner_field_names:
+            partner_field_values = ExtendedField.objects.filter(
+                facility__id=pk,
+                field_name__in=partner_field_names
+            ).values('field_name', 'value')
+
+        for field in partner_field_values:
+            partner_extended_fields.append({
+                field['field_name']: field['value']['raw_value']
+            })
+
+        return partner_extended_fields
