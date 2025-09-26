@@ -306,10 +306,11 @@ class ProductionLocations(ViewSet):
         for field in partner_field_values:
             field_name = field['field_name']
             value = field['value']
-            
-            if isinstance(value.get('raw_values'), list):
+
+            raw_values = value.get('raw_values')
+            if isinstance(raw_values, (list, dict)):
                 partner_extended_fields.append({
-                    field_name: value['raw_values']
+                    field_name: raw_values
                 })
             elif 'raw_value' in value:
                 partner_extended_fields.append({
