@@ -293,7 +293,6 @@ class ProductionLocations(ViewSet):
                 partner_field_names = []
                 cache.set(cache_key, partner_field_names, 60 * 60)
 
-        # TODO: Define proper partner field values, blocked by OSDEV-2065 now
         partner_extended_fields = []
         partner_field_values = []
         if partner_field_names:
@@ -302,9 +301,18 @@ class ProductionLocations(ViewSet):
                 field_name__in=partner_field_names
             ).values('field_name', 'value')
 
-        for field in partner_field_values:
-            partner_extended_fields.append({
-                field['field_name']: field['value']['raw_value']
-            })
+        print(partner_field_values)
 
+        for field in partner_field_values:
+            field_name = field['field_name']
+            value = field['value']
+            
+            if isinstance(value.get('raw_values'), list):
+                partner_extended_fields.append({
+                    field_name: value['raw_values']
+                })
+            elif 'raw_value' in value:
+                partner_extended_fields.append({
+                    field_name: value['raw_value']
+                })
         return partner_extended_fields
