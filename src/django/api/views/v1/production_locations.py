@@ -138,7 +138,6 @@ class ProductionLocations(ViewSet):
         query_params = QueryDict("", mutable=True)
         query_params.update({"os_id": pk})
 
-
         opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
         query_body = opensearch_query_director.build_query(
@@ -150,6 +149,14 @@ class ProductionLocations(ViewSet):
             query_body,
         )
         locations = response.get("data", [])
+
+        if len(locations) == 0:
+            return Response(
+                data={
+                    "detail": "The location with the given id was not found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         partner_extended_fields = self.__check_partner_fields(pk)
 
