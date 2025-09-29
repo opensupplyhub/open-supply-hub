@@ -58,6 +58,7 @@ const ClaimFacilityAdditionalData = ({
     sectorOptions,
     fetchSectors,
     fetching,
+    onValidationChange,
     classes,
 }) => {
     useEffect(() => {
@@ -157,7 +158,7 @@ const ClaimFacilityAdditionalData = ({
                     disabled={fetching}
                 />
             </div>
-            <FreeEmissionsEstimate />
+            <FreeEmissionsEstimate onValidationChange={onValidationChange} />
         </>
     );
 };
@@ -177,6 +178,7 @@ ClaimFacilityAdditionalData.propTypes = {
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
     classes: object.isRequired,
+    onValidationChange: func.isRequired,
 };
 
 function mapStateToProps({

@@ -169,7 +169,7 @@ export const updateClaimEnergyOtherEnabled = createAction(
     'UPDATE_CLAIM_ENERGY_OTHER_ENABLED',
 );
 
-export function submitClaimAFacilityData(osID) {
+export function submitClaimAFacilityData(osID, freeEmissionsEstimateHasErrors) {
     return (dispatch, getState) => {
         const {
             claimFacility: {
@@ -177,7 +177,10 @@ export function submitClaimAFacilityData(osID) {
             },
         } = getState();
 
-        if (!claimAFacilityFormIsValid(formData)) {
+        if (
+            !claimAFacilityFormIsValid(formData) ||
+            freeEmissionsEstimateHasErrors
+        ) {
             return null;
         }
 

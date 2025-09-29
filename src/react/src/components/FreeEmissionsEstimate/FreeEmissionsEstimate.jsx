@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { bool, func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
@@ -36,7 +36,11 @@ import {
 } from '../../actions/claimFacility.js';
 
 import { freeEmissionsEstimateStyles } from './styles.js';
-import { useFreeEmissionsEstimateForm, useFormFieldSync } from './hooks.js';
+import {
+    useFreeEmissionsEstimateForm,
+    useFormFieldSync,
+    useFreeEmissionsEstimateValidation,
+} from './hooks.js';
 import { freeEmissionsEstimateFormConfig } from './constants.js';
 
 const {
@@ -76,10 +80,26 @@ const FreeEmissionsEstimate = ({
     updateEnergyElectricityEnabled,
     updateEnergyOtherEnabled,
     // Other props.
+    onValidationChange,
     classes,
 }) => {
     // Initialize the form.
     const freeEmissionsEstimateForm = useFreeEmissionsEstimateForm(formData);
+
+    // Track validation.
+    const hasValidationErrors = useFreeEmissionsEstimateValidation(
+        freeEmissionsEstimateForm,
+    );
+
+    /*
+    Notify parent when validation state changes.
+    It is necessary to notify the parent because the parent is
+    responsible for determining if the form is valid via custom
+    error handling not by the Formik library as in this component.
+    */
+    useEffect(() => {
+        onValidationChange(hasValidationErrors);
+    }, [hasValidationErrors, onValidationChange]);
 
     /*
     Sync the form values, specifically the Formik form values,
@@ -394,6 +414,7 @@ FreeEmissionsEstimate.propTypes = {
     updateEnergyOtherEnabled: func.isRequired,
     // Other props.
     classes: object.isRequired,
+    onValidationChange: func.isRequired,
 };
 
 const mapStateToProps = ({

@@ -98,3 +98,16 @@ export const useFreeEmissionsEstimateForm = initialValues =>
             return acc;
         }, {}),
     });
+
+export const useFreeEmissionsEstimateValidation = formikInstance => {
+    const [hasErrors, setHasErrors] = useState(false);
+
+    useEffect(() => {
+        // Check if form has validation errors.
+        const errors = formikInstance.errors || {};
+        const hasAnyErrors = Object.keys(errors).length > 0;
+        setHasErrors(hasAnyErrors);
+    }, [formikInstance.errors]);
+
+    return hasErrors;
+};

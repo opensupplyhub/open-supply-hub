@@ -61,7 +61,10 @@ const createPositiveIntegerValidation = schema =>
 const createEnergyFieldValidation = enabledField =>
     stringYup().when(enabledField, {
         is: true,
-        then: schema => createPositiveIntegerValidation(schema),
+        then: schema =>
+            createPositiveIntegerValidation(schema).required(
+                'Once the checkbox is checked, you must enter a value.',
+            ),
     });
 
 // Free missions estimate Yup validation schema.
