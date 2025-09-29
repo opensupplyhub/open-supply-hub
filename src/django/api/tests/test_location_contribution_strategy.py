@@ -1397,3 +1397,478 @@ class TestLocationContributionStrategy(APITestCase):
         )
 
         return facility
+
+    def test_partner_field_string_type_validation(self):
+        existing_location_user_email = 'test3@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        string_field = PartnerField.objects.create(
+            name='string_field',
+            type=PartnerField.STRING,
+            label='String Field'
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 3',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(string_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data_valid = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'string_field': 'valid_string',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_valid,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        input_data_number = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'string_field': 123,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_number,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        detail = result.errors['errors'][0]['detail']
+        self.assertIn(
+            'Field string_field must be string, not int.',
+            detail
+        )
+
+    def test_partner_field_int_type_validation(self):
+        existing_location_user_email = 'test4@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        int_field = PartnerField.objects.create(
+            name='int_field',
+            type=PartnerField.INT,
+            label='Integer Field'
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 4',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(int_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data_valid = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'int_field': 42,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_valid,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+        input_data_invalid = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'int_field': 'not_a_number',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_invalid,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        detail = result.errors['errors'][0]['detail']
+        self.assertIn(
+            'Field int_field must be int, not str.',
+            detail
+        )
+
+    def test_partner_field_float_type_validation(self):
+        existing_location_user_email = 'test5@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        float_field = PartnerField.objects.create(
+            name='float_field',
+            type=PartnerField.FLOAT,
+            label='Float Field'
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 5',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(float_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data_valid = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'float_field': 3.14,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_valid,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+        input_data_invalid = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'float_field': 'not_a_float',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_invalid,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        detail = result.errors['errors'][0]['detail']
+        self.assertIn(
+            'Field float_field must be float, not str.',
+            detail
+        )
+
+    def test_partner_field_object_type_validation(self):
+        existing_location_user_email = 'test6@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        object_field = PartnerField.objects.create(
+            name='object_field',
+            type=PartnerField.OBJECT,
+            label='Object Field'
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 6',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(object_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data_dict = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'object_field': {'key': 'value', 'number': 123},
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_dict,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+        input_data_list = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'object_field': ['item1', 'item2', 'item3'],
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_list,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+        input_data_invalid = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'object_field': 'not_an_object',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_invalid,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        detail = result.errors['errors'][0]['detail']
+        self.assertIn(
+            'Field object_field must be object, not str.',
+            detail
+        )
