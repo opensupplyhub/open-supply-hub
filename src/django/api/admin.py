@@ -242,8 +242,8 @@ class SectorGroupAdmin(admin.ModelAdmin):
 
 
 class PartnerFieldAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'unit', 'created_at')
-    search_fields = ('name', 'type', 'unit')
+    list_display = ('name', 'type', 'label', 'unit', 'created_at')
+    search_fields = ('name', 'type', 'label', 'unit')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
 
 
