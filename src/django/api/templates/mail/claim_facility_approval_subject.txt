@@ -1,1 +1,1 @@
-Your request to claim a profile on Open Supply Hub has been approved!
+[Claim #{{ claim_id }}] - Your request to claim a profile on Open Supply Hub has been approved!
