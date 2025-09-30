@@ -8,6 +8,7 @@ import {
     makeGetFacilityByOSIdURL,
     makeClaimFacilityAPIURL,
     claimAFacilityFormIsValid,
+    filterFreeEmissionsEstimateFields,
 } from '../util/util';
 
 export const startFetchClaimFacilityData = createAction(
@@ -184,8 +185,11 @@ export function submitClaimAFacilityData(osID, freeEmissionsEstimateHasErrors) {
             return null;
         }
 
+        // Filter Free Emissions Estimate fields based on checkbox states and empty values.
+        const filteredFormData = filterFreeEmissionsEstimateFields(formData);
+
         const postData = new FormData();
-        toPairs(formData).forEach(([key, value]) => {
+        toPairs(filteredFormData).forEach(([key, value]) => {
             const formattedKey = snakeCase(key);
             if (
                 formattedKey === 'upload_files' ||

@@ -36,8 +36,9 @@ const MonthYearPicker = ({
             !Number.isNaN(Number(month)) &&
             !Number.isNaN(Number(year))
         ) {
-            // Convert to first day of selected month/year.
-            const isoDate = `${year}-${month}-01`;
+            // Convert to first day of selected month/year in proper ISO format.
+            const paddedMonth = String(month).padStart(2, '0');
+            const isoDate = `${year}-${paddedMonth}-01`;
             onChange(isoDate);
         }
     };

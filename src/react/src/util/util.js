@@ -84,6 +84,7 @@ import {
     API_V1_ERROR_REQUEST_SOURCE_ENUM,
     SLC_FORM_CONSTRAINTS,
 } from './constants';
+import { freeEmissionsEstimateFormConfig } from '../components/FreeEmissionsEstimate/constants';
 
 import renderUniqueListItems from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
@@ -1760,4 +1761,59 @@ export const processDromoResults = (
 
         updateFileName(fileInput);
     }
+};
+
+/**
+ * Filter Free Emissions Estimate fields for claim form submission.
+ * Removes checkbox fields, disabled energy fields, and empty date/throughput fields.
+ */
+export const filterFreeEmissionsEstimateFields = formData => {
+    const {
+        energySourcesData,
+        openingDateField,
+        closingDateField,
+        estimatedAnnualThroughputField,
+    } = freeEmissionsEstimateFormConfig;
+
+    // Get checkbox field names to exclude from submission.
+    const checkboxFieldNames = energySourcesData.map(
+        ({ enabledFieldName }) => enabledFieldName,
+    );
+
+    // Get energy value field names for filtering.
+    const energyFieldNames = energySourcesData.map(
+        ({ valueFieldName }) => valueFieldName,
+    );
+
+    // Get date and throughput field names.
+    const dateAndThroughputFieldNames = [
+        openingDateField.valueFieldName,
+        closingDateField.valueFieldName,
+        estimatedAnnualThroughputField.valueFieldName,
+    ];
+
+    // Filter out checkbox fields, disabled energy fields, and empty date/throughput fields.
+    return omitBy(formData, (value, key) => {
+        // Remove all checkbox fields.
+        if (includes(checkboxFieldNames, key)) {
+            return true;
+        }
+
+        // Remove energy fields where checkbox is false.
+        if (includes(energyFieldNames, key)) {
+            const correspondingCheckbox = energySourcesData.find(
+                ({ valueFieldName }) => valueFieldName === key,
+            )?.enabledFieldName;
+
+            // Remove if checkbox is false.
+            return !formData[correspondingCheckbox];
+        }
+
+        // Remove date and throughput fields if they are empty.
+        if (includes(dateAndThroughputFieldNames, key)) {
+            return isEmpty(value);
+        }
+
+        return false; // Keep all other fields.
+    });
 };
