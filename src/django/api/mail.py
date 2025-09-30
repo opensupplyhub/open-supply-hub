@@ -59,13 +59,14 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     html_template = get_template('mail/claim_facility_submitted_body.html')
 
     claim_dictionary = {
+        'claim_id': facility_claim.id,
         'facility_name': facility_claim.facility.name,
         'facility_address': facility_claim.facility.address,
         'facility_url': make_facility_url(request, facility_claim.facility),
     }
 
     send_mail(
-        subj_template.render().rstrip(),
+        subj_template.render(claim_dictionary).rstrip(),
         text_template.render(claim_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
@@ -81,6 +82,7 @@ def send_message_to_claimant_email(request, facility_claim, message):
     facility_country = COUNTRY_NAMES[facility_claim.facility.country_code]
 
     message_dictionary = {
+        'claim_id': facility_claim.id,
         'message_to_claimant': message,
         'facility_name': facility_claim.facility.name,
         'facility_address': facility_claim.facility.address,
@@ -89,7 +91,7 @@ def send_message_to_claimant_email(request, facility_claim, message):
     }
 
     send_mail(
-        subj_template.render().rstrip(),
+        subj_template.render(message_dictionary).rstrip(),
         text_template.render(message_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
@@ -105,6 +107,7 @@ def send_claim_facility_approval_email(request, facility_claim):
     prod_location_country = COUNTRY_NAMES[facility_claim.facility.country_code]
 
     approval_dictionary = {
+        'claim_id': facility_claim.id,
         'production_location_name': facility_claim.facility.name,
         'production_location_url': make_facility_url(request,
                                                      facility_claim.facility),
@@ -113,7 +116,7 @@ def send_claim_facility_approval_email(request, facility_claim):
     }
 
     send_mail(
-        subj_template.render().rstrip(),
+        subj_template.render(approval_dictionary).rstrip(),
         text_template.render(approval_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
@@ -129,6 +132,7 @@ def send_claim_facility_denial_email(request, facility_claim):
     prod_location_country = COUNTRY_NAMES[facility_claim.facility.country_code]
 
     denial_dictionary = {
+        'claim_id': facility_claim.id,
         'denial_reason': facility_claim.status_change_reason,
         'production_location_name': facility_claim.facility.name,
         'production_location_url': make_facility_url(request,
@@ -138,7 +142,7 @@ def send_claim_facility_denial_email(request, facility_claim):
     }
 
     send_mail(
-        subj_template.render().rstrip(),
+        subj_template.render(denial_dictionary).rstrip(),
         text_template.render(denial_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
@@ -154,6 +158,7 @@ def send_claim_facility_revocation_email(request, facility_claim):
     prod_location_country = COUNTRY_NAMES[facility_claim.facility.country_code]
 
     revocation_dictionary = {
+        'claim_id': facility_claim.id,
         'revocation_reason': facility_claim.status_change_reason,
         'production_location_name': facility_claim.facility.name,
         'production_location_url': make_facility_url(request,
@@ -163,7 +168,7 @@ def send_claim_facility_revocation_email(request, facility_claim):
     }
 
     send_mail(
-        subj_template.render().rstrip(),
+        subj_template.render(revocation_dictionary).rstrip(),
         text_template.render(revocation_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
