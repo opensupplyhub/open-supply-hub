@@ -59,7 +59,10 @@ class ProductionLocationsTest(BaseAPITest):
             "address": "Lepsı Street, Building 2/3, JETISU REGION, PANFILOV DISTRICT, JARKENT CITY ADMINISTRATION, JARKENT CITY",
             "name": "INTERNATIONAL TRADING CORPORATION LLP",
             "country": {
-                "alpha_2": "KZ"
+                "name": "Kazakhstan",
+                "alpha_2": "KZ",
+                "alpha_3": "KAZ",
+                "numeric": "398"
             },
             "os_id": "KZ20250537YJW4D",
         }
@@ -245,6 +248,42 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(result['data'][0]['os_id'], "GL202309INSIDE")
 
     def test_production_locations_with_more_than_hundred_points(self):
+        doc = {
+            "country": {
+                "alpha_3": "USA",
+                "alpha_2": "US",
+                "name": "United States",
+                "numeric": "840"
+            },
+            "address": "13800 S Figueroa St, Los Angeles, CA, 90061",
+            "claim_status": "unclaimed",
+            "geocoded_address": "13800 S Figueroa St, Los Angeles, CA 90061, USA",
+            "os_id": "US2020191TV37YM",
+            "geocoded_location_type": "ROOFTOP",
+            "name": "SWISSTEX DIRECT LLC",
+            "coordinates": {
+                "lat": 33.9068514,
+                "lng": -118.2817015
+            },
+            "sector": [
+                "Wholesale Trade"
+            ],
+            "location_type": [
+                "Textile or Material Production"
+            ],
+            "processing_type": [
+                "Textile or Material Production"
+            ]
+        }
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
         query = (
             "?geo_polygon=71.0,-25.0&geo_polygon=70.5,-22.0&geo_polygon=70.0,-19.0"
             "&geo_polygon=69.5,-16.0&geo_polygon=69.0,-13.0&geo_polygon=68.5,-10.0"
