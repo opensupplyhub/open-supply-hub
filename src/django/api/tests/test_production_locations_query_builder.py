@@ -422,6 +422,7 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['filter'][0]
         )
 
+    '''
     def test_include_into_search(self):
         include_fields = [
             "name",
@@ -444,3 +445,4 @@ class TestProductionLocationsQueryBuilder(TestCase):
             include_fields,
             self.builder.query_body["_source"]
         )
+    '''

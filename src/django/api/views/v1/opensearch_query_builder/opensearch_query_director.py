@@ -47,8 +47,10 @@ class OpenSearchQueryDirector:
         self.__process_aggregation(query_params)
         self.__process_filter(query_params)
 
+        '''
         if (isinstance(include_fields, list) and len(include_fields) > 0):
             self.__builder.include_into_search(include_fields)
+        '''
 
         return self.__builder.get_final_query_body()
 
