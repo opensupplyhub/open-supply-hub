@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.14.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 4, 2025
+
+### Code/API changes
+* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `geocoded_location_type` and `geocoded_address`.
+
+
 ## Release 2.13.0
 
 ## Introduction
@@ -16,7 +32,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
 ### Code/API changes
-* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
+* [OSDEV-2179](https://opensupplyhub.atlassian.net/browse/OSDEV-2179) - Add `select_related()` to default `FacilityClaimViewSet` queryset to optimize foreign key lookups. Add `select_related()` to list method queryset to prevent separate queries for facility, contributor, and admin data.
 
 ### Architecture/Environment changes
 * [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
@@ -26,12 +42,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
     * Added `unit` field to `PartnerField` model
     * Added type validation for submitted partner fields
+    * Added `create_partner_extendedfields_for_single_item()` function for bulk partner field processing
+    * Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
+    * Integrated partner field creation into the moderation event approval workflow
+    * Added `label` field to `PartnerField` model
+    * Added functionality to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption`.
+
 
 ## Release 2.12.0
 
