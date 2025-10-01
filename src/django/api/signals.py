@@ -2,6 +2,7 @@ import logging
 import json
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from opensearchpy.exceptions import \
@@ -142,12 +143,14 @@ def update_extended_fields_on_source_contributor_change(
         return
 
     # Update all ExtendedField records linked to this source
-    updated_count = ExtendedField.objects.filter(
-        facility_list_item__source=instance
-    ).update(contributor=instance.contributor)
+    # Use atomic transaction to ensure consistency
+    with transaction.atomic():
+        updated_count = ExtendedField.objects.filter(
+            facility_list_item__source=instance
+        ).update(contributor=instance.contributor)
 
-    if updated_count > 0:
-        log.info(
-            f"[Source Contributor Change] Updated {updated_count} ExtendedField(s) "
-            f"for Source {instance.id} to contributor {instance.contributor_id}"
-        )
+        if updated_count > 0:
+            log.info(
+                f"[Source Contributor Change] Updated {updated_count} ExtendedField(s) "
+                f"for Source {instance.id} to contributor {instance.contributor_id}"
+            )
