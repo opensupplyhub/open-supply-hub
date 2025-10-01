@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -150,26 +151,30 @@ class SourceAdmin(admin.ModelAdmin):
         old_contributor = None
         if change and 'contributor' in form.changed_data:
             # Get the old contributor before saving
-            old_contributor = models.Source.objects.get(pk=obj.pk).contributor
+            try:
+                old_contributor = models.Source.objects.get(pk=obj.pk).contributor
+            except models.Source.DoesNotExist:
+                pass
 
-        # Call parent save_model to save the Source
-        super().save_model(request, obj, form, change)
+        with transaction.atomic():
+            # Call parent save_model to save the Source
+            super().save_model(request, obj, form, change)
 
-        # If contributor was changed, update all related ExtendedFields
-        if change and 'contributor' in form.changed_data and old_contributor != obj.contributor:
-            # Update all ExtendedField records that are linked to this source
-            # through FacilityListItem
-            updated_count = models.ExtendedField.objects.filter(
-                facility_list_item__source=obj
-            ).update(contributor=obj.contributor)
+            # If contributor was changed, update all related ExtendedFields
+            if change and 'contributor' in form.changed_data and old_contributor and old_contributor != obj.contributor:
+                # Update all ExtendedField records that are linked to this source
+                # through FacilityListItem
+                updated_count = models.ExtendedField.objects.filter(
+                    facility_list_item__source=obj
+                ).update(contributor=obj.contributor)
 
-            # Log the update for admin awareness
-            if updated_count > 0:
-                self.message_user(
-                    request,
-                    f"Updated {updated_count} extended field(s) to new contributor: {obj.contributor}",
-                    level=messages.INFO
-                )
+                # Log the update for admin awareness
+                if updated_count > 0:
+                    self.message_user(
+                        request,
+                        f"Updated {updated_count} extended field(s) to new contributor: {obj.contributor}",
+                        level=messages.INFO
+                    )
 
 
 class RequestLogAdmin(admin.ModelAdmin):
