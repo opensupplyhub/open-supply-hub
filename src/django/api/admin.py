@@ -175,7 +175,7 @@ class SourceAdmin(admin.ModelAdmin):
                     self.message_user(
                         request,
                         (f"Updated {updated_count} extended field(s) to "
-                     f"new contributor: {obj.contributor}"),
+                         f"new contributor: {obj.contributor}"),
                         level=messages.INFO
                     )
 

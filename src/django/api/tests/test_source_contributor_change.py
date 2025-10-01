@@ -49,13 +49,12 @@ class SourceContributorChangeTest(TestCase):
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
-        # Create facility
+        # Create facility (we'll set created_from after creating list item)
         self.facility = Facility.objects.create(
             name="Test Facility",
             address="123 Test St",
             country_code="US",
             location="POINT(0 0)",
-            created_from_id=1,
         )
 
         # Create facility list
@@ -93,6 +92,10 @@ class SourceContributorChangeTest(TestCase):
             facility=self.facility,
             status=FacilityListItem.MATCHED,
         )
+
+        # Update facility's created_from to point to this list item
+        self.facility.created_from = self.list_item
+        self.facility.save()
 
         # Create extended field linked to original contributor
         self.extended_field = ExtendedField.objects.create(
@@ -159,8 +162,8 @@ class SourceContributorChangeTest(TestCase):
         self.assertIn("Updated 2 extended field(s)", messages_list[0])
         self.assertIn(str(self.new_contributor), messages_list[0])
 
-    def test_saving_source_without_contributor_change_does_not_update_fields(self):
-        """Test saving Source without contributor change doesn't affect fields."""
+    def test_saving_source_without_contributor_change_no_update(self):
+        """Test saving Source without contributor change."""
         # Create mock request and form
         request = Mock()
         request.user = self.admin_user
