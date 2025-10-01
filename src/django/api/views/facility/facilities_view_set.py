@@ -890,6 +890,20 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_workers_count=validated_data.get(
                     "number_of_workers"
                 ),
+                opening_date=validated_data.get("opening_date"),
+                closing_date=validated_data.get("closing_date"),
+                estimated_annual_throughput=validated_data.get(
+                    "estimated_annual_throughput"
+                ),
+                energy_coal=validated_data.get("energy_coal"),
+                energy_natural_gas=validated_data.get("energy_natural_gas"),
+                energy_diesel=validated_data.get("energy_diesel"),
+                energy_kerosene=validated_data.get("energy_kerosene"),
+                energy_biomass=validated_data.get("energy_biomass"),
+                energy_charcoal=validated_data.get("energy_charcoal"),
+                energy_animal_waste=validated_data.get("energy_animal_waste"),
+                energy_electricity=validated_data.get("energy_electricity"),
+                energy_other=validated_data.get("energy_other"),
             )
 
             sectors = validated_data.get("sectors")

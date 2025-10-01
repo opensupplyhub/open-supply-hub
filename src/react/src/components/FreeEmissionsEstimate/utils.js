@@ -41,6 +41,7 @@ const isValidPositiveInteger = value => {
     return (
         !Number.isNaN(numericValue) &&
         numericValue > 0 &&
+        numericValue <= Number.MAX_SAFE_INTEGER &&
         value === numericValue.toString()
     );
 };
@@ -54,7 +55,7 @@ const createPositiveIntegerValidation = schema =>
         )
         .test(
             'valid-positive-integer',
-            'Please enter a positive integer.',
+            `Please enter a positive integer that is less than or equal to ${Number.MAX_SAFE_INTEGER}.`,
             value => !value || isValidPositiveInteger(value),
         );
 
