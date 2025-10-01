@@ -263,7 +263,7 @@ class ProductionLocationsTest(BaseAPITest):
             "name": "SWISSTEX DIRECT LLC",
             "coordinates": {
                 "lat": 33.9068514,
-                "lng": -118.2817015
+                "lon": -118.2817015
             },
             "sector": [
                 "Wholesale Trade"
