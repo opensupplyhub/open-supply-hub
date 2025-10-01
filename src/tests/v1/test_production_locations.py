@@ -728,6 +728,7 @@ class ProductionLocationsTest(BaseAPITest):
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/",
                 headers=self.basic_headers,
+                timeout=30,
             )
 
         result = response.json()
