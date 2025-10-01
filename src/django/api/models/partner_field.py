@@ -42,6 +42,10 @@ class PartnerField(models.Model):
         max_length=200,
         blank=True,
         help_text=('The partner field unit.'))
+    label = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=('The partner field label.'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

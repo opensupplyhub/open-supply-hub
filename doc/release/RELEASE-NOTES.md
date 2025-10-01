@@ -15,6 +15,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
 * 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
+### Code/API changes
+* [OSDEV-2179](https://opensupplyhub.atlassian.net/browse/OSDEV-2179) - Add `select_related()` to default `FacilityClaimViewSet` queryset to optimize foreign key lookups. Add `select_related()` to list method queryset to prevent separate queries for facility, contributor, and admin data.
+
 ### Architecture/Environment changes
 * [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
 
@@ -23,6 +26,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
     * Added `unit` field to `PartnerField` model
     * Added type validation for submitted partner fields
+    * Added `create_partner_extendedfields_for_single_item()` function for bulk partner field processing
+    * Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
+    * Integrated partner field creation into the moderation event approval workflow
+    * Added `label` field to `PartnerField` model
+    * Added functionality to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

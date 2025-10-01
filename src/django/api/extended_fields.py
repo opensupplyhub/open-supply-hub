@@ -79,9 +79,12 @@ def get_product_type_extendedfield_value(field_value):
 
 
 def all_values_empty(value):
-    if value is not None and isinstance(value, list):
-        values = [v for v in value if v is not None and v != ""]
-        return len(values) == 0
+    if value is not None:
+        if isinstance(value, list):
+            return all(v in (None, "") for v in value)
+        if isinstance(value, dict):
+            return all(v in (None, "") for v in value.values())
+
     return False
 
 
@@ -123,6 +126,35 @@ def create_extendedfield(field, field_value, item, contributor):
         )
 
 
+OBJECT_FIELD_TYPE = "object"
+
+
+def create_partner_extendedfield(
+        field,
+        field_value,
+        field_type,
+        item,
+        contributor
+):
+    if field_value is not None and field_value != "" \
+            and not all_values_empty(field_value):
+        if field_type == OBJECT_FIELD_TYPE:
+            field_value = {
+                'raw_values': field_value,
+            }
+        else:
+            field_value = {
+                'raw_value': field_value,
+            }
+
+        ExtendedField.objects.create(
+            contributor=contributor,
+            facility_list_item=item,
+            field_name=field,
+            value=field_value
+        )
+
+
 RAW_DATA_FIELDS = (
     ExtendedField.NUMBER_OF_WORKERS,
     ExtendedField.NATIVE_LANGUAGE_NAME,
@@ -137,7 +169,10 @@ RAW_DATA_FIELDS = (
 )
 
 
-def create_extendedfields_for_single_item(item, raw_data):
+def create_extendedfields_for_single_item(
+        item,
+        raw_data
+):
     if item.id is None:
         return False
     contributor = item.source.contributor
@@ -145,6 +180,30 @@ def create_extendedfields_for_single_item(item, raw_data):
     for field in RAW_DATA_FIELDS:
         field_value = raw_data.get(field)
         create_extendedfield(field, field_value, item, contributor)
+
+
+def create_partner_extendedfields_for_single_item(
+    item,
+    raw_data
+):
+    if item.id is None:
+        return False
+
+    contributor = item.source.contributor
+
+    for partner_field in item.source.contributor \
+            .partner_fields.all():
+        field = partner_field.name
+        field_type = partner_field.type
+        field_value = raw_data.get(field)
+
+        create_partner_extendedfield(
+            field,
+            field_value,
+            field_type,
+            item,
+            contributor
+        )
 
 
 def update_extendedfields_for_list_item(list_item):
