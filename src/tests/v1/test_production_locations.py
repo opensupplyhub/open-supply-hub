@@ -734,7 +734,4 @@ class ProductionLocationsTest(BaseAPITest):
         result = response.json()
         self.assertTrue(len(result['data']) > 0)
         first_location = result['data'][0]
-        self.assertIsNotNone(first_location['country']['name'])
-        self.assertIsNotNone(first_location['country']['alpha_2'])
-        self.assertIsNotNone(first_location['country']['alpha_3'])
-        self.assertIsNotNone(first_location['country']['numeric'])
+        self.assertDictEqual(first_location, {'name': 'Location name'})
