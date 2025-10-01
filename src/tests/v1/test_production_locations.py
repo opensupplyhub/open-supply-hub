@@ -722,3 +722,18 @@ class ProductionLocationsTest(BaseAPITest):
             error['detail'],
             "The 'claimed_at_gt' must be less than or equal to 'claimed_at_lt'."
         )
+
+    def test_production_locations_country(self):
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/",
+                headers=self.basic_headers,
+            )
+
+        result = response.json()
+        country = result['data'][0]['country']
+
+        self.assertIsNotNone(country['name'])
+        self.assertIsNotNone(country['alpha_2'])
+        self.assertIsNotNone(country['alpha_3'])
+        self.assertIsNotNone(country['numeric'])
