@@ -656,44 +656,6 @@ SELECT
       1
   ) AS claimed_at_value,
   (
-    SELECT 
-      afc2.opened_at
-    FROM 
-      api_facilityclaim afc2
-    WHERE 
-      afc2.facility_id = af.id
-      AND afc2.opened_at IS NOT NULL
-    ORDER BY
-      afc2.updated_at DESC
-    LIMIT
-      1
-  ) AS opened_at_value,
-  (
-    SELECT 
-      afc2.closed_at
-    FROM
-      api_facilityclaim afc2
-    WHERE
-      afc2.facility_id = af.id
-      AND afc2.closed_at IS NOT NULL
-    ORDER BY
-      afc2.updated_at DESC
-    LIMIT 1
-  ) AS closed_at_value,
-  (
-    SELECT
-      afc2.estimated_annual_throughput
-    FROM
-      api_facilityclaim afc2
-    WHERE
-      afc2.facility_id = af.id
-      AND afc2.estimated_annual_throughput IS NOT NULL
-    ORDER BY
-      afc2.updated_at DESC
-    LIMIT
-      1
-  ) AS estimated_annual_throughput_value,
-  (
     SELECT
       afc2.actual_annual_energy_consumption::text
     FROM
