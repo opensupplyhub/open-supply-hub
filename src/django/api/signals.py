@@ -139,7 +139,9 @@ def update_extended_fields_on_source_contributor_change(
         return
 
     # Skip if update_fields is specified and doesn't include contributor
-    if update_fields and 'contributor_id' not in update_fields and 'contributor' not in update_fields:
+    if (update_fields and
+            'contributor_id' not in update_fields and
+            'contributor' not in update_fields):
         return
 
     # Update all ExtendedField records linked to this source
@@ -151,6 +153,7 @@ def update_extended_fields_on_source_contributor_change(
 
         if updated_count > 0:
             log.info(
-                f"[Source Contributor Change] Updated {updated_count} ExtendedField(s) "
-                f"for Source {instance.id} to contributor {instance.contributor_id}"
+                f"[Source Contributor Change] Updated {updated_count} "
+                f"ExtendedField(s) for Source {instance.id} to "
+                f"contributor {instance.contributor_id}"
             )

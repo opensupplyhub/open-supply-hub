@@ -32,7 +32,8 @@ class SourceContributorChangeTest(TestCase):
 
         # Create original contributor
         self.original_contrib_email = "original@example.com"
-        self.original_user = User.objects.create(email=self.original_contrib_email)
+        self.original_user = User.objects.create(
+            email=self.original_contrib_email)
         self.original_contributor = Contributor.objects.create(
             admin=self.original_user,
             name="Original Contributor",
@@ -88,6 +89,7 @@ class SourceContributorChangeTest(TestCase):
             country_code="US",
             clean_name="test facility",
             clean_address="123 test st",
+            sector=["Apparel"],
             facility=self.facility,
             status=FacilityListItem.MATCHED,
         )
@@ -115,10 +117,12 @@ class SourceContributorChangeTest(TestCase):
         self.source_admin = SourceAdmin(Source, self.site)
 
     def test_changing_source_contributor_updates_extended_fields(self):
-        """Test that changing a Source's contributor updates all related ExtendedFields."""
+        """Test changing Source contributor updates all ExtendedFields."""
         # Verify initial state
-        self.assertEqual(self.extended_field.contributor, self.original_contributor)
-        self.assertEqual(self.extended_field_2.contributor, self.original_contributor)
+        self.assertEqual(
+            self.extended_field.contributor, self.original_contributor)
+        self.assertEqual(
+            self.extended_field_2.contributor, self.original_contributor)
 
         # Create mock request and form
         request = Mock()
@@ -145,16 +149,18 @@ class SourceContributorChangeTest(TestCase):
         self.extended_field_2.refresh_from_db()
 
         # Verify extended fields now have new contributor
-        self.assertEqual(self.extended_field.contributor, self.new_contributor)
-        self.assertEqual(self.extended_field_2.contributor, self.new_contributor)
+        self.assertEqual(
+            self.extended_field.contributor, self.new_contributor)
+        self.assertEqual(
+            self.extended_field_2.contributor, self.new_contributor)
 
         # Verify message was sent
         self.assertEqual(len(messages_list), 1)
         self.assertIn("Updated 2 extended field(s)", messages_list[0])
         self.assertIn(str(self.new_contributor), messages_list[0])
 
-    def test_saving_source_without_contributor_change_does_not_update_extended_fields(self):
-        """Test that saving a Source without changing contributor doesn't affect ExtendedFields."""
+    def test_saving_source_without_contributor_change_does_not_update_fields(self):
+        """Test saving Source without contributor change doesn't affect fields."""
         # Create mock request and form
         request = Mock()
         request.user = self.admin_user
@@ -174,11 +180,13 @@ class SourceContributorChangeTest(TestCase):
         self.extended_field_2.refresh_from_db()
 
         # Verify extended fields still have original contributor
-        self.assertEqual(self.extended_field.contributor, self.original_contributor)
-        self.assertEqual(self.extended_field_2.contributor, self.original_contributor)
+        self.assertEqual(
+            self.extended_field.contributor, self.original_contributor)
+        self.assertEqual(
+            self.extended_field_2.contributor, self.original_contributor)
 
-    def test_creating_new_source_does_not_trigger_extended_field_update(self):
-        """Test that creating a new Source doesn't trigger ExtendedField updates."""
+    def test_creating_new_source_does_not_trigger_field_update(self):
+        """Test creating new Source doesn't trigger ExtendedField updates."""
         # Create new source
         new_list = FacilityList.objects.create(
             name="New List",
@@ -205,11 +213,13 @@ class SourceContributorChangeTest(TestCase):
         # Verify original extended fields unchanged
         self.extended_field.refresh_from_db()
         self.extended_field_2.refresh_from_db()
-        self.assertEqual(self.extended_field.contributor, self.original_contributor)
-        self.assertEqual(self.extended_field_2.contributor, self.original_contributor)
+        self.assertEqual(
+            self.extended_field.contributor, self.original_contributor)
+        self.assertEqual(
+            self.extended_field_2.contributor, self.original_contributor)
 
     def test_extended_fields_without_list_item_are_not_affected(self):
-        """Test that ExtendedFields from claims (without list items) are not affected."""
+        """Test ExtendedFields from claims are not affected."""
         # Create an extended field from a claim (no list item)
         claim_extended_field = ExtendedField.objects.create(
             contributor=self.original_contributor,
@@ -230,8 +240,10 @@ class SourceContributorChangeTest(TestCase):
 
         # Verify claim-based extended field is not changed
         claim_extended_field.refresh_from_db()
-        self.assertEqual(claim_extended_field.contributor, self.original_contributor)
+        self.assertEqual(
+            claim_extended_field.contributor, self.original_contributor)
 
         # But list-based extended fields should be updated
         self.extended_field.refresh_from_db()
-        self.assertEqual(self.extended_field.contributor, self.new_contributor)
+        self.assertEqual(
+            self.extended_field.contributor, self.new_contributor)
