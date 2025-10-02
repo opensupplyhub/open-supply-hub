@@ -660,6 +660,7 @@ SELECT
     FROM api_facilityclaim afc_sub
     WHERE afc_sub.facility_id = af.id
       AND afc_sub.opened_at IS NOT NULL
+      AND afc_sub.status IN ('APPROVED','PENDING')
     ORDER BY afc_sub.opened_at DESC NULLS LAST
     LIMIT 1
   ) AS opened_at_value
