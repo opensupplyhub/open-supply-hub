@@ -656,17 +656,12 @@ SELECT
       1
   ) AS claimed_at_value,
   (
-    SELECT 
-      afc3.opened_at
-    FROM 
-      api_facilityclaim afc3
-    WHERE 
-      afc3.facility_id = af.id
-      AND afc3.opened_at IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
+    SELECT afc_sub.opened_at
+    FROM api_facilityclaim afc_sub
+    WHERE afc_sub.facility_id = af.id
+      AND afc_sub.opened_at IS NOT NULL
+    ORDER BY afc_sub.opened_at DESC NULLS LAST
+    LIMIT 1
   ) AS opened_at_value
 FROM
   api_facility af
