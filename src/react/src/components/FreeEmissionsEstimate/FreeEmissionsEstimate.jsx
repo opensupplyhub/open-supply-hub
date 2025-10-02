@@ -4,13 +4,12 @@ import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import InputLabel from '@material-ui/core/InputLabel';
 import Grid from '@material-ui/core/Grid';
-import InfiniteScrollYearDropdown from './InfiniteScrollYearDropdown.jsx';
+import YearPicker from './YearPicker.jsx';
 import MonthYearPicker from './MonthYearPicker.jsx';
 import InputErrorText from '../Contribute/InputErrorText.jsx';
 import EnergySourceInput from './EnergySourceInput.jsx';
-
+import LabelWithTooltip from './LabelWithTooltip.jsx';
 import {
     updateClaimOpeningDate,
     updateClaimClosingDate,
@@ -41,7 +40,7 @@ import {
     useFormFieldSync,
     useFreeEmissionsEstimateValidation,
 } from './hooks.js';
-import { freeEmissionsEstimateFormConfig } from './constants.js';
+import { freeEmissionsEstimateFormConfig } from './constants.jsx';
 
 const {
     title,
@@ -247,26 +246,17 @@ const FreeEmissionsEstimate = ({
             <Typography className={classes.sectionDescription}>
                 {description.label}
             </Typography>
-            <Grid container spacing={8}>
+            <Grid
+                container
+                spacing={40}
+                className={classes.datePickerContainer}
+            >
                 <Grid item xs={12} md={6}>
-                    <InfiniteScrollYearDropdown
-                        label={openingDateField.label}
-                        name={openingDateField.valueFieldName}
+                    <YearPicker
                         value={freeEmissionsEstimateForm.values.openingDate}
-                        onChange={value => {
-                            freeEmissionsEstimateForm.setFieldValue(
-                                openingDateField.valueFieldName,
-                                value,
-                            );
-                            freeEmissionsEstimateForm.setFieldTouched(
-                                openingDateField.valueFieldName,
-                                true,
-                                false,
-                            );
-                        }}
-                        disabled={fetching}
+                        label={openingDateField.label}
+                        tooltipText={openingDateField.tooltipText}
                         placeholder={openingDateField.placeholder}
-                        error={openingDateHasError}
                         helperText={
                             openingDateHasError && (
                                 <InputErrorText
@@ -277,13 +267,40 @@ const FreeEmissionsEstimate = ({
                                 />
                             )
                         }
+                        disabled={fetching}
+                        error={openingDateHasError}
+                        onChange={value => {
+                            freeEmissionsEstimateForm.setFieldValue(
+                                openingDateField.valueFieldName,
+                                value,
+                            );
+                            freeEmissionsEstimateForm.setFieldTouched(
+                                openingDateField.valueFieldName,
+                                true,
+                                false,
+                            );
+                        }}
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <MonthYearPicker
-                        label={closingDateField.label}
-                        name={closingDateField.valueFieldName}
                         value={freeEmissionsEstimateForm.values.closingDate}
+                        label={closingDateField.label}
+                        tooltipText={closingDateField.tooltipText}
+                        placeholderMonth={closingDateField.placeholderMonth}
+                        placeholderYear={closingDateField.placeholderYear}
+                        helperText={
+                            closingDateHasError && (
+                                <InputErrorText
+                                    text={
+                                        freeEmissionsEstimateForm.errors
+                                            .closingDate
+                                    }
+                                />
+                            )
+                        }
+                        disabled={fetching}
+                        error={closingDateHasError}
                         onChange={value => {
                             freeEmissionsEstimateForm.setFieldValue(
                                 closingDateField.valueFieldName,
@@ -295,44 +312,39 @@ const FreeEmissionsEstimate = ({
                                 false,
                             );
                         }}
-                        disabled={fetching}
-                        placeholder={closingDateField.placeholder}
-                        error={closingDateHasError}
-                        helperText={
-                            closingDateHasError && (
-                                <InputErrorText
-                                    text={
-                                        freeEmissionsEstimateForm.errors
-                                            .closingDate
-                                    }
-                                />
-                            )
-                        }
                     />
                 </Grid>
             </Grid>
-            <Grid container spacing={8}>
+            <Grid
+                container
+                spacing={8}
+                className={classes.estimatedAnnualThroughputContainer}
+            >
                 <Grid item xs={12}>
-                    <InputLabel htmlFor={estimatedAnnualThroughputField.id}>
-                        <Typography
-                            variant="subheading"
-                            className={classes.fieldLabel}
-                        >
-                            {estimatedAnnualThroughputField.label}
-                        </Typography>
-                    </InputLabel>
+                    <LabelWithTooltip
+                        label={estimatedAnnualThroughputField.label}
+                        tooltipText={estimatedAnnualThroughputField.tooltipText}
+                    />
                 </Grid>
                 <Grid item xs={12}>
                     <TextField
-                        id={estimatedAnnualThroughputField.id}
-                        name={estimatedAnnualThroughputField.valueFieldName}
-                        variant="outlined"
-                        fullWidth
                         value={
                             freeEmissionsEstimateForm.values
                                 .estimatedAnnualThroughput
                         }
                         placeholder={estimatedAnnualThroughputField.placeholder}
+                        helperText={
+                            estimatedAnnualThroughputHasError && (
+                                <InputErrorText
+                                    text={
+                                        freeEmissionsEstimateForm.errors
+                                            .estimatedAnnualThroughput
+                                    }
+                                />
+                            )
+                        }
+                        disabled={fetching}
+                        error={estimatedAnnualThroughputHasError}
                         onChange={event => {
                             freeEmissionsEstimateForm.setFieldValue(
                                 estimatedAnnualThroughputField.valueFieldName,
@@ -344,18 +356,8 @@ const FreeEmissionsEstimate = ({
                                 false,
                             );
                         }}
-                        disabled={fetching}
-                        error={estimatedAnnualThroughputHasError}
-                        helperText={
-                            estimatedAnnualThroughputHasError && (
-                                <InputErrorText
-                                    text={
-                                        freeEmissionsEstimateForm.errors
-                                            .estimatedAnnualThroughput
-                                    }
-                                />
-                            )
-                        }
+                        variant="outlined"
+                        fullWidth
                     />
                 </Grid>
             </Grid>
@@ -369,7 +371,7 @@ const FreeEmissionsEstimate = ({
                     </Typography>
                 </Grid>
                 {energySourcesData.map(energyData => (
-                    <Grid item xs={12} key={energyData.source.id}>
+                    <Grid item xs={12} key={energyData.source.label}>
                         <EnergySourceInput
                             source={energyData.source}
                             freeEmissionsEstimateForm={

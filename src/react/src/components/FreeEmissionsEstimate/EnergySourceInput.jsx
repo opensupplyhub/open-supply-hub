@@ -25,15 +25,16 @@ const EnergySourceInput = ({
         !!freeEmissionsEstimateForm.errors[valueFieldName];
 
     return (
-        <Grid container alignItems="center">
+        <Grid container className={classes.energySourceInputContainer}>
             <Grid item xs={12} sm={4} md={3}>
                 <FormControlLabel
-                    className={classes.energyCheckbox}
+                    classes={{
+                        label: classes.checkboxLabel,
+                    }}
                     control={
                         <Checkbox
-                            id={source.id}
-                            name={enabledFieldName}
                             checked={enabled}
+                            name={enabledFieldName}
                             onChange={freeEmissionsEstimateForm.handleChange}
                             disabled={disabled}
                         />
@@ -43,9 +44,6 @@ const EnergySourceInput = ({
             </Grid>
             <Grid item xs={12} sm={8} md={9}>
                 <TextField
-                    variant="outlined"
-                    fullWidth
-                    name={valueFieldName}
                     value={value}
                     placeholder={source.placeholder}
                     disabled={disabled || !enabled}
@@ -81,6 +79,8 @@ const EnergySourceInput = ({
                             </InputAdornment>
                         ),
                     }}
+                    variant="outlined"
+                    fullWidth
                 />
             </Grid>
         </Grid>

@@ -1,26 +1,23 @@
 import React from 'react';
-import { string, func, bool, object, node } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { string, func, bool, node } from 'prop-types';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
 import Grid from '@material-ui/core/Grid';
-import { MONTHS } from './constants.js';
-import { monthYearPickerStyles } from './styles.js';
-import InfiniteScrollYearDropdown from './InfiniteScrollYearDropdown.jsx';
+import LabelWithTooltip from './LabelWithTooltip.jsx';
+import { MONTHS } from './constants.jsx';
+import YearPicker from './YearPicker.jsx';
 
 const MonthYearPicker = ({
-    label,
-    name,
     value,
-    onChange,
-    error,
+    label,
+    tooltipText,
+    placeholderMonth,
+    placeholderYear,
     helperText,
     disabled,
-    placeholder,
-    classes,
-    ...rest
+    error,
+    onChange,
 }) => {
     // Extract month and year from ISO date string (YYYY-MM-DD) for display.
     const date = value ? new Date(value) : null;
@@ -65,20 +62,27 @@ const MonthYearPicker = ({
         }
     };
 
+    const renderMonthValue = selected => {
+        if (!selected) {
+            return placeholderMonth;
+        }
+        // Find the month object and return its label.
+        const monthObj = MONTHS.find(month => month.value === selected);
+        return monthObj.label;
+    };
+
     return (
         <div>
-            <InputLabel className={classes.monthYearPickerLabel}>
-                {label}
-            </InputLabel>
+            <LabelWithTooltip label={label} tooltipText={tooltipText} />
             <Grid container spacing={8}>
-                <Grid item xs={6}>
+                <Grid item xs={12} md={6}>
                     <FormControl fullWidth variant="outlined" error={error}>
-                        <InputLabel>Month</InputLabel>
                         <Select
                             value={displayMonth}
                             onChange={handleMonthChange}
                             disabled={disabled}
-                            label="Month"
+                            displayEmpty
+                            renderValue={renderMonthValue}
                         >
                             {MONTHS.map(month => (
                                 <MenuItem key={month.value} value={month.value}>
@@ -88,15 +92,13 @@ const MonthYearPicker = ({
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid item xs={6}>
-                    <InfiniteScrollYearDropdown
-                        label="Year"
-                        name={`${name}-year`}
+                <Grid item xs={12} md={6}>
+                    <YearPicker
                         value={value}
                         onChange={handleYearChange}
                         error={error}
                         disabled={disabled}
-                        {...rest}
+                        placeholder={placeholderYear}
                     />
                 </Grid>
             </Grid>
@@ -107,14 +109,14 @@ const MonthYearPicker = ({
 
 MonthYearPicker.propTypes = {
     label: string.isRequired,
-    name: string.isRequired,
+    tooltipText: string.isRequired,
     value: string,
     onChange: func.isRequired,
     error: bool,
     helperText: node,
     disabled: bool,
-    placeholder: string,
-    classes: object.isRequired,
+    placeholderMonth: string.isRequired,
+    placeholderYear: string.isRequired,
 };
 
 MonthYearPicker.defaultProps = {
@@ -122,7 +124,6 @@ MonthYearPicker.defaultProps = {
     error: false,
     helperText: null,
     disabled: false,
-    placeholder: '',
 };
 
-export default withStyles(monthYearPickerStyles)(MonthYearPicker);
+export default MonthYearPicker;

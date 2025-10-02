@@ -4,22 +4,22 @@ import { withStyles } from '@material-ui/core/styles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
+import LabelWithTooltip from './LabelWithTooltip.jsx';
 import { useInfiniteYearScroll } from './hooks.js';
-import { infiniteScrollYearDropdownStyles } from './styles.js';
+import { yearPickerStyles } from './styles.js';
 
-const InfiniteScrollYearDropdown = ({
-    label,
-    name,
+const YearPicker = ({
     value,
-    onChange,
-    error,
+    label,
+    tooltipText,
+    placeholder,
     helperText,
     disabled,
+    error,
+    onChange,
     classes,
-    ...rest
 }) => {
     const {
         years,
@@ -57,19 +57,23 @@ const InfiniteScrollYearDropdown = ({
 
     return (
         <div>
+            {label && tooltipText && (
+                <LabelWithTooltip label={label} tooltipText={tooltipText} />
+            )}
             <FormControl fullWidth variant="outlined" error={error}>
-                <InputLabel>{label}</InputLabel>
                 <Select
                     value={displayYear}
                     onChange={handleYearChange}
                     disabled={disabled}
-                    label={label}
+                    displayEmpty
+                    renderValue={selected =>
+                        !selected ? placeholder : selected
+                    }
                     MenuProps={{
                         PaperProps: {
                             onScroll: handleScroll,
                         },
                     }}
-                    {...rest}
                 >
                     {years.map(year => (
                         <MenuItem key={year.value} value={year.value}>
@@ -107,9 +111,9 @@ const InfiniteScrollYearDropdown = ({
     );
 };
 
-InfiniteScrollYearDropdown.propTypes = {
-    label: string.isRequired,
-    name: string.isRequired,
+YearPicker.propTypes = {
+    label: string,
+    tooltipText: string,
     value: string,
     onChange: func.isRequired,
     error: bool,
@@ -118,13 +122,13 @@ InfiniteScrollYearDropdown.propTypes = {
     classes: object.isRequired,
 };
 
-InfiniteScrollYearDropdown.defaultProps = {
+YearPicker.defaultProps = {
     value: '',
+    label: null,
+    tooltipText: null,
     error: false,
     helperText: null,
     disabled: false,
 };
 
-export default withStyles(infiniteScrollYearDropdownStyles)(
-    InfiniteScrollYearDropdown,
-);
+export default withStyles(yearPickerStyles)(YearPicker);

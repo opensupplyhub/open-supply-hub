@@ -1,26 +1,38 @@
+import React from 'react';
+
 export const freeEmissionsEstimateFormConfig = Object.freeze({
     title: Object.freeze({
         label: '🌍 Free Emissions Estimates',
     }),
     description: Object.freeze({
-        label:
-            'Fill in these fields, and Open Supply Hub—together with Climate TRACE—will provide a free emissions estimate for this location. This also helps your partners calculate emissions across their entire value chain.',
+        label: (
+            <>
+                Fill in these fields, and Open Supply Hub—together with{' '}
+                <strong>Climate TRACE</strong>—will provide a free emissions
+                estimate for this location. This also helps your partners
+                calculate emissions across their entire value chain.
+            </>
+        ),
     }),
     openingDateField: Object.freeze({
-        id: 'opening-date',
         label: 'Opening Date',
+        tooltipText:
+            'Enter the date your production location officially started operations.',
         placeholder: 'Select year',
         valueFieldName: 'openingDate',
     }),
     closingDateField: Object.freeze({
-        id: 'closing-date',
         label: 'Closing Date',
-        placeholder: 'Select month/year',
+        tooltipText:
+            'Enter the date your production location permanently stopped operating. Leave blank if still active.',
+        placeholderMonth: 'Select month',
+        placeholderYear: 'Select year',
         valueFieldName: 'closingDate',
     }),
     estimatedAnnualThroughputField: Object.freeze({
-        id: 'estimated-annual-throughput',
         label: 'Estimated Annual Throughput',
+        tooltipText:
+            'Total amount of materials or products processed by this location per year.',
         placeholder: 'Enter value in kg/year',
         valueFieldName: 'estimatedAnnualThroughput',
     }),
@@ -30,7 +42,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
     energySourcesData: Object.freeze([
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-coal',
                 label: 'Coal',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -40,7 +51,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-natural-gas',
                 label: 'Natural Gas',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -50,7 +60,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-diesel',
                 label: 'Diesel',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -60,7 +69,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-kerosene',
                 label: 'Kerosene',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -70,7 +78,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-biomass',
                 label: 'Biomass',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -80,7 +87,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-charcoal',
                 label: 'Charcoal',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -90,7 +96,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-animal-waste',
                 label: 'Animal Waste',
                 unit: 'J',
                 placeholder: 'Enter value in J',
@@ -100,7 +105,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-electricity',
                 label: 'Electricity',
                 unit: 'MWh',
                 placeholder: 'Enter value in MWh',
@@ -110,7 +114,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         }),
         Object.freeze({
             source: Object.freeze({
-                id: 'energy-other',
                 label: 'Other',
                 unit: 'J',
                 placeholder: 'Enter value in J',
