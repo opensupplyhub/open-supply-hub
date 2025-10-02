@@ -641,7 +641,17 @@ SELECT
     WHERE
       afa.facility_id = af.id
   ) AS historical_os_id_value,
-  af.updated_at,
+  GREATEST(
+    af.updated_at,
+    COALESCE(
+      (
+        SELECT MAX(c.updated_at)
+        FROM api_facilityclaim c
+        WHERE c.facility_id = af.id
+      ),
+      af.updated_at
+    )
+  ) AS updated_at,
   (
     SELECT
       afc3.updated_at
@@ -656,28 +666,30 @@ SELECT
       1
   ) AS claimed_at_value,
   (
-    SELECT 
-      afc2.opened_at
-    FROM 
-      api_facilityclaim afc2
-    WHERE 
-      afc2.facility_id = af.id
-      AND afc2.opened_at IS NOT NULL
+    SELECT
+      afc_sub.opened_at
+    FROM
+      api_facilityclaim afc_sub
+    WHERE
+      afc_sub.facility_id = af.id
+      AND afc_sub.opened_at IS NOT NULL
+      AND afc_sub.status IN ('APPROVED','PENDING')
     ORDER BY
-      afc2.updated_at DESC
+      afc_sub.opened_at DESC NULLS LAST
     LIMIT
       1
   ) AS opened_at_value,
   (
-    SELECT 
-      afc2.closed_at
+    SELECT
+      afc_sub.closed_at
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc_sub
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.closed_at IS NOT NULL
+      afc_sub.facility_id = af.id
+      AND afc_sub.closed_at IS NOT NULL
+      AND afc_sub.status IN ('APPROVED','PENDING')
     ORDER BY
-      afc2.updated_at DESC
+      afc_sub.closed_at DESC NULLS LAST
     LIMIT 1
   ) AS closed_at_value,
   (
@@ -688,6 +700,7 @@ SELECT
     WHERE
       afc2.facility_id = af.id
       AND afc2.estimated_annual_throughput IS NOT NULL
+      AND afc2.status IN ('APPROVED','PENDING')
     ORDER BY
       afc2.updated_at DESC
     LIMIT
@@ -701,6 +714,7 @@ SELECT
     WHERE
       afc2.facility_id = af.id
       AND afc2.actual_annual_energy_consumption IS NOT NULL
+      AND afc2.status IN ('APPROVED','PENDING')
     ORDER BY
       afc2.updated_at DESC
     LIMIT
@@ -711,7 +725,27 @@ FROM
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id
   AND afc.status = 'APPROVED'
 WHERE
-  af.updated_at > :sql_last_value
-  AND af.updated_at < CURRENT_TIMESTAMP
+  GREATEST(
+    af.updated_at,
+    COALESCE(
+      (
+        SELECT MAX(c.updated_at)
+        FROM api_facilityclaim c
+        WHERE c.facility_id = af.id
+      ),
+      af.updated_at
+    )
+  ) > :sql_last_value
+  AND GREATEST(
+    af.updated_at,
+    COALESCE(
+      (
+        SELECT MAX(c.updated_at)
+        FROM api_facilityclaim c
+        WHERE c.facility_id = af.id
+      ),
+      af.updated_at
+    )
+  ) < CURRENT_TIMESTAMP
 ORDER BY
   af.updated_at ASC

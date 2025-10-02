@@ -52,6 +52,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertTrue(filtered)
 
     def test_production_locations_country(self):
+
         response = requests.get(
                 f"{self.root_url}/api/v1/production-locations/",
                 headers=self.basic_headers,
