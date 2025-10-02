@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0180_add_unit_to_partner_field'),
+        ('api', '0181_add_label_to_partner_field'),
     ]
 
     operations = [
