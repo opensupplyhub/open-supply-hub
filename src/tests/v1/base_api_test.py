@@ -21,3 +21,25 @@ class BaseAPITest(OpenSearchIntegrationTestCase):
             'Authorization': f'Token {self.admin_token}',
             'Host': f'localhost:{self.port}'
         }
+
+        # Ensure index exists with correct mappings for geo queries and country fields.
+        idx = os.getenv('OPENSEARCH_PRODUCTION_LOCATIONS_INDEX') or 'production-locations'
+        self.open_search_client.indices.delete(index=idx, ignore=[404])
+        self.open_search_client.indices.create(
+            index=idx,
+            body={
+                "mappings": {
+                    "properties": {
+                        "coordinates": {"type": "geo_point"},
+                        "country": {
+                            "properties": {
+                                "name": {"type": "keyword"},
+                                "alpha_2": {"type": "keyword"},
+                                "alpha_3": {"type": "keyword"},
+                                "numeric": {"type": "keyword"},
+                            }
+                        }
+                    }
+                }
+            }
+        )
