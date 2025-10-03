@@ -93,7 +93,6 @@ const claimFacilityStepperStyles = Object.freeze({
         display: 'none',
     }),
     formContainerStyles: Object.freeze({
-        width: '100%',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
@@ -103,7 +102,6 @@ const claimFacilityStepperStyles = Object.freeze({
     }),
     paperStyles: Object.freeze({
         padding: '0 50px 50px 50px',
-        width: '100%',
     }),
 });
 
@@ -152,7 +150,7 @@ const steps = Object.freeze([
 
 const InvisibleDiv = constant(<div style={{ display: 'none ' }} />);
 
-function ClaimFacilityStepper({
+const ClaimFacilityStepper = ({
     fetching,
     submitClaimForm,
     formData,
@@ -161,9 +159,13 @@ function ClaimFacilityStepper({
     match: {
         params: { osID },
     },
-}) {
+}) => {
     const [activeStep, setActiveStep] = useState(0);
     const [submittingForm, setSubmittingForm] = useState(false);
+    const [
+        freeEmissionsEstimateHasErrors,
+        setFreeEmissionsEstimateHasErrors,
+    ] = useState(false);
 
     const incrementActiveStep = () =>
         setActiveStep(clamp(activeStep + 1, 0, steps.length));
@@ -211,7 +213,8 @@ function ClaimFacilityStepper({
         <>
             <div style={claimFacilityStepperStyles.formContainerStyles}>
                 {error ||
-                (!stepInputIsValid(formData) &&
+                ((!stepInputIsValid(formData) ||
+                    freeEmissionsEstimateHasErrors) &&
                     activeStepName !==
                         facilityClaimStepsNames.CLAIM_PROD_LOCATION) ? (
                     <Typography
@@ -223,7 +226,7 @@ function ClaimFacilityStepper({
                     >
                         {error
                             ? 'An error prevented submitting the form'
-                            : 'Some required fields are missing or invalid.'}
+                            : 'Some required fields are missing or some fields are invalid.'}
                     </Typography>
                 ) : null}
                 <div
@@ -248,10 +251,14 @@ function ClaimFacilityStepper({
                         <Button
                             color="secondary"
                             variant="contained"
-                            onClick={submitClaimForm}
+                            onClick={() =>
+                                submitClaimForm(freeEmissionsEstimateHasErrors)
+                            }
                             className={classes.buttonStyles}
                             disabled={
-                                fetching || !claimAFacilityFormIsValid(formData)
+                                fetching ||
+                                !claimAFacilityFormIsValid(formData) ||
+                                freeEmissionsEstimateHasErrors
                             }
                         >
                             {fetching ? (
@@ -371,13 +378,22 @@ function ClaimFacilityStepper({
                     </div>
                 ) : null}
                 <Paper style={claimFacilityStepperStyles.paperStyles}>
-                    <ActiveStepComponent />
+                    {activeStepName ===
+                    facilityClaimStepsNames.ADDITIONAL_DATA ? (
+                        <ActiveStepComponent
+                            onValidationChange={
+                                setFreeEmissionsEstimateHasErrors
+                            }
+                        />
+                    ) : (
+                        <ActiveStepComponent />
+                    )}
                 </Paper>
             </div>
             {controlsSection}
         </div>
     );
-}
+};
 
 ClaimFacilityStepper.defaultProps = {
     error: null,
@@ -394,30 +410,29 @@ ClaimFacilityStepper.propTypes = {
     error: arrayOf(string),
 };
 
-function mapStateToProps({
+const mapStateToProps = ({
     claimFacility: {
         claimData: { fetching, formData, error },
     },
-}) {
-    return {
-        fetching,
-        formData,
-        error,
-    };
-}
+}) => ({
+    fetching,
+    formData,
+    error,
+});
 
-function mapDispatchToProps(
+const mapDispatchToProps = (
     dispatch,
     {
         match: {
             params: { osID },
         },
     },
-) {
-    return {
-        submitClaimForm: () => dispatch(submitClaimAFacilityData(osID)),
-    };
-}
+) => ({
+    submitClaimForm: freeEmissionsEstimateHasErrors =>
+        dispatch(
+            submitClaimAFacilityData(osID, freeEmissionsEstimateHasErrors),
+        ),
+});
 
 export default connect(
     mapStateToProps,

@@ -1,13 +1,15 @@
 import os
+from datetime import date
 
 from rest_framework import serializers
 from django.core.validators import URLValidator
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
-from ...exceptions import BadRequestException
+from api.exceptions import BadRequestException
 
 from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
+from api.constants import JS_MAX_SAFE_INTEGER
 from api.helpers.helpers import validate_workers_count
 from api.serializers.facility.utils import add_http_prefix_to_url
 from oar.settings import (
@@ -63,6 +65,28 @@ def validate_files(files):
     return files
 
 
+def validate_date_not_future(value):
+    '''Validate that a date is not in the future.'''
+    if value and value > date.today():
+        raise DRFValidationError(
+            'Please enter a valid date (not in the future).'
+        )
+    return value
+
+
+def validate_date_range(opening_date, closing_date):
+    '''Validate that opening date is before or equal to closing date.'''
+    if opening_date and closing_date and opening_date > closing_date:
+        raise DRFValidationError({
+            'opening_date': (
+                'Opening date must be before or equal to closing date.'
+            ),
+            'closing_date': (
+                'Closing date must be after or equal to opening date.'
+            )
+        })
+
+
 class FacilityCreateClaimSerializer(serializers.Serializer):
     your_name = serializers.CharField(
         max_length=255,
@@ -107,6 +131,65 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         validators=[validate_files]
     )
 
+    opening_date = serializers.DateField(
+        required=False,
+        validators=[validate_date_not_future]
+    )
+    closing_date = serializers.DateField(
+        required=False,
+        validators=[validate_date_not_future]
+    )
+    estimated_annual_throughput = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_coal = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_natural_gas = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_diesel = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_kerosene = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_biomass = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_charcoal = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_animal_waste = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_electricity = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+    energy_other = serializers.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=JS_MAX_SAFE_INTEGER
+    )
+
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)
 
@@ -135,5 +218,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
             raise BadRequestException(
                 "There is already an approved claim on this facility."
             )
+
+        # Validate date relationships for free missions estimate.
+        validate_date_range(
+            data.get('opening_date'),
+            data.get('closing_date')
+        )
 
         return data

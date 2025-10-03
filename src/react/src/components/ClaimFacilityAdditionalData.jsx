@@ -32,6 +32,7 @@ import {
 import { claimAFacilityAdditionalDataFormFields } from '../util/constants';
 import InputSection from '../components/InputSection';
 import InputErrorText from '../components/Contribute/InputErrorText';
+import FreeEmissionsEstimate from './FreeEmissionsEstimate/FreeEmissionsEstimate.jsx';
 
 const {
     sectorsForm,
@@ -47,7 +48,7 @@ const mergedStyles = {
     ...claimedFacilitiesDetailsStyles(),
 };
 
-function ClaimFacilityAdditionalData({
+const ClaimFacilityAdditionalData = ({
     sectors,
     updateSectors,
     numberOfWorkers,
@@ -57,8 +58,9 @@ function ClaimFacilityAdditionalData({
     sectorOptions,
     fetchSectors,
     fetching,
+    onValidationChange,
     classes,
-}) {
+}) => {
     useEffect(() => {
         if (!sectorOptions) {
             fetchSectors();
@@ -156,9 +158,10 @@ function ClaimFacilityAdditionalData({
                     disabled={fetching}
                 />
             </div>
+            <FreeEmissionsEstimate onValidationChange={onValidationChange} />
         </>
     );
-}
+};
 
 ClaimFacilityAdditionalData.defaultProps = {
     sectors: [],
@@ -175,6 +178,7 @@ ClaimFacilityAdditionalData.propTypes = {
     fetchSectors: func.isRequired,
     fetching: bool.isRequired,
     classes: object.isRequired,
+    onValidationChange: func.isRequired,
 };
 
 function mapStateToProps({
