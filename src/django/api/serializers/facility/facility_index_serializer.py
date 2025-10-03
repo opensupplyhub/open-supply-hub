@@ -79,6 +79,23 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if exclude_fields:
             for field_name in exclude_fields:
                 self.fields.pop(field_name, None)
+    
+    @staticmethod
+    def __sort_order(item, date_field_to_sort):
+        return (
+            item.get('verified_count', 0),
+            item.get('is_from_claim', False),
+            item.get('value_count', 1),
+            item.get(date_field_to_sort, None)
+        )
+    
+    @staticmethod
+    def __sort_order_excluding_date(item):
+        return (
+            item.get('verified_count', 0),
+            item.get('is_from_claim', False),
+            item.get('value_count', 1)
+        )
 
     def get_location(self, facility):
         return facility.location
@@ -238,14 +255,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         grouped_data = defaultdict(list)
 
-        def sort_order(k):
-            return (k.get('verified_count', 0), k.get('is_from_claim', False),
-                    k.get('value_count', 1), k.get(date_field_to_sort, None))
-
-        def sort_order_excluding_date(k):
-            return (k.get('verified_count', 0), k.get('is_from_claim', False),
-                    k.get('value_count', 1))
-
         exclude_fields = []
         if not use_main_created_at:
             exclude_fields.append('created_at')
@@ -277,7 +286,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 name_obj.get('updated_at'),
                                 user_can_see_detail))
                 data = sorted(unsorted_data,
-                              key=sort_order_excluding_date,
+                              key=self.__sort_order_excluding_date,
                               reverse=True)
             elif field_name == ExtendedField.ADDRESS and not embed_mode_active:
                 unsorted_data = serializer.data
@@ -295,10 +304,14 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 address_obj.get('updated_at'),
                                 user_can_see_detail))
                 data = sorted(unsorted_data,
-                              key=sort_order_excluding_date,
+                              key=self.__sort_order_excluding_date,
                               reverse=True)
             else:
-                data = sorted(serializer.data, key=sort_order, reverse=True)
+                data = sorted(
+                    serializer.data,
+                    key=lambda k: self.__sort_order(k, date_field_to_sort),
+                    reverse=True
+                )
 
             grouped_data[field_name] = data
 
@@ -333,10 +346,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         grouped_data = defaultdict(list)
 
-        def sort_order(k):
-            return (k.get('verified_count', 0), k.get('is_from_claim', False),
-                    k.get('value_count', 1), k.get(date_field_to_sort, None))
-
         exclude_fields = []
         if not use_main_created_at:
             exclude_fields.append('created_at')
@@ -356,7 +365,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 exclude_fields=exclude_fields
             )
 
-            data = sorted(serializer.data, key=sort_order, reverse=True)
+            data = sorted(
+                serializer.data,
+                key=lambda k: self.__sort_order(k, date_field_to_sort),
+                reverse=True
+            )
 
             grouped_data[field_name] = data
 
