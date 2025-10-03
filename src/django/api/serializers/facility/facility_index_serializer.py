@@ -14,6 +14,7 @@ from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
 from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
+from ...models.partner_field import PartnerField
 from ...models.nonstandard_field import NonstandardField
 from ...helpers.helpers import parse_raw_data, get_csv_values
 from ..utils import is_embed_mode_active
@@ -48,6 +49,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     address = SerializerMethodField()
     has_approved_claim = SerializerMethodField()
     sector = SerializerMethodField()
+    partner_fields = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -66,6 +68,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             'contributor_fields',
             'extended_fields',
             'sector',
+            'partner_fields',
         )
         geo_field = 'location'
 
@@ -296,6 +299,64 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                               reverse=True)
             else:
                 data = sorted(serializer.data, key=sort_order, reverse=True)
+
+            grouped_data[field_name] = data
+
+        return grouped_data
+
+    def get_partner_fields(self, facility):
+        request = self.context.get('request') \
+            if self.context is not None else None
+
+        use_main_created_at = is_created_at_main_date(self)
+        date_field_to_sort = (
+            'created_at' if use_main_created_at else 'updated_at'
+        )
+
+        embed = request.query_params.get('embed') \
+            if request is not None else None
+        contributor_id = request.query_params.get('contributor', None) \
+            if request is not None and embed == '1' else None
+        if contributor_id is None and request is not None and embed == '1':
+            contributor_ids = request.query_params.getlist('contributors', [])
+            if len(contributor_ids):
+                contributor_id = contributor_ids[0]
+
+        fields = facility.extended_fields
+        if contributor_id is not None:
+            fields = get_efs_associated_with_contributor(
+                int(contributor_id),
+                facility.extended_fields)
+
+        user_can_see_detail = can_user_see_detail(self)
+        embed_mode_active = is_embed_mode_active(self)
+
+        grouped_data = defaultdict(list)
+
+        def sort_order(k):
+            return (k.get('verified_count', 0), k.get('is_from_claim', False),
+                    k.get('value_count', 1), k.get(date_field_to_sort, None))
+
+        exclude_fields = []
+        if not use_main_created_at:
+            exclude_fields.append('created_at')
+
+        field_names = list(
+            PartnerField.objects.values_list("name", flat=True)
+        )
+
+        for field_name in field_names:
+            filtered_fields = list(filter(
+                lambda field: field_name == field.get('field_name'), fields
+            ))
+            serializer = FacilityIndexExtendedFieldListSerializer(
+                filtered_fields,
+                context={'user_can_see_detail': user_can_see_detail,
+                         'embed_mode_active': embed_mode_active},
+                exclude_fields=exclude_fields
+            )
+
+            data = sorted(serializer.data, key=sort_order, reverse=True)
 
             grouped_data[field_name] = data
 
