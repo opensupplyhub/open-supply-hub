@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.14.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 18, 2025
+
+### What's new
+* [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.13.0
 
 ## Introduction

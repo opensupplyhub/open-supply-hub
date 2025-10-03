@@ -327,7 +327,7 @@ const ClaimFacilityStepper = ({
                                 href="/claimed"
                                 className={classes.popupButtonStyles}
                             >
-                                View My Claims
+                                View My Approved Claims
                             </Button>
                             <Button
                                 variant="contained"
