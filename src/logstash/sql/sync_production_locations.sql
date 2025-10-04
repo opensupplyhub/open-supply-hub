@@ -748,4 +748,4 @@ WHERE
     )
   ) < CURRENT_TIMESTAMP
 ORDER BY
-  af.updated_at ASC
+  updated_at ASC
