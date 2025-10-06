@@ -219,7 +219,7 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
                 "There is already an approved claim on this facility."
             )
 
-        # Validate date relationships for free missions estimate.
+        # Validate date relationships for free emissions estimate.
         validate_date_range(
             data.get('opening_date'),
             data.get('closing_date')

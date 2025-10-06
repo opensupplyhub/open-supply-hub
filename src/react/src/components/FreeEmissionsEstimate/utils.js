@@ -68,7 +68,7 @@ const createEnergyFieldValidation = enabledField =>
             ),
     });
 
-// Free missions estimate Yup validation schema.
+// Free emissions estimate Yup validation schema.
 const freeEmissionsEstimateValidationSchema = objectYup({
     openingDate: baseDateValidation.test(
         'opening-before-closing',
