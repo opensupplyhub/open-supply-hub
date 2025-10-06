@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.14.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 18, 2025
+
+### What's new
+* [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.13.0
 
 ## Introduction
@@ -20,6 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Enhanced `sync_databases.py` script (which synchronizes RBA and Production(OS Hub) databases) with improved resilience: implemented checkpoint-based progress saving after each chunk (default 1000 records) instead of only at the end of processing; added configurable connection refresh mechanism (default 15 hours) to prevent RDS Proxy 24-hour timeout during long-running syncs; implemented session-based processing with break-and-resume approach to safely refresh database connections without closing active cursors. 
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
