@@ -79,7 +79,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if exclude_fields:
             for field_name in exclude_fields:
                 self.fields.pop(field_name, None)
-    
+
     @staticmethod
     def __sort_order(item, date_field_to_sort):
         return (
@@ -88,7 +88,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             item.get('value_count', 1),
             item.get(date_field_to_sort, None)
         )
-    
+
     @staticmethod
     def __sort_order_excluding_date(item):
         return (
