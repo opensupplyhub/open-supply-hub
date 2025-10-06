@@ -9,7 +9,11 @@ import FacilityDetailsItem from './FacilityDetailsItem';
 import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
-import { formatAttribution, formatExtendedField } from '../util/util';
+import {
+    formatAttribution,
+    formatExtendedField,
+    formatPartnerFieldValue,
+} from '../util/util';
 
 import {
     EXTENDED_FIELD_TYPES,
@@ -133,6 +137,28 @@ const FacilityDetailsGeneralFields = ({
         );
     };
 
+    const renderPartnerField = ({ label, fieldName, formatValue }) => {
+        const values = get(data, `properties.partner_fields.${fieldName}`, []);
+
+        const formatField = item =>
+            formatExtendedField({ ...item, formatValue });
+
+        if (!values.length || !values[0]) return null;
+
+        const topValue = formatField(values[0]);
+
+        return (
+            <Grid item xs={12} md={6} key={`partner-${label}`}>
+                <FacilityDetailsItem
+                    {...topValue}
+                    label={label}
+                    additionalContent={values.slice(1).map(formatField)}
+                    embed={embed}
+                />
+            </Grid>
+        );
+    };
+
     const contributorFields = filter(
         get(data, 'properties.contributor_fields', null),
         field => field.value !== null,
@@ -167,14 +193,30 @@ const FacilityDetailsGeneralFields = ({
             field => !ADDITIONAL_IDENTIFIERS.includes(field.fieldName),
         );
 
+        const partnerFieldNames = Object.keys(
+            get(data, 'properties.partner_fields', {}),
+        );
+
+        const partnerFields = partnerFieldNames.map(fieldName => ({
+            fieldName,
+            label: fieldName
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase()),
+            formatValue: formatPartnerFieldValue,
+        }));
+
         return (
             <FeatureFlag
                 flag={SHOW_ADDITIONAL_IDENTIFIERS}
-                alternative={extendedFieldsWithoutAdditionalIdentifiers.map(
-                    renderExtendedField,
-                )}
+                alternative={[
+                    ...extendedFieldsWithoutAdditionalIdentifiers.map(
+                        renderExtendedField,
+                    ),
+                    ...partnerFields.map(renderPartnerField),
+                ]}
             >
                 {EXTENDED_FIELD_TYPES.map(renderExtendedField)}
+                {partnerFields.map(renderPartnerField)}
             </FeatureFlag>
         );
     };

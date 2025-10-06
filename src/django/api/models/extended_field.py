@@ -22,8 +22,6 @@ class ExtendedField(models.Model):
     DUNS_ID = 'duns_id'
     LEI_ID = 'lei_id'
     RBA_ID = 'rba_id'
-    ESTIMATED_EMISSIONS_ACTIVITY = 'estimated_emissions_activity'
-    ESTIMATED_ANNUAL_ENERGY_CONSUMPTION = 'estimated_annual_energy_consumption'
 
     FIELD_CHOICES = (
         (NAME, NAME),
@@ -37,15 +35,7 @@ class ExtendedField(models.Model):
         (PARENT_COMPANY_OS_ID, PARENT_COMPANY_OS_ID),
         (DUNS_ID, DUNS_ID),
         (LEI_ID, LEI_ID),
-        (RBA_ID, RBA_ID),
-        (
-            ESTIMATED_EMISSIONS_ACTIVITY,
-            ESTIMATED_EMISSIONS_ACTIVITY
-        ),
-        (
-            ESTIMATED_ANNUAL_ENERGY_CONSUMPTION,
-            ESTIMATED_ANNUAL_ENERGY_CONSUMPTION
-        )
+        (RBA_ID, RBA_ID)
     )
 
     uuid = models.UUIDField(

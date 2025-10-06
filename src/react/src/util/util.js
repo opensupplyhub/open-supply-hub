@@ -1761,3 +1761,16 @@ export const processDromoResults = (
         updateFileName(fileInput);
     }
 };
+
+export const formatPartnerFieldValue = value => {
+    if (value.raw_values !== undefined) {
+        if (Array.isArray(value.raw_values)) {
+            return value.raw_values;
+        }
+        return value.raw_values.toString().split('|');
+    }
+    if (value.raw_value !== undefined) {
+        return value.raw_value;
+    }
+    return value;
+};
