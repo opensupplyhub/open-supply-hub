@@ -7,16 +7,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: October 4, 2025
+* Release date: October 18, 2025
 
 ### Code/API changes
 * [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
+
+### What's new
+* [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
 * Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption`.
+
 
 ## Release 2.13.0
 
