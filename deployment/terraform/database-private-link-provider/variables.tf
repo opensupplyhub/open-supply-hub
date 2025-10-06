@@ -79,5 +79,5 @@ variable "db_proxy_debug_logging" {
 variable "idle_client_timeout" {
   description = "The number of seconds that a connection to the proxy can be inactive before the proxy disconnects it"
   type        = number
-  default     = 2100
+  default     = 21600
 }
