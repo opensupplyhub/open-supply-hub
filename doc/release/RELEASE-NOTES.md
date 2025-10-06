@@ -44,6 +44,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Enhanced `sync_databases.py` script (which synchronizes RBA and Production(OS Hub) databases) with improved resilience: implemented checkpoint-based progress saving after each chunk (default 1000 records) instead of only at the end of processing; added configurable connection refresh mechanism (default 15 hours) to prevent RDS Proxy 24-hour timeout during long-running syncs; implemented session-based processing with break-and-resume approach to safely refresh database connections without closing active cursors. 
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
