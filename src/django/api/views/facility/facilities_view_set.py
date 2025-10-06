@@ -866,7 +866,6 @@ class FacilitiesViewSet(ListModelMixin,
             contributor = request.user.contributor
             files = request.FILES.getlist('files')
 
-            print('request.data', request.data)
             serializer = FacilityCreateClaimSerializer(
                 data=request.data,
                 context={"facility": facility}

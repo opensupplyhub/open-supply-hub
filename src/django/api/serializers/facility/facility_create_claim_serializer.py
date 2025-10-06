@@ -65,7 +65,7 @@ def validate_files(files):
     return files
 
 
-def validate_date_not_future(value):
+def validate_non_future_date(value):
     '''Validate that a date is not in the future.'''
     if value and value > date.today():
         raise DRFValidationError(
@@ -133,11 +133,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
 
     opening_date = serializers.DateField(
         required=False,
-        validators=[validate_date_not_future]
+        validators=[validate_non_future_date]
     )
     closing_date = serializers.DateField(
         required=False,
-        validators=[validate_date_not_future]
+        validators=[validate_non_future_date]
     )
     estimated_annual_throughput = serializers.IntegerField(
         required=False,

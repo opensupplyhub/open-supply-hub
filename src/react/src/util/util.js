@@ -1775,42 +1775,34 @@ export const filterFreeEmissionsEstimateFields = formData => {
         estimatedAnnualThroughputField,
     } = freeEmissionsEstimateFormConfig;
 
-    // Get checkbox field names to exclude from submission.
-    const checkboxFieldNames = energySourcesData.map(
-        ({ enabledFieldName }) => enabledFieldName,
+    // Build checkbox names and value->enabled map in a single iteration.
+    const { checkboxFieldNames, valueToEnabled } = energySourcesData.reduce(
+        (acc, { enabledFieldName, valueFieldName }) => {
+            acc.checkboxFieldNames.add(enabledFieldName);
+            acc.valueToEnabled[valueFieldName] = enabledFieldName;
+            return acc;
+        },
+        { checkboxFieldNames: new Set(), valueToEnabled: {} },
     );
 
-    // Get energy value field names for filtering.
-    const energyFieldNames = energySourcesData.map(
-        ({ valueFieldName }) => valueFieldName,
-    );
-
-    // Get date and throughput field names.
-    const dateAndThroughputFieldNames = [
+    // Use Set for O(1) date and throughput field lookups.
+    const dateAndThroughputFieldNames = new Set([
         openingDateField.valueFieldName,
         closingDateField.valueFieldName,
         estimatedAnnualThroughputField.valueFieldName,
-    ];
+    ]);
 
     // Filter out checkbox fields, disabled energy fields, and empty date/throughput fields.
     return omitBy(formData, (value, key) => {
         // Remove all checkbox fields.
-        if (includes(checkboxFieldNames, key)) {
-            return true;
-        }
+        if (checkboxFieldNames.has(key)) return true;
 
         // Remove energy fields where checkbox is false.
-        if (includes(energyFieldNames, key)) {
-            const correspondingCheckbox = energySourcesData.find(
-                ({ valueFieldName }) => valueFieldName === key,
-            )?.enabledFieldName;
-
-            // Remove if checkbox is false.
-            return !formData[correspondingCheckbox];
-        }
+        const enabledFieldName = valueToEnabled[key];
+        if (enabledFieldName) return !formData[enabledFieldName];
 
         // Remove date and throughput fields if they are empty.
-        if (includes(dateAndThroughputFieldNames, key)) {
+        if (dateAndThroughputFieldNames.has(key)) {
             return isEmpty(value);
         }
 
