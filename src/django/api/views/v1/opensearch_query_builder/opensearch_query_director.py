@@ -35,8 +35,11 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.DATE_LT: 'range',
         }
 
-    def build_query(self, query_params, include_fields=[]):
+    def build_query(self, query_params, include_fields=None):
         self.__builder.reset()
+
+        if include_fields is None:
+            include_fields = []
 
         self.__process_template_fields(query_params)
         self.__process_sorting(query_params)
