@@ -664,6 +664,7 @@ SELECT
       afc3.facility_id = af.id
       AND afc3.opening_date IS NOT NULL
     ORDER BY
+      afc3.updated_at DESC,
       afc3.opening_date DESC NULLS LAST
     LIMIT
       1
@@ -677,6 +678,7 @@ SELECT
       afc3.facility_id = af.id
       AND afc3.closing_date IS NOT NULL
     ORDER BY
+      afc3.updated_at DESC,
       afc3.closing_date DESC NULLS LAST
     LIMIT 1
   ) AS closed_at_value,
