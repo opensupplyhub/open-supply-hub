@@ -941,8 +941,8 @@ class ProductionLocationsTest(BaseAPITest):
         if not keys.issubset(result.keys()):
             self.skipTest("Partner fields not provided by backend in this environment")
 
-        for k, v in partner_fields.items():
-            self.assertEqual(result[k], v)
+        for field_name, value in partner_fields.items():
+            self.assertEqual(result[field_name], value)
 
     def test_production_locations_list_omits_partner_fields(self):
         os_id = "ZZ2024PARTNER02"
