@@ -898,7 +898,7 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertNotIn("estimated_annual_throughput", item)
         self.assertNotIn("actual_annual_energy_consumption", item)
 
-    def test_production_location_retrieve_includes_partner_fiields_when_available(self):
+    def test_production_location_retrieve_includes_partner_fields_when_available(self):
         os_id = "ZZ2024PARTNER01"
         partner_fields = {
             "integer_partner_field": 1234,
