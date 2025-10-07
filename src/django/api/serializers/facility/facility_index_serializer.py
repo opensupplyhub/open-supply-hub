@@ -81,6 +81,12 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 self.fields.pop(field_name, None)
 
     @staticmethod
+    def __date_field_to_sort(use_main_created_at):
+        return (
+            'created_at' if use_main_created_at else 'updated_at'
+        )
+
+    @staticmethod
     def __sort_order(item, date_field_to_sort):
         return (
             item.get('verified_count', 0),
@@ -96,6 +102,31 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             item.get('is_from_claim', False),
             item.get('value_count', 1)
         )
+    
+    @staticmethod
+    def __filter_contributor_extended_fields(facility, request):
+        embed = request.query_params.get('embed') \
+            if request is not None else None
+        contributor_id = request.query_params.get('contributor', None) \
+            if request is not None and embed == '1' else None
+        if (contributor_id is None
+            and request is not None
+            and embed == '1'
+        ):
+            contributor_ids = request.query_params.getlist(
+                'contributors',
+                []
+            )
+            if len(contributor_ids):
+                contributor_id = contributor_ids[0]
+
+        fields = facility.extended_fields
+        if contributor_id is not None:
+            fields = get_efs_associated_with_contributor(
+                int(contributor_id),
+                facility.extended_fields)
+
+        return fields
 
     def get_location(self, facility):
         return facility.location
@@ -231,33 +262,19 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             if self.context is not None else None
 
         use_main_created_at = is_created_at_main_date(self)
-        date_field_to_sort = (
-            'created_at' if use_main_created_at else 'updated_at'
+        date_field_to_sort = self.__date_field_to_sort(
+            use_main_created_at
         )
 
-        embed = request.query_params.get('embed') \
-            if request is not None else None
-        contributor_id = request.query_params.get('contributor', None) \
-            if request is not None and embed == '1' else None
-        if contributor_id is None and request is not None and embed == '1':
-            contributor_ids = request.query_params.getlist('contributors', [])
-            if len(contributor_ids):
-                contributor_id = contributor_ids[0]
-
-        fields = facility.extended_fields
-        if contributor_id is not None:
-            fields = get_efs_associated_with_contributor(
-                int(contributor_id),
-                facility.extended_fields)
+        fields = self.__filter_contributor_extended_fields(
+            facility,
+            request
+        )
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
 
         grouped_data = defaultdict(list)
-
-        exclude_fields = []
-        if not use_main_created_at:
-            exclude_fields.append('created_at')
 
         for field_name, _ in ExtendedField.FIELD_CHOICES:
             filtered_fields = list(filter(
@@ -267,7 +284,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 filtered_fields,
                 context={'user_can_see_detail': user_can_see_detail,
                          'embed_mode_active': embed_mode_active},
-                exclude_fields=exclude_fields
+                exclude_fields=(
+                    ['created_at'] if not use_main_created_at else []
+                )
             )
 
             if field_name == ExtendedField.NAME and not embed_mode_active:
@@ -322,33 +341,19 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             if self.context is not None else None
 
         use_main_created_at = is_created_at_main_date(self)
-        date_field_to_sort = (
-            'created_at' if use_main_created_at else 'updated_at'
+        date_field_to_sort = self.__date_field_to_sort(
+            use_main_created_at
         )
 
-        embed = request.query_params.get('embed') \
-            if request is not None else None
-        contributor_id = request.query_params.get('contributor', None) \
-            if request is not None and embed == '1' else None
-        if contributor_id is None and request is not None and embed == '1':
-            contributor_ids = request.query_params.getlist('contributors', [])
-            if len(contributor_ids):
-                contributor_id = contributor_ids[0]
-
-        fields = facility.extended_fields
-        if contributor_id is not None:
-            fields = get_efs_associated_with_contributor(
-                int(contributor_id),
-                facility.extended_fields)
+        fields = self.__filter_contributor_extended_fields(
+            facility,
+            request
+        )
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
 
         grouped_data = defaultdict(list)
-
-        exclude_fields = []
-        if not use_main_created_at:
-            exclude_fields.append('created_at')
 
         field_names = list(
             PartnerField.objects.values_list("name", flat=True)
@@ -362,7 +367,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 filtered_fields,
                 context={'user_can_see_detail': user_can_see_detail,
                          'embed_mode_active': embed_mode_active},
-                exclude_fields=exclude_fields
+                exclude_fields=(
+                    ['created_at'] if not use_main_created_at else []
+                )
             )
 
             data = sorted(
