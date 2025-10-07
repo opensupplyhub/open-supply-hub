@@ -3,7 +3,7 @@ require 'json'
 def filter(event)
     actual_annual_energy_consumption_value = event.get('actual_annual_energy_consumption_value')
 
-    # First, attempt to build from discrete energy_* fields if present
+    # First, attempt to build from discrete energy_* fields if present.
     energy_sources = [
       ['Coal', 'energy_coal_value'],
       ['Natural gas', 'energy_natural_gas_value'],
@@ -19,7 +19,7 @@ def filter(event)
     energy_sources.each do |source_name, field_key|
       value = event.get(field_key)
       if !value.nil?
-        # Ensure value is numeric; JSON serializer will handle integers
+        # Ensure value is numeric; JSON serializer will handle integers.
         built_array << { 'source' => source_name, 'amount' => value }
       end
     end
@@ -37,7 +37,7 @@ def filter(event)
             event.set('actual_annual_energy_consumption', parsed_value)
           end
         rescue JSON::ParserError
-          # Skip if JSON parsing fails
+          # Skip if JSON parsing fails.
         end
       end
     end
