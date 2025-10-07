@@ -354,7 +354,6 @@ class ProductionLocationsTest(BaseAPITest):
             expected_lei_id
         )
 
-
     def test_production_locations_claim_status_filtering(self):
         claimed_doc = {
             "sector": ["Apparel"],
