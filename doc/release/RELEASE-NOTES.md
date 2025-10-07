@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
 * [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
+* [OSDEV-2180](https://opensupplyhub.atlassian.net/browse/OSDEV-2180) - Introduced logic to return `partner_fields` for both `GET /facilities/{os_id}` and `GET /facilities/` endpoints. Also implemented dynamic rendering of any `partner_fields` returned by the API, ensuring that new fields are displayed automatically without additional actions in `Production Location Profile` page.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
