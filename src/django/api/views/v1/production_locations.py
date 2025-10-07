@@ -158,7 +158,7 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        partner_extended_fields = self.__check_partner_fields(pk)
+        partner_extended_fields = self.__get_partner_fields(pk)
         locations[0].update(partner_extended_fields)
 
         return Response(locations[0])
@@ -277,7 +277,7 @@ class ProductionLocations(ViewSet):
             status=result.status_code
         )
 
-    def __check_partner_fields(self, pk):
+    def __get_partner_fields(self, pk):
         """
         Checks and returns partner extended fields for a
         facility object by its ID.

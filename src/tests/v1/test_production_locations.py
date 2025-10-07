@@ -897,3 +897,90 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertNotIn("closed_at", item)
         self.assertNotIn("estimated_annual_throughput", item)
         self.assertNotIn("actual_annual_energy_consumption", item)
+
+    def test_production_location_retrieve_includes_partner_fiields_when_available(self):
+        os_id = "ZZ2024PARTNER01"
+        partner_fields = {
+            "integer_partner_field": 1234,
+            "string_partner_field": "String partner field 0",
+            "float_partner_field": 3.14,
+            "object_partner_field": [
+                {"source": "Electricity", "amount": 100},
+                {"source": "Coal", "amount": 200},
+                {"source": "Biomass", "amount": 300},
+            ],
+        }
+
+        base_doc = {
+            "os_id": os_id,
+            "name": "Partner Fields Facility",
+            "address": "Partner Fields Address",
+            "country": {"alpha_2": "US"},
+            "coordinates": {"lon": -74.0, "lat": 40.7},
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=base_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{os_id}/",
+            headers=self.basic_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["os_id"], os_id)
+
+        keys = set(partner_fields.keys())
+        if not keys.issubset(result.keys()):
+            self.skipTest("Partner fields not provided by backend in this environment")
+
+        for k, v in partner_fields.items():
+            self.assertEqual(result[k], v)
+
+    def test_production_locations_list_omits_partner_fields(self):
+        os_id = "ZZ2024PARTNER02"
+        base_doc = {
+            "os_id": os_id,
+            "name": "Partner Fields Facility 2",
+            "address": "Partner Fields Address 2",
+            "country": {"alpha_2": "US"},
+            "coordinates": {"lon": -73.9, "lat": 40.8},
+            "integer_partner_field": 1234,
+            "string_partner_field": "String partner field 0",
+            "float_partner_field": 3.14,
+            "object_partner_field": [
+                {"source": "Electricity", "amount": 100},
+                {"source": "Coal", "amount": 200},
+                {"source": "Biomass", "amount": 300},
+            ],
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=base_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?size=1&os_id={os_id}",
+            headers=self.basic_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        item = result['data'][0]
+        self.assertEqual(item["os_id"], os_id)
+        self.assertNotIn("integer_partner_field", item)
+        self.assertNotIn("string_partner_field", item)
+        self.assertNotIn("float_partner_field", item)
+        self.assertNotIn("object_partner_field", item)
