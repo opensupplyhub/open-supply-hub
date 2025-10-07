@@ -1,5 +1,16 @@
 require 'json'
 
+ENERGY_SOURCES = [
+  ['Coal', 'energy_coal_value'],
+  ['Natural gas', 'energy_natural_gas_value'],
+  ['Diesel', 'energy_diesel_value'],
+  ['Kerosene', 'energy_kerosene_value'],
+  ['Biomass', 'energy_biomass_value'],
+  ['Charcoal', 'energy_charcoal_value'],
+  ['Animal waste', 'energy_animal_waste_value'],
+  ['Electricity', 'energy_electricity_value']
+]
+
 def parse_numeric_value(value, field_key)
   return value.to_f if value.is_a?(Numeric)
   return nil unless value.is_a?(String)
@@ -34,76 +45,66 @@ def log_invalid_value(field_key, value)
   )
 end
 
-def filter(event)
-    actual_annual_energy_consumption_value = event.get('actual_annual_energy_consumption_value')
+def build_from_discrete(event)
+  built_array = []
+  ENERGY_SOURCES.each do |source_name, field_key|
+    value = event.get(field_key)
+    next if value.nil?
 
-    # First, attempt to build from discrete energy_* fields if present.
-    energy_sources = [
-      ['Coal', 'energy_coal_value'],
-      ['Natural gas', 'energy_natural_gas_value'],
-      ['Diesel', 'energy_diesel_value'],
-      ['Kerosene', 'energy_kerosene_value'],
-      ['Biomass', 'energy_biomass_value'],
-      ['Charcoal', 'energy_charcoal_value'],
-      ['Animal waste', 'energy_animal_waste_value'],
-      ['Electricity', 'energy_electricity_value']
-    ]
-
-    built_array = []
-    energy_sources.each do |source_name, field_key|
-      value = event.get(field_key)
-      next if value.nil?
-
-      numeric_amount = parse_numeric_value(value, field_key)
-
-      if numeric_amount.nil?
-        # Log non-numeric, non-string values for visibility.
-        log_invalid_value(field_key, value) unless value.is_a?(Numeric) || value.is_a?(String)
-        next
-      end
-
-      built_array << { 'source' => source_name, 'amount' => numeric_amount }
+    numeric_amount = parse_numeric_value(value, field_key)
+    if numeric_amount.nil?
+      # Log non-numeric, non-string values for visibility.
+      log_invalid_value(field_key, value) unless value.is_a?(Numeric) || value.is_a?(String)
+      next
     end
 
+    built_array << { 'source' => source_name, 'amount' => numeric_amount }
+  end
+  built_array
+end
+
+def coerce_aec_array(items)
+  return [] unless items.is_a?(Array)
+  items.map do |item|
+    next nil unless item.is_a?(Hash)
+    amount = parse_numeric_value(item['amount'], 'fallback_amount')
+    source = item['source']
+    next nil if amount.nil? || source.nil?
+    { 'source' => source, 'amount' => amount }
+  end.compact
+end
+
+def set_from_fallback(event, fallback)
+  return if fallback.nil?
+
+  if fallback.is_a?(Array)
+    event.set('actual_annual_energy_consumption', coerce_aec_array(fallback))
+    return
+  end
+
+  if fallback.is_a?(String)
+    begin
+      parsed_value = JSON.parse(fallback)
+      if parsed_value.is_a?(Array)
+        event.set('actual_annual_energy_consumption', coerce_aec_array(parsed_value))
+      end
+    rescue JSON::ParserError
+      # Skip if JSON parsing fails.
+    end
+  end
+end
+
+def filter(event)
+    fallback_value = event.get('actual_annual_energy_consumption_value')
+
+    built_array = build_from_discrete(event)
     if built_array.any?
       event.set('actual_annual_energy_consumption', built_array)
-    elsif !actual_annual_energy_consumption_value.nil?
-      # Fallback to existing array/string field from SQL. If array, optionally coerce amounts.
-      if actual_annual_energy_consumption_value.is_a?(Array)
-        coerced = actual_annual_energy_consumption_value.map do |item|
-          if item.is_a?(Hash)
-            amount = parse_numeric_value(item['amount'], 'fallback_amount')
-            source = item['source']
-            next nil if amount.nil? || source.nil?
-            { 'source' => source, 'amount' => amount }
-          else
-            nil
-          end
-        end.compact
-        event.set('actual_annual_energy_consumption', coerced)
-      elsif actual_annual_energy_consumption_value.is_a?(String)
-        begin
-          parsed_value = JSON.parse(actual_annual_energy_consumption_value)
-          if parsed_value.is_a?(Array)
-            coerced = parsed_value.map do |item|
-              if item.is_a?(Hash)
-                amount = parse_numeric_value(item['amount'], 'fallback_amount')
-                source = item['source']
-                next nil if amount.nil? || source.nil?
-                { 'source' => source, 'amount' => amount }
-              else
-                nil
-              end
-            end.compact
-            event.set('actual_annual_energy_consumption', coerced)
-          end
-        rescue JSON::ParserError
-          # Skip if JSON parsing fails.
-        end
-      end
+    else
+      set_from_fallback(event, fallback_value)
     end
 
-  return [event]
+    return [event]
 end
 
 test 'actual_annual_energy_consumption filter with nil value and no discrete fields' do
