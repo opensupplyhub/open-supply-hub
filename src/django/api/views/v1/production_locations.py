@@ -159,10 +159,7 @@ class ProductionLocations(ViewSet):
             )
 
         partner_extended_fields = self.__check_partner_fields(pk)
-
-        if len(partner_extended_fields) > 0:
-            for partner_field in partner_extended_fields:
-                locations[0].update(partner_field)
+        locations[0].update(partner_extended_fields)
 
         return Response(locations[0])
 
@@ -281,37 +278,49 @@ class ProductionLocations(ViewSet):
         )
 
     def __check_partner_fields(self, pk):
+        """
+        Checks and returns partner extended fields for a
+        facility object by its ID.
+
+        Caches the list of partner field names for one hour.
+        Returns a dictionary of the form:
+            {
+                "field_name_1": [...],
+                "field_name_2": "some_value",
+                ...
+            }
+        """
         cache_key = 'partner_field_names'
         partner_field_names = cache.get(cache_key)
-        if partner_field_names is None:
-            if PartnerField.objects.exists():
-                partner_field_names = list(
-                    PartnerField.objects.values_list('name', flat=True)
-                )
-                cache.set(cache_key, partner_field_names, 60 * 60)
-            else:
-                partner_field_names = []
-                cache.set(cache_key, partner_field_names, 60 * 60)
 
-        partner_extended_fields = []
-        partner_field_values = []
-        if partner_field_names:
-            partner_field_values = ExtendedField.objects.filter(
-                facility__id=pk,
-                field_name__in=partner_field_names
-            ).values('field_name', 'value')
+        if partner_field_names is None:
+            partner_field_names = list(
+                PartnerField.objects.values_list('name', flat=True)
+            )
+            cache.set(cache_key, partner_field_names, 60 * 60)
+
+        if not partner_field_names:
+            return {}
+
+        partner_field_values = ExtendedField.objects.filter(
+            facility__id=pk,
+            field_name__in=partner_field_names
+        ).values('field_name', 'value')
+
+        partner_extended_fields = {}
 
         for field in partner_field_values:
             field_name = field['field_name']
             value = field['value']
 
-            raw_values = value.get('raw_values')
-            if isinstance(raw_values, (list, dict)):
-                partner_extended_fields.append({
-                    field_name: raw_values
-                })
+            if not isinstance(value, dict):
+                continue
+
+            if 'raw_values' in value and isinstance(
+                value['raw_values'], (list, dict)
+            ):
+                partner_extended_fields[field_name] = value['raw_values']
             elif 'raw_value' in value:
-                partner_extended_fields.append({
-                    field_name: value['raw_value']
-                })
+                partner_extended_fields[field_name] = value['raw_value']
+        print(partner_extended_fields)
         return partner_extended_fields
