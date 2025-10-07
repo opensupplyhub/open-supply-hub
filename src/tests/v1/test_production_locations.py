@@ -354,6 +354,7 @@ class ProductionLocationsTest(BaseAPITest):
             expected_lei_id
         )
 
+
     def test_production_locations_claim_status_filtering(self):
         claimed_doc = {
             "sector": ["Apparel"],
@@ -793,3 +794,107 @@ class ProductionLocationsTest(BaseAPITest):
             error['detail'],
             "The 'claimed_at_gt' must be less than or equal to 'claimed_at_lt'."
         )
+
+    def test_production_location_retrieve_includes_detail_fields(self):
+        os_id = "ZZ2024DETAILS01"
+        details_doc = {
+            "os_id": os_id,
+            "name": "Details Facility",
+            "address": "Details Address",
+            "country": {"alpha_2": "US"},
+            "coordinates": {"lon": -74.0, "lat": 40.7},
+            "opened_at": "2024-03-01T00:00:00.000Z",
+            "closed_at": "2025-09-01T00:00:00.000Z",
+            "estimated_annual_throughput": 122,
+            "actual_annual_energy_consumption": [
+                {"amount": 111, "source": "Coal"},
+                {"amount": 222, "source": "Natural gas"},
+                {"amount": 333, "source": "Diesel"},
+                {"amount": 444, "source": "Kerosene"},
+                {"amount": 555, "source": "Biomass"},
+                {"amount": 666, "source": "Charcoal"},
+                {"amount": 777, "source": "Animal waste"},
+                {"amount": 888, "source": "Electricity"}
+            ]
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=details_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{os_id}/",
+            headers=self.basic_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["os_id"], os_id)
+        self.assertEqual(result["opened_at"], "2024-03-01T00:00:00.000Z")
+        self.assertEqual(result["closed_at"], "2025-09-01T00:00:00.000Z")
+        self.assertEqual(result["estimated_annual_throughput"], 122)
+        self.assertEqual(
+            result["actual_annual_energy_consumption"],
+            [
+                {"amount": 111, "source": "Coal"},
+                {"amount": 222, "source": "Natural gas"},
+                {"amount": 333, "source": "Diesel"},
+                {"amount": 444, "source": "Kerosene"},
+                {"amount": 555, "source": "Biomass"},
+                {"amount": 666, "source": "Charcoal"},
+                {"amount": 777, "source": "Animal waste"},
+                {"amount": 888, "source": "Electricity"}
+            ]
+        )
+
+    def test_production_locations_list_omits_detail_fields(self):
+        os_id = "ZZ2024DETAILS02"
+        details_doc = {
+            "os_id": os_id,
+            "name": "Details Facility 2",
+            "address": "Details Address 2",
+            "country": {"alpha_2": "US"},
+            "coordinates": {"lon": -73.9, "lat": 40.8},
+            "opened_at": "2024-03-01T00:00:00.000Z",
+            "closed_at": "2025-09-01T00:00:00.000Z",
+            "estimated_annual_throughput": 122,
+            "actual_annual_energy_consumption": [
+                {"amount": 111, "source": "Coal"},
+                {"amount": 222, "source": "Natural gas"},
+                {"amount": 333, "source": "Diesel"},
+                {"amount": 444, "source": "Kerosene"},
+                {"amount": 555, "source": "Biomass"},
+                {"amount": 666, "source": "Charcoal"},
+                {"amount": 777, "source": "Animal waste"},
+                {"amount": 888, "source": "Electricity"}
+            ]
+        }
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=details_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?size=1&os_id={os_id}",
+            headers=self.basic_headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertGreaterEqual(len(result.get('data', [])), 1)
+        item = result['data'][0]
+        self.assertEqual(item["os_id"], os_id)
+        self.assertNotIn("opened_at", item)
+        self.assertNotIn("closed_at", item)
+        self.assertNotIn("estimated_annual_throughput", item)
+        self.assertNotIn("actual_annual_energy_consumption", item)
