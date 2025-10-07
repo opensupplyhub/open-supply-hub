@@ -272,6 +272,10 @@ class DatabaseSynchronizer:
             'circular_reference_updates': 0
         }
 
+        # Track session start time at the synchronizer level to properly
+        # handle connection refreshes across multiple models.
+        self.__session_start_time = None
+
         # Set up database connection.
         self.__setup_source_database_connection()
 
@@ -284,6 +288,8 @@ class DatabaseSynchronizer:
         logger.info(f'Dry run mode: {self.__dry_run}')
 
         start_time = timezone.now()
+        # Initialize session start time for connection refresh tracking.
+        self.__session_start_time = timezone.now()
 
         # Phase 1: Sync models along with avoiding circular dependencies
         # issues by skipping the fields that cause them.
@@ -360,7 +366,6 @@ class DatabaseSynchronizer:
             # Process records in sessions with connection refresh.
             last_processed_timestamp = None
             record_count = 0
-            session_start_time = timezone.now()
             continue_processing = True
 
             while continue_processing:
@@ -416,8 +421,10 @@ class DatabaseSynchronizer:
 
                             # Check if we need to refresh connections.
                             elapsed_time = (
-                                timezone.now() - session_start_time
+                                timezone.now() - self.__session_start_time
                             ).total_seconds()
+                            logger.info(f'Elapsed time of the current '
+                                        f'database session: {elapsed_time}.')
                             refresh_interval = \
                                 self.__connection_refresh_interval
                             if elapsed_time >= refresh_interval:
@@ -442,7 +449,7 @@ class DatabaseSynchronizer:
                     # Refresh connections and continue with next session.
                     if not self.__dry_run:
                         self.__refresh_database_connections()
-                        session_start_time = timezone.now()
+                        self.__session_start_time = timezone.now()
                         logger.info(
                             f'Resuming from timestamp: '
                             f'{last_processed_timestamp}'
@@ -765,7 +772,6 @@ class DatabaseSynchronizer:
         cleared_count = 0
         errors_count = 0
         record_count = 0
-        session_start_time = timezone.now()
         last_processed_timestamp = None
         continue_processing = True
 
@@ -862,8 +868,10 @@ class DatabaseSynchronizer:
 
                             # Check if we need to refresh connections.
                             elapsed_time = (
-                                timezone.now() - session_start_time
+                                timezone.now() - self.__session_start_time
                             ).total_seconds()
+                            logger.info(f'Elapsed time of the current '
+                                        f'database session: {elapsed_time}.')
                             refresh_interval = \
                                 self.__connection_refresh_interval
                             if elapsed_time >= refresh_interval:
@@ -890,7 +898,7 @@ class DatabaseSynchronizer:
                     # Refresh connections and continue with next session.
                     if not self.__dry_run:
                         self.__refresh_database_connections()
-                        session_start_time = timezone.now()
+                        self.__session_start_time = timezone.now()
                         logger.info(
                             f'Resuming facility updates from timestamp: '
                             f'{last_processed_timestamp}'

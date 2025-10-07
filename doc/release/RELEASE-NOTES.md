@@ -17,6 +17,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
 
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Fixed database connection timeout in the Django `sync_databases` command by implementing global session time tracking. Previously, session time was reset when switching between models, causing the connection to exceed the 24-hour RDS Proxy timeout. Now session time persists across all models and only resets after actual connection refreshes.
+
 ### What's new
 * [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
 * [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
