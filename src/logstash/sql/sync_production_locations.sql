@@ -641,168 +641,159 @@ SELECT
     WHERE
       afa.facility_id = af.id
   ) AS historical_os_id_value,
-  GREATEST(
-    af.updated_at,
-    COALESCE(
-      (
-        SELECT MAX(c.updated_at)
-        FROM api_facilityclaim c
-        WHERE c.facility_id = af.id
-      ),
-      af.updated_at
-    )
-  ) AS updated_at,
+  af.updated_at,
   (
     SELECT
-      afc2.updated_at
+      afc3.updated_at
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
+      afc3.facility_id = af.id
+    AND afc3.status IN ('APPROVED', 'PENDING')
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS claimed_at_value,
   (
     SELECT
-      afc2.opening_date
+      afc3.opening_date
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.opening_date IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.opening_date IS NOT NULL
     ORDER BY
-      afc2.opening_date DESC NULLS LAST
+      afc3.opening_date DESC NULLS LAST
     LIMIT
       1
   ) AS opened_at_value,
   (
     SELECT
-      afc2.closing_date
+      afc3.closing_date
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.closing_date IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.closing_date IS NOT NULL
     ORDER BY
-      afc2.closing_date DESC NULLS LAST
+      afc3.closing_date DESC NULLS LAST
     LIMIT 1
   ) AS closed_at_value,
   (
     SELECT
-      afc2.estimated_annual_throughput
+      afc3.estimated_annual_throughput
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.estimated_annual_throughput IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.estimated_annual_throughput IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS estimated_annual_throughput_value,
   (
     SELECT
-      afc2.energy_coal
+      afc3.energy_coal
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_coal IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_coal IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_coal_value,
   (
     SELECT
-      afc2.energy_natural_gas
+      afc3.energy_natural_gas
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_natural_gas IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_natural_gas IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_natural_gas_value,
   (
     SELECT
-      afc2.energy_diesel
+      afc3.energy_diesel
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_diesel IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_diesel IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_diesel_value,
   (
     SELECT
-      afc2.energy_kerosene
+      afc3.energy_kerosene
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_kerosene IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_kerosene IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_kerosene_value,
   (
     SELECT
-      afc2.energy_biomass
+      afc3.energy_biomass
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_biomass IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_biomass IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_biomass_value,
   (
     SELECT
-      afc2.energy_charcoal
+      afc3.energy_charcoal
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_charcoal IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_charcoal IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_charcoal_value,
   (
     SELECT
-      afc2.energy_animal_waste
+      afc3.energy_animal_waste
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_animal_waste IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_animal_waste IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_animal_waste_value,
   (
     SELECT
-      afc2.energy_electricity
+      afc3.energy_electricity
     FROM
-      api_facilityclaim afc2
+      api_facilityclaim afc3
     WHERE
-      afc2.facility_id = af.id
-      AND afc2.energy_electricity IS NOT NULL
+      afc3.facility_id = af.id
+      AND afc3.energy_electricity IS NOT NULL
     ORDER BY
-      afc2.updated_at DESC
+      afc3.updated_at DESC
     LIMIT
       1
   ) AS energy_electricity_value
@@ -811,27 +802,7 @@ FROM
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id
   AND afc.status = 'APPROVED'
 WHERE
-  GREATEST(
-    af.updated_at,
-    COALESCE(
-      (
-        SELECT MAX(c.updated_at)
-        FROM api_facilityclaim c
-        WHERE c.facility_id = af.id
-      ),
-      af.updated_at
-    )
-  ) > :sql_last_value
-  AND GREATEST(
-    af.updated_at,
-    COALESCE(
-      (
-        SELECT MAX(c.updated_at)
-        FROM api_facilityclaim c
-        WHERE c.facility_id = af.id
-      ),
-      af.updated_at
-    )
-  ) < CURRENT_TIMESTAMP
+  af.updated_at > :sql_last_value
+  AND af.updated_at < CURRENT_TIMESTAMP
 ORDER BY
-  updated_at ASC
+  af.updated_at ASC
