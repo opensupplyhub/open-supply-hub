@@ -1813,8 +1813,15 @@ export const filterFreeEmissionsEstimateFields = formData => {
 export const formatPartnerFieldValue = value => {
     if (value.raw_values !== undefined) {
         if (Array.isArray(value.raw_values)) {
-            return value.raw_values;
+            return value.raw_values.join(', ');
         }
+
+        if (typeof value.raw_values === 'object' && value.raw_values !== null) {
+            return Object.entries(value.raw_values)
+                .map(([key, val]) => `${key}: ${val}`)
+                .join(', ');
+        }
+
         return value.raw_values.toString().split('|');
     }
     if (value.raw_value !== undefined) {
