@@ -654,42 +654,39 @@ SELECT
   ) AS updated_at,
   (
     SELECT
-      afc3.updated_at
+      afc2.updated_at
     FROM
-      api_facilityclaim afc3
+      api_facilityclaim afc2
     WHERE
-      afc3.facility_id = af.id
-      AND afc3.status IN ('APPROVED', 'PENDING')
+      afc2.facility_id = af.id
     ORDER BY
-      afc3.updated_at DESC
+      afc2.updated_at DESC
     LIMIT
       1
   ) AS claimed_at_value,
   (
     SELECT
-      afc_sub.opened_at
+      afc2.opening_date
     FROM
-      api_facilityclaim afc_sub
+      api_facilityclaim afc2
     WHERE
-      afc_sub.facility_id = af.id
-      AND afc_sub.opened_at IS NOT NULL
-      AND afc_sub.status IN ('APPROVED','PENDING')
+      afc2.facility_id = af.id
+      AND afc2.opening_date IS NOT NULL
     ORDER BY
-      afc_sub.opened_at DESC NULLS LAST
+      afc2.opening_date DESC NULLS LAST
     LIMIT
       1
   ) AS opened_at_value,
   (
     SELECT
-      afc_sub.closed_at
+      afc2.closing_date
     FROM
-      api_facilityclaim afc_sub
+      api_facilityclaim afc2
     WHERE
-      afc_sub.facility_id = af.id
-      AND afc_sub.closed_at IS NOT NULL
-      AND afc_sub.status IN ('APPROVED','PENDING')
+      afc2.facility_id = af.id
+      AND afc2.closing_date IS NOT NULL
     ORDER BY
-      afc_sub.closed_at DESC NULLS LAST
+      afc2.closing_date DESC NULLS LAST
     LIMIT 1
   ) AS closed_at_value,
   (
@@ -700,7 +697,6 @@ SELECT
     WHERE
       afc2.facility_id = af.id
       AND afc2.estimated_annual_throughput IS NOT NULL
-      AND afc2.status IN ('APPROVED','PENDING')
     ORDER BY
       afc2.updated_at DESC
     LIMIT
@@ -708,18 +704,108 @@ SELECT
   ) AS estimated_annual_throughput_value,
   (
     SELECT
-      afc2.actual_annual_energy_consumption::text
+      afc2.energy_coal
     FROM
       api_facilityclaim afc2
     WHERE
       afc2.facility_id = af.id
-      AND afc2.actual_annual_energy_consumption IS NOT NULL
-      AND afc2.status IN ('APPROVED','PENDING')
+      AND afc2.energy_coal IS NOT NULL
     ORDER BY
       afc2.updated_at DESC
     LIMIT
       1
-  ) AS actual_annual_energy_consumption_value
+  ) AS energy_coal_value,
+  (
+    SELECT
+      afc2.energy_natural_gas
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_natural_gas IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_natural_gas_value,
+  (
+    SELECT
+      afc2.energy_diesel
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_diesel IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_diesel_value,
+  (
+    SELECT
+      afc2.energy_kerosene
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_kerosene IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_kerosene_value,
+  (
+    SELECT
+      afc2.energy_biomass
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_biomass IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_biomass_value,
+  (
+    SELECT
+      afc2.energy_charcoal
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_charcoal IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_charcoal_value,
+  (
+    SELECT
+      afc2.energy_animal_waste
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_animal_waste IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_animal_waste_value,
+  (
+    SELECT
+      afc2.energy_electricity
+    FROM
+      api_facilityclaim afc2
+    WHERE
+      afc2.facility_id = af.id
+      AND afc2.energy_electricity IS NOT NULL
+    ORDER BY
+      afc2.updated_at DESC
+    LIMIT
+      1
+  ) AS energy_electricity_value
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id

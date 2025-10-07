@@ -301,8 +301,6 @@ class ProductionLocations(ViewSet):
                 field_name__in=partner_field_names
             ).values('field_name', 'value')
 
-        print(partner_field_values)
-
         for field in partner_field_values:
             field_name = field['field_name']
             value = field['value']
