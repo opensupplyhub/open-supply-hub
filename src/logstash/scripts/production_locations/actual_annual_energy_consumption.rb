@@ -1,5 +1,39 @@
 require 'json'
 
+def parse_numeric_value(value, field_key)
+  return value.to_f if value.is_a?(Numeric)
+  return nil unless value.is_a?(String)
+
+  str = value.strip
+  return nil if str.empty?
+
+  begin
+    # Normalize common thousands separators and non-breaking spaces.
+    normalized = str.gsub(/[\u00A0,]/, '')
+    num = Float(normalized)
+    return nil unless num.finite?
+    num
+  rescue StandardError
+    if defined?(@logger) && @logger
+      @logger.warn(
+        "actual_annual_energy_consumption: skipping malformed string value",
+        field: field_key,
+        value: value
+      )
+    end
+    nil
+  end
+end
+
+def log_invalid_value(field_key, value)
+  return unless defined?(@logger) && @logger
+  @logger.warn(
+    "actual_annual_energy_consumption: skipping non-numeric value",
+    field: field_key,
+    value_class: value.class.to_s
+  )
+end
+
 def filter(event)
     actual_annual_energy_consumption_value = event.get('actual_annual_energy_consumption_value')
 
@@ -20,52 +54,48 @@ def filter(event)
       value = event.get(field_key)
       next if value.nil?
 
-      numeric_amount = nil
+      numeric_amount = parse_numeric_value(value, field_key)
 
-      if value.is_a?(Numeric)
-        numeric_amount = value.to_f
-      elsif value.is_a?(String)
-        str = value.strip
-        unless str.empty?
-          begin
-            normalized = str.gsub(',', '')
-            numeric_amount = Float(normalized)
-          rescue StandardError
-            if defined?(@logger) && @logger
-              @logger.warn(
-                "actual_annual_energy_consumption: skipping malformed string value",
-                field: field_key,
-                value: value
-              )
-            end
-          end
-        end
-      else
-        if defined?(@logger) && @logger
-          @logger.warn(
-            "actual_annual_energy_consumption: skipping non-numeric value",
-            field: field_key,
-            value_class: value.class.to_s
-          )
-        end
+      if numeric_amount.nil?
+        # Log non-numeric, non-string values for visibility.
+        log_invalid_value(field_key, value) unless value.is_a?(Numeric) || value.is_a?(String)
+        next
       end
 
-      if !numeric_amount.nil?
-        built_array << { 'source' => source_name, 'amount' => numeric_amount }
-      end
+      built_array << { 'source' => source_name, 'amount' => numeric_amount }
     end
 
     if built_array.any?
       event.set('actual_annual_energy_consumption', built_array)
     elsif !actual_annual_energy_consumption_value.nil?
-      # Fallback to existing array/string field from SQL.
+      # Fallback to existing array/string field from SQL. If array, optionally coerce amounts.
       if actual_annual_energy_consumption_value.is_a?(Array)
-        event.set('actual_annual_energy_consumption', actual_annual_energy_consumption_value)
+        coerced = actual_annual_energy_consumption_value.map do |item|
+          if item.is_a?(Hash)
+            amount = parse_numeric_value(item['amount'], 'fallback_amount')
+            source = item['source']
+            next nil if amount.nil? || source.nil?
+            { 'source' => source, 'amount' => amount }
+          else
+            nil
+          end
+        end.compact
+        event.set('actual_annual_energy_consumption', coerced)
       elsif actual_annual_energy_consumption_value.is_a?(String)
         begin
           parsed_value = JSON.parse(actual_annual_energy_consumption_value)
           if parsed_value.is_a?(Array)
-            event.set('actual_annual_energy_consumption', parsed_value)
+            coerced = parsed_value.map do |item|
+              if item.is_a?(Hash)
+                amount = parse_numeric_value(item['amount'], 'fallback_amount')
+                source = item['source']
+                next nil if amount.nil? || source.nil?
+                { 'source' => source, 'amount' => amount }
+              else
+                nil
+              end
+            end.compact
+            event.set('actual_annual_energy_consumption', coerced)
           end
         rescue JSON::ParserError
           # Skip if JSON parsing fails.
@@ -73,7 +103,7 @@ def filter(event)
       end
     end
 
-    return [event]
+  return [event]
 end
 
 test 'actual_annual_energy_consumption filter with nil value and no discrete fields' do
