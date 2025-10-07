@@ -12,7 +12,7 @@ ENERGY_SOURCES = [
 ]
 
 def parse_numeric_value(value, field_key)
-  return value.to_f if value.is_a?(Numeric)
+  return value.to_i if value.is_a?(Numeric)
   return nil unless value.is_a?(String)
 
   str = value.strip
@@ -21,13 +21,11 @@ def parse_numeric_value(value, field_key)
   begin
     # Normalize common thousands separators and non-breaking spaces.
     normalized = str.gsub(/[\u00A0,]/, '')
-    num = Float(normalized)
-    return nil unless num.finite?
-    num
+    Integer(normalized)
   rescue StandardError
     if defined?(@logger) && @logger
       @logger.warn(
-        "actual_annual_energy_consumption: skipping malformed string value",
+        "actual_annual_energy_consumption: skipping malformed non-integer value",
         field: field_key,
         value: value
       )
