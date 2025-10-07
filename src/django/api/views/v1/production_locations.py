@@ -322,5 +322,4 @@ class ProductionLocations(ViewSet):
                 partner_extended_fields[field_name] = value['raw_values']
             elif 'raw_value' in value:
                 partner_extended_fields[field_name] = value['raw_value']
-        print(partner_extended_fields)
         return partner_extended_fields
