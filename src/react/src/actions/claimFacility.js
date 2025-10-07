@@ -8,6 +8,7 @@ import {
     makeGetFacilityByOSIdURL,
     makeClaimFacilityAPIURL,
     claimAFacilityFormIsValid,
+    filterFreeEmissionsEstimateFields,
 } from '../util/util';
 
 export const startFetchClaimFacilityData = createAction(
@@ -112,7 +113,64 @@ export const updateClaimALocalLanguageName = createAction(
     'UPDATE_CLAIM_A_LOCAL_LANGUAGE_NAME',
 );
 
-export function submitClaimAFacilityData(osID) {
+// Free Emissions Estimate actions
+export const updateClaimOpeningDate = createAction('UPDATE_CLAIM_OPENING_DATE');
+export const updateClaimClosingDate = createAction('UPDATE_CLAIM_CLOSING_DATE');
+export const updateClaimEstimatedAnnualThroughput = createAction(
+    'UPDATE_CLAIM_ESTIMATED_ANNUAL_THROUGHPUT',
+);
+export const updateClaimEnergyCoal = createAction('UPDATE_CLAIM_ENERGY_COAL');
+export const updateClaimEnergyNaturalGas = createAction(
+    'UPDATE_CLAIM_ENERGY_NATURAL_GAS',
+);
+export const updateClaimEnergyDiesel = createAction(
+    'UPDATE_CLAIM_ENERGY_DIESEL',
+);
+export const updateClaimEnergyKerosene = createAction(
+    'UPDATE_CLAIM_ENERGY_KEROSENE',
+);
+export const updateClaimEnergyBiomass = createAction(
+    'UPDATE_CLAIM_ENERGY_BIOMASS',
+);
+export const updateClaimEnergyCharcoal = createAction(
+    'UPDATE_CLAIM_ENERGY_CHARCOAL',
+);
+export const updateClaimEnergyAnimalWaste = createAction(
+    'UPDATE_CLAIM_ENERGY_ANIMAL_WASTE',
+);
+export const updateClaimEnergyElectricity = createAction(
+    'UPDATE_CLAIM_ENERGY_ELECTRICITY',
+);
+export const updateClaimEnergyOther = createAction('UPDATE_CLAIM_ENERGY_OTHER');
+export const updateClaimEnergyCoalEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_COAL_ENABLED',
+);
+export const updateClaimEnergyNaturalGasEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_NATURAL_GAS_ENABLED',
+);
+export const updateClaimEnergyDieselEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_DIESEL_ENABLED',
+);
+export const updateClaimEnergyKeroseneEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_KEROSENE_ENABLED',
+);
+export const updateClaimEnergyBiomassEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_BIOMASS_ENABLED',
+);
+export const updateClaimEnergyCharcoalEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_CHARCOAL_ENABLED',
+);
+export const updateClaimEnergyAnimalWasteEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_ANIMAL_WASTE_ENABLED',
+);
+export const updateClaimEnergyElectricityEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_ELECTRICITY_ENABLED',
+);
+export const updateClaimEnergyOtherEnabled = createAction(
+    'UPDATE_CLAIM_ENERGY_OTHER_ENABLED',
+);
+
+export function submitClaimAFacilityData(osID, freeEmissionsEstimateHasErrors) {
     return (dispatch, getState) => {
         const {
             claimFacility: {
@@ -120,12 +178,18 @@ export function submitClaimAFacilityData(osID) {
             },
         } = getState();
 
-        if (!claimAFacilityFormIsValid(formData)) {
+        if (
+            !claimAFacilityFormIsValid(formData) ||
+            freeEmissionsEstimateHasErrors
+        ) {
             return null;
         }
 
+        // Filter Free Emissions Estimate fields based on checkbox states and empty values.
+        const filteredFormData = filterFreeEmissionsEstimateFields(formData);
+
         const postData = new FormData();
-        toPairs(formData).forEach(([key, value]) => {
+        toPairs(filteredFormData).forEach(([key, value]) => {
             const formattedKey = snakeCase(key);
             if (
                 formattedKey === 'upload_files' ||

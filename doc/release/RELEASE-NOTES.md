@@ -9,8 +9,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: October 18, 2025
 
+### Database changes
+
+#### Migrations
+* 0182_introduce_free_emissions_estimate_fields.py - This migration introduces new fields for emissions estimation including energy consumption by source (electricity, natural gas, diesel, coal, biomass, etc.), opening/closing dates, and estimated annual throughput to the `facilityclaim` and `historicalfacilityclaim` tables.
+
+### Code/API changes
+* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
+
 ### What's new
 * [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
+* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
