@@ -102,14 +102,15 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             item.get('is_from_claim', False),
             item.get('value_count', 1)
         )
-    
+
     @staticmethod
     def __filter_contributor_extended_fields(facility, request):
         embed = request.query_params.get('embed') \
             if request is not None else None
         contributor_id = request.query_params.get('contributor', None) \
             if request is not None and embed == '1' else None
-        if (contributor_id is None
+        if (
+            contributor_id is None
             and request is not None
             and embed == '1'
         ):
