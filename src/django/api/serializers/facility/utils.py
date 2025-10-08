@@ -1,7 +1,10 @@
 from typing import (Union)
 from itertools import groupby
 
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimStatuses,
+    FacilitiesQueryParams
+)
 from dateutil import parser
 from django.utils import timezone
 
@@ -348,36 +351,49 @@ def add_http_prefix_to_url(value: str) -> str:
     return value
 
 
-def is_same_contributor_for_queryset(queryset, request) -> bool:
-    contributor = getattr(request.user, 'contributor', None)
-    if not contributor:
+def is_same_contributor_from_url_param(request) -> bool:
+    """
+    Determines if the current contributor matches the contributors
+    passed in the query parameters to allow free list download.
+
+    Rules:
+    - If only one contributor (current user), return True.
+    - If multiple contributors and combiner == AND, return True
+    (but only if current user is included).
+    - Otherwise, return False due to filtering limitations.
+    """
+    current_contributor = getattr(request.user, 'contributor', None)
+    if not current_contributor:
         return False
-    current_user_contributor_id = contributor.id
 
-    facilities_without_contributor_count = queryset.exclude(
-        contributors_id__contains=[current_user_contributor_id]
-    ).exists()
+    contributors_from_url = [
+        int(contributor) for contributor in
+        request.query_params.getlist(
+            FacilitiesQueryParams.CONTRIBUTORS
+        )
+    ]
+    combine_contributors = request.query_params.get(
+        FacilitiesQueryParams.COMBINE_CONTRIBUTORS
+    )
 
-    if facilities_without_contributor_count:
-        return False
+    current_contributor_id = current_contributor.id
+    is_current_contributor = current_contributor_id in contributors_from_url
 
-    return queryset.exists()
+    def check_only_current_contributor() -> bool:
+        return (
+            len(contributors_from_url) == 1
+            and is_current_contributor
+        )
 
+    def check_current_contributor_and_combined() -> bool:
+        return (
+            len(contributors_from_url) > 0
+            and is_current_contributor
+            and combine_contributors == 'AND'
+        )
 
-def is_same_contributor_for_list(list, request) -> bool:
-    contributor = getattr(request.user, 'contributor', None)
-    if not contributor:
-        return False
-    current_user_contributor_id = contributor.id
-
-    found_any_facility = False
-    for facility in list:
-        found_any_facility = True
-        facility_contributor_ids = [
-            contributor.get('id') for contributor in facility.contributors
-            if contributor.get('id') is not None
-        ]
-        if current_user_contributor_id not in facility_contributor_ids:
-            return False
-
-    return found_any_facility
+    return (
+        check_only_current_contributor()
+        or
+        check_current_contributor_and_combined()
+    )

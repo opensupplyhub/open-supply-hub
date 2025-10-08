@@ -572,6 +572,7 @@ export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
+export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -1121,6 +1122,16 @@ export const EXTENDED_FIELD_TYPES = [
         label: 'Parent Company OS ID',
         fieldName: 'parent_company_os_id',
         formatValue: value => value.raw_values,
+    },
+    {
+        label: 'Estimated Emissions Activity',
+        fieldName: 'estimated_emissions_activity',
+        formatValue: value => value.raw_value,
+    },
+    {
+        label: 'Estimated Annual Energy Consumption',
+        fieldName: 'estimated_annual_energy_consumption',
+        formatValue: value => value.raw_value,
     },
 ];
 

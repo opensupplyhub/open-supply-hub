@@ -3,16 +3,94 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.14.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 18, 2025
+
+### Database changes
+
+#### Migrations
+* 0182_introduce_free_emissions_estimate_fields.py - This migration introduces new fields for emissions estimation including energy consumption by source (electricity, natural gas, diesel, coal, biomass, etc.), opening/closing dates, and estimated annual throughput to the `facilityclaim` and `historicalfacilityclaim` tables.
+
+### Code/API changes
+* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
+
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Fixed database connection timeout in the Django `sync_databases` command by implementing global session time tracking. Previously, session time was reset when switching between models, causing the connection to exceed the 24-hour RDS Proxy timeout. Now session time persists across all models and only resets after actual connection refreshes.
+
+### What's new
+* [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
+* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 2.13.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 4, 2025
+
+### Database changes
+
+#### Migrations
+* 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
+* 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
+
+### Code/API changes
+* [OSDEV-2179](https://opensupplyhub.atlassian.net/browse/OSDEV-2179) - Add `select_related()` to default `FacilityClaimViewSet` queryset to optimize foreign key lookups. Add `select_related()` to list method queryset to prevent separate queries for facility, contributor, and admin data.
+
+### Architecture/Environment changes
+* [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Enhanced `sync_databases.py` script (which synchronizes RBA and Production(OS Hub) databases) with improved resilience: implemented checkpoint-based progress saving after each chunk (default 1000 records) instead of only at the end of processing; added configurable connection refresh mechanism (default 15 hours) to prevent RDS Proxy 24-hour timeout during long-running syncs; implemented session-based processing with break-and-resume approach to safely refresh database connections without closing active cursors. 
+
+### What's new
+* [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
+* [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
+    * Added `unit` field to `PartnerField` model
+    * Added type validation for submitted partner fields
+    * Added `create_partner_extendedfields_for_single_item()` function for bulk partner field processing
+    * Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
+    * Integrated partner field creation into the moderation event approval workflow
+    * Added `label` field to `PartnerField` model
+    * Added functionality to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.12.0
 
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: September 20, 2025
 
+### Database changes
+
+#### Migrations
+* 0177_add_new_certifications.py - This migration introduces new certifications for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
+* 0178_add_partner_fields_to_contributor.py - This migration introduces a new table called `Partner Field`, enhanced `Contributor` model with `partner_fields` relationship `ManyToMany`.
+
 ### Code/API changes
 * [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
 * [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
 * [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
+* [OSDEV-2122](https://opensupplyhub.atlassian.net/browse/OSDEV-2122) - Enhanced PATCH `/api/v1/production-locations/{os_id}/` endpoint validation to enforce required field constraints when coordinates are provided. Implemented automatic backfill of missing required fields (name, address, country) from existing facility data when no required fields are provided in PATCH requests.
+
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Disabled the RBA synchronization script trigger via the `db_sync_enabled` Terraform variable due to the temporary unnecessity of synchronization.
+
+### What's new
+* [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
+* [OSDEV-2044](https://opensupplyhub.atlassian.net/browse/OSDEV-2044) - Added additional certifications to `Certifications/Standards/Regulations` on `Claim Profile`.
+* [OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Added permission system to control which partner data fields contributors can submit for `POST v1/production-locations/` & `PATCH v1/production-locations/{os_id}` endpoints. Created new `PartnerField` model for categorizing partner-specific fields. Enhanced `Contributor` model with `partner_fields` relationship.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -78,7 +156,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0176_introduce_enable_dromo_uploading_switch.py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
 
 ### Code/API changes
-* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters: 
+* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters:
     * `claim_status` - filter by the claim status (`claimed`, `unclaimed`, `pending`).
     * `claimed_at_gt` - starting date to filter by production location claim timestamp.
     * `claimed_at_lt` - ending date to filter by production location claim timestamp.
@@ -133,7 +211,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to the Open Supply Hub site. Both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don’t execute JavaScript) were enabled.
 
 ### Architecture/Environment changes
-* [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard. 
+* [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard.
 
 ### What's new
 * [OSDEV-1881](https://opensupplyhub.atlassian.net/browse/OSDEV-1881) - Implemented automated email notifications for registered users in three scenarios: when nearing the 5,000-record annual download limit, upon reaching that limit, and after exhausting all purchased downloads.

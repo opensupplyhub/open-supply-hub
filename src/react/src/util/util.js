@@ -84,6 +84,7 @@ import {
     API_V1_ERROR_REQUEST_SOURCE_ENUM,
     SLC_FORM_CONSTRAINTS,
 } from './constants';
+import { freeEmissionsEstimateFormConfig } from '../components/FreeEmissionsEstimate/constants';
 
 import renderUniqueListItems from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
@@ -1806,4 +1807,51 @@ export const processDromoResults = (
 
         updateFileName(fileInput);
     }
+};
+
+/**
+ * Filter Free Emissions Estimate fields for claim form submission.
+ * Removes checkbox fields, disabled energy fields, and empty date/throughput fields.
+ */
+export const filterFreeEmissionsEstimateFields = formData => {
+    const {
+        energySourcesData,
+        openingDateField,
+        closingDateField,
+        estimatedAnnualThroughputField,
+    } = freeEmissionsEstimateFormConfig;
+
+    // Build checkbox names and value->enabled map in a single iteration.
+    const { checkboxFieldNames, valueToEnabled } = energySourcesData.reduce(
+        (acc, { enabledFieldName, valueFieldName }) => {
+            acc.checkboxFieldNames.add(enabledFieldName);
+            acc.valueToEnabled[valueFieldName] = enabledFieldName;
+            return acc;
+        },
+        { checkboxFieldNames: new Set(), valueToEnabled: {} },
+    );
+
+    // Use Set for O(1) date and throughput field lookups.
+    const dateAndThroughputFieldNames = new Set([
+        openingDateField.valueFieldName,
+        closingDateField.valueFieldName,
+        estimatedAnnualThroughputField.valueFieldName,
+    ]);
+
+    // Filter out checkbox fields, disabled energy fields, and empty date/throughput fields.
+    return omitBy(formData, (value, key) => {
+        // Remove all checkbox fields.
+        if (checkboxFieldNames.has(key)) return true;
+
+        // Remove energy fields where checkbox is false.
+        const enabledFieldName = valueToEnabled[key];
+        if (enabledFieldName) return !formData[enabledFieldName];
+
+        // Remove date and throughput fields if they are empty.
+        if (dateAndThroughputFieldNames.has(key)) {
+            return isEmpty(value);
+        }
+
+        return false; // Keep all other fields.
+    });
 };

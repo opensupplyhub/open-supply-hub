@@ -121,6 +121,10 @@ class FacilityClaim(models.Model):
             Certifications.RESPONSIBLE_DOWN_STANDARD,
             Certifications.RESPONSIBLE_WOOL_STANDARD,
             Certifications.SAB8000,
+            Certifications.ABVTEX,
+            Certifications.EMPRESA_B,
+            Certifications.ORIGEM_SUSTENTAVEL,
+            Certifications.SELO_ABR,
         ]
     ]
 
@@ -411,6 +415,79 @@ class FacilityClaim(models.Model):
         help_text="The environment value where instance running"
     )
 
+    opening_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='opening date',
+        help_text='The opening date of the location for emissions estimation.'
+    )
+    closing_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='closing date',
+        help_text='The closing date of the location for emissions estimation.'
+    )
+    estimated_annual_throughput = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='estimated annual throughput',
+        help_text='The estimated annual throughput in kg/year.'
+    )
+    energy_coal = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy coal consumption',
+        help_text='Annual coal energy consumption in Joules.'
+    )
+    energy_natural_gas = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy natural gas consumption',
+        help_text='Annual natural gas energy consumption in Joules.'
+    )
+    energy_diesel = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy diesel consumption',
+        help_text='Annual diesel energy consumption in Joules.'
+    )
+    energy_kerosene = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy kerosene consumption',
+        help_text='Annual kerosene energy consumption in Joules.'
+    )
+    energy_biomass = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy biomass consumption',
+        help_text='Annual biomass energy consumption in Joules.'
+    )
+    energy_charcoal = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy charcoal consumption',
+        help_text='Annual charcoal energy consumption in Joules.'
+    )
+    energy_animal_waste = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy animal waste consumption',
+        help_text='Annual animal waste energy consumption in Joules.'
+    )
+    energy_electricity = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy electricity consumption',
+        help_text='Annual electricity consumption in MWh.'
+    )
+    energy_other = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='energy other consumption',
+        help_text='Annual other energy source consumption in Joules.'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -446,6 +523,18 @@ class FacilityClaim(models.Model):
         'parent_company',
         'sector',
         'facility_location',
+        'opening_date',
+        'closing_date',
+        'estimated_annual_throughput',
+        'energy_coal',
+        'energy_natural_gas',
+        'energy_diesel',
+        'energy_kerosene',
+        'energy_biomass',
+        'energy_charcoal',
+        'energy_animal_waste',
+        'energy_electricity',
+        'energy_other',
     )
 
     # A dictionary where the keys are field names and the values are predicate

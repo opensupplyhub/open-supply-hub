@@ -142,6 +142,10 @@ class Certifications:
     SAB8000 = 'SA8000'
     GREEN_BUTTON = 'Green Button'
     FAIRTRADE_USA = 'Fairtrade USA'
+    ABVTEX = 'ABVTEX'
+    EMPRESA_B = 'Empresa B'
+    ORIGEM_SUSTENTAVEL = 'Origem Sustentável'
+    SELO_ABR = 'Selo ABR'
 
 
 class LogDownloadQueryParams:
@@ -290,3 +294,7 @@ LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX = (
 )
 
 SINGLE_PAID_DOWNLOAD_RECORDS = 10000
+
+# JavaScript's MAX_SAFE_INTEGER (2^53 - 1).
+# Use this for frontend compatibility.
+JS_MAX_SAFE_INTEGER = 9007199254740991
