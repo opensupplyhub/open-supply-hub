@@ -661,7 +661,7 @@ SELECT
       api_facilityclaim afc3
     WHERE
       afc3.facility_id = af.id
-      AND afc3.status IN ('APPROVED', 'PENDING')
+    AND afc3.status IN ('APPROVED', 'PENDING')
     ORDER BY
       afc3.updated_at DESC
     LIMIT
