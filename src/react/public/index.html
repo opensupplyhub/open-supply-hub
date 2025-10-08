@@ -81,8 +81,8 @@
           window.ENVIRONMENT.ENVIRONMENT !== 'local') {
         var _rollbarConfig = {
           accessToken: window.ENVIRONMENT.REACT_APP_ROLLBAR_CLIENT_SIDE_ACCESS_TOKEN,
-          captureUncaught: false,           // Disable auto-capture - we'll handle it manually
-          captureUnhandledRejections: false, // Disable auto-capture - we'll handle it manually
+          captureUncaught: false,           // Disable auto-capture and handle them manually.
+          captureUnhandledRejections: false, // Disable auto-capture and handle them manually.
           captureIp: false,
           payload: {
             environment: window.ENVIRONMENT.ENVIRONMENT,

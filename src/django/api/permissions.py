@@ -45,7 +45,7 @@ class IsAuthenticatedOrWebClient(permissions.BasePermission):
                     'Unallowed referring host passed with API request',
                     extra_data={'host': host})
         else:
-            # OSDEV-1213 - ticket to fix this case
+            # OSDEV-1213 - ticket to fix this case.
             '''
             _report_warning_to_rollbar(
                 'Incorrect client key submitted with API request',

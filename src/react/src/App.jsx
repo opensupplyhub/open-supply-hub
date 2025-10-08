@@ -26,7 +26,7 @@ function App({
 }) {
     const contributorId = contributor?.value;
 
-    // Set up global error handlers to catch errors from third-party libraries
+    // Set up global error handlers to catch errors from third-party libraries.
     useGlobalErrorHandler(user);
 
     useEffect(() => {
