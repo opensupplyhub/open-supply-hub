@@ -1441,7 +1441,7 @@ const FILTERED_ERROR_MESSAGES = [
 ];
 
 const shouldFilterError = error => {
-    if (!error || !error.message) {
+    if (!error?.message) {
         return false;
     }
 
@@ -1459,11 +1459,11 @@ const shouldFilterError = error => {
         }
 
         const normalizedErrorMessage = errorMessage
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, ' ');
+            .replaceAll(/[^\w\s]/g, '')
+            .replaceAll(/\s+/g, ' ');
         const normalizedFilteredMsg = filteredMsgLower
-            .replace(/[^\w\s]/g, '')
-            .replace(/\s+/g, ' ');
+            .replaceAll(/[^\w\s]/g, '')
+            .replaceAll(/\s+/g, ' ');
 
         if (normalizedErrorMessage.includes(normalizedFilteredMsg)) {
             return true;

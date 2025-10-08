@@ -420,7 +420,7 @@ export const useGlobalErrorHandler = user => {
             errorObj.colno = colno;
 
             // Log to Rollbar with filtering.
-            logErrorToRollbar(window, errorObj, user);
+            logErrorToRollbar(globalThis, errorObj, user);
         };
 
         // Handle unhandled promise rejections.
@@ -432,15 +432,18 @@ export const useGlobalErrorHandler = user => {
                 error instanceof Error ? error : new Error(String(error));
 
             // Log to Rollbar with filtering.
-            logErrorToRollbar(window, errorObj, user);
+            logErrorToRollbar(globalThis, errorObj, user);
         };
 
-        window.addEventListener('error', handleGlobalError);
-        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+        globalThis.addEventListener('error', handleGlobalError);
+        globalThis.addEventListener(
+            'unhandledrejection',
+            handleUnhandledRejection,
+        );
 
         return () => {
-            window.removeEventListener('error', handleGlobalError);
-            window.removeEventListener(
+            globalThis.removeEventListener('error', handleGlobalError);
+            globalThis.removeEventListener(
                 'unhandledrejection',
                 handleUnhandledRejection,
             );
