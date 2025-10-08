@@ -8,7 +8,8 @@ ENERGY_SOURCES = [
   ['Biomass', 'energy_biomass_value'],
   ['Charcoal', 'energy_charcoal_value'],
   ['Animal waste', 'energy_animal_waste_value'],
-  ['Electricity', 'energy_electricity_value']
+  ['Electricity', 'energy_electricity_value'],
+  ['Other', 'energy_other_value']
 ]
 
 def parse_numeric_value(value, field_key)

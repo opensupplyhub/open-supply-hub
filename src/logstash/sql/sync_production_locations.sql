@@ -37,6 +37,18 @@ SELECT
   ) AS name,
   afc.facility_name_native_language AS local_name_value,
   afc.facility_description AS description_value,
+  afc.opening_date AS opened_at_value,
+  afc.closing_date AS closed_at_value,
+  afc.energy_coal AS energy_coal_value,
+  afc.energy_natural_gas AS energy_natural_gas_value,
+  afc.energy_diesel AS energy_diesel_value,
+  afc.energy_kerosene AS energy_kerosene_value,
+  afc.energy_biomass AS energy_biomass_value,
+  afc.energy_charcoal AS energy_charcoal_value,
+  afc.energy_animal_waste AS energy_animal_waste_value,
+  afc.energy_electricity AS energy_electricity_value,
+  afc.energy_other AS energy_other_value,
+  afc.estimated_annual_throughput AS estimated_annual_throughput_value,
   (
     SELECT
       COALESCE(
@@ -649,156 +661,12 @@ SELECT
       api_facilityclaim afc3
     WHERE
       afc3.facility_id = af.id
-    AND afc3.status IN ('APPROVED', 'PENDING')
+      AND afc3.status IN ('APPROVED', 'PENDING')
     ORDER BY
       afc3.updated_at DESC
     LIMIT
       1
-  ) AS claimed_at_value,
-  (
-    SELECT
-      afc3.opening_date
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.opening_date IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC,
-      afc3.opening_date DESC NULLS LAST
-    LIMIT
-      1
-  ) AS opened_at_value,
-  (
-    SELECT
-      afc3.closing_date
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.closing_date IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC,
-      afc3.closing_date DESC NULLS LAST
-    LIMIT 1
-  ) AS closed_at_value,
-  (
-    SELECT
-      afc3.estimated_annual_throughput
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.estimated_annual_throughput IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS estimated_annual_throughput_value,
-  (
-    SELECT
-      afc3.energy_coal
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_coal IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_coal_value,
-  (
-    SELECT
-      afc3.energy_natural_gas
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_natural_gas IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_natural_gas_value,
-  (
-    SELECT
-      afc3.energy_diesel
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_diesel IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_diesel_value,
-  (
-    SELECT
-      afc3.energy_kerosene
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_kerosene IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_kerosene_value,
-  (
-    SELECT
-      afc3.energy_biomass
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_biomass IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_biomass_value,
-  (
-    SELECT
-      afc3.energy_charcoal
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_charcoal IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_charcoal_value,
-  (
-    SELECT
-      afc3.energy_animal_waste
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_animal_waste IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_animal_waste_value,
-  (
-    SELECT
-      afc3.energy_electricity
-    FROM
-      api_facilityclaim afc3
-    WHERE
-      afc3.facility_id = af.id
-      AND afc3.energy_electricity IS NOT NULL
-    ORDER BY
-      afc3.updated_at DESC
-    LIMIT
-      1
-  ) AS energy_electricity_value
+  ) AS claimed_at_value
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id

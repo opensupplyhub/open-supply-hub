@@ -813,7 +813,8 @@ class ProductionLocationsTest(BaseAPITest):
                 {"amount": 555, "source": "Biomass"},
                 {"amount": 666, "source": "Charcoal"},
                 {"amount": 777, "source": "Animal waste"},
-                {"amount": 888, "source": "Electricity"}
+                {"amount": 888, "source": "Electricity"},
+                {"amount": 999, "source": "Other"}
             ]
         }
 
@@ -847,7 +848,8 @@ class ProductionLocationsTest(BaseAPITest):
                 {"amount": 555, "source": "Biomass"},
                 {"amount": 666, "source": "Charcoal"},
                 {"amount": 777, "source": "Animal waste"},
-                {"amount": 888, "source": "Electricity"}
+                {"amount": 888, "source": "Electricity"},
+                {"amount": 999, "source": "Other"}
             ]
         )
 
@@ -870,7 +872,8 @@ class ProductionLocationsTest(BaseAPITest):
                 {"amount": 555, "source": "Biomass"},
                 {"amount": 666, "source": "Charcoal"},
                 {"amount": 777, "source": "Animal waste"},
-                {"amount": 888, "source": "Electricity"}
+                {"amount": 888, "source": "Electricity"},
+                {"amount": 999, "source": "Other"}
             ]
         }
 
