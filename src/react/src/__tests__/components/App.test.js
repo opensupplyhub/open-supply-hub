@@ -4,7 +4,7 @@ import { waitFor, render } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { USER_DEFAULT_STATE } from '../../util/constants';
 
-// Keep App's other internals minimal by mocking heavy children/dependencies
+// Keep App's other internals minimal by mocking heavy children/dependencies.
 jest.mock('../../Routes', () => {
     const React = require('react');
     return function Routes() {
@@ -12,7 +12,7 @@ jest.mock('../../Routes', () => {
     };
 });
 
-// Mock the embedded map action to assert it is called when embed + contributor present
+// Mock the embedded map action to assert it is called when embed + contributor present.
 const mockFetchEmbedConfig = jest.fn(() => () => ({}));
 jest.mock('../../actions/embeddedMap', () => ({
     fetchEmbedConfig: (...args) => mockFetchEmbedConfig(...args),
@@ -37,7 +37,7 @@ describe('App component', () => {
     afterEach(() => {
         if (addEventListenerSpy) addEventListenerSpy.mockRestore();
         delete window.Rollbar;
-        // Do not reset modules here to avoid multiple React instances across tests
+        // Do not reset modules here to avoid multiple React instances across tests.
     });
 
     test('registers global error handler and calls logErrorToRollbar', async () => {

@@ -421,7 +421,7 @@ export const useGlobalErrorHandler = user => {
 
             // Log to Rollbar with filtering.
             logErrorToRollbar(
-                typeof window !== 'undefined' ? window : globalThis,
+                typeof window !== 'undefined' ? window : {},
                 errorObj,
                 user,
             );
@@ -437,7 +437,7 @@ export const useGlobalErrorHandler = user => {
 
             // Log to Rollbar with filtering.
             logErrorToRollbar(
-                typeof window !== 'undefined' ? window : globalThis,
+                typeof window !== 'undefined' ? window : {},
                 errorObj,
                 user,
             );
@@ -449,11 +449,6 @@ export const useGlobalErrorHandler = user => {
             typeof window.addEventListener === 'function'
         ) {
             eventTarget = window;
-        } else if (
-            typeof globalThis !== 'undefined' &&
-            typeof globalThis.addEventListener === 'function'
-        ) {
-            eventTarget = globalThis;
         }
 
         if (!eventTarget) {
