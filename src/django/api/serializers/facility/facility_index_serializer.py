@@ -1,5 +1,8 @@
+import logging
+
 from itertools import groupby
 from collections import defaultdict
+from typing import Dict, List, Any
 from rest_framework_gis.serializers import (
     GeoFeatureModelSerializer,
     GeometrySerializerMethodField,
@@ -36,6 +39,7 @@ from .utils import (
     regroup_claims_for_sector_field
 )
 
+logger = logging.getLogger(__name__)
 
 class FacilityIndexSerializer(GeoFeatureModelSerializer):
     os_id = SerializerMethodField()
@@ -80,6 +84,46 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             for field_name in exclude_fields:
                 self.fields.pop(field_name, None)
 
+    def __get_request(self):
+        return getattr(self.context, 'get', lambda *_: None)('request')
+
+    def __serialize_and_sort_partner_fields(
+        self,
+        grouped_fields: Dict[str, List[Dict[str, Any]]],
+        partner_field_names: List[str],
+        user_can_see_detail: bool,
+        embed_mode_active: bool,
+        use_main_created_at: bool,
+        date_field_to_sort: str
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        grouped_data = {}
+        for field_name in partner_field_names:
+            fields = grouped_fields.get(field_name, [])
+            if not fields:
+                continue
+
+            try:
+                serializer = FacilityIndexExtendedFieldListSerializer(
+                    fields,
+                    context={
+                        'user_can_see_detail': user_can_see_detail,
+                        'embed_mode_active': embed_mode_active,
+                    },
+                    exclude_fields=(
+                        ['created_at'] if not use_main_created_at else []
+                    )
+                )
+                grouped_data[field_name] = sorted(
+                    serializer.data,
+                    key=lambda k: self.__sort_order(k, date_field_to_sort),
+                    reverse=True
+                )
+            except Exception as exc:
+                logger.error(f"Failed to serialize partner field '{field_name}': {exc}")
+                grouped_data[field_name] = []
+
+        return grouped_data
+
     @staticmethod
     def __date_field_to_sort(use_main_created_at):
         return (
@@ -105,29 +149,35 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
     @staticmethod
     def __filter_contributor_extended_fields(facility, request):
-        embed = request.query_params.get('embed') \
-            if request is not None else None
-        contributor_id = request.query_params.get('contributor', None) \
-            if request is not None and embed == '1' else None
-        if (
-            contributor_id is None
-            and request is not None
-            and embed == '1'
-        ):
-            contributor_ids = request.query_params.getlist(
-                'contributors',
-                []
-            )
-            if len(contributor_ids):
+        if request is None:
+            return facility.extended_fields
+
+        embed = request.query_params.get('embed')
+        if embed != '1':
+            return facility.extended_fields
+
+        contributor_id = request.query_params.get('contributor')
+        if contributor_id is None:
+            contributor_ids = request.query_params.getlist('contributors', [])
+            if contributor_ids:
                 contributor_id = contributor_ids[0]
 
-        fields = facility.extended_fields
-        if contributor_id is not None:
-            fields = get_efs_associated_with_contributor(
+        if contributor_id:
+            return get_efs_associated_with_contributor(
                 int(contributor_id),
-                facility.extended_fields)
+                facility.extended_fields,
+            )
 
-        return fields
+        return facility.extended_fields
+
+    @staticmethod
+    def __group_fields_by_name(fields: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+        grouped = defaultdict(list)
+        for field in fields:
+            name = field.get('field_name')
+            if name:
+                grouped[name].append(field)
+        return grouped
 
     def get_location(self, facility):
         return facility.location
@@ -259,8 +309,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 return fields
 
     def get_extended_fields(self, facility):
-        request = self.context.get('request') \
-            if self.context is not None else None
+        request = self.__get_request()
 
         use_main_created_at = is_created_at_main_date(self)
         date_field_to_sort = self.__date_field_to_sort(
@@ -338,8 +387,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         return grouped_data
 
     def get_partner_fields(self, facility):
-        request = self.context.get('request') \
-            if self.context is not None else None
+        request = self.__get_request()
 
         use_main_created_at = is_created_at_main_date(self)
         date_field_to_sort = self.__date_field_to_sort(
@@ -350,38 +398,28 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             facility,
             request
         )
+        grouped_fields = self.__group_fields_by_name(
+            fields
+        )
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
 
-        grouped_data = defaultdict(list)
-
-        field_names = list(
-            PartnerField.objects.values_list("name", flat=True)
+        partner_field_names = list(
+            PartnerField.objects.values_list(
+                "name",
+                flat=True
+            )
         )
 
-        for field_name in field_names:
-            filtered_fields = list(filter(
-                lambda field: field_name == field.get('field_name'), fields
-            ))
-            serializer = FacilityIndexExtendedFieldListSerializer(
-                filtered_fields,
-                context={'user_can_see_detail': user_can_see_detail,
-                         'embed_mode_active': embed_mode_active},
-                exclude_fields=(
-                    ['created_at'] if not use_main_created_at else []
-                )
-            )
-
-            data = sorted(
-                serializer.data,
-                key=lambda k: self.__sort_order(k, date_field_to_sort),
-                reverse=True
-            )
-
-            grouped_data[field_name] = data
-
-        return grouped_data
+        return self.__serialize_and_sort_partner_fields(
+            grouped_fields,
+            partner_field_names,
+            user_can_see_detail,
+            embed_mode_active,
+            use_main_created_at,
+            date_field_to_sort
+        )
 
     def get_sector(self, facility):
         user_can_see_detail = can_user_see_detail(self)
@@ -429,8 +467,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if is_embed_mode_active(self):
             return []
 
-        request = self.context.get('request') \
-            if self.context is not None else None
+        request = self.__get_request()
         user = request.user if request is not None else None
         if user is not None and not user.is_anonymous:
             user_can_see_detail = user.can_view_full_contrib_details

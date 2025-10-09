@@ -1810,21 +1810,27 @@ export const filterFreeEmissionsEstimateFields = formData => {
     });
 };
 
-export const formatPartnerFieldValue = value => {
-    if (value.raw_values !== undefined) {
-        if (Array.isArray(value.raw_values)) {
-            return value.raw_values.join(', ');
-        }
-
-        if (typeof value.raw_values === 'object' && value.raw_values !== null) {
-            return Object.entries(value.raw_values)
-                .map(([key, val]) => `${key}: ${val}`)
-                .join(', ');
-        }
-
-        return value.raw_values.toString().split('|');
+const formatRawValues = rawValues => {
+    if (Array.isArray(rawValues)) {
+        return rawValues.join(', ');
     }
-    if (value.raw_value !== undefined) {
+
+    if (typeof rawValues === 'object' && rawValues !== null) {
+        return Object.entries(rawValues)
+            .map(([key, val]) => `${key}: ${val}`)
+            .join(', ');
+    }
+
+    return rawValues.toString().split('|');
+};
+
+export const formatPartnerFieldValue = value => {
+    const { raw_values, raw_value } = value;
+
+    if (raw_values !== undefined) {
+        return formatRawValues(raw_values);
+    }
+    if (raw_value !== undefined) {
         return value.raw_value;
     }
     return value;
