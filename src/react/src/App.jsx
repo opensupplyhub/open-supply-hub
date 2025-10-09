@@ -1,15 +1,23 @@
 import React, { useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 import Routes from './Routes';
 import { fetchEmbedConfig } from './actions/embeddedMap';
-import { OARColor, OARSecondaryColor, OARActionColor } from './util/constants';
+import {
+    OARColor,
+    OARSecondaryColor,
+    OARActionColor,
+    USER_DEFAULT_STATE,
+} from './util/constants';
 import EmbeddedMapUnauthorized from './components/EmbeddedMapUnauthorized';
+import { useGlobalErrorHandler } from './util/hooks';
 import 'typeface-darker-grotesque';
 
 import './App.css';
 import COLOURS from './util/COLOURS';
+import { userPropType, reactSelectOptionPropType } from './util/propTypes';
 
 const configOrDefault = (configColor, defaultColor) =>
     !configColor || configColor === OARColor ? defaultColor : configColor;
@@ -21,8 +29,13 @@ function App({
     config,
     embedError,
     embedLoading,
+    user,
 }) {
     const contributorId = contributor?.value;
+
+    // Set up global error handlers to catch errors from third-party libraries.
+    useGlobalErrorHandler(user);
+
     useEffect(() => {
         if (embed && contributorId) {
             getEmbedConfig(contributorId);
@@ -92,9 +105,32 @@ function App({
     );
 }
 
+App.defaultProps = {
+    contributor: null,
+    embedError: [],
+    embedLoading: false,
+    user: USER_DEFAULT_STATE,
+};
+
+App.propTypes = {
+    embed: PropTypes.bool.isRequired,
+    contributor: reactSelectOptionPropType,
+    getEmbedConfig: PropTypes.func.isRequired,
+    config: PropTypes.shape({
+        font: PropTypes.string.isRequired,
+        color: PropTypes.string,
+    }).isRequired,
+    embedError: PropTypes.arrayOf(PropTypes.string),
+    embedLoading: PropTypes.bool,
+    user: userPropType,
+};
+
 function mapStateToProps({
     embeddedMap: { embed, config, error, loading },
     filters,
+    auth: {
+        user: { user },
+    },
 }) {
     return {
         embed: !!embed,
@@ -102,6 +138,7 @@ function mapStateToProps({
         config,
         embedError: error,
         embedLoading: loading,
+        user,
     };
 }
 
@@ -112,3 +149,4 @@ function mapDispatchToProps(dispatch) {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(App);
+export { App as UnconnectedApp };
