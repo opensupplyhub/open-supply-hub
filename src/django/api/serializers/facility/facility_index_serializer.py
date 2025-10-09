@@ -13,6 +13,7 @@ from rest_framework.serializers import (
 )
 
 from countries.lib.countries import COUNTRY_NAMES
+from api.constants import PARTNER_FIELD_NAMES_LIST_KEY
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
@@ -87,7 +88,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 self.fields.pop(field_name, None)
 
     def __get_request(self):
-        return getattr(self.context, 'get', lambda *_: None)('request')
+        if self.context is None:
+            return None
+        return self.context.get('request')
 
     def __serialize_and_sort_partner_fields(
         self,
@@ -188,8 +191,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
     @staticmethod
     def __get_partner_field_names():
-        cache_key = 'partner_field_names_list'
-        cached_names = cache.get(cache_key)
+        cached_names = cache.get(PARTNER_FIELD_NAMES_LIST_KEY)
 
         if cached_names is not None:
             return cached_names
@@ -198,7 +200,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             PartnerField.objects.values_list("name", flat=True)
         )
 
-        cache.set(cache_key, names, 600)
+        cache.set(PARTNER_FIELD_NAMES_LIST_KEY, names, 600)
 
         return names
 

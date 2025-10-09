@@ -1,5 +1,7 @@
 import uuid
 from django.db import models
+from django.core.cache import cache
+from api.constants import PARTNER_FIELD_NAMES_LIST_KEY
 
 
 class PartnerField(models.Model):
@@ -52,3 +54,11 @@ class PartnerField(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
+
+    def delete(self, *args, **kwargs):
+        cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
+        super().delete(*args, **kwargs)
