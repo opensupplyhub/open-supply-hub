@@ -1,7 +1,6 @@
 import React from 'react';
 import { waitFor, render } from '@testing-library/react';
 
-import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { USER_DEFAULT_STATE } from '../../util/constants';
 
 // Keep App's other internals minimal by mocking heavy children/dependencies.
@@ -36,7 +35,6 @@ describe('App component', () => {
 
     afterEach(() => {
         if (addEventListenerSpy) addEventListenerSpy.mockRestore();
-        delete window.Rollbar;
         // Do not reset modules here to avoid multiple React instances across tests.
     });
 
