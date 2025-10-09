@@ -41,6 +41,7 @@ from .utils import (
 
 logger = logging.getLogger(__name__)
 
+
 class FacilityIndexSerializer(GeoFeatureModelSerializer):
     os_id = SerializerMethodField()
     country_name = SerializerMethodField()
@@ -119,7 +120,10 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                     reverse=True
                 )
             except Exception as exc:
-                logger.error(f"Failed to serialize partner field '{field_name}': {exc}")
+                logger.error(
+                    f"Failed to serialize partner field '{field_name}': " 
+                    f"{exc}"
+                )
                 grouped_data[field_name] = []
 
         return grouped_data
@@ -171,7 +175,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         return facility.extended_fields
 
     @staticmethod
-    def __group_fields_by_name(fields: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def __group_fields_by_name(
+        fields: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
         grouped = defaultdict(list)
         for field in fields:
             name = field.get('field_name')
