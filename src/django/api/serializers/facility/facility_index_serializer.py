@@ -198,7 +198,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             PartnerField.objects.values_list("name", flat=True)
         )
 
-        cache.set(cache_key, names, 60)
+        cache.set(cache_key, names, 600)
 
         return names
 
