@@ -427,7 +427,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
-
         field_names = self.__get_partner_field_names()
 
         return self.__serialize_and_sort_partner_fields(
