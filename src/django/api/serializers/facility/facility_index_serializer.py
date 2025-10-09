@@ -121,7 +121,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 )
             except Exception as exc:
                 logger.error(
-                    f"Failed to serialize partner field '{field_name}': " 
+                    f"Failed to serialize partner field '{field_name}': "
                     f"{exc}"
                 )
                 grouped_data[field_name] = []
