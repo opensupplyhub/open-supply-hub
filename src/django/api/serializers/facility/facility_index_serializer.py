@@ -3,6 +3,7 @@ import logging
 from itertools import groupby
 from collections import defaultdict
 from typing import Dict, List, Any
+from django.core.cache import cache
 from rest_framework_gis.serializers import (
     GeoFeatureModelSerializer,
     GeometrySerializerMethodField,
@@ -184,6 +185,22 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             if name:
                 grouped[name].append(field)
         return grouped
+
+    @staticmethod
+    def __get_partner_field_names():
+        cache_key = 'partner_field_names_list'
+        cached_names = cache.get(cache_key)
+
+        if cached_names is not None:
+            return cached_names
+
+        names = list(
+            PartnerField.objects.values_list("name", flat=True)
+        )
+
+        cache.set(cache_key, names, 60)
+
+        return names
 
     def get_location(self, facility):
         return facility.location
@@ -411,16 +428,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
 
-        partner_field_names = list(
-            PartnerField.objects.values_list(
-                "name",
-                flat=True
-            )
-        )
+        field_names = self.__get_partner_field_names()
 
         return self.__serialize_and_sort_partner_fields(
             grouped_fields,
-            partner_field_names,
+            field_names,
             user_can_see_detail,
             embed_mode_active,
             use_main_created_at,
