@@ -37,6 +37,18 @@ SELECT
   ) AS name,
   afc.facility_name_native_language AS local_name_value,
   afc.facility_description AS description_value,
+  afc.opening_date AS opened_at_value,
+  afc.closing_date AS closed_at_value,
+  afc.energy_coal AS energy_coal_value,
+  afc.energy_natural_gas AS energy_natural_gas_value,
+  afc.energy_diesel AS energy_diesel_value,
+  afc.energy_kerosene AS energy_kerosene_value,
+  afc.energy_biomass AS energy_biomass_value,
+  afc.energy_charcoal AS energy_charcoal_value,
+  afc.energy_animal_waste AS energy_animal_waste_value,
+  afc.energy_electricity AS energy_electricity_value,
+  afc.energy_other AS energy_other_value,
+  afc.estimated_annual_throughput AS estimated_annual_throughput_value,
   (
     SELECT
       COALESCE(
@@ -649,7 +661,7 @@ SELECT
       api_facilityclaim afc3
     WHERE
       afc3.facility_id = af.id
-      AND afc3.status IN ('APPROVED', 'PENDING')
+    AND afc3.status IN ('APPROVED', 'PENDING')
     ORDER BY
       afc3.updated_at DESC
     LIMIT

@@ -1,4 +1,5 @@
 import copy
+from typing import List
 from api.views.v1.opensearch_query_builder. \
     opensearch_query_builder import OpenSearchQueryBuilder
 from api.views.v1.parameters_list import V1_PARAMETERS_LIST
@@ -188,3 +189,7 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         }
 
         self.query_body["query"]["bool"]["filter"].append(geo_polygon)
+
+    def include_into_search(self, include_fields: List[str]):
+        if include_fields:
+            self.query_body['_source'] = include_fields
