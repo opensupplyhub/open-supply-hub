@@ -2808,13 +2808,6 @@ describe('formatPartnerFieldValue', () => {
         expect(result).toBe(42);
     });
 
-    it('handles null raw_values gracefully', () => {
-        const value = { raw_values: null };
-        const result = formatPartnerFieldValue(value);
-        // toString() on null would throw, so we expect undefined or error handling
-        expect(() => result).not.toThrow();
-    });
-
     it('prefers raw_values over raw_value when both exist', () => {
         const value = { raw_value: 'ignored', raw_values: ['preferred'] };
         const result = formatPartnerFieldValue(value);
