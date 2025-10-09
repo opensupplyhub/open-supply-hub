@@ -60,5 +60,6 @@ class PartnerField(models.Model):
         cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
 
     def delete(self, *args, **kwargs):
+        result = super().delete(*args, **kwargs)
         cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
-        super().delete(*args, **kwargs)
+        return result
