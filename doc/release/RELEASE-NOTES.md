@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
 * [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
+* [OSDEV-2198](https://opensupplyhub.atlassian.net/browse/OSDEV-2198) - Pass authenticated user information to the `Dromo Uploader` initialization, for auditing and customer support purposes only.
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Fixed database connection timeout in the Django `sync_databases` command by implementing global session time tracking. Previously, session time was reset when switching between models, causing the connection to exceed the 24-hour RDS Proxy timeout. Now session time persists across all models and only resets after actual connection refreshes.
