@@ -298,3 +298,5 @@ SINGLE_PAID_DOWNLOAD_RECORDS = 10000
 # JavaScript's MAX_SAFE_INTEGER (2^53 - 1).
 # Use this for frontend compatibility.
 JS_MAX_SAFE_INTEGER = 9007199254740991
+
+PARTNER_FIELD_NAMES_LIST_KEY = 'partner_field_names_list'
