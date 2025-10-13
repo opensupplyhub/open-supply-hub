@@ -421,3 +421,26 @@ class TestProductionLocationsQueryBuilder(TestCase):
             expected,
             self.builder.query_body['query']['bool']['filter'][0]
         )
+
+    def test_include_into_search(self):
+        include_fields = [
+            "name",
+            "address",
+            "description",
+            "number_of_workers",
+            "percent_female_workers",
+            "claim_status",
+            "claimed_at",
+            "historical_os_id",
+            "opened_at",
+            "closed_at",
+            "actual_annual_energy_consumption",
+            "estimated_annual_throughput",
+        ]
+
+        self.builder.include_into_search(include_fields)
+
+        self.assertListEqual(
+            include_fields,
+            self.builder.query_body["_source"]
+        )

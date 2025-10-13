@@ -9,13 +9,30 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: October 18, 2025
 
+### Database changes
+
+#### Migrations
+* 0182_introduce_free_emissions_estimate_fields.py - This migration introduces new fields for emissions estimation including energy consumption by source (electricity, natural gas, diesel, coal, biomass, etc.), opening/closing dates, and estimated annual throughput to the `facilityclaim` and `historicalfacilityclaim` tables.
+
+### Code/API changes
+* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
+* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
+* [OSDEV-2198](https://opensupplyhub.atlassian.net/browse/OSDEV-2198) - Pass authenticated user information to the `Dromo Uploader` initialization, for auditing and customer support purposes only.
+
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Fixed database connection timeout in the Django `sync_databases` command by implementing global session time tracking. Previously, session time was reset when switching between models, causing the connection to exceed the 24-hour RDS Proxy timeout. Now session time persists across all models and only resets after actual connection refreshes.
+* [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Enabled the daily RBA synchronization trigger following the successful completion of the initial full sync run.
+
 ### What's new
 * [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
+* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
+* [OSDEV-2180](https://opensupplyhub.atlassian.net/browse/OSDEV-2180) - Introduced logic to return `partner_fields` for both `GET /facilities/{os_id}` and `GET /facilities/` endpoints. Also implemented dynamic rendering of any `partner_fields` returned by the API, ensuring that new fields are displayed automatically without additional actions in `Production Location Profile` page.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption`.
 
 
 ## Release 2.13.0
@@ -35,6 +52,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Enhanced `sync_databases.py` script (which synchronizes RBA and Production(OS Hub) databases) with improved resilience: implemented checkpoint-based progress saving after each chunk (default 1000 records) instead of only at the end of processing; added configurable connection refresh mechanism (default 15 hours) to prevent RDS Proxy 24-hour timeout during long-running syncs; implemented session-based processing with break-and-resume approach to safely refresh database connections without closing active cursors. 
 
 ### What's new
 * [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
