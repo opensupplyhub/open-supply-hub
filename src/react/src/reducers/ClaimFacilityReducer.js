@@ -22,7 +22,69 @@ import {
     completeSubmitClaimAFacilityData,
     updateClaimAFacilityUploadFiles,
     updateClaimAFacilityBusinessUploadFiles,
+    updateClaimOpeningDate,
+    updateClaimClosingDate,
+    updateClaimEstimatedAnnualThroughput,
+    updateClaimEnergyCoal,
+    updateClaimEnergyNaturalGas,
+    updateClaimEnergyDiesel,
+    updateClaimEnergyKerosene,
+    updateClaimEnergyBiomass,
+    updateClaimEnergyCharcoal,
+    updateClaimEnergyAnimalWaste,
+    updateClaimEnergyElectricity,
+    updateClaimEnergyOther,
+    updateClaimEnergyCoalEnabled,
+    updateClaimEnergyNaturalGasEnabled,
+    updateClaimEnergyDieselEnabled,
+    updateClaimEnergyKeroseneEnabled,
+    updateClaimEnergyBiomassEnabled,
+    updateClaimEnergyCharcoalEnabled,
+    updateClaimEnergyAnimalWasteEnabled,
+    updateClaimEnergyElectricityEnabled,
+    updateClaimEnergyOtherEnabled,
 } from '../actions/claimFacility';
+
+/**
+ * Helper function to set a form field for the free
+ * emissions estimate fields.
+ */
+const setFormField = key => (state, payload) =>
+    update(state, {
+        claimData: {
+            formData: {
+                [key]: { $set: payload },
+            },
+        },
+    });
+
+const FREE_EMISSIONS_FIELDS = [
+    [updateClaimOpeningDate, 'openingDate'],
+    [updateClaimClosingDate, 'closingDate'],
+    [updateClaimEstimatedAnnualThroughput, 'estimatedAnnualThroughput'],
+    [updateClaimEnergyCoal, 'energyCoal'],
+    [updateClaimEnergyNaturalGas, 'energyNaturalGas'],
+    [updateClaimEnergyDiesel, 'energyDiesel'],
+    [updateClaimEnergyKerosene, 'energyKerosene'],
+    [updateClaimEnergyBiomass, 'energyBiomass'],
+    [updateClaimEnergyCharcoal, 'energyCharcoal'],
+    [updateClaimEnergyAnimalWaste, 'energyAnimalWaste'],
+    [updateClaimEnergyElectricity, 'energyElectricity'],
+    [updateClaimEnergyOther, 'energyOther'],
+    [updateClaimEnergyCoalEnabled, 'energyCoalEnabled'],
+    [updateClaimEnergyNaturalGasEnabled, 'energyNaturalGasEnabled'],
+    [updateClaimEnergyDieselEnabled, 'energyDieselEnabled'],
+    [updateClaimEnergyKeroseneEnabled, 'energyKeroseneEnabled'],
+    [updateClaimEnergyBiomassEnabled, 'energyBiomassEnabled'],
+    [updateClaimEnergyCharcoalEnabled, 'energyCharcoalEnabled'],
+    [updateClaimEnergyAnimalWasteEnabled, 'energyAnimalWasteEnabled'],
+    [updateClaimEnergyElectricityEnabled, 'energyElectricityEnabled'],
+    [updateClaimEnergyOtherEnabled, 'energyOtherEnabled'],
+];
+
+const freeEmissionsReducers = Object.fromEntries(
+    FREE_EMISSIONS_FIELDS.map(([action, key]) => [action, setFormField(key)]),
+);
 
 const initialState = Object.freeze({
     facilityData: Object.freeze({
@@ -41,6 +103,28 @@ const initialState = Object.freeze({
             numberOfWorkers: '',
             localLanguageName: '',
             agreement: 'no',
+            // Free Emissions Estimate fields
+            openingDate: '',
+            closingDate: '',
+            estimatedAnnualThroughput: '',
+            energyCoal: '',
+            energyNaturalGas: '',
+            energyDiesel: '',
+            energyKerosene: '',
+            energyBiomass: '',
+            energyCharcoal: '',
+            energyAnimalWaste: '',
+            energyElectricity: '',
+            energyOther: '',
+            energyCoalEnabled: false,
+            energyNaturalGasEnabled: false,
+            energyDieselEnabled: false,
+            energyKeroseneEnabled: false,
+            energyBiomassEnabled: false,
+            energyCharcoalEnabled: false,
+            energyAnimalWasteEnabled: false,
+            energyElectricityEnabled: false,
+            energyOtherEnabled: false,
         }),
         fetching: false,
         error: null,
@@ -187,6 +271,7 @@ export default createReducer(
                     fetching: { $set: false },
                 },
             }),
+        ...freeEmissionsReducers,
         [clearClaimFacilityDataAndForm]: () => initialState,
     },
     initialState,

@@ -130,13 +130,19 @@ class Contributor(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
+    partner_fields = models.ManyToManyField(
+        'PartnerField',
+        blank=True,
+        null=True,
+        help_text='Partner fields that this contributor can access'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = ContributorManager.as_manager()
     history = HistoricalRecords(
-        excluded_fields=['uuid', 'origin_source']
+        excluded_fields=['uuid', 'origin_source', 'partner_fields']
     )
 
     def __str__(self):

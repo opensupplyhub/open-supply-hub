@@ -5,27 +5,25 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import { makeDatePickerStyles } from '../util/styles';
 
-function DatePicker({ label, value, onChange, name, classes, ...rest }) {
-    return (
-        <div className={classes.datePickerContainer}>
-            <Typography className={classes.datePickerLabel}>{label}</Typography>
-            <TextField
-                id={name}
-                type="date"
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                InputProps={{
-                    classes: {
-                        input: classes.dateInputStyles,
-                        notchedOutline: classes.notchedOutlineStyles,
-                    },
-                }}
-                variant="outlined"
-                {...rest}
-            />
-        </div>
-    );
-}
+const DatePicker = ({ label, value, onChange, name, classes, ...rest }) => (
+    <div className={classes.datePickerContainer}>
+        <Typography className={classes.datePickerLabel}>{label}</Typography>
+        <TextField
+            id={name}
+            type="date"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            InputProps={{
+                classes: {
+                    input: classes.dateInputStyles,
+                    notchedOutline: classes.notchedOutlineStyles,
+                },
+            }}
+            variant="outlined"
+            {...rest}
+        />
+    </div>
+);
 
 DatePicker.propTypes = {
     label: PropTypes.string.isRequired,

@@ -244,14 +244,14 @@ class FacilitiesDownloadService:
         page_size: int,
         is_last_page: bool
     ):
-        base_qs_params = request.query_params.copy()
 
         def make_link(target_page):
-            query = base_qs_params.copy()
-            query['page'] = target_page
-            query['pageSize'] = page_size
+            query_dict = dict(request.query_params.lists())
+            query_dict['page'] = [str(target_page)]
+            query_dict['pageSize'] = [str(page_size)]
+
             return request.build_absolute_uri(
-                '?' + urlencode(query, doseq=True)
+                '?' + urlencode(query_dict, doseq=True)
             )
 
         next_link = None if is_last_page else make_link(page + 1)

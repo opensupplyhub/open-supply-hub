@@ -2,6 +2,7 @@ from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
+from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
@@ -30,6 +31,8 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
+from api.models.partner_field import PartnerField
+from api.models.extended_field import ExtendedField
 from api.throttles import (
     DataUploadThrottle,
     DuplicateThrottle
@@ -44,6 +47,8 @@ from api.mail import (
     send_slc_new_location_confirmation_email,
     send_slc_additional_info_confirmation_email
 )
+from api.views.v1.response_mappings.production_locations_response import \
+    ProductionLocationsResponseMapping
 
 
 class ProductionLocations(ViewSet):
@@ -120,6 +125,7 @@ class ProductionLocations(ViewSet):
             self.__init_opensearch()
         query_body = opensearch_query_director.build_query(
             request.GET,
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATIONS
         )
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
@@ -134,7 +140,10 @@ class ProductionLocations(ViewSet):
 
         opensearch_service, opensearch_query_director = \
             self.__init_opensearch()
-        query_body = opensearch_query_director.build_query(query_params)
+        query_body = opensearch_query_director.build_query(
+            query_params,
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID
+        )
         response = opensearch_service.search_index(
             OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             query_body,
@@ -148,6 +157,9 @@ class ProductionLocations(ViewSet):
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        partner_extended_fields = self.__get_partner_fields(pk)
+        locations[0].update(partner_extended_fields)
 
         return Response(locations[0])
 
@@ -264,3 +276,50 @@ class ProductionLocations(ViewSet):
             },
             status=result.status_code
         )
+
+    def __get_partner_fields(self, pk):
+        """
+        Checks and returns partner extended fields for a
+        facility object by its ID.
+
+        Caches the list of partner field names for one hour.
+        Returns a dictionary of the form:
+            {
+                "field_name_1": [...],
+                "field_name_2": "some_value",
+                ...
+            }
+        """
+        cache_key = 'partner_field_names'
+        partner_field_names = cache.get(cache_key)
+
+        if partner_field_names is None:
+            partner_field_names = list(
+                PartnerField.objects.values_list('name', flat=True)
+            )
+            cache.set(cache_key, partner_field_names, 60 * 60)
+
+        if not partner_field_names:
+            return {}
+
+        partner_field_values = ExtendedField.objects.filter(
+            facility__id=pk,
+            field_name__in=partner_field_names
+        ).values('field_name', 'value')
+
+        partner_extended_fields = {}
+
+        for field in partner_field_values:
+            field_name = field['field_name']
+            value = field['value']
+
+            if not isinstance(value, dict):
+                continue
+
+            if 'raw_values' in value and isinstance(
+                value['raw_values'], (list, dict)
+            ):
+                partner_extended_fields[field_name] = value['raw_values']
+            elif 'raw_value' in value:
+                partner_extended_fields[field_name] = value['raw_value']
+        return partner_extended_fields

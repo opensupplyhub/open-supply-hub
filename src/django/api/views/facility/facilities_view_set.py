@@ -91,8 +91,7 @@ from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
 from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
-    is_same_contributor_for_queryset,
-    is_same_contributor_for_list
+    is_same_contributor_from_url_param,
 )
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -272,15 +271,14 @@ class FacilitiesViewSet(ListModelMixin,
         if not should_serialize_number_of_public_contributors:
             exclude_fields.extend(['number_of_public_contributors'])
 
+        is_same_contributor = is_same_contributor_from_url_param(
+            request
+        )
+
         if page_queryset is not None:
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
-
-            is_same_contributor = is_same_contributor_for_list(
-                page_queryset,
-                request
-            )
 
             page = self.get_paginated_response(serializer.data)
             page.data['extent'] = extent
@@ -289,11 +287,6 @@ class FacilitiesViewSet(ListModelMixin,
             return page
 
         # Non-paginated response
-        is_same_contributor = is_same_contributor_for_queryset(
-            queryset,
-            request
-        )
-
         serializer = FacilityIndexSerializer(queryset, many=True,
                                              context=context,
                                              exclude_fields=exclude_fields)
@@ -896,6 +889,20 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_workers_count=validated_data.get(
                     "number_of_workers"
                 ),
+                opening_date=validated_data.get("opening_date"),
+                closing_date=validated_data.get("closing_date"),
+                estimated_annual_throughput=validated_data.get(
+                    "estimated_annual_throughput"
+                ),
+                energy_coal=validated_data.get("energy_coal"),
+                energy_natural_gas=validated_data.get("energy_natural_gas"),
+                energy_diesel=validated_data.get("energy_diesel"),
+                energy_kerosene=validated_data.get("energy_kerosene"),
+                energy_biomass=validated_data.get("energy_biomass"),
+                energy_charcoal=validated_data.get("energy_charcoal"),
+                energy_animal_waste=validated_data.get("energy_animal_waste"),
+                energy_electricity=validated_data.get("energy_electricity"),
+                energy_other=validated_data.get("energy_other"),
             )
 
             sectors = validated_data.get("sectors")

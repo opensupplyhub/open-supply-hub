@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import EmailField
+from django.db import connections
 
 from api.models.extended_field import ExtendedField
 from api.models.user import User
@@ -94,7 +95,8 @@ class DatabaseSynchronizer:
                 'embed_config',
                 'embed_level',
                 'created_at',
-                'updated_at'
+                'updated_at',
+                'partner_fields'
             ]
         },
         'FacilityList': {
@@ -235,7 +237,8 @@ class DatabaseSynchronizer:
     }
 
     def __init__(self, source_db_config, chunk_size=1000,
-                 dry_run=False, last_run_path=None):
+                 dry_run=False, last_run_path=None,
+                 connection_refresh_interval=54000):
         '''
         Initialize the synchronizer with database configurations.
 
@@ -247,11 +250,15 @@ class DatabaseSynchronizer:
                 would be done.
             last_run_path (str): Path to store last run metadata for each
                 model.
+            connection_refresh_interval (int): Seconds before refreshing
+                database connections to avoid RDS Proxy 24-hour timeout
+                (default: 54000 = 15 hours).
         '''
         self.__source_config = source_db_config
         self.__chunk_size = chunk_size
         self.__dry_run = dry_run
         self.__last_run_path = last_run_path or '/tmp/sync_databases_last_run'
+        self.__connection_refresh_interval = connection_refresh_interval
 
         # Ensure the last run directory exists.
         os.makedirs(self.__last_run_path, exist_ok=True)
@@ -265,6 +272,10 @@ class DatabaseSynchronizer:
             'circular_reference_updates': 0
         }
 
+        # Track session start time at the synchronizer level to properly
+        # handle connection refreshes across multiple models.
+        self.__session_start_time = None
+
         # Set up database connection.
         self.__setup_source_database_connection()
 
@@ -277,6 +288,8 @@ class DatabaseSynchronizer:
         logger.info(f'Dry run mode: {self.__dry_run}')
 
         start_time = timezone.now()
+        # Initialize session start time for connection refresh tracking.
+        self.__session_start_time = timezone.now()
 
         # Phase 1: Sync models along with avoiding circular dependencies
         # issues by skipping the fields that cause them.
@@ -350,41 +363,112 @@ class DatabaseSynchronizer:
         logger.info(f'Last run timestamp for {model_name}: {last_run}')
 
         try:
-            # Get only records updated since last run.
-            source_records = model_class.objects.using('source').filter(
-                updated_at__gt=last_run
-            ).order_by('updated_at').iterator(
-                chunk_size=self.__chunk_size)
-
-            logger.info(f'Created iterator for {model_name} with chunk size '
-                        f'{self.__chunk_size}.')
-
-            # Process each record.
+            # Process records in sessions with connection refresh.
             last_processed_timestamp = None
-            for source_record in source_records:
-                try:
-                    self.__process_record(
-                        model_class, source_record, sync_field,
-                        pk_type, foreign_keys, model_name, excluded_fields
-                    )
+            record_count = 0
+            continue_processing = True
 
-                    # Track the timestamp of the last processed record.
-                    last_processed_timestamp = source_record.updated_at
+            while continue_processing:
+                # Get only records updated since last run.
+                current_start = (last_processed_timestamp
+                                 if last_processed_timestamp else last_run)
+                source_records = model_class.objects.using('source').filter(
+                    updated_at__gt=current_start
+                ).order_by('updated_at').iterator(
+                    chunk_size=self.__chunk_size)
 
-                except Exception as e:
-                    logger.exception('Error processing record in '
-                                     f'{model_name}: {e}.')
-                    self.__stats['errors'] += 1
+                logger.info(
+                    f'Created iterator for {model_name} starting from '
+                    f'{current_start} with chunk size '
+                    f'{self.__chunk_size}.'
+                )
 
-            # Save the timestamp of the last successfully processed record.
+                records_in_session = 0
+                need_connection_refresh = False
+
+                for source_record in source_records:
+                    try:
+                        self.__process_record(
+                            model_class, source_record, sync_field,
+                            pk_type, foreign_keys, model_name, excluded_fields
+                        )
+
+                        # Track the timestamp of the last processed record.
+                        last_processed_timestamp = source_record.updated_at
+                        record_count += 1
+                        records_in_session += 1
+
+                        # Save timestamp after each chunk.
+                        if (record_count % self.__chunk_size == 0 and
+                                last_processed_timestamp):
+                            if self.__dry_run:
+                                logger.info(
+                                    f'[DRY RUN] Would save checkpoint '
+                                    f'after {record_count} records for '
+                                    f'{model_name}: '
+                                    f'{last_processed_timestamp}.'
+                                )
+                            else:
+                                self.__save_last_run_timestamp(
+                                    model_name, last_processed_timestamp
+                                )
+                                logger.info(
+                                    f'Saved checkpoint after '
+                                    f'{record_count} records for '
+                                    f'{model_name}: '
+                                    f'{last_processed_timestamp}.'
+                                )
+
+                            # Check if we need to refresh connections.
+                            elapsed_time = (
+                                timezone.now() - self.__session_start_time
+                            ).total_seconds()
+                            logger.info(f'Elapsed time of the current '
+                                        f'database session: {elapsed_time}.')
+                            refresh_interval = \
+                                self.__connection_refresh_interval
+                            if elapsed_time >= refresh_interval:
+                                need_connection_refresh = True
+                                logger.info(
+                                    f'Connection has been open for '
+                                    f'{elapsed_time/3600:.1f} hours. '
+                                    f'Will refresh after current batch.'
+                                )
+                                break  # Break to refresh connections.
+
+                    except Exception as e:
+                        logger.exception('Error processing record in '
+                                         f'{model_name}: {e}.')
+                        self.__stats['errors'] += 1
+
+                # Check if we processed any records in this session.
+                if records_in_session == 0:
+                    # No more records to process.
+                    continue_processing = False
+                elif need_connection_refresh:
+                    # Refresh connections and continue with next session.
+                    if not self.__dry_run:
+                        self.__refresh_database_connections()
+                        self.__session_start_time = timezone.now()
+                        logger.info(
+                            f'Resuming from timestamp: '
+                            f'{last_processed_timestamp}'
+                        )
+                else:
+                    # Finished all records without needing refresh.
+                    continue_processing = False
+
+            # Final save after all processing completes.
             if last_processed_timestamp:
                 if self.__dry_run:
-                    logger.info(f'[DRY RUN] Would save last run timestamp '
+                    logger.info(f'[DRY RUN] Would save final timestamp '
                                 f'for {model_name}: '
                                 f'{last_processed_timestamp}.')
                 else:
                     self.__save_last_run_timestamp(model_name,
                                                    last_processed_timestamp)
+                    logger.info(f'Saved final timestamp for {model_name}: '
+                                f'{last_processed_timestamp}.')
 
             logger.info(f'Completed synchronization for model {model_name}.')
 
@@ -486,7 +570,8 @@ class DatabaseSynchronizer:
             logger.exception(f'Error updating record in {model_name}: {e}.')
             raise
 
-    def __get_record_data(self, record, pk_type, excluded_fields=None):
+    @staticmethod
+    def __get_record_data(record, pk_type, excluded_fields=None):
         '''Extract field data from a model instance.'''
         if excluded_fields is None:
             excluded_fields = []
@@ -503,12 +588,13 @@ class DatabaseSynchronizer:
 
                 # Anonymize EmailField values using MD5 hash of random text.
                 if isinstance(field, EmailField) and value:
-                    value = self.__anonymize_email(value)
+                    value = DatabaseSynchronizer.__anonymize_email(value)
 
                 data[field.name] = value
         return data
 
-    def __anonymize_email(self, email):
+    @staticmethod
+    def __anonymize_email(email):
         '''
         Anonymize email using deterministic HMAC-SHA256.
         Same input always produces same output, preserving data stability.
@@ -681,75 +767,145 @@ class DatabaseSynchronizer:
         logger.info('Last run timestamp for FacilityListItem facility '
                     f'updates: {last_run}')
 
-        # Query source records by updated_at.
-        source_list_items = FacilityListItem.objects.using('source').filter(
-            updated_at__gt=last_run
-        ).order_by('updated_at').iterator(chunk_size=self.__chunk_size)
-
-        logger.info('Created iterator for FacilityListItem facility updates '
-                    f'with chunk_size={self.__chunk_size}.')
-
+        # Process records in sessions with connection refresh.
         updated_count = 0
         cleared_count = 0
         errors_count = 0
-
-        # Track the timestamp of the last processed record.
+        record_count = 0
         last_processed_timestamp = None
+        continue_processing = True
 
         try:
-            for source_list_item in source_list_items:
-                # Find the corresponding list item in target DB by UUID.
-                try:
-                    target_list_item = FacilityListItem.objects.get(
-                        uuid=source_list_item.uuid
-                    )
+            while continue_processing:
+                # Query source records by updated_at.
+                current_start = (last_processed_timestamp
+                                 if last_processed_timestamp else last_run)
+                source_list_items = \
+                    FacilityListItem.objects.using('source').filter(
+                        updated_at__gt=current_start
+                    ).order_by('updated_at').iterator(
+                        chunk_size=self.__chunk_size)
 
-                    if source_list_item.facility:
-                        # Source has a facility - find the corresponding
-                        # facility in target DB.
-                        try:
-                            target_facility = Facility.objects.get(
-                                id=source_list_item.facility.id
-                            )
-                            # Only update if the facility is different.
-                            if (target_list_item.facility is None or
-                                    target_list_item.facility.id !=
-                                    target_facility.id):
-                                target_list_item.facility = target_facility
-                                target_list_item.save()
-                                updated_count += 1
-                                logger.info('Updated FacilityListItem '
-                                            f'{target_list_item.id} facility '
-                                            f'to {target_facility.id}.')
-                        except Facility.DoesNotExist:
-                            logger.warning('Could not find Facility with ID '
-                                           f'{source_list_item.facility.id} '
-                                           'for FacilityListItem '
-                                           f'{target_list_item.id}.')
-                            errors_count += 1
-                    else:
-                        # Source has no facility - clear the facility in
-                        # target if it exists.
-                        if target_list_item.facility is not None:
-                            target_list_item.facility = None
-                            target_list_item.save()
-                            cleared_count += 1
-                            logger.info('Cleared facility for '
-                                        f'FacilityListItem '
-                                        f'{target_list_item.id} '
-                                        '(source has no facility).')
+                logger.info(
+                    'Created iterator for FacilityListItem facility '
+                    f'updates starting from {current_start} with '
+                    f'chunk_size={self.__chunk_size}.'
+                )
+
+                records_in_session = 0
+                need_connection_refresh = False
+
+                for source_list_item in source_list_items:
+                    # Find the corresponding list item in target DB by UUID.
+                    try:
+                        target_list_item = FacilityListItem.objects.get(
+                            uuid=source_list_item.uuid
+                        )
+
+                        if source_list_item.facility:
+                            # Source has a facility - find the corresponding
+                            # facility in target DB.
+                            try:
+                                target_facility = Facility.objects.get(
+                                    id=source_list_item.facility.id
+                                )
+                                # Only update if the facility is different.
+                                if (target_list_item.facility is None or
+                                        target_list_item.facility.id !=
+                                        target_facility.id):
+                                    target_list_item.facility = target_facility
+                                    target_list_item.save()
+                                    updated_count += 1
+                                    logger.info(
+                                        'Updated FacilityListItem '
+                                        f'{target_list_item.id} facility '
+                                        f'to {target_facility.id}.'
+                                    )
+                            except Facility.DoesNotExist:
+                                logger.warning(
+                                    'Could not find Facility with ID '
+                                    f'{source_list_item.facility.id} '
+                                    'for FacilityListItem '
+                                    f'{target_list_item.id}.'
+                                )
+                                errors_count += 1
                         else:
-                            logger.info(f'FacilityListItem '
-                                        f'{target_list_item.id} '
-                                        'already has no facility reference.')
+                            # Source has no facility - clear the facility in
+                            # target if it exists.
+                            if target_list_item.facility is not None:
+                                target_list_item.facility = None
+                                target_list_item.save()
+                                cleared_count += 1
+                                logger.info('Cleared facility for '
+                                            f'FacilityListItem '
+                                            f'{target_list_item.id} '
+                                            '(source has no facility).')
+                            else:
+                                logger.info(
+                                    f'FacilityListItem '
+                                    f'{target_list_item.id} '
+                                    'already has no facility reference.'
+                                )
 
-                    # Track the timestamp of the last processed record.
-                    last_processed_timestamp = source_list_item.updated_at
+                        # Track the timestamp of the last processed record.
+                        last_processed_timestamp = source_list_item.updated_at
+                        record_count += 1
+                        records_in_session += 1
 
-                except FacilityListItem.DoesNotExist:
-                    logger.warning('Could not find target FacilityListItem '
-                                   f'with UUID {source_list_item.uuid}.')
-                    errors_count += 1
+                        # Save timestamp after each chunk.
+                        if (record_count % self.__chunk_size == 0 and
+                                last_processed_timestamp):
+                            self.__save_last_run_timestamp(
+                                'FacilityListItem',
+                                last_processed_timestamp,
+                                'facility_updates'
+                            )
+                            logger.info(
+                                f'Saved checkpoint after {record_count} '
+                                f'facility updates: '
+                                f'{last_processed_timestamp}.'
+                            )
+
+                            # Check if we need to refresh connections.
+                            elapsed_time = (
+                                timezone.now() - self.__session_start_time
+                            ).total_seconds()
+                            logger.info(f'Elapsed time of the current '
+                                        f'database session: {elapsed_time}.')
+                            refresh_interval = \
+                                self.__connection_refresh_interval
+                            if elapsed_time >= refresh_interval:
+                                need_connection_refresh = True
+                                logger.info(
+                                    f'Connection has been open for '
+                                    f'{elapsed_time/3600:.1f} hours. '
+                                    f'Will refresh after current batch.'
+                                )
+                                break  # Break to refresh connections.
+
+                    except FacilityListItem.DoesNotExist:
+                        logger.warning(
+                            'Could not find target FacilityListItem '
+                            f'with UUID {source_list_item.uuid}.'
+                        )
+                        errors_count += 1
+
+                # Check if we processed any records in this session.
+                if records_in_session == 0:
+                    # No more records to process.
+                    continue_processing = False
+                elif need_connection_refresh:
+                    # Refresh connections and continue with next session.
+                    if not self.__dry_run:
+                        self.__refresh_database_connections()
+                        self.__session_start_time = timezone.now()
+                        logger.info(
+                            f'Resuming facility updates from timestamp: '
+                            f'{last_processed_timestamp}'
+                        )
+                else:
+                    # Finished all records without needing refresh.
+                    continue_processing = False
 
         except Exception as e:
             logger.exception(
@@ -769,14 +925,14 @@ class DatabaseSynchronizer:
                     f'FacilityListItem records.')
         logger.info(f'Circular reference errors: {errors_count}.')
 
-        # Save the timestamp of the last successfully processed record.
+        # Final save after loop completes.
         if last_processed_timestamp:
             self.__save_last_run_timestamp(
                 'FacilityListItem',
                 last_processed_timestamp,
                 'facility_updates'
             )
-            logger.info('Saved facility updates timestamp: '
+            logger.info('Saved final facility updates timestamp: '
                         f'{last_processed_timestamp}.')
 
     def __setup_source_database_connection(self):
@@ -827,6 +983,15 @@ class DatabaseSynchronizer:
             logger.exception(
                 f'Could not save last run timestamp for {model_name}: {e}.'
             )
+
+    @staticmethod
+    def __refresh_database_connections():
+        '''Close all database connections to avoid RDS Proxy timeouts.'''
+        logger.info('Refreshing database connections to avoid 24-hour '
+                    'RDS Proxy timeout...')
+        connections.close_all()
+        logger.info('Database connections closed. They will reopen on next '
+                    'query.')
 
 
 class Command(BaseCommand):
@@ -879,6 +1044,13 @@ class Command(BaseCommand):
                  'database (default: 1000)'
         )
         parser.add_argument(
+            '--connection-refresh-interval',
+            type=int,
+            default=54000,
+            help='Seconds before refreshing database connections to avoid '
+                 'RDS Proxy 24-hour timeout (default: 54000 = 15 hours)'
+        )
+        parser.add_argument(
             '--dry-run',
             action='store_true',
             help='Show what would be done without making changes'
@@ -907,7 +1079,10 @@ class Command(BaseCommand):
                 source_config,
                 chunk_size=options['chunk_size'],
                 dry_run=options['dry_run'],
-                last_run_path=options['last_run_path']
+                last_run_path=options['last_run_path'],
+                connection_refresh_interval=options[
+                    'connection_refresh_interval'
+                ]
             )
             synchronizer.sync_all()
 

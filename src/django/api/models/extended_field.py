@@ -35,7 +35,7 @@ class ExtendedField(models.Model):
         (PARENT_COMPANY_OS_ID, PARENT_COMPANY_OS_ID),
         (DUNS_ID, DUNS_ID),
         (LEI_ID, LEI_ID),
-        (RBA_ID, RBA_ID),
+        (RBA_ID, RBA_ID)
     )
 
     uuid = models.UUIDField(

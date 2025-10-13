@@ -7,6 +7,8 @@ from rest_framework import serializers
 
 
 class ProductionLocationSchemaSerializer(serializers.Serializer):
+    core_fields = ('name', 'address', 'country')
+
     name = serializers.CharField(
         max_length=200,
         required=True,
@@ -43,9 +45,7 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     product_type = StringOrListField(required=False)
     location_type = StringOrListField(required=False)
     processing_type = StringOrListField(required=False)
-    number_of_workers = NumberOfWorkersSerializer(
-        required=False,
-    )
+    number_of_workers = NumberOfWorkersSerializer(required=False)
     coordinates = CoordinatesSerializer(
         required=False,
         error_messages={
@@ -54,28 +54,43 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         },
     )
 
+    # Use only subclasses.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.__class__ is ProductionLocationSchemaSerializer:
+            raise TypeError(
+                'ProductionLocationSchemaSerializer is abstract;'
+                ' use a concrete subclass.'
+            )
+
+    def _set_core_required(self, required: bool) -> None:
+        for field in self.core_fields:
+            if field in self.fields:
+                self.fields[field].required = required
+
     def _validate_string_field(self, data, field_name):
-        if field_name in data and data[field_name].isdigit():
+        if (
+            field_name in data and
+            isinstance(data[field_name], str) and
+            data[field_name].isdigit()
+        ):
             return {
                 "field": field_name,
                 "detail": f"Field {field_name} must be a string, not a number."
             }
-
         return None
 
     def validate(self, data):
         errors = []
+        for field in self.core_fields:
+            err = self._validate_string_field(data, field)
+            if err:
+                errors.append(err)
 
-        for field in ['name', 'address', 'country']:
-            error = self._validate_string_field(data, field)
-            if error:
-                errors.append(error)
+        err = self._validate_string_field(data, 'parent_company')
+        if err:
+            errors.append(err)
 
-        error = self._validate_string_field(data, 'parent_company')
-        if error:
-            errors.append(error)
-
-        if len(errors) > 0:
+        if errors:
             raise serializers.ValidationError(errors)
-
         return data

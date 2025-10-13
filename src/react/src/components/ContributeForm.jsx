@@ -53,7 +53,7 @@ import {
     resetUserFacilityLists,
 } from '../actions/facilityLists';
 
-import { facilityListPropType } from '../util/propTypes';
+import { facilityListPropType, userPropType } from '../util/propTypes';
 
 const contributeFormStyles = Object.freeze({
     uploaderButtonWrapper: Object.freeze({
@@ -92,6 +92,7 @@ const ContributeForm = ({
     resetForm,
     facilityLists,
     fetchingFacilityLists,
+    user,
 }) => {
     const { fileInput } = useFileUploadHandler({
         resetForm,
@@ -172,6 +173,7 @@ const ContributeForm = ({
                         <SelfServiceDromoUploader
                             fileInput={fileInput}
                             updateFileName={updateFileName}
+                            user={user}
                         />
                     </FeatureFlag>
                 </div>
@@ -251,6 +253,7 @@ ContributeForm.propTypes = {
     fetchingFacilityLists: bool.isRequired,
     fetchLists: func.isRequired,
     resetForm: func.isRequired,
+    user: userPropType.isRequired,
 };
 
 const mapStateToProps = ({
@@ -260,6 +263,9 @@ const mapStateToProps = ({
         error,
     },
     facilityLists: { facilityLists, fetching: fetchingFacilityLists },
+    auth: {
+        user: { user },
+    },
 }) => ({
     name,
     description,
@@ -269,6 +275,7 @@ const mapStateToProps = ({
     error,
     facilityLists,
     fetchingFacilityLists,
+    user,
 });
 
 const mapDispatchToProps = (dispatch, { history: { push } }) => ({
