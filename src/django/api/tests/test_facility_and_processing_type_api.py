@@ -203,7 +203,13 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
              if item["facilityType"].lower() == "office / hq".lower()),
             None
         )
-        
+
         self.assertIsNotNone(office_hq)
-        self.assertIn("Recruitment Agency", office_hq["processingTypes"])
-        self.assertIn("Union Headquarters/Office", office_hq["processingTypes"])
+        self.assertIn(
+            "Recruitment Agency",
+            office_hq["processingTypes"]
+        )
+        self.assertIn(
+            "Union Headquarters/Office",
+            office_hq["processingTypes"]
+        )
