@@ -365,7 +365,7 @@ class ProductionLocationsTest(BaseAPITest):
             "claim_status": "claimed",
             "claimed_at": "2023-06-15T10:30:00Z"
         }
-        
+
         unclaimed_doc = {
             "sector": ["Apparel"],
             "address": "Unclaimed Facility Address",
@@ -375,7 +375,7 @@ class ProductionLocationsTest(BaseAPITest):
             "coordinates": {"lon": -79.3832, "lat": 43.6532},
             "claim_status": "unclaimed"
         }
-        
+
         pending_doc = {
             "sector": ["Apparel"],
             "address": "Pending Facility Address",
@@ -436,7 +436,7 @@ class ProductionLocationsTest(BaseAPITest):
             "claim_status": "claimed",
             "claimed_at": "2023-01-15T10:30:00Z"
         }
-        
+
         late_claimed_doc = {
             "sector": ["Apparel"],
             "address": "Late Claimed Facility",
@@ -802,8 +802,8 @@ class ProductionLocationsTest(BaseAPITest):
             "address": "Details Address",
             "country": {"alpha_2": "US"},
             "coordinates": {"lon": -74.0, "lat": 40.7},
-            "opened_at": "2024-03-01T00:00:00.000Z",
-            "closed_at": "2025-09-01T00:00:00.000Z",
+            "opened_at": "2024-03-01",
+            "closed_at": "2025-09-01",
             "estimated_annual_throughput": 122,
             "actual_annual_energy_consumption": [
                 {"amount": 111, "source": "Coal"},
@@ -835,8 +835,8 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(result["os_id"], os_id)
-        self.assertEqual(result["opened_at"], "2024-03-01T00:00:00.000Z")
-        self.assertEqual(result["closed_at"], "2025-09-01T00:00:00.000Z")
+        self.assertEqual(result["opened_at"], "2024-03-01")
+        self.assertEqual(result["closed_at"], "2025-09-01")
         self.assertEqual(result["estimated_annual_throughput"], 122)
         self.assertEqual(
             result["actual_annual_energy_consumption"],
@@ -861,8 +861,8 @@ class ProductionLocationsTest(BaseAPITest):
             "address": "Details Address 2",
             "country": {"alpha_2": "US"},
             "coordinates": {"lon": -73.9, "lat": 40.8},
-            "opened_at": "2024-03-01T00:00:00.000Z",
-            "closed_at": "2025-09-01T00:00:00.000Z",
+            "opened_at": "2024-03-01",
+            "closed_at": "2025-09-01",
             "estimated_annual_throughput": 122,
             "actual_annual_energy_consumption": [
                 {"amount": 111, "source": "Coal"},
