@@ -1,20 +1,8 @@
+require_relative 'date_formatter_helper'
+
 def filter(event)
-  closed_at_value = event.get('closed_at_value')
-
-  if closed_at_value.nil?
-      return [event]
-  end
-
   # Normalize to year-month format (YYYY-MM).
-  # Accepts values like '2023-12-01' or ISO8601 '2023-12-01T10:30:00Z'.
-  begin
-    t = Time.parse(closed_at_value.to_s)
-    event.set('closed_at', t.strftime('%Y-%m'))
-  rescue => e
-    # If parsing fails, pass through original value (to avoid data loss).
-    event.set('closed_at', closed_at_value)
-  end
-
+  DateFormatterHelper.format_date_field(event, 'closed_at_value', 'closed_at', '%Y-%m')
   return [event]
 end
 

@@ -1,20 +1,8 @@
+require_relative 'date_formatter_helper'
+
 def filter(event)
-  opened_at_value = event.get('opened_at_value')
-
-  if opened_at_value.nil?
-      return [event]
-  end
-
   # Normalize to year format (YYYY).
-  # Accepts values like '2023-12-01' or ISO8601 '2023-12-01T10:30:00Z'.
-  begin
-    t = Time.parse(opened_at_value.to_s)
-    event.set('opened_at', t.strftime('%Y'))
-  rescue => e
-    # If parsing fails, pass through original value (to avoid data loss)
-    event.set('opened_at', opened_at_value)
-  end
-
+  DateFormatterHelper.format_date_field(event, 'opened_at_value', 'opened_at', '%Y')
   return [event]
 end
 
