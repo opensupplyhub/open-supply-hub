@@ -218,6 +218,26 @@
         },
         "lei_id": {
           "type": "keyword"
+        },
+        "opened_at": {
+          "type": "date"
+        },
+        "closed_at": {
+          "type": "date"
+        },
+        "estimated_annual_throughput": {
+          "type": "float"
+        },
+        "actual_annual_energy_consumption": {
+          "type": "nested",
+          "properties": {
+            "source": {
+              "type": "keyword"
+            },
+            "amount": {
+              "type": "float"
+            }
+          }
         }
       }
     }
