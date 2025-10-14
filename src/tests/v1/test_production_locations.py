@@ -5,65 +5,59 @@ from .base_api_test \
 
 class ProductionLocationsTest(BaseAPITest):
 
-    SAMPLE_ENERGY_CONSUMPTION = [
-        {"amount": 111, "source": "Coal"},
-        {"amount": 222, "source": "Natural gas"},
-        {"amount": 333, "source": "Diesel"},
-        {"amount": 444, "source": "Kerosene"},
-        {"amount": 555, "source": "Biomass"},
-        {"amount": 666, "source": "Charcoal"},
-        {"amount": 777, "source": "Animal waste"},
-        {"amount": 888, "source": "Electricity"},
-        {"amount": 999, "source": "Other"}
-    ]
+    def test_production_locations_status(self):
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/",
+            headers=self.basic_headers,
+        )
+        self.assertEqual(response.status_code, 200)
 
-    def index_documents(self, docs):
-        """Index one or more documents and refresh the index."""
-        if not isinstance(docs, list):
-            docs = [docs]
-
-        for doc in docs:
-            self.open_search_client.index(
-                index=self.production_locations_index_name,
-                body=doc,
-                id=self.open_search_client.count()
-            )
-
+    def test_production_locations_exact(self):
+        # Index a document
+        doc = {
+            "sector": [
+                "Apparel"
+            ],
+            "address": "Vill. B.K. Bari, Taltoli, P.O.: Mirzapur Gazipur",
+            "name": "Silver Composite Textile Mills Ltd.",
+            "country": {
+                "alpha_2": "BD"
+            },
+            "os_id": "BD2020052SV22HT",
+            "coordinates": {
+                "lon": 90.378162,
+                "lat": 24.1166236
+            },
+            "claim_status": "unclaimed"
+        }
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
         )
 
-    def get_production_locations(self, query=""):
-        """Make a GET request to production-locations endpoint."""
-        url = f"{self.root_url}/api/v1/production-locations/{query}"
-        return requests.get(url, headers=self.basic_headers)
-
-    def test_production_locations_status(self):
-        response = self.get_production_locations()
-        self.assertEqual(response.status_code, 200)
-
-    def test_production_locations_exact(self):
-        doc = {
-            "sector": ["Apparel"],
-            "address": "Vill. B.K. Bari, Taltoli, P.O.: Mirzapur Gazipur",
-            "name": "Silver Composite Textile Mills Ltd.",
-            "country": {"alpha_2": "BD"},
-            "os_id": "BD2020052SV22HT",
-            "coordinates": {"lon": 90.378162, "lat": 24.1166236},
-            "claim_status": "unclaimed"
-        }
-        self.index_documents(doc)
-
         search_name = "Silver Composite Textile Mills Ltd."
         query = f"?size=3&name={search_name}"
-        response = self.get_production_locations(query)
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
 
         result = response.json()
         filtered = [item for item in result['data'] if item['os_id'] == 'BD2020052SV22HT']
         self.assertTrue(filtered)
 
     def test_production_locations_country(self):
-        response = self.get_production_locations()
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/",
+                headers=self.basic_headers,
+            )
+
         result = response.json()
         country = result['data'][0]['country']
 
@@ -74,49 +68,91 @@ class ProductionLocationsTest(BaseAPITest):
 
     def test_production_locations_history_os_id(self):
         doc = {
-            "sector": ["Apparel"],
+            "sector": [
+                "Apparel"
+            ],
             "address": "Test Address",
             "name": "Test Name",
-            "country": {"alpha_2": "US"},
+            "country": {
+                "alpha_2": "US"
+            },
             "os_id": "US2020052SV22HT",
             "historical_os_id": "US20203545HUE4L",
-            "coordinates": {"lon": 90.378162, "lat": 24.1166236},
+            "coordinates": {
+                "lon": 90.378162,
+                "lat": 24.1166236
+            },
         }
-        self.index_documents(doc)
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         search_os_id = "US2020052SV22HT"
         query = f"?size=1&os_id={search_os_id}"
-        response = self.get_production_locations(query)
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
 
         result = response.json()
         self.assertEqual(result['data'][0]['os_id'], 'US2020052SV22HT')
-        self.assertEqual(result['data'][0]['historical_os_id'], 'US20203545HUE4L')
+        self.assertEqual(
+            result['data'][0]['historical_os_id'], 'US20203545HUE4L'
+        )
 
     def test_production_locations_aggregations(self):
         query = "?aggregation=geohex_grid&geohex_grid_precision=2"
-        response = self.get_production_locations(query)
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
 
         result = response.json()
         self.assertIsNotNone(result['aggregations'])
         self.assertIsNotNone(result['aggregations']['geohex_grid'][0]['key'])
-        self.assertIsNotNone(result['aggregations']['geohex_grid'][0]['doc_count'])
+        self.assertIsNotNone(
+            result['aggregations']['geohex_grid'][0]['doc_count']
+        )
 
     def test_production_locations_geo_bounding_box(self):
         doc = {
-            "sector": ["Apparel"],
+            "sector": [
+                "Apparel"
+            ],
             "address": "Test Address 2",
             "name": "Test Name 2",
-            "country": {"alpha_2": "US"},
+            "country": {
+                "alpha_2": "US"
+            },
             "os_id": "US2020052SV22KJ",
-            "coordinates": {"lon": -102.378162, "lat": 40.1166236},
+            "coordinates": {
+                "lon": -102.378162,
+                "lat": 40.1166236
+            },
         }
-        self.index_documents(doc)
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         query = (
             "?geo_bounding_box[top]=41&geo_bounding_box[left]="
             "-103&geo_bounding_box[bottom]=39&geo_bounding_box[right]=-101"
         )
-        response = self.get_production_locations(query)
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
 
         result = response.json()
         self.assertIsNotNone(result['data'])
@@ -130,12 +166,27 @@ class ProductionLocationsTest(BaseAPITest):
             "name": "Outside Polygon Location",
             "country": {"alpha_2": "US"},
             "os_id": "US202309OUTSIDE",
-            "coordinates": {"lon": -75.000000, "lat": 42.000000},
+            "coordinates": {
+                "lon": -75.000000,
+                "lat": 42.000000
+            },
         }
-        self.index_documents(outside_polygon)
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=outside_polygon,
+            id=self.open_search_client.count()
+        )
+
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         query = "?geo_polygon=79.318492,-39.36719&geo_polygon=79.280399,-55.39907&geo_polygon=77.57295,-55.512304&geo_polygon=77.598154,-38.396004"
-        response = self.get_production_locations(query)
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         os_ids = {item["os_id"] for item in result["data"]}
@@ -148,12 +199,27 @@ class ProductionLocationsTest(BaseAPITest):
             "name": "Inside Polygon Location",
             "country": {"alpha_2": "GL"},
             "os_id": "GL202309INSIDE",
-            "coordinates": {"lon": -47.0, "lat": 78.0},
+            "coordinates": {
+                "lon": -47.0,
+                "lat": 78.0
+            },
         }
-        self.index_documents(inside_polygon)
+
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=inside_polygon,
+            id=self.open_search_client.count()
+        )
+
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         query = "?geo_polygon=79.318492,-39.36719&geo_polygon=79.280399,-55.39907&geo_polygon=77.57295,-55.512304&geo_polygon=77.598154,-38.396004"
-        response = self.get_production_locations(query)
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         self.assertIsNotNone(result['data'])
@@ -204,7 +270,10 @@ class ProductionLocationsTest(BaseAPITest):
             "&geo_polygon=11.0,-25.0&geo_polygon=10.5,-22.0&geo_polygon=10.0,-19.0"
         )
 
-        response = self.get_production_locations(query)
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
 
         self.assertEqual(response.status_code, 200)
 
@@ -219,7 +288,10 @@ class ProductionLocationsTest(BaseAPITest):
             "geo_polygon=&geo_polygon="
         )
 
-        response = self.get_production_locations(query)
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
 
         self.assertEqual(response.status_code, 400)
 
@@ -230,12 +302,19 @@ class ProductionLocationsTest(BaseAPITest):
 
     def test_production_locations_additional_identifiers(self):
         doc = {
-            "sector": ["Apparel"],
+            "sector": [
+                "Apparel"
+            ],
             "address": "Test Address",
             "name": "Test Name",
-            "country": {"alpha_2": "US"},
+            "country": {
+                "alpha_2": "US"
+            },
             "os_id": "UC3020952SV27JF",
-            "coordinates": {"lon": 90.378162, "lat": 24.1166236},
+            "coordinates": {
+                "lon": 90.378162,
+                "lat": 24.1166236
+            },
             "rba_id": "RBA-12345678",
             "duns_id": "150483782",
             "lei_id": "529900T8BM49AURSDO55"
@@ -244,16 +323,36 @@ class ProductionLocationsTest(BaseAPITest):
         expected_duns_id = "150483782"
         expected_lei_id = "529900T8BM49AURSDO55"
 
-        self.index_documents(doc)
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         search_os_id = "UC3020952SV27JF"
         query = f"?size=1&os_id={search_os_id}"
-        response = self.get_production_locations(query)
+
+        response = requests.get(
+                f"{self.root_url}/api/v1/production-locations/{query}",
+                headers=self.basic_headers,
+            )
 
         result = response.json()
-        self.assertEqual(result['data'][0]['rba_id'], expected_rba_id)
-        self.assertEqual(result['data'][0]['duns_id'], expected_duns_id)
-        self.assertEqual(result['data'][0]['lei_id'], expected_lei_id)
+        self.assertEqual(
+            result['data'][0]['rba_id'],
+            expected_rba_id
+        )
+        self.assertEqual(
+            result['data'][0]['duns_id'],
+            expected_duns_id
+        )
+        self.assertEqual(
+            result['data'][0]['lei_id'],
+            expected_lei_id
+        )
 
     def test_production_locations_claim_status_filtering(self):
         claimed_doc = {
@@ -288,19 +387,39 @@ class ProductionLocationsTest(BaseAPITest):
             "claimed_at": "2023-08-20T14:45:00Z"
         }
 
-        self.index_documents([claimed_doc, unclaimed_doc, pending_doc])
+        for doc in [claimed_doc, unclaimed_doc, pending_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
 
-        response = self.get_production_locations("?claim_status=claimed")
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed",
+            headers=self.basic_headers,
+        )
+
         result = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in result['data']))
 
-        response = self.get_production_locations("?claim_status=claimed&claim_status=pending")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status=pending",
+            headers=self.basic_headers,
+        )
+
         result = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(all(item['claim_status'] in ['claimed', 'pending'] for item in result['data']))
 
-        response = self.get_production_locations("?claim_status=unclaimed")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=unclaimed",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -329,23 +448,42 @@ class ProductionLocationsTest(BaseAPITest):
             "claimed_at": "2023-12-15T14:45:00Z"
         }
 
-        self.index_documents([early_claimed_doc, late_claimed_doc])
+        for doc in [early_claimed_doc, late_claimed_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         test_os_ids = {'US2023EARLY01', 'CA2023LATE01'}
 
-        response = self.get_production_locations("?claimed_at_gt=2023-06-01T00:00:00.000000Z&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claimed_at_gt=2023-06-01T00:00:00.000000Z&size=100",
+            headers=self.basic_headers,
+        )
         result = response.json()
+
         self.assertEqual(response.status_code, 200)
         filtered = [item for item in result['data'] if item['os_id'] in test_os_ids]
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
 
-        response = self.get_production_locations("?claimed_at_lt=2023-06-01T00:00:00.000000Z&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claimed_at_lt=2023-06-01T00:00:00.000000Z&size=100",
+            headers=self.basic_headers,
+        )
         result = response.json()
+
         self.assertEqual(response.status_code, 200)
         filtered = [item for item in result['data'] if item['os_id'] in test_os_ids]
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
 
-        response = self.get_production_locations("?claimed_at_gt=2023-01-01T00:00:00.000000Z&claimed_at_lt=2023-07-01T00:00:00.000000Z&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claimed_at_gt=2023-01-01T00:00:00.000000Z&claimed_at_lt=2023-07-01T00:00:00.000000Z&size=100",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -385,14 +523,29 @@ class ProductionLocationsTest(BaseAPITest):
             "claim_status": "unclaimed"
         }
 
-        self.index_documents([claimed_early_doc, claimed_late_doc, unclaimed_doc])
+        for doc in [claimed_early_doc, claimed_late_doc, unclaimed_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
-        response = self.get_production_locations("?sort_by=claim_status&order_by=asc&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claim_status&order_by=asc&size=100",
+            headers=self.basic_headers,
+        )
+
         result = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result['data'][0]['claim_status'], 'claimed')
 
-        response = self.get_production_locations("?sort_by=claim_status&order_by=desc&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claim_status&order_by=desc&size=100",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -431,24 +584,43 @@ class ProductionLocationsTest(BaseAPITest):
             "claimed_at": "2023-08-20T14:45:00Z"
         }
 
-        self.index_documents([claimed_us_doc, unclaimed_ca_doc, pending_mx_doc])
+        for doc in [claimed_us_doc, unclaimed_ca_doc, pending_mx_doc]:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
         test_os_ids = {'US2023COMBINED01', 'CA2023COMBINED01', 'MX2023COMBINED01'}
 
-        response = self.get_production_locations("?claim_status=claimed&country=US&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&country=US&size=100",
+            headers=self.basic_headers,
+        )
+
         result = response.json()
         self.assertEqual(response.status_code, 200)
         filtered = [item for item in result['data'] if item['os_id'] in test_os_ids]
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
         self.assertTrue(all(item['country']['alpha_2'] == 'US' for item in filtered))
 
-        response = self.get_production_locations("?claim_status=claimed&claimed_at_gt=2023-05-01T00:00:00.000000Z&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claimed_at_gt=2023-05-01T00:00:00.000000Z&size=100",
+            headers=self.basic_headers,
+        )
+
         result = response.json()
         self.assertEqual(response.status_code, 200)
         filtered = [item for item in result['data'] if item['os_id'] in test_os_ids]
         self.assertTrue(all(item['claim_status'] == 'claimed' for item in filtered))
 
-        response = self.get_production_locations("?claim_status=claimed&claim_status=pending&country=US&country=MX&size=100")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=claimed&claim_status=pending&country=US&country=MX&size=100",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -459,20 +631,29 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertTrue(all(item['country']['alpha_2'] in ['US', 'MX'] for item in filtered))
 
     def test_production_locations_claim_status_invalid_filters(self):
-        response = self.get_production_locations("?claim_status=invalid_status")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claim_status=invalid_status",
+            headers=self.basic_headers,
+        )
 
         if response.status_code == 400:
             result = response.json()
             self.assertEqual(result['detail'], 'The request query is invalid.')
             self.assertEqual(result['errors'][0]['field'], 'claim_status')
 
-        response = self.get_production_locations("?claimed_at_gt=invalid-date")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?claimed_at_gt=invalid-date",
+            headers=self.basic_headers,
+        )
 
         if response.status_code == 400:
             result = response.json()
             self.assertEqual(result['detail'], 'The request query is invalid.')
 
-        response = self.get_production_locations("?sort_by=invalid_field")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=invalid_field",
+            headers=self.basic_headers,
+        )
 
         if response.status_code == 400:
             result = response.json()
@@ -519,9 +700,13 @@ class ProductionLocationsTest(BaseAPITest):
                 body=doc,
                 id=f"test_sort_doc_{i}"
             )
+
         self.open_search_client.indices.refresh(index=self.production_locations_index_name)
 
-        response = self.get_production_locations("?sort_by=claimed_at&order_by=asc&size=10")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=asc&size=10",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         claimed_results = [item for item in result['data'] if item.get('claimed_at')]
@@ -572,9 +757,13 @@ class ProductionLocationsTest(BaseAPITest):
                 body=doc,
                 id=f"test_sort_desc_doc_{i}"
             )
+
         self.open_search_client.indices.refresh(index=self.production_locations_index_name)
 
-        response = self.get_production_locations("?sort_by=claimed_at&order_by=desc&size=10")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=claimed_at&order_by=desc&size=10",
+            headers=self.basic_headers,
+        )
 
         result = response.json()
         claimed_results = [item for item in result['data'] if item.get('claimed_at')]
@@ -590,7 +779,10 @@ class ProductionLocationsTest(BaseAPITest):
         wrong_date_lt = '2024-10-18T13:49:51.141Z'
 
         query = f"?claimed_at_gt={wrong_date_gte}&claimed_at_lt={wrong_date_lt}"
-        response = self.get_production_locations(query)
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{query}",
+            headers=self.basic_headers,
+        )
         result = response.json()
 
         self.assertEqual(response.status_code, 400)
@@ -610,22 +802,56 @@ class ProductionLocationsTest(BaseAPITest):
             "address": "Details Address",
             "country": {"alpha_2": "US"},
             "coordinates": {"lon": -74.0, "lat": 40.7},
-            "opened_at": "2024",
-            "closed_at": "2025-09",
+            "opened_at": "2023",
+            "closed_at": "2024-09",
             "estimated_annual_throughput": 122,
-            "actual_annual_energy_consumption": self.SAMPLE_ENERGY_CONSUMPTION
+            "actual_annual_energy_consumption": [
+                {"amount": 111, "source": "Coal"},
+                {"amount": 222, "source": "Natural gas"},
+                {"amount": 333, "source": "Diesel"},
+                {"amount": 444, "source": "Kerosene"},
+                {"amount": 555, "source": "Biomass"},
+                {"amount": 666, "source": "Charcoal"},
+                {"amount": 777, "source": "Animal waste"},
+                {"amount": 888, "source": "Electricity"},
+                {"amount": 999, "source": "Other"}
+            ]
         }
-        self.index_documents(details_doc)
 
-        response = self.get_production_locations(f"{os_id}/")
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=details_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{os_id}/",
+            headers=self.basic_headers,
+        )
 
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(result["os_id"], os_id)
-        self.assertEqual(result["opened_at"], "2024")
-        self.assertEqual(result["closed_at"], "2025-09")
+        self.assertEqual(result["opened_at"], "2023")
+        self.assertEqual(result["closed_at"], "2024-09")
         self.assertEqual(result["estimated_annual_throughput"], 122)
-        self.assertEqual(result["actual_annual_energy_consumption"], self.SAMPLE_ENERGY_CONSUMPTION)
+        self.assertEqual(
+            result["actual_annual_energy_consumption"],
+            [
+                {"amount": 111, "source": "Coal"},
+                {"amount": 222, "source": "Natural gas"},
+                {"amount": 333, "source": "Diesel"},
+                {"amount": 444, "source": "Kerosene"},
+                {"amount": 555, "source": "Biomass"},
+                {"amount": 666, "source": "Charcoal"},
+                {"amount": 777, "source": "Animal waste"},
+                {"amount": 888, "source": "Electricity"},
+                {"amount": 999, "source": "Other"}
+            ]
+        )
 
     def test_production_locations_list_omits_detail_fields(self):
         os_id = "ZZ2024DETAILS02"
@@ -636,13 +862,34 @@ class ProductionLocationsTest(BaseAPITest):
             "country": {"alpha_2": "US"},
             "coordinates": {"lon": -73.9, "lat": 40.8},
             "opened_at": "2024",
-            "closed_at": "2025-09",
+            "closed_at": "2025-10",
             "estimated_annual_throughput": 122,
-            "actual_annual_energy_consumption": self.SAMPLE_ENERGY_CONSUMPTION
+            "actual_annual_energy_consumption": [
+                {"amount": 111, "source": "Coal"},
+                {"amount": 222, "source": "Natural gas"},
+                {"amount": 333, "source": "Diesel"},
+                {"amount": 444, "source": "Kerosene"},
+                {"amount": 555, "source": "Biomass"},
+                {"amount": 666, "source": "Charcoal"},
+                {"amount": 777, "source": "Animal waste"},
+                {"amount": 888, "source": "Electricity"},
+                {"amount": 999, "source": "Other"}
+            ]
         }
-        self.index_documents(details_doc)
 
-        response = self.get_production_locations(f"?size=1&os_id={os_id}")
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=details_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?size=1&os_id={os_id}",
+            headers=self.basic_headers,
+        )
 
         self.assertEqual(response.status_code, 200)
         result = response.json()
@@ -675,9 +922,19 @@ class ProductionLocationsTest(BaseAPITest):
             "coordinates": {"lon": -74.0, "lat": 40.7},
         }
 
-        self.index_documents(base_doc)
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=base_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
 
-        response = self.get_production_locations(f"{os_id}/")
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/{os_id}/",
+            headers=self.basic_headers,
+        )
 
         self.assertEqual(response.status_code, 200)
         result = response.json()
@@ -707,9 +964,20 @@ class ProductionLocationsTest(BaseAPITest):
                 {"source": "Biomass", "amount": 300},
             ],
         }
-        self.index_documents(base_doc)
 
-        response = self.get_production_locations(f"?size=1&os_id={os_id}")
+        self.open_search_client.index(
+            index=self.production_locations_index_name,
+            body=base_doc,
+            id=self.open_search_client.count()
+        )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?size=1&os_id={os_id}",
+            headers=self.basic_headers,
+        )
 
         self.assertEqual(response.status_code, 200)
         result = response.json()
