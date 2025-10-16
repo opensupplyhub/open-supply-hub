@@ -103,6 +103,21 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
     )
+    point_of_contact_person_name = serializers.CharField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+    )
+    point_of_contact_email = serializers.EmailField(
+        max_length=255,
+        required=False,
+        allow_blank=True,
+    ),
+    point_of_contact_publicly_visible = serializers.BooleanField(
+        required=False,
+        default=False,
+        allow_null=False,
+    )
     business_website = serializers.CharField(
         max_length=255,
         required=False,
@@ -130,7 +145,6 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         validators=[validate_files]
     )
-
     opening_date = serializers.DateField(
         required=False,
         validators=[validate_non_future_date]
