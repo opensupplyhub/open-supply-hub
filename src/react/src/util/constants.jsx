@@ -337,6 +337,7 @@ export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
 export const facilityDetailsRoute = '/facilities/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';
+export const claimIntroRoute = '/claim/:osID';
 export const profileRoute = '/profile/:id';
 export const aboutProcessingRoute = `${InfoLink}/${InfoPaths.dataQuality}`;
 export const dashboardRoute = '/dashboard';
