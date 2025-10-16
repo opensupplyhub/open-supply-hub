@@ -157,7 +157,7 @@ const claimInfoStyles = theme => ({
         color: '#fff',
         padding: '6px 12px',
         borderRadius: 20,
-        fontSize: 12,
+        fontSize: 16,
         fontWeight: 700,
         marginBottom: theme.spacing.unit * 1.5,
         boxShadow: '0 2px 6px rgba(255, 160, 0, 0.4)',
@@ -167,12 +167,13 @@ const claimInfoStyles = theme => ({
         padding: theme.spacing.unit * 1.5,
         borderRadius: theme.spacing.unit,
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center', // Changed from 'flex-start' to 'center'
     },
     warningIcon: {
         color: '#d32f2f',
         marginRight: theme.spacing.unit,
         fontSize: 16,
+        flexShrink: 0, // Add this to prevent icon from shrinking
     },
     link: {
         color: '#1976d2',
@@ -437,7 +438,7 @@ const ClaimInfoSection = ({ classes }) => (
         <div className={`${classes.stepBox} ${classes.amberStep}`}>
             <div style={{ textAlign: 'center' }}>
                 <span className={classes.maxValueBadge}>
-                    <StarIcon style={{ fontSize: 14, marginRight: 4 }} />
+                    <StarIcon style={{ fontSize: 16, marginRight: 4 }} />
                     Maximum Value
                 </span>
             </div>

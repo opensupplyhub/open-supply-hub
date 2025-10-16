@@ -72,7 +72,7 @@ const claimIntroStyles = theme => ({
     backButton: {
         padding: '10px 24px',
         fontSize: 14,
-        fontWeight: 600,
+        fontWeight: 800,
         borderColor: '#ccc',
         '&:hover': {
             backgroundColor: '#f5f5f5',
@@ -85,7 +85,7 @@ const claimIntroStyles = theme => ({
     continueButton: {
         padding: '10px 24px',
         fontSize: 14,
-        fontWeight: 600,
+        fontWeight: 800,
         backgroundColor: '#FFD700',
         color: '#000',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
