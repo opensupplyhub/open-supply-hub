@@ -924,6 +924,24 @@ class FacilitiesViewSet(ListModelMixin,
                 claimant_linkedin_profile_url=validated_data.get(
                     "claimant_linkedin_profile_url"
                 ),
+                office_phone_number=validated_data.get(
+                    "office_phone_number"
+                ),
+                facility_description=validated_data.get(
+                    "facility_description", ""
+                ),
+                office_official_name=validated_data.get(
+                    "office_official_name"
+                ),
+                office_address=validated_data.get(
+                    "office_address"
+                ),
+                office_country_code=validated_data.get(
+                    "office_country_code"
+                ),
+                parent_company_name=validated_data.get(
+                    "parent_company_name"
+                ),
             )
 
             sectors = validated_data.get("sectors")

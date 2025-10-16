@@ -89,22 +89,22 @@ def validate_date_range(opening_date, closing_date):
 
 class FacilityCreateClaimSerializer(serializers.Serializer):
     your_name = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=True,
         allow_blank=False,
     )
     your_title = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=True,
         allow_blank=False,
     )
     your_business_website = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=False,
         allow_blank=True,
     )
     point_of_contact_person_name = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=False,
         allow_blank=True,
     )
@@ -119,12 +119,12 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_null=False,
     )
     business_website = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=False,
         allow_blank=True,
     )
     business_linkedin_profile = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=True,
         allow_blank=True,
     )
@@ -221,7 +221,37 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
     claimant_linkedin_profile_url = serializers.URLField(
         required=False,
         allow_blank=True,
-        max_length=255
+        max_length=200
+    )
+    office_phone_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=1000
+    )
+    office_official_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    office_address = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    office_country_code = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=2
+    )
+    parent_company_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
     )
 
     def validate_your_business_website(self, value):
