@@ -233,10 +233,10 @@ class FacilitiesViewSet(ListModelMixin,
             raise ValidationError(params.errors)
 
         queryset = (
-                FacilityIndex
-                .objects
-                .filter_by_query_params(request.query_params)
-            )
+            FacilityIndex
+            .objects
+            .filter_by_query_params(request.query_params)
+        )
         sort_by = params.validated_data['sort_by']
         order_list = []
 
@@ -903,6 +903,18 @@ class FacilitiesViewSet(ListModelMixin,
                 energy_animal_waste=validated_data.get("energy_animal_waste"),
                 energy_electricity=validated_data.get("energy_electricity"),
                 energy_other=validated_data.get("energy_other"),
+                claimant_location_relationship=validated_data.get(
+                    "claimant_location_relationship"
+                ),
+                claimant_employment_verification_method=validated_data.get(
+                    "claimant_employment_verification_method"
+                ),
+                location_address_verification_method=validated_data.get(
+                    "location_address_verification_method"
+                ),
+                claimant_linkedin_profile_url=validated_data.get(
+                    "claimant_linkedin_profile_url"
+                ),
             )
 
             sectors = validated_data.get("sectors")
@@ -1671,7 +1683,7 @@ class FacilitiesViewSet(ListModelMixin,
         except Contributor.DoesNotExist as exc:
             raise ValidationError(
                 'Contributor not found for requesting user.'
-                ) from exc
+            ) from exc
 
         facility_activity_report = FacilityActivityReport.objects.create(
             facility=facility,

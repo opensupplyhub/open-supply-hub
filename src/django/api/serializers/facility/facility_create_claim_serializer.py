@@ -189,6 +189,26 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         min_value=1,
         max_value=JS_MAX_SAFE_INTEGER
     )
+    claimant_location_relationship = serializers.CharField(
+        allow_blank=True,
+        required=False,
+        max_length=250
+    )
+    claimant_employment_verification_method = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250
+    )
+    location_address_verification_method = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250
+    )
+    claimant_linkedin_profile_url = serializers.URLField(
+        required=False,
+        allow_blank=True,
+        max_length=255
+    )
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)
