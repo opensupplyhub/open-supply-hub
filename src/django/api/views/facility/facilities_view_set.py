@@ -878,9 +878,15 @@ class FacilitiesViewSet(ListModelMixin,
                 contributor=contributor,
                 contact_person=validated_data.get("your_name"),
                 job_title=validated_data.get("your_title"),
-                point_of_contact_person_name=validated_data.get("point_of_contact_person_name"),
-                point_of_contact_email=validated_data.get("point_of_contact_email"),
-                point_of_contact_publicly_visible=validated_data.get("point_of_contact_publicly_visible"),
+                point_of_contact_person_name=validated_data.get(
+                    "point_of_contact_person_name",
+                ),
+                point_of_contact_email=validated_data.get(
+                    "point_of_contact_email",
+                ),
+                point_of_contact_publicly_visible=validated_data.get(
+                    "point_of_contact_publicly_visible",
+                ),
                 website=validated_data.get("your_business_website"),
                 facility_website=validated_data.get("business_website"),
                 linkedin_profile=validated_data.get(

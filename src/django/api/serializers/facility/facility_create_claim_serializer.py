@@ -109,10 +109,10 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
     )
     point_of_contact_email = serializers.EmailField(
-        max_length=255,
         required=False,
         allow_blank=True,
-    ),
+        allow_null=True,
+    )
     point_of_contact_publicly_visible = serializers.BooleanField(
         required=False,
         default=False,
