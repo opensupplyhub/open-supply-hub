@@ -22,13 +22,13 @@ const claimInfoStyles = theme => ({
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 3,
         '& > *:not(:last-child)': {
-            marginBottom: theme.spacing.unit * 3, // Add spacing between direct children
+            marginBottom: theme.spacing.unit * 3,
         },
     },
     stepBox: {
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 2,
-        marginBottom: 0, // Remove or reduce this
+        marginBottom: 0,
         display: 'flex',
         flexDirection: 'column',
     },
@@ -91,7 +91,7 @@ const claimInfoStyles = theme => ({
     },
     bulletPoint: {
         display: 'flex',
-        alignItems: 'center', // Changed to center
+        alignItems: 'center',
         marginBottom: theme.spacing.unit,
     },
     bullet: {
@@ -147,10 +147,10 @@ const claimInfoStyles = theme => ({
         lineHeight: 1.2,
     },
     purpleLabel: {
-        color: '#6a1b9a', // Purple text color
+        color: '#6a1b9a',
     },
     greenLabel: {
-        color: '#2e7d32', // Green text color
+        color: '#2e7d32',
     },
     noteBox: {
         backgroundColor: '#c8e6c9',
@@ -175,13 +175,13 @@ const claimInfoStyles = theme => ({
         padding: theme.spacing.unit * 1.5,
         borderRadius: theme.spacing.unit,
         display: 'flex',
-        alignItems: 'center', // Changed from 'flex-start' to 'center'
+        alignItems: 'center',
     },
     warningIcon: {
         color: '#d32f2f',
         marginRight: theme.spacing.unit,
         fontSize: 16,
-        flexShrink: 0, // Add this to prevent icon from shrinking
+        flexShrink: 0,
     },
     link: {
         color: '#1976d2',
@@ -206,8 +206,8 @@ const claimInfoStyles = theme => ({
     twoColumnGrid: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        columnGap: theme.spacing.unit * 3, // Horizontal spacing between columns
-        rowGap: theme.spacing.unit * 2, // Vertical spacing (for mobile)
+        columnGap: theme.spacing.unit * 3,
+        rowGap: theme.spacing.unit * 2,
         [theme.breakpoints.down('sm')]: {
             gridTemplateColumns: '1fr',
         },

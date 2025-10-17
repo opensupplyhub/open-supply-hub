@@ -58,7 +58,7 @@ const claimIntroStyles = theme => ({
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 2,
         marginTop: theme.spacing.unit * 3,
-        marginBottom: 0, // Add this to remove bottom margin
+        marginBottom: 0,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         border: '1px solid #e0e0e0',
     },
@@ -186,7 +186,6 @@ const ClaimIntro = ({ classes, history, osID }) => {
 
 ClaimIntro.propTypes = {
     osID: string.isRequired,
-    // Add other prop types as needed
 };
 
 const mapStateToProps = (
