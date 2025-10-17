@@ -38,7 +38,7 @@ const claimIntroStyles = theme => ({
         paddingTop: 0,
     },
     title: {
-        fontSize: 28,
+        fontSize: 30,
         fontWeight: 700,
         color: '#191919',
         marginBottom: theme.spacing.unit,
