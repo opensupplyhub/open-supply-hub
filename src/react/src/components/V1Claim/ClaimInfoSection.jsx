@@ -7,6 +7,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import InfoIcon from '@material-ui/icons/Info';
 import StarIcon from '@material-ui/icons/Star';
+import COLOURS from '../../util/COLOURS';
 
 import businessRegistrationExample from '../../images/business-registration-example.jpg';
 import businessLicenseExample from '../../images/business-license-example.jpg';
@@ -171,7 +172,7 @@ const claimInfoStyles = theme => ({
         boxShadow: '0 2px 6px rgba(255, 160, 0, 0.4)',
     },
     warningBox: {
-        backgroundColor: '#fce4ec',
+        backgroundColor: COLOURS.LIGHT_GREY,
         padding: theme.spacing.unit * 1.5,
         borderRadius: theme.spacing.unit,
         display: 'flex',
@@ -495,7 +496,7 @@ const ClaimInfoSection = ({ classes }) => (
         {/* Warning Note */}
         <div className={classes.warningBox}>
             <InfoIcon className={classes.warningIcon} />
-            <Typography variant="caption" style={{ fontSize: 16 }}>
+            <Typography variant="subheading" style={{ fontSize: 16 }}>
                 <strong style={{ color: '#d32f2f', fontSize: 16 }}>
                     IMPORTANT!
                 </strong>{' '}
