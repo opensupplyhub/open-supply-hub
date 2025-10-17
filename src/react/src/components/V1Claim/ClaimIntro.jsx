@@ -74,7 +74,7 @@ const claimIntroStyles = theme => ({
     backButton: {
         padding: '10px 24px',
         fontSize: 16,
-        fontWeight: 600,
+        fontWeight: 800,
         borderColor: '#ccc',
         textTransform: 'none',
         display: 'flex',
