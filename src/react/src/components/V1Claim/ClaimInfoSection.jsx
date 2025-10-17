@@ -21,11 +21,16 @@ const claimInfoStyles = theme => ({
         border: '1px solid #e0e0e0',
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 3,
+        '& > *:not(:last-child)': {
+            marginBottom: theme.spacing.unit * 3, // Add spacing between direct children
+        },
     },
     stepBox: {
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 2,
-        marginBottom: theme.spacing.unit * 3,
+        marginBottom: 0, // Remove or reduce this
+        display: 'flex',
+        flexDirection: 'column',
     },
     blueStep: {
         backgroundColor: '#e3f2fd',
@@ -53,7 +58,7 @@ const claimInfoStyles = theme => ({
         justifyContent: 'center',
         color: '#fff',
         fontWeight: 600,
-        fontSize: 14,
+        fontSize: 18,
         marginRight: theme.spacing.unit * 1.5,
         flexShrink: 0,
     },
@@ -76,7 +81,7 @@ const claimInfoStyles = theme => ({
         marginBottom: theme.spacing.unit * 1.5,
     },
     stepTitle: {
-        fontSize: 22,
+        fontSize: 24,
         fontWeight: 600,
         marginBottom: theme.spacing.unit * 0.5,
     },
@@ -86,7 +91,7 @@ const claimInfoStyles = theme => ({
     },
     bulletPoint: {
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center', // Changed to center
         marginBottom: theme.spacing.unit,
     },
     bullet: {
@@ -94,7 +99,6 @@ const claimInfoStyles = theme => ({
         height: 6,
         borderRadius: '50%',
         marginRight: theme.spacing.unit,
-        marginTop: 8,
         flexShrink: 0,
     },
     blueBullet: {
@@ -135,7 +139,7 @@ const claimInfoStyles = theme => ({
         fontSize: 14,
         textAlign: 'center',
         marginTop: theme.spacing.unit,
-        fontWeight: 500,
+        fontWeight: 700,
         lineHeight: 1.2,
     },
     purpleLabel: {
@@ -157,7 +161,7 @@ const claimInfoStyles = theme => ({
         color: '#fff',
         padding: '6px 12px',
         borderRadius: 20,
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 700,
         marginBottom: theme.spacing.unit * 1.5,
         boxShadow: '0 2px 6px rgba(255, 160, 0, 0.4)',
@@ -273,7 +277,7 @@ const ClaimInfoSection = ({ classes }) => (
                 </div>
                 <div>
                     <Typography
-                        variant="h6"
+                        variant="title"
                         className={classes.stepTitle}
                         style={{ color: '#0d47a1' }}
                     >
@@ -324,7 +328,7 @@ const ClaimInfoSection = ({ classes }) => (
                         2
                     </div>
                     <Typography
-                        variant="h6"
+                        variant="title"
                         className={classes.stepTitle}
                         style={{ color: '#4a148c' }}
                     >
@@ -378,7 +382,7 @@ const ClaimInfoSection = ({ classes }) => (
                         3
                     </div>
                     <Typography
-                        variant="h6"
+                        variant="title"
                         className={classes.stepTitle}
                         style={{ color: '#1b5e20' }}
                     >

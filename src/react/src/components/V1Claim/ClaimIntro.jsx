@@ -6,12 +6,11 @@ import { withRouter } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import ClaimInfoSection from './ClaimInfoSection';
 import AppGrid from '../AppGrid';
 import AppOverflow from '../AppOverflow';
-import { makeClaimFacilityLink } from '../../util/util';
+import { makeClaimDetailsLink } from '../../util/util';
 import COLOURS from '../../util/COLOURS';
 
 const claimIntroStyles = theme => ({
@@ -21,8 +20,8 @@ const claimIntroStyles = theme => ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: theme.spacing.unit,
-        paddingBottom: theme.spacing.unit,
+        paddingTop: theme.spacing.unit * 0,
+        paddingBottom: theme.spacing.unit * 4,
     },
     container: {
         maxWidth: 1440,
@@ -35,6 +34,8 @@ const claimIntroStyles = theme => ({
     heroSection: {
         textAlign: 'center',
         marginBottom: theme.spacing.unit * 3,
+        marginTop: 0,
+        paddingTop: 0,
     },
     title: {
         fontSize: 28,
@@ -46,7 +47,7 @@ const claimIntroStyles = theme => ({
         },
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 18,
         color: '#666',
         maxWidth: 720,
         margin: '0 auto',
@@ -55,8 +56,9 @@ const claimIntroStyles = theme => ({
     actionsContainer: {
         backgroundColor: '#fff',
         borderRadius: theme.spacing.unit,
-        padding: theme.spacing.unit * 3,
+        padding: theme.spacing.unit * 2,
         marginTop: theme.spacing.unit * 3,
+        marginBottom: 0, // Add this to remove bottom margin
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         border: '1px solid #e0e0e0',
     },
@@ -71,9 +73,14 @@ const claimIntroStyles = theme => ({
     },
     backButton: {
         padding: '10px 24px',
-        fontSize: 14,
-        fontWeight: 800,
+        fontSize: 16,
+        fontWeight: 600,
         borderColor: '#ccc',
+        textTransform: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '8px !important',
         '&:hover': {
             backgroundColor: '#f5f5f5',
             borderColor: '#999',
@@ -84,11 +91,16 @@ const claimIntroStyles = theme => ({
     },
     continueButton: {
         padding: '10px 24px',
-        fontSize: 14,
+        fontSize: 18,
         fontWeight: 800,
         backgroundColor: '#FFD700',
         color: '#000',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        textTransform: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '8px !important',
         '&:hover': {
             backgroundColor: '#FFC700',
             boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
@@ -99,11 +111,10 @@ const claimIntroStyles = theme => ({
     },
     icon: {
         marginLeft: theme.spacing.unit,
-        fontSize: 18,
-    },
-    backIcon: {
-        marginRight: theme.spacing.unit,
-        fontSize: 18,
+        fontSize: 20,
+        fontWeight: 800,
+        display: 'flex',
+        alignItems: 'center',
     },
 });
 
@@ -113,26 +124,25 @@ const ClaimIntro = ({ classes, history, osID }) => {
     };
 
     const handleContinue = () => {
-        // Navigate to the claim facility stepper
-        history.push(makeClaimFacilityLink(osID));
+        history.push(makeClaimDetailsLink(osID));
     };
 
     return (
         <div className={classes.root}>
             <AppOverflow>
-                <AppGrid title="">
+                <AppGrid>
                     <div className={classes.container}>
                         {/* Hero Section */}
                         <div className={classes.heroSection}>
                             <Typography
-                                variant="h1"
+                                variant="title"
                                 className={classes.title}
                                 component="h1"
                             >
                                 Claim a Production Location
                             </Typography>
                             <Typography
-                                variant="body1"
+                                variant="subheading"
                                 className={classes.subtitle}
                             >
                                 In order to submit a claim request, you must be
@@ -153,9 +163,6 @@ const ClaimIntro = ({ classes, history, osID }) => {
                                     className={classes.backButton}
                                     onClick={handleGoBack}
                                 >
-                                    <ArrowBackIcon
-                                        className={classes.backIcon}
-                                    />
                                     GO BACK
                                 </Button>
                                 <Button
