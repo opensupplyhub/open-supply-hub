@@ -107,7 +107,10 @@ const claimInfoStyles = theme => ({
     examplesContainer: {
         display: 'flex',
         gap: theme.spacing.unit * 3,
-        marginTop: theme.spacing.unit * 2,
+        marginTop: 'auto',
+        paddingTop: theme.spacing.unit * 2,
+        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
         flexWrap: 'wrap',
     },
     exampleItem: {
@@ -115,6 +118,7 @@ const claimInfoStyles = theme => ({
         flexDirection: 'column',
         alignItems: 'center',
         width: 80,
+        justifyContent: 'flex-start',
     },
     exampleImage: {
         width: 64,
