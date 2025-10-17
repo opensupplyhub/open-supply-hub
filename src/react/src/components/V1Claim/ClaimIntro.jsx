@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { string } from 'prop-types';
+import { string, bool } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
@@ -11,6 +11,7 @@ import ClaimInfoSection from './ClaimInfoSection';
 import AppGrid from '../AppGrid';
 import AppOverflow from '../AppOverflow';
 import { makeClaimDetailsLink } from '../../util/util';
+import RequireAuthNotice from '../RequireAuthNotice';
 import COLOURS from '../../util/COLOURS';
 
 const claimIntroStyles = theme => ({
@@ -118,7 +119,16 @@ const claimIntroStyles = theme => ({
     },
 });
 
-const ClaimIntro = ({ classes, history, osID }) => {
+const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
+    if (!userHasSignedIn) {
+        return (
+            <RequireAuthNotice
+                title="Claim this production location"
+                text="Log in to claim a production location on Open Supply Hub"
+            />
+        );
+    }
+
     const handleGoBack = () => {
         history.goBack();
     };
@@ -186,6 +196,7 @@ const ClaimIntro = ({ classes, history, osID }) => {
 
 ClaimIntro.propTypes = {
     osID: string.isRequired,
+    userHasSignedIn: bool.isRequired,
 };
 
 const mapStateToProps = (
@@ -197,6 +208,7 @@ const mapStateToProps = (
     },
 ) => ({
     osID,
+    userHasSignedIn: !state.auth.user.user.isAnon,
 });
 
 export default connect(mapStateToProps)(
