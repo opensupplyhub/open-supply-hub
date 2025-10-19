@@ -14,7 +14,9 @@ def normalize_date_field(event, source_key, target_key, format)
     event.set(target_key, t.strftime(format))
   rescue StandardError => error
     # Log parse failure and set to nil to avoid OpenSearch format mismatch.
-    logger.warn("Failed to parse #{source_key}: '#{value}'. Error: #{error.message}")
+    if defined?(@logger) && @logger
+      @logger.warn("Failed to parse #{source_key}: '#{value}'. Error: #{error.message}")
+    end
     event.set(target_key, nil)
   end
 end
