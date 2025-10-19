@@ -5,11 +5,11 @@ def filter(event)
       return [event]
   end
 
-  # Normalize to strict date (YYYY-MM-DD).
+  # Normalize to YYYY-MM format.
   # Accepts values like '2023-12-01' or ISO8601 '2023-12-01T10:30:00Z'.
   begin
     t = Time.parse(closed_at_value.to_s)
-    event.set('closed_at', t.strftime('%Y-%m-%d'))
+    event.set('closed_at', t.strftime('%Y-%m'))
   rescue => e
     # If parsing fails, pass through original value (to avoid data loss).
     event.set('closed_at', closed_at_value)
@@ -23,7 +23,7 @@ test 'closed_at filter with ISO datetime value' do
 
   expect('sets closed_at field as strict date') do |events|
       events.size == 1 &&
-      events[0].get('closed_at') == '2023-12-01'
+      events[0].get('closed_at') == '2023-12'
   end
 end
 
@@ -32,7 +32,7 @@ test 'closed_at filter with date string' do
 
   expect('keeps closed_at field as date') do |events|
       events.size == 1 &&
-      events[0].get('closed_at') == '2023-12-01'
+      events[0].get('closed_at') == '2023-12'
   end
 end
 
