@@ -6,11 +6,9 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimIntro from '../../components/V1Claim/ClaimIntro';
 import { makeClaimDetailsLink } from '../../util/util';
 
-jest.mock('../../components/V1Claim/ClaimInfoSection', () => {
-    return function ClaimInfoSection() {
-        return <div data-testid="claim-info-section">ClaimInfoSection</div>;
-    };
-});
+jest.mock('../../components/V1Claim/ClaimInfoSection', () => () => (
+    <div data-testid="claim-info-section">ClaimInfoSection</div>
+));
 
 describe('ClaimIntro component', () => {
     const mockOsID = 'TEST123';
