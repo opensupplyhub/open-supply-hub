@@ -220,10 +220,12 @@
           "type": "keyword"
         },
         "opened_at": {
-          "type": "date"
+          "type": "date",
+          "format": "strict_date"
         },
         "closed_at": {
-          "type": "date"
+          "type": "date",
+          "format": "strict_date"
         },
         "estimated_annual_throughput": {
           "type": "float"
