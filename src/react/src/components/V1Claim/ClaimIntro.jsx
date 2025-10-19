@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { string, bool } from 'prop-types';
+import PropTypes  from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
@@ -142,7 +142,6 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
             <AppOverflow>
                 <AppGrid>
                     <div className={classes.container}>
-                        {/* Hero Section */}
                         <div className={classes.heroSection}>
                             <Typography
                                 variant="title"
@@ -161,11 +160,7 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
                                 company of the production location.
                             </Typography>
                         </div>
-
-                        {/* Claim Info Steps */}
                         <ClaimInfoSection />
-
-                        {/* Action Buttons */}
                         <div className={classes.actionsContainer}>
                             <div className={classes.actionsInner}>
                                 <Button
@@ -195,12 +190,21 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
 };
 
 ClaimIntro.propTypes = {
-    osID: string.isRequired,
-    userHasSignedIn: bool.isRequired,
+    osID: PropTypes.string.isRequired,
+    userHasSignedIn: PropTypes.bool.isRequired,
+    classes: PropTypes.object.isRequired,
+    history: PropTypes.shape({
+        goBack: PropTypes.func.isRequired,
+        push: PropTypes.func.isRequired,
+    }).isRequired,
 };
 
 const mapStateToProps = (
-    state,
+    {
+        auth: {
+            user: { user },
+        },
+    },
     {
         match: {
             params: { osID },
@@ -208,7 +212,7 @@ const mapStateToProps = (
     },
 ) => ({
     osID,
-    userHasSignedIn: !state.auth.user.user.isAnon,
+    userHasSignedIn: !user.isAnon,
 });
 
 export default connect(mapStateToProps)(

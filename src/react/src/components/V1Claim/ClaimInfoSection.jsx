@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -226,6 +227,14 @@ const ImageDialog = ({ open, onClose, image, alt, classes }) => (
     </Dialog>
 );
 
+ImageDialog.propTypes = {
+    open: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
+    image: PropTypes.string.isRequired,
+    alt: PropTypes.string.isRequired,
+    classes: PropTypes.object.isRequired,
+};
+
 const ExampleImage = ({
     src,
     alt,
@@ -272,9 +281,17 @@ const ExampleImage = ({
     );
 };
 
+ExampleImage.propTypes = {
+    src: PropTypes.string.isRequired,
+    alt: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    borderClass: PropTypes.string.isRequired,
+    labelColorClass: PropTypes.string.isRequired,
+    classes: PropTypes.object.isRequired,
+};
+
 const ClaimInfoSection = ({ classes }) => (
     <div className={classes.root}>
-        {/* Step 1: Eligibility */}
         <div className={`${classes.stepBox} ${classes.blueStep}`}>
             <div className={classes.stepHeader}>
                 <div className={`${classes.stepNumber} ${classes.blueNumber}`}>
@@ -321,10 +338,7 @@ const ClaimInfoSection = ({ classes }) => (
                 </div>
             </div>
         </div>
-
-        {/* Steps 2 & 3: Documents Grid */}
         <div className={classes.twoColumnGrid}>
-            {/* Step 2: Prove Your Name and Role */}
             <div className={`${classes.stepBox} ${classes.purpleStep}`}>
                 <div className={classes.stepHeader}>
                     <div
@@ -377,8 +391,6 @@ const ClaimInfoSection = ({ classes }) => (
                     />
                 </div>
             </div>
-
-            {/* Step 3: Prove Your Company Name and Address */}
             <div className={`${classes.stepBox} ${classes.greenStep}`}>
                 <div className={classes.stepHeader}>
                     <div
@@ -442,8 +454,6 @@ const ClaimInfoSection = ({ classes }) => (
                 </div>
             </div>
         </div>
-
-        {/* Steps 4 & 5: Maximum Value Benefits */}
         <div className={`${classes.stepBox} ${classes.amberStep}`}>
             <div style={{ textAlign: 'center' }}>
                 <span className={classes.maxValueBadge}>
@@ -492,8 +502,6 @@ const ClaimInfoSection = ({ classes }) => (
                 </Typography>
             </div>
         </div>
-
-        {/* Warning Note */}
         <div className={classes.warningBox}>
             <InfoIcon className={classes.warningIcon} />
             <Typography variant="subheading" style={{ fontSize: 16 }}>
@@ -506,5 +514,9 @@ const ClaimInfoSection = ({ classes }) => (
         </div>
     </div>
 );
+
+ClaimInfoSection.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
 
 export default withStyles(claimInfoStyles)(ClaimInfoSection);
