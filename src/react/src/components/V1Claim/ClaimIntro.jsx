@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import PropTypes  from 'prop-types';
+import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
