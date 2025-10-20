@@ -156,7 +156,6 @@ const claimInfoStyles = theme => ({
     noteBox: {
         backgroundColor: COLOURS.NOTE_GREEN,
         padding: theme.spacing.unit * 1.5,
-        borderRadius: theme.spacing.unit,
         marginTop: theme.spacing.unit,
     },
     maxValueBadge: {
