@@ -143,11 +143,6 @@ class Routes extends Component {
                                     component={ClaimIntro}
                                 />
                                 <Route
-                                    exact
-                                    path={claimDetailsRoute}
-                                    component={ClaimForm}
-                                />
-                                <Route
                                     path={facilitiesRoute}
                                     component={Facilities}
                                 />
