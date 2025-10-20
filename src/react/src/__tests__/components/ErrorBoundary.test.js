@@ -1,5 +1,6 @@
 import React from 'react'
 import { waitFor } from '@testing-library/react'
+import { shape } from 'prop-types'
 import FacilityLists from '../../components/FacilityLists'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { USER_DEFAULT_STATE } from '../../util/constants'
@@ -145,6 +146,10 @@ describe('useGlobalErrorHandler', () => {
 		const GlobalErrorHandlerTester = ({ user: testUser }) => {
 			useGlobalErrorHandler(testUser)
 			return null
+		}
+
+		GlobalErrorHandlerTester.propTypes = {
+			user: shape({}).isRequired,
 		}
 
 		render(<GlobalErrorHandlerTester user={user} />)

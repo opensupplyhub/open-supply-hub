@@ -420,11 +420,7 @@ export const useGlobalErrorHandler = user => {
             errorObj.colno = colno;
 
             // Log to Rollbar with filtering.
-            logErrorToRollbar(
-                typeof window !== 'undefined' ? window : {},
-                errorObj,
-                user,
-            );
+            logErrorToRollbar(window, errorObj, user);
         };
 
         // Handle unhandled promise rejections.
@@ -436,11 +432,7 @@ export const useGlobalErrorHandler = user => {
                 error instanceof Error ? error : new Error(String(error));
 
             // Log to Rollbar with filtering.
-            logErrorToRollbar(
-                typeof window !== 'undefined' ? window : {},
-                errorObj,
-                user,
-            );
+            logErrorToRollbar(window, errorObj, user);
         };
 
         let eventTarget = null;
