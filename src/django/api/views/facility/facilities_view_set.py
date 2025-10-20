@@ -942,6 +942,12 @@ class FacilitiesViewSet(ListModelMixin,
                 parent_company_name=validated_data.get(
                     "parent_company_name"
                 ),
+                facility_affiliations=validated_data.get(
+                    "facility_affiliations"
+                ),
+                facility_certifications=validated_data.get(
+                    "facility_certifications"
+                ),
             )
 
             sectors = validated_data.get("sectors")

@@ -253,6 +253,18 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=200
     )
+    facility_affiliations = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=FacilityClaim.AFFILIATION_CHOICES,
+        ),
+        required=False
+    )
+    facility_certifications = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=FacilityClaim.CERTIFICATION_CHOICES,
+        ),
+        required=False
+    )
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)
