@@ -41,7 +41,6 @@ export default {
     ORANGE: '#f57c00',
     AMBER_YELLOW: '#fbc02d',
     LIGHT_AMBER: '#fff8e1',
-    LIGHT_AMBER_2: '#ffecb3',
 
     // Grays and Neutrals
     WHITE: '#FFF',
@@ -51,7 +50,6 @@ export default {
     DARK_SLATE_GREY: '#3D4153',
     MEDIUM_GREY: '#666',
     HOVER_GREY: '#f5f5f5',
-    BORDER_GREY: '#e0e0e0',
     LIGHT_BORDER: '#ccc',
     MEDIUM_BORDER: '#999',
     NEAR_BLACK: '#0D1128',
@@ -64,8 +62,4 @@ export default {
     // Blacks
     JET_BLACK: '#191919',
     BLACK: '#000',
-
-    // Yellows
-    YELLOW: '#FFD700',
-    LIGHT_YELLOW: '#FFC700',
 };

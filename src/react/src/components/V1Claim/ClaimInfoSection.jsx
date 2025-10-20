@@ -21,15 +21,13 @@ import businessCardExample from '../../images/business-card-example.jpg';
 const claimInfoStyles = theme => ({
     root: {
         backgroundColor: COLOURS.WHITE,
-        border: `1px solid ${COLOURS.BORDER_GREY}`,
-        borderRadius: theme.spacing.unit,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         padding: theme.spacing.unit * 3,
         '& > *:not(:last-child)': {
             marginBottom: theme.spacing.unit * 3,
         },
     },
     stepBox: {
-        borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 2,
         marginBottom: 0,
         display: 'flex',
@@ -48,8 +46,8 @@ const claimInfoStyles = theme => ({
         border: `1px solid ${COLOURS.LIGHT_GREEN_BORDER}`,
     },
     amberStep: {
-        background: `linear-gradient(135deg, ${COLOURS.LIGHT_AMBER} 0%, ${COLOURS.LIGHT_AMBER_2} 100%)`,
-        border: `4px solid ${COLOURS.AMBER}`,
+        background: COLOURS.LIGHT_AMBER,
+        border: `1px solid ${COLOURS.AMBER}`,
         boxShadow: '0 4px 12px rgba(255, 193, 7, 0.3)',
     },
     stepNumber: {
@@ -75,7 +73,7 @@ const claimInfoStyles = theme => ({
         backgroundColor: COLOURS.MATERIAL_GREEN,
     },
     amberNumber: {
-        background: `linear-gradient(135deg, ${COLOURS.ORANGE} 0%, ${COLOURS.AMBER_YELLOW} 100%)`,
+        background: COLOURS.ORANGE,
         boxShadow: '0 2px 8px rgba(245, 124, 0, 0.4)',
     },
     stepHeader: {
@@ -164,7 +162,7 @@ const claimInfoStyles = theme => ({
     maxValueBadge: {
         display: 'inline-flex',
         alignItems: 'center',
-        backgroundColor: COLOURS.DARK_AMBER,
+        backgroundColor: COLOURS.ORANGE,
         color: COLOURS.WHITE,
         padding: '6px 12px',
         borderRadius: 20,
@@ -176,7 +174,6 @@ const claimInfoStyles = theme => ({
     warningBox: {
         backgroundColor: COLOURS.LIGHT_GREY,
         padding: theme.spacing.unit * 1.5,
-        borderRadius: theme.spacing.unit,
         display: 'flex',
         alignItems: 'center',
     },

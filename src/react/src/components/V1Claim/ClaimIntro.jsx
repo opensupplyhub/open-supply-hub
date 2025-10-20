@@ -56,12 +56,10 @@ const claimIntroStyles = theme => ({
     },
     actionsContainer: {
         backgroundColor: COLOURS.WHITE,
-        borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 2,
         marginTop: theme.spacing.unit * 3,
         marginBottom: 0,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        border: `1px solid ${COLOURS.BORDER_GREY}`,
     },
     actionsInner: {
         display: 'flex',
@@ -81,7 +79,6 @@ const claimIntroStyles = theme => ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '8px !important',
         '&:hover': {
             backgroundColor: COLOURS.HOVER_GREY,
             borderColor: COLOURS.MEDIUM_BORDER,
@@ -94,16 +91,15 @@ const claimIntroStyles = theme => ({
         padding: '10px 24px',
         fontSize: 18,
         fontWeight: 800,
-        backgroundColor: COLOURS.YELLOW,
+        backgroundColor: theme.palette.action.main,
         color: COLOURS.BLACK,
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         textTransform: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '8px !important',
         '&:hover': {
-            backgroundColor: COLOURS.LIGHT_YELLOW,
+            backgroundColor: theme.palette.action.dark,
             boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
         },
         [theme.breakpoints.down('sm')]: {
