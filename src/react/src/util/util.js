@@ -1855,3 +1855,29 @@ export const filterFreeEmissionsEstimateFields = formData => {
         return false; // Keep all other fields.
     });
 };
+
+const formatRawValues = rawValues => {
+    if (Array.isArray(rawValues)) {
+        return rawValues.join(', ');
+    }
+
+    if (typeof rawValues === 'object' && rawValues !== null) {
+        return Object.entries(rawValues)
+            .map(([key, val]) => `${key}: ${val}`)
+            .join(', ');
+    }
+
+    return rawValues.toString().split('|');
+};
+
+export const formatPartnerFieldValue = value => {
+    const { raw_values, raw_value } = value;
+
+    if (raw_values !== undefined) {
+        return formatRawValues(raw_values);
+    }
+    if (raw_value !== undefined) {
+        return value.raw_value;
+    }
+    return value;
+};

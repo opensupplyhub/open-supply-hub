@@ -37,6 +37,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     created_from = SerializerMethodField()
     sector = SerializerMethodField()
     is_claimed = SerializerMethodField()
+    partner_fields = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -62,6 +63,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'created_from',
             'sector',
             'is_claimed',
+            'partner_fields',
         )
         geo_field = 'location'
 
