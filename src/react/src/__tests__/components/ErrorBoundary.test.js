@@ -1,10 +1,10 @@
 import React from 'react'
+import { waitFor } from '@testing-library/react'
 import FacilityLists from '../../components/FacilityLists'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { USER_DEFAULT_STATE } from '../../util/constants'
 import renderWithProviders from '../../util/testUtils/renderWithProviders'
 import * as util from '../../util/util'
-import { waitFor } from '@testing-library/react'
 
 const ERROR_MESSAGE = 'Error while fetching facilities'
 const CONTRIBUTOR_ID = 1705
@@ -130,10 +130,11 @@ describe('useGlobalErrorHandler', () => {
 
 		// Load the hook module in isolation
 		jest.isolateModules(() => {
+			// eslint-disable-next-line global-require
 			const { useGlobalErrorHandler } = require('../../util/hooks')
 
-			const GlobalErrorHandlerTester = ({ user }) => {
-				useGlobalErrorHandler(user)
+			const GlobalErrorHandlerTester = ({ user: testUser }) => {
+				useGlobalErrorHandler(testUser)
 				return null
 			}
 

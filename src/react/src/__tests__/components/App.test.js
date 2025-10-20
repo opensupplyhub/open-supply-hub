@@ -4,11 +4,8 @@ import { waitFor, render } from '@testing-library/react';
 import { USER_DEFAULT_STATE } from '../../util/constants';
 
 // Keep App's other internals minimal by mocking heavy children/dependencies.
-jest.mock('../../Routes', () => {
-    const React = require('react');
-    return function Routes() {
-        return React.createElement('div', { 'data-testid': 'routes' });
-    };
+jest.mock('../../Routes', () => function Routes() {
+    return React.createElement('div', { 'data-testid': 'routes' });
 });
 
 // Mock the embedded map action to assert it is called when embed + contributor present.
@@ -39,11 +36,13 @@ describe('App component', () => {
     });
 
     test('registers global error handler and calls logErrorToRollbar', async () => {
+        // eslint-disable-next-line global-require
         const utilModule = require('../../util/util');
         const logSpy = jest
             .spyOn(utilModule, 'logErrorToRollbar')
             .mockImplementation(() => {});
 
+        // eslint-disable-next-line global-require
         const { UnconnectedApp } = require('../../App.jsx');
 
         const props = {
@@ -79,6 +78,7 @@ describe('App component', () => {
     test('dispatches fetchEmbedConfig when embed is true and contributor exists', async () => {
         const contributorId = 1705;
 
+        // eslint-disable-next-line global-require
         const { UnconnectedApp } = require('../../App.jsx');
 
         const props = {
