@@ -948,6 +948,15 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_certifications=validated_data.get(
                     "facility_certifications"
                 ),
+                facility_female_workers_percentage=validated_data.get(
+                    "facility_female_workers_percentage"
+                ),
+                facility_minimum_order_quantity=validated_data.get(
+                    "facility_minimum_order_quantity"
+                ),
+                facility_average_lead_time=validated_data.get(
+                    "facility_average_lead_time"
+                ),
             )
 
             sectors = validated_data.get("sectors")

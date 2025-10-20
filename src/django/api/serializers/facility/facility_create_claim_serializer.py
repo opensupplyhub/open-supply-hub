@@ -265,6 +265,21 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         ),
         required=False
     )
+    facility_female_workers_percentage = serializers.IntegerField(
+        required=False,
+        max_value=100,
+        min_value=0
+    )
+    facility_minimum_order_quantity = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_average_lead_time = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)
