@@ -41,7 +41,7 @@ const claimIntroStyles = theme => ({
     title: {
         fontSize: 30,
         fontWeight: 700,
-        color: '#191919',
+        color: COLOURS.JET_BLACK,
         marginBottom: theme.spacing.unit,
         [theme.breakpoints.down('sm')]: {
             fontSize: 24,
@@ -49,19 +49,19 @@ const claimIntroStyles = theme => ({
     },
     subtitle: {
         fontSize: 18,
-        color: '#666',
+        color: COLOURS.MEDIUM_GREY,
         maxWidth: 720,
         margin: '0 auto',
         lineHeight: 1.6,
     },
     actionsContainer: {
-        backgroundColor: '#fff',
+        backgroundColor: COLOURS.WHITE,
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 2,
         marginTop: theme.spacing.unit * 3,
         marginBottom: 0,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        border: '1px solid #e0e0e0',
+        border: `1px solid ${COLOURS.BORDER_GREY}`,
     },
     actionsInner: {
         display: 'flex',
@@ -76,15 +76,15 @@ const claimIntroStyles = theme => ({
         padding: '10px 24px',
         fontSize: 16,
         fontWeight: 800,
-        borderColor: '#ccc',
+        borderColor: COLOURS.LIGHT_BORDER,
         textTransform: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: '8px !important',
         '&:hover': {
-            backgroundColor: '#f5f5f5',
-            borderColor: '#999',
+            backgroundColor: COLOURS.HOVER_GREY,
+            borderColor: COLOURS.MEDIUM_BORDER,
         },
         [theme.breakpoints.down('sm')]: {
             width: '100%',
@@ -94,8 +94,8 @@ const claimIntroStyles = theme => ({
         padding: '10px 24px',
         fontSize: 18,
         fontWeight: 800,
-        backgroundColor: '#FFD700',
-        color: '#000',
+        backgroundColor: COLOURS.YELLOW,
+        color: COLOURS.BLACK,
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         textTransform: 'none',
         display: 'flex',
@@ -103,7 +103,7 @@ const claimIntroStyles = theme => ({
         justifyContent: 'center',
         borderRadius: '8px !important',
         '&:hover': {
-            backgroundColor: '#FFC700',
+            backgroundColor: COLOURS.LIGHT_YELLOW,
             boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
         },
         [theme.breakpoints.down('sm')]: {

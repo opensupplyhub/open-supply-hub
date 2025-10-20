@@ -9,6 +9,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import InfoIcon from '@material-ui/icons/Info';
 import StarIcon from '@material-ui/icons/Star';
 import COLOURS from '../../util/COLOURS';
+import { ClaimFacilityInfoLink } from '../../util/constants';
 
 import businessRegistrationExample from '../../images/business-registration-example.jpg';
 import businessLicenseExample from '../../images/business-license-example.jpg';
@@ -19,8 +20,8 @@ import businessCardExample from '../../images/business-card-example.jpg';
 
 const claimInfoStyles = theme => ({
     root: {
-        backgroundColor: '#fff',
-        border: '1px solid #e0e0e0',
+        backgroundColor: COLOURS.WHITE,
+        border: `1px solid ${COLOURS.BORDER_GREY}`,
         borderRadius: theme.spacing.unit,
         padding: theme.spacing.unit * 3,
         '& > *:not(:last-child)': {
@@ -35,20 +36,20 @@ const claimInfoStyles = theme => ({
         flexDirection: 'column',
     },
     blueStep: {
-        backgroundColor: '#e3f2fd',
-        border: '1px solid #90caf9',
+        backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
+        border: `1px solid ${COLOURS.LIGHT_BLUE_BORDER}`,
     },
     purpleStep: {
-        backgroundColor: '#f3e5f5',
-        border: '1px solid #ce93d8',
+        backgroundColor: COLOURS.LIGHT_PURPLE_BG,
+        border: `1px solid ${COLOURS.LIGHT_PURPLE_BORDER}`,
     },
     greenStep: {
-        backgroundColor: '#e8f5e9',
-        border: '1px solid #81c784',
+        backgroundColor: COLOURS.LIGHT_GREEN,
+        border: `1px solid ${COLOURS.LIGHT_GREEN_BORDER}`,
     },
     amberStep: {
-        background: 'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)',
-        border: '4px solid #ffc107',
+        background: `linear-gradient(135deg, ${COLOURS.LIGHT_AMBER} 0%, ${COLOURS.LIGHT_AMBER_2} 100%)`,
+        border: `4px solid ${COLOURS.AMBER}`,
         boxShadow: '0 4px 12px rgba(255, 193, 7, 0.3)',
     },
     stepNumber: {
@@ -58,23 +59,23 @@ const claimInfoStyles = theme => ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#fff',
+        color: COLOURS.WHITE,
         fontWeight: 600,
         fontSize: 18,
         marginRight: theme.spacing.unit * 1.5,
         flexShrink: 0,
     },
     blueNumber: {
-        backgroundColor: '#1976d2',
+        backgroundColor: COLOURS.MATERIAL_BLUE,
     },
     purpleNumber: {
-        backgroundColor: '#7b1fa2',
+        backgroundColor: COLOURS.MATERIAL_PURPLE,
     },
     greenNumber: {
-        backgroundColor: '#388e3c',
+        backgroundColor: COLOURS.MATERIAL_GREEN,
     },
     amberNumber: {
-        background: 'linear-gradient(135deg, #f57c00 0%, #fbc02d 100%)',
+        background: `linear-gradient(135deg, ${COLOURS.ORANGE} 0%, ${COLOURS.AMBER_YELLOW} 100%)`,
         boxShadow: '0 2px 8px rgba(245, 124, 0, 0.4)',
     },
     stepHeader: {
@@ -104,7 +105,7 @@ const claimInfoStyles = theme => ({
         flexShrink: 0,
     },
     blueBullet: {
-        backgroundColor: '#1976d2',
+        backgroundColor: COLOURS.MATERIAL_BLUE,
     },
     examplesContainer: {
         display: 'flex',
@@ -136,10 +137,10 @@ const claimInfoStyles = theme => ({
         },
     },
     purpleBorder: {
-        border: '2px solid #ce93d8',
+        border: `2px solid ${COLOURS.LIGHT_PURPLE_BORDER}`,
     },
     greenBorder: {
-        border: '2px solid #81c784',
+        border: `2px solid ${COLOURS.LIGHT_GREEN_BORDER}`,
     },
     exampleLabel: {
         fontSize: 14,
@@ -149,13 +150,13 @@ const claimInfoStyles = theme => ({
         lineHeight: 1.2,
     },
     purpleLabel: {
-        color: '#6a1b9a',
+        color: COLOURS.PURPLE_TEXT,
     },
     greenLabel: {
-        color: '#2e7d32',
+        color: COLOURS.GREEN_TEXT,
     },
     noteBox: {
-        backgroundColor: '#c8e6c9',
+        backgroundColor: COLOURS.NOTE_GREEN,
         padding: theme.spacing.unit * 1.5,
         borderRadius: theme.spacing.unit,
         marginTop: theme.spacing.unit,
@@ -163,8 +164,8 @@ const claimInfoStyles = theme => ({
     maxValueBadge: {
         display: 'inline-flex',
         alignItems: 'center',
-        backgroundColor: '#ffa000',
-        color: '#fff',
+        backgroundColor: COLOURS.DARK_AMBER,
+        color: COLOURS.WHITE,
         padding: '6px 12px',
         borderRadius: 20,
         fontSize: 18,
@@ -180,13 +181,13 @@ const claimInfoStyles = theme => ({
         alignItems: 'center',
     },
     warningIcon: {
-        color: '#d32f2f',
+        color: COLOURS.MATERIAL_RED,
         marginRight: theme.spacing.unit,
         fontSize: 16,
         flexShrink: 0,
     },
     link: {
-        color: '#1976d2',
+        color: COLOURS.MATERIAL_BLUE,
         textDecoration: 'none',
         fontWeight: 500,
         '&:hover': {
@@ -301,7 +302,7 @@ const ClaimInfoSection = ({ classes }) => (
                     <Typography
                         variant="title"
                         className={classes.stepTitle}
-                        style={{ color: '#0d47a1' }}
+                        style={{ color: COLOURS.DARK_BLUE }}
                     >
                         Confirm Your Eligibility
                     </Typography>
@@ -313,7 +314,7 @@ const ClaimInfoSection = ({ classes }) => (
                             <Typography
                                 variant="body2"
                                 className={classes.stepText}
-                                style={{ color: '#1565c0' }}
+                                style={{ color: COLOURS.LIGHT_MATERIAL_BLUE }}
                             >
                                 Claim requests must be submitted by a current
                                 employee of the location or its parent company.
@@ -326,7 +327,7 @@ const ClaimInfoSection = ({ classes }) => (
                             <Typography
                                 variant="body2"
                                 className={classes.stepText}
-                                style={{ color: '#1565c0' }}
+                                style={{ color: COLOURS.LIGHT_MATERIAL_BLUE }}
                             >
                                 If you&apos;re not an owner or manager, you can
                                 still proceed by providing your
@@ -349,7 +350,7 @@ const ClaimInfoSection = ({ classes }) => (
                     <Typography
                         variant="title"
                         className={classes.stepTitle}
-                        style={{ color: '#4a148c' }}
+                        style={{ color: COLOURS.DARK_PURPLE }}
                     >
                         Prove Your Name and Role
                     </Typography>
@@ -357,7 +358,7 @@ const ClaimInfoSection = ({ classes }) => (
                 <Typography
                     variant="body2"
                     className={classes.stepText}
-                    style={{ color: '#6a1b9a', marginBottom: 16 }}
+                    style={{ color: COLOURS.PURPLE_TEXT, marginBottom: 16 }}
                 >
                     <strong>OPTIONS:</strong> Company website showing your name
                     and role, Employee ID badge, Employment letter, Job
@@ -401,7 +402,7 @@ const ClaimInfoSection = ({ classes }) => (
                     <Typography
                         variant="title"
                         className={classes.stepTitle}
-                        style={{ color: '#1b5e20' }}
+                        style={{ color: COLOURS.DARK_MATERIAL_GREEN }}
                     >
                         Prove Your Company Name and Address
                     </Typography>
@@ -409,7 +410,7 @@ const ClaimInfoSection = ({ classes }) => (
                 <Typography
                     variant="body2"
                     className={classes.stepText}
-                    style={{ color: '#2e7d32', marginBottom: 8 }}
+                    style={{ color: COLOURS.GREEN_TEXT, marginBottom: 8 }}
                 >
                     <strong>OPTIONS:</strong> Business registration, Business
                     license, Utility bill, link to company website, link to
@@ -419,7 +420,7 @@ const ClaimInfoSection = ({ classes }) => (
                     <Typography
                         variant="body2"
                         className={classes.stepText}
-                        style={{ color: '#2e7d32' }}
+                        style={{ color: COLOURS.GREEN_TEXT }}
                     >
                         <strong>NOTE:</strong> The document must show the same
                         company name and address as listed on your OS Hub
@@ -469,7 +470,7 @@ const ClaimInfoSection = ({ classes }) => (
                 <Typography
                     variant="body2"
                     className={classes.stepText}
-                    style={{ color: '#e65100' }}
+                    style={{ color: COLOURS.DEEP_ORANGE }}
                 >
                     <strong style={{ fontSize: 20 }}>Add Key Details:</strong>{' '}
                     Provide information about the production location such as
@@ -485,14 +486,14 @@ const ClaimInfoSection = ({ classes }) => (
                 <Typography
                     variant="body2"
                     className={classes.stepText}
-                    style={{ color: '#e65100' }}
+                    style={{ color: COLOURS.DEEP_ORANGE }}
                 >
                     <strong style={{ fontSize: 20 }}>Get Verified:</strong>{' '}
                     After the claim is approved, you get a credible and
                     confirmed profile—with a green banner and Claimed badge—that
                     helps buyers trust and find your company.{' '}
                     <a
-                        href="https://info.opensupplyhub.org/resources/claim-a-facility"
+                        href={ClaimFacilityInfoLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={classes.link}
@@ -505,7 +506,7 @@ const ClaimInfoSection = ({ classes }) => (
         <div className={classes.warningBox}>
             <InfoIcon className={classes.warningIcon} />
             <Typography variant="subheading" style={{ fontSize: 16 }}>
-                <strong style={{ color: '#d32f2f', fontSize: 16 }}>
+                <strong style={{ color: COLOURS.MATERIAL_RED, fontSize: 16 }}>
                     IMPORTANT!
                 </strong>{' '}
                 Any documentation appearing to be forged or counterfeit may

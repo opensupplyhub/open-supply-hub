@@ -18,6 +18,8 @@ export const MERGE_ACTION = 'merge';
 export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
+export const ClaimFacilityInfoLink =
+    'https://info.opensupplyhub.org/resources/claim-a-facility';
 
 export const EMPTY_PLACEHOLDER = 'N/A';
 
