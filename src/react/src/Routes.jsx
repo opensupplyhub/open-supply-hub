@@ -25,6 +25,7 @@ import RouteNotFound from './components/RouteNotFound';
 import Dashboard from './components/Dashboard';
 import FeatureFlag from './components/FeatureFlag';
 import ClaimFacility from './components/ClaimFacility';
+import ClaimForm from './components/ClaimForm/ClaimForm';
 import ClaimedFacilities from './components/ClaimedFacilities';
 import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
@@ -132,6 +133,11 @@ class Routes extends Component {
                                             />
                                         </FeatureFlag>
                                     )}
+                                />
+                                <Route
+                                    exact
+                                    path="/claim/:osID/details/"
+                                    component={ClaimForm}
                                 />
                                 <Route
                                     path={facilitiesRoute}
