@@ -960,6 +960,9 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_product_types=validated_data.get(
                     "facility_product_types"
                 ),
+                facility_production_types=validated_data.get(
+                    "facility_production_types"
+                ),
             )
 
             sectors = validated_data.get("sectors")

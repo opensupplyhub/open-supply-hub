@@ -292,6 +292,14 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         ),
         required=False
     )
+    facility_production_types = serializers.ListField(
+        child=serializers.CharField(
+            max_length=50,
+            allow_blank=False,
+            allow_null=False,
+        ),
+        required=False
+    )
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)
