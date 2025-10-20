@@ -957,6 +957,9 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_average_lead_time=validated_data.get(
                     "facility_average_lead_time"
                 ),
+                facility_product_types=validated_data.get(
+                    "facility_product_types"
+                ),
             )
 
             sectors = validated_data.get("sectors")
