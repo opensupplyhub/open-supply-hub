@@ -1,10 +1,8 @@
-import React from 'react'
-import { waitFor } from '@testing-library/react'
-import FacilityLists from '../../components/FacilityLists'
-import ErrorBoundary from '../../components/ErrorBoundary'
-import { USER_DEFAULT_STATE } from '../../util/constants'
-import renderWithProviders from '../../util/testUtils/renderWithProviders'
-import * as util from '../../util/util'
+// Mock the util module FIRST, before any imports
+jest.mock('../../util/util', () => ({
+	...jest.requireActual('../../util/util'),
+	logErrorToRollbar: jest.fn(),
+}))
 
 const ERROR_MESSAGE = 'Error while fetching facilities'
 const CONTRIBUTOR_ID = 1705
@@ -21,7 +19,19 @@ jest.mock('../../components/FacilityLists', () => {
 	}
 
 	return MockedFacilityLists;
-});
+})
+
+// Now import everything AFTER the mocks are set up
+import React from 'react'
+import { waitFor } from '@testing-library/react'
+import FacilityLists from '../../components/FacilityLists'
+import ErrorBoundary from '../../components/ErrorBoundary'
+import { USER_DEFAULT_STATE } from '../../util/constants'
+import renderWithProviders from '../../util/testUtils/renderWithProviders'
+
+// Import util and get reference to the mocked function
+const util = require('../../util/util')
+const mockLogErrorToRollbar = util.logErrorToRollbar
 
 const mockLogErrorToRollbarGetUserInfo = (user, shouldApiUser) => {
 	expect(user.contributor_id).toBe(CONTRIBUTOR_ID)
@@ -108,38 +118,37 @@ describe('Test ErrorBoundary component for API user with contributor id', () => 
 })
 
 describe('useGlobalErrorHandler', () => {
+	beforeEach(() => {
+		mockLogErrorToRollbar.mockClear()
+	})
+
 	it('logs to Rollbar on window error events', async () => {
-		const user = { ...USER_DEFAULT_STATE, isAnon: false, contributor_id: 123 }
+		const user = { ...USER_DEFAULT_STATE, isAnon: false, id: 5, contributor_id: 123 }
 
-		// Mock Rollbar on window so the real util.logErrorToRollbar will hit it
-		const rollbarError = jest.fn()
-		const rollbarConfigure = jest.fn()
-		window.Rollbar = { error: rollbarError, configure: rollbarConfigure }
-
-		// Suppress React error output caused by dispatching a window error event
+		// Suppress console output
 		const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
-		// Capture registered listeners so we can invoke them directly without relying on Event
+		// Capture registered listeners
 		const listeners = {}
+		const originalAddEventListener = window.addEventListener.bind(window)
 		const addEventListenerSpy = jest
 			.spyOn(window, 'addEventListener')
-			.mockImplementation((type, cb) => {
+			.mockImplementation((type, cb, options) => {
 				listeners[type] = cb
+				return originalAddEventListener(type, cb, options)
 			})
 
+		// eslint-disable-next-line global-require
+		const { useGlobalErrorHandler } = require('../../util/hooks')
+		// eslint-disable-next-line global-require
+		const { render } = require('@testing-library/react')
 
-		// Load the hook module in isolation
-		jest.isolateModules(() => {
-			// eslint-disable-next-line global-require
-			const { useGlobalErrorHandler } = require('../../util/hooks')
+		const GlobalErrorHandlerTester = ({ user: testUser }) => {
+			useGlobalErrorHandler(testUser)
+			return null
+		}
 
-			const GlobalErrorHandlerTester = ({ user: testUser }) => {
-				useGlobalErrorHandler(testUser)
-				return null
-			}
-
-			renderWithProviders(<GlobalErrorHandlerTester user={user} />)
-		})
+		render(<GlobalErrorHandlerTester user={user} />)
 
 		await waitFor(() => {
 			expect(typeof listeners.error).toBe('function')
@@ -154,12 +163,15 @@ describe('useGlobalErrorHandler', () => {
 			error,
 		})
 
-		await waitFor(() => {
-			expect(rollbarError).toHaveBeenCalled()
-		})
+		// logErrorToRollbar is called synchronously
+		expect(mockLogErrorToRollbar).toHaveBeenCalled()
+		expect(mockLogErrorToRollbar).toHaveBeenCalledWith(
+			expect.objectContaining({ addEventListener: expect.any(Function) }),
+			expect.objectContaining({ message: 'Global handler test error' }),
+			user
+		)
 
 		consoleSpy.mockRestore()
 		addEventListenerSpy.mockRestore()
-		jest.resetModules()
 	})
 })

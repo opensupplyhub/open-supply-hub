@@ -4,8 +4,12 @@ import { waitFor, render } from '@testing-library/react';
 import { USER_DEFAULT_STATE } from '../../util/constants';
 
 // Keep App's other internals minimal by mocking heavy children/dependencies.
-jest.mock('../../Routes', () => function Routes() {
-    return React.createElement('div', { 'data-testid': 'routes' });
+jest.mock('../../Routes', () => {
+    // eslint-disable-next-line no-shadow, global-require
+    const React = require('react');
+    return function Routes() {
+        return React.createElement('div', { 'data-testid': 'routes' });
+    };
 });
 
 // Mock the embedded map action to assert it is called when embed + contributor present.
