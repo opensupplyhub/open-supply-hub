@@ -129,7 +129,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
     )
     sectors = serializers.ListField(
-        child=serializers.CharField(),
+        child=serializers.CharField(
+            max_length=50,
+            allow_blank=False,
+            allow_null=False,
+        ),
         required=False
     )
     number_of_workers = serializers.CharField(
