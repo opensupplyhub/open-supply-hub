@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import ImageDialog from './ImageDialog';
+import { claimInfoStyles } from './styles';
 
 const ExampleImage = ({
     src,
@@ -43,7 +45,6 @@ const ExampleImage = ({
                 onClose={() => setDialogOpen(false)}
                 image={src}
                 alt={alt}
-                classes={classes}
             />
         </div>
     );
@@ -58,4 +59,4 @@ ExampleImage.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default ExampleImage;
+export default withStyles(claimInfoStyles)(ExampleImage);

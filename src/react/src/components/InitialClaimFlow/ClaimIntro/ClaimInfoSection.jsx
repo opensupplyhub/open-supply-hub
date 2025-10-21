@@ -97,7 +97,6 @@ const ClaimInfoSection = ({ classes }) => (
                         label="Employee ID Badge"
                         borderClass="purpleBorder"
                         labelColorClass="purpleLabel"
-                        classes={classes}
                     />
                     <ExampleImage
                         src={employmentLetterExample}
@@ -105,7 +104,6 @@ const ClaimInfoSection = ({ classes }) => (
                         label="Employment Letter"
                         borderClass="purpleBorder"
                         labelColorClass="purpleLabel"
-                        classes={classes}
                     />
                     <ExampleImage
                         src={businessCardExample}
@@ -113,7 +111,6 @@ const ClaimInfoSection = ({ classes }) => (
                         label="Business Card"
                         borderClass="purpleBorder"
                         labelColorClass="purpleLabel"
-                        classes={classes}
                     />
                 </div>
             </div>
@@ -159,7 +156,6 @@ const ClaimInfoSection = ({ classes }) => (
                         label="Business Registration"
                         borderClass="greenBorder"
                         labelColorClass="greenLabel"
-                        classes={classes}
                     />
                     <ExampleImage
                         src={businessLicenseExample}
@@ -167,7 +163,6 @@ const ClaimInfoSection = ({ classes }) => (
                         label="Business License"
                         borderClass="greenBorder"
                         labelColorClass="greenLabel"
-                        classes={classes}
                     />
                     <ExampleImage
                         src={utilityBillExample}
@@ -175,7 +170,6 @@ const ClaimInfoSection = ({ classes }) => (
                         label="Utility Bill"
                         borderClass="greenBorder"
                         labelColorClass="greenLabel"
-                        classes={classes}
                     />
                 </div>
             </div>
