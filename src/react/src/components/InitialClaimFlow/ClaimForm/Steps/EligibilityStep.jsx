@@ -6,11 +6,13 @@ import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
+import TextField from '@material-ui/core/TextField';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Security from '@material-ui/icons/Security';
 
-import COLOURS from '../../../util/COLOURS';
+import COLOURS from '../../../../util/COLOURS';
+import withScrollReset from '../../HOCs/withScrollReset';
 
 const eligibilityStepStyles = theme =>
     Object.freeze({
@@ -96,6 +98,11 @@ EligibilityStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    handleBlur: func.isRequired,
+    errors: object,
+    touched: object,
 };
 
-export default withStyles(eligibilityStepStyles)(EligibilityStep);
+export default withStyles(eligibilityStepStyles)(
+    withScrollReset(EligibilityStep),
+);
