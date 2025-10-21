@@ -18,6 +18,8 @@ export const MERGE_ACTION = 'merge';
 export const REJECT_ACTION = 'reject';
 
 export const InfoLink = 'https://info.opensupplyhub.org';
+export const ClaimFacilityInfoLink =
+    'https://info.opensupplyhub.org/resources/claim-a-facility';
 
 export const EMPTY_PLACEHOLDER = 'N/A';
 
@@ -337,6 +339,8 @@ export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
 export const facilityDetailsRoute = '/facilities/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';
+export const claimDetailsRoute = '/claim/:osID/details';
+export const claimIntroRoute = '/claim/:osID';
 export const profileRoute = '/profile/:id';
 export const aboutProcessingRoute = `${InfoLink}/${InfoPaths.dataQuality}`;
 export const dashboardRoute = '/dashboard';
