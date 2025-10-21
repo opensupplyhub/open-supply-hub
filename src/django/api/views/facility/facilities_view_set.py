@@ -976,8 +976,10 @@ class FacilitiesViewSet(ListModelMixin,
             facility_type = validated_data.get("facility_type")
 
             if facility_type:
-                (_, __, facility_type_value, processing_type_value) = get_facility_and_processing_type(
-                    facility_type, sectors,
+                (_, __, facility_type_value, processing_type_value) = (
+                    get_facility_and_processing_type(
+                        facility_type, sectors,
+                    )
                 )
 
                 if facility_type_value:

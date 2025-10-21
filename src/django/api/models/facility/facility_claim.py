@@ -492,7 +492,7 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         verbose_name='claimant location relationship',
-        help_text="Claimant's relationship to the location of the production location."
+        help_text="Claimant's relationship to the location."
     )
     claimant_employment_verification_method = models.CharField(
         max_length=250,
@@ -506,7 +506,7 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         verbose_name='location address verification method',
-        help_text="Verification method used to confirm the production location's address."
+        help_text="Verification method used to confirm the address."
     )
     claimant_linkedin_profile_url = models.URLField(
         null=True,
