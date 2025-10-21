@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
@@ -7,6 +8,9 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import ArrowBack from '@material-ui/icons/ArrowBack';
+import ArrowForward from '@material-ui/icons/ArrowForward';
 import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
@@ -38,6 +42,7 @@ import {
     STEP_DESCRIPTIONS,
     NEXT_BUTTON_TEXT,
     STEP_ICONS,
+    claimIntroRoute,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
