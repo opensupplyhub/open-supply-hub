@@ -51,7 +51,7 @@ const EligibilityStep = ({ classes, formData, handleChange }) => (
                 <CardHeader
                     className={classes.cardHeader}
                     title={
-                        <Typography variant="h6">
+                        <Typography variant="title">
                             <Security className={classes.headerIcon} />
                             Eligibility Verification
                         </Typography>

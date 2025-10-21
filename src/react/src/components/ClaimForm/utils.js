@@ -1,14 +1,6 @@
 import { CLAIM_FORM_STEPS, TOTAL_STEPS } from './constants';
 
 /**
- * Calculate the overall progress percentage
- * @param {Array} completedSteps - Array of completed step indices
- * @returns {number} - Progress percentage (0-100)
- */
-export const calculateProgress = completedSteps =>
-    (completedSteps.length / TOTAL_STEPS) * 100;
-
-/**
  * Check if a step is complete
  * @param {number} stepIndex - The index of the step to check
  * @param {Array} completedSteps - Array of completed step indices

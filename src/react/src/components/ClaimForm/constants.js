@@ -33,15 +33,13 @@ export const STEP_DESCRIPTIONS = Object.freeze([
     'Detailed information about the production location (Optional)',
 ]);
 
+export const NEXT_BUTTON_TEXT = Object.freeze({
+    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Continue to Contact Information',
+    [CLAIM_FORM_STEPS.CONTACT]: 'Continue to Business Details',
+    [CLAIM_FORM_STEPS.BUSINESS]: 'Continue to Production Location Details',
+});
+
 export const claimFormRoute = '/claim/:osID/details/';
 export const claimIntroRoute = '/claim/:osID/';
-
-// Map step indices to Material-UI icon names
-export const STEP_ICONS = Object.freeze({
-    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Security',
-    [CLAIM_FORM_STEPS.CONTACT]: 'People',
-    [CLAIM_FORM_STEPS.BUSINESS]: 'Language',
-    [CLAIM_FORM_STEPS.PROFILE]: 'Business',
-});
 
 export const TOTAL_STEPS = 4;

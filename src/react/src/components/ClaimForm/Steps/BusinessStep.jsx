@@ -51,7 +51,7 @@ const BusinessStep = ({ classes, formData, handleChange, errors, touched }) => (
                 <CardHeader
                     className={classes.cardHeader}
                     title={
-                        <Typography variant="h6">
+                        <Typography variant="title">
                             <Language className={classes.headerIcon} />
                             Business Information
                         </Typography>
@@ -60,7 +60,7 @@ const BusinessStep = ({ classes, formData, handleChange, errors, touched }) => (
                 <CardContent className={classes.content}>
                     <div className={classes.section}>
                         <Typography
-                            variant="subtitle1"
+                            variant="subheading"
                             className={classes.sectionTitle}
                         >
                             Company Verification
