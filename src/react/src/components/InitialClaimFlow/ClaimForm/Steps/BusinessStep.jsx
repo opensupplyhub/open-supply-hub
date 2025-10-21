@@ -7,11 +7,12 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
 import TextField from '@material-ui/core/TextField';
-import People from '@material-ui/icons/People';
+import Language from '@material-ui/icons/Language';
 
-import COLOURS from '../../../util/COLOURS';
+import COLOURS from '../../../../util/COLOURS';
+import withScrollReset from '../../HOCs/withScrollReset';
 
-const contactStepStyles = theme =>
+const businessStepStyles = theme =>
     Object.freeze({
         card: Object.freeze({
             marginBottom: theme.spacing.unit * 2,
@@ -44,7 +45,7 @@ const contactStepStyles = theme =>
         }),
     });
 
-const ContactStep = ({ classes, formData, handleChange, errors, touched }) => (
+const BusinessStep = ({ classes, formData, handleChange, errors, touched }) => (
     <Grid container spacing={24}>
         <Grid item xs={12}>
             <Card className={classes.card}>
@@ -52,8 +53,8 @@ const ContactStep = ({ classes, formData, handleChange, errors, touched }) => (
                     className={classes.cardHeader}
                     title={
                         <Typography variant="title">
-                            <People className={classes.headerIcon} />
-                            Contact Information
+                            <Language className={classes.headerIcon} />
+                            Business Information
                         </Typography>
                     }
                 />
@@ -63,77 +64,56 @@ const ContactStep = ({ classes, formData, handleChange, errors, touched }) => (
                             variant="subheading"
                             className={classes.sectionTitle}
                         >
-                            Your Information (Claimant)
+                            Company Verification
                         </Typography>
 
                         <Grid container spacing={16}>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12}>
                                 <TextField
                                     fullWidth
-                                    label="Your Name"
-                                    value={formData.claimantName || ''}
+                                    label="Business Website"
+                                    value={formData.businessWebsite || ''}
                                     onChange={e =>
                                         handleChange(
-                                            'claimantName',
+                                            'businessWebsite',
                                             e.target.value,
                                         )
                                     }
                                     className={classes.field}
-                                    placeholder="Enter your full name"
+                                    placeholder="https://company.com"
                                     error={
-                                        touched.claimantName &&
-                                        !!errors.claimantName
+                                        touched.businessWebsite &&
+                                        !!errors.businessWebsite
                                     }
                                     helperText={
-                                        touched.claimantName &&
-                                        errors.claimantName
-                                    }
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Your Job Title"
-                                    value={formData.claimantTitle || ''}
-                                    onChange={e =>
-                                        handleChange(
-                                            'claimantTitle',
-                                            e.target.value,
-                                        )
-                                    }
-                                    className={classes.field}
-                                    placeholder="e.g., Plant Manager, Safety Director"
-                                    error={
-                                        touched.claimantTitle &&
-                                        !!errors.claimantTitle
-                                    }
-                                    helperText={
-                                        touched.claimantTitle &&
-                                        errors.claimantTitle
+                                        touched.businessWebsite &&
+                                        errors.businessWebsite
                                     }
                                 />
                             </Grid>
                             <Grid item xs={12}>
                                 <TextField
                                     fullWidth
-                                    label="Your Email"
-                                    type="email"
-                                    value={formData.claimantEmail || ''}
+                                    label="Company Address Verification Method"
+                                    value={
+                                        formData.companyAddressVerification ||
+                                        ''
+                                    }
                                     onChange={e =>
                                         handleChange(
-                                            'claimantEmail',
+                                            'companyAddressVerification',
                                             e.target.value,
                                         )
                                     }
                                     className={classes.field}
-                                    placeholder="your.email@company.com"
+                                    placeholder="Select verification method"
                                     error={
-                                        touched.claimantEmail &&
-                                        !!errors.claimantEmail
+                                        touched.companyAddressVerification &&
+                                        !!errors.companyAddressVerification
                                     }
                                     helperText={
-                                        touched.claimantEmail &&
-                                        errors.claimantEmail
+                                        touched.companyAddressVerification &&
+                                        errors.companyAddressVerification
                                     }
                                 />
                             </Grid>
@@ -150,12 +130,12 @@ const ContactStep = ({ classes, formData, handleChange, errors, touched }) => (
     </Grid>
 );
 
-ContactStep.defaultProps = {
+BusinessStep.defaultProps = {
     errors: {},
     touched: {},
 };
 
-ContactStep.propTypes = {
+BusinessStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
@@ -163,4 +143,4 @@ ContactStep.propTypes = {
     touched: object,
 };
 
-export default withStyles(contactStepStyles)(ContactStep);
+export default withStyles(businessStepStyles)(withScrollReset(BusinessStep));

@@ -25,7 +25,7 @@ import RouteNotFound from './components/RouteNotFound';
 import Dashboard from './components/Dashboard';
 import FeatureFlag from './components/FeatureFlag';
 import ClaimFacility from './components/ClaimFacility';
-import ClaimForm from './components/ClaimForm/ClaimForm';
+import ClaimForm from './components/InitialClaimFlow/ClaimForm/ClaimForm';
 import ClaimedFacilities from './components/ClaimedFacilities';
 import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
@@ -58,9 +58,9 @@ import {
     dashboardRoute,
     claimFacilityRoute,
     claimIntroRoute,
+    claimDetailsRoute,
     claimedFacilitiesRoute,
     CLAIM_A_FACILITY,
-    ENABLE_V1_CLAIMS_FLOW,
     settingsRoute,
     InfoLink,
     InfoPaths,
@@ -112,20 +112,6 @@ class Routes extends Component {
                             <Switch>
                                 <Route
                                     exact
-                                    path={claimIntroRoute}
-                                    render={() => (
-                                        <FeatureFlag
-                                            flag={ENABLE_V1_CLAIMS_FLOW}
-                                            alternative={
-                                                <Route component={Facilities} />
-                                            }
-                                        >
-                                            <Route component={ClaimIntro} />
-                                        </FeatureFlag>
-                                    )}
-                                />
-                                <Route
-                                    exact
                                     path={claimFacilityRoute}
                                     render={() => (
                                         <FeatureFlag
@@ -153,7 +139,12 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
-                                    path="/claim/:osID/details/"
+                                    path={claimIntroRoute}
+                                    component={ClaimIntro}
+                                />
+                                <Route
+                                    exact
+                                    path={claimDetailsRoute}
                                     component={ClaimForm}
                                 />
                                 <Route

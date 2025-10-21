@@ -1,4 +1,4 @@
-import COLOURS from '../../../util/COLOURS';
+import COLOURS from '../../../../util/COLOURS';
 
 const stepperStyles = () => ({
     stepperRoot: Object.freeze({

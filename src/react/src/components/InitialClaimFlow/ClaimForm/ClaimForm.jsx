@@ -14,26 +14,26 @@ import EligibilityStep from './Steps/EligibilityStep';
 import ContactStep from './Steps/ContactStep';
 import BusinessStep from './Steps/BusinessStep';
 import ProfileStep from './Steps/ProfileStep';
-import RequireAuthNotice from '../RequireAuthNotice';
+import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
     fetchClaimFormData,
     setActiveClaimFormStep,
     markStepComplete,
     updateClaimFormField,
-} from '../../actions/claimForm';
+} from '../../../actions/claimForm';
 
 import {
     CLAIM_FORM_STEPS,
     STEP_NAMES,
     STEP_DESCRIPTIONS,
     NEXT_BUTTON_TEXT,
-    claimIntroRoute,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
 import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
 import { useStepResetOnMount, usePrefetchData } from './hooks';
+import { claimIntroRoute } from '../../../util/constants';
 
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,

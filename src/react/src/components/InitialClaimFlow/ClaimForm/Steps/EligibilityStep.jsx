@@ -10,7 +10,8 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Security from '@material-ui/icons/Security';
 
-import COLOURS from '../../../util/COLOURS';
+import COLOURS from '../../../../util/COLOURS';
+import withScrollReset from '../../HOCs/withScrollReset';
 
 const eligibilityStepStyles = theme =>
     Object.freeze({
@@ -98,4 +99,6 @@ EligibilityStep.propTypes = {
     handleChange: func.isRequired,
 };
 
-export default withStyles(eligibilityStepStyles)(EligibilityStep);
+export default withStyles(eligibilityStepStyles)(
+    withScrollReset(EligibilityStep),
+);

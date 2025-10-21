@@ -39,7 +39,4 @@ export const NEXT_BUTTON_TEXT = Object.freeze({
     [CLAIM_FORM_STEPS.BUSINESS]: 'Continue to Production Location Details',
 });
 
-export const claimFormRoute = '/claim/:osID/details/';
-export const claimIntroRoute = '/claim/:osID/';
-
 export const TOTAL_STEPS = 4;

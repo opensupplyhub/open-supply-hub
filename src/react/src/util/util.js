@@ -284,8 +284,6 @@ export const makeProductionLocationURL = (osID = '') => {
     return `/api/v1/production-locations/${osIDPathParameter}`;
 };
 
-export const makeClaimDetailsLink = osID => `/claim/${osID}/details`;
-
 export const makeGetProductionLocationsForPotentialMatches = (
     productionLocationName,
     address,

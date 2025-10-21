@@ -1,4 +1,4 @@
-import COLOURS from '../../util/COLOURS';
+import COLOURS from '../../../util/COLOURS';
 
 const claimFormStyles = theme =>
     Object.freeze({
@@ -23,6 +23,7 @@ const claimFormStyles = theme =>
             fontWeight: 900,
             lineHeight: '60px',
             textAlign: 'center',
+            color: COLOURS.JET_BLACK,
         }),
         description: Object.freeze({
             marginBottom: '24px',
@@ -50,12 +51,12 @@ const claimFormStyles = theme =>
             textTransform: 'none',
             backgroundColor: theme.palette.action.main,
             color: theme.palette.common.black,
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
             boxShadow: 'none',
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
         }),
         sectionTitle: Object.freeze({
             fontSize: '1.25rem',

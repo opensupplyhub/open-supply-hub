@@ -13,7 +13,8 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Business from '@material-ui/icons/Business';
 
-import COLOURS from '../../../util/COLOURS';
+import COLOURS from '../../../../util/COLOURS';
+import withScrollReset from '../../HOCs/withScrollReset';
 
 const profileStepStyles = theme =>
     Object.freeze({
@@ -153,4 +154,4 @@ ProfileStep.propTypes = {
     handleChange: func.isRequired,
 };
 
-export default withStyles(profileStepStyles)(ProfileStep);
+export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));
