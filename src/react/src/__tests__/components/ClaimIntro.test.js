@@ -3,10 +3,10 @@ import { Router } from 'react-router-dom';
 import { fireEvent } from '@testing-library/react';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import ClaimIntro from '../../components/V1Claim/ClaimIntro';
+import ClaimIntro from '../../components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 import { makeClaimDetailsLink } from '../../util/util';
 
-jest.mock('../../components/V1Claim/ClaimInfoSection', () => () => (
+jest.mock('../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection', () => () => (
     <div data-testid="claim-info-section">ClaimInfoSection</div>
 ));
 

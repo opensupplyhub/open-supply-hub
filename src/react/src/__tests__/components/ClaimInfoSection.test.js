@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, waitFor } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import ClaimInfoSection from '../../components/V1Claim/ClaimInfoSection';
+import ClaimInfoSection from '../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection';
 
 describe('ClaimInfoSection component', () => {
     const renderComponent = () => renderWithProviders(<ClaimInfoSection />);

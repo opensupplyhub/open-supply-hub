@@ -8,112 +8,11 @@ import Typography from '@material-ui/core/Typography';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
 import ClaimInfoSection from './ClaimInfoSection';
-import AppGrid from '../AppGrid';
-import AppOverflow from '../AppOverflow';
-import { makeClaimDetailsLink } from '../../util/util';
-import RequireAuthNotice from '../RequireAuthNotice';
-import COLOURS from '../../util/COLOURS';
-
-const claimIntroStyles = theme => ({
-    root: {
-        backgroundColor: COLOURS.LIGHT_GREY,
-        minHeight: 'calc(100vh - 64px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: theme.spacing.unit * 0,
-        paddingBottom: theme.spacing.unit * 4,
-    },
-    container: {
-        maxWidth: 1440,
-        width: '100%',
-        padding: theme.spacing.unit * 2,
-        [theme.breakpoints.down('sm')]: {
-            padding: theme.spacing.unit * 2,
-        },
-    },
-    heroSection: {
-        textAlign: 'center',
-        marginBottom: theme.spacing.unit * 3,
-        marginTop: 0,
-        paddingTop: 0,
-    },
-    title: {
-        fontSize: 48,
-        fontWeight: 700,
-        color: COLOURS.JET_BLACK,
-        marginBottom: theme.spacing.unit,
-        [theme.breakpoints.down('sm')]: {
-            fontSize: 24,
-        },
-    },
-    subtitle: {
-        fontSize: 18,
-        color: COLOURS.MEDIUM_GREY,
-        maxWidth: 720,
-        margin: '0 auto',
-        lineHeight: 1.6,
-    },
-    actionsContainer: {
-        backgroundColor: COLOURS.WHITE,
-        padding: theme.spacing.unit * 2,
-        marginTop: theme.spacing.unit * 3,
-        marginBottom: 0,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    },
-    actionsInner: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        [theme.breakpoints.down('sm')]: {
-            flexDirection: 'column',
-            gap: theme.spacing.unit * 2,
-        },
-    },
-    backButton: {
-        padding: '10px 24px',
-        fontSize: 16,
-        fontWeight: 800,
-        borderColor: COLOURS.LIGHT_BORDER,
-        textTransform: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        '&:hover': {
-            backgroundColor: COLOURS.HOVER_GREY,
-            borderColor: COLOURS.MEDIUM_BORDER,
-        },
-        [theme.breakpoints.down('sm')]: {
-            width: '100%',
-        },
-    },
-    continueButton: {
-        padding: '10px 24px',
-        fontSize: 18,
-        fontWeight: 800,
-        backgroundColor: theme.palette.action.main,
-        color: COLOURS.BLACK,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        textTransform: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        '&:hover': {
-            backgroundColor: theme.palette.action.dark,
-            boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-        },
-        [theme.breakpoints.down('sm')]: {
-            width: '100%',
-        },
-    },
-    icon: {
-        marginLeft: theme.spacing.unit,
-        fontSize: 20,
-        fontWeight: 800,
-        display: 'flex',
-        alignItems: 'center',
-    },
-});
+import AppGrid from '../../AppGrid';
+import AppOverflow from '../../AppOverflow';
+import { makeClaimDetailsLink } from '../../../util/util';
+import RequireAuthNotice from '../../RequireAuthNotice';
+import { claimIntroStyles } from './styles';
 
 const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
     if (!userHasSignedIn) {

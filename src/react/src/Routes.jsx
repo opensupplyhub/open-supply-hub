@@ -35,7 +35,7 @@ import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
 import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
 import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
-import ClaimIntro from './components/V1Claim/ClaimIntro';
+import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags } from './actions/featureFlags';
