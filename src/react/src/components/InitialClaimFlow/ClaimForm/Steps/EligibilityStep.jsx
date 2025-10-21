@@ -7,6 +7,8 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
 import TextField from '@material-ui/core/TextField';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import Security from '@material-ui/icons/Security';
 
 import COLOURS from '../../../../util/COLOURS';
@@ -32,23 +34,19 @@ const eligibilityStepStyles = theme =>
         content: Object.freeze({
             padding: theme.spacing.unit * 3,
         }),
+        checkboxLabel: Object.freeze({
+            marginTop: theme.spacing.unit * 2,
+            marginBottom: theme.spacing.unit * 2,
+        }),
         description: Object.freeze({
             marginBottom: theme.spacing.unit * 2,
             color: COLOURS.DARK_GREY,
-        }),
-        field: Object.freeze({
-            marginBottom: theme.spacing.unit * 2,
+            fontSize: '0.875rem',
+            lineHeight: 1.5,
         }),
     });
 
-const EligibilityStep = ({
-    classes,
-    formData,
-    handleChange,
-    handleBlur,
-    errors,
-    touched,
-}) => (
+const EligibilityStep = ({ classes, formData, handleChange }) => (
     <Grid container spacing={24}>
         <Grid item xs={12}>
             <Card className={classes.card}>
@@ -57,68 +55,44 @@ const EligibilityStep = ({
                     title={
                         <Typography variant="title">
                             <Security className={classes.headerIcon} />
-                            Eligibility Check
+                            Eligibility Verification
                         </Typography>
                     }
                 />
                 <CardContent className={classes.content}>
                     <Typography variant="body1" className={classes.description}>
-                        Confirm your eligibility to claim this facility.
+                        In order to submit a claim request, you must be an owner
+                        or senior manager of the production location. By
+                        proceeding, you confirm that you have the authority to
+                        claim this facility.
                     </Typography>
 
-                    <Grid container spacing={16}>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                required
-                                name="position"
-                                label="Your Position/Title"
-                                value={formData.position || ''}
-                                onChange={e =>
-                                    handleChange('position', e.target.value)
-                                }
-                                onBlur={handleBlur}
-                                className={classes.field}
-                                placeholder="e.g., Owner, General Manager, CEO"
-                                error={touched.position && !!errors.position}
-                                helperText={touched.position && errors.position}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                name="yearsAtCompany"
-                                label="Years at Company (Optional)"
-                                value={formData.yearsAtCompany || ''}
+                    <FormControlLabel
+                        className={classes.checkboxLabel}
+                        control={
+                            <Checkbox
+                                checked={formData.eligibilityConfirmed || false}
                                 onChange={e =>
                                     handleChange(
-                                        'yearsAtCompany',
-                                        e.target.value,
+                                        'eligibilityConfirmed',
+                                        e.target.checked,
                                     )
                                 }
-                                className={classes.field}
-                                placeholder="e.g., 5"
-                                error={
-                                    touched.yearsAtCompany &&
-                                    !!errors.yearsAtCompany
-                                }
-                                helperText={
-                                    touched.yearsAtCompany &&
-                                    errors.yearsAtCompany
-                                }
+                                color="primary"
                             />
-                        </Grid>
-                    </Grid>
+                        }
+                        label="I confirm that I am an owner or senior manager of this production location and have the authority to claim it"
+                    />
+
+                    <Typography variant="caption" color="textSecondary">
+                        Note: False claims may result in account suspension. All
+                        claims are subject to verification.
+                    </Typography>
                 </CardContent>
             </Card>
         </Grid>
     </Grid>
 );
-
-EligibilityStep.defaultProps = {
-    errors: {},
-    touched: {},
-};
 
 EligibilityStep.propTypes = {
     classes: object.isRequired,
@@ -128,9 +102,6 @@ EligibilityStep.propTypes = {
     errors: object,
     touched: object,
 };
-
-// TODO: Retrieve user info from redux store and display it in
-// the eligibility step. The data is already prefetched.
 
 export default withStyles(eligibilityStepStyles)(
     withScrollReset(EligibilityStep),
