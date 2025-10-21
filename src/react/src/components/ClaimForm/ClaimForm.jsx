@@ -8,9 +8,6 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import ArrowBack from '@material-ui/icons/ArrowBack';
-import ArrowForward from '@material-ui/icons/ArrowForward';
 
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep';
@@ -30,17 +27,12 @@ import {
     CLAIM_FORM_STEPS,
     STEP_NAMES,
     STEP_DESCRIPTIONS,
+    NEXT_BUTTON_TEXT,
     claimIntroRoute,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
-import {
-    calculateProgress,
-    isFirstStep,
-    isLastStep,
-    getNextStep,
-    getPreviousStep,
-} from './utils';
+import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
 import { useStepResetOnMount, usePrefetchData } from './hooks';
 
 const stepComponents = {
@@ -99,7 +91,10 @@ const ClaimForm = ({
             <div className={classes.container}>
                 <Paper className={classes.paper}>
                     <div className={classes.errorContainer}>
-                        <Typography variant="h6" className={classes.errorText}>
+                        <Typography
+                            variant="title"
+                            className={classes.errorText}
+                        >
                             An error occurred while loading the claim form
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
@@ -121,7 +116,6 @@ const ClaimForm = ({
 
     const currentStepComponent = stepComponents[activeStep];
     const StepComponent = currentStepComponent || EligibilityStep;
-    const progress = calculateProgress(completedSteps);
 
     const handleNext = async (validateForm, values) => {
         const errors = await validateForm(values);
@@ -164,36 +158,18 @@ const ClaimForm = ({
     return (
         <div className={classes.container}>
             <div className={classes.innerContainer}>
-                {/* Header */}
-                <Typography variant="h5" className={classes.title}>
+                <Typography className={classes.title}>
                     Production Location Claims Process
                 </Typography>
-                <Typography variant="body2" className={classes.description}>
+                <Typography className={classes.description}>
                     Complete all sections to submit your production location
                     claim
                 </Typography>
-                <div className={classes.progressContainer}>
-                    <LinearProgress
-                        variant="determinate"
-                        value={progress}
-                        className={classes.progressBar}
-                    />
-                    <Typography
-                        variant="caption"
-                        className={classes.progressText}
-                    >
-                        {completedSteps.length} of 4 sections completed
-                    </Typography>
-                </div>
-
-                {/* Stepper */}
                 <ClaimFormStepper
                     currentStep={activeStep}
                     completedSteps={completedSteps}
                     onStepClick={setStep}
                 />
-
-                {/* Form */}
                 <Formik
                     initialValues={formData}
                     validationSchema={getValidationSchemaForStep(activeStep)}
@@ -209,9 +185,8 @@ const ClaimForm = ({
                     }) => (
                         <Form>
                             <Paper className={classes.paper}>
-                                {/* Step Title and Description */}
                                 <Typography
-                                    variant="h6"
+                                    variant="title"
                                     className={classes.sectionTitle}
                                 >
                                     {STEP_NAMES[activeStep]}
@@ -221,40 +196,31 @@ const ClaimForm = ({
                                 >
                                     {STEP_DESCRIPTIONS[activeStep]}
                                 </Typography>
-
-                                {/* Step Content */}
-                                <div className={classes.stepContent}>
-                                    <StepComponent
-                                        formData={values}
-                                        handleChange={(field, value) =>
-                                            handleFieldChange(
-                                                field,
-                                                value,
-                                                setFieldValue,
-                                            )
-                                        }
-                                        errors={errors}
-                                        touched={touched}
-                                        prefetchedData={prefetchedData}
-                                    />
-                                </div>
-
-                                {/* Navigation Buttons */}
+                                <StepComponent
+                                    formData={values}
+                                    handleChange={(field, value) =>
+                                        handleFieldChange(
+                                            field,
+                                            value,
+                                            setFieldValue,
+                                        )
+                                    }
+                                    errors={errors}
+                                    touched={touched}
+                                    prefetchedData={prefetchedData}
+                                />
                                 <Grid
                                     container
-                                    spacing={16}
-                                    justifyContent="space-between"
                                     className={classes.navigationButtons}
                                 >
                                     <Grid item>
                                         <Button
                                             variant="outlined"
                                             onClick={handleBack}
-                                            startIcon={<ArrowBack />}
                                             className={classes.buttonBack}
                                         >
                                             {isFirstStep(activeStep)
-                                                ? 'GO BACK'
+                                                ? 'Go Back'
                                                 : 'Back'}
                                         </Button>
                                     </Grid>
@@ -268,17 +234,20 @@ const ClaimForm = ({
                                                         values,
                                                     )
                                                 }
-                                                endIcon={<ArrowForward />}
-                                                className={classes.buttonNext}
+                                                className={
+                                                    classes.buttonPrimary
+                                                }
                                             >
-                                                Continue
+                                                {NEXT_BUTTON_TEXT[activeStep]}
                                             </Button>
                                         )}
                                         {isLastStep(activeStep) && (
                                             <Button
                                                 variant="contained"
                                                 type="submit"
-                                                className={classes.buttonSubmit}
+                                                className={
+                                                    classes.buttonPrimary
+                                                }
                                             >
                                                 Submit Claim
                                             </Button>

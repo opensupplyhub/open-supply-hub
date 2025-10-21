@@ -1,106 +1,85 @@
 import COLOURS from '../../../util/COLOURS';
 
-const stepperStyles = theme => ({
+const stepperStyles = () => ({
     stepperRoot: Object.freeze({
         backgroundColor: 'transparent',
-        paddingTop: theme.spacing.unit * 3,
-        paddingBottom: theme.spacing.unit * 3,
+        padding: 0,
     }),
-    step: Object.freeze({
+    stepIconContainer: Object.freeze({
+        '& > svg': {
+            fontSize: '40px',
+        },
+    }),
+    stepIconContainerClickable: Object.freeze({
         cursor: 'pointer',
-        '& .MuiStepIcon-root': {
-            width: 40,
-            height: 40,
-            border: `2px solid ${COLOURS.GREY}`,
-            borderRadius: '50%',
-            backgroundColor: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.3s',
+        pointerEvents: 'auto',
+    }),
+    stepRoot: Object.freeze({
+        '&:last-child': {
+            paddingRight: '8px',
         },
-        '& .MuiStepIcon-active': {
-            border: `2px solid ${theme.palette.primary.main}`,
-            backgroundColor: theme.palette.primary.main,
-            color: '#fff',
-        },
-        '& .MuiStepIcon-completed': {
-            border: `2px solid ${theme.palette.primary.main}`,
-            backgroundColor: theme.palette.primary.main,
-            color: '#fff',
+        '&:first-child': {
+            paddingLeft: '8px',
         },
     }),
-    stepLabel: Object.freeze({
-        cursor: 'pointer',
-        '& .MuiStepLabel-label': {
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            marginTop: theme.spacing.unit,
+    stepLabelRoot: Object.freeze({
+        pointerEvents: 'none',
+        cursor: 'default !important',
+    }),
+    stepLabelContainer: Object.freeze({
+        '& > span': {
+            marginTop: '4px !important',
         },
-    }),
-    stepLabelActive: Object.freeze({
-        '& .MuiStepLabel-label': {
-            fontWeight: 600,
-            color: theme.palette.text.primary,
-        },
-    }),
-    stepLabelCompleted: Object.freeze({
-        '& .MuiStepLabel-label': {
-            color: theme.palette.text.primary,
-        },
-    }),
-    stepIcon: Object.freeze({
-        width: 40,
-        height: 40,
-        fontSize: '1.25rem',
-    }),
-    stepIconActive: Object.freeze({
-        color: '#fff',
-        backgroundColor: theme.palette.primary.main,
-        border: `2px solid ${theme.palette.primary.main}`,
-    }),
-    stepIconCompleted: Object.freeze({
-        color: '#fff',
-        backgroundColor: theme.palette.primary.main,
-        border: `2px solid ${theme.palette.primary.main}`,
     }),
     stepContent: Object.freeze({
-        display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        textAlign: 'center',
+    }),
+    stepLabel: Object.freeze({
+        fontSize: '17px',
+        fontWeight: 600,
+        lineHeight: '1.5',
     }),
     stepSubtitle: Object.freeze({
-        fontSize: '0.75rem',
+        fontSize: '16px',
         color: COLOURS.DARK_GREY,
-        marginTop: theme.spacing.unit * 0.5,
+        fontWeight: 500,
+        lineHeight: '1.2',
     }),
     stepTime: Object.freeze({
-        fontSize: '0.75rem',
-        color: COLOURS.DARK_GREY,
-        marginTop: theme.spacing.unit,
-        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: theme.spacing.unit * 0.5,
-        fontWeight: 500,
     }),
-    connectorActive: {
-        '& $connectorLine': {
-            borderColor: theme.palette.primary.main,
-        },
-    },
-    connectorCompleted: {
-        '& $connectorLine': {
-            borderColor: theme.palette.primary.main,
-        },
-    },
-    connectorLine: {
+    stepTimeIconContainer: Object.freeze({
+        height: 'fit-content',
+        width: 'fit-content',
+        marginRight: '4px',
+        marginTop: '2px',
+    }),
+    stepTimeIcon: Object.freeze({
+        fontSize: '15px',
+        color: COLOURS.DARK_GREY,
+    }),
+    stepTimeIconActive: Object.freeze({
+        color: COLOURS.PURPLE,
+    }),
+    stepTimeText: Object.freeze({
+        fontSize: '15px',
+        fontWeight: 500,
+        color: COLOURS.DARK_GREY,
+    }),
+    stepTimeTextActive: Object.freeze({
+        color: COLOURS.PURPLE,
+    }),
+    connectorRoot: Object.freeze({
+        top: '20px',
+        left: 'calc(50% + 36px)',
+        right: 'calc(-50% + 36px)',
+    }),
+    connectorLine: Object.freeze({
         borderColor: COLOURS.GREY,
         borderTopWidth: 2,
-        borderTopStyle: 'solid',
-        transition: theme.transitions.create('border-color'),
-    },
+    }),
 });
 
 export default stepperStyles;

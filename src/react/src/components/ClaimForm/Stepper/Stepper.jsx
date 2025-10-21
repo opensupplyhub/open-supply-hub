@@ -1,32 +1,17 @@
 import React from 'react';
-import { func, number, arrayOf } from 'prop-types';
+import { func, number, arrayOf, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
 import StepConnector from '@material-ui/core/StepConnector';
 import Typography from '@material-ui/core/Typography';
-import Security from '@material-ui/icons/Security';
-import People from '@material-ui/icons/People';
-import Language from '@material-ui/icons/Language';
-import Business from '@material-ui/icons/Business';
 import Schedule from '@material-ui/icons/Schedule';
+import Grid from '@material-ui/core/Grid';
 
-import {
-    STEP_NAMES,
-    STEP_SUBTITLES,
-    STEP_TIME_ESTIMATES,
-    STEP_ICONS,
-} from '../constants';
+import { STEP_NAMES, STEP_SUBTITLES, STEP_TIME_ESTIMATES } from '../constants';
 import stepperStyles from './styles';
 import useStepNavigation from './hooks';
-
-const iconComponents = {
-    Security,
-    People,
-    Language,
-    Business,
-};
 
 const ClaimFormStepper = ({
     classes,
@@ -40,23 +25,6 @@ const ClaimFormStepper = ({
         onStepClick,
     );
 
-    const getStepIcon = stepIndex => {
-        const iconName = STEP_ICONS[stepIndex];
-        const IconComponent = iconComponents[iconName] || Business;
-        const isCompleted = completedSteps.includes(stepIndex);
-        const isActiveStep = stepIndex === currentStep;
-
-        return (
-            <IconComponent
-                className={
-                    isActiveStep || isCompleted
-                        ? classes.stepIconActive
-                        : classes.stepIcon
-                }
-            />
-        );
-    };
-
     return (
         <Stepper
             activeStep={currentStep}
@@ -65,37 +33,42 @@ const ClaimFormStepper = ({
             connector={
                 <StepConnector
                     classes={{
-                        active: classes.connectorActive,
-                        completed: classes.connectorCompleted,
+                        root: classes.connectorRoot,
                         line: classes.connectorLine,
                     }}
                 />
             }
         >
             {STEP_NAMES.map((label, index) => {
-                const isClickable = completedSteps.includes(index);
+                const isClickable = index < currentStep;
+                const isActiveOrCompleted = index <= currentStep;
 
                 return (
                     <Step
                         key={label}
-                        completed={completedSteps.includes(index)}
+                        classes={{
+                            root: classes.stepRoot,
+                        }}
                     >
                         <StepLabel
-                            icon={getStepIcon(index)}
-                            classes={{
-                                root: classes.stepLabel,
-                                active: classes.stepLabelActive,
-                                completed: classes.stepLabelCompleted,
-                            }}
                             onClick={() =>
                                 isClickable && handleStepClick(index)
                             }
-                            style={{
-                                cursor: isClickable ? 'pointer' : 'default',
+                            classes={{
+                                root: classes.stepLabelRoot,
+                                labelContainer: classes.stepLabelContainer,
+                                iconContainer: isClickable
+                                    ? `${classes.stepIconContainer} ${classes.stepIconContainerClickable}`
+                                    : classes.stepIconContainer,
                             }}
                         >
-                            <div className={classes.stepContent}>
-                                <Typography variant="body2">{label}</Typography>
+                            <Grid container className={classes.stepContent}>
+                                <Typography
+                                    variant="body2"
+                                    className={classes.stepLabel}
+                                >
+                                    {label}
+                                </Typography>
                                 {STEP_SUBTITLES[index] && (
                                     <Typography
                                         variant="caption"
@@ -105,18 +78,41 @@ const ClaimFormStepper = ({
                                     </Typography>
                                 )}
                                 {STEP_TIME_ESTIMATES[index] && (
-                                    <div className={classes.stepTime}>
-                                        <Schedule
-                                            style={{
-                                                fontSize: '0.875rem',
-                                            }}
-                                        />
-                                        <Typography variant="caption">
-                                            {STEP_TIME_ESTIMATES[index]}
-                                        </Typography>
-                                    </div>
+                                    <Grid
+                                        item
+                                        container
+                                        className={classes.stepTime}
+                                    >
+                                        <Grid
+                                            item
+                                            container
+                                            className={
+                                                classes.stepTimeIconContainer
+                                            }
+                                        >
+                                            <Schedule
+                                                className={
+                                                    isActiveOrCompleted
+                                                        ? `${classes.stepTimeIconActive} ${classes.stepTimeIcon}`
+                                                        : classes.stepTimeIcon
+                                                }
+                                            />
+                                        </Grid>
+                                        <Grid item>
+                                            <Typography
+                                                variant="caption"
+                                                className={
+                                                    isActiveOrCompleted
+                                                        ? `${classes.stepTimeTextActive} ${classes.stepTimeText}`
+                                                        : classes.stepTimeText
+                                                }
+                                            >
+                                                {STEP_TIME_ESTIMATES[index]}
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
                                 )}
-                            </div>
+                            </Grid>
                         </StepLabel>
                     </Step>
                 );
@@ -126,7 +122,7 @@ const ClaimFormStepper = ({
 };
 
 ClaimFormStepper.propTypes = {
-    classes: func.isRequired,
+    classes: object.isRequired,
     currentStep: number.isRequired,
     completedSteps: arrayOf(number).isRequired,
     onStepClick: func.isRequired,
