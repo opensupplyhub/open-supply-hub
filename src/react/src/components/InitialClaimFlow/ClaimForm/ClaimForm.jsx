@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, string } from 'prop-types';
@@ -8,6 +9,13 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import ArrowBack from '@material-ui/icons/ArrowBack';
+import ArrowForward from '@material-ui/icons/ArrowForward';
+import Security from '@material-ui/icons/Security';
+import People from '@material-ui/icons/People';
+import Language from '@material-ui/icons/Language';
+import Business from '@material-ui/icons/Business';
 
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep';
@@ -28,12 +36,30 @@ import {
     STEP_NAMES,
     STEP_DESCRIPTIONS,
     NEXT_BUTTON_TEXT,
+    STEP_ICONS,
+    claimIntroRoute,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
-import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
+import { getValidationSchemaForStep } from './validationSchemas';
+import { claimFormStyles } from './styles';
+import {
+    calculateProgress,
+    isFirstStep,
+    isLastStep,
+    getNextStep,
+    getPreviousStep,
+} from './utils';
 import { useStepResetOnMount, usePrefetchData } from './hooks';
-import { claimIntroRoute } from '../../../util/constants';
+
+const iconMapping = {
+    Security,
+    People,
+    Language,
+    Business,
+};
+
+const getIconComponent = iconName => iconMapping[iconName] || Security;
 
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,
@@ -186,9 +212,15 @@ const ClaimForm = ({
                         <Form>
                             <Paper className={classes.paper}>
                                 <Typography
-                                    variant="title"
-                                    className={classes.sectionTitle}
+                                    component="h2"
+                                    className={classes.titleStyles}
                                 >
+                                    {(() => {
+                                        const IconName = getIconComponent(
+                                            STEP_ICONS[activeStep],
+                                        );
+                                        return <IconName />;
+                                    })()}
                                     {STEP_NAMES[activeStep]}
                                 </Typography>
                                 <Typography
