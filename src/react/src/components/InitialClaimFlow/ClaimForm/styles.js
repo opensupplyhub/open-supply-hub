@@ -72,6 +72,13 @@ const claimFormStyles = theme =>
             lineHeight: '40px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
+        titleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            gap: '5px',
+            display: 'flex',
+            alignItems: 'center',
+        }),
         sectionDescription: Object.freeze({
             fontSize: '18px',
             fontWeight: 500,
@@ -96,6 +103,8 @@ const eligibilityStepStyles = theme =>
             padding: theme.spacing.unit * 3,
         }),
         titleSection: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.unit,
