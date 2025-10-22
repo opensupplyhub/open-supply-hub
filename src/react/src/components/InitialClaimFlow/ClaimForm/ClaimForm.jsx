@@ -37,10 +37,8 @@ import {
     STEP_DESCRIPTIONS,
     NEXT_BUTTON_TEXT,
     STEP_ICONS,
-    claimIntroRoute,
 } from './constants';
-import { getValidationSchemaForStep } from './validationSchemas';
-import claimFormStyles from './styles';
+import { claimIntroRoute } from '../../../util/constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import { claimFormStyles } from './styles';
 import {
