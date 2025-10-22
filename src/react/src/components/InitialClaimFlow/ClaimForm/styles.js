@@ -54,14 +54,6 @@ const claimFormStyles = theme =>
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
             boxShadow: 'none',
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-        }),
-        sectionTitle: Object.freeze({
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            marginBottom: theme.spacing.unit * 2,
         }),
         titleStyles: Object.freeze({
             fontSize: '36px',
@@ -180,10 +172,6 @@ const eligibilityStepStyles = theme =>
             textTransform: 'none',
             '&:hover': {
                 backgroundColor: '#eab308',
-            },
-            '&:disabled': {
-                backgroundColor: '#facc15',
-                opacity: 0.5,
             },
         }),
     });

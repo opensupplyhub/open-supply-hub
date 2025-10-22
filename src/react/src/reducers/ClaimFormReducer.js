@@ -17,7 +17,7 @@ const initialState = Object.freeze({
     completedSteps: [],
     formData: Object.freeze({
         // Eligibility step
-        eligibilityConfirmed: false,
+        relationship: null,
 
         // Contact step
         claimantName: '',

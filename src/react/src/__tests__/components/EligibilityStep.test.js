@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import EligibilityStep from '../../components/ClaimForm/Steps/EligibilityStep';
+import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep';
 import { mainRoute } from '../../util/constants';
 
 const mockHistoryPush = jest.fn();
