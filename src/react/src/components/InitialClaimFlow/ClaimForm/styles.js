@@ -69,6 +69,13 @@ const claimFormStyles = theme =>
             fontWeight: 600,
             marginBottom: theme.spacing.unit * 2,
         }),
+        titleStyles: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            gap: '5px',
+            display: 'flex',
+            alignItems: 'center',
+        }),
         sectionDescription: Object.freeze({
             fontSize: '0.875rem',
             color: COLOURS.DARK_GREY,
@@ -92,6 +99,8 @@ const eligibilityStepStyles = theme =>
             padding: theme.spacing.unit * 3,
         }),
         titleSection: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.unit,
