@@ -180,10 +180,6 @@ const eligibilityStepStyles = theme =>
             '&:hover': {
                 backgroundColor: '#eab308',
             },
-            '&:disabled': {
-                backgroundColor: '#facc15',
-                opacity: 0.5,
-            },
         }),
     });
 
