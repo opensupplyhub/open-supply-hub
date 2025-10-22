@@ -13,6 +13,12 @@ jest.mock('react-router-dom', () => {
         useHistory: () => ({
             push: mockHistoryPush,
         }),
+        useLocation: () => ({
+            pathname: '/claim/test-os-id',
+            search: '',
+            hash: '',
+            state: null,
+        }),
     };
 });
 
