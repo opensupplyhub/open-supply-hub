@@ -17,9 +17,9 @@ import SecurityOutlinedIcon from '@material-ui/icons/SecurityOutlined';
 
 import COLOURS from '../../../../util/COLOURS';
 import withScrollReset from '../../HOCs/withScrollReset';
-import StyledSelect from '../../Filters/StyledSelect';
-import { getSelectStyles } from '../../../util/util';
-import { mainRoute } from '../../../util/constants';
+import StyledSelect from '../../../Filters/StyledSelect';
+import { getSelectStyles } from '../../../../util/util';
+import { mainRoute } from '../../../../util/constants';
 import { eligibilityStepStyles } from '../styles';
 
 const RELATIONSHIP_OPTIONS = [
