@@ -3,8 +3,11 @@ import { CLAIM_FORM_STEPS } from './constants';
 
 // Step 1: Eligibility validation.
 export const eligibilityStepSchema = Yup.object().shape({
-    position: Yup.string().required('Position/Title is required'),
-    yearsAtCompany: Yup.string(),
+    relationship: Yup.object()
+        .nullable()
+        .required(
+            'Please select your relationship to this production location',
+        ),
 });
 
 // Step 2: Contact validation.

@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useState } from 'react';
 import { func, object, string } from 'prop-types';
 import { connect } from 'react-redux';
@@ -6,16 +5,12 @@ import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
-import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Security from '@material-ui/icons/Security';
-import SecurityOutlinedIcon from '@material-ui/icons/SecurityOutlined';
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
 
-import COLOURS from '../../../../util/COLOURS';
 import withScrollReset from '../../HOCs/withScrollReset';
 import StyledSelect from '../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../util/util';
@@ -51,8 +46,6 @@ const EligibilityStep = ({
     classes,
     formData,
     handleChange,
-    onNext,
-    onBack,
     userEmail,
     organizationName,
 }) => {
@@ -63,7 +56,6 @@ const EligibilityStep = ({
     const selectedRelationship = formData.relationship || null;
 
     const isRelationshipError = relationshipTouched && !selectedRelationship;
-    const isFormValid = !!selectedRelationship;
 
     const handleCloseIneligibleDialog = () => {
         setIneligibleDialogOpen(false);
@@ -170,17 +162,14 @@ const EligibilityStep = ({
 EligibilityStep.defaultProps = {
     userEmail: null,
     organizationName: null,
-    onNext: () => {},
-    onBack: () => {},
 };
 
 EligibilityStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
-    handleBlur: func.isRequired,
-    errors: object,
-    touched: object,
+    userEmail: string,
+    organizationName: string,
 };
 
 const mapStateToProps = ({
