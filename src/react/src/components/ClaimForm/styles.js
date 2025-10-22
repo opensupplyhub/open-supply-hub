@@ -1,3 +1,4 @@
+// TODO: Restructure this style file
 import COLOURS from '../../util/COLOURS';
 
 const claimFormStyles = theme =>

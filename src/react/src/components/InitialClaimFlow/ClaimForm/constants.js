@@ -39,6 +39,7 @@ export const NEXT_BUTTON_TEXT = Object.freeze({
     [CLAIM_FORM_STEPS.BUSINESS]: 'Continue to Production Location Details',
 });
 
+// Map step indices to Material-UI icon names
 export const STEP_ICONS = Object.freeze({
     [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Security',
     [CLAIM_FORM_STEPS.CONTACT]: 'People',
