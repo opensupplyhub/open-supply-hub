@@ -18,8 +18,18 @@ import {
     facilityDetailsRoute,
 } from '../../../util/constants';
 import { resetClaimForm } from '../../../actions/claimForm';
+import { resetFilterOptions } from '../../../actions/filterOptions';
+import { resetSingleProductionLocation } from '../../../actions/contributeProductionLocation';
 
-const ClaimIntro = ({ classes, history, osID, userHasSignedIn, resetForm }) => {
+const ClaimIntro = ({
+    classes,
+    history,
+    osID,
+    userHasSignedIn,
+    resetForm,
+    resetFilters,
+    resetProductionLocation,
+}) => {
     if (!userHasSignedIn) {
         return (
             <RequireAuthNotice
@@ -30,11 +40,17 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn, resetForm }) => {
     }
 
     const handleGoBack = () => {
+        // Reset form, filters, and production location data when going back.
         resetForm();
+        resetFilters();
+        resetProductionLocation();
+
         history.push(facilityDetailsRoute.replace(':osID', osID));
     };
 
     const handleContinue = () => {
+        // Set session storage flag to allow access to claim form.
+        sessionStorage.setItem(`claim-form-access-${osID}`, 'true');
         history.push(claimDetailsRoute.replace(':osID', osID));
     };
 
@@ -99,6 +115,8 @@ ClaimIntro.propTypes = {
         push: PropTypes.func.isRequired,
     }).isRequired,
     resetForm: PropTypes.func.isRequired,
+    resetFilters: PropTypes.func.isRequired,
+    resetProductionLocation: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (
@@ -119,6 +137,8 @@ const mapStateToProps = (
 
 const mapDispatchToProps = dispatch => ({
     resetForm: () => dispatch(resetClaimForm()),
+    resetFilters: () => dispatch(resetFilterOptions()),
+    resetProductionLocation: () => dispatch(resetSingleProductionLocation()),
 });
 
 export default connect(

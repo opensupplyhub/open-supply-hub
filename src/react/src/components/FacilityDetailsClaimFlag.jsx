@@ -6,9 +6,8 @@ import { withStyles } from '@material-ui/core/styles';
 
 import BadgeClaimed from './BadgeClaimed';
 import COLOURS from '../util/COLOURS';
-import { claimIntroRoute } from '../util/constants';
 
-// import { makeClaimFacilityLink } from '../util/util';
+import { makeClaimFacilityLink } from '../util/util';
 
 const claimFlagBaseStyles = theme =>
     Object.freeze({
@@ -66,7 +65,7 @@ const FacilityDetailsClaimFlag = ({
 }) => {
     if (isEmbed) return null;
     const backgroundColor = getBackgroundColor(isClaimed, isPending);
-    // const claimFacilityLink = makeClaimFacilityLink(osId);
+    const claimFacilityLink = makeClaimFacilityLink(osId);
     return (
         <div
             className={classes.root}
@@ -83,8 +82,8 @@ const FacilityDetailsClaimFlag = ({
                 {!isClaimed && !isPending ? (
                     <Typography className={classes.itemPadding}>
                         <Link
-                            to={claimIntroRoute.replace(':osID', osId)}
-                            href={claimIntroRoute.replace(':osID', osId)}
+                            to={claimFacilityLink}
+                            href={claimFacilityLink}
                             className={classes.link}
                         >
                             I want to claim this production location

@@ -17,11 +17,15 @@ import ErrorState from './ErrorState/ErrorState';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
-    fetchClaimFormData,
     setActiveClaimFormStep,
     markStepComplete,
     updateClaimFormField,
 } from '../../../actions/claimForm';
+import {
+    fetchCountryOptions,
+    fetchFacilityProcessingTypeOptions,
+} from '../../../actions/filterOptions';
+import { fetchProductionLocationByOsId } from '../../../actions/contributeProductionLocation';
 
 import {
     CLAIM_FORM_STEPS,
@@ -32,7 +36,11 @@ import {
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
 import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
-import { usePrefetchData, useClaimForm } from './hooks';
+import {
+    usePrefetchClaimData,
+    useClaimForm,
+    useRequireIntroAccess,
+} from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
 
 const stepComponents = {
@@ -51,17 +59,34 @@ const ClaimForm = ({
     activeStep,
     completedSteps,
     formData,
-    prefetchedData,
-    fetching,
-    error,
+    countriesOptions,
+    facilityProcessingTypeOptions,
+    countriesFetching,
+    facilityProcessingTypeFetching,
+    productionLocationFetching,
+    countriesError,
+    facilityProcessingTypeError,
+    productionLocationError,
     userHasSignedIn,
-    fetchData,
+    fetchCountries,
+    fetchFacilityProcessingType,
+    fetchProductionLocation,
     setStep,
     markComplete,
     updateField,
 }) => {
-    // Prefetch data on mount.
-    usePrefetchData(fetchData, osID);
+    // Redirect to intro page if user accessed form directly via URL.
+    useRequireIntroAccess(history, osID);
+
+    // Prefetch required data on mount.
+    usePrefetchClaimData(
+        fetchCountries,
+        fetchFacilityProcessingType,
+        fetchProductionLocation,
+        osID,
+        countriesOptions,
+        facilityProcessingTypeOptions,
+    );
 
     // Handle form submission.
     const handleSubmit = values => {
@@ -93,8 +118,13 @@ const ClaimForm = ({
         );
     }
 
-    // Show loading state.
-    if (fetching && !prefetchedData.facilityData) {
+    // Show loading state while prefetching data.
+    const isPrefetching =
+        countriesFetching ||
+        facilityProcessingTypeFetching ||
+        productionLocationFetching;
+
+    if (isPrefetching) {
         return (
             <div className={classes.loadingContainer}>
                 <CircularProgress />
@@ -102,9 +132,30 @@ const ClaimForm = ({
         );
     }
 
-    // Show error state.
-    if (error) {
-        return <ErrorState error={error} onRetry={() => fetchData(osID)} />;
+    // Show error state if prefetching failed.
+    const hasError =
+        countriesError ||
+        facilityProcessingTypeError ||
+        productionLocationError;
+    if (hasError) {
+        let errorMessage = 'Failed to load required data';
+        let retryHandler = () => {};
+
+        if (countriesError) {
+            errorMessage =
+                'Failed to load countries data needed for the claim form.';
+            retryHandler = fetchCountries;
+        } else if (facilityProcessingTypeError) {
+            errorMessage =
+                'Failed to load facility processing type data needed for the claim form.';
+            retryHandler = fetchFacilityProcessingType;
+        } else if (productionLocationError) {
+            errorMessage =
+                'Failed to load production location data needed for the claim form.';
+            retryHandler = () => fetchProductionLocation(osID);
+        }
+
+        return <ErrorState error={errorMessage} onRetry={retryHandler} />;
     }
 
     const currentStepComponent = stepComponents[activeStep];
@@ -178,7 +229,6 @@ const ClaimForm = ({
                             handleBlur={claimForm.handleBlur}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
-                            prefetchedData={prefetchedData}
                         />
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
@@ -223,7 +273,11 @@ const ClaimForm = ({
 };
 
 ClaimForm.defaultProps = {
-    error: null,
+    countriesOptions: null,
+    facilityProcessingTypeOptions: null,
+    countriesError: null,
+    facilityProcessingTypeError: null,
+    productionLocationError: null,
 };
 
 ClaimForm.propTypes = {
@@ -233,24 +287,42 @@ ClaimForm.propTypes = {
     activeStep: number.isRequired,
     completedSteps: arrayOf(number).isRequired,
     formData: object.isRequired,
-    prefetchedData: object.isRequired,
-    fetching: bool.isRequired,
-    error: string,
+    countriesOptions: object,
+    facilityProcessingTypeOptions: object,
+    countriesFetching: bool.isRequired,
+    facilityProcessingTypeFetching: bool.isRequired,
+    productionLocationFetching: bool.isRequired,
+    countriesError: arrayOf(string),
+    facilityProcessingTypeError: arrayOf(string),
+    productionLocationError: arrayOf(string),
     userHasSignedIn: bool.isRequired,
-    fetchData: func.isRequired,
+    fetchCountries: func.isRequired,
+    fetchFacilityProcessingType: func.isRequired,
+    fetchProductionLocation: func.isRequired,
     setStep: func.isRequired,
     markComplete: func.isRequired,
     updateField: func.isRequired,
 };
 
 const mapStateToProps = ({
-    claimForm: {
-        activeStep,
-        completedSteps,
-        formData,
-        prefetchedData,
-        fetching,
-        error,
+    claimForm: { activeStep, completedSteps, formData },
+    filterOptions: {
+        countries: {
+            data: countriesOptions,
+            fetching: countriesFetching,
+            error: countriesError,
+        },
+        facilityProcessingType: {
+            data: facilityProcessingTypeOptions,
+            fetching: facilityProcessingTypeFetching,
+            error: facilityProcessingTypeError,
+        },
+    },
+    contributeProductionLocation: {
+        singleProductionLocation: {
+            fetching: productionLocationFetching,
+            error: productionLocationError,
+        },
     },
     auth: {
         user: { user },
@@ -259,14 +331,23 @@ const mapStateToProps = ({
     activeStep,
     completedSteps,
     formData,
-    prefetchedData,
-    fetching,
-    error,
+    countriesOptions,
+    facilityProcessingTypeOptions,
+    countriesFetching,
+    facilityProcessingTypeFetching,
+    productionLocationFetching,
+    countriesError,
+    facilityProcessingTypeError,
+    productionLocationError,
     userHasSignedIn: !user.isAnon,
 });
 
 const mapDispatchToProps = dispatch => ({
-    fetchData: osID => dispatch(fetchClaimFormData(osID)),
+    fetchCountries: () => dispatch(fetchCountryOptions()),
+    fetchFacilityProcessingType: () =>
+        dispatch(fetchFacilityProcessingTypeOptions()),
+    fetchProductionLocation: osID =>
+        dispatch(fetchProductionLocationByOsId(osID)),
     setStep: stepIndex => dispatch(setActiveClaimFormStep(stepIndex)),
     markComplete: stepIndex => dispatch(markStepComplete(stepIndex)),
     updateField: payload => dispatch(updateClaimFormField(payload)),

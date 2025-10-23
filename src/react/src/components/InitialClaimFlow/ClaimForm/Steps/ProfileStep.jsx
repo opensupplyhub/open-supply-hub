@@ -65,9 +65,8 @@ const ProfileStep = ({ classes, formData, handleChange, errors, touched }) => (
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                required
                                 name="numberOfWorkers"
-                                label="Number of Workers"
+                                label="Number of Workers (Optional)"
                                 value={formData.numberOfWorkers || ''}
                                 onChange={e =>
                                     handleChange(
@@ -126,4 +125,8 @@ ProfileStep.propTypes = {
     handleChange: func.isRequired,
 };
 
+// TODO: Retrieve countries, location/processing type from redux store
+// and display it in the dropdowns in the profile step. See how
+// it is done in the ProductionLocationInfo component. The data is
+// already prefetched in the ClaimForm component.
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));

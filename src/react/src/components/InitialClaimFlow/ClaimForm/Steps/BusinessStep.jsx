@@ -137,4 +137,9 @@ BusinessStep.propTypes = {
     touched: object,
 };
 
+// TODO: Retrieve location info from redux store and display it in
+// the business step. See how it is done in the
+// ProductionLocationInfo component. The data is already prefetched
+// in the ClaimForm component.
+
 export default withStyles(businessStepStyles)(withScrollReset(BusinessStep));

@@ -1,13 +1,54 @@
 import { useEffect } from 'react';
 import { useFormik } from 'formik';
 import { getValidationSchemaForStep } from './validationSchemas';
+import { claimIntroRoute } from '../../../util/constants';
 
-export const usePrefetchData = (fetchData, osID) => {
+export const usePrefetchClaimData = (
+    fetchCountries,
+    fetchFacilityProcessingType,
+    fetchProductionLocation,
+    osID,
+    countriesOptions,
+    facilityProcessingTypeOptions,
+) => {
+    useEffect(() => {
+        if (!countriesOptions) {
+            fetchCountries();
+        }
+    }, [countriesOptions, fetchCountries]);
+
+    useEffect(() => {
+        if (!facilityProcessingTypeOptions) {
+            fetchFacilityProcessingType();
+        }
+    }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
+
     useEffect(() => {
         if (osID) {
-            fetchData(osID);
+            fetchProductionLocation(osID);
         }
-    }, [fetchData, osID]);
+    }, [osID, fetchProductionLocation]);
+};
+
+/**
+ * Hook to ensure user accessed form through intro page.
+ * Redirects to intro page if accessed directly via URL.
+ */
+export const useRequireIntroAccess = (history, osID) => {
+    useEffect(() => {
+        const hasAccessedFromIntro = sessionStorage.getItem(
+            `claim-form-access-${osID}`,
+        );
+
+        if (!hasAccessedFromIntro) {
+            history.replace(claimIntroRoute.replace(':osID', osID));
+        }
+
+        // Clean up session storage when component unmounts.
+        return () => {
+            sessionStorage.removeItem(`claim-form-access-${osID}`);
+        };
+    }, [history, osID]);
 };
 
 export const useClaimForm = (
@@ -22,7 +63,12 @@ export const useClaimForm = (
         onSubmit,
     });
 
-    // Re-validate when step changes to populate errors for new schema.
+    /**
+     * Re-validate when step changes to restore errors.
+     * Without this, returning to a step with invalid data via Continue button
+     * will not show errors because Formik clears errors when validationSchema
+     * changes.
+     */
     useEffect(() => {
         const schema = getValidationSchemaForStep(activeStep);
         const currentStepFields = Object.keys(schema.describe().fields);

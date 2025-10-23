@@ -52,86 +52,74 @@ const ContactStep = ({
     handleBlur,
     errors,
     touched,
-}) => {
-    console.log('errors', errors);
-    console.log('touched', touched);
-    return (
-        <Grid container spacing={24}>
-            <Grid item xs={12}>
-                <Card className={classes.card}>
-                    <CardHeader
-                        className={classes.cardHeader}
-                        title={
-                            <Typography variant="title">
-                                <People className={classes.headerIcon} />
-                                Contact Information
-                            </Typography>
-                        }
-                    />
-                    <CardContent className={classes.content}>
-                        <Typography variant="body1" className={classes.section}>
-                            Provide contact information for this facility.
+}) => (
+    <Grid container spacing={24}>
+        <Grid item xs={12}>
+            <Card className={classes.card}>
+                <CardHeader
+                    className={classes.cardHeader}
+                    title={
+                        <Typography variant="title">
+                            <People className={classes.headerIcon} />
+                            Contact Information
                         </Typography>
+                    }
+                />
+                <CardContent className={classes.content}>
+                    <Typography variant="body1" className={classes.section}>
+                        Provide contact information for this facility.
+                    </Typography>
 
-                        <Grid container spacing={16}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    required
-                                    name="contactEmail"
-                                    label="Contact Email"
-                                    type="email"
-                                    value={formData.contactEmail || ''}
-                                    onChange={e =>
-                                        handleChange(
-                                            'contactEmail',
-                                            e.target.value,
-                                        )
-                                    }
-                                    onBlur={handleBlur}
-                                    className={classes.field}
-                                    placeholder="contact@facility.com"
-                                    error={
-                                        touched.contactEmail &&
-                                        !!errors.contactEmail
-                                    }
-                                    helperText={
-                                        touched.contactEmail &&
-                                        errors.contactEmail
-                                    }
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    name="contactPhone"
-                                    label="Contact Phone (Optional)"
-                                    value={formData.contactPhone || ''}
-                                    onChange={e =>
-                                        handleChange(
-                                            'contactPhone',
-                                            e.target.value,
-                                        )
-                                    }
-                                    className={classes.field}
-                                    placeholder="+1 (555) 123-4567"
-                                    error={
-                                        touched.contactPhone &&
-                                        !!errors.contactPhone
-                                    }
-                                    helperText={
-                                        touched.contactPhone &&
-                                        errors.contactPhone
-                                    }
-                                />
-                            </Grid>
+                    <Grid container spacing={16}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                required
+                                name="contactEmail"
+                                label="Contact Email"
+                                type="email"
+                                value={formData.contactEmail || ''}
+                                onChange={e =>
+                                    handleChange('contactEmail', e.target.value)
+                                }
+                                onBlur={handleBlur}
+                                className={classes.field}
+                                placeholder="contact@facility.com"
+                                error={
+                                    touched.contactEmail &&
+                                    !!errors.contactEmail
+                                }
+                                helperText={
+                                    touched.contactEmail && errors.contactEmail
+                                }
+                            />
                         </Grid>
-                    </CardContent>
-                </Card>
-            </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                name="contactPhone"
+                                label="Contact Phone (Optional)"
+                                value={formData.contactPhone || ''}
+                                onChange={e =>
+                                    handleChange('contactPhone', e.target.value)
+                                }
+                                className={classes.field}
+                                placeholder="+1 (555) 123-4567"
+                                error={
+                                    touched.contactPhone &&
+                                    !!errors.contactPhone
+                                }
+                                helperText={
+                                    touched.contactPhone && errors.contactPhone
+                                }
+                            />
+                        </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
         </Grid>
-    );
-};
+    </Grid>
+);
 
 ContactStep.defaultProps = {
     errors: {},
@@ -145,5 +133,8 @@ ContactStep.propTypes = {
     errors: object,
     touched: object,
 };
+
+// TODO: Retrieve user info from redux store and display it in
+// the eligibility step. The data is already prefetched.
 
 export default withStyles(contactStepStyles)(withScrollReset(ContactStep));
