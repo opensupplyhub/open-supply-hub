@@ -26,24 +26,6 @@ import FreeEmissionsEstimate from '../../../FreeEmissionsEstimate/FreeEmissionsE
 const BETA_TOOLTIP_TEXT =
     "What does beta mean? Open Supply Hub is developing a Premium offering for facilities, to help you use your OS Hub profile to connect with more customers and build your business. Once live, all fields that say beta will be a part of this new package. For now, these beta fields will appear on your profile just like all the others. Once the Premium offering is live, you'll receive next steps about how it will work and whether you will want to keep these beta fields live.";
 
-const SECTOR_OPTIONS = [
-    { value: 'apparel', label: 'Apparel' },
-    { value: 'footwear', label: 'Footwear' },
-    { value: 'accessories', label: 'Accessories' },
-    { value: 'textiles', label: 'Textiles' },
-];
-
-const PROCESSING_TYPE_OPTIONS = [
-    { value: 'cut_sew', label: 'Cut & Sew' },
-    { value: 'dyeing', label: 'Dyeing' },
-    { value: 'knitting', label: 'Knitting' },
-    { value: 'weaving', label: 'Weaving' },
-    { value: 'printing', label: 'Printing' },
-    { value: 'embroidery', label: 'Embroidery' },
-    { value: 'finishing', label: 'Finishing' },
-    { value: 'assembly', label: 'Assembly' },
-];
-
 const AFFILIATIONS_OPTIONS = [
     { value: 'fla', label: 'Fair Labor Association (FLA)' },
     { value: 'wrap', label: 'WRAP' },
@@ -191,7 +173,14 @@ const profileStepStyles = theme =>
         }),
     });
 
-const ProfileStep = ({ classes, formData, handleChange }) => {
+const ProfileStep = ({
+    classes,
+    formData,
+    handleChange,
+    countryOptions,
+    sectorOptions,
+    processingTypeOptions,
+}) => {
     const [
         freeEmissionsEstimateHasErrors,
         setFreeEmissionsEstimateHasErrors,
@@ -647,17 +636,16 @@ const ProfileStep = ({ classes, formData, handleChange }) => {
                                             </IconButton>
                                         </Tooltip>
                                     </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.officeCountry || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'officeCountry',
-                                                e.target.value,
-                                            )
+                                    <ReactSelect
+                                        options={countryOptions || []}
+                                        value={formData.officeCountry || null}
+                                        onChange={value =>
+                                            handleChange('officeCountry', value)
                                         }
-                                        placeholder="Country"
+                                        placeholder="Select country..."
+                                        className="basic-multi-select"
+                                        classNamePrefix="select"
+                                        isClearable
                                     />
                                 </div>
                             </Grid>
@@ -713,7 +701,7 @@ const ProfileStep = ({ classes, formData, handleChange }) => {
                                     </div>
                                     <ReactSelect
                                         isMulti
-                                        options={SECTOR_OPTIONS}
+                                        options={sectorOptions || []}
                                         value={formData.sector || []}
                                         onChange={values =>
                                             handleChange('sector', values)
@@ -758,7 +746,7 @@ const ProfileStep = ({ classes, formData, handleChange }) => {
                                     </div>
                                     <ReactSelect
                                         isMulti
-                                        options={PROCESSING_TYPE_OPTIONS}
+                                        options={processingTypeOptions || []}
                                         value={formData.facilityTypes || []}
                                         onChange={values =>
                                             handleChange(
@@ -1199,6 +1187,9 @@ ProfileStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    countryOptions: object.isRequired,
+    sectorOptions: object.isRequired,
+    processingTypeOptions: object.isRequired,
 };
 
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));
