@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -22,11 +22,6 @@ import {
     markStepComplete,
     updateClaimFormField,
 } from '../../../actions/claimForm';
-import {
-    fetchCountryOptions,
-    fetchSectorOptions,
-    fetchFacilityProcessingTypeOptions,
-} from '../../../actions/filterOptions';
 
 import {
     CLAIM_FORM_STEPS,
@@ -59,14 +54,8 @@ const ClaimForm = ({
     prefetchedData,
     fetching,
     error,
-    countryOptions,
-    sectorOptions,
-    processingTypeOptions,
     userHasSignedIn,
     fetchData,
-    fetchCountries,
-    fetchSectors,
-    fetchProcessingTypes,
     setStep,
     markComplete,
     updateField,
@@ -76,26 +65,6 @@ const ClaimForm = ({
 
     // Prefetch data on mount
     usePrefetchData(fetchData, osID);
-
-    // Fetch all dropdown options on mount
-    useEffect(() => {
-        if (!countryOptions) {
-            fetchCountries();
-        }
-        if (!sectorOptions) {
-            fetchSectors();
-        }
-        if (!processingTypeOptions) {
-            fetchProcessingTypes();
-        }
-    }, [
-        countryOptions,
-        sectorOptions,
-        processingTypeOptions,
-        fetchCountries,
-        fetchSectors,
-        fetchProcessingTypes,
-    ]);
 
     // Check authentication
     if (!userHasSignedIn) {
@@ -239,11 +208,6 @@ const ClaimForm = ({
                                     errors={errors}
                                     touched={touched}
                                     prefetchedData={prefetchedData}
-                                    countryOptions={countryOptions}
-                                    sectorOptions={sectorOptions}
-                                    processingTypeOptions={
-                                        processingTypeOptions
-                                    }
                                 />
                                 <Grid
                                     container
@@ -313,14 +277,8 @@ ClaimForm.propTypes = {
     prefetchedData: object.isRequired,
     fetching: bool.isRequired,
     error: string,
-    countryOptions: object.isRequired,
-    sectorOptions: object.isRequired,
-    processingTypeOptions: object.isRequired,
     userHasSignedIn: bool.isRequired,
     fetchData: func.isRequired,
-    fetchCountries: func.isRequired,
-    fetchSectors: func.isRequired,
-    fetchProcessingTypes: func.isRequired,
     setStep: func.isRequired,
     markComplete: func.isRequired,
     updateField: func.isRequired,
@@ -335,11 +293,6 @@ const mapStateToProps = ({
         fetching,
         error,
     },
-    filterOptions: {
-        countries: { data: countryOptions },
-        sectors: { data: sectorOptions },
-        facilityProcessingType: { data: processingTypeOptions },
-    },
     auth: {
         user: { user },
     },
@@ -350,17 +303,11 @@ const mapStateToProps = ({
     prefetchedData,
     fetching,
     error,
-    countryOptions,
-    sectorOptions,
-    processingTypeOptions,
     userHasSignedIn: !user.isAnon,
 });
 
 const mapDispatchToProps = dispatch => ({
     fetchData: osID => dispatch(fetchClaimFormData(osID)),
-    fetchCountries: () => dispatch(fetchCountryOptions()),
-    fetchSectors: () => dispatch(fetchSectorOptions()),
-    fetchProcessingTypes: () => dispatch(fetchFacilityProcessingTypeOptions()),
     setStep: stepIndex => dispatch(setActiveClaimFormStep(stepIndex)),
     markComplete: stepIndex => dispatch(markStepComplete(stepIndex)),
     updateField: payload => dispatch(updateClaimFormField(payload)),
