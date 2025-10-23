@@ -33,19 +33,86 @@ const BETA_TOOLTIP_TEXT =
     "What does beta mean? Open Supply Hub is developing a Premium offering for facilities, to help you use your OS Hub profile to connect with more customers and build your business. Once live, all fields that say beta will be a part of this new package. For now, these beta fields will appear on your profile just like all the others. Once the Premium offering is live, you'll receive next steps about how it will work and whether you will want to keep these beta fields live.";
 
 const AFFILIATIONS_OPTIONS = [
-    { value: 'fla', label: 'Fair Labor Association (FLA)' },
-    { value: 'wrap', label: 'WRAP' },
-    { value: 'sedex', label: 'Sedex' },
-    { value: 'bsci', label: 'BSCI' },
+    {
+        value: 'benefits_for_business_and_workers',
+        label: 'Benefits for Business and Workers (BBW)',
+    },
+    { value: 'better_mills_program', label: 'Better Mills Program' },
+    { value: 'better_work', label: 'Better Work (ILO)' },
+    { value: 'canopy', label: 'Canopy' },
+    {
+        value: 'ethical_trading_initiative',
+        label: 'Ethical Trading Initiative',
+    },
+    { value: 'fair_labor_association', label: 'Fair Labor Association' },
+    { value: 'fair_wear_foundation', label: 'Fair Wear Foundation' },
+    { value: 'herfinance', label: 'HERfinance' },
+    { value: 'herhealth', label: 'HERhealth' },
+    { value: 'herrespect', label: 'HERrespect' },
+    { value: 'sedex', label: 'SEDEX' },
+    {
+        value: 'social_and_labor_convergence_plan',
+        label: 'Social and Labor Convergence Plan (SLCP)',
+    },
+    {
+        value: 'sustainable_apparel_coalition',
+        label: 'Sustainable Apparel Coalition',
+    },
+    {
+        value: 'sweatfree_purchasing_consortium',
+        label: 'Sweatfree Purchasing Consortium',
+    },
+    { value: 'zdhc', label: 'ZDHC' },
 ];
 
 const CERTIFICATIONS_OPTIONS = [
-    { value: 'iso_9001', label: 'ISO 9001' },
-    { value: 'iso_14001', label: 'ISO 14001' },
+    { value: 'bci', label: 'BCI' },
+    { value: 'b_corp', label: 'B Corp' },
+    { value: 'bluesign', label: 'Bluesign' },
+    { value: 'canopy', label: 'Canopy' },
+    { value: 'cradle_to_cradle', label: 'Cradle to Cradle' },
+    { value: 'eu_ecolabel', label: 'EU Ecolabel' },
+    { value: 'fairtrade_usa', label: 'Fairtrade USA' },
+    { value: 'fsc', label: 'FSC' },
+    {
+        value: 'global_recycling_standard',
+        label: 'Global Recycling Standard (GRS)',
+    },
+    { value: 'gots', label: 'GOTS' },
+    { value: 'green_button', label: 'Green Button' },
+    {
+        value: 'green_screen_for_safer_chemicals',
+        label: 'Green Screen for Safer Chemicals',
+    },
+    { value: 'higg_index', label: 'Higg Index' },
+    { value: 'imo_control', label: 'IMO Control' },
+    {
+        value: 'international_wool_textile_organisation',
+        label: 'International Wool Textile Organisation (IWTO)',
+    },
+    { value: 'iso_9000', label: 'ISO 9000' },
+    { value: 'ivn_leather', label: 'IVN leather' },
+    { value: 'leather_working_group', label: 'Leather Working Group' },
+    { value: 'nordic_swan', label: 'Nordic Swan' },
+    { value: 'oeko_tex_standard_100', label: 'Oeko-Tex Standard 100' },
+    { value: 'oeko_tex_step', label: 'Oeko-Tex STeP' },
+    { value: 'oeko_tex_eco_passport', label: 'Oeko-Tex Eco Passport' },
+    { value: 'oeko_tex_made_in_green', label: 'Oeko-Tex Made in Green' },
+    { value: 'pefc', label: 'PEFC' },
+    { value: 'reach', label: 'REACH' },
+    {
+        value: 'responsible_down_standard',
+        label: 'Responsible Down Standard (RDS)',
+    },
+    {
+        value: 'responsible_wool_standard',
+        label: 'Responsible Wool Standard (RWS)',
+    },
     { value: 'sa8000', label: 'SA8000' },
-    { value: 'oeko_tex', label: 'OEKO-TEX' },
-    { value: 'gots', label: 'GOTS (Global Organic Textile Standard)' },
-    { value: 'bluesign', label: 'bluesign' },
+    { value: 'abvtex', label: 'ABVTEX' },
+    { value: 'empresa_b', label: 'Empresa B' },
+    { value: 'origem_sustentavel', label: 'Origem Sustentável' },
+    { value: 'selo_abr', label: 'Selo ABR' },
 ];
 
 const profileStepStyles = theme =>
@@ -811,101 +878,126 @@ const ProfileStep = ({
                                     )}
                                 </div>
                             </Grid>
-                        </Grid>
 
-                        {/* Processing Type */}
-                        <div className={classes.field}>
-                            <div className={classes.fieldLabel}>
-                                <Typography
-                                    variant="body2"
-                                    component="label"
-                                    style={{ fontSize: '16px' }}
-                                >
-                                    Processing Type(s)
-                                </Typography>
-                                <Tooltip
-                                    title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <IconButton
-                                        size="small"
-                                        disableRipple
-                                        className={classes.helpIconButton}
-                                    >
-                                        <HelpOutline
-                                            className={classes.helpIcon}
+                            {/* Processing Type */}
+                            <Grid item xs={12} md={6}>
+                                <div className={classes.field}>
+                                    <div className={classes.fieldLabel}>
+                                        <Typography
+                                            variant="body2"
+                                            component="label"
+                                            style={{ fontSize: '16px' }}
+                                        >
+                                            Processing Type(s)
+                                        </Typography>
+                                        <Tooltip
+                                            title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </div>
+                                    {enabledTaxonomy ? (
+                                        <StyledSelect
+                                            id="processing_type"
+                                            name="processing-type"
+                                            aria-label="Processing Type"
+                                            isMulti
+                                            options={mapProcessingTypeOptions(
+                                                processingTypeOptions || [],
+                                                formData.locationType || [],
+                                            )}
+                                            value={
+                                                formData.processingType || []
+                                            }
+                                            onChange={values =>
+                                                handleChange(
+                                                    'processingType',
+                                                    values,
+                                                )
+                                            }
+                                            placeholder="Select processing type(s)"
                                         />
-                                    </IconButton>
-                                </Tooltip>
-                            </div>
-                            {enabledTaxonomy ? (
-                                <StyledSelect
-                                    id="processing_type"
-                                    name="processing-type"
-                                    aria-label="Processing Type"
-                                    isMulti
-                                    options={mapProcessingTypeOptions(
-                                        processingTypeOptions || [],
-                                        formData.locationType || [],
+                                    ) : (
+                                        <StyledSelect
+                                            creatable
+                                            isMulti
+                                            name="processing-type"
+                                            aria-label="Processing Type"
+                                            value={
+                                                formData.processingType || []
+                                            }
+                                            onChange={values =>
+                                                handleChange(
+                                                    'processingType',
+                                                    values,
+                                                )
+                                            }
+                                            placeholder="Enter processing type(s)"
+                                        />
                                     )}
-                                    value={formData.processingType || []}
-                                    onChange={values =>
-                                        handleChange('processingType', values)
-                                    }
-                                    placeholder="Select processing type(s)"
-                                />
-                            ) : (
-                                <StyledSelect
-                                    creatable
-                                    isMulti
-                                    name="processing-type"
-                                    aria-label="Processing Type"
-                                    value={formData.processingType || []}
-                                    onChange={values =>
-                                        handleChange('processingType', values)
-                                    }
-                                    placeholder="Enter processing type(s)"
-                                />
-                            )}
-                        </div>
+                                </div>
+                            </Grid>
 
-                        {/* Product Types */}
-                        <div className={classes.field}>
-                            <div className={classes.fieldLabel}>
-                                <Typography
-                                    variant="body2"
-                                    component="label"
-                                    style={{ fontSize: '16px' }}
-                                >
-                                    Product Types
-                                </Typography>
-                                <Tooltip
-                                    title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <IconButton
-                                        size="small"
-                                        disableRipple
-                                        className={classes.helpIconButton}
-                                    >
-                                        <HelpOutline
-                                            className={classes.helpIcon}
-                                        />
-                                    </IconButton>
-                                </Tooltip>
-                            </div>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                value={formData.productTypes || ''}
-                                onChange={e =>
-                                    handleChange('productTypes', e.target.value)
-                                }
-                                placeholder="e.g., T-shirts, Jeans, Dresses"
-                            />
-                        </div>
+                            {/* Product Types */}
+                            <Grid item xs={12} md={6}>
+                                <div className={classes.field}>
+                                    <div className={classes.fieldLabel}>
+                                        <Typography
+                                            variant="body2"
+                                            component="label"
+                                            style={{ fontSize: '16px' }}
+                                        >
+                                            Product Types
+                                        </Typography>
+                                        <Tooltip
+                                            title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </div>
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        value={formData.productTypes || ''}
+                                        onChange={e =>
+                                            handleChange(
+                                                'productTypes',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="e.g., T-shirts, Jeans, Dresses"
+                                    />
+                                </div>
+                            </Grid>
+                        </Grid>
 
                         <Grid container spacing={24}>
                             {/* Number of Workers */}
