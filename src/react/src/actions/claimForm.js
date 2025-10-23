@@ -1,6 +1,6 @@
 import { createAction } from 'redux-act';
 
-// Prefetch data actions
+// Prefetch data actions.
 export const startPrefetchClaimFormData = createAction(
     'START_PREFETCH_CLAIM_FORM_DATA',
 );
@@ -11,24 +11,24 @@ export const failPrefetchClaimFormData = createAction(
     'FAIL_PREFETCH_CLAIM_FORM_DATA',
 );
 
-// Step navigation actions
+// Step navigation actions.
 export const setActiveClaimFormStep = createAction(
     'SET_ACTIVE_CLAIM_FORM_STEP',
 );
 export const markStepComplete = createAction('MARK_CLAIM_FORM_STEP_COMPLETE');
 
-// Form data actions
+// Form data actions.
 export const updateClaimFormField = createAction('UPDATE_CLAIM_FORM_FIELD');
 export const setClaimFormData = createAction('SET_CLAIM_FORM_DATA');
 export const resetClaimForm = createAction('RESET_CLAIM_FORM');
 
-// Mock data prefetch function
-// TODO: Replace with actual API call when backend is ready
+// Mock data prefetch function.
+// TODO: Replace with actual API call when backend is ready.
 export function fetchClaimFormData(osID) {
     return dispatch => {
         dispatch(startPrefetchClaimFormData());
 
-        // Mock implementation - simulates API call
+        // Mock implementation - simulates API call.
         setTimeout(() => {
             const mockData = {
                 sectors: [

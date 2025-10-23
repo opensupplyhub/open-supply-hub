@@ -3,45 +3,35 @@ import { CLAIM_FORM_STEPS } from './constants';
 
 // Step 1: Eligibility validation
 export const eligibilityStepSchema = Yup.object().shape({
-    eligibilityConfirmed: Yup.boolean()
-        .oneOf([true], 'You must confirm eligibility')
-        .required('Required'),
+    position: Yup.string().required('Position/Title is required'),
+    yearsAtCompany: Yup.string(),
 });
 
-// Step 2: Contact validation (basic structure for now)
+// Step 2: Contact validation
 export const contactStepSchema = Yup.object().shape({
-    claimantName: Yup.string(),
-    claimantTitle: Yup.string(),
-    claimantEmail: Yup.string().email('Invalid email address'),
-    verificationMethod: Yup.string(),
+    contactEmail: Yup.string()
+        .email('Invalid email address')
+        .required('Contact email is required'),
+    contactPhone: Yup.string(),
 });
 
-// Step 3: Business validation (basic structure for now)
+// Step 3: Business validation
 export const businessStepSchema = Yup.object().shape({
+    businessName: Yup.string().required('Business name is required'),
     businessWebsite: Yup.string().url('Invalid URL'),
-    companyAddressVerification: Yup.string(),
 });
 
-// Step 4: Profile validation (optional fields)
+// Step 4: Profile validation (all optional fields)
 export const profileStepSchema = Yup.object().shape({
-    facilityName: Yup.string(),
-    sector: Yup.array(),
-    facilityPhone: Yup.string(),
-    facilityWebsite: Yup.string().url('Invalid URL'),
-    localLanguageName: Yup.string(),
-    numberOfWorkers: Yup.string(),
-    femaleWorkers: Yup.string(),
-    minimumOrderQuantity: Yup.string(),
-    averageLeadTime: Yup.string(),
-    facilityTypes: Yup.array(),
-    productTypes: Yup.string(),
-    parentCompanyName: Yup.string(),
-    officeName: Yup.string(),
-    officeAddress: Yup.string(),
-    officeCountry: Yup.string(),
-    affiliations: Yup.array(),
-    certifications: Yup.array(),
-    description: Yup.string(),
+    numberOfWorkers: Yup.string()
+        .nullable()
+        .test('is-valid-workers', 'Must be at least 1 worker', value => {
+            if (!value || value.trim() === '') return true; // Optional
+
+            const num = Number(value);
+            return !Number.isNaN(num) && num >= 1 && Number.isInteger(num);
+        }),
+    additionalNotes: Yup.string(),
 });
 
 /**

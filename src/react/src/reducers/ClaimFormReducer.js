@@ -16,10 +16,10 @@ const initialState = Object.freeze({
     activeStep: 0,
     completedSteps: [],
     formData: Object.freeze({
-        // Eligibility step
+        // Eligibility step.
         eligibilityConfirmed: false,
 
-        // Contact step
+        // Contact step.
         claimantName: '',
         claimantTitle: '',
         claimantEmail: '',
@@ -27,11 +27,11 @@ const initialState = Object.freeze({
         contactName: '',
         contactEmail: '',
 
-        // Business step
+        // Business step.
         businessWebsite: '',
         companyAddressVerification: '',
 
-        // Profile step
+        // Profile step.
         facilityName: '',
         sector: [],
         facilityPhone: '',

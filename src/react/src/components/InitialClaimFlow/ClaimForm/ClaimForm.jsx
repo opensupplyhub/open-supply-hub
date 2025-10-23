@@ -32,7 +32,7 @@ import {
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
 import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
-import { useStepResetOnMount, usePrefetchData } from './hooks';
+import { usePrefetchData } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
 
 const stepComponents = {
@@ -60,13 +60,10 @@ const ClaimForm = ({
     markComplete,
     updateField,
 }) => {
-    // Reset to first step on mount
-    useStepResetOnMount(setStep);
-
-    // Prefetch data on mount
+    // Prefetch data on mount.
     usePrefetchData(fetchData, osID);
 
-    // Check authentication
+    // Check authentication.
     if (!userHasSignedIn) {
         return (
             <RequireAuthNotice
@@ -76,7 +73,7 @@ const ClaimForm = ({
         );
     }
 
-    // Show loading state
+    // Show loading state.
     if (fetching && !prefetchedData.facilityData) {
         return (
             <div className={classes.loadingContainer}>
@@ -85,7 +82,7 @@ const ClaimForm = ({
         );
     }
 
-    // Show error state
+    // Show error state.
     if (error) {
         return (
             <div className={classes.container}>
@@ -117,19 +114,35 @@ const ClaimForm = ({
     const currentStepComponent = stepComponents[activeStep];
     const StepComponent = currentStepComponent || EligibilityStep;
 
-    const handleNext = async (validateForm, values) => {
-        const errors = await validateForm(values);
+    const handleNext = async (setTouched, values, touched) => {
+        // Get all fields from current step's validation schema.
+        const schema = getValidationSchemaForStep(activeStep);
+        const schemaFields = schema.describe().fields;
 
-        if (Object.keys(errors).length === 0) {
+        // Mark all fields in current step as touched to show validation errors.
+        const touchedFields = Object.keys(schemaFields).reduce((acc, field) => {
+            acc[field] = true;
+            return acc;
+        }, {});
+
+        setTouched({ ...touched, ...touchedFields });
+
+        // Validate only the current step's fields, not the entire form.
+        try {
+            await schema.validate(values, { abortEarly: false });
+            // If validation passes, proceed to next step.
             markComplete(activeStep);
             const nextStepIndex = getNextStep(activeStep);
             setStep(nextStepIndex);
+        } catch (validationErrors) {
+            // Validation failed for current step, stay on this step.
+            // Errors will be displayed via Formik's error state.
         }
     };
 
     const handleBack = () => {
         if (isFirstStep(activeStep)) {
-            // Go back to claim intro page
+            // Go back to claim intro page.
             history.push(claimIntroRoute.replace(':osID', osID));
         } else {
             const prevStepIndex = getPreviousStep(activeStep);
@@ -138,20 +151,24 @@ const ClaimForm = ({
     };
 
     const handleSubmit = values => {
-        // Mark final step as complete
+        // Mark final step as complete.
         markComplete(activeStep);
 
-        // TODO: Implement actual form submission
-        // eslint-disable-next-line no-console
+        // TODO: Implement actual form submission.
         console.log('Form submitted with values:', values);
 
-        // For now, just show a success message
-        // eslint-disable-next-line no-alert
+        // For now, just show a success message.
         alert('Claim form submitted successfully! (This is a placeholder)');
     };
 
-    const handleFieldChange = (field, value, setFieldValue) => {
+    const handleFieldChange = (
+        field,
+        value,
+        setFieldValue,
+        setFieldTouched,
+    ) => {
         setFieldValue(field, value);
+        setFieldTouched(field, true, false);
         updateField({ field, value });
     };
 
@@ -173,7 +190,6 @@ const ClaimForm = ({
                 <Formik
                     initialValues={formData}
                     validationSchema={getValidationSchemaForStep(activeStep)}
-                    enableReinitialize
                     onSubmit={handleSubmit}
                 >
                     {({
@@ -181,82 +197,118 @@ const ClaimForm = ({
                         errors,
                         touched,
                         setFieldValue,
-                        validateForm,
-                    }) => (
-                        <Form>
-                            <Paper className={classes.paper}>
-                                <Typography
-                                    variant="title"
-                                    className={classes.sectionTitle}
-                                >
-                                    {STEP_NAMES[activeStep]}
-                                </Typography>
-                                <Typography
-                                    className={classes.sectionDescription}
-                                >
-                                    {STEP_DESCRIPTIONS[activeStep]}
-                                </Typography>
-                                <StepComponent
-                                    formData={values}
-                                    handleChange={(field, value) =>
-                                        handleFieldChange(
-                                            field,
-                                            value,
-                                            setFieldValue,
-                                        )
-                                    }
-                                    errors={errors}
-                                    touched={touched}
-                                    prefetchedData={prefetchedData}
-                                />
-                                <Grid
-                                    container
-                                    className={classes.navigationButtons}
-                                >
-                                    <Grid item>
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleBack}
-                                            className={classes.buttonBack}
-                                        >
-                                            {isFirstStep(activeStep)
-                                                ? 'Go Back'
-                                                : 'Back'}
-                                        </Button>
-                                    </Grid>
-                                    <Grid item>
-                                        {!isLastStep(activeStep) && (
+                        setFieldTouched,
+                        setTouched,
+                        handleBlur,
+                    }) => {
+                        // Get fields for current step only.
+                        const schema = getValidationSchemaForStep(activeStep);
+                        const currentStepFields = Object.keys(
+                            schema.describe().fields,
+                        );
+
+                        // Check if user has interacted with any field in current step.
+                        const hasInteractedWithCurrentStep = currentStepFields.some(
+                            field => touched[field],
+                        );
+
+                        // Check if there are validation errors in CURRENT STEP ONLY.
+                        const hasCurrentStepErrors = currentStepFields.some(
+                            field => errors[field],
+                        );
+
+                        // Only disable button if user has interacted
+                        // AND there are errors in current step. This allows
+                        // button to be enabled initially (optimistic approach).
+                        const isButtonDisabled =
+                            hasInteractedWithCurrentStep &&
+                            hasCurrentStepErrors;
+
+                        return (
+                            <Form>
+                                <Paper className={classes.paper}>
+                                    <Typography
+                                        variant="title"
+                                        className={classes.sectionTitle}
+                                    >
+                                        {STEP_NAMES[activeStep]}
+                                    </Typography>
+                                    <Typography
+                                        className={classes.sectionDescription}
+                                    >
+                                        {STEP_DESCRIPTIONS[activeStep]}
+                                    </Typography>
+                                    <StepComponent
+                                        formData={values}
+                                        handleChange={(field, value) =>
+                                            handleFieldChange(
+                                                field,
+                                                value,
+                                                setFieldValue,
+                                                setFieldTouched,
+                                            )
+                                        }
+                                        handleBlur={handleBlur}
+                                        errors={errors}
+                                        touched={touched}
+                                        prefetchedData={prefetchedData}
+                                    />
+                                    <Grid
+                                        container
+                                        className={classes.navigationButtons}
+                                    >
+                                        <Grid item>
                                             <Button
-                                                variant="contained"
-                                                onClick={() =>
-                                                    handleNext(
-                                                        validateForm,
-                                                        values,
-                                                    )
-                                                }
-                                                className={
-                                                    classes.buttonPrimary
-                                                }
+                                                variant="outlined"
+                                                onClick={handleBack}
+                                                className={classes.buttonBack}
                                             >
-                                                {NEXT_BUTTON_TEXT[activeStep]}
+                                                {isFirstStep(activeStep)
+                                                    ? 'Go Back'
+                                                    : 'Back'}
                                             </Button>
-                                        )}
-                                        {isLastStep(activeStep) && (
-                                            <Button
-                                                variant="contained"
-                                                type="submit"
-                                                className={
-                                                    classes.buttonPrimary
-                                                }
-                                            >
-                                                Submit Claim
-                                            </Button>
-                                        )}
+                                        </Grid>
+                                        <Grid item>
+                                            {!isLastStep(activeStep) && (
+                                                <Button
+                                                    variant="contained"
+                                                    onClick={() =>
+                                                        handleNext(
+                                                            setTouched,
+                                                            values,
+                                                            touched,
+                                                        )
+                                                    }
+                                                    className={
+                                                        classes.buttonPrimary
+                                                    }
+                                                    disabled={isButtonDisabled}
+                                                >
+                                                    {
+                                                        NEXT_BUTTON_TEXT[
+                                                            activeStep
+                                                        ]
+                                                    }
+                                                </Button>
+                                            )}
+                                            {isLastStep(activeStep) && (
+                                                <Button
+                                                    variant="contained"
+                                                    type="submit"
+                                                    className={
+                                                        classes.buttonPrimary
+                                                    }
+                                                    disabled={isButtonDisabled}
+                                                >
+                                                    Submit Claim
+                                                </Button>
+                                            )}
+                                        </Grid>
                                     </Grid>
-                                </Grid>
-                            </Paper>
-                        </Form>
-                    )}
+                                </Paper>
+                            </Form>
+                        );
+                    }}
                 </Formik>
             </div>
         </div>

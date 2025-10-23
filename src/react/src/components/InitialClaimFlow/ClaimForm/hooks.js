@@ -1,17 +1,6 @@
 import { useEffect } from 'react';
 
 /**
- * Hook to reset the form to the first step on component mount
- * This ensures that direct URL access or page reload always starts at step 0
- * @param {Function} setActiveStep - Redux action to set the active step
- */
-export const useStepResetOnMount = setActiveStep => {
-    useEffect(() => {
-        setActiveStep(0);
-    }, [setActiveStep]);
-};
-
-/**
  * Hook to prefetch data when component mounts
  * @param {Function} fetchData - Function to dispatch data fetching
  * @param {string} osID - The facility OS ID

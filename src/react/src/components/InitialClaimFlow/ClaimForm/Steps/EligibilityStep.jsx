@@ -6,8 +6,7 @@ import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
+import TextField from '@material-ui/core/TextField';
 import Security from '@material-ui/icons/Security';
 
 import COLOURS from '../../../../util/COLOURS';
@@ -33,70 +32,111 @@ const eligibilityStepStyles = theme =>
         content: Object.freeze({
             padding: theme.spacing.unit * 3,
         }),
-        checkboxLabel: Object.freeze({
-            marginTop: theme.spacing.unit * 2,
-            marginBottom: theme.spacing.unit * 2,
-        }),
         description: Object.freeze({
             marginBottom: theme.spacing.unit * 2,
             color: COLOURS.DARK_GREY,
-            fontSize: '0.875rem',
-            lineHeight: 1.5,
+        }),
+        field: Object.freeze({
+            marginBottom: theme.spacing.unit * 2,
         }),
     });
 
-const EligibilityStep = ({ classes, formData, handleChange }) => (
-    <Grid container spacing={24}>
-        <Grid item xs={12}>
-            <Card className={classes.card}>
-                <CardHeader
-                    className={classes.cardHeader}
-                    title={
-                        <Typography variant="title">
-                            <Security className={classes.headerIcon} />
-                            Eligibility Verification
-                        </Typography>
-                    }
-                />
-                <CardContent className={classes.content}>
-                    <Typography variant="body1" className={classes.description}>
-                        In order to submit a claim request, you must be an owner
-                        or senior manager of the production location. By
-                        proceeding, you confirm that you have the authority to
-                        claim this facility.
-                    </Typography>
-
-                    <FormControlLabel
-                        className={classes.checkboxLabel}
-                        control={
-                            <Checkbox
-                                checked={formData.eligibilityConfirmed || false}
-                                onChange={e =>
-                                    handleChange(
-                                        'eligibilityConfirmed',
-                                        e.target.checked,
-                                    )
-                                }
-                                color="primary"
-                            />
+const EligibilityStep = ({
+    classes,
+    formData,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
+}) => {
+    console.log('errors', errors);
+    console.log('touched', touched);
+    return (
+        <Grid container spacing={24}>
+            <Grid item xs={12}>
+                <Card className={classes.card}>
+                    <CardHeader
+                        className={classes.cardHeader}
+                        title={
+                            <Typography variant="title">
+                                <Security className={classes.headerIcon} />
+                                Eligibility Check
+                            </Typography>
                         }
-                        label="I confirm that I am an owner or senior manager of this production location and have the authority to claim it"
                     />
+                    <CardContent className={classes.content}>
+                        <Typography
+                            variant="body1"
+                            className={classes.description}
+                        >
+                            Confirm your eligibility to claim this facility.
+                        </Typography>
 
-                    <Typography variant="caption" color="textSecondary">
-                        Note: False claims may result in account suspension. All
-                        claims are subject to verification.
-                    </Typography>
-                </CardContent>
-            </Card>
+                        <Grid container spacing={16}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    name="position"
+                                    label="Your Position/Title"
+                                    value={formData.position || ''}
+                                    onChange={e =>
+                                        handleChange('position', e.target.value)
+                                    }
+                                    onBlur={handleBlur}
+                                    className={classes.field}
+                                    placeholder="e.g., Owner, General Manager, CEO"
+                                    error={
+                                        touched.position && !!errors.position
+                                    }
+                                    helperText={
+                                        touched.position && errors.position
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    name="yearsAtCompany"
+                                    label="Years at Company (Optional)"
+                                    value={formData.yearsAtCompany || ''}
+                                    onChange={e =>
+                                        handleChange(
+                                            'yearsAtCompany',
+                                            e.target.value,
+                                        )
+                                    }
+                                    className={classes.field}
+                                    placeholder="e.g., 5"
+                                    error={
+                                        touched.yearsAtCompany &&
+                                        !!errors.yearsAtCompany
+                                    }
+                                    helperText={
+                                        touched.yearsAtCompany &&
+                                        errors.yearsAtCompany
+                                    }
+                                />
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            </Grid>
         </Grid>
-    </Grid>
-);
+    );
+};
+
+EligibilityStep.defaultProps = {
+    errors: {},
+    touched: {},
+};
 
 EligibilityStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    errors: object,
+    touched: object,
 };
 
 export default withStyles(eligibilityStepStyles)(

@@ -13,9 +13,13 @@ import AppOverflow from '../../AppOverflow';
 import RequireAuthNotice from '../../RequireAuthNotice';
 import { claimIntroStyles } from './styles';
 import withScrollReset from '../HOCs/withScrollReset';
-import { claimDetailsRoute } from '../../../util/constants';
+import {
+    claimDetailsRoute,
+    facilityDetailsRoute,
+} from '../../../util/constants';
+import { resetClaimForm } from '../../../actions/claimForm';
 
-const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
+const ClaimIntro = ({ classes, history, osID, userHasSignedIn, resetForm }) => {
     if (!userHasSignedIn) {
         return (
             <RequireAuthNotice
@@ -26,7 +30,8 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
     }
 
     const handleGoBack = () => {
-        history.goBack();
+        resetForm();
+        history.push(facilityDetailsRoute.replace(':osID', osID));
     };
 
     const handleContinue = () => {
@@ -93,6 +98,7 @@ ClaimIntro.propTypes = {
         goBack: PropTypes.func.isRequired,
         push: PropTypes.func.isRequired,
     }).isRequired,
+    resetForm: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (
@@ -111,6 +117,11 @@ const mapStateToProps = (
     userHasSignedIn: !user.isAnon,
 });
 
-export default connect(mapStateToProps)(
-    withRouter(withStyles(claimIntroStyles)(withScrollReset(ClaimIntro))),
-);
+const mapDispatchToProps = dispatch => ({
+    resetForm: () => dispatch(resetClaimForm()),
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withRouter(withStyles(claimIntroStyles)(withScrollReset(ClaimIntro))));

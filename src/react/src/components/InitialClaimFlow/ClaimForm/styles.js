@@ -57,6 +57,11 @@ const claimFormStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+            '&:disabled': {
+                backgroundColor: COLOURS.GREY,
+                color: COLOURS.DARK_GREY,
+                cursor: 'not-allowed',
+            },
         }),
         sectionTitle: Object.freeze({
             fontSize: '1.25rem',

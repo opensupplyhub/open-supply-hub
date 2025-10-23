@@ -45,111 +45,93 @@ const contactStepStyles = theme =>
         }),
     });
 
-const ContactStep = ({ classes, formData, handleChange, errors, touched }) => (
-    <Grid container spacing={24}>
-        <Grid item xs={12}>
-            <Card className={classes.card}>
-                <CardHeader
-                    className={classes.cardHeader}
-                    title={
-                        <Typography variant="title">
-                            <People className={classes.headerIcon} />
-                            Contact Information
-                        </Typography>
-                    }
-                />
-                <CardContent className={classes.content}>
-                    <div className={classes.section}>
-                        <Typography
-                            variant="subheading"
-                            className={classes.sectionTitle}
-                        >
-                            Your Information (Claimant)
+const ContactStep = ({
+    classes,
+    formData,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
+}) => {
+    console.log('errors', errors);
+    console.log('touched', touched);
+    return (
+        <Grid container spacing={24}>
+            <Grid item xs={12}>
+                <Card className={classes.card}>
+                    <CardHeader
+                        className={classes.cardHeader}
+                        title={
+                            <Typography variant="title">
+                                <People className={classes.headerIcon} />
+                                Contact Information
+                            </Typography>
+                        }
+                    />
+                    <CardContent className={classes.content}>
+                        <Typography variant="body1" className={classes.section}>
+                            Provide contact information for this facility.
                         </Typography>
 
                         <Grid container spacing={16}>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12}>
                                 <TextField
                                     fullWidth
-                                    label="Your Name"
-                                    value={formData.claimantName || ''}
+                                    required
+                                    name="contactEmail"
+                                    label="Contact Email"
+                                    type="email"
+                                    value={formData.contactEmail || ''}
                                     onChange={e =>
                                         handleChange(
-                                            'claimantName',
+                                            'contactEmail',
                                             e.target.value,
                                         )
                                     }
+                                    onBlur={handleBlur}
                                     className={classes.field}
-                                    placeholder="Enter your full name"
+                                    placeholder="contact@facility.com"
                                     error={
-                                        touched.claimantName &&
-                                        !!errors.claimantName
+                                        touched.contactEmail &&
+                                        !!errors.contactEmail
                                     }
                                     helperText={
-                                        touched.claimantName &&
-                                        errors.claimantName
-                                    }
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Your Job Title"
-                                    value={formData.claimantTitle || ''}
-                                    onChange={e =>
-                                        handleChange(
-                                            'claimantTitle',
-                                            e.target.value,
-                                        )
-                                    }
-                                    className={classes.field}
-                                    placeholder="e.g., Plant Manager, Safety Director"
-                                    error={
-                                        touched.claimantTitle &&
-                                        !!errors.claimantTitle
-                                    }
-                                    helperText={
-                                        touched.claimantTitle &&
-                                        errors.claimantTitle
+                                        touched.contactEmail &&
+                                        errors.contactEmail
                                     }
                                 />
                             </Grid>
                             <Grid item xs={12}>
                                 <TextField
                                     fullWidth
-                                    label="Your Email"
-                                    type="email"
-                                    value={formData.claimantEmail || ''}
+                                    name="contactPhone"
+                                    label="Contact Phone (Optional)"
+                                    value={formData.contactPhone || ''}
                                     onChange={e =>
                                         handleChange(
-                                            'claimantEmail',
+                                            'contactPhone',
                                             e.target.value,
                                         )
                                     }
                                     className={classes.field}
-                                    placeholder="your.email@company.com"
+                                    placeholder="+1 (555) 123-4567"
                                     error={
-                                        touched.claimantEmail &&
-                                        !!errors.claimantEmail
+                                        touched.contactPhone &&
+                                        !!errors.contactPhone
                                     }
                                     helperText={
-                                        touched.claimantEmail &&
-                                        errors.claimantEmail
+                                        touched.contactPhone &&
+                                        errors.contactPhone
                                     }
                                 />
                             </Grid>
                         </Grid>
-                    </div>
-
-                    <Typography variant="caption" color="textSecondary">
-                        Note: This is placeholder content. Actual form fields
-                        will be implemented in future tasks.
-                    </Typography>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </Grid>
         </Grid>
-    </Grid>
-);
+    );
+};
 
 ContactStep.defaultProps = {
     errors: {},

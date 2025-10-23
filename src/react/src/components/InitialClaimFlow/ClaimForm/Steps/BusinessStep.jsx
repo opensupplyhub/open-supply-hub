@@ -45,7 +45,14 @@ const businessStepStyles = theme =>
         }),
     });
 
-const BusinessStep = ({ classes, formData, handleChange, errors, touched }) => (
+const BusinessStep = ({
+    classes,
+    formData,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
+}) => (
     <Grid container spacing={24}>
         <Grid item xs={12}>
             <Card className={classes.card}>
@@ -54,76 +61,63 @@ const BusinessStep = ({ classes, formData, handleChange, errors, touched }) => (
                     title={
                         <Typography variant="title">
                             <Language className={classes.headerIcon} />
-                            Business Information
+                            Business Details
                         </Typography>
                     }
                 />
                 <CardContent className={classes.content}>
-                    <div className={classes.section}>
-                        <Typography
-                            variant="subheading"
-                            className={classes.sectionTitle}
-                        >
-                            Company Verification
-                        </Typography>
-
-                        <Grid container spacing={16}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Business Website"
-                                    value={formData.businessWebsite || ''}
-                                    onChange={e =>
-                                        handleChange(
-                                            'businessWebsite',
-                                            e.target.value,
-                                        )
-                                    }
-                                    className={classes.field}
-                                    placeholder="https://company.com"
-                                    error={
-                                        touched.businessWebsite &&
-                                        !!errors.businessWebsite
-                                    }
-                                    helperText={
-                                        touched.businessWebsite &&
-                                        errors.businessWebsite
-                                    }
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Company Address Verification Method"
-                                    value={
-                                        formData.companyAddressVerification ||
-                                        ''
-                                    }
-                                    onChange={e =>
-                                        handleChange(
-                                            'companyAddressVerification',
-                                            e.target.value,
-                                        )
-                                    }
-                                    className={classes.field}
-                                    placeholder="Select verification method"
-                                    error={
-                                        touched.companyAddressVerification &&
-                                        !!errors.companyAddressVerification
-                                    }
-                                    helperText={
-                                        touched.companyAddressVerification &&
-                                        errors.companyAddressVerification
-                                    }
-                                />
-                            </Grid>
-                        </Grid>
-                    </div>
-
-                    <Typography variant="caption" color="textSecondary">
-                        Note: This is placeholder content. Actual form fields
-                        will be implemented in future tasks.
+                    <Typography variant="body1" className={classes.section}>
+                        Provide basic business information.
                     </Typography>
+
+                    <Grid container spacing={16}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                required
+                                name="businessName"
+                                label="Business Name"
+                                value={formData.businessName || ''}
+                                onChange={e =>
+                                    handleChange('businessName', e.target.value)
+                                }
+                                onBlur={handleBlur}
+                                className={classes.field}
+                                placeholder="Company or facility name"
+                                error={
+                                    touched.businessName &&
+                                    !!errors.businessName
+                                }
+                                helperText={
+                                    touched.businessName && errors.businessName
+                                }
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                name="businessWebsite"
+                                label="Business Website (Optional)"
+                                value={formData.businessWebsite || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'businessWebsite',
+                                        e.target.value,
+                                    )
+                                }
+                                className={classes.field}
+                                placeholder="https://company.com"
+                                error={
+                                    touched.businessWebsite &&
+                                    !!errors.businessWebsite
+                                }
+                                helperText={
+                                    touched.businessWebsite &&
+                                    errors.businessWebsite
+                                }
+                            />
+                        </Grid>
+                    </Grid>
                 </CardContent>
             </Card>
         </Grid>
