@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { bool, func, number, object, arrayOf, string } from 'prop-types';
+import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
@@ -24,6 +24,7 @@ import {
 import {
     fetchCountryOptions,
     fetchFacilityProcessingTypeOptions,
+    fetchParentCompanyOptions,
 } from '../../../actions/filterOptions';
 import { fetchProductionLocationByOsId } from '../../../actions/contributeProductionLocation';
 
@@ -35,7 +36,13 @@ import {
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
-import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
+import {
+    isFirstStep,
+    isLastStep,
+    getNextStep,
+    getPreviousStep,
+    getPrefetchErrorConfig,
+} from './utils';
 import {
     usePrefetchClaimData,
     useClaimForm,
@@ -61,15 +68,20 @@ const ClaimForm = ({
     formData,
     countriesOptions,
     facilityProcessingTypeOptions,
+    parentCompanyOptions,
+    productionLocationData,
     countriesFetching,
     facilityProcessingTypeFetching,
+    parentCompaniesFetching,
     productionLocationFetching,
     countriesError,
     facilityProcessingTypeError,
+    parentCompaniesError,
     productionLocationError,
     userHasSignedIn,
     fetchCountries,
     fetchFacilityProcessingType,
+    fetchParentCompanies,
     fetchProductionLocation,
     setStep,
     markComplete,
@@ -82,10 +94,13 @@ const ClaimForm = ({
     usePrefetchClaimData(
         fetchCountries,
         fetchFacilityProcessingType,
+        fetchParentCompanies,
         fetchProductionLocation,
         osID,
+        productionLocationData,
         countriesOptions,
         facilityProcessingTypeOptions,
+        parentCompanyOptions,
     );
 
     // Handle form submission.
@@ -93,10 +108,9 @@ const ClaimForm = ({
         // Mark final step as complete.
         markComplete(activeStep);
 
-        // TODO: Implement actual form submission.
+        // TODO: Create action in the claimForm.js to submit the form data to
+        // the backend via api/facilities/{os_id}/claim/ POST endpoint.
         console.log('Form submitted with values:', values);
-
-        // For now, just show a success message.
         alert('Claim form submitted successfully! (This is a placeholder)');
     };
 
@@ -122,6 +136,7 @@ const ClaimForm = ({
     const isPrefetching =
         countriesFetching ||
         facilityProcessingTypeFetching ||
+        parentCompaniesFetching ||
         productionLocationFetching;
 
     if (isPrefetching) {
@@ -133,29 +148,29 @@ const ClaimForm = ({
     }
 
     // Show error state if prefetching failed.
-    const hasError =
-        countriesError ||
-        facilityProcessingTypeError ||
-        productionLocationError;
-    if (hasError) {
-        let errorMessage = 'Failed to load required data';
-        let retryHandler = () => {};
+    const errorConfig = getPrefetchErrorConfig(
+        {
+            countriesError,
+            facilityProcessingTypeError,
+            parentCompaniesError,
+            productionLocationError,
+        },
+        {
+            fetchCountries,
+            fetchFacilityProcessingType,
+            fetchParentCompanies,
+            fetchProductionLocation,
+            osID,
+        },
+    );
 
-        if (countriesError) {
-            errorMessage =
-                'Failed to load countries data needed for the claim form.';
-            retryHandler = fetchCountries;
-        } else if (facilityProcessingTypeError) {
-            errorMessage =
-                'Failed to load facility processing type data needed for the claim form.';
-            retryHandler = fetchFacilityProcessingType;
-        } else if (productionLocationError) {
-            errorMessage =
-                'Failed to load production location data needed for the claim form.';
-            retryHandler = () => fetchProductionLocation(osID);
-        }
-
-        return <ErrorState error={errorMessage} onRetry={retryHandler} />;
+    if (errorConfig) {
+        return (
+            <ErrorState
+                error={errorConfig.message}
+                onRetry={errorConfig.onRetry}
+            />
+        );
     }
 
     const currentStepComponent = stepComponents[activeStep];
@@ -273,10 +288,13 @@ const ClaimForm = ({
 };
 
 ClaimForm.defaultProps = {
-    countriesOptions: null,
-    facilityProcessingTypeOptions: null,
+    countriesOptions: [],
+    facilityProcessingTypeOptions: [],
+    parentCompanyOptions: [],
+    productionLocationData: {},
     countriesError: null,
     facilityProcessingTypeError: null,
+    parentCompaniesError: null,
     productionLocationError: null,
 };
 
@@ -287,17 +305,22 @@ ClaimForm.propTypes = {
     activeStep: number.isRequired,
     completedSteps: arrayOf(number).isRequired,
     formData: object.isRequired,
-    countriesOptions: object,
-    facilityProcessingTypeOptions: object,
+    countriesOptions: array,
+    facilityProcessingTypeOptions: array,
+    parentCompanyOptions: array,
+    productionLocationData: object,
     countriesFetching: bool.isRequired,
     facilityProcessingTypeFetching: bool.isRequired,
+    parentCompaniesFetching: bool.isRequired,
     productionLocationFetching: bool.isRequired,
-    countriesError: arrayOf(string),
-    facilityProcessingTypeError: arrayOf(string),
-    productionLocationError: arrayOf(string),
+    countriesError: array,
+    facilityProcessingTypeError: array,
+    parentCompaniesError: array,
+    productionLocationError: array,
     userHasSignedIn: bool.isRequired,
     fetchCountries: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
+    fetchParentCompanies: func.isRequired,
     fetchProductionLocation: func.isRequired,
     setStep: func.isRequired,
     markComplete: func.isRequired,
@@ -317,9 +340,15 @@ const mapStateToProps = ({
             fetching: facilityProcessingTypeFetching,
             error: facilityProcessingTypeError,
         },
+        parentCompanies: {
+            data: parentCompanyOptions,
+            fetching: parentCompaniesFetching,
+            error: parentCompaniesError,
+        },
     },
     contributeProductionLocation: {
         singleProductionLocation: {
+            data: productionLocationData,
             fetching: productionLocationFetching,
             error: productionLocationError,
         },
@@ -333,11 +362,15 @@ const mapStateToProps = ({
     formData,
     countriesOptions,
     facilityProcessingTypeOptions,
+    parentCompanyOptions,
     countriesFetching,
     facilityProcessingTypeFetching,
+    parentCompaniesFetching,
     productionLocationFetching,
+    productionLocationData,
     countriesError,
     facilityProcessingTypeError,
+    parentCompaniesError,
     productionLocationError,
     userHasSignedIn: !user.isAnon,
 });
@@ -346,6 +379,7 @@ const mapDispatchToProps = dispatch => ({
     fetchCountries: () => dispatch(fetchCountryOptions()),
     fetchFacilityProcessingType: () =>
         dispatch(fetchFacilityProcessingTypeOptions()),
+    fetchParentCompanies: () => dispatch(fetchParentCompanyOptions()),
     fetchProductionLocation: osID =>
         dispatch(fetchProductionLocationByOsId(osID)),
     setStep: stepIndex => dispatch(setActiveClaimFormStep(stepIndex)),

@@ -1,15 +1,19 @@
 import { useEffect } from 'react';
 import { useFormik } from 'formik';
+import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
 import { claimIntroRoute } from '../../../util/constants';
 
 export const usePrefetchClaimData = (
     fetchCountries,
     fetchFacilityProcessingType,
+    fetchParentCompanies,
     fetchProductionLocation,
     osID,
+    productionLocationData,
     countriesOptions,
     facilityProcessingTypeOptions,
+    parentCompanyOptions,
 ) => {
     useEffect(() => {
         if (!countriesOptions) {
@@ -24,10 +28,16 @@ export const usePrefetchClaimData = (
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
 
     useEffect(() => {
-        if (osID) {
+        if (!parentCompanyOptions) {
+            fetchParentCompanies();
+        }
+    }, [parentCompanyOptions, fetchParentCompanies]);
+
+    useEffect(() => {
+        if (osID && isEmpty(productionLocationData)) {
             fetchProductionLocation(osID);
         }
-    }, [osID, fetchProductionLocation]);
+    }, [osID, productionLocationData, fetchProductionLocation]);
 };
 
 /**

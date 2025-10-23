@@ -5,7 +5,6 @@ import {
     setActiveClaimFormStep,
     markStepComplete,
     updateClaimFormField,
-    setClaimFormData,
     resetClaimForm,
 } from '../actions/claimForm';
 
@@ -53,11 +52,6 @@ const claimFormReducer = createReducer(
                 formData: {
                     [field]: { $set: value },
                 },
-            }),
-
-        [setClaimFormData]: (state, formData) =>
-            update(state, {
-                formData: { $set: formData },
             }),
 
         [resetClaimForm]: () => initialState,
