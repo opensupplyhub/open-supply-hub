@@ -191,7 +191,7 @@ const profileStepStyles = theme =>
         }),
     });
 
-const ProfileStep = ({ classes, formData, handleChange }) => {
+const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
     const [
         freeEmissionsEstimateHasErrors,
         setFreeEmissionsEstimateHasErrors,
@@ -274,6 +274,14 @@ const ProfileStep = ({ classes, formData, handleChange }) => {
                                     )
                                 }
                                 placeholder="Enter location name in native language (if different from English)"
+                                error={
+                                    touched.localLanguageName &&
+                                    !!errors.localLanguageName
+                                }
+                                helperText={
+                                    touched.localLanguageName &&
+                                    errors.localLanguageName
+                                }
                             />
                         </div>
 
@@ -1201,4 +1209,8 @@ ProfileStep.propTypes = {
     handleChange: func.isRequired,
 };
 
+// TODO: Retrieve countries, location/processing type from redux store
+// and display it in the dropdowns in the profile step. See how
+// it is done in the ProductionLocationInfo component. The data is
+// already prefetched in the ClaimForm component.
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));

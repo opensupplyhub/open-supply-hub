@@ -207,7 +207,9 @@ const ClaimInfoSection = ({ classes }) => (
                     className={classes.stepText}
                     style={{ color: COLOURS.DEEP_ORANGE }}
                 >
-                    <strong style={{ fontSize: 20 }}>Get Verified:</strong>{' '}
+                    <strong style={{ fontSize: 20 }}>
+                        Get a Credible and Confirmed Profile:
+                    </strong>{' '}
                     After the claim is approved, you get a credible and
                     confirmed profile—with a green banner and Claimed badge—that
                     helps buyers trust and find your company.{' '}

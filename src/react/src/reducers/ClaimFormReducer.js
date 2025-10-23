@@ -2,9 +2,6 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 
 import {
-    startPrefetchClaimFormData,
-    completePrefetchClaimFormData,
-    failPrefetchClaimFormData,
     setActiveClaimFormStep,
     markStepComplete,
     updateClaimFormField,
@@ -16,73 +13,26 @@ const initialState = Object.freeze({
     activeStep: 0,
     completedSteps: [],
     formData: Object.freeze({
-        // Eligibility step
-        eligibilityConfirmed: false,
+        // Eligibility step.
+        position: '',
+        yearsAtCompany: '',
 
-        // Contact step
-        claimantName: '',
-        claimantTitle: '',
-        claimantEmail: '',
-        verificationMethod: '',
-        contactName: '',
+        // Contact step.
         contactEmail: '',
+        contactPhone: '',
 
-        // Business step
+        // Business step.
+        businessName: '',
         businessWebsite: '',
-        companyAddressVerification: '',
 
-        // Profile step
-        facilityName: '',
-        sector: [],
-        facilityPhone: '',
-        facilityWebsite: '',
-        localLanguageName: '',
+        // Profile step.
         numberOfWorkers: '',
-        femaleWorkers: '',
-        minimumOrderQuantity: '',
-        averageLeadTime: '',
-        facilityTypes: [],
-        productTypes: '',
-        parentCompanyName: '',
-        officeName: '',
-        officeAddress: '',
-        officeCountry: '',
-        affiliations: [],
-        certifications: [],
-        description: '',
+        additionalNotes: '',
     }),
-    prefetchedData: Object.freeze({
-        sectors: [],
-        processingTypes: [],
-        affiliations: [],
-        certifications: [],
-        facilityData: null,
-    }),
-    fetching: false,
-    error: null,
 });
 
 const claimFormReducer = createReducer(
     {
-        [startPrefetchClaimFormData]: state =>
-            update(state, {
-                fetching: { $set: true },
-                error: { $set: null },
-            }),
-
-        [completePrefetchClaimFormData]: (state, payload) =>
-            update(state, {
-                fetching: { $set: false },
-                prefetchedData: { $set: payload },
-                error: { $set: null },
-            }),
-
-        [failPrefetchClaimFormData]: (state, payload) =>
-            update(state, {
-                fetching: { $set: false },
-                error: { $set: payload },
-            }),
-
         [setActiveClaimFormStep]: (state, stepIndex) =>
             update(state, {
                 activeStep: { $set: stepIndex },

@@ -57,6 +57,11 @@ const claimFormStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+            '&:disabled': {
+                backgroundColor: COLOURS.GREY,
+                color: COLOURS.DARK_GREY,
+                cursor: 'not-allowed',
+            },
         }),
         sectionTitle: Object.freeze({
             fontSize: '1.5rem',
@@ -73,17 +78,6 @@ const claimFormStyles = theme =>
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '400px',
-        }),
-        errorContainer: Object.freeze({
-            padding: theme.spacing.unit * 3,
-            textAlign: 'center',
-        }),
-        errorText: Object.freeze({
-            color: theme.palette.error.main,
-            marginBottom: theme.spacing.unit * 2,
-        }),
-        errorButton: Object.freeze({
-            marginTop: theme.spacing.unit * 2,
         }),
     });
 
