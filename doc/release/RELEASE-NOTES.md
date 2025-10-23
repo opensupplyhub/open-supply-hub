@@ -12,6 +12,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
 
+### Code/API changes
+* [OSDEV-2166](https://opensupplyhub.atlassian.net/browse/OSDEV-2166) - Disabled noisy Rollbar error reporting for non-critical errors to reduce alert fatigue and improve signal-to-noise ratio in error monitoring.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`

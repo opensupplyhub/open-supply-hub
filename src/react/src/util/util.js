@@ -1434,7 +1434,53 @@ export const createUserDropdownLinks = (
 export const isApiUser = user =>
     !user.isAnon && Array.isArray(user.groups) && user.groups.length > 0;
 
+// OSDEV-2166 - temporarily suppress noisy errors from being sent to Rollbar.
+const FILTERED_ERROR_MESSAGES = [
+    'Either containerHeight or useWindowAsScrollContainer must be provided.',
+    "Uncaught TypeError: Cannot read properties of undefined (reading '_leaflet_pos')",
+    "Cannot read properties of undefined (reading '_leaflet_pos')",
+    'Cannot read properties of undefined reading _leaflet_pos',
+];
+
+const shouldFilterError = error => {
+    if (!error?.message) {
+        return false;
+    }
+
+    const errorMessage = error.message.toLowerCase();
+
+    return FILTERED_ERROR_MESSAGES.some(filteredMsg => {
+        const filteredMsgLower = filteredMsg.toLowerCase();
+
+        if (errorMessage === filteredMsgLower) {
+            return true;
+        }
+
+        if (errorMessage.includes(filteredMsgLower)) {
+            return true;
+        }
+
+        const normalizedErrorMessage = errorMessage
+            .replaceAll(/[^\w\s]/g, '')
+            .replaceAll(/\s+/g, ' ');
+        const normalizedFilteredMsg = filteredMsgLower
+            .replaceAll(/[^\w\s]/g, '')
+            .replaceAll(/\s+/g, ' ');
+
+        if (normalizedErrorMessage.includes(normalizedFilteredMsg)) {
+            return true;
+        }
+
+        return false;
+    });
+};
+
 export const logErrorToRollbar = (window, error, user) => {
+    if (shouldFilterError(error)) {
+        console.warn('Filtered error from Rollbar:', error.message);
+        return;
+    }
+
     if (window.Rollbar) {
         if (user) {
             const contributorIdMsg = user.contributor_id
