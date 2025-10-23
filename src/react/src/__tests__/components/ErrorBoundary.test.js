@@ -138,6 +138,10 @@ describe('useGlobalErrorHandler', () => {
 				return originalAddEventListener(type, cb, options)
 			})
 
+		/* 
+		We need to import these after mocking window.addEventListener
+		so the hook and render function use the mocked version
+		*/
 		// eslint-disable-next-line global-require
 		const { useGlobalErrorHandler } = require('../../util/hooks')
 		// eslint-disable-next-line global-require
