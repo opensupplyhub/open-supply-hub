@@ -1,10 +1,7 @@
 import { useEffect } from 'react';
+import { useFormik } from 'formik';
+import { getValidationSchemaForStep } from './validationSchemas';
 
-/**
- * Hook to prefetch data when component mounts
- * @param {Function} fetchData - Function to dispatch data fetching
- * @param {string} osID - The facility OS ID
- */
 export const usePrefetchData = (fetchData, osID) => {
     useEffect(() => {
         if (osID) {
@@ -13,17 +10,68 @@ export const usePrefetchData = (fetchData, osID) => {
     }, [fetchData, osID]);
 };
 
-/**
- * Hook to validate current step before allowing navigation
- * @param {Object} formValues - Current form values
- * @param {Function} validateForm - Formik's validateForm function
- * @returns {Function} - Validation function that returns a promise
- */
-export const useStepValidation = (formValues, validateForm) => {
-    const validateCurrentStep = async () => {
-        const errors = await validateForm(formValues);
-        return Object.keys(errors).length === 0;
+export const useClaimForm = (
+    initialValues,
+    activeStep,
+    updateField,
+    onSubmit,
+) => {
+    const formik = useFormik({
+        initialValues,
+        validationSchema: getValidationSchemaForStep(activeStep),
+        onSubmit,
+    });
+
+    // Re-validate when step changes to populate errors for new schema.
+    useEffect(() => {
+        const schema = getValidationSchemaForStep(activeStep);
+        const currentStepFields = Object.keys(schema.describe().fields);
+
+        // Mark fields with values as touched when returning to a step.
+        const fieldsToTouch = {};
+        currentStepFields.forEach(field => {
+            if (formik.values[field] && formik.values[field] !== '') {
+                fieldsToTouch[field] = true;
+            }
+        });
+
+        if (Object.keys(fieldsToTouch).length > 0) {
+            formik.setTouched(fieldsToTouch);
+        }
+
+        // Validate to populate errors for current step.
+        formik.validateForm();
+    }, [activeStep]);
+
+    // Custom field change handler that syncs to Redux.
+    const handleFieldChange = (field, value) => {
+        formik.setFieldValue(field, value);
+        formik.setFieldTouched(field, true, false);
+        updateField({ field, value });
     };
 
-    return validateCurrentStep;
+    // Calculate button disabled state for current step.
+    const getButtonDisabledState = () => {
+        const schema = getValidationSchemaForStep(activeStep);
+        const currentStepFields = Object.keys(schema.describe().fields);
+
+        // Check if user has interacted with any field in current step.
+        const hasInteractedWithCurrentStep = currentStepFields.some(
+            field => formik.touched[field],
+        );
+
+        // Check if there are validation errors in CURRENT STEP ONLY.
+        const hasCurrentStepErrors = currentStepFields.some(
+            field => formik.errors[field],
+        );
+
+        // Only disable button if user has interacted AND there are errors.
+        return hasInteractedWithCurrentStep && hasCurrentStepErrors;
+    };
+
+    return {
+        claimForm: formik,
+        handleFieldChange,
+        isButtonDisabled: getButtonDisabledState(),
+    };
 };
