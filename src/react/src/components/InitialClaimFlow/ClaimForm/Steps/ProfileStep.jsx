@@ -16,33 +16,21 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import Star from '@material-ui/icons/Star';
 import IconButton from '@material-ui/core/IconButton';
-import ReactSelect from 'react-select';
 
 import COLOURS from '../../../../util/COLOURS';
+import StyledSelect from '../../../Filters/StyledSelect';
 import withScrollReset from '../../HOCs/withScrollReset';
 import FreeEmissionsEstimate from '../../../FreeEmissionsEstimate/FreeEmissionsEstimate';
+import { mockedSectors } from '../../../../util/constants';
+import {
+    mapDjangoChoiceTuplesToSelectOptions,
+    mapFacilityTypeOptions,
+    mapProcessingTypeOptions,
+} from '../../../../util/util';
 
 // TODO: Move these to constants file
 const BETA_TOOLTIP_TEXT =
     "What does beta mean? Open Supply Hub is developing a Premium offering for facilities, to help you use your OS Hub profile to connect with more customers and build your business. Once live, all fields that say beta will be a part of this new package. For now, these beta fields will appear on your profile just like all the others. Once the Premium offering is live, you'll receive next steps about how it will work and whether you will want to keep these beta fields live.";
-
-const SECTOR_OPTIONS = [
-    { value: 'apparel', label: 'Apparel' },
-    { value: 'footwear', label: 'Footwear' },
-    { value: 'accessories', label: 'Accessories' },
-    { value: 'textiles', label: 'Textiles' },
-];
-
-const PROCESSING_TYPE_OPTIONS = [
-    { value: 'cut_sew', label: 'Cut & Sew' },
-    { value: 'dyeing', label: 'Dyeing' },
-    { value: 'knitting', label: 'Knitting' },
-    { value: 'weaving', label: 'Weaving' },
-    { value: 'printing', label: 'Printing' },
-    { value: 'embroidery', label: 'Embroidery' },
-    { value: 'finishing', label: 'Finishing' },
-    { value: 'assembly', label: 'Assembly' },
-];
 
 const AFFILIATIONS_OPTIONS = [
     { value: 'fla', label: 'Fair Labor Association (FLA)' },
@@ -191,15 +179,33 @@ const profileStepStyles = theme =>
         }),
     });
 
-const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
+const ProfileStep = ({
+    classes,
+    formData,
+    handleChange,
+    touched,
+    errors,
+    countryOptions,
+    processingTypeOptions,
+}) => {
     const [
         freeEmissionsEstimateHasErrors,
         setFreeEmissionsEstimateHasErrors,
     ] = useState(false);
 
+    const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
+
     useEffect(() => {
         console.log(freeEmissionsEstimateHasErrors);
     }, [freeEmissionsEstimateHasErrors]);
+
+    useEffect(() => {
+        setEnabledTaxonomy(
+            formData.sector &&
+                formData.sector.length === 1 &&
+                formData.sector[0].value === 'Apparel',
+        );
+    }, [formData.sector]);
 
     return (
         <Grid container spacing={24}>
@@ -655,17 +661,16 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                             </IconButton>
                                         </Tooltip>
                                     </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.officeCountry || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'officeCountry',
-                                                e.target.value,
-                                            )
+                                    <StyledSelect
+                                        id="officeCountry"
+                                        name="officeCountry"
+                                        aria-label="Office Country"
+                                        options={countryOptions || []}
+                                        value={formData.officeCountry || null}
+                                        onChange={value =>
+                                            handleChange('officeCountry', value)
                                         }
-                                        placeholder="Country"
+                                        placeholder="Select country..."
                                     />
                                 </div>
                             </Grid>
@@ -719,21 +724,26 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                             Industry / Sectors
                                         </Typography>
                                     </div>
-                                    <ReactSelect
+                                    <StyledSelect
+                                        id="sector"
+                                        name="sector"
+                                        aria-label="Select sector"
                                         isMulti
-                                        options={SECTOR_OPTIONS}
+                                        options={
+                                            mapDjangoChoiceTuplesToSelectOptions(
+                                                mockedSectors,
+                                            ) || []
+                                        }
                                         value={formData.sector || []}
                                         onChange={values =>
                                             handleChange('sector', values)
                                         }
                                         placeholder="Select sectors..."
-                                        className="basic-multi-select"
-                                        classNamePrefix="select"
                                     />
                                 </div>
                             </Grid>
 
-                            {/* Facility Types */}
+                            {/* Location Type */}
                             <Grid item xs={12} md={6}>
                                 <div className={classes.field}>
                                     <div className={classes.fieldLabel}>
@@ -742,10 +752,10 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                             component="label"
                                             style={{ fontSize: '16px' }}
                                         >
-                                            Facility / Processing Types
+                                            Location Type(s)
                                         </Typography>
                                         <Tooltip
-                                            title="Examples: Cut & Sew, Dyeing, Knitting, Weaving, Printing, Embroidery, Finishing, Assembly"
+                                            title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
                                             placement="top"
                                             classes={{
                                                 tooltip: classes.tooltip,
@@ -764,23 +774,101 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                             </IconButton>
                                         </Tooltip>
                                     </div>
-                                    <ReactSelect
-                                        isMulti
-                                        options={PROCESSING_TYPE_OPTIONS}
-                                        value={formData.facilityTypes || []}
-                                        onChange={values =>
-                                            handleChange(
-                                                'facilityTypes',
-                                                values,
-                                            )
-                                        }
-                                        placeholder="Select processing types..."
-                                        className="basic-multi-select"
-                                        classNamePrefix="select"
-                                    />
+                                    {enabledTaxonomy ? (
+                                        <StyledSelect
+                                            id="location_type"
+                                            name="location-type"
+                                            aria-label="Location type"
+                                            isMulti
+                                            options={mapFacilityTypeOptions(
+                                                processingTypeOptions || [],
+                                                formData.processingType || [],
+                                            )}
+                                            value={formData.locationType || []}
+                                            onChange={values =>
+                                                handleChange(
+                                                    'locationType',
+                                                    values,
+                                                )
+                                            }
+                                            placeholder="Select location type(s)"
+                                        />
+                                    ) : (
+                                        <StyledSelect
+                                            creatable
+                                            isMulti
+                                            name="location-type"
+                                            aria-label="Location type"
+                                            value={formData.locationType || []}
+                                            onChange={values =>
+                                                handleChange(
+                                                    'locationType',
+                                                    values,
+                                                )
+                                            }
+                                            placeholder="Enter location type(s)"
+                                        />
+                                    )}
                                 </div>
                             </Grid>
                         </Grid>
+
+                        {/* Processing Type */}
+                        <div className={classes.field}>
+                            <div className={classes.fieldLabel}>
+                                <Typography
+                                    variant="body2"
+                                    component="label"
+                                    style={{ fontSize: '16px' }}
+                                >
+                                    Processing Type(s)
+                                </Typography>
+                                <Tooltip
+                                    title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
+                                    placement="top"
+                                    classes={{ tooltip: classes.tooltip }}
+                                >
+                                    <IconButton
+                                        size="small"
+                                        disableRipple
+                                        className={classes.helpIconButton}
+                                    >
+                                        <HelpOutline
+                                            className={classes.helpIcon}
+                                        />
+                                    </IconButton>
+                                </Tooltip>
+                            </div>
+                            {enabledTaxonomy ? (
+                                <StyledSelect
+                                    id="processing_type"
+                                    name="processing-type"
+                                    aria-label="Processing Type"
+                                    isMulti
+                                    options={mapProcessingTypeOptions(
+                                        processingTypeOptions || [],
+                                        formData.locationType || [],
+                                    )}
+                                    value={formData.processingType || []}
+                                    onChange={values =>
+                                        handleChange('processingType', values)
+                                    }
+                                    placeholder="Select processing type(s)"
+                                />
+                            ) : (
+                                <StyledSelect
+                                    creatable
+                                    isMulti
+                                    name="processing-type"
+                                    aria-label="Processing Type"
+                                    value={formData.processingType || []}
+                                    onChange={values =>
+                                        handleChange('processingType', values)
+                                    }
+                                    placeholder="Enter processing type(s)"
+                                />
+                            )}
+                        </div>
 
                         {/* Product Types */}
                         <div className={classes.field}>
@@ -1109,7 +1197,10 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                     </IconButton>
                                 </Tooltip>
                             </div>
-                            <ReactSelect
+                            <StyledSelect
+                                id="affiliations"
+                                name="affiliations"
+                                aria-label="Affiliations"
                                 isMulti
                                 options={AFFILIATIONS_OPTIONS}
                                 value={formData.affiliations || []}
@@ -1117,8 +1208,6 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                     handleChange('affiliations', values)
                                 }
                                 placeholder="Select affiliations..."
-                                className="basic-multi-select"
-                                classNamePrefix="select"
                             />
                         </div>
 
@@ -1143,7 +1232,10 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                     </div>
                                 </Tooltip>
                             </div>
-                            <ReactSelect
+                            <StyledSelect
+                                id="certifications"
+                                name="certifications"
+                                aria-label="Certifications"
                                 isMulti
                                 options={CERTIFICATIONS_OPTIONS}
                                 value={formData.certifications || []}
@@ -1151,8 +1243,6 @@ const ProfileStep = ({ classes, formData, handleChange, touched, errors }) => {
                                     handleChange('certifications', values)
                                 }
                                 placeholder="Select certifications..."
-                                className="basic-multi-select"
-                                classNamePrefix="select"
                             />
                         </div>
                     </ExpansionPanelDetails>
@@ -1207,10 +1297,17 @@ ProfileStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    touched: object,
+    errors: object,
+    countryOptions: object,
+    processingTypeOptions: object,
 };
 
-// TODO: Retrieve countries, location/processing type from redux store
-// and display it in the dropdowns in the profile step. See how
-// it is done in the ProductionLocationInfo component. The data is
-// already prefetched in the ClaimForm component.
+ProfileStep.defaultProps = {
+    touched: {},
+    errors: {},
+    countryOptions: null,
+    processingTypeOptions: null,
+};
+
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));

@@ -229,6 +229,10 @@ const ClaimForm = ({
                             handleBlur={claimForm.handleBlur}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
+                            countryOptions={countriesOptions}
+                            processingTypeOptions={
+                                facilityProcessingTypeOptions
+                            }
                         />
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
