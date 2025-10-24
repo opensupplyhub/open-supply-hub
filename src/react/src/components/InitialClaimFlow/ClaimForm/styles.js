@@ -1,4 +1,5 @@
 import COLOURS from '../../../util/COLOURS';
+import { HEADER_HEIGHT } from '../../../util/constants';
 
 const claimFormStyles = theme =>
     Object.freeze({
@@ -77,7 +78,7 @@ const claimFormStyles = theme =>
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            minHeight: '400px',
+            height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
     });
 

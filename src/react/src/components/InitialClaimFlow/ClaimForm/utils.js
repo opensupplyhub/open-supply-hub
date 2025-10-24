@@ -3,19 +3,6 @@ import { CLAIM_FORM_STEPS, TOTAL_STEPS } from './constants';
 export const isStepComplete = (stepIndex, completedSteps) =>
     completedSteps.includes(stepIndex);
 
-export const isStepAccessible = (stepIndex, activeStep, completedSteps) => {
-    // Current step is always accessible.
-    if (stepIndex === activeStep) return true;
-
-    // Completed steps are accessible.
-    if (completedSteps.includes(stepIndex)) return true;
-
-    // Step immediately after last completed step is accessible.
-    if (stepIndex === completedSteps.length) return true;
-
-    return false;
-};
-
 export const getNextStep = currentStep =>
     Math.min(currentStep + 1, TOTAL_STEPS - 1);
 
@@ -26,5 +13,52 @@ export const isFirstStep = stepIndex =>
 
 export const isLastStep = stepIndex => stepIndex === CLAIM_FORM_STEPS.PROFILE;
 
-export const areAllStepsComplete = completedSteps =>
-    completedSteps.length === TOTAL_STEPS;
+export const getPrefetchErrorConfig = (errors, handlers) => {
+    const {
+        countriesError,
+        facilityProcessingTypeError,
+        parentCompaniesError,
+        productionLocationError,
+    } = errors;
+
+    const {
+        fetchCountries,
+        fetchFacilityProcessingType,
+        fetchParentCompanies,
+        fetchProductionLocation,
+        osID,
+    } = handlers;
+
+    if (countriesError) {
+        return {
+            message: 'Failed to load countries data needed for the claim form.',
+            onRetry: fetchCountries,
+        };
+    }
+
+    if (facilityProcessingTypeError) {
+        return {
+            message:
+                'Failed to load facility processing type data needed for the claim form.',
+            onRetry: fetchFacilityProcessingType,
+        };
+    }
+
+    if (parentCompaniesError) {
+        return {
+            message:
+                'Failed to load parent company data needed for the claim form.',
+            onRetry: fetchParentCompanies,
+        };
+    }
+
+    if (productionLocationError) {
+        return {
+            message:
+                'Failed to load production location data needed for the claim form.',
+            onRetry: () => fetchProductionLocation(osID),
+        };
+    }
+
+    return null;
+};

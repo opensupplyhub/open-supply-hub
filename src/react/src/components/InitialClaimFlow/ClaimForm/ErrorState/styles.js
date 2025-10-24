@@ -25,7 +25,7 @@ const errorStateStyles = theme =>
         }),
         errorText: Object.freeze({
             marginBottom: theme.spacing.unit * 2,
-            // fontSize: '18px',
+            fontSize: '17px',
         }),
         buttonContainer: Object.freeze({
             justifyContent: 'center',

@@ -13,6 +13,7 @@ import { resetClaimForm } from '../../../../actions/claimForm';
 import { resetFilterOptions } from '../../../../actions/filterOptions';
 import { resetSingleProductionLocation } from '../../../../actions/contributeProductionLocation';
 import errorStateStyles from './styles';
+import withScrollReset from '../../HOCs/withScrollReset';
 
 const ErrorState = ({
     classes,
@@ -42,8 +43,8 @@ const ErrorState = ({
                         color="textSecondary"
                         className={classes.errorText}
                     >
-                        {error} If the issue continues after trying again, feel
-                        free to contact our support team.
+                        {error} If the issue continues, feel free to contact our
+                        support team.
                     </Typography>
                     <Grid container className={classes.buttonContainer}>
                         <Grid item>
@@ -89,4 +90,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     null,
     mapDispatchToProps,
-)(withRouter(withStyles(errorStateStyles)(ErrorState)));
+)(withRouter(withStyles(errorStateStyles)(withScrollReset(ErrorState))));
