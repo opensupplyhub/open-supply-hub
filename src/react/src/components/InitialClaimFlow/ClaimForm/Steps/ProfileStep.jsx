@@ -19,6 +19,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 import COLOURS from '../../../../util/COLOURS';
 import StyledSelect from '../../../Filters/StyledSelect';
+import InputSection from '../../../InputSection';
 import withScrollReset from '../../HOCs/withScrollReset';
 import FreeEmissionsEstimate from '../../../FreeEmissionsEstimate/FreeEmissionsEstimate';
 import { mockedSectors } from '../../../../util/constants';
@@ -254,6 +255,7 @@ const ProfileStep = ({
     errors,
     countryOptions,
     processingTypeOptions,
+    parentCompanyOptions,
 }) => {
     const [
         freeEmissionsEstimateHasErrors,
@@ -557,45 +559,23 @@ const ProfileStep = ({
                         <Grid container spacing={16}>
                             <Grid item xs={12} md={6}>
                                 <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Parent Company Name / Supplier Group
-                                        </Typography>
-                                        <Tooltip
-                                            title="The name of the parent company or corporate group that owns this production location"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.parentCompanyName || ''}
-                                        onChange={e =>
+                                    <InputSection
+                                        label="Parent Company Name / Supplier Group"
+                                        isSelect
+                                        selectOptions={
+                                            parentCompanyOptions || []
+                                        }
+                                        value={
+                                            formData.parentCompanyName?.value ||
+                                            ''
+                                        }
+                                        onChange={value =>
                                             handleChange(
                                                 'parentCompanyName',
-                                                e.target.value,
+                                                value,
                                             )
                                         }
-                                        placeholder="Parent company name"
+                                        selectPlaceholder="Select parent company..."
                                     />
                                 </div>
                             </Grid>
@@ -700,44 +680,17 @@ const ProfileStep = ({
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Office Country
-                                        </Typography>
-                                        <Tooltip
-                                            title="Country where the office is located"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <StyledSelect
-                                        id="officeCountry"
-                                        name="officeCountry"
-                                        aria-label="Office Country"
-                                        options={countryOptions || []}
-                                        value={formData.officeCountry || null}
+                                    <InputSection
+                                        label="Office Country"
+                                        isSelect
+                                        selectOptions={countryOptions || []}
+                                        value={
+                                            formData.officeCountry?.value || ''
+                                        }
                                         onChange={value =>
                                             handleChange('officeCountry', value)
                                         }
-                                        placeholder="Select country..."
+                                        selectPlaceholder="Select country..."
                                     />
                                 </div>
                             </Grid>
@@ -1393,6 +1346,7 @@ ProfileStep.propTypes = {
     errors: object,
     countryOptions: object,
     processingTypeOptions: object,
+    parentCompanyOptions: object,
 };
 
 ProfileStep.defaultProps = {
@@ -1400,6 +1354,7 @@ ProfileStep.defaultProps = {
     errors: {},
     countryOptions: null,
     processingTypeOptions: null,
+    parentCompanyOptions: null,
 };
 
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));

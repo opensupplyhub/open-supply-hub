@@ -248,6 +248,7 @@ const ClaimForm = ({
                             processingTypeOptions={
                                 facilityProcessingTypeOptions
                             }
+                            parentCompanyOptions={parentCompanyOptions}
                         />
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
