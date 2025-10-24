@@ -469,7 +469,10 @@ const ProfileStep = ({
                         </Grid>
 
                         {/* Description */}
-                        <div className={classes.field}>
+                        <div
+                            className={classes.field}
+                            style={{ paddingRight: '28px' }}
+                        >
                             <div className={classes.fieldLabel}>
                                 <Typography
                                     variant="body2"
