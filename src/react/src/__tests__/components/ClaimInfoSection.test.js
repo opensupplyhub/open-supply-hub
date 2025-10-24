@@ -117,10 +117,10 @@ describe('ClaimInfoSection component', () => {
             ).toBeInTheDocument();
         });
 
-        test('displays Step 5 - Get Verified', () => {
+        test('displays Step 5 - Get a Credible and Confirmed Profile', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText(/Get Verified:/)).toBeInTheDocument();
+            expect(getByText(/Get a Credible and Confirmed Profile:/)).toBeInTheDocument();
             expect(
                 getByText(/After the claim is approved, you get a credible/)
             ).toBeInTheDocument();
