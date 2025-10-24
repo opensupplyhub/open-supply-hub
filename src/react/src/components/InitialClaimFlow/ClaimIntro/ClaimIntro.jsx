@@ -10,9 +10,10 @@ import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import ClaimInfoSection from './ClaimInfoSection';
 import AppGrid from '../../AppGrid';
 import AppOverflow from '../../AppOverflow';
-import { makeClaimDetailsLink } from '../../../util/util';
 import RequireAuthNotice from '../../RequireAuthNotice';
 import { claimIntroStyles } from './styles';
+import withScrollReset from '../HOCs/withScrollReset';
+import { claimDetailsRoute } from '../../../util/constants';
 
 const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
     if (!userHasSignedIn) {
@@ -29,7 +30,7 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
     };
 
     const handleContinue = () => {
-        history.push(makeClaimDetailsLink(osID));
+        history.push(claimDetailsRoute.replace(':osID', osID));
     };
 
     return (
@@ -63,7 +64,7 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
                                     className={classes.backButton}
                                     onClick={handleGoBack}
                                 >
-                                    GO BACK
+                                    Go Back
                                 </Button>
                                 <Button
                                     variant="contained"
@@ -111,5 +112,5 @@ const mapStateToProps = (
 });
 
 export default connect(mapStateToProps)(
-    withRouter(withStyles(claimIntroStyles)(ClaimIntro)),
+    withRouter(withStyles(claimIntroStyles)(withScrollReset(ClaimIntro))),
 );
