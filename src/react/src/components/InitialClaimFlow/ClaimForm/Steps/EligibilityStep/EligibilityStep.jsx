@@ -11,11 +11,11 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 
-import withScrollReset from '../../HOCs/withScrollReset';
-import StyledSelect from '../../../Filters/StyledSelect';
-import { getSelectStyles } from '../../../../util/util';
-import { mainRoute } from '../../../../util/constants';
-import { eligibilityStepStyles } from '../styles';
+import withScrollReset from '../../../HOCs/withScrollReset';
+import StyledSelect from '../../../../Filters/StyledSelect';
+import { getSelectStyles } from '../../../../../util/util';
+import { mainRoute } from '../../../../../util/constants';
+import eligibilityStepStyles from './styles';
 
 const RELATIONSHIP_OPTIONS = [
     { value: 'owner', label: 'I am the owner of this production location' },

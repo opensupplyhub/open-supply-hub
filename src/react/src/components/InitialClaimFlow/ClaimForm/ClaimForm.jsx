@@ -14,7 +14,7 @@ import Language from '@material-ui/icons/Language';
 import Business from '@material-ui/icons/Business';
 
 import ClaimFormStepper from './Stepper/Stepper';
-import EligibilityStep from './Steps/EligibilityStep';
+import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactStep from './Steps/ContactStep';
 import BusinessStep from './Steps/BusinessStep';
 import ProfileStep from './Steps/ProfileStep';
@@ -36,7 +36,7 @@ import {
 } from './constants';
 import { claimIntroRoute } from '../../../util/constants';
 import { getValidationSchemaForStep } from './validationSchemas';
-import { claimFormStyles } from './styles';
+import claimFormStyles from './styles';
 import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
 import { useStepResetOnMount, usePrefetchData } from './hooks';
 
