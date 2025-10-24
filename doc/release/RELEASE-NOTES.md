@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
+* [OSDEV-2203](https://opensupplyhub.atlassian.net/browse/OSDEV-2203) - Implemented new multi-step claim flow for production locations with routing skeleton and shared layout. Introduced claim form page (`/claim/:osID/details/`) featuring a four-step stepper (Eligibility Check, Contact Information, Business Details, Production Location Details). Added step-isolated form validation with optimistic button states that enable on initial render and disable after user interaction with errors. Integrated session-based URL access protection and data prefetching for countries, facility processing types, parent companies, and production location data using the existing Redux infrastructure for the claim form steps where this data should be prepopulated.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

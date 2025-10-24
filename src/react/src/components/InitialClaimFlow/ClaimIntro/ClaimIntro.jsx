@@ -10,11 +10,26 @@ import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import ClaimInfoSection from './ClaimInfoSection';
 import AppGrid from '../../AppGrid';
 import AppOverflow from '../../AppOverflow';
-import { makeClaimDetailsLink } from '../../../util/util';
 import RequireAuthNotice from '../../RequireAuthNotice';
 import { claimIntroStyles } from './styles';
+import withScrollReset from '../HOCs/withScrollReset';
+import {
+    claimDetailsRoute,
+    facilityDetailsRoute,
+} from '../../../util/constants';
+import { resetClaimForm } from '../../../actions/claimForm';
+import { resetFilterOptions } from '../../../actions/filterOptions';
+import { resetSingleProductionLocation } from '../../../actions/contributeProductionLocation';
 
-const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
+const ClaimIntro = ({
+    classes,
+    history,
+    osID,
+    userHasSignedIn,
+    resetForm,
+    resetFilters,
+    resetProductionLocation,
+}) => {
     if (!userHasSignedIn) {
         return (
             <RequireAuthNotice
@@ -25,11 +40,18 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
     }
 
     const handleGoBack = () => {
-        history.goBack();
+        // Reset form, filters, and production location data when going back.
+        resetForm();
+        resetFilters();
+        resetProductionLocation();
+
+        history.push(facilityDetailsRoute.replace(':osID', osID));
     };
 
     const handleContinue = () => {
-        history.push(makeClaimDetailsLink(osID));
+        // Set session storage flag to allow access to claim form.
+        sessionStorage.setItem(`claim-form-access-${osID}`, 'true');
+        history.push(claimDetailsRoute.replace(':osID', osID));
     };
 
     return (
@@ -63,7 +85,7 @@ const ClaimIntro = ({ classes, history, osID, userHasSignedIn }) => {
                                     className={classes.backButton}
                                     onClick={handleGoBack}
                                 >
-                                    GO BACK
+                                    Go Back
                                 </Button>
                                 <Button
                                     variant="contained"
@@ -92,6 +114,9 @@ ClaimIntro.propTypes = {
         goBack: PropTypes.func.isRequired,
         push: PropTypes.func.isRequired,
     }).isRequired,
+    resetForm: PropTypes.func.isRequired,
+    resetFilters: PropTypes.func.isRequired,
+    resetProductionLocation: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (
@@ -110,6 +135,13 @@ const mapStateToProps = (
     userHasSignedIn: !user.isAnon,
 });
 
-export default connect(mapStateToProps)(
-    withRouter(withStyles(claimIntroStyles)(ClaimIntro)),
-);
+const mapDispatchToProps = dispatch => ({
+    resetForm: () => dispatch(resetClaimForm()),
+    resetFilters: () => dispatch(resetFilterOptions()),
+    resetProductionLocation: () => dispatch(resetSingleProductionLocation()),
+});
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withRouter(withStyles(claimIntroStyles)(withScrollReset(ClaimIntro))));
