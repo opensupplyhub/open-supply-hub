@@ -54,6 +54,17 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
+import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
+import { useStepResetOnMount, usePrefetchData } from './hooks';
+
+const iconMapping = {
+    Security,
+    People,
+    Language,
+    Business,
+};
+
+const getIconComponent = iconName => iconMapping[iconName] || Security;
 
 const iconMapping = {
     Security,
