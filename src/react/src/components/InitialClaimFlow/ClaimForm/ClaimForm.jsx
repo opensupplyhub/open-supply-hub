@@ -13,7 +13,7 @@ import Language from '@material-ui/icons/Language';
 import Business from '@material-ui/icons/Business';
 
 import ClaimFormStepper from './Stepper/Stepper';
-import EligibilityStep from './Steps/EligibilityStep';
+import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactStep from './Steps/ContactStep';
 import BusinessStep from './Steps/BusinessStep';
 import ProfileStep from './Steps/ProfileStep';
@@ -54,6 +54,17 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
+import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
+import { useStepResetOnMount, usePrefetchData } from './hooks';
+
+const iconMapping = {
+    Security,
+    People,
+    Language,
+    Business,
+};
+
+const getIconComponent = iconName => iconMapping[iconName] || Security;
 
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,
