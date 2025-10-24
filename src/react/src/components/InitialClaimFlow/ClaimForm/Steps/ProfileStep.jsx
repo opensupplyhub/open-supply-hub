@@ -119,10 +119,17 @@ const ProfileStep = ({ classes, formData, handleChange, errors, touched }) => (
     </Grid>
 );
 
+ProfileStep.defaultProps = {
+    errors: {},
+    touched: {},
+};
+
 ProfileStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    errors: object,
+    touched: object,
 };
 
 // TODO: Retrieve countries, location/processing type from redux store

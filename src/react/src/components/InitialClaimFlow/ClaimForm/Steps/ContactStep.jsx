@@ -130,6 +130,7 @@ ContactStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    handleBlur: func.isRequired,
     errors: object,
     touched: object,
 };

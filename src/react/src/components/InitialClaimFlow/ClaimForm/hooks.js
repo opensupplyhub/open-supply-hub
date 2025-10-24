@@ -16,13 +16,16 @@ export const usePrefetchClaimData = (
     parentCompanyOptions,
 ) => {
     useEffect(() => {
-        if (!countriesOptions) {
+        if (!countriesOptions || isEmpty(countriesOptions)) {
             fetchCountries();
         }
     }, [countriesOptions, fetchCountries]);
 
     useEffect(() => {
-        if (!facilityProcessingTypeOptions) {
+        if (
+            !facilityProcessingTypeOptions ||
+            isEmpty(facilityProcessingTypeOptions)
+        ) {
             fetchFacilityProcessingType();
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
