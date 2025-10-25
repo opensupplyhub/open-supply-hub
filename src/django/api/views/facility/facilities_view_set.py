@@ -101,6 +101,9 @@ from api.views.facility.facility_parameters import (
     facilities_list_parameters,
     facilities_create_parameters,
 )
+from api.facility_type_processing_type import (
+    get_facility_and_processing_type,
+)
 
 log = logging.getLogger(__name__)
 
@@ -233,10 +236,10 @@ class FacilitiesViewSet(ListModelMixin,
             raise ValidationError(params.errors)
 
         queryset = (
-                FacilityIndex
-                .objects
-                .filter_by_query_params(request.query_params)
-            )
+            FacilityIndex
+            .objects
+            .filter_by_query_params(request.query_params)
+        )
         sort_by = params.validated_data['sort_by']
         order_list = []
 
@@ -876,8 +879,17 @@ class FacilitiesViewSet(ListModelMixin,
             facility_claim = FacilityClaim.objects.create(
                 facility=facility,
                 contributor=contributor,
-                contact_person=validated_data["your_name"],
+                contact_person=validated_data.get("your_name"),
                 job_title=validated_data.get("your_title"),
+                point_of_contact_person_name=validated_data.get(
+                    "point_of_contact_person_name",
+                ),
+                point_of_contact_email=validated_data.get(
+                    "point_of_contact_email",
+                ),
+                point_of_contact_publicly_visible=validated_data.get(
+                    "point_of_contact_publicly_visible",
+                ),
                 website=validated_data.get("your_business_website"),
                 facility_website=validated_data.get("business_website"),
                 linkedin_profile=validated_data.get(
@@ -903,11 +915,80 @@ class FacilitiesViewSet(ListModelMixin,
                 energy_animal_waste=validated_data.get("energy_animal_waste"),
                 energy_electricity=validated_data.get("energy_electricity"),
                 energy_other=validated_data.get("energy_other"),
+                claimant_location_relationship=validated_data.get(
+                    "claimant_location_relationship"
+                ),
+                claimant_employment_verification_method=validated_data.get(
+                    "claimant_employment_verification_method"
+                ),
+                location_address_verification_method=validated_data.get(
+                    "location_address_verification_method"
+                ),
+                claimant_linkedin_profile_url=validated_data.get(
+                    "claimant_linkedin_profile_url"
+                ),
+                office_phone_number=validated_data.get(
+                    "office_phone_number"
+                ),
+                facility_description=validated_data.get(
+                    "facility_description", ""
+                ),
+                office_official_name=validated_data.get(
+                    "office_official_name"
+                ),
+                office_address=validated_data.get(
+                    "office_address"
+                ),
+                office_country_code=validated_data.get(
+                    "office_country_code"
+                ),
+                parent_company_name=validated_data.get(
+                    "parent_company_name"
+                ),
+                facility_affiliations=validated_data.get(
+                    "facility_affiliations"
+                ),
+                facility_certifications=validated_data.get(
+                    "facility_certifications"
+                ),
+                facility_female_workers_percentage=validated_data.get(
+                    "facility_female_workers_percentage"
+                ),
+                facility_minimum_order_quantity=validated_data.get(
+                    "facility_minimum_order_quantity"
+                ),
+                facility_average_lead_time=validated_data.get(
+                    "facility_average_lead_time"
+                ),
+                facility_product_types=validated_data.get(
+                    "facility_product_types"
+                ),
+                facility_production_types=validated_data.get(
+                    "facility_production_types", []
+                ),
             )
 
             sectors = validated_data.get("sectors")
+
             if sectors and len(sectors) > 0:
                 facility_claim.sector = sectors
+
+            facility_type = validated_data.get("facility_type")
+
+            if facility_type:
+                (_, __, facility_type_value, processing_type_value) = (
+                    get_facility_and_processing_type(
+                        facility_type, sectors,
+                    )
+                )
+
+                if facility_type_value:
+                    facility_claim.facility_type = facility_type_value
+
+                if processing_type_value:
+                    facility_claim.facility_production_types.append(
+                        processing_type_value,
+                    )
 
             facility_claim.save()
 
@@ -1671,7 +1752,7 @@ class FacilitiesViewSet(ListModelMixin,
         except Contributor.DoesNotExist as exc:
             raise ValidationError(
                 'Contributor not found for requesting user.'
-                ) from exc
+            ) from exc
 
         facility_activity_report = FacilityActivityReport.objects.create(
             facility=facility,

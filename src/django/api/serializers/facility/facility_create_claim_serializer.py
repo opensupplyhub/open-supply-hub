@@ -89,32 +89,51 @@ def validate_date_range(opening_date, closing_date):
 
 class FacilityCreateClaimSerializer(serializers.Serializer):
     your_name = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=True,
         allow_blank=False,
     )
     your_title = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=True,
         allow_blank=False,
     )
     your_business_website = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=False,
         allow_blank=True,
     )
+    point_of_contact_person_name = serializers.CharField(
+        max_length=200,
+        required=False,
+        allow_blank=True,
+    )
+    point_of_contact_email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    point_of_contact_publicly_visible = serializers.BooleanField(
+        required=False,
+        default=False,
+        allow_null=False,
+    )
     business_website = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=False,
         allow_blank=True,
     )
     business_linkedin_profile = serializers.CharField(
-        max_length=255,
+        max_length=200,
         required=True,
         allow_blank=True,
     )
     sectors = serializers.ListField(
-        child=serializers.CharField(),
+        child=serializers.CharField(
+            max_length=50,
+            allow_blank=False,
+            allow_null=False,
+        ),
         required=False
     )
     number_of_workers = serializers.CharField(
@@ -130,7 +149,6 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         validators=[validate_files]
     )
-
     opening_date = serializers.DateField(
         required=False,
         validators=[validate_non_future_date]
@@ -188,6 +206,104 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         min_value=1,
         max_value=JS_MAX_SAFE_INTEGER
+    )
+    claimant_location_relationship = serializers.CharField(
+        allow_blank=True,
+        required=False,
+        max_length=250
+    )
+    claimant_employment_verification_method = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250
+    )
+    location_address_verification_method = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250
+    )
+    claimant_linkedin_profile_url = serializers.URLField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    office_phone_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=1000
+    )
+    office_official_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    office_address = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    office_country_code = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=2
+    )
+    parent_company_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_affiliations = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=FacilityClaim.AFFILIATION_CHOICES,
+        ),
+        required=False
+    )
+    facility_certifications = serializers.ListField(
+        child=serializers.ChoiceField(
+            choices=FacilityClaim.CERTIFICATION_CHOICES,
+        ),
+        required=False
+    )
+    facility_female_workers_percentage = serializers.IntegerField(
+        required=False,
+        max_value=100,
+        min_value=0
+    )
+    facility_minimum_order_quantity = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_average_lead_time = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_product_types = serializers.ListField(
+        child=serializers.CharField(
+            max_length=50,
+            allow_blank=False,
+            allow_null=False,
+        ),
+        required=False
+    )
+    facility_production_types = serializers.ListField(
+        child=serializers.CharField(
+            max_length=50,
+            allow_blank=False,
+            allow_null=False,
+        ),
+        required=False
+    )
+    facility_type = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=300
     )
 
     def validate_your_business_website(self, value):
