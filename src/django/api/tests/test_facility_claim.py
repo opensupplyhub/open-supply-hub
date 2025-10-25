@@ -86,7 +86,10 @@ class FacilityClaimTest(APITestCase):
         data = json.loads(response.content)
         self.assertEqual([], data)
 
-        claim = FacilityClaim(facility=self.facility, contributor=self.contributor)
+        claim = FacilityClaim(
+            facility=self.facility,
+            contributor=self.contributor,
+        )
         claim.save()
 
         # A new claim should NOT appear in the claimed list
@@ -115,12 +118,13 @@ class FacilityClaimTest(APITestCase):
         )
 
         claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        business_linkedin_profile = "https://linkedin.com/company/facility"
         claim_data = {
             "your_name": "John Doe",
             "your_title": "Facility Manager",
             "your_business_website": "https://example.com",
             "business_website": "https://facility.com",
-            "business_linkedin_profile": "https://linkedin.com/company/facility",
+            "business_linkedin_profile": business_linkedin_profile,
             "opening_date": "2020-01-01",
             "closing_date": "2023-12-31",
             "estimated_annual_throughput": 100000,
@@ -157,12 +161,13 @@ class FacilityClaimTest(APITestCase):
         )
 
         claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        business_linkedin_profile = "https://linkedin.com/company/facility"
         claim_data = {
             "your_name": "Jane Smith",
             "your_title": "Operations Manager",
             "your_business_website": "https://example.com",
             "business_website": "https://facility.com",
-            "business_linkedin_profile": "https://linkedin.com/company/facility",
+            "business_linkedin_profile": business_linkedin_profile,
         }
 
         response = self.client.post(claim_url, claim_data)
@@ -186,12 +191,13 @@ class FacilityClaimTest(APITestCase):
         )
 
         claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        business_linkedin_profile = "https://linkedin.com/company/facility"
         claim_data = {
             "your_name": "John Doe",
             "your_title": "Manager",
             "your_business_website": "https://example.com",
             "business_website": "https://facility.com",
-            "business_linkedin_profile": "https://linkedin.com/company/facility",
+            "business_linkedin_profile": business_linkedin_profile,
             "opening_date": "2023-12-31",
             "closing_date": "2020-01-01",
         }
@@ -210,12 +216,13 @@ class FacilityClaimTest(APITestCase):
         )
 
         claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        business_linkedin_profile = "https://linkedin.com/company/facility"
         claim_data = {
             "your_name": "John Doe",
             "your_title": "Manager",
             "your_business_website": "https://example.com",
             "business_website": "https://facility.com",
-            "business_linkedin_profile": "https://linkedin.com/company/facility",
+            "business_linkedin_profile": business_linkedin_profile,
             "opening_date": "2020-01-01",
             "closing_date": "2022-12-31",
             "estimated_annual_throughput": 50000,
@@ -259,12 +266,13 @@ class FacilityClaimTest(APITestCase):
         )
 
         claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        business_linkedin_profile = "https://linkedin.com/company/facility"
         claim_data = {
             "your_name": "John Doe",
             "your_title": "Manager",
             "your_business_website": "https://example.com",
             "business_website": "https://facility.com",
-            "business_linkedin_profile": "https://linkedin.com/company/facility",
+            "business_linkedin_profile": business_linkedin_profile,
             "energy_coal": 0,  # Should fail because min_value=1.
         }
 
@@ -283,12 +291,13 @@ class FacilityClaimTest(APITestCase):
         )
 
         claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        business_linkedin_profile = "https://linkedin.com/company/facility"
         claim_data = {
             "your_name": "John Doe",
             "your_title": "Manager",
             "your_business_website": "https://example.com",
             "business_website": "https://facility.com",
-            "business_linkedin_profile": "https://linkedin.com/company/facility",
+            "business_linkedin_profile": business_linkedin_profile,
             "claimant_location_relationship": "Employee",
             "claimant_employment_verification_method": "Work ID badge",
             "location_address_verification_method": "Utility bill",
@@ -299,8 +308,8 @@ class FacilityClaimTest(APITestCase):
             "office_address": "123 Main Street, City, ST",
             "office_country_code": "US",
             "parent_company_name": "Big Parent Corporation",
-            "facility_affiliations": ["Brand Affiliate", "Industry Group"],
-            "facility_certifications": ["ISO 9001", "SA8000"],
+            "facility_affiliations": ["Sustainable Apparel Coalition", "Canopy"],
+            "facility_certifications": ["BCI", "Canopy"],
             "facility_female_workers_percentage": 47,
             "facility_minimum_order_quantity": "1000 pcs",
             "facility_average_lead_time": "45 days",
@@ -314,33 +323,88 @@ class FacilityClaimTest(APITestCase):
 
         response = self.client.post(claim_url, claim_data)
         self.assertEqual(200, response.status_code)
+        print(response.content)
 
         claim = FacilityClaim.objects.filter(facility=self.facility).first()
         self.assertIsNotNone(claim)
-        self.assertEqual(claim.claimant_location_relationship, "Employee")
-        self.assertEqual(claim.claimant_employment_verification_method, "Work ID badge")
-        self.assertEqual(claim.location_address_verification_method, "Utility bill")
         self.assertEqual(
-            claim.claimant_linkedin_profile_url, "https://linkedin.com/in/person"
+            claim.claimant_location_relationship,
+            "Employee",
+        )
+        self.assertEqual(
+            claim.claimant_employment_verification_method,
+            "Work ID badge",
+        )
+        self.assertEqual(
+            claim.location_address_verification_method,
+            "Utility bill",
+        )
+        self.assertEqual(
+            claim.claimant_linkedin_profile_url,
+            "https://linkedin.com/in/person",
         )
         self.assertEqual(claim.office_phone_number, "+1-555-1234")
         self.assertEqual(
-            claim.facility_description, "A facility for garment manufacturing."
+            claim.facility_description,
+            "A facility for garment manufacturing.",
         )
-        self.assertEqual(claim.office_official_name, "HQ Offices Inc.")
-        self.assertEqual(claim.office_address, "123 Main Street, City, ST")
-        self.assertEqual(claim.office_country_code, "US")
-        self.assertEqual(claim.parent_company_name, "Big Parent Corporation")
         self.assertEqual(
-            claim.facility_affiliations, ["Brand Affiliate", "Industry Group"]
+            claim.office_official_name,
+            "HQ Offices Inc.",
         )
-        self.assertEqual(claim.facility_certifications, ["ISO 9001", "SA8000"])
-        self.assertEqual(claim.facility_female_workers_percentage, 47)
-        self.assertEqual(claim.facility_minimum_order_quantity, "1000 pcs")
-        self.assertEqual(claim.facility_average_lead_time, "45 days")
-        self.assertEqual(claim.facility_product_types, ["Jeans", "Shirts"])
-        self.assertEqual(claim.facility_production_types, ["Cutting", "Sewing"])
-        self.assertEqual(claim.facility_type, "Manufacturing")
-        self.assertEqual(claim.point_of_contact_email, "test@example.com")
-        self.assertEqual(claim.point_of_contact_person_name, "John Doe")
-        self.assertEqual(claim.point_of_contact_publicly_visible, True)
+        self.assertEqual(
+            claim.office_address,
+            "123 Main Street, City, ST",
+        )
+        self.assertEqual(
+            claim.office_country_code,
+            "US",
+        )
+        self.assertEqual(
+            claim.parent_company_name,
+            "Big Parent Corporation",
+        )
+        self.assertEqual(
+            claim.facility_affiliations,
+            ["Sustainable Apparel Coalition", "Canopy"],
+        )
+        self.assertEqual(
+            claim.facility_certifications,
+            ["BCI", "Canopy"],
+        )
+        self.assertEqual(
+            claim.facility_female_workers_percentage,
+            47,
+        )
+        self.assertEqual(
+            claim.facility_minimum_order_quantity,
+            "1000 pcs",
+        )
+        self.assertEqual(
+            claim.facility_average_lead_time,
+            "45 days",
+        )
+        self.assertEqual(
+            claim.facility_product_types,
+            ["Jeans", "Shirts"],
+        )
+        self.assertEqual(
+            claim.facility_production_types,
+            ["Cutting", "Sewing", "Manufacturing"],
+        )
+        self.assertEqual(
+            claim.facility_type,
+            None,
+        )
+        self.assertEqual(
+            claim.point_of_contact_email,
+            "test@example.com",
+        )
+        self.assertEqual(
+            claim.point_of_contact_person_name,
+            "John Doe",
+        )
+        self.assertEqual(
+            claim.point_of_contact_publicly_visible,
+            True,
+        )
