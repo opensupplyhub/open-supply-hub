@@ -308,7 +308,10 @@ class FacilityClaimTest(APITestCase):
             "office_address": "123 Main Street, City, ST",
             "office_country_code": "US",
             "parent_company_name": "Big Parent Corporation",
-            "facility_affiliations": ["Sustainable Apparel Coalition", "Canopy"],
+            "facility_affiliations": [
+                "Sustainable Apparel Coalition",
+                "Canopy",
+            ],
             "facility_certifications": ["BCI", "Canopy"],
             "facility_female_workers_percentage": 47,
             "facility_minimum_order_quantity": "1000 pcs",
