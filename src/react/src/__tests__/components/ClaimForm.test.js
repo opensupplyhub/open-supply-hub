@@ -22,7 +22,7 @@ beforeAll(() => {
 });
 
 // Mock step components to simplify testing.
-jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep', () => () => (
+jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep', () => () => (
     <div data-testid="eligibility-step">Eligibility Step</div>
 ));
 
