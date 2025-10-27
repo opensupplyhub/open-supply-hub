@@ -487,7 +487,33 @@ class FacilityClaim(models.Model):
         verbose_name='energy other consumption',
         help_text='Annual other energy source consumption in Joules.'
     )
-
+    claimant_location_relationship = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True,
+        verbose_name='claimant location relationship',
+        help_text="Claimant's relationship to the location."
+    )
+    claimant_employment_verification_method = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True,
+        verbose_name='claimant employment verification method',
+        help_text="Claimant's employment verification method."
+    )
+    location_address_verification_method = models.CharField(
+        max_length=250,
+        null=True,
+        blank=True,
+        verbose_name='location address verification method',
+        help_text="Verification method used to confirm the address."
+    )
+    claimant_linkedin_profile_url = models.URLField(
+        null=True,
+        blank=True,
+        verbose_name='claimant linkedin profile url',
+        help_text="Claimant's LinkedIn profile URL."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -535,6 +561,10 @@ class FacilityClaim(models.Model):
         'energy_animal_waste',
         'energy_electricity',
         'energy_other',
+        'claimant_location_relationship',
+        'claimant_employment_verification_method',
+        'location_address_verification_method',
+        'claimant_linkedin_profile_url',
     )
 
     # A dictionary where the keys are field names and the values are predicate
