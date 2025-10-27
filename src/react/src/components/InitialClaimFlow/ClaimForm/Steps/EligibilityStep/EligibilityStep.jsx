@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-<<<<<<< HEAD
 import { func, object, string, shape, bool, oneOfType } from 'prop-types';
-=======
-import { func, object, string } from 'prop-types';
->>>>>>> 252080f2 (Replace EligibilyStep to separate folder)
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
