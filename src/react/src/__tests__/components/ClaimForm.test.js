@@ -106,7 +106,6 @@ describe('ClaimForm component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         history.push('/');
-        // sessionStorage.getItem.mockReturnValue('true'); // Simulate access from intro.
     });
 
     describe('Authentication checks', () => {
