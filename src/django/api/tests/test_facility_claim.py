@@ -283,7 +283,6 @@ class FacilityClaimTest(APITestCase):
     @override_switch("claim_a_facility", active=True)
     def test_create_claim_with_additional_fields(self):
         """Test that creating a claim with additional fields succeeds."""
-        """Test that energy data is correctly saved to the database."""
         self.client.post(
             "/user-login/",
             {"email": self.email, "password": self.password},
@@ -326,7 +325,6 @@ class FacilityClaimTest(APITestCase):
 
         response = self.client.post(claim_url, claim_data)
         self.assertEqual(200, response.status_code)
-        print(response.content)
 
         claim = FacilityClaim.objects.filter(facility=self.facility).first()
         self.assertIsNotNone(claim)

@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
             name='claimant_location_relationship',
             field=models.CharField(
                 blank=True,
-                help_text="Claimant's relationship to the location of the production location.",
+                help_text="Claimant's relationship to the location.",
                 max_length=250,
                 null=True,
                 verbose_name='claimant location relationship'
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
             name='location_address_verification_method',
             field=models.CharField(
                 blank=True,
-                help_text="Verification method used to confirm the production location's address.",
+                help_text="Verification method used to confirm the address.",
                 max_length=250,
                 null=True,
                 verbose_name='location address verification method',
@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
             name='claimant_location_relationship',
             field=models.CharField(
                 blank=True,
-                help_text="Claimant's relationship to the location of the production location.",
+                help_text="Claimant's relationship to the location.",
                 max_length=250,
                 null=True,
                 verbose_name='claimant location relationship'
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
             name='location_address_verification_method',
             field=models.CharField(
                 blank=True,
-                help_text="Verification method used to confirm the production location's address.",
+                help_text="Verification method used to confirm the address.",
                 max_length=250,
                 null=True,
                 verbose_name='location address verification method',
