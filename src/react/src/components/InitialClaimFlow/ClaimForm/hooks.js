@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
+import { CLAIM_FORM_STEPS } from './constants';
 import { claimIntroRoute } from '../../../util/constants';
 
 export const usePrefetchClaimData = (
@@ -73,6 +74,7 @@ export const useClaimForm = (
     const formik = useFormik({
         initialValues,
         validationSchema: getValidationSchemaForStep(activeStep),
+        validateOnMount: true,
         onSubmit,
     });
 

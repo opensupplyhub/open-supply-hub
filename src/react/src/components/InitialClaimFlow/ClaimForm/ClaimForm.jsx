@@ -214,16 +214,18 @@ const ClaimForm = ({
 
         claimForm.setTouched({ ...claimForm.touched, ...touchedFields });
 
-        // Validate only the current step's fields, not the entire form.
-        try {
-            await schema.validate(claimForm.values, { abortEarly: false });
-            // If validation passes, proceed to next step.
+        // Use Formik's validateForm to avoid stale values when clicking quickly.
+        await claimForm.validateForm();
+
+        // Proceed only if the CURRENT STEP has no errors.
+        const hasCurrentStepErrors = Object.keys(schemaFields).some(
+            field => claimForm.errors[field],
+        );
+
+        if (!hasCurrentStepErrors) {
             markComplete(activeStep);
             const nextStepIndex = getNextStep(activeStep);
             setStep(nextStepIndex);
-        } catch (validationErrors) {
-            // Validation failed for current step, stay on this step.
-            // Errors will be displayed via Formik's error state.
         }
     };
 
