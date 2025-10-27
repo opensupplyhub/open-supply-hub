@@ -58,9 +58,8 @@ const EligibilityStep = ({
     const isRelationshipError = relationshipTouched && !selectedRelationship;
 
     const handleCloseIneligibleDialog = () => {
+        // Close dialog without altering previously selected valid relationship.
         setIneligibleDialogOpen(false);
-        handleChange('relationship', null);
-        setRelationshipTouched(false);
     };
 
     const handleGoToMainPage = () => {
@@ -123,9 +122,7 @@ const EligibilityStep = ({
             </Grid>
 
             <Dialog open={ineligibleDialogOpen}>
-                <DialogTitle style={{ textAlign: 'center' }}>
-                    Not Eligible to File Claim
-                </DialogTitle>
+                <DialogTitle>Not Eligible to File Claim</DialogTitle>
                 <DialogContent>
                     <Typography
                         variant="body1"

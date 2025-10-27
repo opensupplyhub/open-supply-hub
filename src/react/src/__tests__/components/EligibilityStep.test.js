@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
@@ -23,7 +24,6 @@ jest.mock('react-router-dom', () => {
 });
 
 jest.mock('../../components/Filters/StyledSelect', () => {
-    const PropTypes = require('prop-types');
 
     const MockStyledSelect = ({
         options,
@@ -72,6 +72,13 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur: PropTypes.func,
         placeholder: PropTypes.string,
         name: PropTypes.string,
+    };
+
+    MockStyledSelect.defaultProps = {
+        value: null,
+        onBlur: () => {},
+        placeholder: '',
+        name: 'relationship',
     };
 
     return MockStyledSelect;

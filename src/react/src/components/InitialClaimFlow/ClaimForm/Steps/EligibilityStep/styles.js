@@ -46,13 +46,23 @@ const eligibilityStepStyles = theme =>
             marginLeft: theme.spacing.unit,
         }),
         sectionTitle: Object.freeze({
-            fontSize: '16px',
-            fontWeight: theme.typography.fontWeightSemiBoldPlus,
-            color: '#111827',
-            marginBottom: theme.spacing.unit * 2,
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            marginBottom: theme.spacing.unit * 1.5,
         }),
         selectWrapper: Object.freeze({
             marginBottom: 0,
+        }),
+        dialogTitle: Object.freeze({
+            textAlign: 'center',
+        }),
+        dialogBodyText: Object.freeze({
+            textAlign: 'center',
+            fontSize: '16px',
+        }),
+        dialogActions: Object.freeze({
+            justifyContent: 'center',
+            padding: theme.spacing.unit * 2,
         }),
         buttonContainer: Object.freeze({
             display: 'flex',

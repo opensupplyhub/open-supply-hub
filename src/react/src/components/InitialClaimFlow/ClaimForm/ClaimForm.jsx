@@ -247,7 +247,7 @@ const ClaimForm = ({
                     <Paper className={classes.paper}>
                         <Typography
                             variant="title"
-                            className={classes.sectionTitle}
+                            className={classes.titleStyles}
                         >
                             {(() => {
                                 const IconName = getIconComponent(

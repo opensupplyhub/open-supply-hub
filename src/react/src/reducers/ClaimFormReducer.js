@@ -12,7 +12,7 @@ const initialState = Object.freeze({
     activeStep: 0,
     completedSteps: [],
     formData: Object.freeze({
-        // Eligibility step
+        // Eligibility step.
         relationship: null,
 
         // Contact step.
