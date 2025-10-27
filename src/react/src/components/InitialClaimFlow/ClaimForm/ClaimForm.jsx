@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
@@ -54,8 +55,6 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
-import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
-import { useStepResetOnMount, usePrefetchData } from './hooks';
 
 const iconMapping = {
     Security,
