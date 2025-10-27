@@ -72,13 +72,6 @@ const claimFormStyles = theme =>
             lineHeight: '40px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
-        titleStyles: Object.freeze({
-            fontSize: '36px',
-            fontWeight: theme.typography.fontWeightSemiBoldPlus,
-            gap: '5px',
-            display: 'flex',
-            alignItems: 'center',
-        }),
         sectionDescription: Object.freeze({
             fontSize: '18px',
             fontWeight: 500,
