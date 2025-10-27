@@ -4,7 +4,11 @@ import { fireEvent } from '@testing-library/react';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimIntro from '../../components/InitialClaimFlow/ClaimIntro/ClaimIntro';
-import { makeClaimDetailsLink } from '../../util/util';
+import { facilityDetailsRoute, claimDetailsRoute } from '../../util/constants';
+
+beforeAll(() => {
+    window.scrollTo = jest.fn();
+});
 
 jest.mock('../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection', () => () => (
     <div data-testid="claim-info-section">ClaimInfoSection</div>
@@ -80,7 +84,7 @@ describe('ClaimIntro component', () => {
         test('renders both action buttons', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText('GO BACK')).toBeInTheDocument();
+            expect(getByText('Go Back')).toBeInTheDocument();
             expect(getByText('Continue to Claim Form')).toBeInTheDocument();
         });
 
@@ -92,25 +96,26 @@ describe('ClaimIntro component', () => {
     });
 
     describe('Navigation functionality', () => {
-        test('navigates back when GO BACK button is clicked', () => {
-            history.push('/some-page');
-            const previousPath = history.location.pathname;
-
+        test('navigates back when Go Back button is clicked', () => {
             const { getByText } = renderComponent();
-            const backButton = getByText('GO BACK');
+            const backButton = getByText('Go Back');
 
             fireEvent.click(backButton);
 
-            expect(history.location.pathname).toBe(previousPath);
+            expect(history.location.pathname).toBe(facilityDetailsRoute.replace(':osID', mockOsID));
         });
 
         test('navigates to claim details when Continue button is clicked', () => {
             const { getByText } = renderComponent();
-            const continueButton = getByText('Continue to Claim Form');
+            const sessionStorageMock = {
+                setItem: jest.fn(),
+            };
+            global.sessionStorage = sessionStorageMock;
 
+            const continueButton = getByText('Continue to Claim Form');
             fireEvent.click(continueButton);
 
-            const expectedPath = makeClaimDetailsLink(mockOsID);
+            const expectedPath = claimDetailsRoute.replace(':osID', mockOsID);
             expect(history.location.pathname).toBe(expectedPath);
         });
     });

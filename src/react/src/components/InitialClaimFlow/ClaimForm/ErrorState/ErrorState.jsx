@@ -79,6 +79,7 @@ ErrorState.propTypes = {
     resetForm: func.isRequired,
     resetFilters: func.isRequired,
     resetProductionLocation: func.isRequired,
+    history: object.isRequired,
 };
 
 const mapDispatchToProps = dispatch => ({

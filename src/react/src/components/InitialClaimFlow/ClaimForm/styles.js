@@ -65,12 +65,12 @@ const claimFormStyles = theme =>
             },
         }),
         sectionTitle: Object.freeze({
-            fontSize: '1.5rem',
+            fontSize: '1.25rem',
             fontWeight: 600,
             marginBottom: theme.spacing.unit * 2,
         }),
         sectionDescription: Object.freeze({
-            fontSize: '1rem',
+            fontSize: '0.875rem',
             color: COLOURS.DARK_GREY,
             marginBottom: theme.spacing.unit * 3,
         }),
