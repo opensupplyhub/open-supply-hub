@@ -20,8 +20,9 @@ const initialState = Object.freeze({
         contactPhone: '',
 
         // Business step.
-        businessName: '',
-        businessWebsite: '',
+        companyAddressVerification: '',
+        verificationUrl: '',
+        verificationDocuments: [],
 
         // Profile step.
         numberOfWorkers: '',
