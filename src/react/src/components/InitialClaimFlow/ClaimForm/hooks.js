@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
+import { CLAIM_FORM_STEPS } from './constants';
 import { claimIntroRoute } from '../../../util/constants';
 
 export const usePrefetchClaimData = (
@@ -73,6 +74,7 @@ export const useClaimForm = (
     const formik = useFormik({
         initialValues,
         validationSchema: getValidationSchemaForStep(activeStep),
+        validateOnMount: true,
         onSubmit,
     });
 
@@ -124,7 +126,15 @@ export const useClaimForm = (
             field => formik.errors[field],
         );
 
-        // Only disable button if user has interacted AND there are errors.
+        // Eligibility and Contact should be strict: disabled whenever invalid (even before interaction).
+        if (
+            activeStep === CLAIM_FORM_STEPS.ELIGIBILITY ||
+            activeStep === CLAIM_FORM_STEPS.CONTACT
+        ) {
+            return hasCurrentStepErrors;
+        }
+
+        // Other steps keep prior UX: disable only after interaction when there are errors.
         return hasInteractedWithCurrentStep && hasCurrentStepErrors;
     };
 
