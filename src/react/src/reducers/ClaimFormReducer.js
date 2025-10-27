@@ -24,9 +24,54 @@ const initialState = Object.freeze({
         businessName: '',
         businessWebsite: '',
 
-        // Profile step.
+        // Profile step - Production Location Overview.
+        localLanguageName: '',
+        facilityPhone: '',
+        facilityWebsite: '',
+        description: '',
+
+        // Profile step - Company Information.
+        parentCompanyName: null,
+        officeName: '',
+        officeAddress: '',
+        officeCountry: null,
+
+        // Profile step - Operations & Capabilities.
+        sector: [],
+        locationType: [],
+        processingType: [],
+        productTypes: [],
         numberOfWorkers: '',
-        additionalNotes: '',
+        femaleWorkers: '',
+        minimumOrderQuantity: '',
+        averageLeadTime: '',
+
+        // Profile step - Compliance & Partnerships.
+        affiliations: [],
+        certifications: [],
+
+        // Profile step - Free Emissions Estimate.
+        openingDate: '',
+        closingDate: '',
+        estimatedAnnualThroughput: '',
+        energyCoal: '',
+        energyNaturalGas: '',
+        energyDiesel: '',
+        energyKerosene: '',
+        energyBiomass: '',
+        energyCharcoal: '',
+        energyAnimalWaste: '',
+        energyElectricity: '',
+        energyOther: '',
+        energyCoalEnabled: false,
+        energyNaturalGasEnabled: false,
+        energyDieselEnabled: false,
+        energyKeroseneEnabled: false,
+        energyBiomassEnabled: false,
+        energyCharcoalEnabled: false,
+        energyAnimalWasteEnabled: false,
+        energyElectricityEnabled: false,
+        energyOtherEnabled: false,
     }),
 });
 

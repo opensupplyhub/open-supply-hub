@@ -21,7 +21,7 @@ import COLOURS from '../../../../util/COLOURS';
 import StyledSelect from '../../../Filters/StyledSelect';
 import InputSection from '../../../InputSection';
 import withScrollReset from '../../HOCs/withScrollReset';
-import FreeEmissionsEstimate from '../../../FreeEmissionsEstimate/FreeEmissionsEstimate';
+import FreeEmissionsEstimate from '../FreeEmissionsEstimate/FreeEmissionsEstimate';
 import { mockedSectors } from '../../../../util/constants';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
@@ -251,6 +251,7 @@ const ProfileStep = ({
     classes,
     formData,
     handleChange,
+    handleBlur,
     touched,
     errors,
     countryOptions,
@@ -416,7 +417,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="+1 (555) 123-4567"
+                                        error={
+                                            touched.facilityPhone &&
+                                            !!errors.facilityPhone
+                                        }
+                                        helperText={
+                                            touched.facilityPhone &&
+                                            errors.facilityPhone
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -462,7 +472,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="https://company.com"
+                                        error={
+                                            touched.facilityWebsite &&
+                                            !!errors.facilityWebsite
+                                        }
+                                        helperText={
+                                            touched.facilityWebsite &&
+                                            errors.facilityWebsite
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -516,7 +535,14 @@ const ProfileStep = ({
                                 onChange={e =>
                                     handleChange('description', e.target.value)
                                 }
+                                onBlur={handleBlur}
                                 placeholder="Brief description of what this production location produces or its main activities"
+                                error={
+                                    touched.description && !!errors.description
+                                }
+                                helperText={
+                                    touched.description && errors.description
+                                }
                             />
                         </div>
                     </ExpansionPanelDetails>
@@ -633,7 +659,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="Office name"
+                                        error={
+                                            touched.officeName &&
+                                            !!errors.officeName
+                                        }
+                                        helperText={
+                                            touched.officeName &&
+                                            errors.officeName
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -677,7 +712,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="Office address"
+                                        error={
+                                            touched.officeAddress &&
+                                            !!errors.officeAddress
+                                        }
+                                        helperText={
+                                            touched.officeAddress &&
+                                            errors.officeAddress
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -939,17 +983,16 @@ const ProfileStep = ({
                                             </IconButton>
                                         </Tooltip>
                                     </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.productTypes || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'productTypes',
-                                                e.target.value,
-                                            )
+                                    <StyledSelect
+                                        creatable
+                                        isMulti
+                                        name="product-types"
+                                        aria-label="Product Types"
+                                        value={formData.productTypes || []}
+                                        onChange={values =>
+                                            handleChange('productTypes', values)
                                         }
-                                        placeholder="e.g., T-shirts, Jeans, Dresses"
+                                        placeholder="Enter product types..."
                                     />
                                 </div>
                             </Grid>
@@ -998,7 +1041,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="e.g., 500"
+                                        error={
+                                            touched.numberOfWorkers &&
+                                            !!errors.numberOfWorkers
+                                        }
+                                        helperText={
+                                            touched.numberOfWorkers &&
+                                            errors.numberOfWorkers
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -1044,7 +1096,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="e.g., 45%"
+                                        error={
+                                            touched.femaleWorkers &&
+                                            !!errors.femaleWorkers
+                                        }
+                                        helperText={
+                                            touched.femaleWorkers &&
+                                            errors.femaleWorkers
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -1108,7 +1169,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="e.g., 1000 units"
+                                        error={
+                                            touched.minimumOrderQuantity &&
+                                            !!errors.minimumOrderQuantity
+                                        }
+                                        helperText={
+                                            touched.minimumOrderQuantity &&
+                                            errors.minimumOrderQuantity
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -1168,7 +1238,16 @@ const ProfileStep = ({
                                                 e.target.value,
                                             )
                                         }
+                                        onBlur={handleBlur}
                                         placeholder="e.g., 30 days"
+                                        error={
+                                            touched.averageLeadTime &&
+                                            !!errors.averageLeadTime
+                                        }
+                                        helperText={
+                                            touched.averageLeadTime &&
+                                            errors.averageLeadTime
+                                        }
                                     />
                                 </div>
                             </Grid>
@@ -1345,6 +1424,7 @@ ProfileStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    handleBlur: func.isRequired,
     touched: object,
     errors: object,
     countryOptions: object,

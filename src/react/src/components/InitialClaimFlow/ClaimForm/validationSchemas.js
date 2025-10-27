@@ -21,17 +21,59 @@ export const businessStepSchema = Yup.object().shape({
     businessWebsite: Yup.string().url('Invalid URL'),
 });
 
-// Step 4: Profile validation (all optional fields).
+// Step 4: Profile validation.
 export const profileStepSchema = Yup.object().shape({
+    // Production Location Overview
+    localLanguageName: Yup.string(),
+    facilityPhone: Yup.string(),
+    facilityWebsite: Yup.string()
+        .nullable()
+        .test('is-valid-url', 'Must be a valid URL', value => {
+            if (!value || value.trim() === '') return true; // Optional.
+            try {
+                const url = new URL(value);
+                return !!url;
+            } catch {
+                return false;
+            }
+        }),
+    description: Yup.string(),
+
+    // Company Information
+    parentCompanyName: Yup.mixed(),
+    officeName: Yup.string(),
+    officeAddress: Yup.string(),
+    officeCountry: Yup.mixed(),
+
+    // Operations & Capabilities
+    sector: Yup.array(),
+    locationType: Yup.array(),
+    processingType: Yup.array(),
+    productTypes: Yup.array(),
     numberOfWorkers: Yup.string()
         .nullable()
-        .test('is-valid-workers', 'Must be at least 1 worker', value => {
+        .test('is-valid-workers', 'Must be a positive integer', value => {
             if (!value || value.trim() === '') return true; // Optional.
 
             const num = Number(value);
             return !Number.isNaN(num) && num >= 1 && Number.isInteger(num);
         }),
-    additionalNotes: Yup.string(),
+    femaleWorkers: Yup.string()
+        .nullable()
+        .test('is-valid-percentage', 'Must be between 0 and 100', value => {
+            if (!value || value.trim() === '') return true; // Optional.
+
+            // Remove % sign if present
+            const cleanValue = value.replace('%', '').trim();
+            const num = Number(cleanValue);
+            return !Number.isNaN(num) && num >= 0 && num <= 100;
+        }),
+    minimumOrderQuantity: Yup.string(),
+    averageLeadTime: Yup.string(),
+
+    // Compliance & Partnerships
+    affiliations: Yup.array(),
+    certifications: Yup.array(),
 });
 
 export const getValidationSchemaForStep = stepIndex => {
