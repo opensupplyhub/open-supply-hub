@@ -10,7 +10,7 @@ import Grid from '@material-ui/core/Grid';
 import InputErrorText from '../../../Contribute/InputErrorText';
 import { energySourceInputStyles } from './styles';
 
-const EnergySourceInput = ({
+const ClaimEnergySourceInput = ({
     source,
     freeEmissionsEstimateForm,
     enabledFieldName,
@@ -87,7 +87,7 @@ const EnergySourceInput = ({
     );
 };
 
-EnergySourceInput.propTypes = {
+ClaimEnergySourceInput.propTypes = {
     source: object.isRequired,
     freeEmissionsEstimateForm: object.isRequired,
     enabledFieldName: string.isRequired,
@@ -96,4 +96,4 @@ EnergySourceInput.propTypes = {
     classes: object.isRequired,
 };
 
-export default withStyles(energySourceInputStyles)(EnergySourceInput);
+export default withStyles(energySourceInputStyles)(ClaimEnergySourceInput);

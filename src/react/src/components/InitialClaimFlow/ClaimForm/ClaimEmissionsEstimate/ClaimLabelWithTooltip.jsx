@@ -7,7 +7,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import { labelStyles } from './styles';
 
-const LabelWithTooltip = ({ label, tooltipText, classes }) => (
+const ClaimLabelWithTooltip = ({ label, tooltipText, classes }) => (
     <Grid container className={classes.labelContainer}>
         <Grid item>
             <Typography className={classes.label}>{label}</Typography>
@@ -28,10 +28,10 @@ const LabelWithTooltip = ({ label, tooltipText, classes }) => (
     </Grid>
 );
 
-LabelWithTooltip.propTypes = {
+ClaimLabelWithTooltip.propTypes = {
     label: string.isRequired,
     tooltipText: string.isRequired,
     classes: object.isRequired,
 };
 
-export default withStyles(labelStyles)(LabelWithTooltip);
+export default withStyles(labelStyles)(ClaimLabelWithTooltip);

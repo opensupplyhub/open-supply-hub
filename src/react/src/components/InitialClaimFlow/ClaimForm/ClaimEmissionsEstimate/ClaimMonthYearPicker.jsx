@@ -4,11 +4,11 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
-import LabelWithTooltip from './LabelWithTooltip';
+import ClaimLabelWithTooltip from './ClaimLabelWithTooltip';
 import { MONTHS } from './constants';
-import YearPicker from './YearPicker';
+import ClaimYearPicker from './ClaimYearPicker';
 
-const MonthYearPicker = ({
+const ClaimMonthYearPicker = ({
     value,
     label,
     tooltipText,
@@ -73,7 +73,7 @@ const MonthYearPicker = ({
 
     return (
         <div>
-            <LabelWithTooltip label={label} tooltipText={tooltipText} />
+            <ClaimLabelWithTooltip label={label} tooltipText={tooltipText} />
             <Grid container spacing={8}>
                 <Grid item xs={12} md={6}>
                     <FormControl fullWidth variant="outlined" error={error}>
@@ -93,7 +93,7 @@ const MonthYearPicker = ({
                     </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <YearPicker
+                    <ClaimYearPicker
                         value={value}
                         onChange={handleYearChange}
                         error={error}
@@ -107,7 +107,7 @@ const MonthYearPicker = ({
     );
 };
 
-MonthYearPicker.propTypes = {
+ClaimMonthYearPicker.propTypes = {
     label: string.isRequired,
     tooltipText: string.isRequired,
     value: string,
@@ -119,11 +119,11 @@ MonthYearPicker.propTypes = {
     placeholderYear: string.isRequired,
 };
 
-MonthYearPicker.defaultProps = {
+ClaimMonthYearPicker.defaultProps = {
     value: '',
     error: false,
     helperText: null,
     disabled: false,
 };
 
-export default MonthYearPicker;
+export default ClaimMonthYearPicker;

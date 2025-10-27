@@ -6,11 +6,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
-import LabelWithTooltip from './LabelWithTooltip';
+import ClaimLabelWithTooltip from './ClaimLabelWithTooltip';
 import { useInfiniteYearScroll } from './hooks';
 import { yearPickerStyles } from './styles';
 
-const YearPicker = ({
+const ClaimYearPicker = ({
     value,
     label,
     tooltipText,
@@ -58,7 +58,10 @@ const YearPicker = ({
     return (
         <div>
             {label && tooltipText && (
-                <LabelWithTooltip label={label} tooltipText={tooltipText} />
+                <ClaimLabelWithTooltip
+                    label={label}
+                    tooltipText={tooltipText}
+                />
             )}
             <FormControl fullWidth variant="outlined" error={error}>
                 <Select
@@ -111,7 +114,7 @@ const YearPicker = ({
     );
 };
 
-YearPicker.propTypes = {
+ClaimYearPicker.propTypes = {
     label: string,
     tooltipText: string,
     value: string,
@@ -122,7 +125,7 @@ YearPicker.propTypes = {
     classes: object.isRequired,
 };
 
-YearPicker.defaultProps = {
+ClaimYearPicker.defaultProps = {
     value: '',
     label: null,
     tooltipText: null,
@@ -131,4 +134,4 @@ YearPicker.defaultProps = {
     disabled: false,
 };
 
-export default withStyles(yearPickerStyles)(YearPicker);
+export default withStyles(yearPickerStyles)(ClaimYearPicker);

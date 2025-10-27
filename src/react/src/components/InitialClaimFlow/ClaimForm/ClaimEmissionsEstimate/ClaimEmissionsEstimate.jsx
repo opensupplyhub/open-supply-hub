@@ -5,11 +5,11 @@ import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
-import YearPicker from './YearPicker';
-import MonthYearPicker from './MonthYearPicker';
+import ClaimYearPicker from './ClaimYearPicker';
+import ClaimMonthYearPicker from './ClaimMonthYearPicker';
 import InputErrorText from '../../../Contribute/InputErrorText';
-import EnergySourceInput from './EnergySourceInput';
-import LabelWithTooltip from './LabelWithTooltip';
+import ClaimEnergySourceInput from './ClaimEnergySourceInput';
+import ClaimLabelWithTooltip from './ClaimLabelWithTooltip';
 
 import { freeEmissionsEstimateStyles } from './styles';
 import {
@@ -31,7 +31,7 @@ const {
     energySourcesData,
 } = freeEmissionsEstimateFormConfig;
 
-const FreeEmissionsEstimate = ({
+const ClaimEmissionsEstimate = ({
     // Redux state values.
     formData,
     // Redux dispatch functions.
@@ -230,7 +230,7 @@ const FreeEmissionsEstimate = ({
                 className={classes.datePickerContainer}
             >
                 <Grid item xs={12} md={6}>
-                    <YearPicker
+                    <ClaimYearPicker
                         value={freeEmissionsEstimateForm.values.openingDate}
                         label={openingDateField.label}
                         tooltipText={openingDateField.tooltipText}
@@ -260,7 +260,7 @@ const FreeEmissionsEstimate = ({
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <MonthYearPicker
+                    <ClaimMonthYearPicker
                         value={freeEmissionsEstimateForm.values.closingDate}
                         label={closingDateField.label}
                         tooltipText={closingDateField.tooltipText}
@@ -297,7 +297,7 @@ const FreeEmissionsEstimate = ({
                 className={classes.estimatedAnnualThroughputContainer}
             >
                 <Grid item xs={12}>
-                    <LabelWithTooltip
+                    <ClaimLabelWithTooltip
                         label={estimatedAnnualThroughputField.label}
                         tooltipText={estimatedAnnualThroughputField.tooltipText}
                     />
@@ -347,7 +347,7 @@ const FreeEmissionsEstimate = ({
                 </Grid>
                 {energySourcesData.map(energyData => (
                     <Grid item xs={12} key={energyData.source.label}>
-                        <EnergySourceInput
+                        <ClaimEnergySourceInput
                             source={energyData.source}
                             freeEmissionsEstimateForm={
                                 freeEmissionsEstimateForm
@@ -362,7 +362,7 @@ const FreeEmissionsEstimate = ({
     );
 };
 
-FreeEmissionsEstimate.propTypes = {
+ClaimEmissionsEstimate.propTypes = {
     // Redux state.
     formData: object.isRequired,
     // Redux dispatch functions.
@@ -454,4 +454,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(freeEmissionsEstimateStyles)(FreeEmissionsEstimate));
+)(withStyles(freeEmissionsEstimateStyles)(ClaimEmissionsEstimate));

@@ -21,7 +21,7 @@ import COLOURS from '../../../../util/COLOURS';
 import StyledSelect from '../../../Filters/StyledSelect';
 import InputSection from '../../../InputSection';
 import withScrollReset from '../../HOCs/withScrollReset';
-import FreeEmissionsEstimate from '../FreeEmissionsEstimate/FreeEmissionsEstimate';
+import ClaimEmissionsEstimate from '../ClaimEmissionsEstimate/ClaimEmissionsEstimate';
 import { mockedSectors } from '../../../../util/constants';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
@@ -259,15 +259,15 @@ const ProfileStep = ({
     parentCompanyOptions,
 }) => {
     const [
-        freeEmissionsEstimateHasErrors,
-        setFreeEmissionsEstimateHasErrors,
+        claimEmissionsEstimateHasErrors,
+        setClaimEmissionsEstimateHasErrors,
     ] = useState(false);
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
     useEffect(() => {
-        console.log(freeEmissionsEstimateHasErrors);
-    }, [freeEmissionsEstimateHasErrors]);
+        console.log(claimEmissionsEstimateHasErrors);
+    }, [claimEmissionsEstimateHasErrors]);
 
     useEffect(() => {
         setEnabledTaxonomy(
@@ -1408,9 +1408,9 @@ const ProfileStep = ({
                     <ExpansionPanelDetails
                         className={classes.expansionPanelDetails}
                     >
-                        <FreeEmissionsEstimate
+                        <ClaimEmissionsEstimate
                             onValidationChange={
-                                setFreeEmissionsEstimateHasErrors
+                                setClaimEmissionsEstimateHasErrors
                             }
                         />
                     </ExpansionPanelDetails>
