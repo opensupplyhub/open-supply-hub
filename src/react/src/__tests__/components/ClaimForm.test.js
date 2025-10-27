@@ -1,6 +1,5 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { fireEvent } from '@testing-library/react';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimForm from '../../components/InitialClaimFlow/ClaimForm/ClaimForm';
@@ -96,14 +95,13 @@ describe('ClaimForm component', () => {
         },
     };
 
-    const renderComponent = (preloadedState = defaultPreloadedState) => {
-        return renderWithProviders(
+    const renderComponent = (preloadedState = defaultPreloadedState) =>
+        renderWithProviders(
             <Router history={history}>
                 <ClaimForm match={mockMatch} />
             </Router>,
             { preloadedState },
         );
-    };
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -391,6 +389,7 @@ describe('ClaimForm component', () => {
 
     describe('URL access protection', () => {
         test('uses access protection hook on mount', () => {
+            // eslint-disable-next-line global-require
             const { useRequireIntroAccess } = require('../../components/InitialClaimFlow/ClaimForm/hooks');
 
             renderComponent();
