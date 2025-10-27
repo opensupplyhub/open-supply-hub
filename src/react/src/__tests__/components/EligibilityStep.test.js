@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
@@ -24,7 +23,8 @@ jest.mock('react-router-dom', () => {
 });
 
 jest.mock('../../components/Filters/StyledSelect', () => {
-
+    // eslint-disable-next-line global-require
+    const mockPropTypes = require('prop-types');
     const MockStyledSelect = ({
         options,
         value,
@@ -55,23 +55,23 @@ jest.mock('../../components/Filters/StyledSelect', () => {
     );
 
     MockStyledSelect.propTypes = {
-        options: PropTypes.arrayOf(
-            PropTypes.shape({
-                value: PropTypes.string.isRequired,
-                label: PropTypes.string.isRequired,
+        options: mockPropTypes.arrayOf(
+            mockPropTypes.shape({
+                value: mockPropTypes.string.isRequired,
+                label: mockPropTypes.string.isRequired,
             }),
         ).isRequired,
-        value: PropTypes.oneOfType([
-            PropTypes.shape({
-                value: PropTypes.string,
-                label: PropTypes.string,
+        value: mockPropTypes.oneOfType([
+            mockPropTypes.shape({
+                value: mockPropTypes.string,
+                label: mockPropTypes.string,
             }),
-            PropTypes.oneOf([null]),
+            mockPropTypes.oneOf([null]),
         ]),
-        onChange: PropTypes.func.isRequired,
-        onBlur: PropTypes.func,
-        placeholder: PropTypes.string,
-        name: PropTypes.string,
+        onChange: mockPropTypes.func.isRequired,
+        onBlur: mockPropTypes.func,
+        placeholder: mockPropTypes.string,
+        name: mockPropTypes.string,
     };
 
     MockStyledSelect.defaultProps = {
@@ -82,6 +82,16 @@ jest.mock('../../components/Filters/StyledSelect', () => {
     };
 
     return MockStyledSelect;
+});
+
+// jsdom does not implement scrollTo; stub to avoid errors in hooks.
+beforeAll(() => {
+    // eslint-disable-next-line no-underscore-dangle
+    if (!window._scrollToStubbed) {
+        window.scrollTo = jest.fn();
+        // eslint-disable-next-line no-underscore-dangle
+        window._scrollToStubbed = true;
+    }
 });
 
 describe('EligibilityStep component', () => {
@@ -227,7 +237,7 @@ describe('EligibilityStep component', () => {
         expect(mockHistoryPush).toHaveBeenCalledWith(mainRoute);
     });
 
-    test('closes dialog and resets selection when "Return to Claims" is clicked', () => {
+    test('closes dialog without resetting selection when "Return to Claims" is clicked', () => {
         renderComponent();
 
         const selectField = screen.getByTestId('relationship-select');
@@ -240,8 +250,10 @@ describe('EligibilityStep component', () => {
         });
         fireEvent.click(returnButton);
 
-        // The dialog should close and handleChange should be called with null
-        expect(mockHandleChange).toHaveBeenCalledWith('relationship', null);
+        // The dialog should close and NOT reset previously selected valid relationship
+        expect(mockHandleChange).not.toHaveBeenCalledWith('relationship', null);
+        // And no change should be emitted at all for ineligible selections.
+        expect(mockHandleChange).not.toHaveBeenCalled();
     });
 
     test('calls handleChange when eligible "owner" option is selected', () => {
