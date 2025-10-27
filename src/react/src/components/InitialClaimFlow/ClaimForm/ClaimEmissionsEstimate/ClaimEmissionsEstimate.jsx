@@ -5,19 +5,19 @@ import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
-import ClaimYearPicker from './ClaimYearPicker';
-import ClaimMonthYearPicker from './ClaimMonthYearPicker';
+import YearPicker from '../../../FreeEmissionsEstimate/YearPicker';
+import MonthYearPicker from '../../../FreeEmissionsEstimate/MonthYearPicker';
 import InputErrorText from '../../../Contribute/InputErrorText';
-import ClaimEnergySourceInput from './ClaimEnergySourceInput';
-import ClaimLabelWithTooltip from './ClaimLabelWithTooltip';
+import EnergySourceInput from '../../../FreeEmissionsEstimate/EnergySourceInput';
+import LabelWithTooltip from '../../../FreeEmissionsEstimate/LabelWithTooltip';
 
-import { freeEmissionsEstimateStyles } from './styles';
+import { freeEmissionsEstimateStyles } from '../../../FreeEmissionsEstimate/styles';
 import {
     useFreeEmissionsEstimateForm,
     useFormFieldSync,
     useFreeEmissionsEstimateValidation,
-} from './hooks';
-import { freeEmissionsEstimateFormConfig } from './constants';
+} from '../../../FreeEmissionsEstimate/hooks';
+import { freeEmissionsEstimateFormConfig } from '../../../FreeEmissionsEstimate/constants';
 
 import { updateClaimFormField } from '../../../../actions/claimForm';
 
@@ -230,7 +230,7 @@ const ClaimEmissionsEstimate = ({
                 className={classes.datePickerContainer}
             >
                 <Grid item xs={12} md={6}>
-                    <ClaimYearPicker
+                    <YearPicker
                         value={freeEmissionsEstimateForm.values.openingDate}
                         label={openingDateField.label}
                         tooltipText={openingDateField.tooltipText}
@@ -260,7 +260,7 @@ const ClaimEmissionsEstimate = ({
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <ClaimMonthYearPicker
+                    <MonthYearPicker
                         value={freeEmissionsEstimateForm.values.closingDate}
                         label={closingDateField.label}
                         tooltipText={closingDateField.tooltipText}
@@ -297,7 +297,7 @@ const ClaimEmissionsEstimate = ({
                 className={classes.estimatedAnnualThroughputContainer}
             >
                 <Grid item xs={12}>
-                    <ClaimLabelWithTooltip
+                    <LabelWithTooltip
                         label={estimatedAnnualThroughputField.label}
                         tooltipText={estimatedAnnualThroughputField.tooltipText}
                     />
@@ -347,7 +347,7 @@ const ClaimEmissionsEstimate = ({
                 </Grid>
                 {energySourcesData.map(energyData => (
                     <Grid item xs={12} key={energyData.source.label}>
-                        <ClaimEnergySourceInput
+                        <EnergySourceInput
                             source={energyData.source}
                             freeEmissionsEstimateForm={
                                 freeEmissionsEstimateForm
