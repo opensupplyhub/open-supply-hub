@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
@@ -72,6 +73,13 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur: mockPropTypes.func,
         placeholder: mockPropTypes.string,
         name: mockPropTypes.string,
+    };
+
+    MockStyledSelect.defaultProps = {
+        value: null,
+        onBlur: () => {},
+        placeholder: '',
+        name: 'relationship',
     };
 
     MockStyledSelect.defaultProps = {
