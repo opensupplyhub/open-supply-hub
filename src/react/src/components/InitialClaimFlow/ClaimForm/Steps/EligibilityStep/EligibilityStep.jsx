@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { func, object, string } from 'prop-types';
+import { func, object, string, shape, bool, oneOfType } from 'prop-types';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
@@ -57,7 +57,8 @@ const EligibilityStep = ({
 
     const selectedRelationship = formData.relationship || null;
 
-    // If we choose partner or other on first render, we highlight the field with an error.
+    // This checks if the relationship field has been touched and either has validation errors
+    // or no value selected
     const isRelationshipError = Boolean(
         touched?.relationship &&
             (errors?.relationship || !selectedRelationship),
@@ -164,12 +165,21 @@ const EligibilityStep = ({
 EligibilityStep.defaultProps = {
     userEmail: null,
     organizationName: null,
+    errors: {},
+    touched: {},
 };
 
 EligibilityStep.propTypes = {
     classes: object.isRequired,
     formData: object.isRequired,
     handleChange: func.isRequired,
+    handleBlur: func.isRequired,
+    errors: shape({
+        relationship: oneOfType([string, object]),
+    }),
+    touched: shape({
+        relationship: bool,
+    }),
     userEmail: string,
     organizationName: string,
 };
