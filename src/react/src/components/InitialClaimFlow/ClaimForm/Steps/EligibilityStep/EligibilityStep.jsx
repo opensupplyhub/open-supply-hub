@@ -165,8 +165,6 @@ const EligibilityStep = ({
 EligibilityStep.defaultProps = {
     userEmail: null,
     organizationName: null,
-    errors: {},
-    touched: {},
 };
 
 EligibilityStep.propTypes = {
@@ -176,10 +174,10 @@ EligibilityStep.propTypes = {
     handleBlur: func.isRequired,
     errors: shape({
         relationship: oneOfType([string, object]),
-    }),
+    }).isRequired,
     touched: shape({
         relationship: bool,
-    }),
+    }).isRequired,
     userEmail: string,
     organizationName: string,
 };
