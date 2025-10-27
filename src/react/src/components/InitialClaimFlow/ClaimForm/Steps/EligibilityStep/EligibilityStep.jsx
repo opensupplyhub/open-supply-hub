@@ -140,14 +140,14 @@ const EligibilityStep = ({
                 </DialogContent>
                 <DialogActions style={{ justifyContent: 'center' }}>
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         color="primary"
                         onClick={handleGoToMainPage}
                     >
                         Back to Open Supply Hub
                     </Button>
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         color="secondary"
                         onClick={handleCloseIneligibleDialog}
                     >
