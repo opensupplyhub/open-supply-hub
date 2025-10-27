@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
