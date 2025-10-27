@@ -153,8 +153,6 @@ const EligibilityStep = ({
 EligibilityStep.defaultProps = {
     userEmail: null,
     organizationName: null,
-    errors: {},
-    touched: {},
 };
 
 EligibilityStep.propTypes = {
