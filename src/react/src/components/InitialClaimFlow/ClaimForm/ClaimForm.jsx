@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
@@ -54,8 +55,6 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
-import { isFirstStep, isLastStep, getNextStep, getPreviousStep } from './utils';
-import { useStepResetOnMount, usePrefetchData } from './hooks';
 
 const iconMapping = {
     Security,
@@ -249,6 +248,12 @@ const ClaimForm = ({
                             variant="title"
                             className={classes.sectionTitle}
                         >
+                            {(() => {
+                                const IconName = getIconComponent(
+                                    STEP_ICONS[activeStep],
+                                );
+                                return <IconName />;
+                            })()}
                             {STEP_NAMES[activeStep]}
                         </Typography>
                         <Typography className={classes.sectionDescription}>
