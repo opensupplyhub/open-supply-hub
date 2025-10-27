@@ -1,40 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { func, object } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
-import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
-import Grid from '@material-ui/core/Grid';
-import YearPicker from '../../../FreeEmissionsEstimate/YearPicker';
-import MonthYearPicker from '../../../FreeEmissionsEstimate/MonthYearPicker';
-import InputErrorText from '../../../Contribute/InputErrorText';
-import EnergySourceInput from '../../../FreeEmissionsEstimate/EnergySourceInput';
-import LabelWithTooltip from '../../../FreeEmissionsEstimate/LabelWithTooltip';
-
-import { freeEmissionsEstimateStyles } from '../../../FreeEmissionsEstimate/styles';
-import {
-    useFreeEmissionsEstimateForm,
-    useFormFieldSync,
-    useFreeEmissionsEstimateValidation,
-} from '../../../FreeEmissionsEstimate/hooks';
-import { freeEmissionsEstimateFormConfig } from '../../../FreeEmissionsEstimate/constants';
-
+import EmissionsEstimateForm from '../../../FreeEmissionsEstimate/EmissionsEstimateForm';
 import { updateClaimFormField } from '../../../../actions/claimForm';
 
-const {
-    title,
-    description,
-    openingDateField,
-    closingDateField,
-    estimatedAnnualThroughputField,
-    energyConsumptionLabel,
-    energySourcesData,
-} = freeEmissionsEstimateFormConfig;
-
+/**
+ * Wrapper component for EmissionsEstimateForm connected to claimForm Redux state.
+ * Used in the initial claim flow (ProfileStep).
+ */
 const ClaimEmissionsEstimate = ({
-    // Redux state values.
     formData,
-    // Redux dispatch functions.
     updateOpeningDate,
     updateClosingDate,
     updateEstimatedAnnualThroughput,
@@ -56,316 +31,38 @@ const ClaimEmissionsEstimate = ({
     updateEnergyAnimalWasteEnabled,
     updateEnergyElectricityEnabled,
     updateEnergyOtherEnabled,
-    // Other props.
     onValidationChange,
-    classes,
-}) => {
-    // Initialize the form.
-    const freeEmissionsEstimateForm = useFreeEmissionsEstimateForm(formData);
-
-    // Track validation.
-    const hasValidationErrors = useFreeEmissionsEstimateValidation(
-        freeEmissionsEstimateForm,
-    );
-
-    /*
-    Notify parent when validation state changes.
-    It is necessary to notify the parent because the parent is
-    responsible for determining if the form is valid via custom
-    error handling not by the Formik library as in this component.
-    */
-    useEffect(() => {
-        onValidationChange(hasValidationErrors);
-    }, [hasValidationErrors, onValidationChange]);
-
-    /*
-    Sync the form values, specifically the Formik form values,
-    with the Redux store. It is necessary to sync the form values
-    with the Redux store because the form values are not
-    automatically updated in the Redux store when the form values
-    are changed. And also because after form submission the
-    function that handles the whole form takes the values from the
-    Redux store.
-    */
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.openingDate,
-        formData.openingDate,
-        updateOpeningDate,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.closingDate,
-        formData.closingDate,
-        updateClosingDate,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.estimatedAnnualThroughput,
-        formData.estimatedAnnualThroughput,
-        updateEstimatedAnnualThroughput,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyCoal,
-        formData.energyCoal,
-        updateEnergyCoal,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyCoalEnabled,
-        formData.energyCoalEnabled,
-        updateEnergyCoalEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyNaturalGas,
-        formData.energyNaturalGas,
-        updateEnergyNaturalGas,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyNaturalGasEnabled,
-        formData.energyNaturalGasEnabled,
-        updateEnergyNaturalGasEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyDiesel,
-        formData.energyDiesel,
-        updateEnergyDiesel,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyDieselEnabled,
-        formData.energyDieselEnabled,
-        updateEnergyDieselEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyKerosene,
-        formData.energyKerosene,
-        updateEnergyKerosene,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyKeroseneEnabled,
-        formData.energyKeroseneEnabled,
-        updateEnergyKeroseneEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyBiomass,
-        formData.energyBiomass,
-        updateEnergyBiomass,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyBiomassEnabled,
-        formData.energyBiomassEnabled,
-        updateEnergyBiomassEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyCharcoal,
-        formData.energyCharcoal,
-        updateEnergyCharcoal,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyCharcoalEnabled,
-        formData.energyCharcoalEnabled,
-        updateEnergyCharcoalEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyAnimalWaste,
-        formData.energyAnimalWaste,
-        updateEnergyAnimalWaste,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyAnimalWasteEnabled,
-        formData.energyAnimalWasteEnabled,
-        updateEnergyAnimalWasteEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyElectricity,
-        formData.energyElectricity,
-        updateEnergyElectricity,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyElectricityEnabled,
-        formData.energyElectricityEnabled,
-        updateEnergyElectricityEnabled,
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyOther,
-        formData.energyOther,
-        updateEnergyOther,
-    );
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.energyOtherEnabled,
-        formData.energyOtherEnabled,
-        updateEnergyOtherEnabled,
-    );
-
-    const estimatedAnnualThroughputHasError =
-        freeEmissionsEstimateForm.touched.estimatedAnnualThroughput &&
-        !!freeEmissionsEstimateForm.errors.estimatedAnnualThroughput;
-
-    const openingDateHasError =
-        freeEmissionsEstimateForm.touched.openingDate &&
-        !!freeEmissionsEstimateForm.errors.openingDate;
-
-    const closingDateHasError =
-        freeEmissionsEstimateForm.touched.closingDate &&
-        !!freeEmissionsEstimateForm.errors.closingDate;
-
-    return (
-        <div className={classes.emissionsSection}>
-            <Typography className={classes.sectionTitle}>
-                {title.label}
-            </Typography>
-            <Typography className={classes.sectionDescription}>
-                {description.label}
-            </Typography>
-            <Grid
-                container
-                spacing={40}
-                className={classes.datePickerContainer}
-            >
-                <Grid item xs={12} md={6}>
-                    <YearPicker
-                        value={freeEmissionsEstimateForm.values.openingDate}
-                        label={openingDateField.label}
-                        tooltipText={openingDateField.tooltipText}
-                        placeholder={openingDateField.placeholder}
-                        helperText={
-                            openingDateHasError && (
-                                <InputErrorText
-                                    text={
-                                        freeEmissionsEstimateForm.errors
-                                            .openingDate
-                                    }
-                                />
-                            )
-                        }
-                        error={openingDateHasError}
-                        onChange={value => {
-                            freeEmissionsEstimateForm.setFieldValue(
-                                openingDateField.valueFieldName,
-                                value,
-                            );
-                            freeEmissionsEstimateForm.setFieldTouched(
-                                openingDateField.valueFieldName,
-                                true,
-                                false,
-                            );
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <MonthYearPicker
-                        value={freeEmissionsEstimateForm.values.closingDate}
-                        label={closingDateField.label}
-                        tooltipText={closingDateField.tooltipText}
-                        placeholderMonth={closingDateField.placeholderMonth}
-                        placeholderYear={closingDateField.placeholderYear}
-                        helperText={
-                            closingDateHasError && (
-                                <InputErrorText
-                                    text={
-                                        freeEmissionsEstimateForm.errors
-                                            .closingDate
-                                    }
-                                />
-                            )
-                        }
-                        error={closingDateHasError}
-                        onChange={value => {
-                            freeEmissionsEstimateForm.setFieldValue(
-                                closingDateField.valueFieldName,
-                                value,
-                            );
-                            freeEmissionsEstimateForm.setFieldTouched(
-                                closingDateField.valueFieldName,
-                                true,
-                                false,
-                            );
-                        }}
-                    />
-                </Grid>
-            </Grid>
-            <Grid
-                container
-                spacing={8}
-                className={classes.estimatedAnnualThroughputContainer}
-            >
-                <Grid item xs={12}>
-                    <LabelWithTooltip
-                        label={estimatedAnnualThroughputField.label}
-                        tooltipText={estimatedAnnualThroughputField.tooltipText}
-                    />
-                </Grid>
-                <Grid item xs={12}>
-                    <TextField
-                        value={
-                            freeEmissionsEstimateForm.values
-                                .estimatedAnnualThroughput
-                        }
-                        placeholder={estimatedAnnualThroughputField.placeholder}
-                        helperText={
-                            estimatedAnnualThroughputHasError && (
-                                <InputErrorText
-                                    text={
-                                        freeEmissionsEstimateForm.errors
-                                            .estimatedAnnualThroughput
-                                    }
-                                />
-                            )
-                        }
-                        error={estimatedAnnualThroughputHasError}
-                        onChange={event => {
-                            freeEmissionsEstimateForm.setFieldValue(
-                                estimatedAnnualThroughputField.valueFieldName,
-                                event.target.value,
-                            );
-                            freeEmissionsEstimateForm.setFieldTouched(
-                                estimatedAnnualThroughputField.valueFieldName,
-                                true,
-                                false,
-                            );
-                        }}
-                        variant="outlined"
-                        fullWidth
-                    />
-                </Grid>
-            </Grid>
-            <Grid container spacing={8}>
-                <Grid item xs={12}>
-                    <Typography
-                        variant="subheading"
-                        className={classes.energyConsumptionTitle}
-                    >
-                        {energyConsumptionLabel.label}
-                    </Typography>
-                </Grid>
-                {energySourcesData.map(energyData => (
-                    <Grid item xs={12} key={energyData.source.label}>
-                        <EnergySourceInput
-                            source={energyData.source}
-                            freeEmissionsEstimateForm={
-                                freeEmissionsEstimateForm
-                            }
-                            enabledFieldName={energyData.enabledFieldName}
-                            valueFieldName={energyData.valueFieldName}
-                        />
-                    </Grid>
-                ))}
-            </Grid>
-        </div>
-    );
-};
+}) => (
+    <EmissionsEstimateForm
+        formData={formData}
+        updateOpeningDate={updateOpeningDate}
+        updateClosingDate={updateClosingDate}
+        updateEstimatedAnnualThroughput={updateEstimatedAnnualThroughput}
+        updateEnergyCoal={updateEnergyCoal}
+        updateEnergyNaturalGas={updateEnergyNaturalGas}
+        updateEnergyDiesel={updateEnergyDiesel}
+        updateEnergyKerosene={updateEnergyKerosene}
+        updateEnergyBiomass={updateEnergyBiomass}
+        updateEnergyCharcoal={updateEnergyCharcoal}
+        updateEnergyAnimalWaste={updateEnergyAnimalWaste}
+        updateEnergyElectricity={updateEnergyElectricity}
+        updateEnergyOther={updateEnergyOther}
+        updateEnergyCoalEnabled={updateEnergyCoalEnabled}
+        updateEnergyNaturalGasEnabled={updateEnergyNaturalGasEnabled}
+        updateEnergyDieselEnabled={updateEnergyDieselEnabled}
+        updateEnergyKeroseneEnabled={updateEnergyKeroseneEnabled}
+        updateEnergyBiomassEnabled={updateEnergyBiomassEnabled}
+        updateEnergyCharcoalEnabled={updateEnergyCharcoalEnabled}
+        updateEnergyAnimalWasteEnabled={updateEnergyAnimalWasteEnabled}
+        updateEnergyElectricityEnabled={updateEnergyElectricityEnabled}
+        updateEnergyOtherEnabled={updateEnergyOtherEnabled}
+        onValidationChange={onValidationChange}
+        disabled={false}
+    />
+);
 
 ClaimEmissionsEstimate.propTypes = {
-    // Redux state.
     formData: object.isRequired,
-    // Redux dispatch functions.
     updateOpeningDate: func.isRequired,
     updateClosingDate: func.isRequired,
     updateEstimatedAnnualThroughput: func.isRequired,
@@ -387,8 +84,6 @@ ClaimEmissionsEstimate.propTypes = {
     updateEnergyAnimalWasteEnabled: func.isRequired,
     updateEnergyElectricityEnabled: func.isRequired,
     updateEnergyOtherEnabled: func.isRequired,
-    // Other props.
-    classes: object.isRequired,
     onValidationChange: func.isRequired,
 };
 
@@ -419,39 +114,101 @@ const mapStateToProps = ({ claimForm: { formData } }) => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    updateOpeningDate: date => dispatch(updateClaimFormField(date)),
-    updateClosingDate: date => dispatch(updateClaimFormField(date)),
+    updateOpeningDate: date =>
+        dispatch(updateClaimFormField({ field: 'openingDate', value: date })),
+    updateClosingDate: date =>
+        dispatch(updateClaimFormField({ field: 'closingDate', value: date })),
     updateEstimatedAnnualThroughput: value =>
-        dispatch(updateClaimFormField(value)),
-    updateEnergyCoal: value => dispatch(updateClaimFormField(value)),
-    updateEnergyNaturalGas: value => dispatch(updateClaimFormField(value)),
-    updateEnergyDiesel: value => dispatch(updateClaimFormField(value)),
-    updateEnergyKerosene: value => dispatch(updateClaimFormField(value)),
-    updateEnergyBiomass: value => dispatch(updateClaimFormField(value)),
-    updateEnergyCharcoal: value => dispatch(updateClaimFormField(value)),
-    updateEnergyAnimalWaste: value => dispatch(updateClaimFormField(value)),
-    updateEnergyElectricity: value => dispatch(updateClaimFormField(value)),
-    updateEnergyOther: value => dispatch(updateClaimFormField(value)),
-    updateEnergyCoalEnabled: enabled => dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'estimatedAnnualThroughput',
+                value,
+            }),
+        ),
+    updateEnergyCoal: value =>
+        dispatch(updateClaimFormField({ field: 'energyCoal', value })),
+    updateEnergyNaturalGas: value =>
+        dispatch(updateClaimFormField({ field: 'energyNaturalGas', value })),
+    updateEnergyDiesel: value =>
+        dispatch(updateClaimFormField({ field: 'energyDiesel', value })),
+    updateEnergyKerosene: value =>
+        dispatch(updateClaimFormField({ field: 'energyKerosene', value })),
+    updateEnergyBiomass: value =>
+        dispatch(updateClaimFormField({ field: 'energyBiomass', value })),
+    updateEnergyCharcoal: value =>
+        dispatch(updateClaimFormField({ field: 'energyCharcoal', value })),
+    updateEnergyAnimalWaste: value =>
+        dispatch(updateClaimFormField({ field: 'energyAnimalWaste', value })),
+    updateEnergyElectricity: value =>
+        dispatch(updateClaimFormField({ field: 'energyElectricity', value })),
+    updateEnergyOther: value =>
+        dispatch(updateClaimFormField({ field: 'energyOther', value })),
+    updateEnergyCoalEnabled: enabled =>
+        dispatch(
+            updateClaimFormField({
+                field: 'energyCoalEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyNaturalGasEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyNaturalGasEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyDieselEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyDieselEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyKeroseneEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyKeroseneEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyBiomassEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyBiomassEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyCharcoalEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyCharcoalEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyAnimalWasteEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyAnimalWasteEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyElectricityEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyElectricityEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyOtherEnabled: enabled =>
-        dispatch(updateClaimFormField(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyOtherEnabled',
+                value: enabled,
+            }),
+        ),
 });
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(freeEmissionsEstimateStyles)(ClaimEmissionsEstimate));
+)(ClaimEmissionsEstimate);
