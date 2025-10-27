@@ -23,7 +23,6 @@ jest.mock('react-router-dom', () => {
 });
 
 jest.mock('../../components/Filters/StyledSelect', () => {
-    const React = require('react');
     const PropTypes = require('prop-types');
 
     const MockStyledSelect = ({

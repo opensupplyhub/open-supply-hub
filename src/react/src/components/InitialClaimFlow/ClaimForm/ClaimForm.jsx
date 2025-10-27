@@ -204,12 +204,12 @@ const ClaimForm = ({
 
         claimForm.setTouched({ ...claimForm.touched, ...touchedFields });
 
-        // Use Formik's validateForm to avoid stale values when clicking quickly.
-        await claimForm.validateForm();
+        // Use Formik's validateForm and rely on the returned latest errors.
+        const latestErrors = await claimForm.validateForm();
 
         // Proceed only if the CURRENT STEP has no errors.
         const hasCurrentStepErrors = Object.keys(schemaFields).some(
-            field => claimForm.errors[field],
+            field => latestErrors && latestErrors[field],
         );
 
         if (!hasCurrentStepErrors) {
