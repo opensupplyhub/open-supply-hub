@@ -65,16 +65,12 @@ const claimFormStyles = theme =>
             },
         }),
         sectionTitle: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
             fontSize: '1.25rem',
             fontWeight: 600,
             marginBottom: theme.spacing.unit * 2,
-        }),
-        titleStyles: Object.freeze({
-            fontSize: '36px',
-            fontWeight: theme.typography.fontWeightSemiBoldPlus,
-            gap: '5px',
-            display: 'flex',
-            alignItems: 'center',
         }),
         sectionDescription: Object.freeze({
             fontSize: '0.875rem',
