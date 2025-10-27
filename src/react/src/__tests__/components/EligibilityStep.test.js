@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep';
+import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
 import { mainRoute } from '../../util/constants';
 
 const mockHistoryPush = jest.fn();
@@ -22,16 +22,25 @@ jest.mock('react-router-dom', () => {
     };
 });
 
-jest.mock('../../components/Filters/StyledSelect', () => props => {
-    const { options, value, onChange, onBlur, placeholder, name } = props;
-    return (
+jest.mock('../../components/Filters/StyledSelect', () => {
+    const React = require('react');
+    const PropTypes = require('prop-types');
+
+    const MockStyledSelect = ({
+        options,
+        value,
+        onChange,
+        onBlur,
+        placeholder,
+        name,
+    }) => (
         <select
             data-testid="relationship-select"
             name={name}
             value={value ? value.value : ''}
             onChange={e => {
                 const selectedOption = options.find(
-                    opt => opt.value === e.target.value
+                    opt => opt.value === e.target.value,
                 );
                 onChange(selectedOption);
             }}
@@ -45,6 +54,28 @@ jest.mock('../../components/Filters/StyledSelect', () => props => {
             ))}
         </select>
     );
+
+    MockStyledSelect.propTypes = {
+        options: PropTypes.arrayOf(
+            PropTypes.shape({
+                value: PropTypes.string.isRequired,
+                label: PropTypes.string.isRequired,
+            }),
+        ).isRequired,
+        value: PropTypes.oneOfType([
+            PropTypes.shape({
+                value: PropTypes.string,
+                label: PropTypes.string,
+            }),
+            PropTypes.oneOf([null]),
+        ]),
+        onChange: PropTypes.func.isRequired,
+        onBlur: PropTypes.func,
+        placeholder: PropTypes.string,
+        name: PropTypes.string,
+    };
+
+    return MockStyledSelect;
 });
 
 describe('EligibilityStep component', () => {
