@@ -46,16 +46,22 @@ const EligibilityStep = ({
     classes,
     formData,
     handleChange,
+    errors,
+    touched,
     userEmail,
     organizationName,
+    handleBlur,
 }) => {
     const history = useHistory();
-    const [relationshipTouched, setRelationshipTouched] = useState(false);
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
     const selectedRelationship = formData.relationship || null;
 
-    const isRelationshipError = relationshipTouched && !selectedRelationship;
+    // If we choose partner or other on first render, we highlight the field with an error.
+    const isRelationshipError = Boolean(
+        touched?.relationship &&
+            (errors?.relationship || !selectedRelationship),
+    );
 
     const handleCloseIneligibleDialog = () => {
         // Close dialog without altering previously selected valid relationship.
@@ -99,6 +105,7 @@ const EligibilityStep = ({
                             aria-label="Select your relationship to this production location"
                             label={null}
                             options={RELATIONSHIP_OPTIONS}
+                            onBlur={() => handleBlur('relationship')}
                             value={selectedRelationship}
                             onChange={value => {
                                 if (
@@ -109,10 +116,8 @@ const EligibilityStep = ({
                                     setIneligibleDialogOpen(true);
                                 } else {
                                     handleChange('relationship', value);
-                                    setRelationshipTouched(true);
                                 }
                             }}
-                            onBlur={() => setRelationshipTouched(true)}
                             styles={getSelectStyles(isRelationshipError)}
                             placeholder="Select your relationship to this production location"
                             isMulti={false}

@@ -129,12 +129,12 @@ const ClaimForm = ({
     };
 
     // Initialize form with custom hook with Formik inside.
-    const { claimForm, handleFieldChange, isButtonDisabled } = useClaimForm(
-        formData,
-        activeStep,
-        updateField,
-        handleSubmit,
-    );
+    const {
+        claimForm,
+        handleFieldChange,
+        handleBlur,
+        isButtonDisabled,
+    } = useClaimForm(formData, activeStep, updateField, handleSubmit);
 
     // Check authentication.
     if (!userHasSignedIn) {
@@ -263,7 +263,7 @@ const ClaimForm = ({
                         <StepComponent
                             formData={claimForm.values}
                             handleChange={handleFieldChange}
-                            handleBlur={claimForm.handleBlur}
+                            handleBlur={handleBlur}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
                         />
