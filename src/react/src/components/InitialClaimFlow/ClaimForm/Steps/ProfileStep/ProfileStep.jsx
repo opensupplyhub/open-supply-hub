@@ -53,6 +53,10 @@ const ProfileStep = ({
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
+    const [shouldHideBusinessWebsite] = useState(
+        () => !!formData.businessWebsite,
+    );
+
     useEffect(() => {
         if (onEmissionsValidationChange) {
             onEmissionsValidationChange(claimEmissionsEstimateHasErrors);
@@ -222,7 +226,7 @@ const ProfileStep = ({
                             </Grid>
 
                             {/* Facility Website - Hidden if businessWebsite is already provided */}
-                            {!formData.businessWebsite && (
+                            {!shouldHideBusinessWebsite && (
                                 <Grid item xs={12} md={6}>
                                     <div className={classes.field}>
                                         <div className={classes.fieldLabel}>
