@@ -27,7 +27,6 @@ const initialState = Object.freeze({
         // Profile step - Production Location Overview.
         localLanguageName: '',
         facilityPhone: '',
-        facilityWebsite: '',
         description: '',
 
         // Profile step - Company Information.

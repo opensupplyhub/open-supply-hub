@@ -353,60 +353,66 @@ const ProfileStep = ({
                                 </div>
                             </Grid>
 
-                            {/* Facility Website */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Company Website
-                                        </Typography>
-                                        <Tooltip
-                                            title="Official website URL for this specific production location (if available)"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
+                            {/* Facility Website - Hidden if businessWebsite is already provided */}
+                            {!formData.businessWebsite && (
+                                <Grid item xs={12} md={6}>
+                                    <div className={classes.field}>
+                                        <div className={classes.fieldLabel}>
+                                            <Typography
+                                                variant="body2"
+                                                component="label"
+                                                style={{ fontSize: '16px' }}
                                             >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                                Company Website
+                                            </Typography>
+                                            <Tooltip
+                                                title="Official website URL for this specific production location (if available)"
+                                                placement="top"
+                                                classes={{
+                                                    tooltip: classes.tooltip,
+                                                }}
+                                            >
+                                                <IconButton
+                                                    size="small"
+                                                    disableRipple
+                                                    className={
+                                                        classes.helpIconButton
+                                                    }
+                                                >
+                                                    <HelpOutline
+                                                        className={
+                                                            classes.helpIcon
+                                                        }
+                                                    />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </div>
+                                        <TextField
+                                            fullWidth
+                                            variant="outlined"
+                                            value={
+                                                formData.businessWebsite || ''
+                                            }
+                                            onChange={e =>
+                                                handleChange(
+                                                    'businessWebsite',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            onBlur={handleBlur}
+                                            placeholder="https://company.com"
+                                            error={
+                                                touched.businessWebsite &&
+                                                !!errors.businessWebsite
+                                            }
+                                            helperText={
+                                                touched.businessWebsite &&
+                                                errors.businessWebsite
+                                            }
+                                        />
                                     </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.facilityWebsite || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'facilityWebsite',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="https://company.com"
-                                        error={
-                                            touched.facilityWebsite &&
-                                            !!errors.facilityWebsite
-                                        }
-                                        helperText={
-                                            touched.facilityWebsite &&
-                                            errors.facilityWebsite
-                                        }
-                                    />
-                                </div>
-                            </Grid>
+                                </Grid>
+                            )}
                         </Grid>
 
                         {/* Description */}
@@ -955,7 +961,6 @@ const ProfileStep = ({
                                     <TextField
                                         fullWidth
                                         variant="outlined"
-                                        type="number"
                                         value={formData.numberOfWorkers || ''}
                                         onChange={e =>
                                             handleChange(
