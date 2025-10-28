@@ -34,9 +34,10 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep', () =
     <div data-testid="business-step">Business Step</div>
 ));
 
-jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep', () => () => (
-    <div data-testid="profile-step">Profile Step</div>
-));
+jest.mock(
+    '../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep',
+    () => () => <div data-testid="profile-step">Profile Step</div>,
+);
 
 describe('ClaimForm component', () => {
     const mockOsID = 'TEST123';
