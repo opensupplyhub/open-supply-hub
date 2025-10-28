@@ -1,11 +1,10 @@
-/* eslint-disable import/prefer-default-export */
 import { useEffect } from 'react';
 
 /**
  * Custom hook to handle verification URL field clearing when verification method changes.
  * Clears the URL field when switching between different verification methods.
  */
-export const useVerificationMethodChange = (
+const useVerificationMethodChange = (
     verificationMethod,
     prevVerificationMethod,
     handleFieldChange,
@@ -15,8 +14,10 @@ export const useVerificationMethodChange = (
             verificationMethod !== prevVerificationMethod &&
             prevVerificationMethod
         ) {
-            // Clear verification URL when switching methods
+            // Clear verification URL when switching methods.
             handleFieldChange('verificationUrl', '');
         }
     }, [verificationMethod, prevVerificationMethod, handleFieldChange]);
 };
+
+export default useVerificationMethodChange;

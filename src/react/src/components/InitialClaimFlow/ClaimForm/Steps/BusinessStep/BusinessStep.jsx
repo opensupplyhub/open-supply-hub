@@ -25,7 +25,7 @@ import {
     getUrlLabel,
     buildProductionLocationUrl,
 } from './utils';
-import { useVerificationMethodChange } from './hooks';
+import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
 
 const BusinessStep = ({
@@ -41,14 +41,14 @@ const BusinessStep = ({
         formData.companyAddressVerification || '',
     );
 
-    // Update previous verification method when it changes
+    // Update previous verification method when it changes.
     useEffect(() => {
         if (formData.companyAddressVerification !== prevVerificationMethod) {
             setPrevVerificationMethod(formData.companyAddressVerification);
         }
     }, [formData.companyAddressVerification]);
 
-    // Clear verification URL when verification method changes
+    // Clear verification URL when verification method changes.
     useVerificationMethodChange(
         formData.companyAddressVerification,
         prevVerificationMethod,
@@ -65,7 +65,7 @@ const BusinessStep = ({
     const locationAddress = productionLocationData?.address || '';
     const productionLocationUrl = buildProductionLocationUrl(osId);
 
-    // Convert verification options to format expected by StyledSelect
+    // Convert verification options to format expected by StyledSelect.
     const verificationOptions = COMPANY_ADDRESS_VERIFICATION_OPTIONS.map(
         option => ({
             value: option.value,
@@ -73,7 +73,7 @@ const BusinessStep = ({
         }),
     );
 
-    // Convert selected verification method to format expected by StyledSelect
+    // Convert selected verification method to format expected by StyledSelect.
     const selectedVerificationMethod = formData.companyAddressVerification
         ? verificationOptions.find(
               opt => opt.value === formData.companyAddressVerification,
@@ -98,9 +98,7 @@ const BusinessStep = ({
                             Verify the company address for this production
                             location
                         </Typography>
-
-                        {/* Production Location Details */}
-                        <div className={classes.section}>
+                        <Grid item xs={12} className={classes.section}>
                             <Typography
                                 variant="subtitle1"
                                 className={classes.sectionTitle}
@@ -156,10 +154,12 @@ const BusinessStep = ({
                                     />
                                 </Grid>
                             </Grid>
-                        </div>
-
-                        {/* Company Address Verification */}
-                        <div className={classes.verificationSection}>
+                        </Grid>
+                        <Grid
+                            item
+                            xs={12}
+                            className={classes.verificationSection}
+                        >
                             <Typography
                                 variant="subtitle1"
                                 className={classes.sectionTitle}
@@ -173,7 +173,7 @@ const BusinessStep = ({
                                 items for company address verification.
                             </Typography>
 
-                            <div className={classes.selectStyles}>
+                            <Grid item xs={12} className={classes.selectStyles}>
                                 <StyledSelect
                                     id="companyAddressVerification"
                                     name="companyAddressVerification"
@@ -212,9 +212,7 @@ const BusinessStep = ({
                                             {errors.companyAddressVerification}
                                         </Typography>
                                     )}
-                            </div>
-
-                            {/* URL Input for website/LinkedIn verification */}
+                            </Grid>
                             {showUrlInput && (
                                 <Grid container spacing={16}>
                                     <Grid item xs={12}>
@@ -254,10 +252,12 @@ const BusinessStep = ({
                                     </Grid>
                                 </Grid>
                             )}
-
-                            {/* Document Upload for document-based verification */}
                             {showDocumentUpload && (
-                                <div className={classes.uploaderContainer}>
+                                <Grid
+                                    item
+                                    xs={12}
+                                    className={classes.uploaderContainer}
+                                >
                                     <ClaimAttachmentsUploader
                                         inputId="company-address-verification-documents"
                                         title="Upload your documents"
@@ -271,21 +271,25 @@ const BusinessStep = ({
                                             )
                                         }
                                     />
-                                </div>
+                                </Grid>
                             )}
-                        </div>
-
-                        {/* Important Notice */}
-                        <div className={classes.importantNotice}>
-                            <Warning className={classes.noticeIcon} />
-                            <div>
+                        </Grid>
+                        <Grid
+                            container
+                            className={classes.importantNotice}
+                            wrap="nowrap"
+                        >
+                            <Grid item>
+                                <Warning className={classes.noticeIcon} />
+                            </Grid>
+                            <Grid item xs>
                                 <Typography className={classes.noticeText}>
                                     <strong>IMPORTANT!</strong> Verification
                                     documents must show the same name and
                                     address as listed on Open Supply Hub.
                                 </Typography>
-                            </div>
-                        </div>
+                            </Grid>
+                        </Grid>
                     </CardContent>
                 </Card>
             </Grid>
