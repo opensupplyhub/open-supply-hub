@@ -64,15 +64,6 @@ const iconMapping = {
 
 const getIconComponent = iconName => iconMapping[iconName] || Security;
 
-const iconMapping = {
-    Security,
-    People,
-    Language,
-    Business,
-};
-
-const getIconComponent = iconName => iconMapping[iconName] || Security;
-
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,
     [CLAIM_FORM_STEPS.CONTACT]: ContactInfoStep,
@@ -257,7 +248,7 @@ const ClaimForm = ({
                     <Paper className={classes.paper}>
                         <Typography
                             variant="title"
-                            className={classes.titleStyles}
+                            className={classes.stepTitleStyles}
                         >
                             {(() => {
                                 const IconName = getIconComponent(

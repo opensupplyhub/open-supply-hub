@@ -64,7 +64,7 @@ const claimFormStyles = theme =>
                 cursor: 'not-allowed',
             },
         }),
-        titleStyles: Object.freeze({
+        stepTitleStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             gap: '5px',
