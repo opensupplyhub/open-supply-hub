@@ -12,6 +12,7 @@ import contactInfoStepStyles from './styles';
 import EMPLOYMENT_VERIFICATION_OPTIONS from './constants';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
+import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 
 const ContactInfoStep = ({
     classes,
@@ -29,6 +30,13 @@ const ContactInfoStep = ({
         touched?.employmentVerification &&
             (errors?.employmentVerification || !employmentOption),
     );
+    const showUploadBlock = Boolean(
+        employmentOption &&
+            employmentOption.value !== 'company_website' &&
+            employmentOption.value !== 'linkedin_page',
+    );
+    const showWebsiteUrlField = employmentOption?.value === 'company_website';
+    const showLinkedInUrlField = employmentOption?.value === 'linkedin_page';
 
     return (
         <Grid container spacing={24}>
@@ -162,6 +170,93 @@ const ContactInfoStep = ({
                         </div>
                     </div>
 
+                    {showUploadBlock && (
+                        <div className={classes.gridSpacing}>
+                            <ClaimAttachmentsUploader
+                                inputId="employment-verification-upload"
+                                title={
+                                    'Upload your documents/photos\nPlease upload one or more clear photos or scans of your selected verification method. You can upload multiple files.'
+                                }
+                                files={
+                                    formData.employmentVerificationFiles || []
+                                }
+                                updateUploadFiles={newFiles =>
+                                    handleChange(
+                                        'employmentVerificationFiles',
+                                        newFiles,
+                                    )
+                                }
+                            />
+                        </div>
+                    )}
+
+                    {showWebsiteUrlField && (
+                        <div className={classes.gridSpacing}>
+                            <TextField
+                                fullWidth
+                                required
+                                type="url"
+                                name="employmentVerificationUrl"
+                                label="Website URL"
+                                value={formData.employmentVerificationUrl || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'employmentVerificationUrl',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={() =>
+                                    handleBlur('employmentVerificationUrl')
+                                }
+                                className={classes.textField}
+                                placeholder="https://example.com/team"
+                                error={
+                                    touched?.employmentVerificationUrl &&
+                                    Boolean(errors?.employmentVerificationUrl)
+                                }
+                                helperText={
+                                    touched?.employmentVerificationUrl &&
+                                    errors?.employmentVerificationUrl
+                                }
+                            />
+                        </div>
+                    )}
+
+                    {showLinkedInUrlField && (
+                        <div className={classes.gridSpacing}>
+                            <TextField
+                                fullWidth
+                                required
+                                type="url"
+                                name="employmentVerificationUrl"
+                                label="LinkedIn Profile URL"
+                                value={formData.employmentVerificationUrl || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'employmentVerificationUrl',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={() =>
+                                    handleBlur('employmentVerificationUrl')
+                                }
+                                className={classes.textField}
+                                placeholder="https://linkedin.com/in/yourprofile"
+                                error={
+                                    touched?.employmentVerificationUrl &&
+                                    Boolean(errors?.employmentVerificationUrl)
+                                }
+                                helperText={
+                                    touched?.employmentVerificationUrl &&
+                                    errors?.employmentVerificationUrl
+                                }
+                            />
+                        </div>
+                    )}
+
+                    <Typography className={classes.sectionTitle}>
+                        Production Location Contact Person
+                    </Typography>
                     <div className={classes.publicContactBox}>
                         <div className={classes.publicContactRow}>
                             <div>
@@ -191,10 +286,6 @@ const ContactInfoStep = ({
                             </div>
                         </div>
                     </div>
-
-                    <Typography className={classes.sectionTitle}>
-                        Production Location Contact Person
-                    </Typography>
 
                     {isPublic && (
                         <Grid

@@ -18,6 +18,9 @@ const initialState = Object.freeze({
         // Contact step.
         contactEmail: '',
         contactPhone: '',
+        employmentVerification: null,
+        employmentVerificationUrl: '',
+        employmentVerificationFiles: [],
 
         // Business step.
         locationAddressVerificationMethod: '',

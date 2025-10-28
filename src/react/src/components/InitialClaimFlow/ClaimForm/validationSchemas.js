@@ -18,6 +18,30 @@ export const contactStepSchema = Yup.object().shape({
         .email('Invalid email address')
         .required('Contact email is required'),
     contactPhone: Yup.string(),
+    employmentVerification: Yup.object()
+        .nullable()
+        .required('Please select an employment verification option'),
+    employmentVerificationUrl: Yup.string()
+        .nullable()
+        .when('employmentVerification', {
+            is: value =>
+                value &&
+                (value.value === 'company_website' ||
+                    value.value === 'linkedin_page'),
+            then: schema =>
+                schema.required('A valid URL is required').url('Invalid URL'),
+            otherwise: schema => schema.nullable(),
+        }),
+    employmentVerificationFiles: Yup.array()
+        .nullable()
+        .when('employmentVerification', {
+            is: value =>
+                value &&
+                value.value !== 'company_website' &&
+                value.value !== 'linkedin_page',
+            then: schema => schema.min(1, 'Please upload at least one file'),
+            otherwise: schema => schema.nullable(),
+        }),
 });
 
 // Step 3: Business validation.
