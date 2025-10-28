@@ -7,16 +7,6 @@ const businessStepStyles = theme =>
             boxShadow: 'none',
             border: `1px solid ${COLOURS.GREY}`,
         }),
-        cardHeader: Object.freeze({
-            backgroundColor: '#f9fafb',
-            paddingTop: theme.spacing.unit * 2,
-            paddingBottom: theme.spacing.unit * 2,
-        }),
-        headerIcon: Object.freeze({
-            marginRight: theme.spacing.unit,
-            verticalAlign: 'middle',
-            fontSize: '1.25rem',
-        }),
         content: Object.freeze({
             padding: theme.spacing.unit * 3,
         }),

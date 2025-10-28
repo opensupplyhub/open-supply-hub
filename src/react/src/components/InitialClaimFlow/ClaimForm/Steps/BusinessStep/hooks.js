@@ -15,7 +15,8 @@ const useVerificationMethodChange = (
             prevVerificationMethod
         ) {
             // Clear verification URL when switching methods.
-            handleFieldChange('verificationUrl', '');
+            console.log(handleFieldChange);
+            // handleFieldChange('verificationUrl', '');
         }
     }, [verificationMethod, prevVerificationMethod, handleFieldChange]);
 };

@@ -88,6 +88,7 @@ export const useClaimForm = (
 
         // Mark fields with values as touched when returning to a step.
         const fieldsToTouch = {};
+        console.log('currentStepFields', currentStepFields);
         currentStepFields.forEach(field => {
             if (formik.values[field] && formik.values[field] !== '') {
                 fieldsToTouch[field] = true;
@@ -97,6 +98,7 @@ export const useClaimForm = (
         if (Object.keys(fieldsToTouch).length > 0) {
             formik.setTouched(fieldsToTouch);
         }
+        console.log('fieldsToTouch', fieldsToTouch);
 
         // Validate to populate errors for current step.
         formik.validateForm();
@@ -127,7 +129,12 @@ export const useClaimForm = (
         const hasCurrentStepErrors = currentStepFields.some(
             field => formik.errors[field],
         );
-
+        console.log(
+            'hasInteractedWithCurrentStep',
+            hasInteractedWithCurrentStep,
+        );
+        console.log('hasCurrentStepErrors', hasCurrentStepErrors);
+        console.log('currentStepFields', currentStepFields);
         // Only disable button if user has interacted AND there are errors.
         return hasInteractedWithCurrentStep && hasCurrentStepErrors;
     };

@@ -6,9 +6,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
-import CardHeader from '@material-ui/core/CardHeader';
 import TextField from '@material-ui/core/TextField';
-import Language from '@material-ui/icons/Language';
 import Warning from '@material-ui/icons/Warning';
 
 import RequiredAsterisk from '../../../../RequiredAsterisk';
@@ -27,6 +25,7 @@ import {
 } from './utils';
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
+import findSelectedOption from '../utils';
 
 const BusinessStep = ({
     classes,
@@ -55,9 +54,14 @@ const BusinessStep = ({
         handleChange,
     );
 
-    const showUrlInput = requiresUrlInput(formData.companyAddressVerification);
-    const showDocumentUpload = requiresDocumentUpload(
+    const selectedVerificationMethod = findSelectedOption(
+        COMPANY_ADDRESS_VERIFICATION_OPTIONS,
         formData.companyAddressVerification,
+    );
+
+    const showUrlInput = requiresUrlInput(selectedVerificationMethod?.value);
+    const showDocumentUpload = requiresDocumentUpload(
+        selectedVerificationMethod?.value,
     );
 
     const osId = productionLocationData?.os_id || '';
@@ -65,42 +69,21 @@ const BusinessStep = ({
     const locationAddress = productionLocationData?.address || '';
     const productionLocationUrl = buildProductionLocationUrl(osId);
 
-    // Convert verification options to format expected by StyledSelect.
-    const verificationOptions = COMPANY_ADDRESS_VERIFICATION_OPTIONS.map(
-        option => ({
-            value: option.value,
-            label: option.label,
-        }),
+    // This checks if the company address verification field has been touched and either has validation errors
+    // or no value selected.
+    const isCompanyAddressVerificationError = !!(
+        touched?.companyAddressVerification &&
+        errors?.companyAddressVerification
     );
-
-    // Convert selected verification method to format expected by StyledSelect.
-    const selectedVerificationMethod = formData.companyAddressVerification
-        ? verificationOptions.find(
-              opt => opt.value === formData.companyAddressVerification,
-          )
-        : null;
 
     return (
         <Grid container spacing={24}>
             <Grid item xs={12}>
                 <Card className={classes.card}>
-                    <CardHeader
-                        className={classes.cardHeader}
-                        title={
-                            <Typography variant="title">
-                                <Language className={classes.headerIcon} />
-                                Business Information
-                            </Typography>
-                        }
-                    />
                     <CardContent className={classes.content}>
-                        <Typography variant="body1" className={classes.section}>
-                            Verify the company address for this production
-                            location
-                        </Typography>
                         <Grid item xs={12} className={classes.section}>
                             <Typography
-                                variant="subtitle1"
+                                variant="subheading"
                                 className={classes.sectionTitle}
                             >
                                 Production Location Details
@@ -161,7 +144,7 @@ const BusinessStep = ({
                             className={classes.verificationSection}
                         >
                             <Typography
-                                variant="subtitle1"
+                                variant="subheading"
                                 className={classes.sectionTitle}
                             >
                                 Company Address Verification{' '}
@@ -178,40 +161,30 @@ const BusinessStep = ({
                                     id="companyAddressVerification"
                                     name="companyAddressVerification"
                                     aria-label="Company Address Verification"
-                                    options={verificationOptions}
+                                    options={
+                                        COMPANY_ADDRESS_VERIFICATION_OPTIONS
+                                    }
                                     value={selectedVerificationMethod}
-                                    onChange={value => {
+                                    onChange={valueObject => {
                                         handleChange(
                                             'companyAddressVerification',
-                                            value ? value.value : '',
+                                            valueObject.label,
                                         );
                                     }}
-                                    onBlur={e => {
-                                        const event = {
-                                            ...e,
-                                            target: {
-                                                ...e.target,
-                                                name:
-                                                    'companyAddressVerification',
-                                            },
-                                        };
-                                        handleBlur(event);
-                                    }}
+                                    onBlur={() =>
+                                        handleBlur('companyAddressVerification')
+                                    }
                                     styles={getSelectStyles(
-                                        touched.companyAddressVerification &&
-                                            !!errors.companyAddressVerification,
+                                        isCompanyAddressVerificationError,
                                     )}
                                     placeholder="Choose ONE"
                                     isMulti={false}
                                 />
-                                {touched.companyAddressVerification &&
-                                    errors.companyAddressVerification && (
-                                        <Typography
-                                            className={classes.errorText}
-                                        >
-                                            {errors.companyAddressVerification}
-                                        </Typography>
-                                    )}
+                                {isCompanyAddressVerificationError && (
+                                    <Typography className={classes.errorText}>
+                                        {errors.companyAddressVerification}
+                                    </Typography>
+                                )}
                             </Grid>
                             {showUrlInput && (
                                 <Grid container spacing={16}>

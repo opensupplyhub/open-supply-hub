@@ -16,6 +16,9 @@ start: ## Start project from scratch with seeded data (uses ./scripts/start_loca
 up: ## Start all containers (docker compose up -d)
 	docker compose up -d
 
+stop: ## Stop all containers (docker compose stop)
+	docker compose stop
+
 build: ## Build all Docker images
 	docker compose build
 

@@ -21,9 +21,8 @@ export const businessStepSchema = Yup.object().shape({
     companyAddressVerification: Yup.string().required(
         'Company address verification method is required',
     ),
-    verificationUrl: Yup.string().when(
-        'companyAddressVerification',
-        (val, schema) => {
+    verificationUrl: Yup.string()
+        .when('companyAddressVerification', (val, schema) => {
             if (
                 val === 'company-website-address' ||
                 val === 'linkedin-address'
@@ -33,11 +32,10 @@ export const businessStepSchema = Yup.object().shape({
                     .required('Verification URL is required');
             }
             return schema.nullable();
-        },
-    ),
-    verificationDocuments: Yup.array().when(
-        'companyAddressVerification',
-        (val, schema) => {
+        })
+        .required('Verification URL is required'),
+    verificationDocuments: Yup.array()
+        .when('companyAddressVerification', (val, schema) => {
             if (
                 val === 'utility-bill' ||
                 val === 'business-registration' ||
@@ -50,8 +48,8 @@ export const businessStepSchema = Yup.object().shape({
                     .required('Verification documents are required');
             }
             return schema.nullable();
-        },
-    ),
+        })
+        .required('Verification documents are required'),
 });
 
 // Step 4: Profile validation (all optional fields).
