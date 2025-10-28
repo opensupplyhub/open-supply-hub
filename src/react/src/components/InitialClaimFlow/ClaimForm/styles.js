@@ -64,15 +64,18 @@ const claimFormStyles = theme =>
                 cursor: 'not-allowed',
             },
         }),
-        sectionTitle: Object.freeze({
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            marginBottom: theme.spacing.unit * 2,
+        titleStyles: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            fontSize: '36px',
+            lineHeight: '40px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
         sectionDescription: Object.freeze({
-            fontSize: '0.875rem',
-            color: COLOURS.DARK_GREY,
-            marginBottom: theme.spacing.unit * 3,
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: '0 0 20px 0',
         }),
         loadingContainer: Object.freeze({
             display: 'flex',

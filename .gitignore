@@ -102,3 +102,4 @@ dumps
 
 # Cursor
 .cursor-rules
+.cursor-test-conventions.md

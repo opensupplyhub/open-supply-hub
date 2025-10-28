@@ -13,8 +13,7 @@ const initialState = Object.freeze({
     completedSteps: [],
     formData: Object.freeze({
         // Eligibility step.
-        position: '',
-        yearsAtCompany: '',
+        relationship: null,
 
         // Contact step.
         contactEmail: '',
