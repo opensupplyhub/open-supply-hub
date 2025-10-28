@@ -204,18 +204,16 @@ const ClaimForm = ({
 
         claimForm.setTouched({ ...claimForm.touched, ...touchedFields });
 
-        // Use Formik's validateForm and rely on the returned latest errors.
-        const latestErrors = await claimForm.validateForm();
-
-        // Proceed only if the CURRENT STEP has no errors.
-        const hasCurrentStepErrors = Object.keys(schemaFields).some(
-            field => latestErrors && latestErrors[field],
-        );
-
-        if (!hasCurrentStepErrors) {
+        // Validate only the current step's fields, not the entire form.
+        try {
+            await schema.validate(claimForm.values, { abortEarly: false });
+            // If validation passes, proceed to next step.
             markComplete(activeStep);
             const nextStepIndex = getNextStep(activeStep);
             setStep(nextStepIndex);
+        } catch (validationErrors) {
+            // Validation failed for current step, stay on this step.
+            // Errors will be displayed via Formik's error state.
         }
     };
 
@@ -248,7 +246,7 @@ const ClaimForm = ({
                     <Paper className={classes.paper}>
                         <Typography
                             variant="title"
-                            className={classes.stepTitleStyles}
+                            className={classes.titleStyles}
                         >
                             {(() => {
                                 const IconName = getIconComponent(

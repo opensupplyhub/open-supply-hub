@@ -116,11 +116,13 @@ const EligibilityStep = ({
             </Grid>
 
             <Dialog open={ineligibleDialogOpen}>
-                <DialogTitle>Not Eligible to File Claim</DialogTitle>
+                <DialogTitle className={classes.dialogTitle}>
+                    Not Eligible to File Claim
+                </DialogTitle>
                 <DialogContent>
                     <Typography
                         variant="body1"
-                        style={{ textAlign: 'center', fontSize: '16px' }}
+                        className={classes.dialogBodyText}
                     >
                         You are not eligible to file a claim for this location.
                         Only the owner, manager, authorized employee, or a
@@ -129,7 +131,7 @@ const EligibilityStep = ({
                         to claim directly.
                     </Typography>
                 </DialogContent>
-                <DialogActions style={{ justifyContent: 'center' }}>
+                <DialogActions className={classes.dialogActions}>
                     <Button
                         variant="contained"
                         color="primary"

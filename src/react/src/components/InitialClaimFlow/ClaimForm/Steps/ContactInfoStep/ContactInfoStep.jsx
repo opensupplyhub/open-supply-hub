@@ -23,7 +23,6 @@ const ContactInfoStep = ({
     errors,
     touched,
     userEmail,
-    organizationName,
 }) => {
     const isPublic = Boolean(formData.publicContactEnabled);
     const employmentOption = formData.employmentVerification || null;
@@ -43,29 +42,9 @@ const ContactInfoStep = ({
         <Grid container spacing={24}>
             <Grid item xs={12}>
                 <div className={classes.accountInfoSection}>
-                    <div className={classes.accountInfoBox}>
-                        <div className={classes.accountInfoRow}>
-                            <span className={classes.accountInfoLabel}>
-                                Account email:
-                            </span>
-                            <span className={classes.accountInfoValue}>
-                                {userEmail || 'Not available'}
-                            </span>
-                        </div>
-                        <div className={classes.accountInfoRow}>
-                            <span className={classes.accountInfoLabel}>
-                                Organization name:
-                            </span>
-                            <span className={classes.accountInfoValue}>
-                                {organizationName || 'Not available'}
-                            </span>
-                        </div>
-                    </div>
-
                     <Typography className={classes.sectionTitle}>
                         Your Information (Claimant)
                     </Typography>
-
                     <Grid container spacing={16}>
                         <Grid item xs={12}>
                             <TextField
@@ -383,7 +362,6 @@ const ContactInfoStep = ({
 
 ContactInfoStep.defaultProps = {
     userEmail: null,
-    organizationName: null,
     errors: {},
     touched: {},
 };
@@ -406,7 +384,6 @@ ContactInfoStep.propTypes = {
         contactName: bool,
     }),
     userEmail: string,
-    organizationName: string,
 };
 
 const mapStateToProps = ({

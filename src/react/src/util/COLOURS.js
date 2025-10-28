@@ -41,25 +41,37 @@ export default {
     ORANGE: '#f57c00',
     AMBER_YELLOW: '#fbc02d',
     LIGHT_AMBER: '#fff8e1',
+    AMBER_50: '#fffbeb',
+    AMBER_300: '#fde68a',
+    AMBER_800: '#92400e',
 
     // Grays and Neutrals
     WHITE: '#FFF',
     GREY: '#D2D2D2',
     LIGHT_GREY: '#F9F7F7',
+    LIGHTEST_GREY: '#f9fafb',
     DARK_GREY: '#6E707E',
     DARK_SLATE_GREY: '#3D4153',
     MEDIUM_GREY: '#666',
     HOVER_GREY: '#f5f5f5',
     LIGHT_BORDER: '#ccc',
+    LIGHT_BORDER_GREY: '#e5e7eb',
     MEDIUM_BORDER: '#999',
     NEAR_BLACK: '#0D1128',
+    ALMOST_BLACK: '#111827',
 
     // Accent Colors
     NAVIGATION: '#FCCF3F',
     PALE_LIGHT_YELLOW: '#FFF2CE',
     ACCENT_GREY: '#E7E8EA',
+    YELLOW_400: '#facc15',
+    YELLOW_500: '#eab308',
 
     // Blacks
     JET_BLACK: '#191919',
     BLACK: '#000',
+
+    // Gradients helpers
+    PURPLE_GRADIENT_FROM: '#a855f7',
+    PINK_GRADIENT_TO: '#ec4899',
 };

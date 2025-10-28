@@ -81,13 +81,6 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         name: 'relationship',
     };
 
-    MockStyledSelect.defaultProps = {
-        value: null,
-        onBlur: () => {},
-        placeholder: '',
-        name: 'relationship',
-    };
-
     return MockStyledSelect;
 });
 
