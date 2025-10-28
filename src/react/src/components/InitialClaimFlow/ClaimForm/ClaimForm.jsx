@@ -16,7 +16,7 @@ import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactStep from './Steps/ContactStep';
 import BusinessStep from './Steps/BusinessStep';
-import ProfileStep from './Steps/ProfileStep';
+import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
