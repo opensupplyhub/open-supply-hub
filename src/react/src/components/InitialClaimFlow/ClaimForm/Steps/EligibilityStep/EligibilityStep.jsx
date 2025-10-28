@@ -18,6 +18,7 @@ import { mainRoute } from '../../../../../util/constants';
 import eligibilityStepStyles from './styles';
 import RELATIONSHIP_OPTIONS from './constants';
 import InputErrorText from '../../../../Contribute/InputErrorText';
+import findSelectedOption from '../utils';
 
 const EligibilityStep = ({
     classes,
@@ -32,13 +33,15 @@ const EligibilityStep = ({
     const history = useHistory();
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
-    const selectedRelationship = (formData && formData.relationship) || null;
+    const selectedRelationship = findSelectedOption(
+        RELATIONSHIP_OPTIONS,
+        formData.relationship,
+    );
 
     // This checks if the relationship field has been touched and either has validation errors
     // or no value selected
-    const isRelationshipError = Boolean(
-        touched?.relationship &&
-            (errors?.relationship || !selectedRelationship),
+    const isRelationshipError = !!(
+        touched?.relationship && errors?.relationship
     );
 
     const handleCloseIneligibleDialog = () => {
@@ -85,15 +88,18 @@ const EligibilityStep = ({
                             options={RELATIONSHIP_OPTIONS}
                             onBlur={() => handleBlur('relationship')}
                             value={selectedRelationship}
-                            onChange={value => {
+                            onChange={valueObject => {
                                 if (
-                                    value &&
-                                    (value.value === 'partner' ||
-                                        value.value === 'other')
+                                    valueObject &&
+                                    (valueObject.value === 'partner' ||
+                                        valueObject.value === 'other')
                                 ) {
                                     setIneligibleDialogOpen(true);
                                 } else {
-                                    handleChange('relationship', value);
+                                    handleChange(
+                                        'relationship',
+                                        valueObject.label,
+                                    );
                                 }
                             }}
                             styles={getSelectStyles(isRelationshipError)}
