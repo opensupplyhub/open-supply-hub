@@ -32,7 +32,7 @@ const EligibilityStep = ({
     const history = useHistory();
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
-    const selectedRelationship = formData.relationship || null;
+    const selectedRelationship = (formData && formData.relationship) || null;
 
     // This checks if the relationship field has been touched and either has validation errors
     // or no value selected

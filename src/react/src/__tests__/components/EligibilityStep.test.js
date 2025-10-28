@@ -104,6 +104,9 @@ describe('EligibilityStep component', () => {
         handleChange: mockHandleChange,
         onNext: mockOnNext,
         onBack: mockOnBack,
+        errors: {},
+        touched: {},
+        handleBlur: () => {},
     };
 
     const preloadedState = {
