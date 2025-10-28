@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { func, object } from 'prop-types';
+import { array, func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -175,6 +175,7 @@ const ProfileStep = ({
     countryOptions,
     processingTypeOptions,
     parentCompanyOptions,
+    onEmissionsValidationChange,
 }) => {
     const [
         claimEmissionsEstimateHasErrors,
@@ -183,9 +184,12 @@ const ProfileStep = ({
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
+    // Notify parent component when emissions validation state changes.
     useEffect(() => {
-        console.log(claimEmissionsEstimateHasErrors);
-    }, [claimEmissionsEstimateHasErrors]);
+        if (onEmissionsValidationChange) {
+            onEmissionsValidationChange(claimEmissionsEstimateHasErrors);
+        }
+    }, [claimEmissionsEstimateHasErrors, onEmissionsValidationChange]);
 
     useEffect(() => {
         setEnabledTaxonomy(
@@ -1345,9 +1349,10 @@ ProfileStep.propTypes = {
     handleBlur: func.isRequired,
     touched: object,
     errors: object,
-    countryOptions: object,
-    processingTypeOptions: object,
-    parentCompanyOptions: object,
+    countryOptions: array,
+    processingTypeOptions: array,
+    parentCompanyOptions: array,
+    onEmissionsValidationChange: func,
 };
 
 ProfileStep.defaultProps = {
@@ -1356,6 +1361,7 @@ ProfileStep.defaultProps = {
     countryOptions: null,
     processingTypeOptions: null,
     parentCompanyOptions: null,
+    onEmissionsValidationChange: null,
 };
 
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));

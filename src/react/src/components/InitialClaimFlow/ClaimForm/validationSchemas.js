@@ -40,10 +40,10 @@ export const profileStepSchema = Yup.object().shape({
     description: Yup.string(),
 
     // Company Information
-    parentCompanyName: Yup.mixed(),
+    parentCompanyName: Yup.mixed().nullable(),
     officeName: Yup.string(),
     officeAddress: Yup.string(),
-    officeCountry: Yup.mixed(),
+    officeCountry: Yup.mixed().nullable(),
 
     // Operations & Capabilities
     sector: Yup.array(),

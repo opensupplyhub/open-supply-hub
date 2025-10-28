@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -87,6 +87,9 @@ const ClaimForm = ({
     markComplete,
     updateField,
 }) => {
+    // Track emissions validation errors from ProfileStep.
+    const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
+
     // Redirect to intro page if user accessed form directly via URL.
     useRequireIntroAccess(history, osID);
 
@@ -120,6 +123,7 @@ const ClaimForm = ({
         activeStep,
         updateField,
         handleSubmit,
+        emissionsHasErrors,
     );
 
     // Check authentication.
@@ -249,6 +253,7 @@ const ClaimForm = ({
                                 facilityProcessingTypeOptions
                             }
                             parentCompanyOptions={parentCompanyOptions}
+                            onEmissionsValidationChange={setEmissionsHasErrors}
                         />
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>

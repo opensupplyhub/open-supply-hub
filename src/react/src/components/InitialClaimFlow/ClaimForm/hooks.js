@@ -69,6 +69,7 @@ export const useClaimForm = (
     activeStep,
     updateField,
     onSubmit,
+    emissionsHasErrors,
 ) => {
     const formik = useFormik({
         initialValues,
@@ -124,8 +125,13 @@ export const useClaimForm = (
             field => formik.errors[field],
         );
 
-        // Only disable button if user has interacted AND there are errors.
-        return hasInteractedWithCurrentStep && hasCurrentStepErrors;
+        // Disable button if:
+        // 1. User has interacted with fields AND there are Formik validation errors, OR
+        // 2. There are emissions validation errors
+        return (
+            (hasInteractedWithCurrentStep && hasCurrentStepErrors) ||
+            emissionsHasErrors
+        );
     };
 
     return {
