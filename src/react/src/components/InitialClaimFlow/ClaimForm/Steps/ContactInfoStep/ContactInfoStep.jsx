@@ -13,7 +13,7 @@ import EMPLOYMENT_VERIFICATION_OPTIONS from './constants';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
-import DialogTooltip from '../../../Contribute/DialogTooltip';
+import DialogTooltip from '../../../../Contribute/DialogTooltip';
 
 const ContactInfoStep = ({
     classes,
