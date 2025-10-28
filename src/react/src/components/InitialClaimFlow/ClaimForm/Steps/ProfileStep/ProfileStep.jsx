@@ -53,7 +53,6 @@ const ProfileStep = ({
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
-    // Notify parent component when emissions validation state changes.
     useEffect(() => {
         if (onEmissionsValidationChange) {
             onEmissionsValidationChange(claimEmissionsEstimateHasErrors);

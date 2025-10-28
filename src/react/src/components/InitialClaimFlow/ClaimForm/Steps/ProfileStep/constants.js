@@ -1,10 +1,6 @@
-// ProfileStep-specific constants
-
-// Beta tooltip text for premium features
 export const BETA_TOOLTIP_TEXT =
     "What does beta mean? Open Supply Hub is developing a Premium offering for facilities, to help you use your OS Hub profile to connect with more customers and build your business. Once live, all fields that say beta will be a part of this new package. For now, these beta fields will appear on your profile just like all the others. Once the Premium offering is live, you'll receive next steps about how it will work and whether you will want to keep these beta fields live.";
 
-// Affiliations dropdown options
 export const AFFILIATIONS_OPTIONS = [
     {
         value: 'benefits_for_business_and_workers',
@@ -38,7 +34,6 @@ export const AFFILIATIONS_OPTIONS = [
     { value: 'zdhc', label: 'ZDHC' },
 ];
 
-// Certifications dropdown options
 export const CERTIFICATIONS_OPTIONS = [
     { value: 'bci', label: 'BCI' },
     { value: 'b_corp', label: 'B Corp' },
