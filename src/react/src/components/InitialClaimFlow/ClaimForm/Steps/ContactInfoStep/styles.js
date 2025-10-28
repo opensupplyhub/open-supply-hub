@@ -91,6 +91,29 @@ const contactInfoStepStyles = theme =>
             fontSize: '12px',
             color: COLOURS.DARK_GREY,
         }),
+        labelRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.unit,
+            marginBottom: theme.spacing.unit * 0.5,
+        }),
+        fieldLabel: Object.freeze({
+            fontSize: '14px',
+            fontWeight: theme.typography.fontWeightMedium,
+        }),
+        betaBadge: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: theme.spacing.unit / 2,
+            padding: '2px 6px',
+            borderRadius: 9999,
+            fontSize: '10px',
+            fontWeight: 700,
+            color: '#ffffff',
+            backgroundImage: 'linear-gradient(to right, #a855f7, #ec4899)',
+            cursor: 'pointer',
+            marginLeft: theme.spacing.unit,
+        }),
     });
 
 export default contactInfoStepStyles;

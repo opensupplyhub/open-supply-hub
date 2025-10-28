@@ -13,6 +13,7 @@ import EMPLOYMENT_VERIFICATION_OPTIONS from './constants';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
+import DialogTooltip from '../../../Contribute/DialogTooltip';
 
 const ContactInfoStep = ({
     classes,
@@ -294,10 +295,24 @@ const ContactInfoStep = ({
                             className={classes.gridSpacing}
                         >
                             <Grid item xs={12} sm={6}>
+                                <div className={classes.labelRow}>
+                                    <span className={classes.fieldLabel}>
+                                        Contact Name
+                                    </span>
+                                    <DialogTooltip
+                                        text={
+                                            "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active."
+                                        }
+                                        childComponent={
+                                            <span className={classes.betaBadge}>
+                                                BETA
+                                            </span>
+                                        }
+                                    />
+                                </div>
                                 <TextField
                                     fullWidth
                                     name="contactName"
-                                    label="Contact Name"
                                     value={formData.contactName || ''}
                                     onChange={e =>
                                         handleChange(
@@ -319,11 +334,25 @@ const ContactInfoStep = ({
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
+                                <div className={classes.labelRow}>
+                                    <span className={classes.fieldLabel}>
+                                        Contact Email
+                                    </span>
+                                    <DialogTooltip
+                                        text={
+                                            "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active."
+                                        }
+                                        childComponent={
+                                            <span className={classes.betaBadge}>
+                                                BETA
+                                            </span>
+                                        }
+                                    />
+                                </div>
                                 <TextField
                                     fullWidth
                                     type="email"
                                     name="contactEmail"
-                                    label="Contact Email"
                                     value={formData.contactEmail || ''}
                                     onChange={e =>
                                         handleChange(
