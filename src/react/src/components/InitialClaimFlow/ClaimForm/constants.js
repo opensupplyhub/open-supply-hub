@@ -39,6 +39,13 @@ export const NEXT_BUTTON_TEXT = Object.freeze({
     [CLAIM_FORM_STEPS.BUSINESS]: 'Continue to Production Location Details',
 });
 
+export const STEP_ICONS = Object.freeze({
+    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Security',
+    [CLAIM_FORM_STEPS.CONTACT]: 'People',
+    [CLAIM_FORM_STEPS.BUSINESS]: 'Language',
+    [CLAIM_FORM_STEPS.PROFILE]: 'Business',
+});
+
 export const TOTAL_STEPS = 4;
 
 // Beta tooltip text for premium features

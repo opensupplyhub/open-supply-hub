@@ -7,9 +7,13 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Security from '@material-ui/icons/Security';
+import People from '@material-ui/icons/People';
+import Language from '@material-ui/icons/Language';
+import Business from '@material-ui/icons/Business';
 
 import ClaimFormStepper from './Stepper/Stepper';
-import EligibilityStep from './Steps/EligibilityStep';
+import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactStep from './Steps/ContactStep';
 import BusinessStep from './Steps/BusinessStep';
 import ProfileStep from './Steps/ProfileStep';
@@ -33,6 +37,7 @@ import {
     STEP_NAMES,
     STEP_DESCRIPTIONS,
     NEXT_BUTTON_TEXT,
+    STEP_ICONS,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
 import claimFormStyles from './styles';
@@ -49,6 +54,15 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
+
+const iconMapping = {
+    Security,
+    People,
+    Language,
+    Business,
+};
+
+const getIconComponent = iconName => iconMapping[iconName] || Security;
 
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,
@@ -118,7 +132,12 @@ const ClaimForm = ({
     };
 
     // Initialize form with custom hook with Formik inside.
-    const { claimForm, handleFieldChange, isButtonDisabled } = useClaimForm(
+    const {
+        claimForm,
+        handleFieldChange,
+        handleBlur,
+        isButtonDisabled,
+    } = useClaimForm(
         formData,
         activeStep,
         updateField,
@@ -235,8 +254,14 @@ const ClaimForm = ({
                     <Paper className={classes.paper}>
                         <Typography
                             variant="title"
-                            className={classes.sectionTitle}
+                            className={classes.titleStyles}
                         >
+                            {(() => {
+                                const IconName = getIconComponent(
+                                    STEP_ICONS[activeStep],
+                                );
+                                return <IconName />;
+                            })()}
                             {STEP_NAMES[activeStep]}
                         </Typography>
                         <Typography className={classes.sectionDescription}>
@@ -245,7 +270,7 @@ const ClaimForm = ({
                         <StepComponent
                             formData={claimForm.values}
                             handleChange={handleFieldChange}
-                            handleBlur={claimForm.handleBlur}
+                            handleBlur={handleBlur}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
                             countryOptions={countriesOptions}

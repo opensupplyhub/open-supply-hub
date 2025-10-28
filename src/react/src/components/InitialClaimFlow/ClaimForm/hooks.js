@@ -110,6 +110,10 @@ export const useClaimForm = (
         updateField({ field, value });
     };
 
+    const handleBlur = field => {
+        formik.setFieldTouched(field, true);
+    };
+
     // Calculate button disabled state for current step.
     const getButtonDisabledState = () => {
         const schema = getValidationSchemaForStep(activeStep);
@@ -137,6 +141,7 @@ export const useClaimForm = (
     return {
         claimForm: formik,
         handleFieldChange,
+        handleBlur,
         isButtonDisabled: getButtonDisabledState(),
     };
 };
