@@ -91,6 +91,9 @@ const eligibilityStepStyles = theme =>
                 backgroundColor: '#eab308',
             },
         }),
+        errorWrapStyles: Object.freeze({
+            margin: '8px 12px 0 0',
+        }),
     });
 
 export default eligibilityStepStyles;
