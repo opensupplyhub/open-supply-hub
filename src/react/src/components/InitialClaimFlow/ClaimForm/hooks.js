@@ -128,6 +128,7 @@ export const useClaimForm = (
             field => formik.errors[field],
         );
 
+        // Only disable button if user has interacted AND there are errors.
         return hasInteractedWithCurrentStep && hasCurrentStepErrors;
     };
 
