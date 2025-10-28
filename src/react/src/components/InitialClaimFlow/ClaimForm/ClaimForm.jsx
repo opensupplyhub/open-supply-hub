@@ -75,7 +75,7 @@ const getIconComponent = iconName => iconMapping[iconName] || Security;
 
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,
-    [CLAIM_FORM_STEPS.CONTACT]: ContactStep,
+    [CLAIM_FORM_STEPS.CONTACT]: ContactInfoStep,
     [CLAIM_FORM_STEPS.BUSINESS]: BusinessStep,
     [CLAIM_FORM_STEPS.PROFILE]: ProfileStep,
 };

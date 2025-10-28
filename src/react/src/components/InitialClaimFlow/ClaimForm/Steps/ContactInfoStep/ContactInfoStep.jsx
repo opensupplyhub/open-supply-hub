@@ -1,0 +1,303 @@
+import React from 'react';
+import { func, object, shape, string, bool, oneOfType } from 'prop-types';
+import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
+import TextField from '@material-ui/core/TextField';
+import Switch from '@material-ui/core/Switch';
+
+import withScrollReset from '../../../HOCs/withScrollReset';
+import contactInfoStepStyles from './styles';
+import EMPLOYMENT_VERIFICATION_OPTIONS from './constants';
+import StyledSelect from '../../../../Filters/StyledSelect';
+import { getSelectStyles } from '../../../../../util/util';
+
+const ContactInfoStep = ({
+    classes,
+    formData,
+    handleChange,
+    handleBlur,
+    errors,
+    touched,
+    userEmail,
+    organizationName,
+}) => {
+    const isPublic = Boolean(formData.publicContactEnabled);
+    const employmentOption = formData.employmentVerification || null;
+    const employmentError = Boolean(
+        touched?.employmentVerification &&
+            (errors?.employmentVerification || !employmentOption),
+    );
+
+    return (
+        <Grid container spacing={24}>
+            <Grid item xs={12}>
+                <div className={classes.accountInfoSection}>
+                    <div className={classes.accountInfoBox}>
+                        <div className={classes.accountInfoRow}>
+                            <span className={classes.accountInfoLabel}>
+                                Account email:
+                            </span>
+                            <span className={classes.accountInfoValue}>
+                                {userEmail || 'Not available'}
+                            </span>
+                        </div>
+                        <div className={classes.accountInfoRow}>
+                            <span className={classes.accountInfoLabel}>
+                                Organization name:
+                            </span>
+                            <span className={classes.accountInfoValue}>
+                                {organizationName || 'Not available'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <Typography className={classes.sectionTitle}>
+                        Your Information (Claimant)
+                    </Typography>
+
+                    <Grid container spacing={16}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Your Email"
+                                value={userEmail || ''}
+                                required
+                                InputProps={{ readOnly: true }}
+                                className={classes.textField}
+                                placeholder="opensupplyhubuser@company.com"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                required
+                                name="claimantName"
+                                label="Your Name"
+                                value={formData.claimantName || ''}
+                                onChange={e =>
+                                    handleChange('claimantName', e.target.value)
+                                }
+                                onBlur={() => handleBlur('claimantName')}
+                                className={classes.textField}
+                                placeholder="Enter your full name"
+                                error={
+                                    touched?.claimantName &&
+                                    Boolean(errors?.claimantName)
+                                }
+                                helperText={
+                                    touched?.claimantName &&
+                                    errors?.claimantName
+                                }
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                required
+                                name="claimantTitle"
+                                label="Your Job Title"
+                                value={formData.claimantTitle || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'claimantTitle',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={() => handleBlur('claimantTitle')}
+                                className={classes.textField}
+                                placeholder="e.g., Plant Manager, Safety Director"
+                                error={
+                                    touched?.claimantTitle &&
+                                    Boolean(errors?.claimantTitle)
+                                }
+                                helperText={
+                                    touched?.claimantTitle &&
+                                    errors?.claimantTitle
+                                }
+                            />
+                        </Grid>
+                    </Grid>
+
+                    <div className={classes.infoAlert}>
+                        <div className={classes.infoAlertInner}>
+                            <Typography variant="caption">
+                                <strong>IMPORTANT!</strong> Your name and job
+                                title must match the person associated with the
+                                email address provided above.
+                            </Typography>
+                        </div>
+                    </div>
+
+                    <div className={classes.gridSpacing}>
+                        <Typography className={classes.sectionTitle}>
+                            Employment Verification*
+                        </Typography>
+                        <Typography className={classes.helperTextSmall}>
+                            You need to select and provide one of the below
+                            items for employment verification.
+                        </Typography>
+                        <div className={classes.selectWrapper}>
+                            <StyledSelect
+                                id="employmentVerification"
+                                name="employmentVerification"
+                                aria-label="Select employment verification option"
+                                label={null}
+                                options={EMPLOYMENT_VERIFICATION_OPTIONS}
+                                onBlur={() =>
+                                    handleBlur('employmentVerification')
+                                }
+                                value={employmentOption}
+                                onChange={value =>
+                                    handleChange(
+                                        'employmentVerification',
+                                        value,
+                                    )
+                                }
+                                styles={getSelectStyles(employmentError)}
+                                placeholder="Choose ONE"
+                                isMulti={false}
+                            />
+                        </div>
+                    </div>
+
+                    <div className={classes.publicContactBox}>
+                        <div className={classes.publicContactRow}>
+                            <div>
+                                <Typography variant="subtitle1">
+                                    Do you want this location&apos;s contact
+                                    info to be public?
+                                </Typography>
+                                <Typography className={classes.helperTextSmall}>
+                                    Toggle &quot;Yes&quot; to add public contact
+                                    details. When enabled, contact info will be
+                                    visible on your Open Supply Hub profile for
+                                    sourcing requests, general inquiries, and
+                                    potential business opportunities.
+                                </Typography>
+                            </div>
+                            <div>
+                                <Switch
+                                    checked={isPublic}
+                                    onChange={(_, checked) =>
+                                        handleChange(
+                                            'publicContactEnabled',
+                                            checked,
+                                        )
+                                    }
+                                    color="primary"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <Typography className={classes.sectionTitle}>
+                        Production Location Contact Person
+                    </Typography>
+
+                    {isPublic && (
+                        <Grid
+                            container
+                            spacing={16}
+                            className={classes.gridSpacing}
+                        >
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    name="contactName"
+                                    label="Contact Name"
+                                    value={formData.contactName || ''}
+                                    onChange={e =>
+                                        handleChange(
+                                            'contactName',
+                                            e.target.value,
+                                        )
+                                    }
+                                    onBlur={() => handleBlur('contactName')}
+                                    className={classes.textField}
+                                    placeholder="Contact person's name"
+                                    error={
+                                        touched?.contactName &&
+                                        Boolean(errors?.contactName)
+                                    }
+                                    helperText={
+                                        touched?.contactName &&
+                                        errors?.contactName
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    type="email"
+                                    name="contactEmail"
+                                    label="Contact Email"
+                                    value={formData.contactEmail || ''}
+                                    onChange={e =>
+                                        handleChange(
+                                            'contactEmail',
+                                            e.target.value,
+                                        )
+                                    }
+                                    onBlur={() => handleBlur('contactEmail')}
+                                    className={classes.textField}
+                                    placeholder="contact@company.com"
+                                    error={
+                                        touched?.contactEmail &&
+                                        Boolean(errors?.contactEmail)
+                                    }
+                                    helperText={
+                                        touched?.contactEmail &&
+                                        errors?.contactEmail
+                                    }
+                                />
+                            </Grid>
+                        </Grid>
+                    )}
+                </div>
+            </Grid>
+        </Grid>
+    );
+};
+
+ContactInfoStep.defaultProps = {
+    userEmail: null,
+    organizationName: null,
+    errors: {},
+    touched: {},
+};
+
+ContactInfoStep.propTypes = {
+    classes: object.isRequired,
+    formData: object.isRequired,
+    handleChange: func.isRequired,
+    handleBlur: func.isRequired,
+    errors: shape({
+        claimantName: oneOfType([string, object]),
+        claimantTitle: oneOfType([string, object]),
+        contactEmail: oneOfType([string, object]),
+        contactName: oneOfType([string, object]),
+    }),
+    touched: shape({
+        claimantName: bool,
+        claimantTitle: bool,
+        contactEmail: bool,
+        contactName: bool,
+    }),
+    userEmail: string,
+    organizationName: string,
+};
+
+const mapStateToProps = ({
+    auth: {
+        user: { user },
+    },
+}) => ({
+    userEmail: user?.email,
+    organizationName: user?.name,
+});
+
+export default connect(mapStateToProps)(
+    withStyles(contactInfoStepStyles)(withScrollReset(ContactInfoStep)),
+);
