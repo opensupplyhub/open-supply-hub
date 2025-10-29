@@ -16,11 +16,13 @@ const initialState = Object.freeze({
         relationship: null,
 
         // Contact step.
-        contactEmail: '',
+        claimantName: '',
+        claimantTitle: '',
+        contactEmail: null,
         contactPhone: '',
         employmentVerification: null,
         employmentVerificationUrl: '',
-        employmentVerificationFiles: [],
+        employmentVerificationFiles: null,
 
         // Business step.
         locationAddressVerificationMethod: '',

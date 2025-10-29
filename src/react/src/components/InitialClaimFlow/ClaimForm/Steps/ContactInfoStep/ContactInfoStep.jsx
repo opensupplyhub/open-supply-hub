@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { func, object, shape, string, bool, oneOfType } from 'prop-types';
 import { connect } from 'react-redux';
@@ -15,6 +16,8 @@ import { getSelectStyles } from '../../../../../util/util';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import findSelectedOption from '../utils';
+import InputErrorText from '../../../../Contribute/InputErrorText';
 
 const ContactInfoStep = ({
     classes,
@@ -26,10 +29,9 @@ const ContactInfoStep = ({
     userEmail,
 }) => {
     const isPublic = Boolean(formData.publicContactEnabled);
-    const employmentOption = formData.employmentVerification || null;
-    const employmentError = Boolean(
-        touched?.employmentVerification &&
-            (errors?.employmentVerification || !employmentOption),
+    const employmentOption = findSelectedOption(
+        EMPLOYMENT_VERIFICATION_OPTIONS,
+        formData.employmentVerification,
     );
     const showUploadBlock = Boolean(
         employmentOption &&
@@ -38,6 +40,12 @@ const ContactInfoStep = ({
     );
     const showWebsiteUrlField = employmentOption?.value === 'company_website';
     const showLinkedInUrlField = employmentOption?.value === 'linkedin_page';
+
+    // This checks if the employment verification field has been touched and either has validation errors
+    // or no value selected
+    const isEmploymentVerificationError = !!(
+        touched?.employmentVerification && errors?.employmentVerification
+    );
 
     return (
         <Grid container spacing={24}>
@@ -78,24 +86,27 @@ const ContactInfoStep = ({
                                 }
                                 onBlur={() => handleBlur('claimantName')}
                                 variant="outlined"
+                                error={
+                                    touched.claimantName &&
+                                    Boolean(errors.claimantName)
+                                }
                                 InputProps={{
                                     classes: {
-                                        root: classes.inputRoot,
-                                        input: classes.input,
-                                        notchedOutline: classes.notchedOutline,
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
                                     },
                                 }}
-                                className={classes.textField}
+                                // className={classes.textField}
                                 placeholder="Enter your full name"
-                                error={
-                                    touched?.claimantName &&
-                                    Boolean(errors?.claimantName)
-                                }
-                                helperText={
-                                    touched?.claimantName &&
-                                    errors?.claimantName
-                                }
                             />
+                            {touched.claimantName && errors.claimantName && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.claimantName}
+                                    />
+                                </div>
+                            )}
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <FormFieldTitle label="Your Job Title" required />
@@ -112,24 +123,31 @@ const ContactInfoStep = ({
                                 }
                                 onBlur={() => handleBlur('claimantTitle')}
                                 variant="outlined"
+                                error={
+                                    touched.claimantTitle &&
+                                    Boolean(errors.claimantTitle)
+                                }
+                                // className={classes.textField}
                                 InputProps={{
                                     classes: {
-                                        root: classes.inputRoot,
-                                        input: classes.input,
-                                        notchedOutline: classes.notchedOutline,
+                                        input: `${classes.inputStyles}
+                                        ${
+                                            errors?.claimantTitle &&
+                                            classes.errorStyle
+                                        }`,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
                                     },
                                 }}
-                                className={classes.textField}
                                 placeholder="e.g., Plant Manager, Safety Director"
-                                error={
-                                    touched?.claimantTitle &&
-                                    Boolean(errors?.claimantTitle)
-                                }
-                                helperText={
-                                    touched?.claimantTitle &&
-                                    errors?.claimantTitle
-                                }
                             />
+                            {touched.claimantTitle && errors.claimantTitle && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.claimantName}
+                                    />
+                                </div>
+                            )}
                         </Grid>
                     </Grid>
 
@@ -162,17 +180,27 @@ const ContactInfoStep = ({
                                     handleBlur('employmentVerification')
                                 }
                                 value={employmentOption}
-                                onChange={value =>
+                                onChange={valueObject =>
                                     handleChange(
                                         'employmentVerification',
-                                        value,
+                                        valueObject.label,
                                     )
                                 }
-                                styles={getSelectStyles(employmentError)}
+                                styles={getSelectStyles(
+                                    isEmploymentVerificationError,
+                                )}
                                 placeholder="Choose ONE"
                                 isMulti={false}
                             />
                         </div>
+                        {touched.employmentVerification &&
+                            errors.employmentVerification && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.employmentVerification}
+                                    />
+                                </div>
+                            )}
                     </div>
 
                     {showUploadBlock && (
@@ -216,12 +244,12 @@ const ContactInfoStep = ({
                                 variant="outlined"
                                 InputProps={{
                                     classes: {
-                                        root: classes.inputRoot,
-                                        input: classes.input,
-                                        notchedOutline: classes.notchedOutline,
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
                                     },
                                 }}
-                                className={classes.textField}
+                                // className={classes.textField}
                                 placeholder="https://example.com/team"
                                 error={
                                     touched?.employmentVerificationUrl &&
@@ -259,12 +287,12 @@ const ContactInfoStep = ({
                                 variant="outlined"
                                 InputProps={{
                                     classes: {
-                                        root: classes.inputRoot,
-                                        input: classes.input,
-                                        notchedOutline: classes.notchedOutline,
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
                                     },
                                 }}
-                                className={classes.textField}
+                                // className={classes.textField}
                                 placeholder="https://linkedin.com/in/yourprofile"
                                 error={
                                     touched?.employmentVerificationUrl &&
@@ -299,12 +327,36 @@ const ContactInfoStep = ({
                             <div>
                                 <Switch
                                     checked={isPublic}
-                                    onChange={(_, checked) =>
+                                    onChange={(_, checked) => {
                                         handleChange(
                                             'publicContactEnabled',
                                             checked,
-                                        )
-                                    }
+                                        );
+
+                                        // When enabling public contact, prefill fields
+                                        if (checked) {
+                                            // Copy claimantName -> contactName if claimant has data
+                                            const claimantHasName = Boolean(
+                                                (formData.claimantName || '')
+                                                    .toString()
+                                                    .trim(),
+                                            );
+                                            if (claimantHasName) {
+                                                handleChange(
+                                                    'contactName',
+                                                    formData.claimantName,
+                                                );
+                                            }
+
+                                            // Always set contactEmail from userEmail; remains editable
+                                            if (userEmail) {
+                                                handleChange(
+                                                    'contactEmail',
+                                                    userEmail,
+                                                );
+                                            }
+                                        }
+                                    }}
                                     color="primary"
                                 />
                             </div>
@@ -345,25 +397,27 @@ const ContactInfoStep = ({
                                     }
                                     onBlur={() => handleBlur('contactName')}
                                     variant="outlined"
+                                    error={
+                                        touched.contactName &&
+                                        Boolean(errors.contactName)
+                                    }
                                     InputProps={{
                                         classes: {
-                                            root: classes.inputRoot,
-                                            input: classes.input,
+                                            input: `${classes.inputStyles}`,
                                             notchedOutline:
-                                                classes.notchedOutline,
+                                                classes.notchedOutlineStyles,
                                         },
                                     }}
-                                    className={classes.textField}
+                                    // className={classes.textField}
                                     placeholder="Contact person's name"
-                                    error={
-                                        touched?.contactName &&
-                                        Boolean(errors?.contactName)
-                                    }
-                                    helperText={
-                                        touched?.contactName &&
-                                        errors?.contactName
-                                    }
                                 />
+                                {touched.contactName && errors.contactName && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.contactName}
+                                        />
+                                    </div>
+                                )}
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <div className={classes.labelRow}>
@@ -394,25 +448,27 @@ const ContactInfoStep = ({
                                     }
                                     onBlur={() => handleBlur('contactEmail')}
                                     variant="outlined"
+                                    // className={classes.textField}
                                     InputProps={{
                                         classes: {
-                                            root: classes.inputRoot,
-                                            input: classes.input,
+                                            input: classes.inputStyles,
                                             notchedOutline:
-                                                classes.notchedOutline,
+                                                classes.notchedOutlineStyles,
                                         },
                                     }}
-                                    className={classes.textField}
-                                    placeholder="contact@company.com"
                                     error={
-                                        touched?.contactEmail &&
-                                        Boolean(errors?.contactEmail)
+                                        touched.contactEmail &&
+                                        Boolean(errors.contactEmail)
                                     }
-                                    helperText={
-                                        touched?.contactEmail &&
-                                        errors?.contactEmail
-                                    }
+                                    placeholder="contact@company.com"
                                 />
+                                {touched.contactEmail && errors.contactEmail && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors?.contactEmail}
+                                        />
+                                    </div>
+                                )}
                             </Grid>
                         </Grid>
                     )}

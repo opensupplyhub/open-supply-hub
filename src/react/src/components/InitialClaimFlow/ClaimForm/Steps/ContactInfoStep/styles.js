@@ -114,6 +114,26 @@ const contactInfoStepStyles = theme =>
             cursor: 'pointer',
             marginLeft: theme.spacing.unit,
         }),
+        // TODO: use globally
+        notchedOutlineStyles: Object.freeze({
+            borderRadius: 0,
+        }),
+        errorOutlineStyles: Object.freeze({
+            borderColor: COLOURS.RED,
+        }),
+        errorWrapStyles: Object.freeze({
+            marginTop: '8px',
+        }),
+        errorStyles: Object.freeze({
+            color: COLOURS.RED,
+        }),
+        inputStyles: Object.freeze({
+            backgroundColor: COLOURS.WHITE,
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            lineHeight: '22px',
+            padding: '16px',
+        }),
     });
 
 export default contactInfoStepStyles;
