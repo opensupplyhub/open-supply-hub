@@ -87,7 +87,7 @@ export const claimFormStyles = theme =>
             fontWeight: 'bold',
             margin: '10px',
             backgroundColor: theme.palette.action.main,
-            color: theme.palette.getContrastText(theme.palette.action.main),
+            color: theme.palette.common.black,
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
