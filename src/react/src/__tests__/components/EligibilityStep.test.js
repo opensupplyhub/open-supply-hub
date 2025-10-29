@@ -266,10 +266,10 @@ describe('EligibilityStep component', () => {
         fireEvent.change(selectField, { target: { value: 'owner' } });
 
         expect(mockHandleChange).toHaveBeenCalledTimes(1);
-        expect(mockHandleChange).toHaveBeenCalledWith('relationship', {
-            value: 'owner',
-            label: 'I am the owner of this production location',
-        });
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'relationship',
+            'I am the owner of this production location',
+        );
         expect(
             screen.queryByText('Not Eligible to File Claim')
         ).not.toBeInTheDocument();
@@ -282,10 +282,10 @@ describe('EligibilityStep component', () => {
         fireEvent.change(selectField, { target: { value: 'manager' } });
 
         expect(mockHandleChange).toHaveBeenCalledTimes(1);
-        expect(mockHandleChange).toHaveBeenCalledWith('relationship', {
-            value: 'manager',
-            label: 'I am a manager working at this production location',
-        });
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'relationship',
+            'I am a manager working at this production location',
+        );
         expect(
             screen.queryByText('Not Eligible to File Claim')
         ).not.toBeInTheDocument();
