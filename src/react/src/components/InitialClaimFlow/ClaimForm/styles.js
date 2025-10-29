@@ -1,7 +1,7 @@
 import COLOURS from '../../../util/COLOURS';
 import { HEADER_HEIGHT } from '../../../util/constants';
 
-const claimFormStyles = theme =>
+export const claimFormStyles = theme =>
     Object.freeze({
         container: Object.freeze({
             backgroundColor: '#F9F7F7',
@@ -83,6 +83,37 @@ const claimFormStyles = theme =>
             alignItems: 'center',
             height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }),
+        popupButtonStyles: Object.freeze({
+            fontWeight: 'bold',
+            margin: '10px',
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.getContrastText(theme.palette.action.main),
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+        }),
     });
 
-export default claimFormStyles;
+export const popupDialogStyles = Object.freeze({
+    containerStyles: Object.freeze({
+        padding: '35px',
+    }),
+    titleStyles: Object.freeze({
+        margin: 'auto',
+        textAlign: 'center',
+        color: COLOURS.NEAR_BLACK,
+        paddingBottom: '10px',
+        fontSize: '2.125rem',
+        fontWeight: '400',
+        lineHeight: '1.20588em',
+    }),
+    contentStyles: Object.freeze({
+        fontSize: '20px',
+        margin: 'auto',
+        textAlign: 'center',
+        paddingTop: '10px',
+    }),
+    actionStyles: Object.freeze({
+        justifyContent: 'center',
+    }),
+});

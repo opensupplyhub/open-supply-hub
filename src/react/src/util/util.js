@@ -1282,6 +1282,58 @@ export const claimFacilitySupportDocsIsValid = ({
             !isEmpty(businessWebsite) ||
             !isEmpty(businessLinkedinProfile),
     ]);
+
+/**
+ * Extract string value from React Select option object or return value as-is
+ */
+export const extractSelectValue = item =>
+    typeof item === 'object' ? item.label || item.value : item;
+
+/**
+ * Handle file uploads in FormData
+ */
+export const appendFiles = (postData, formattedKey, files) => {
+    mapKeys(files, file => {
+        postData.append(formattedKey, file);
+    });
+};
+
+/**
+ * Handle array fields that should send multiple values
+ * (sectors, facility_production_types, etc.)
+ */
+export const appendArrayField = (postData, formattedKey, value) => {
+    if (!Array.isArray(value) || value.length === 0) {
+        return;
+    }
+
+    value.forEach(item => {
+        const extractedValue = extractSelectValue(item);
+        postData.append(formattedKey, extractedValue);
+    });
+};
+
+/**
+ * Handle facility_type field - converts array to comma-separated string
+ */
+export const appendFacilityType = (postData, formattedKey, value) => {
+    if (!Array.isArray(value) || value.length === 0) {
+        return;
+    }
+
+    const extractedValues = value.map(extractSelectValue);
+    postData.append(formattedKey, extractedValues.join(', '));
+};
+
+/**
+ * Handle simple string/number fields
+ */
+export const appendSimpleField = (postData, formattedKey, value) => {
+    if (value !== null && value !== undefined && value !== '') {
+        postData.append(formattedKey, value);
+    }
+};
+
 export const isValidFacilityURL = url =>
     isEmpty(url) || isURL(url, { protocols: ['http', 'https'] });
 

@@ -6,6 +6,9 @@ import {
     markStepComplete,
     updateClaimFormField,
     resetClaimForm,
+    startSubmitClaimFormData,
+    failSubmitClaimFormData,
+    completeSubmitClaimFormData,
 } from '../actions/claimForm';
 
 const initialState = Object.freeze({
@@ -25,28 +28,28 @@ const initialState = Object.freeze({
 
         // Profile step - Production Location Overview.
         localLanguageName: '',
-        facilityPhone: '',
-        description: '',
+        officePhoneNumber: '',
+        facilityDescription: '',
 
         // Profile step - Company Information.
-        parentCompanyName: null,
-        officeName: '',
+        parentCompanyName: '',
+        officeOfficialName: '',
         officeAddress: '',
-        officeCountry: null,
+        officeCountryCode: '',
 
         // Profile step - Operations & Capabilities.
-        sector: [],
-        locationType: [],
-        processingType: [],
-        productTypes: [],
+        sectors: [],
+        facilityType: [],
+        facilityProductionTypes: [],
+        facilityProductTypes: [],
         numberOfWorkers: '',
-        femaleWorkers: '',
-        minimumOrderQuantity: '',
-        averageLeadTime: '',
+        facilityFemaleWorkersPercentage: '',
+        facilityMinimumOrderQuantity: '',
+        facilityAverageLeadTime: '',
 
         // Profile step - Compliance & Partnerships.
-        affiliations: [],
-        certifications: [],
+        facilityAffiliations: [],
+        facilityCertifications: [],
 
         // Profile step - Free Emissions Estimate.
         openingDate: '',
@@ -70,6 +73,14 @@ const initialState = Object.freeze({
         energyAnimalWasteEnabled: false,
         energyElectricityEnabled: false,
         energyOtherEnabled: false,
+
+        // Files
+        files: [],
+    }),
+    submissionState: Object.freeze({
+        fetching: false,
+        error: null,
+        data: null,
     }),
 });
 
@@ -98,6 +109,32 @@ const claimFormReducer = createReducer(
             }),
 
         [resetClaimForm]: () => initialState,
+
+        [startSubmitClaimFormData]: state =>
+            update(state, {
+                submissionState: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                    data: { $set: null },
+                },
+            }),
+
+        [failSubmitClaimFormData]: (state, error) =>
+            update(state, {
+                submissionState: {
+                    fetching: { $set: false },
+                    error: { $set: error },
+                },
+            }),
+
+        [completeSubmitClaimFormData]: (state, data) =>
+            update(state, {
+                submissionState: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: data },
+                },
+            }),
     },
     initialState,
 );

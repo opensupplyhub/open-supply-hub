@@ -65,11 +65,11 @@ const ProfileStep = ({
 
     useEffect(() => {
         setEnabledTaxonomy(
-            formData.sector &&
-                formData.sector.length === 1 &&
-                formData.sector[0].value === 'Apparel',
+            formData.sectors &&
+                formData.sectors.length === 1 &&
+                formData.sectors[0].value === 'Apparel',
         );
-    }, [formData.sector]);
+    }, [formData.sectors]);
 
     return (
         <Grid container spacing={24}>
@@ -204,22 +204,22 @@ const ProfileStep = ({
                                     <TextField
                                         fullWidth
                                         variant="outlined"
-                                        value={formData.facilityPhone || ''}
+                                        value={formData.officePhoneNumber || ''}
                                         onChange={e =>
                                             handleChange(
-                                                'facilityPhone',
+                                                'officePhoneNumber',
                                                 e.target.value,
                                             )
                                         }
                                         onBlur={handleBlur}
                                         placeholder="+1 (555) 123-4567"
                                         error={
-                                            touched.facilityPhone &&
-                                            !!errors.facilityPhone
+                                            touched.officePhoneNumber &&
+                                            !!errors.officePhoneNumber
                                         }
                                         helperText={
-                                            touched.facilityPhone &&
-                                            errors.facilityPhone
+                                            touched.officePhoneNumber &&
+                                            errors.officePhoneNumber
                                         }
                                     />
                                 </div>
@@ -331,17 +331,22 @@ const ProfileStep = ({
                                 multiline
                                 rows={4}
                                 variant="outlined"
-                                value={formData.description || ''}
+                                value={formData.facilityDescription || ''}
                                 onChange={e =>
-                                    handleChange('description', e.target.value)
+                                    handleChange(
+                                        'facilityDescription',
+                                        e.target.value,
+                                    )
                                 }
                                 onBlur={handleBlur}
                                 placeholder="Brief description of what this production location produces or its main activities"
                                 error={
-                                    touched.description && !!errors.description
+                                    touched.facilityDescription &&
+                                    !!errors.facilityDescription
                                 }
                                 helperText={
-                                    touched.description && errors.description
+                                    touched.facilityDescription &&
+                                    errors.facilityDescription
                                 }
                             />
                         </div>
@@ -394,14 +399,11 @@ const ProfileStep = ({
                                         selectOptions={
                                             parentCompanyOptions || []
                                         }
-                                        value={
-                                            formData.parentCompanyName?.value ||
-                                            ''
-                                        }
-                                        onChange={value =>
+                                        value={formData.parentCompanyName || ''}
+                                        onChange={option =>
                                             handleChange(
                                                 'parentCompanyName',
-                                                value,
+                                                option?.value || '',
                                             )
                                         }
                                         selectPlaceholder="Select parent company..."
@@ -452,22 +454,24 @@ const ProfileStep = ({
                                     <TextField
                                         fullWidth
                                         variant="outlined"
-                                        value={formData.officeName || ''}
+                                        value={
+                                            formData.officeOfficialName || ''
+                                        }
                                         onChange={e =>
                                             handleChange(
-                                                'officeName',
+                                                'officeOfficialName',
                                                 e.target.value,
                                             )
                                         }
                                         onBlur={handleBlur}
                                         placeholder="Office name"
                                         error={
-                                            touched.officeName &&
-                                            !!errors.officeName
+                                            touched.officeOfficialName &&
+                                            !!errors.officeOfficialName
                                         }
                                         helperText={
-                                            touched.officeName &&
-                                            errors.officeName
+                                            touched.officeOfficialName &&
+                                            errors.officeOfficialName
                                         }
                                     />
                                 </div>
@@ -531,11 +535,12 @@ const ProfileStep = ({
                                         label="Office Country"
                                         isSelect
                                         selectOptions={countryOptions || []}
-                                        value={
-                                            formData.officeCountry?.value || ''
-                                        }
-                                        onChange={value =>
-                                            handleChange('officeCountry', value)
+                                        value={formData.officeCountryCode || ''}
+                                        onChange={option =>
+                                            handleChange(
+                                                'officeCountryCode',
+                                                option?.value || '',
+                                            )
                                         }
                                         selectPlaceholder="Select country..."
                                     />
@@ -592,8 +597,8 @@ const ProfileStep = ({
                                         </Typography>
                                     </div>
                                     <StyledSelect
-                                        id="sector"
-                                        name="sector"
+                                        id="sectors"
+                                        name="sectors"
                                         aria-label="Select sector"
                                         isMulti
                                         options={
@@ -601,9 +606,9 @@ const ProfileStep = ({
                                                 mockedSectors,
                                             ) || []
                                         }
-                                        value={formData.sector || []}
+                                        value={formData.sectors || []}
                                         onChange={values =>
-                                            handleChange('sector', values)
+                                            handleChange('sectors', values)
                                         }
                                         placeholder="Select sectors..."
                                     />
@@ -649,12 +654,13 @@ const ProfileStep = ({
                                             isMulti
                                             options={mapFacilityTypeOptions(
                                                 processingTypeOptions || [],
-                                                formData.processingType || [],
+                                                formData.facilityProductionTypes ||
+                                                    [],
                                             )}
-                                            value={formData.locationType || []}
+                                            value={formData.facilityType || []}
                                             onChange={values =>
                                                 handleChange(
-                                                    'locationType',
+                                                    'facilityType',
                                                     values,
                                                 )
                                             }
@@ -666,10 +672,10 @@ const ProfileStep = ({
                                             isMulti
                                             name="location-type"
                                             aria-label="Location type"
-                                            value={formData.locationType || []}
+                                            value={formData.facilityType || []}
                                             onChange={values =>
                                                 handleChange(
-                                                    'locationType',
+                                                    'facilityType',
                                                     values,
                                                 )
                                             }
@@ -718,14 +724,15 @@ const ProfileStep = ({
                                             isMulti
                                             options={mapProcessingTypeOptions(
                                                 processingTypeOptions || [],
-                                                formData.locationType || [],
+                                                formData.facilityType || [],
                                             )}
                                             value={
-                                                formData.processingType || []
+                                                formData.facilityProductionTypes ||
+                                                []
                                             }
                                             onChange={values =>
                                                 handleChange(
-                                                    'processingType',
+                                                    'facilityProductionTypes',
                                                     values,
                                                 )
                                             }
@@ -738,11 +745,12 @@ const ProfileStep = ({
                                             name="processing-type"
                                             aria-label="Processing Type"
                                             value={
-                                                formData.processingType || []
+                                                formData.facilityProductionTypes ||
+                                                []
                                             }
                                             onChange={values =>
                                                 handleChange(
-                                                    'processingType',
+                                                    'facilityProductionTypes',
                                                     values,
                                                 )
                                             }
@@ -788,9 +796,14 @@ const ProfileStep = ({
                                         isMulti
                                         name="product-types"
                                         aria-label="Product Types"
-                                        value={formData.productTypes || []}
+                                        value={
+                                            formData.facilityProductTypes || []
+                                        }
                                         onChange={values =>
-                                            handleChange('productTypes', values)
+                                            handleChange(
+                                                'facilityProductTypes',
+                                                values,
+                                            )
                                         }
                                         placeholder="Enter product types..."
                                     />
@@ -888,22 +901,25 @@ const ProfileStep = ({
                                     <TextField
                                         fullWidth
                                         variant="outlined"
-                                        value={formData.femaleWorkers || ''}
+                                        value={
+                                            formData.facilityFemaleWorkersPercentage ||
+                                            ''
+                                        }
                                         onChange={e =>
                                             handleChange(
-                                                'femaleWorkers',
+                                                'facilityFemaleWorkersPercentage',
                                                 e.target.value,
                                             )
                                         }
                                         onBlur={handleBlur}
                                         placeholder="e.g., 45%"
                                         error={
-                                            touched.femaleWorkers &&
-                                            !!errors.femaleWorkers
+                                            touched.facilityFemaleWorkersPercentage &&
+                                            !!errors.facilityFemaleWorkersPercentage
                                         }
                                         helperText={
-                                            touched.femaleWorkers &&
-                                            errors.femaleWorkers
+                                            touched.facilityFemaleWorkersPercentage &&
+                                            errors.facilityFemaleWorkersPercentage
                                         }
                                     />
                                 </div>
@@ -960,23 +976,24 @@ const ProfileStep = ({
                                         fullWidth
                                         variant="outlined"
                                         value={
-                                            formData.minimumOrderQuantity || ''
+                                            formData.facilityMinimumOrderQuantity ||
+                                            ''
                                         }
                                         onChange={e =>
                                             handleChange(
-                                                'minimumOrderQuantity',
+                                                'facilityMinimumOrderQuantity',
                                                 e.target.value,
                                             )
                                         }
                                         onBlur={handleBlur}
                                         placeholder="e.g., 1000 units"
                                         error={
-                                            touched.minimumOrderQuantity &&
-                                            !!errors.minimumOrderQuantity
+                                            touched.facilityMinimumOrderQuantity &&
+                                            !!errors.facilityMinimumOrderQuantity
                                         }
                                         helperText={
-                                            touched.minimumOrderQuantity &&
-                                            errors.minimumOrderQuantity
+                                            touched.facilityMinimumOrderQuantity &&
+                                            errors.facilityMinimumOrderQuantity
                                         }
                                     />
                                 </div>
@@ -1030,22 +1047,25 @@ const ProfileStep = ({
                                     <TextField
                                         fullWidth
                                         variant="outlined"
-                                        value={formData.averageLeadTime || ''}
+                                        value={
+                                            formData.facilityAverageLeadTime ||
+                                            ''
+                                        }
                                         onChange={e =>
                                             handleChange(
-                                                'averageLeadTime',
+                                                'facilityAverageLeadTime',
                                                 e.target.value,
                                             )
                                         }
                                         onBlur={handleBlur}
                                         placeholder="e.g., 30 days"
                                         error={
-                                            touched.averageLeadTime &&
-                                            !!errors.averageLeadTime
+                                            touched.facilityAverageLeadTime &&
+                                            !!errors.facilityAverageLeadTime
                                         }
                                         helperText={
-                                            touched.averageLeadTime &&
-                                            errors.averageLeadTime
+                                            touched.facilityAverageLeadTime &&
+                                            errors.facilityAverageLeadTime
                                         }
                                     />
                                 </div>
@@ -1129,9 +1149,9 @@ const ProfileStep = ({
                                 aria-label="Affiliations"
                                 isMulti
                                 options={AFFILIATIONS_OPTIONS}
-                                value={formData.affiliations || []}
+                                value={formData.facilityAffiliations || []}
                                 onChange={values =>
-                                    handleChange('affiliations', values)
+                                    handleChange('facilityAffiliations', values)
                                 }
                                 placeholder="Select affiliations..."
                             />
@@ -1164,9 +1184,12 @@ const ProfileStep = ({
                                 aria-label="Certifications"
                                 isMulti
                                 options={CERTIFICATIONS_OPTIONS}
-                                value={formData.certifications || []}
+                                value={formData.facilityCertifications || []}
                                 onChange={values =>
-                                    handleChange('certifications', values)
+                                    handleChange(
+                                        'facilityCertifications',
+                                        values,
+                                    )
                                 }
                                 placeholder="Select certifications..."
                             />
