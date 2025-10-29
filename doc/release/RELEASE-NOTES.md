@@ -16,6 +16,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2201](https://opensupplyhub.atlassian.net/browse/OSDEV-2201) - Claim Flow: Eligibility Step
   - Added a dedicated Eligibility step UI showing account email and organization name, plus a required relationship selector with the following options: owner, manager, parent company representative, worker, partner, and other.
   - Implemented an ineligibility dialog for the "partner" and "other" selections that blocks progression but preserves any previously valid selection when the dialog is closed.
+* [OSDEV-2212](https://opensupplyhub.atlassian.net/browse/OSDEV-2212) - Claim Flow: Profile Step
+  - Implemented comprehensive Profile step with four expandable sections: Production Location Overview, Company Information, Operations & Capabilities, and Compliance & Partnerships.
+  - Added dynamic sector-based taxonomy for facility types and processing types that filters options when "Apparel" sector is selected, with fallback to creatable fields for other sectors.
+  - Integrated emissions estimation fields allowing claimants to provide energy consumption data by source type, facility opening/closing dates, and estimated annual throughput.
+  - Added Beta labels with tooltips to premium fields (Company Phone, Production Location Description, Minimum Order Quantity, Average Lead Time, Affiliations, and Certifications) to indicate future Premium offering features.
+  - Implemented form submission functionality with success dialog popup showing "View My Approved Claims" and "Search OS Hub" action buttons upon successful claim submission.
+  
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
