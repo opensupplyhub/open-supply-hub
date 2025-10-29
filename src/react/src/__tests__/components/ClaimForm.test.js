@@ -59,6 +59,11 @@ describe('ClaimForm component', () => {
                 numberOfWorkers: '',
                 additionalNotes: '',
             },
+            submissionState: {
+                fetching: false,
+                error: null,
+                data: null,
+            },
         },
         filterOptions: {
             countries: {
