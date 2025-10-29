@@ -6,7 +6,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Switch from '@material-ui/core/Switch';
-
+import RequiredAsterisk from '../../../../RequiredAsterisk';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import contactInfoStepStyles from './styles';
 import EMPLOYMENT_VERIFICATION_OPTIONS from './constants';
@@ -14,6 +14,7 @@ import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
+import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
 
 const ContactInfoStep = ({
     classes,
@@ -47,27 +48,43 @@ const ContactInfoStep = ({
                     </Typography>
                     <Grid container spacing={16}>
                         <Grid item xs={12}>
+                            <FormFieldTitle label="Your Email" required />
                             <TextField
                                 fullWidth
-                                label="Your Email"
                                 value={userEmail || ''}
                                 required
-                                InputProps={{ readOnly: true }}
+                                variant="outlined"
+                                InputProps={{
+                                    readOnly: true,
+                                    classes: {
+                                        root: classes.inputRoot,
+                                        input: classes.input,
+                                        notchedOutline: classes.notchedOutline,
+                                    },
+                                }}
                                 className={classes.textField}
                                 placeholder="opensupplyhubuser@company.com"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
+                            <FormFieldTitle label="Your Name" required />
                             <TextField
                                 fullWidth
                                 required
                                 name="claimantName"
-                                label="Your Name"
                                 value={formData.claimantName || ''}
                                 onChange={e =>
                                     handleChange('claimantName', e.target.value)
                                 }
                                 onBlur={() => handleBlur('claimantName')}
+                                variant="outlined"
+                                InputProps={{
+                                    classes: {
+                                        root: classes.inputRoot,
+                                        input: classes.input,
+                                        notchedOutline: classes.notchedOutline,
+                                    },
+                                }}
                                 className={classes.textField}
                                 placeholder="Enter your full name"
                                 error={
@@ -81,11 +98,11 @@ const ContactInfoStep = ({
                             />
                         </Grid>
                         <Grid item xs={12} sm={6}>
+                            <FormFieldTitle label="Your Job Title" required />
                             <TextField
                                 fullWidth
                                 required
                                 name="claimantTitle"
-                                label="Your Job Title"
                                 value={formData.claimantTitle || ''}
                                 onChange={e =>
                                     handleChange(
@@ -94,6 +111,14 @@ const ContactInfoStep = ({
                                     )
                                 }
                                 onBlur={() => handleBlur('claimantTitle')}
+                                variant="outlined"
+                                InputProps={{
+                                    classes: {
+                                        root: classes.inputRoot,
+                                        input: classes.input,
+                                        notchedOutline: classes.notchedOutline,
+                                    },
+                                }}
                                 className={classes.textField}
                                 placeholder="e.g., Plant Manager, Safety Director"
                                 error={
@@ -120,7 +145,7 @@ const ContactInfoStep = ({
 
                     <div className={classes.gridSpacing}>
                         <Typography className={classes.sectionTitle}>
-                            Employment Verification*
+                            Employment Verification <RequiredAsterisk />
                         </Typography>
                         <Typography className={classes.helperTextSmall}>
                             You need to select and provide one of the below
@@ -172,12 +197,12 @@ const ContactInfoStep = ({
 
                     {showWebsiteUrlField && (
                         <div className={classes.gridSpacing}>
+                            <FormFieldTitle label="Website URL" required />
                             <TextField
                                 fullWidth
                                 required
                                 type="url"
                                 name="employmentVerificationUrl"
-                                label="Website URL"
                                 value={formData.employmentVerificationUrl || ''}
                                 onChange={e =>
                                     handleChange(
@@ -188,6 +213,14 @@ const ContactInfoStep = ({
                                 onBlur={() =>
                                     handleBlur('employmentVerificationUrl')
                                 }
+                                variant="outlined"
+                                InputProps={{
+                                    classes: {
+                                        root: classes.inputRoot,
+                                        input: classes.input,
+                                        notchedOutline: classes.notchedOutline,
+                                    },
+                                }}
                                 className={classes.textField}
                                 placeholder="https://example.com/team"
                                 error={
@@ -204,12 +237,15 @@ const ContactInfoStep = ({
 
                     {showLinkedInUrlField && (
                         <div className={classes.gridSpacing}>
+                            <FormFieldTitle
+                                label="LinkedIn Profile URL"
+                                required
+                            />
                             <TextField
                                 fullWidth
                                 required
                                 type="url"
                                 name="employmentVerificationUrl"
-                                label="LinkedIn Profile URL"
                                 value={formData.employmentVerificationUrl || ''}
                                 onChange={e =>
                                     handleChange(
@@ -220,6 +256,14 @@ const ContactInfoStep = ({
                                 onBlur={() =>
                                     handleBlur('employmentVerificationUrl')
                                 }
+                                variant="outlined"
+                                InputProps={{
+                                    classes: {
+                                        root: classes.inputRoot,
+                                        input: classes.input,
+                                        notchedOutline: classes.notchedOutline,
+                                    },
+                                }}
                                 className={classes.textField}
                                 placeholder="https://linkedin.com/in/yourprofile"
                                 error={
@@ -300,6 +344,15 @@ const ContactInfoStep = ({
                                         )
                                     }
                                     onBlur={() => handleBlur('contactName')}
+                                    variant="outlined"
+                                    InputProps={{
+                                        classes: {
+                                            root: classes.inputRoot,
+                                            input: classes.input,
+                                            notchedOutline:
+                                                classes.notchedOutline,
+                                        },
+                                    }}
                                     className={classes.textField}
                                     placeholder="Contact person's name"
                                     error={
@@ -340,6 +393,15 @@ const ContactInfoStep = ({
                                         )
                                     }
                                     onBlur={() => handleBlur('contactEmail')}
+                                    variant="outlined"
+                                    InputProps={{
+                                        classes: {
+                                            root: classes.inputRoot,
+                                            input: classes.input,
+                                            notchedOutline:
+                                                classes.notchedOutline,
+                                        },
+                                    }}
                                     className={classes.textField}
                                     placeholder="contact@company.com"
                                     error={
