@@ -11,6 +11,7 @@ import Warning from '@material-ui/icons/Warning';
 
 import RequiredAsterisk from '../../../../RequiredAsterisk';
 import StyledSelect from '../../../../Filters/StyledSelect';
+import InputErrorText from '../../../../Contribute/InputErrorText';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import withScrollReset from '../../../HOCs/withScrollReset';
 
@@ -35,6 +36,7 @@ const BusinessStep = ({
     errors,
     touched,
     productionLocationData,
+    updateFieldWithoutTouch,
 }) => {
     const [prevVerificationMethod, setPrevVerificationMethod] = useState(
         formData.companyAddressVerification || '',
@@ -47,11 +49,11 @@ const BusinessStep = ({
         }
     }, [formData.companyAddressVerification]);
 
-    // Clear verification URL when verification method changes.
+    // Clear verification URL and documents when verification method changes.
     useVerificationMethodChange(
         formData.companyAddressVerification,
         prevVerificationMethod,
-        handleChange,
+        updateFieldWithoutTouch,
     );
 
     const selectedVerificationMethod = findSelectedOption(
@@ -74,6 +76,12 @@ const BusinessStep = ({
     const isCompanyAddressVerificationError = !!(
         touched?.companyAddressVerification &&
         errors?.companyAddressVerification
+    );
+
+    // This checks if the company address verification URL field has been touched and has validation errors.
+    const isCompanyAddressVerificationUrlError = !!(
+        touched.companyAddressVerificationUrl &&
+        errors.companyAddressVerificationUrl
     );
 
     return (
@@ -192,31 +200,39 @@ const BusinessStep = ({
                                         <TextField
                                             fullWidth
                                             required
-                                            name="verificationUrl"
+                                            name="companyAddressVerificationUrl"
                                             label={getUrlLabel(
                                                 formData.companyAddressVerification,
                                             )}
                                             value={
-                                                formData.verificationUrl || ''
+                                                formData.companyAddressVerificationUrl
                                             }
                                             onChange={e =>
                                                 handleChange(
-                                                    'verificationUrl',
+                                                    'companyAddressVerificationUrl',
                                                     e.target.value,
                                                 )
                                             }
-                                            onBlur={handleBlur}
+                                            onBlur={() =>
+                                                handleBlur(
+                                                    'companyAddressVerificationUrl',
+                                                )
+                                            }
                                             className={classes.field}
                                             placeholder={getUrlPlaceholder(
                                                 formData.companyAddressVerification,
                                             )}
                                             error={
-                                                touched.verificationUrl &&
-                                                !!errors.verificationUrl
+                                                isCompanyAddressVerificationUrlError
                                             }
                                             helperText={
-                                                touched.verificationUrl &&
-                                                errors.verificationUrl
+                                                isCompanyAddressVerificationUrlError && (
+                                                    <InputErrorText
+                                                        text={
+                                                            errors.companyAddressVerificationUrl
+                                                        }
+                                                    />
+                                                )
                                             }
                                             FormHelperTextProps={{
                                                 className: classes.helperText,
@@ -235,15 +251,26 @@ const BusinessStep = ({
                                         inputId="company-address-verification-documents"
                                         title="Upload your documents"
                                         files={
-                                            formData.verificationDocuments || []
+                                            formData.companyAddressVerificationDocuments ||
+                                            []
                                         }
                                         updateUploadFiles={files =>
                                             handleChange(
-                                                'verificationDocuments',
+                                                'companyAddressVerificationDocuments',
                                                 files,
                                             )
                                         }
                                     />
+                                    {touched.companyAddressVerificationDocuments &&
+                                        !!errors.companyAddressVerificationDocuments && (
+                                            <Typography
+                                                className={classes.errorText}
+                                            >
+                                                {
+                                                    errors.companyAddressVerificationDocuments
+                                                }
+                                            </Typography>
+                                        )}
                                 </Grid>
                             )}
                         </Grid>
@@ -281,6 +308,7 @@ BusinessStep.propTypes = {
     formData: object.isRequired,
     handleChange: func.isRequired,
     handleBlur: func.isRequired,
+    updateFieldWithoutTouch: func.isRequired,
     errors: object,
     touched: object,
     productionLocationData: object,

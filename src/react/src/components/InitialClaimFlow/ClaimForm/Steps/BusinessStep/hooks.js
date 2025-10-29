@@ -1,24 +1,25 @@
 import { useEffect } from 'react';
 
 /**
- * Custom hook to handle verification URL field clearing when verification method changes.
- * Clears the URL field when switching between different verification methods.
+ * Custom hook to handle verification URL field clearing when verification
+ * method changes. Clears the URL and documents fields when switching
+ * between different verification methods.
  */
 const useVerificationMethodChange = (
     verificationMethod,
     prevVerificationMethod,
-    handleFieldChange,
+    updateField,
 ) => {
     useEffect(() => {
         if (
-            verificationMethod !== prevVerificationMethod &&
-            prevVerificationMethod
+            prevVerificationMethod &&
+            verificationMethod !== prevVerificationMethod
         ) {
-            // Clear verification URL when switching methods.
-            console.log(handleFieldChange);
-            // handleFieldChange('verificationUrl', '');
+            // Clear verification URL and documents when switching methods.
+            updateField('companyAddressVerificationUrl', '');
+            updateField('companyAddressVerificationDocuments', []);
         }
-    }, [verificationMethod, prevVerificationMethod, handleFieldChange]);
+    }, [verificationMethod, prevVerificationMethod, updateField]);
 };
 
 export default useVerificationMethodChange;

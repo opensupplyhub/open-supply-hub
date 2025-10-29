@@ -133,6 +133,7 @@ const ClaimForm = ({
         claimForm,
         handleFieldChange,
         handleBlur,
+        updateFieldWithoutTouch,
         isButtonDisabled,
     } = useClaimForm(formData, activeStep, updateField, handleSubmit);
 
@@ -262,6 +263,7 @@ const ClaimForm = ({
                             formData={claimForm.values}
                             handleChange={handleFieldChange}
                             handleBlur={handleBlur}
+                            updateFieldWithoutTouch={updateFieldWithoutTouch}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
                         />

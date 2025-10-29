@@ -1,5 +1,10 @@
 import * as Yup from 'yup';
 import { CLAIM_FORM_STEPS } from './constants';
+import {
+    COMPANY_ADDRESS_VERIFICATION_OPTIONS,
+    URL_BASED_VERIFICATION_OPTIONS,
+    DOCUMENT_BASED_VERIFICATION_OPTIONS,
+} from './Steps/BusinessStep/constants';
 
 // Step 1: Eligibility validation.
 export const eligibilityStepSchema = Yup.object().shape({
@@ -17,39 +22,42 @@ export const contactStepSchema = Yup.object().shape({
 });
 
 // Step 3: Business validation.
+const getVerificationLabel = value =>
+    COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(opt => opt.value === value)
+        ?.label;
+
+const urlBasedLabels = URL_BASED_VERIFICATION_OPTIONS.map(getVerificationLabel);
+
+const documentBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
+    getVerificationLabel,
+);
+
 export const businessStepSchema = Yup.object().shape({
     companyAddressVerification: Yup.string().required(
         'Company address verification method is required',
     ),
-    verificationUrl: Yup.string()
-        .when('companyAddressVerification', (val, schema) => {
-            if (
-                val === 'company-website-address' ||
-                val === 'linkedin-address'
-            ) {
-                return schema
+    companyAddressVerificationUrl: Yup.string().when(
+        'companyAddressVerification',
+        {
+            is: value => urlBasedLabels.includes(value),
+            then: schema =>
+                schema
                     .url('Invalid URL format')
-                    .required('Verification URL is required');
-            }
-            return schema.nullable();
-        })
-        .required('Verification URL is required'),
-    verificationDocuments: Yup.array()
-        .when('companyAddressVerification', (val, schema) => {
-            if (
-                val === 'utility-bill' ||
-                val === 'business-registration' ||
-                val === 'tax-license' ||
-                val === 'property-lease' ||
-                val === 'official-documents'
-            ) {
-                return schema
+                    .required(
+                        'Company address verification URL is required on this address verification method',
+                    ),
+        },
+    ),
+    companyAddressVerificationDocuments: Yup.array().when(
+        'companyAddressVerification',
+        {
+            is: value => documentBasedLabels.includes(value),
+            then: schema =>
+                schema
                     .min(1, 'At least one verification document is required')
-                    .required('Verification documents are required');
-            }
-            return schema.nullable();
-        })
-        .required('Verification documents are required'),
+                    .required('Verification documents are required'),
+        },
+    ),
 });
 
 // Step 4: Profile validation (all optional fields).

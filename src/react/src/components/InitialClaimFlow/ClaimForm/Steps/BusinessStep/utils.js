@@ -1,6 +1,7 @@
 import {
     URL_BASED_VERIFICATION_OPTIONS,
     DOCUMENT_BASED_VERIFICATION_OPTIONS,
+    COMPANY_ADDRESS_VERIFICATION_OPTIONS,
 } from './constants';
 
 /**
@@ -20,9 +21,13 @@ export const requiresDocumentUpload = verificationMethod =>
  */
 export const getUrlPlaceholder = verificationMethod => {
     switch (verificationMethod) {
-        case 'linkedin-address':
+        case COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(
+            option => option.value === 'linkedin-address',
+        )?.label:
             return 'https://linkedin.com/company/yourcompany';
-        case 'company-website-address':
+        case COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(
+            option => option.value === 'company-website-address',
+        )?.label:
             return 'https://company.com/contact-us';
         default:
             return 'https://';
@@ -34,9 +39,13 @@ export const getUrlPlaceholder = verificationMethod => {
  */
 export const getUrlLabel = verificationMethod => {
     switch (verificationMethod) {
-        case 'linkedin-address':
+        case COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(
+            option => option.value === 'linkedin-address',
+        )?.label:
             return 'Company LinkedIn Page URL';
-        case 'company-website-address':
+        case COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(
+            option => option.value === 'company-website-address',
+        )?.label:
             return 'Company Website URL';
         default:
             return 'Website URL';

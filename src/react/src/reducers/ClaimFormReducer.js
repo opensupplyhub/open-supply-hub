@@ -21,8 +21,8 @@ const initialState = Object.freeze({
 
         // Business step.
         companyAddressVerification: '',
-        verificationUrl: '',
-        verificationDocuments: [],
+        companyAddressVerificationUrl: '',
+        companyAddressVerificationDocuments: [],
 
         // Profile step.
         numberOfWorkers: '',
