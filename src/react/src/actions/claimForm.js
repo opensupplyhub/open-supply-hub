@@ -84,7 +84,7 @@ const appendFormField = (postData, key, value) => {
 
     if (formattedKey === 'files') {
         appendFiles(postData, formattedKey, value);
-    } else if (formattedKey in arrayFieldsKeys) {
+    } else if (arrayFieldsKeys.includes(formattedKey)) {
         appendArrayField(postData, formattedKey, value);
     } else if (formattedKey === 'facility_type') {
         appendFacilityType(postData, formattedKey, value);
