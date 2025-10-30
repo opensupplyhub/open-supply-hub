@@ -26,7 +26,7 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/Eli
     <div data-testid="eligibility-step">Eligibility Step</div>
 ));
 
-jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/ContactStep', () => () => (
+jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/ContactInfoStep/ContactInfoStep', () => () => (
     <div data-testid="contact-step">Contact Step</div>
 ));
 
