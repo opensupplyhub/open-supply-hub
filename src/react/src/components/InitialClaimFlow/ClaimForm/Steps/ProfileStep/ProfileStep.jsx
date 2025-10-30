@@ -32,7 +32,7 @@ import {
     AFFILIATIONS_OPTIONS,
     CERTIFICATIONS_OPTIONS,
 } from './constants';
-import profileStepStyles from './styles';
+import { profileStepStyles, selectStyles } from './styles';
 
 const ProfileStep = ({
     classes,
@@ -543,6 +543,7 @@ const ProfileStep = ({
                                             )
                                         }
                                         selectPlaceholder="Select country..."
+                                        menuPlacement="top"
                                     />
                                 </div>
                             </Grid>
@@ -611,6 +612,7 @@ const ProfileStep = ({
                                             handleChange('sectors', values)
                                         }
                                         placeholder="Select sectors..."
+                                        styles={selectStyles}
                                     />
                                 </div>
                             </Grid>
@@ -665,6 +667,7 @@ const ProfileStep = ({
                                                 )
                                             }
                                             placeholder="Select location type(s)"
+                                            styles={selectStyles}
                                         />
                                     ) : (
                                         <StyledSelect
@@ -680,6 +683,7 @@ const ProfileStep = ({
                                                 )
                                             }
                                             placeholder="Enter location type(s)"
+                                            styles={selectStyles}
                                         />
                                     )}
                                 </div>
@@ -737,6 +741,7 @@ const ProfileStep = ({
                                                 )
                                             }
                                             placeholder="Select processing type(s)"
+                                            styles={selectStyles}
                                         />
                                     ) : (
                                         <StyledSelect
@@ -755,6 +760,7 @@ const ProfileStep = ({
                                                 )
                                             }
                                             placeholder="Enter processing type(s)"
+                                            styles={selectStyles}
                                         />
                                     )}
                                 </div>
@@ -806,6 +812,7 @@ const ProfileStep = ({
                                             )
                                         }
                                         placeholder="Enter product types..."
+                                        styles={selectStyles}
                                     />
                                 </div>
                             </Grid>
@@ -1154,6 +1161,7 @@ const ProfileStep = ({
                                     handleChange('facilityAffiliations', values)
                                 }
                                 placeholder="Select affiliations..."
+                                styles={selectStyles}
                             />
                         </div>
 
@@ -1192,6 +1200,7 @@ const ProfileStep = ({
                                     )
                                 }
                                 placeholder="Select certifications..."
+                                styles={selectStyles}
                             />
                         </div>
                     </ExpansionPanelDetails>

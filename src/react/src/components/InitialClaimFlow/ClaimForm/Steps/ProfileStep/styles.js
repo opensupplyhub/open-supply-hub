@@ -1,6 +1,6 @@
 import COLOURS from '../../../../../util/COLOURS';
 
-const profileStepStyles = theme =>
+export const profileStepStyles = theme =>
     Object.freeze({
         expansionPanel: Object.freeze({
             marginBottom: theme.spacing.unit * 2,
@@ -131,4 +131,28 @@ const profileStepStyles = theme =>
         }),
     });
 
-export default profileStepStyles;
+export const selectStyles = {
+    control: provided => ({
+        ...provided,
+        minHeight: '56px',
+        borderRadius: '4px',
+        borderColor: 'rgba(0, 0, 0, 0.23)',
+        '&:hover': {
+            borderColor: 'rgba(0, 0, 0, 0.87)',
+        },
+        boxShadow: 'none',
+    }),
+    valueContainer: provided => ({
+        ...provided,
+        padding: '18.5px 14px',
+    }),
+    placeholder: provided => ({
+        ...provided,
+        color: 'rgba(0, 0, 0, 0.54)',
+    }),
+    input: provided => ({
+        ...provided,
+        margin: 0,
+        padding: 0,
+    }),
+};
