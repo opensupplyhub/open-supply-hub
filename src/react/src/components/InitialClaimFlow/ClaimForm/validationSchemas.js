@@ -34,17 +34,17 @@ export const contactStepSchema = Yup.object().shape({
 
     contactPhone: Yup.string(),
 
-    // Required only if public contact block is visible
+    // Required only if public contact block is visible.
     contactName: Yup.string().when('publicContactEnabled', {
         is: v => v === true,
-        then: s => s.required('Contact name is required field!'),
+        then: s => s.required('Contact name is required field!'), // NOSONAR
         otherwise: s => s.strip().nullable(),
     }),
     contactEmail: Yup.string()
         .email('Invalid email address')
         .when('publicContactEnabled', {
             is: v => v === true,
-            then: s => s.required('Contact email is required field!'),
+            then: s => s.required('Contact email is required field!'), // NOSONAR
             otherwise: s => s.strip().nullable(),
         }),
     employmentVerification: Yup.string().required(
@@ -52,7 +52,9 @@ export const contactStepSchema = Yup.object().shape({
     ),
     employmentVerificationUrl: Yup.string().when('employmentVerification', {
         is: value => urlEmploymentVerificationBasedLabels.includes(value),
-        then: schema =>
+        then: (
+            schema, // NOSONAR
+        ) =>
             schema
                 .url('Invalid URL format')
                 .required(
@@ -64,7 +66,9 @@ export const contactStepSchema = Yup.object().shape({
         {
             is: value =>
                 documentEmploymentVerificationBasedLabels.includes(value),
-            then: schema =>
+            then: (
+                schema, // NOSONAR
+            ) =>
                 schema
                     .min(1, 'At least one verification document is required')
                     .required('Verification documents are required'),

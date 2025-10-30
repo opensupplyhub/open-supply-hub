@@ -48,7 +48,7 @@ const ContactInfoStep = ({
     // Update previous verification method when it changes.
     useEffect(() => {
         if (formData.employmentVerification !== prevVerificationMethod) {
-            setPrevVerificationMethod(formData.companyAddressVerification);
+            setPrevVerificationMethod(formData.employmentVerification);
         }
     }, [formData.employmentVerification]);
 
@@ -175,7 +175,7 @@ const ContactInfoStep = ({
                             {touched.claimantTitle && errors.claimantTitle && (
                                 <div className={classes.errorWrapStyles}>
                                     <InputErrorText
-                                        text={errors.claimantName}
+                                        text={errors.claimantTitle}
                                     />
                                 </div>
                             )}

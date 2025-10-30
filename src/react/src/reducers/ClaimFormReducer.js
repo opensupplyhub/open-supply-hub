@@ -20,11 +20,11 @@ const initialState = Object.freeze({
         claimantTitle: '',
         publicContactEnabled: false,
         contactName: '',
-        contactEmail: null,
+        contactEmail: '',
         contactPhone: '',
         employmentVerification: null,
         employmentVerificationUrl: '',
-        employmentVerificationDocuments: null,
+        employmentVerificationDocuments: [],
 
         // Business step.
         locationAddressVerificationMethod: '',
