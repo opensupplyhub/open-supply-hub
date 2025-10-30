@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React from 'react';
 import { func, object, shape, string, bool, oneOfType } from 'prop-types';
 import { connect } from 'react-redux';
@@ -97,7 +96,6 @@ const ContactInfoStep = ({
                                             classes.notchedOutlineStyles,
                                     },
                                 }}
-                                // className={classes.textField}
                                 placeholder="Enter your full name"
                             />
                             {touched.claimantName && errors.claimantName && (
@@ -127,7 +125,6 @@ const ContactInfoStep = ({
                                     touched.claimantTitle &&
                                     Boolean(errors.claimantTitle)
                                 }
-                                // className={classes.textField}
                                 InputProps={{
                                     classes: {
                                         input: `${classes.inputStyles}
@@ -204,7 +201,7 @@ const ContactInfoStep = ({
                     </div>
 
                     {showUploadBlock && (
-                        <div className={classes.gridSpacing}>
+                        <Grid item xs={12} className={classes.gridSpacing}>
                             <ClaimAttachmentsUploader
                                 inputId="employment-verification-upload"
                                 title={
@@ -220,11 +217,21 @@ const ContactInfoStep = ({
                                     )
                                 }
                             />
-                        </div>
+                            {touched.employmentVerificationFiles &&
+                                errors.employmentVerificationFiles && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={
+                                                errors.employmentVerificationFiles
+                                            }
+                                        />
+                                    </div>
+                                )}
+                        </Grid>
                     )}
 
                     {showWebsiteUrlField && (
-                        <div className={classes.gridSpacing}>
+                        <Grid item xs={12} className={classes.gridSpacing}>
                             <FormFieldTitle label="Website URL" required />
                             <TextField
                                 fullWidth
@@ -249,7 +256,6 @@ const ContactInfoStep = ({
                                             classes.notchedOutlineStyles,
                                     },
                                 }}
-                                // className={classes.textField}
                                 placeholder="https://example.com/team"
                                 error={
                                     touched?.employmentVerificationUrl &&
@@ -260,11 +266,11 @@ const ContactInfoStep = ({
                                     errors?.employmentVerificationUrl
                                 }
                             />
-                        </div>
+                        </Grid>
                     )}
 
                     {showLinkedInUrlField && (
-                        <div className={classes.gridSpacing}>
+                        <Grid item xs={12} className={classes.gridSpacing}>
                             <FormFieldTitle
                                 label="LinkedIn Profile URL"
                                 required
@@ -292,7 +298,6 @@ const ContactInfoStep = ({
                                             classes.notchedOutlineStyles,
                                     },
                                 }}
-                                // className={classes.textField}
                                 placeholder="https://linkedin.com/in/yourprofile"
                                 error={
                                     touched?.employmentVerificationUrl &&
@@ -303,7 +308,7 @@ const ContactInfoStep = ({
                                     errors?.employmentVerificationUrl
                                 }
                             />
-                        </div>
+                        </Grid>
                     )}
 
                     <Typography className={classes.sectionTitle}>
@@ -408,7 +413,6 @@ const ContactInfoStep = ({
                                                 classes.notchedOutlineStyles,
                                         },
                                     }}
-                                    // className={classes.textField}
                                     placeholder="Contact person's name"
                                 />
                                 {touched.contactName && errors.contactName && (
@@ -448,7 +452,6 @@ const ContactInfoStep = ({
                                     }
                                     onBlur={() => handleBlur('contactEmail')}
                                     variant="outlined"
-                                    // className={classes.textField}
                                     InputProps={{
                                         classes: {
                                             input: classes.inputStyles,
