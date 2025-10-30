@@ -52,7 +52,7 @@ const contactInfoStepStyles = theme =>
             marginLeft: theme.spacing.unit,
         }),
         selectWrapper: Object.freeze({
-            marginBottom: 0,
+            marginBottom: '18px',
         }),
         gridSpacing: Object.freeze({
             marginTop: theme.spacing.unit * 2,

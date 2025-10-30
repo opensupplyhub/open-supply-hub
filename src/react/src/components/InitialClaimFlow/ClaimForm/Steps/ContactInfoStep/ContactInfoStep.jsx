@@ -1,4 +1,5 @@
-import React from 'react';
+/* eslint no-unused-vars: 0 */
+import React, { useState, useEffect } from 'react';
 import { func, object, shape, string, bool, oneOfType } from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -9,7 +10,15 @@ import Switch from '@material-ui/core/Switch';
 import RequiredAsterisk from '../../../../RequiredAsterisk';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import contactInfoStepStyles from './styles';
-import EMPLOYMENT_VERIFICATION_OPTIONS from './constants';
+import { EMPLOYMENT_VERIFICATION_OPTIONS } from './constants';
+import {
+    requiresUrlInput,
+    requiresDocumentUpload,
+    getUrlPlaceholder,
+    getUrlLabel,
+    buildProductionLocationUrl,
+} from './utils';
+import useVerificationMethodChange from './hooks';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
@@ -23,6 +32,7 @@ const ContactInfoStep = ({
     formData,
     handleChange,
     handleBlur,
+    updateFieldWithoutTouch,
     errors,
     touched,
     userEmail,
@@ -32,18 +42,44 @@ const ContactInfoStep = ({
         EMPLOYMENT_VERIFICATION_OPTIONS,
         formData.employmentVerification,
     );
-    const showUploadBlock = Boolean(
-        employmentOption &&
-            employmentOption.value !== 'company_website' &&
-            employmentOption.value !== 'linkedin_page',
+
+    const [prevVerificationMethod, setPrevVerificationMethod] = useState(
+        formData.employmentVerification || '',
     );
-    const showWebsiteUrlField = employmentOption?.value === 'company_website';
-    const showLinkedInUrlField = employmentOption?.value === 'linkedin_page';
+
+    // Update previous verification method when it changes.
+    useEffect(() => {
+        if (formData.employmentVerification !== prevVerificationMethod) {
+            setPrevVerificationMethod(formData.companyAddressVerification);
+        }
+    }, [formData.employmentVerification]);
+
+    // Clear verification URL and documents when verification method changes.
+    useVerificationMethodChange(
+        formData.employmentVerification,
+        prevVerificationMethod,
+        updateFieldWithoutTouch,
+    );
+
+    const selectedVerificationMethod = findSelectedOption(
+        EMPLOYMENT_VERIFICATION_OPTIONS,
+        formData.employmentVerification,
+    );
+
+    const showUrlInput = requiresUrlInput(selectedVerificationMethod?.value);
+    const showDocumentUpload = requiresDocumentUpload(
+        selectedVerificationMethod?.value,
+    );
 
     // This checks if the employment verification field has been touched and either has validation errors
     // or no value selected
     const isEmploymentVerificationError = !!(
         touched?.employmentVerification && errors?.employmentVerification
+    );
+
+    // This checks if the company address verification URL field has been touched and has validation errors.
+    const isEmploymentVerificationUrlError = !!(
+        touched.employmentVerificationUrl && errors.employmentVerificationUrl
     );
 
     return (
@@ -199,8 +235,57 @@ const ContactInfoStep = ({
                                 </div>
                             )}
                     </div>
-
-                    {showUploadBlock && (
+                    {showUrlInput && (
+                        <Grid container spacing={16}>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    type="url"
+                                    variant="outlined"
+                                    name="employmentVerificationUrl"
+                                    value={formData.employmentVerificationUrl}
+                                    onChange={e =>
+                                        handleChange(
+                                            'employmentVerificationUrl',
+                                            e.target.value,
+                                        )
+                                    }
+                                    onBlur={() =>
+                                        handleBlur('employmentVerificationUrl')
+                                    }
+                                    InputProps={{
+                                        classes: {
+                                            input: `${classes.inputStyles}
+                                            ${
+                                                errors?.employmentVerificationUrl &&
+                                                classes.errorStyle
+                                            }`,
+                                            notchedOutline:
+                                                classes.notchedOutlineStyles,
+                                        },
+                                    }}
+                                    placeholder={getUrlPlaceholder(
+                                        formData.employmentVerification,
+                                    )}
+                                    error={isEmploymentVerificationUrlError}
+                                />
+                                {touched.employmentVerificationUrl &&
+                                    errors.employmentVerificationUrl && (
+                                        <div
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={
+                                                    errors.employmentVerificationUrl
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                            </Grid>
+                        </Grid>
+                    )}
+                    {showDocumentUpload && (
                         <Grid item xs={12} className={classes.gridSpacing}>
                             <ClaimAttachmentsUploader
                                 inputId="employment-verification-upload"
@@ -208,107 +293,26 @@ const ContactInfoStep = ({
                                     'Upload your documents/photos\nPlease upload one or more clear photos or scans of your selected verification method. You can upload multiple files.'
                                 }
                                 files={
-                                    formData.employmentVerificationFiles || []
+                                    formData.employmentVerificationDocuments ||
+                                    []
                                 }
                                 updateUploadFiles={newFiles =>
                                     handleChange(
-                                        'employmentVerificationFiles',
+                                        'employmentVerificationDocuments',
                                         newFiles,
                                     )
                                 }
                             />
-                            {/** This can't be displayed because of disabled 'Continue to Business Details' button */}
-                            {touched.employmentVerificationFiles &&
-                                errors.employmentVerificationFiles && (
+                            {touched.employmentVerificationDocuments &&
+                                errors.employmentVerificationDocuments && (
                                     <div className={classes.errorWrapStyles}>
                                         <InputErrorText
                                             text={
-                                                errors.employmentVerificationFiles
+                                                errors.employmentVerificationDocuments
                                             }
                                         />
                                     </div>
                                 )}
-                        </Grid>
-                    )}
-
-                    {showWebsiteUrlField && (
-                        <Grid item xs={12} className={classes.gridSpacing}>
-                            <FormFieldTitle label="Website URL" required />
-                            <TextField
-                                fullWidth
-                                required
-                                type="url"
-                                name="employmentVerificationUrl"
-                                value={formData.employmentVerificationUrl || ''}
-                                onChange={e =>
-                                    handleChange(
-                                        'employmentVerificationUrl',
-                                        e.target.value,
-                                    )
-                                }
-                                onBlur={() =>
-                                    handleBlur('employmentVerificationUrl')
-                                }
-                                variant="outlined"
-                                InputProps={{
-                                    classes: {
-                                        input: classes.inputStyles,
-                                        notchedOutline:
-                                            classes.notchedOutlineStyles,
-                                    },
-                                }}
-                                placeholder="https://example.com/team"
-                                error={
-                                    touched?.employmentVerificationUrl &&
-                                    Boolean(errors?.employmentVerificationUrl)
-                                }
-                                helperText={
-                                    touched?.employmentVerificationUrl &&
-                                    errors?.employmentVerificationUrl
-                                }
-                            />
-                        </Grid>
-                    )}
-
-                    {showLinkedInUrlField && (
-                        <Grid item xs={12} className={classes.gridSpacing}>
-                            <FormFieldTitle
-                                label="LinkedIn Profile URL"
-                                required
-                            />
-                            <TextField
-                                fullWidth
-                                required
-                                type="url"
-                                name="employmentVerificationUrl"
-                                value={formData.employmentVerificationUrl || ''}
-                                onChange={e =>
-                                    handleChange(
-                                        'employmentVerificationUrl',
-                                        e.target.value,
-                                    )
-                                }
-                                onBlur={() =>
-                                    handleBlur('employmentVerificationUrl')
-                                }
-                                variant="outlined"
-                                InputProps={{
-                                    classes: {
-                                        input: classes.inputStyles,
-                                        notchedOutline:
-                                            classes.notchedOutlineStyles,
-                                    },
-                                }}
-                                placeholder="https://linkedin.com/in/yourprofile"
-                                error={
-                                    touched?.employmentVerificationUrl &&
-                                    Boolean(errors?.employmentVerificationUrl)
-                                }
-                                helperText={
-                                    touched?.employmentVerificationUrl &&
-                                    errors?.employmentVerificationUrl
-                                }
-                            />
                         </Grid>
                     )}
 

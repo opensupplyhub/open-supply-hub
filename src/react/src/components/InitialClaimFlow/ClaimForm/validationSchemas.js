@@ -13,6 +13,17 @@ export const eligibilityStepSchema = Yup.object().shape({
 });
 
 // Step 2: Contact validation.
+const getEmploymentVerificationLabel = value =>
+    EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === value)?.label;
+
+const urlEmploymentVerificationBasedLabels = URL_BASED_VERIFICATION_OPTIONS.map(
+    getEmploymentVerificationLabel,
+);
+
+const documentEmploymentVerificationBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
+    getEmploymentVerificationLabel,
+);
+
 export const contactStepSchema = Yup.object().shape({
     // Always required (claimant fields).
     claimantName: Yup.string().required('Your full name is required field!'),
@@ -39,46 +50,26 @@ export const contactStepSchema = Yup.object().shape({
     employmentVerification: Yup.string().required(
         'Please select an employment verification option',
     ),
-    employmentVerificationUrl: Yup.string()
-        .nullable()
-        .when('employmentVerification', {
+    employmentVerificationUrl: Yup.string().when('employmentVerification', {
+        is: value => urlEmploymentVerificationBasedLabels.includes(value),
+        then: schema =>
+            schema
+                .url('Invalid URL format')
+                .required(
+                    'Employment verification URL is required on this employment verification method',
+                ),
+    }),
+    employmentVerificationDocuments: Yup.array().when(
+        'employmentVerification',
+        {
             is: value =>
-                value &&
-                (value.value === 'company_website' ||
-                    value.value === 'linkedin_page'),
+                documentEmploymentVerificationBasedLabels.includes(value),
             then: schema =>
-                schema.required('A valid URL is required').url('Invalid URL'),
-            otherwise: schema => schema.nullable(),
-        }),
-    employmentVerificationFiles: Yup.array()
-        .nullable()
-        .when('employmentVerification', {
-            is: v => {
-                if (!v) return false;
-                if (typeof v === 'object') {
-                    return (
-                        v.value !== 'company_website' &&
-                        v.value !== 'linkedin_page'
-                    );
-                }
-                const s = String(v).toLowerCase();
-                const isWebsite =
-                    s.includes('company website') || s.includes('linkedin');
-                return !isWebsite;
-            },
-            /*
-             * This error message is not displayed because triggering the file upload
-             * render switches the touch event to true, which sets to true disable attribute of
-             * the 'Continue to Business Details' button. We can't render this message
-             * when the button is inactive.
-             */
-            then: s =>
-                s
-                    .transform(val => (val == null ? [] : val))
-                    .required('Please upload at least one file')
-                    .min(1, 'Please upload at least one file'),
-            otherwise: s => s.strip().nullable(),
-        }),
+                schema
+                    .min(1, 'At least one verification document is required')
+                    .required('Verification documents are required'),
+        },
+    ),
 });
 
 // Step 3: Business validation.

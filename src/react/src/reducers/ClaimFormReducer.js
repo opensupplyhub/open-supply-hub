@@ -22,7 +22,7 @@ const initialState = Object.freeze({
         contactPhone: '',
         employmentVerification: null,
         employmentVerificationUrl: '',
-        employmentVerificationFiles: null,
+        employmentVerificationDocuments: null,
 
         // Business step.
         locationAddressVerificationMethod: '',
