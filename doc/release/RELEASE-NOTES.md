@@ -16,6 +16,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2201](https://opensupplyhub.atlassian.net/browse/OSDEV-2201) - Claim Flow: Eligibility Step
   - Added a dedicated Eligibility step UI showing account email and organization name, plus a required relationship selector with the following options: owner, manager, parent company representative, worker, partner, and other.
   - Implemented an ineligibility dialog for the "partner" and "other" selections that blocks progression but preserves any previously valid selection when the dialog is closed.
+* [OSDEV-2205](https://opensupplyhub.atlassian.net/browse/OSDEV-2205) - Claim Flow: Business Information Step
+  - Implemented Business step UI displaying read-only production location details including OS ID (with clickable link to facility profile), company name, and address.
+  - Added Company Address Verification section with seven verification method options: company website URL, LinkedIn page URL, utility bill upload, business registration document upload, tax document/license upload, property lease/ownership document upload, and other official documents upload.
+  - Implemented dynamic form fields that conditionally display URL input (for website/LinkedIn verification) or document uploader (for document-based verification methods) based on selected verification method.
+  - Added comprehensive form validation with real-time error messaging for verification method selection, URL format validation, and required document uploads.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
