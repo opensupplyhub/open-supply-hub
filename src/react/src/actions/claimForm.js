@@ -80,10 +80,15 @@ const appendFormField = (postData, key, value) => {
         'facility_certifications',
     ];
 
+    const fileFieldsKeys = [
+        'companyAddressVerificationDocuments',
+        'employmentVerificationDocuments',
+    ];
+
     const formattedKey = mapFieldNameToAPI(key);
 
-    if (formattedKey === 'files') {
-        appendFiles(postData, formattedKey, value);
+    if (fileFieldsKeys.includes(formattedKey)) {
+        appendFiles(postData, 'files', value);
     } else if (arrayFieldsKeys.includes(formattedKey)) {
         appendArrayField(postData, formattedKey, value);
     } else if (formattedKey === 'facility_type') {
