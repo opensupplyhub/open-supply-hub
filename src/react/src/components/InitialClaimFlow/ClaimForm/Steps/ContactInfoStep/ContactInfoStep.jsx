@@ -161,11 +161,7 @@ const ContactInfoStep = ({
                                 }
                                 InputProps={{
                                     classes: {
-                                        input: `${classes.inputStyles}
-                                        ${
-                                            errors?.claimantTitle &&
-                                            classes.errorStyle
-                                        }`,
+                                        input: `${classes.inputStyles}`,
                                         notchedOutline:
                                             classes.notchedOutlineStyles,
                                     },
@@ -264,11 +260,7 @@ const ContactInfoStep = ({
                                     }
                                     InputProps={{
                                         classes: {
-                                            input: `${classes.inputStyles}
-                                            ${
-                                                errors?.employmentVerificationUrl &&
-                                                classes.errorStyle
-                                            }`,
+                                            input: `${classes.inputStyles}`,
                                             notchedOutline:
                                                 classes.notchedOutlineStyles,
                                         },

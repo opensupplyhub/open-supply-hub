@@ -26,8 +26,12 @@ const documentEmploymentVerificationBasedLabels = DOCUMENT_BASED_VERIFICATION_OP
 
 export const contactStepSchema = Yup.object().shape({
     // Always required (claimant fields).
-    claimantName: Yup.string().required('Your full name is required field!'),
-    claimantTitle: Yup.string().required('Your job title is required field!'),
+    claimantName: Yup.string()
+        .trim()
+        .required('Your full name is required field!'),
+    claimantTitle: Yup.string()
+        .trim()
+        .required('Your job title is required field!'),
 
     // Toggle controlling public contact block visibility.
     publicContactEnabled: Yup.boolean().nullable(),
@@ -37,7 +41,7 @@ export const contactStepSchema = Yup.object().shape({
     // Required only if public contact block is visible.
     contactName: Yup.string().when('publicContactEnabled', {
         is: v => v === true,
-        then: s => s.required('Contact name is required field!'), // NOSONAR
+        then: s => s.trim().required('Contact name is required field!'), // NOSONAR
         otherwise: s => s.strip().nullable(),
     }),
     contactEmail: Yup.string()
