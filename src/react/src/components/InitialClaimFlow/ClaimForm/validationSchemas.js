@@ -27,17 +27,7 @@ export const profileStepSchema = Yup.object().shape({
     // Production Location Overview
     localLanguageName: Yup.string(),
     officePhoneNumber: Yup.string(),
-    businessWebsite: Yup.string()
-        .nullable()
-        .test('is-valid-url', 'Must be a valid URL', value => {
-            if (!value || value.trim() === '') return true;
-            try {
-                const url = new URL(value);
-                return !!url;
-            } catch {
-                return false;
-            }
-        }),
+    businessWebsite: Yup.string().url('Invalid URL'),
     facilityDescription: Yup.string(),
 
     // Company Information

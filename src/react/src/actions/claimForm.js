@@ -35,8 +35,8 @@ export const completeSubmitClaimFormData = createAction(
 const makeClaimFacilityAPIURL = osID => `/api/facilities/${osID}/claim/`;
 
 /**
- * Transform field name to API format
- * Remove once proper form fields names are implemented
+ * Temporary transform field name to API format.
+ * Remove once proper form fields names are implemented.
  */
 const mapFieldNameToAPI = key => {
     const specialMappings = {
@@ -51,8 +51,8 @@ const mapFieldNameToAPI = key => {
 };
 
 /**
- * Add temporary mock values for required fields
- * Remove once proper form fields are implemented
+ * Add temporary mock values for required fields.
+ * Remove once proper form fields are implemented.
  */
 const addMockRequiredFields = postData => {
     if (!postData.has('your_name')) {

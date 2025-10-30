@@ -261,6 +261,7 @@ const ProfileStep = ({
                                         </div>
                                         <TextField
                                             fullWidth
+                                            type="url"
                                             variant="outlined"
                                             value={
                                                 formData.businessWebsite || ''

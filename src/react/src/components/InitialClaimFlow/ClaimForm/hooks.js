@@ -119,23 +119,16 @@ export const useClaimForm = (
         const schema = getValidationSchemaForStep(activeStep);
         const currentStepFields = Object.keys(schema.describe().fields);
 
-        // Check if user has interacted with any field in current step.
-        const hasInteractedWithCurrentStep = currentStepFields.some(
-            field => formik.touched[field],
-        );
-
-        // Check if there are validation errors in CURRENT STEP ONLY.
-        const hasCurrentStepErrors = currentStepFields.some(
-            field => formik.errors[field],
+        // Check if there are validation errors on touched fields only.
+        // This prevents blocking the button when errors exist on untouched fields.
+        const hasTouchedFieldErrors = currentStepFields.some(
+            field => formik.touched[field] && formik.errors[field],
         );
 
         // Disable button if:
         // 1. User has interacted with fields AND there are Formik validation errors, OR
-        // 2. There are emissions validation errors
-        return (
-            (hasInteractedWithCurrentStep && hasCurrentStepErrors) ||
-            emissionsHasErrors
-        );
+        // 2. There are emissions validation errors.
+        return hasTouchedFieldErrors || emissionsHasErrors;
     };
 
     return {
