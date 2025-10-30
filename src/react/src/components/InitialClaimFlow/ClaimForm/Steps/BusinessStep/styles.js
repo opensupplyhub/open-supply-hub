@@ -21,7 +21,7 @@ const businessStepStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBold,
             marginBottom: '20px',
         }),
-        verficationSectionTitle: Object.freeze({
+        verificationSectionTitle: Object.freeze({
             marginBottom: '0',
         }),
         fieldLabel: Object.freeze({

@@ -182,7 +182,7 @@ const BusinessStep = ({
                         >
                             <Typography
                                 variant="subheading"
-                                className={`${classes.sectionTitle} ${classes.verficationSectionTitle}`}
+                                className={`${classes.sectionTitle} ${classes.verificationSectionTitle}`}
                             >
                                 Company Address Verification{' '}
                                 <RequiredAsterisk />
