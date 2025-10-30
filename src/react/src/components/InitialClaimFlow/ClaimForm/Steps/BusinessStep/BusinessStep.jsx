@@ -7,7 +7,8 @@ import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import TextField from '@material-ui/core/TextField';
-import Warning from '@material-ui/icons/Warning';
+import InfoIcon from '@material-ui/icons/Info';
+import { Link } from 'react-router-dom';
 
 import RequiredAsterisk from '../../../../RequiredAsterisk';
 import StyledSelect from '../../../../Filters/StyledSelect';
@@ -22,11 +23,11 @@ import {
     requiresDocumentUpload,
     getUrlPlaceholder,
     getUrlLabel,
-    buildProductionLocationUrl,
 } from './utils';
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
 import findSelectedOption from '../utils';
+import { facilityDetailsRoute } from '../../../../../util/constants';
 
 const BusinessStep = ({
     classes,
@@ -69,7 +70,7 @@ const BusinessStep = ({
     const osId = productionLocationData?.os_id || '';
     const locationName = productionLocationData?.name || '';
     const locationAddress = productionLocationData?.address || '';
-    const productionLocationUrl = buildProductionLocationUrl(osId);
+    const productionLocationUrl = facilityDetailsRoute.replace(':osID', osId);
 
     // This checks if the company address verification field has been touched and either has validation errors
     // or no value selected.
@@ -89,58 +90,80 @@ const BusinessStep = ({
             <Grid item xs={12}>
                 <Card className={classes.card}>
                     <CardContent className={classes.content}>
-                        <Grid item xs={12} className={classes.section}>
+                        <Grid
+                            item
+                            xs={12}
+                            className={classes.productionLocationSection}
+                        >
                             <Typography
                                 variant="subheading"
                                 className={classes.sectionTitle}
                             >
                                 Production Location Details
                             </Typography>
-
                             <Grid container spacing={16}>
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
                                         color="textSecondary"
+                                        className={classes.fieldLabel}
                                     >
                                         OS ID
                                     </Typography>
-                                    <a
-                                        href={productionLocationUrl}
+                                    <Link
+                                        to={productionLocationUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className={classes.linkField}
                                     >
                                         {osId}
-                                    </a>
+                                    </Link>
                                 </Grid>
-
                                 <Grid item xs={12} md={6}>
+                                    <Typography
+                                        variant="caption"
+                                        color="textSecondary"
+                                        className={classes.fieldLabel}
+                                    >
+                                        Company Name
+                                    </Typography>
                                     <TextField
                                         fullWidth
                                         disabled
+                                        variant="outlined"
+                                        multiline
                                         name="companyName"
-                                        label="Company Name"
                                         value={locationName}
-                                        className={classes.field}
                                         InputProps={{
                                             className: classes.disabledField,
+                                            classes: {
+                                                notchedOutline:
+                                                    classes.notchedOutlineStyles,
+                                            },
                                         }}
                                     />
                                 </Grid>
-
                                 <Grid item xs={12} md={6}>
+                                    <Typography
+                                        variant="caption"
+                                        color="textSecondary"
+                                        className={classes.fieldLabel}
+                                    >
+                                        Company Address
+                                    </Typography>
                                     <TextField
                                         fullWidth
                                         disabled
+                                        variant="outlined"
                                         multiline
-                                        rows={2}
                                         name="companyAddress"
-                                        label="Company Address"
                                         value={locationAddress}
-                                        className={classes.field}
                                         InputProps={{
                                             className: classes.disabledField,
+                                            classes: {
+                                                notchedOutline:
+                                                    classes.notchedOutlineStyles,
+                                            },
                                         }}
                                     />
                                 </Grid>
@@ -153,17 +176,19 @@ const BusinessStep = ({
                         >
                             <Typography
                                 variant="subheading"
-                                className={classes.sectionTitle}
+                                className={`${classes.sectionTitle} ${classes.verficationSectionTitle}`}
                             >
                                 Company Address Verification{' '}
                                 <RequiredAsterisk />
                             </Typography>
-
-                            <Typography variant="caption" color="textSecondary">
+                            <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                className={classes.verificationDescription}
+                            >
                                 You need to select and provide one of the below
                                 items for company address verification.
                             </Typography>
-
                             <Grid item xs={12} className={classes.selectStyles}>
                                 <StyledSelect
                                     id="companyAddressVerification"
@@ -189,21 +214,33 @@ const BusinessStep = ({
                                     isMulti={false}
                                 />
                                 {isCompanyAddressVerificationError && (
-                                    <Typography className={classes.errorText}>
-                                        {errors.companyAddressVerification}
-                                    </Typography>
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={
+                                                errors.companyAddressVerification
+                                            }
+                                        />
+                                    </div>
                                 )}
                             </Grid>
                             {showUrlInput && (
-                                <Grid container spacing={16}>
+                                <Grid container>
                                     <Grid item xs={12}>
+                                        <Typography
+                                            variant="caption"
+                                            color="textSecondary"
+                                            className={classes.fieldLabel}
+                                        >
+                                            {getUrlLabel(
+                                                formData.companyAddressVerification,
+                                            )}{' '}
+                                            <RequiredAsterisk />
+                                        </Typography>
                                         <TextField
                                             fullWidth
                                             required
+                                            variant="outlined"
                                             name="companyAddressVerificationUrl"
-                                            label={getUrlLabel(
-                                                formData.companyAddressVerification,
-                                            )}
                                             value={
                                                 formData.companyAddressVerificationUrl
                                             }
@@ -218,7 +255,17 @@ const BusinessStep = ({
                                                     'companyAddressVerificationUrl',
                                                 )
                                             }
-                                            className={classes.field}
+                                            InputProps={{
+                                                classes: {
+                                                    notchedOutline:
+                                                        classes.notchedOutlineStyles,
+                                                    input: `
+                                                    ${
+                                                        isCompanyAddressVerificationUrlError &&
+                                                        classes.errorInput
+                                                    }`,
+                                                },
+                                            }}
                                             placeholder={getUrlPlaceholder(
                                                 formData.companyAddressVerification,
                                             )}
@@ -242,11 +289,7 @@ const BusinessStep = ({
                                 </Grid>
                             )}
                             {showDocumentUpload && (
-                                <Grid
-                                    item
-                                    xs={12}
-                                    className={classes.uploaderContainer}
-                                >
+                                <Grid item xs={12}>
                                     <ClaimAttachmentsUploader
                                         inputId="company-address-verification-documents"
                                         title="Upload your documents"
@@ -263,30 +306,37 @@ const BusinessStep = ({
                                     />
                                     {touched.companyAddressVerificationDocuments &&
                                         !!errors.companyAddressVerificationDocuments && (
-                                            <Typography
-                                                className={classes.errorText}
-                                            >
-                                                {
-                                                    errors.companyAddressVerificationDocuments
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
                                                 }
-                                            </Typography>
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        errors.companyAddressVerificationDocuments
+                                                    }
+                                                />
+                                            </div>
                                         )}
                                 </Grid>
                             )}
                         </Grid>
                         <Grid
                             container
-                            className={classes.importantNotice}
+                            className={classes.warningBox}
                             wrap="nowrap"
                         >
-                            <Grid item>
-                                <Warning className={classes.noticeIcon} />
+                            <Grid item className={classes.warningIconContainer}>
+                                <InfoIcon className={classes.warningIcon} />
                             </Grid>
                             <Grid item xs>
-                                <Typography className={classes.noticeText}>
-                                    <strong>IMPORTANT!</strong> Verification
-                                    documents must show the same name and
-                                    address as listed on Open Supply Hub.
+                                <Typography className={classes.warningText}>
+                                    <span className={classes.warningBoldText}>
+                                        IMPORTANT!
+                                    </span>{' '}
+                                    Verification documents must show the same
+                                    name and address as listed on Open Supply
+                                    Hub.
                                 </Typography>
                             </Grid>
                         </Grid>

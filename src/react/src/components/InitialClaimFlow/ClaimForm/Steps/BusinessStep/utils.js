@@ -3,7 +3,6 @@ import {
     DOCUMENT_BASED_VERIFICATION_OPTIONS,
     COMPANY_ADDRESS_VERIFICATION_OPTIONS,
 } from './constants';
-
 /**
  * Determines if the verification method requires a URL input.
  */
@@ -50,13 +49,4 @@ export const getUrlLabel = verificationMethod => {
         default:
             return 'Website URL';
     }
-};
-
-/**
- * Builds the production location URL for the OS Hub platform.
- */
-export const buildProductionLocationUrl = osId => {
-    if (!osId) return '#';
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/facilities/${osId}`;
 };

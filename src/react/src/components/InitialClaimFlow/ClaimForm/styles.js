@@ -74,8 +74,9 @@ const claimFormStyles = theme =>
         }),
         sectionDescription: Object.freeze({
             fontSize: '18px',
-            fontWeight: theme.typography.fontWeightSemiBold,
+            fontWeight: 500,
             margin: '0 0 20px 0',
+            color: COLOURS.DARK_GREY,
         }),
         loadingContainer: Object.freeze({
             display: 'flex',

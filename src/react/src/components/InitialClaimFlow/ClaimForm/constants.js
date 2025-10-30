@@ -8,7 +8,7 @@ export const CLAIM_FORM_STEPS = Object.freeze({
 export const STEP_NAMES = Object.freeze([
     'Eligibility Check',
     'Contact',
-    'Business',
+    'Business Information',
     'Open Supply Hub Profile',
 ]);
 
