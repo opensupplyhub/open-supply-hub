@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import Icon from '@material-ui/core/Icon';
 import { withStyles } from '@material-ui/core/styles';
@@ -7,7 +8,9 @@ import { withStyles } from '@material-ui/core/styles';
 import BadgeClaimed from './BadgeClaimed';
 import COLOURS from '../util/COLOURS';
 
-import { makeClaimFacilityLink } from '../util/util';
+import { makeClaimFacilityLinkWithFeatureFlag } from '../util/util';
+import { ENABLE_V1_CLAIMS_FLOW } from '../util/constants';
+import { convertFeatureFlagsObjectToListOfActiveFlags } from '../util/util';
 
 const claimFlagBaseStyles = theme =>
     Object.freeze({
@@ -62,10 +65,14 @@ const FacilityDetailsClaimFlag = ({
     isClaimed,
     isPending,
     isEmbed,
+    isV1ClaimsFlowEnabled,
 }) => {
     if (isEmbed) return null;
     const backgroundColor = getBackgroundColor(isClaimed, isPending);
-    const claimFacilityLink = makeClaimFacilityLink(osId);
+    const claimFacilityLink = makeClaimFacilityLinkWithFeatureFlag(
+        osId,
+        isV1ClaimsFlowEnabled,
+    );
     return (
         <div
             className={classes.root}
@@ -95,4 +102,17 @@ const FacilityDetailsClaimFlag = ({
     );
 };
 
-export default withStyles(claimFlagBaseStyles)(FacilityDetailsClaimFlag);
+const mapStateToProps = ({ featureFlags: { flags } }) => {
+    const activeFeatureFlags = convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    );
+    return {
+        isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
+            ENABLE_V1_CLAIMS_FLOW,
+        ),
+    };
+};
+
+export default connect(mapStateToProps)(
+    withStyles(claimFlagBaseStyles)(FacilityDetailsClaimFlag),
+);

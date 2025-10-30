@@ -28,13 +28,15 @@ import {
     facilityDetailsActions,
     FACILITIES_REQUEST_PAGE_SIZE,
     facilityClaimStatusChoicesEnum,
+    ENABLE_V1_CLAIMS_FLOW,
 } from '../util/constants';
 
 import {
-    makeClaimFacilityLink,
+    makeClaimFacilityLinkWithFeatureFlag,
     getLocationWithoutEmbedParam,
     formatAttribution,
     formatExtendedField,
+    convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -113,6 +115,7 @@ const FacilityDetailsContent = ({
     facilityIsClaimedByCurrentUser,
     embedConfig,
     hideSectorData,
+    isV1ClaimsFlowEnabled,
 }) => {
     useEffect(() => {
         fetchFacility(Number(embed), contributors);
@@ -193,7 +196,8 @@ const FacilityDetailsContent = ({
         data?.properties?.claim_info?.status ===
         facilityClaimStatusChoicesEnum.PENDING;
     const isClaimed = !isPendingClaim && !!data?.properties?.claim_info;
-    const claimFacility = () => push(makeClaimFacilityLink(osId));
+    const claimFacility = () =>
+        push(makeClaimFacilityLinkWithFeatureFlag(osId, isV1ClaimsFlowEnabled));
 
     return (
         <div className={classes.root}>
@@ -297,6 +301,13 @@ function mapStateToProps(
         false,
     );
 
+    const activeFeatureFlags = convertFeatureFlagsObjectToListOfActiveFlags(
+        featureFlags.flags,
+    );
+    const isV1ClaimsFlowEnabled = activeFeatureFlags.includes(
+        ENABLE_V1_CLAIMS_FLOW,
+    );
+
     return {
         data,
         fetching,
@@ -309,6 +320,7 @@ function mapStateToProps(
         facilityIsClaimedByCurrentUser,
         vectorTileFlagIsActive,
         hideSectorData: embed ? config.hide_sector_data : false,
+        isV1ClaimsFlowEnabled,
     };
 }
 
