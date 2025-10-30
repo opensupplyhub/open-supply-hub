@@ -60,7 +60,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         value: null,
         onBlur: () => {},
         placeholder: '',
-        name: 'companyAddressVerification',
+        name: 'locationAddressVerificationMethod',
     };
 
     return MockStyledSelect;
@@ -112,8 +112,9 @@ describe('BusinessStep component', () => {
 
     const defaultProps = {
         formData: {
-            companyAddressVerification: '',
-            companyAddressVerificationUrl: '',
+            locationAddressVerificationMethod: '',
+            businessWebsite: '',
+            businessLinkedinProfile: '',
             companyAddressVerificationDocuments: [],
         },
         handleChange: mockHandleChange,
@@ -197,9 +198,10 @@ describe('BusinessStep component', () => {
     test('shows URL input when company-website-address is selected', () => {
         const propsWithUrlVerification = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Company website showing the production location address (e.g., Contact Us, Locations page)',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
         };
@@ -213,9 +215,10 @@ describe('BusinessStep component', () => {
     test('shows URL input when linkedin-address is selected', () => {
         const propsWithLinkedInVerification = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Company LinkedIn page showing the production location address',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
         };
@@ -229,9 +232,10 @@ describe('BusinessStep component', () => {
     test('shows document uploader when utility-bill is selected', () => {
         const propsWithDocumentVerification = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Utility bill showing company name and address',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
         };
@@ -245,9 +249,10 @@ describe('BusinessStep component', () => {
     test('calls handleChange when URL input value changes', () => {
         const propsWithUrlVerification = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Company website showing the production location address (e.g., Contact Us, Locations page)',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
         };
@@ -258,7 +263,7 @@ describe('BusinessStep component', () => {
         fireEvent.change(urlInput, { target: { value: 'https://test.com' } });
 
         expect(mockHandleChange).toHaveBeenCalledWith(
-            'companyAddressVerificationUrl',
+            'businessWebsite',
             'https://test.com'
         );
     });
@@ -266,9 +271,10 @@ describe('BusinessStep component', () => {
     test('calls handleBlur when URL input loses focus', () => {
         const propsWithUrlVerification = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Company website showing the production location address (e.g., Contact Us, Locations page)',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
         };
@@ -279,17 +285,17 @@ describe('BusinessStep component', () => {
         fireEvent.blur(urlInput);
 
         expect(mockHandleBlur).toHaveBeenCalledWith(
-            'companyAddressVerificationUrl'
+            'businessWebsite'
         );
     });
 
     test('displays error message for verification method when touched and has error', () => {
         const propsWithError = {
             touched: {
-                companyAddressVerification: true,
+                locationAddressVerificationMethod: true,
             },
             errors: {
-                companyAddressVerification: 'Verification method is required',
+                locationAddressVerificationMethod: 'Verification method is required',
             },
         };
 
@@ -301,16 +307,17 @@ describe('BusinessStep component', () => {
     test('displays error message for URL when touched and has error', () => {
         const propsWithUrlError = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Company website showing the production location address (e.g., Contact Us, Locations page)',
-                companyAddressVerificationUrl: 'invalid-url',
+                businessWebsite: 'invalid-url',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
             touched: {
-                companyAddressVerificationUrl: true,
+                businessWebsite: true,
             },
             errors: {
-                companyAddressVerificationUrl: 'Please enter a valid URL',
+                businessWebsite: 'Please enter a valid URL',
             },
         };
 
@@ -322,9 +329,10 @@ describe('BusinessStep component', () => {
     test('displays error message for documents when touched and has error', () => {
         const propsWithDocError = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Utility bill showing company name and address',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [],
             },
             touched: {
@@ -370,7 +378,7 @@ describe('BusinessStep component', () => {
         fireEvent.change(selectField, { target: { value: 'company-website-address' } });
 
         expect(mockHandleChange).toHaveBeenCalledWith(
-            'companyAddressVerification',
+            'locationAddressVerificationMethod',
             'Company website showing the production location address (e.g., Contact Us, Locations page)'
         );
     });
@@ -378,9 +386,10 @@ describe('BusinessStep component', () => {
     test('document uploader shows correct number of uploaded files', () => {
         const propsWithFiles = {
             formData: {
-                companyAddressVerification:
+                locationAddressVerificationMethod:
                     'Utility bill showing company name and address',
-                companyAddressVerificationUrl: '',
+                businessWebsite: '',
+                businessLinkedinProfile: '',
                 companyAddressVerificationDocuments: [
                     { name: 'file1.pdf' },
                     { name: 'file2.pdf' },
@@ -405,8 +414,9 @@ describe('BusinessStep component', () => {
         documentOptions.forEach(option => {
             const { unmount } = renderComponent({
                 formData: {
-                    companyAddressVerification: option,
-                    companyAddressVerificationUrl: '',
+                    locationAddressVerificationMethod: option,
+                    businessWebsite: '',
+                    businessLinkedinProfile: '',
                     companyAddressVerificationDocuments: [],
                 },
             });

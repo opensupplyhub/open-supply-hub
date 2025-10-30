@@ -15,8 +15,9 @@ const useVerificationMethodChange = (
             prevVerificationMethod &&
             verificationMethod !== prevVerificationMethod
         ) {
-            // Clear verification URL and documents when switching methods.
-            updateField('companyAddressVerificationUrl', '');
+            // Clear verification URLs and documents when switching methods.
+            updateField('businessLinkedinProfile', '');
+            updateField('businessWebsite', '');
             updateField('companyAddressVerificationDocuments', []);
         }
     }, [verificationMethod, prevVerificationMethod, updateField]);

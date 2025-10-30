@@ -23,6 +23,7 @@ import {
     requiresDocumentUpload,
     getUrlPlaceholder,
     getUrlLabel,
+    getVerificationUrlField,
 } from './utils';
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
@@ -40,26 +41,31 @@ const BusinessStep = ({
     updateFieldWithoutTouch,
 }) => {
     const [prevVerificationMethod, setPrevVerificationMethod] = useState(
-        formData.companyAddressVerification || '',
+        formData.locationAddressVerificationMethod || '',
     );
 
     // Update previous verification method when it changes.
     useEffect(() => {
-        if (formData.companyAddressVerification !== prevVerificationMethod) {
-            setPrevVerificationMethod(formData.companyAddressVerification);
+        if (
+            formData.locationAddressVerificationMethod !==
+            prevVerificationMethod
+        ) {
+            setPrevVerificationMethod(
+                formData.locationAddressVerificationMethod,
+            );
         }
-    }, [formData.companyAddressVerification]);
+    }, [formData.locationAddressVerificationMethod]);
 
     // Clear verification URL and documents when verification method changes.
     useVerificationMethodChange(
-        formData.companyAddressVerification,
+        formData.locationAddressVerificationMethod,
         prevVerificationMethod,
         updateFieldWithoutTouch,
     );
 
     const selectedVerificationMethod = findSelectedOption(
         COMPANY_ADDRESS_VERIFICATION_OPTIONS,
-        formData.companyAddressVerification,
+        formData.locationAddressVerificationMethod,
     );
 
     const showUrlInput = requiresUrlInput(selectedVerificationMethod?.value);
@@ -73,12 +79,12 @@ const BusinessStep = ({
     const productionLocationUrl = facilityDetailsRoute.replace(':osID', osId);
 
     const isCompanyAddressVerificationError = !!(
-        touched?.companyAddressVerification &&
-        errors?.companyAddressVerification
+        touched.locationAddressVerificationMethod &&
+        errors.locationAddressVerificationMethod
     );
     const isCompanyAddressVerificationUrlError = !!(
-        touched.companyAddressVerificationUrl &&
-        errors.companyAddressVerificationUrl
+        touched[getVerificationUrlField(selectedVerificationMethod?.value)] &&
+        errors[getVerificationUrlField(selectedVerificationMethod?.value)]
     );
     const isCompanyAddressVerificationDocumentsError = !!(
         touched.companyAddressVerificationDocuments &&
@@ -191,8 +197,8 @@ const BusinessStep = ({
                             </Typography>
                             <Grid item xs={12} className={classes.selectStyles}>
                                 <StyledSelect
-                                    id="companyAddressVerification"
-                                    name="companyAddressVerification"
+                                    id="locationAddressVerificationMethod"
+                                    name="locationAddressVerificationMethod"
                                     aria-label="Company Address Verification"
                                     options={
                                         COMPANY_ADDRESS_VERIFICATION_OPTIONS
@@ -200,12 +206,14 @@ const BusinessStep = ({
                                     value={selectedVerificationMethod}
                                     onChange={valueObject => {
                                         handleChange(
-                                            'companyAddressVerification',
+                                            'locationAddressVerificationMethod',
                                             valueObject.label,
                                         );
                                     }}
                                     onBlur={() =>
-                                        handleBlur('companyAddressVerification')
+                                        handleBlur(
+                                            'locationAddressVerificationMethod',
+                                        )
                                     }
                                     styles={getSelectStyles(
                                         isCompanyAddressVerificationError,
@@ -217,7 +225,7 @@ const BusinessStep = ({
                                     <div className={classes.errorWrapStyles}>
                                         <InputErrorText
                                             text={
-                                                errors.companyAddressVerification
+                                                errors.locationAddressVerificationMethod
                                             }
                                         />
                                     </div>
@@ -232,7 +240,7 @@ const BusinessStep = ({
                                             className={classes.fieldLabel}
                                         >
                                             {getUrlLabel(
-                                                formData.companyAddressVerification,
+                                                selectedVerificationMethod?.value,
                                             )}{' '}
                                             <RequiredAsterisk />
                                         </Typography>
@@ -240,19 +248,29 @@ const BusinessStep = ({
                                             fullWidth
                                             required
                                             variant="outlined"
-                                            name="companyAddressVerificationUrl"
+                                            name={getVerificationUrlField(
+                                                selectedVerificationMethod?.value,
+                                            )}
                                             value={
-                                                formData.companyAddressVerificationUrl
+                                                formData[
+                                                    getVerificationUrlField(
+                                                        selectedVerificationMethod?.value,
+                                                    )
+                                                ]
                                             }
                                             onChange={e =>
                                                 handleChange(
-                                                    'companyAddressVerificationUrl',
+                                                    getVerificationUrlField(
+                                                        selectedVerificationMethod?.value,
+                                                    ),
                                                     e.target.value,
                                                 )
                                             }
                                             onBlur={() =>
                                                 handleBlur(
-                                                    'companyAddressVerificationUrl',
+                                                    getVerificationUrlField(
+                                                        selectedVerificationMethod?.value,
+                                                    ),
                                                 )
                                             }
                                             InputProps={{
@@ -267,7 +285,7 @@ const BusinessStep = ({
                                                 },
                                             }}
                                             placeholder={getUrlPlaceholder(
-                                                formData.companyAddressVerification,
+                                                selectedVerificationMethod?.value,
                                             )}
                                             error={
                                                 isCompanyAddressVerificationUrlError
@@ -276,7 +294,11 @@ const BusinessStep = ({
                                                 isCompanyAddressVerificationUrlError && (
                                                     <InputErrorText
                                                         text={
-                                                            errors.companyAddressVerificationUrl
+                                                            errors[
+                                                                getVerificationUrlField(
+                                                                    selectedVerificationMethod?.value,
+                                                                )
+                                                            ]
                                                         }
                                                     />
                                                 )

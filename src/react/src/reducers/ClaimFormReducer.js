@@ -20,8 +20,9 @@ const initialState = Object.freeze({
         contactPhone: '',
 
         // Business step.
-        companyAddressVerification: '',
-        companyAddressVerificationUrl: '',
+        locationAddressVerificationMethod: '',
+        businessLinkedinProfile: '',
+        businessWebsite: '',
         companyAddressVerificationDocuments: [],
 
         // Profile step.

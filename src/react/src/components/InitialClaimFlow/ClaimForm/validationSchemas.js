@@ -2,7 +2,6 @@ import * as Yup from 'yup';
 import { CLAIM_FORM_STEPS } from './constants';
 import {
     COMPANY_ADDRESS_VERIFICATION_OPTIONS,
-    URL_BASED_VERIFICATION_OPTIONS,
     DOCUMENT_BASED_VERIFICATION_OPTIONS,
 } from './Steps/BusinessStep/constants';
 
@@ -26,32 +25,38 @@ const getVerificationLabel = value =>
     COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(opt => opt.value === value)
         ?.label;
 
-const urlBasedLabels = URL_BASED_VERIFICATION_OPTIONS.map(getVerificationLabel);
+const companyLinkedinAddressLabel = getVerificationLabel('linkedin-address');
+const companyWebsiteAddressLabel = getVerificationLabel(
+    'company-website-address',
+);
 
-const documentBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
+const companyDocumentBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
     getVerificationLabel,
 );
 
+const getCompanyUrlValidationSchema = label =>
+    Yup.string().when('locationAddressVerificationMethod', {
+        is: value => value === label,
+        then: schema =>
+            schema
+                .url('Invalid URL format')
+                .required(
+                    'The company address verification URL is required when this address verification method is selected',
+                ),
+    });
+
 export const businessStepSchema = Yup.object().shape({
-    companyAddressVerification: Yup.string().required(
+    locationAddressVerificationMethod: Yup.string().required(
         'Company address verification method is required',
     ),
-    companyAddressVerificationUrl: Yup.string().when(
-        'companyAddressVerification',
-        {
-            is: value => urlBasedLabels.includes(value),
-            then: schema =>
-                schema
-                    .url('Invalid URL format')
-                    .required(
-                        'The company address verification URL is required when this address verification method is selected',
-                    ),
-        },
+    businessLinkedinProfile: getCompanyUrlValidationSchema(
+        companyLinkedinAddressLabel,
     ),
+    businessWebsite: getCompanyUrlValidationSchema(companyWebsiteAddressLabel),
     companyAddressVerificationDocuments: Yup.array().when(
-        'companyAddressVerification',
+        'locationAddressVerificationMethod',
         {
-            is: value => documentBasedLabels.includes(value),
+            is: value => companyDocumentBasedLabels.includes(value),
             then: schema =>
                 schema
                     .min(1, 'At least one verification document is required')
