@@ -19,6 +19,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputSection from '../../../../InputSection';
+import InputErrorText from '../../../../Contribute/InputErrorText';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import ClaimEmissionsEstimate from '../../ClaimEmissionsEstimate/ClaimEmissionsEstimate';
 import { mockedSectors } from '../../../../../util/constants';
@@ -150,7 +151,11 @@ const ProfileStep = ({
                                 }
                                 helperText={
                                     touched.localLanguageName &&
-                                    errors.localLanguageName
+                                    errors.localLanguageName && (
+                                        <InputErrorText
+                                            text={errors.localLanguageName}
+                                        />
+                                    )
                                 }
                             />
                         </div>
@@ -219,7 +224,13 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.officePhoneNumber &&
-                                            errors.officePhoneNumber
+                                            errors.officePhoneNumber && (
+                                                <InputErrorText
+                                                    text={
+                                                        errors.officePhoneNumber
+                                                    }
+                                                />
+                                            )
                                         }
                                     />
                                 </div>
@@ -280,7 +291,13 @@ const ProfileStep = ({
                                             }
                                             helperText={
                                                 touched.businessWebsite &&
-                                                errors.businessWebsite
+                                                errors.businessWebsite && (
+                                                    <InputErrorText
+                                                        text={
+                                                            errors.businessWebsite
+                                                        }
+                                                    />
+                                                )
                                             }
                                         />
                                     </div>
@@ -347,7 +364,11 @@ const ProfileStep = ({
                                 }
                                 helperText={
                                     touched.facilityDescription &&
-                                    errors.facilityDescription
+                                    errors.facilityDescription && (
+                                        <InputErrorText
+                                            text={errors.facilityDescription}
+                                        />
+                                    )
                                 }
                             />
                         </div>
@@ -472,7 +493,13 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.officeOfficialName &&
-                                            errors.officeOfficialName
+                                            errors.officeOfficialName && (
+                                                <InputErrorText
+                                                    text={
+                                                        errors.officeOfficialName
+                                                    }
+                                                />
+                                            )
                                         }
                                     />
                                 </div>
@@ -525,7 +552,11 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.officeAddress &&
-                                            errors.officeAddress
+                                            errors.officeAddress && (
+                                                <InputErrorText
+                                                    text={errors.officeAddress}
+                                                />
+                                            )
                                         }
                                     />
                                 </div>
@@ -869,7 +900,13 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.numberOfWorkers &&
-                                            errors.numberOfWorkers
+                                            errors.numberOfWorkers && (
+                                                <InputErrorText
+                                                    text={
+                                                        errors.numberOfWorkers
+                                                    }
+                                                />
+                                            )
                                         }
                                     />
                                 </div>
@@ -927,7 +964,13 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.facilityFemaleWorkersPercentage &&
-                                            errors.facilityFemaleWorkersPercentage
+                                            errors.facilityFemaleWorkersPercentage && (
+                                                <InputErrorText
+                                                    text={
+                                                        errors.facilityFemaleWorkersPercentage
+                                                    }
+                                                />
+                                            )
                                         }
                                     />
                                 </div>
@@ -1001,7 +1044,13 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.facilityMinimumOrderQuantity &&
-                                            errors.facilityMinimumOrderQuantity
+                                            errors.facilityMinimumOrderQuantity && (
+                                                <InputErrorText
+                                                    text={
+                                                        errors.facilityMinimumOrderQuantity
+                                                    }
+                                                />
+                                            )
                                         }
                                     />
                                 </div>
@@ -1073,7 +1122,13 @@ const ProfileStep = ({
                                         }
                                         helperText={
                                             touched.facilityAverageLeadTime &&
-                                            errors.facilityAverageLeadTime
+                                            errors.facilityAverageLeadTime && (
+                                                <InputErrorText
+                                                    text={
+                                                        errors.facilityAverageLeadTime
+                                                    }
+                                                />
+                                            )
                                         }
                                     />
                                 </div>

@@ -25,15 +25,15 @@ export const businessStepSchema = Yup.object().shape({
 // Step 4: Profile validation.
 export const profileStepSchema = Yup.object().shape({
     // Production Location Overview
-    localLanguageName: Yup.string(),
-    officePhoneNumber: Yup.string(),
+    localLanguageName: Yup.string().trim(),
+    officePhoneNumber: Yup.string().trim(),
     businessWebsite: Yup.string().url('Invalid URL'),
-    facilityDescription: Yup.string(),
+    facilityDescription: Yup.string().trim(),
 
     // Company Information
     parentCompanyName: Yup.string(),
-    officeOfficialName: Yup.string(),
-    officeAddress: Yup.string(),
+    officeOfficialName: Yup.string().trim(),
+    officeAddress: Yup.string().trim(),
     officeCountryCode: Yup.string(),
 
     // Operations & Capabilities
@@ -101,8 +101,8 @@ export const profileStepSchema = Yup.object().shape({
             const num = Number(cleanValue);
             return !Number.isNaN(num) && num >= 0 && num <= 100;
         }),
-    facilityMinimumOrderQuantity: Yup.string(),
-    facilityAverageLeadTime: Yup.string(),
+    facilityMinimumOrderQuantity: Yup.string().trim(),
+    facilityAverageLeadTime: Yup.string().trim(),
 
     // Compliance & Partnerships
     facilityAffiliations: Yup.array(),

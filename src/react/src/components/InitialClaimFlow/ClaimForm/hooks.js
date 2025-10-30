@@ -3,6 +3,7 @@ import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
 import { claimIntroRoute } from '../../../util/constants';
+import { hasValue } from './utils';
 
 export const usePrefetchClaimData = (
     fetchCountries,
@@ -90,7 +91,7 @@ export const useClaimForm = (
         // Mark fields with values as touched when returning to a step.
         const fieldsToTouch = {};
         currentStepFields.forEach(field => {
-            if (formik.values[field] && formik.values[field] !== '') {
+            if (hasValue(formik.values[field])) {
                 fieldsToTouch[field] = true;
             }
         });
