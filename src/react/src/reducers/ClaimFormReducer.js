@@ -18,6 +18,8 @@ const initialState = Object.freeze({
         // Contact step.
         claimantName: '',
         claimantTitle: '',
+        publicContactEnabled: false,
+        contactName: '',
         contactEmail: null,
         contactPhone: '',
         employmentVerification: null,

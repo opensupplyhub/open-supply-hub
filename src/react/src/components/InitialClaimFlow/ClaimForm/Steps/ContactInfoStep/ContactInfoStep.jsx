@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useState, useEffect } from 'react';
 import { func, object, shape, string, bool, oneOfType } from 'prop-types';
 import { connect } from 'react-redux';
@@ -7,6 +6,7 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Switch from '@material-ui/core/Switch';
+import Warning from '@material-ui/icons/Warning';
 import RequiredAsterisk from '../../../../RequiredAsterisk';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import contactInfoStepStyles from './styles';
@@ -15,7 +15,6 @@ import {
     requiresUrlInput,
     requiresDocumentUpload,
     getUrlPlaceholder,
-    getUrlLabel,
 } from './utils';
 import useVerificationMethodChange from './hooks';
 import StyledSelect from '../../../../Filters/StyledSelect';
@@ -183,15 +182,22 @@ const ContactInfoStep = ({
                         </Grid>
                     </Grid>
 
-                    <div className={classes.infoAlert}>
-                        <div className={classes.infoAlertInner}>
-                            <Typography variant="caption">
+                    <Grid
+                        container
+                        className={classes.importantNotice}
+                        wrap="nowrap"
+                    >
+                        <Grid item>
+                            <Warning className={classes.noticeIcon} />
+                        </Grid>
+                        <Grid item xs>
+                            <Typography className={classes.noticeText}>
                                 <strong>IMPORTANT!</strong> Your name and job
                                 title must match the person associated with the
                                 email address provided above.
                             </Typography>
-                        </div>
-                    </div>
+                        </Grid>
+                    </Grid>
 
                     <div className={classes.gridSpacing}>
                         <Typography className={classes.sectionTitle}>

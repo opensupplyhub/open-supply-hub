@@ -134,6 +134,24 @@ const contactInfoStepStyles = theme =>
             lineHeight: '22px',
             padding: '16px',
         }),
+        importantNotice: Object.freeze({
+            backgroundColor: '#fff3e0',
+            border: '1px solid #ffb74d',
+            borderRadius: '4px',
+            padding: theme.spacing.unit * 2,
+            marginTop: theme.spacing.unit * 2,
+            display: 'flex',
+            alignItems: 'flex-start',
+        }),
+        noticeIcon: Object.freeze({
+            color: '#f57c00',
+            marginRight: theme.spacing.unit,
+            fontSize: '1.2rem',
+        }),
+        noticeText: Object.freeze({
+            fontSize: '0.875rem',
+            lineHeight: 1.5,
+        }),
     });
 
 export default contactInfoStepStyles;
