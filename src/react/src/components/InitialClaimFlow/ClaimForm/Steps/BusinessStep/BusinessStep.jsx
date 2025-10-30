@@ -72,17 +72,17 @@ const BusinessStep = ({
     const locationAddress = productionLocationData?.address || '';
     const productionLocationUrl = facilityDetailsRoute.replace(':osID', osId);
 
-    // This checks if the company address verification field has been touched and either has validation errors
-    // or no value selected.
     const isCompanyAddressVerificationError = !!(
         touched?.companyAddressVerification &&
         errors?.companyAddressVerification
     );
-
-    // This checks if the company address verification URL field has been touched and has validation errors.
     const isCompanyAddressVerificationUrlError = !!(
         touched.companyAddressVerificationUrl &&
         errors.companyAddressVerificationUrl
+    );
+    const isCompanyAddressVerificationDocumentsError = !!(
+        touched.companyAddressVerificationDocuments &&
+        errors.companyAddressVerificationDocuments
     );
 
     return (
@@ -304,20 +304,17 @@ const BusinessStep = ({
                                             )
                                         }
                                     />
-                                    {touched.companyAddressVerificationDocuments &&
-                                        !!errors.companyAddressVerificationDocuments && (
-                                            <div
-                                                className={
-                                                    classes.errorWrapStyles
+                                    {isCompanyAddressVerificationDocumentsError && (
+                                        <div
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={
+                                                    errors.companyAddressVerificationDocuments
                                                 }
-                                            >
-                                                <InputErrorText
-                                                    text={
-                                                        errors.companyAddressVerificationDocuments
-                                                    }
-                                                />
-                                            </div>
-                                        )}
+                                            />
+                                        </div>
+                                    )}
                                 </Grid>
                             )}
                         </Grid>
