@@ -217,6 +217,7 @@ const ContactInfoStep = ({
                                     )
                                 }
                             />
+                            {/** This can't be displayed because of disabled 'Continue to Business Details' button */}
                             {touched.employmentVerificationFiles &&
                                 errors.employmentVerificationFiles && (
                                     <div className={classes.errorWrapStyles}>
