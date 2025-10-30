@@ -16,7 +16,6 @@ import {
     requiresDocumentUpload,
     getUrlPlaceholder,
     getUrlLabel,
-    buildProductionLocationUrl,
 } from './utils';
 import useVerificationMethodChange from './hooks';
 import StyledSelect from '../../../../Filters/StyledSelect';
@@ -77,7 +76,7 @@ const ContactInfoStep = ({
         touched?.employmentVerification && errors?.employmentVerification
     );
 
-    // This checks if the company address verification URL field has been touched and has validation errors.
+    // This checks if the employment verification URL field has been touched and has validation errors.
     const isEmploymentVerificationUrlError = !!(
         touched.employmentVerificationUrl && errors.employmentVerificationUrl
     );
@@ -244,6 +243,9 @@ const ContactInfoStep = ({
                                     type="url"
                                     variant="outlined"
                                     name="employmentVerificationUrl"
+                                    // label={getUrlLabel(
+                                    //     formData.employmentVerification,
+                                    // )}
                                     value={formData.employmentVerificationUrl}
                                     onChange={e =>
                                         handleChange(

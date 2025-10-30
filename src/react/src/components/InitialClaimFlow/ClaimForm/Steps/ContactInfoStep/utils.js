@@ -51,12 +51,3 @@ export const getUrlLabel = verificationMethod => {
             return 'Website URL';
     }
 };
-
-/**
- * Builds the production location URL for the OS Hub platform.
- */
-export const buildProductionLocationUrl = osId => {
-    if (!osId) return '#';
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/facilities/${osId}`;
-};
