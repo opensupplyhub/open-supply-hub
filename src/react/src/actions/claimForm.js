@@ -42,7 +42,6 @@ const mapFieldNameToAPI = key => {
     const specialMappings = {
         relationship: 'claimant_location_relationship',
         contactEmail: 'point_of_contact_email',
-        contactPhone: 'point_of_contact_person_name',
         businessName: 'office_official_name',
         businessWebsite: 'business_website',
     };
@@ -73,17 +72,19 @@ const addMockRequiredFields = postData => {
 };
 
 const appendFormField = (postData, key, value) => {
+    const arrayFieldsKeys = [
+        'sectors',
+        'facility_production_types',
+        'facility_product_types',
+        'facility_affiliations',
+        'facility_certifications',
+    ];
+
     const formattedKey = mapFieldNameToAPI(key);
 
     if (formattedKey === 'files') {
         appendFiles(postData, formattedKey, value);
-    } else if (
-        formattedKey === 'sectors' ||
-        formattedKey === 'facility_production_types' ||
-        formattedKey === 'facility_product_types' ||
-        formattedKey === 'facility_affiliations' ||
-        formattedKey === 'facility_certifications'
-    ) {
+    } else if (formattedKey in arrayFieldsKeys) {
         appendArrayField(postData, formattedKey, value);
     } else if (formattedKey === 'facility_type') {
         appendFacilityType(postData, formattedKey, value);
