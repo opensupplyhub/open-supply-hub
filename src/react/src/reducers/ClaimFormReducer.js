@@ -21,6 +21,7 @@ const initialState = Object.freeze({
         // Contact step.
         contactEmail: '',
         contactPhone: '',
+        yourBusinessWebsite: '',
 
         // Business step.
         locationAddressVerificationMethod: '',

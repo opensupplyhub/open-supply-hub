@@ -42,8 +42,6 @@ const mapFieldNameToAPI = key => {
     const specialMappings = {
         relationship: 'claimant_location_relationship',
         contactEmail: 'point_of_contact_email',
-        businessName: 'office_official_name',
-        businessWebsite: 'business_website',
     };
 
     return specialMappings[key] || snakeCase(key);
@@ -60,15 +58,6 @@ const addMockRequiredFields = postData => {
     if (!postData.has('your_title')) {
         postData.append('your_title', 'Test Title');
     }
-    if (!postData.has('business_linkedin_profile')) {
-        postData.append(
-            'business_linkedin_profile',
-            'https://www.linkedin.com/in/test-linkedin-profile',
-        );
-    }
-    if (!postData.has('your_business_website')) {
-        postData.append('your_business_website', 'https://www.sf.com');
-    }
 };
 
 const appendFormField = (postData, key, value) => {
@@ -81,8 +70,8 @@ const appendFormField = (postData, key, value) => {
     ];
 
     const fileFieldsKeys = [
-        'companyAddressVerificationDocuments',
-        'employmentVerificationDocuments',
+        'company_address_verification_documents',
+        'employment_verification_documents',
     ];
 
     const formattedKey = mapFieldNameToAPI(key);

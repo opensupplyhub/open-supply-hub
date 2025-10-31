@@ -1329,7 +1329,7 @@ export const appendFacilityType = (postData, formattedKey, value) => {
  * Handle simple string/number fields.
  */
 export const appendSimpleField = (postData, formattedKey, value) => {
-    if (value !== null && value !== undefined && value !== '') {
+    if (value !== null && value !== undefined) {
         postData.append(formattedKey, value);
     }
 };
