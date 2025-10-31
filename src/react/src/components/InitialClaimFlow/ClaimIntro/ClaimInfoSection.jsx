@@ -18,8 +18,12 @@ const ClaimInfoSection = ({ classes, children }) => (
     <div className={classes.root}>
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                <span className={classes.stepNumber}>1</span>
-                Confirm Your Eligibility
+                <span className={`${classes.stepNumber} ${classes.blueStep}`}>
+                    1
+                </span>
+                <span className={classes.stepTitle}>
+                    Confirm Your Eligibility
+                </span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 Confirm that you are eligible to claim this production location,
@@ -27,16 +31,22 @@ const ClaimInfoSection = ({ classes, children }) => (
             </Typography>
             <ul className={classes.boxList}>
                 <li>
-                    <Typography variant="body2" className={classes.boxText}>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
                         Claim requests must be submitted by a current employee
-                        of the location or its parent company.
+                        of the location or its parent company
                     </Typography>
                 </li>
                 <li>
-                    <Typography variant="body2" className={classes.boxText}>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
                         If you&apos;re not an owner or manager, you can still
                         proceed by providing your supervisor&apos;s contact
-                        information for verification.
+                        information for verification
                     </Typography>
                 </li>
             </ul>
@@ -44,8 +54,12 @@ const ClaimInfoSection = ({ classes, children }) => (
         <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                <span className={classes.stepNumber}>2</span> Prove Your Name
-                and Role
+                <span className={`${classes.stepNumber} ${classes.purpleStep}`}>
+                    2
+                </span>
+                <span className={classes.stepTitle}>
+                    Prove Your Name and Role
+                </span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 Provide the document about your name and role,{' '}
@@ -65,7 +79,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Employee ID badge
+                        Employee ID badge, Employment letter
                     </Typography>
                 </li>
                 <li>
@@ -73,15 +87,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Employment letter
-                    </Typography>
-                </li>
-                <li>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        Job contract
+                        Job contract, Business card
                     </Typography>
                 </li>
                 <li>
@@ -90,14 +96,6 @@ const ClaimInfoSection = ({ classes, children }) => (
                         className={classes.boxDescription}
                     >
                         Link to your LinkedIn profile
-                    </Typography>
-                </li>
-                <li>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        Business card
                     </Typography>
                 </li>
                 <li>
@@ -114,24 +112,34 @@ const ClaimInfoSection = ({ classes, children }) => (
                     src={employeeIdExample}
                     alt="Example employee ID badge"
                     label="Employee ID Badge"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
                 />
                 <ExampleImage
                     src={employmentLetterExample}
                     alt="Example employment letter"
                     label="Employment Letter"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
                 />
                 <ExampleImage
                     src={businessCardExample}
                     alt="Example business card"
                     label="Business Card"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
                 />
             </div>
         </div>
         <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                <span className={classes.stepNumber}>3</span> Prove Your Company
-                Name and Address
+                <span className={`${classes.stepNumber} ${classes.greenStep}`}>
+                    3
+                </span>
+                <span className={classes.stepTitle}>
+                    Prove Your Company Name and Address
+                </span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 Provide the document about your company name and address,{' '}
@@ -143,15 +151,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Business registration
-                    </Typography>
-                </li>
-                <li>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        Business license
+                        Business registration, Business license
                     </Typography>
                 </li>
                 <li>
@@ -167,15 +167,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Link to company website
-                    </Typography>
-                </li>
-                <li>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        Link to company LinkedIn page
+                        Link to company website or LinkedIn page
                     </Typography>
                 </li>
                 <li>
@@ -194,23 +186,32 @@ const ClaimInfoSection = ({ classes, children }) => (
                     src={businessRegistrationExample}
                     alt="Example business registration certificate"
                     label="Business Registration"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
                 />
                 <ExampleImage
                     src={businessLicenseExample}
                     alt="Example business license"
                     label="Business License"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
                 />
                 <ExampleImage
                     src={utilityBillExample}
                     alt="Example utility bill"
                     label="Utility Bill"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
                 />
             </div>
         </div>
         <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                <span className={classes.stepNumber}>4</span> Add Key Details
+                <span className={`${classes.stepNumber} ${classes.amberStep}`}>
+                    4
+                </span>
+                <span className={classes.stepTitle}>Add Key Details</span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 Provide information about the production location, such as:
@@ -245,8 +246,12 @@ const ClaimInfoSection = ({ classes, children }) => (
         <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                <span className={classes.stepNumber}>5</span> Get a Credible and
-                Confirmed Profile
+                <span className={`${classes.stepNumber} ${classes.amberStep}`}>
+                    5
+                </span>
+                <span className={classes.stepTitle}>
+                    Get a Credible and Confirmed Profile
+                </span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 After the claim is approved, you get a credible and confirmed
@@ -266,10 +271,14 @@ const ClaimInfoSection = ({ classes, children }) => (
             className={`${classes.boxContainer} ${classes.boxWarningContainer}`}
         >
             <Typography variant="body2" className={classes.boxWarningText}>
-                <InfoIcon className={classes.warningIcon} />
-                <strong>IMPORTANT!</strong>&nbsp;Any documentation appearing to
-                be forged or counterfeit may result in your claim request being
-                denied.
+                <span className={classes.boxWarningTextIcon}>
+                    <InfoIcon className={classes.warningIcon} />
+                    <strong>IMPORTANT!</strong>
+                </span>
+                <span>
+                    &nbsp;Any documentation appearing to be forged or
+                    counterfeit may result in your claim request being denied.
+                </span>
             </Typography>
         </div>
         <div>{children}</div>

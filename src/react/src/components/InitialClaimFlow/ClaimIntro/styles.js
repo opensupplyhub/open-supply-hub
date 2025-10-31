@@ -83,14 +83,18 @@ export const claimInfoStyles = theme => ({
             padding: '24px 5% 0 5%',
         },
     },
-    boxContainer: Object.freeze({
-        padding: '20px 0 20px 0',
-    }),
+    boxContainer: {
+        padding: '40px 0 40px 0',
+    },
     boxHeader: {
         fontSize: '36px',
         fontWeight: 700,
         display: 'flex',
         alignItems: 'center',
+        marginBottom: theme.spacing.unit * 2,
+    },
+    stepTitle: {
+        lineHeight: '1.2',
     },
     stepNumber: {
         width: 36,
@@ -105,6 +109,8 @@ export const claimInfoStyles = theme => ({
         boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
         fontSize: '24px',
         marginRight: '10px',
+        marginTop: '4px',
+        flexShrink: 0,
     },
     boxList: {
         margin: 0,
@@ -134,40 +140,58 @@ export const claimInfoStyles = theme => ({
     },
     boxWarningText: {
         fontSize: '18px',
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
     },
     warningIcon: {
         color: COLOURS.MATERIAL_RED,
         marginRight: theme.spacing.unit,
         fontSize: 16,
-        flexShrink: 0,
         marginTop: '2px',
     },
-
-    // OLD STYLES
-    stepBox: {
-        padding: theme.spacing.unit * 2,
-        marginBottom: 0,
-        display: 'flex',
-        flexDirection: 'column',
+    boxWarningTextIcon: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        marginRight: theme.spacing.unit,
     },
     blueStep: {
         backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
-        border: `1px solid ${COLOURS.LIGHT_BLUE_BORDER}`,
+        border: `1px solid ${theme.palette.common.black}`,
+        color: theme.palette.common.black,
     },
     purpleStep: {
         backgroundColor: COLOURS.LIGHT_PURPLE_BG,
-        border: `1px solid ${COLOURS.LIGHT_PURPLE_BORDER}`,
+        border: `1px solid ${theme.palette.common.black}`,
+        color: theme.palette.common.black,
     },
     greenStep: {
         backgroundColor: COLOURS.LIGHT_GREEN,
-        border: `1px solid ${COLOURS.LIGHT_GREEN_BORDER}`,
+        border: `1px solid ${theme.palette.common.black}`,
+        color: theme.palette.common.black,
     },
     amberStep: {
-        background: COLOURS.LIGHT_AMBER,
-        border: `1px solid ${COLOURS.AMBER}`,
-        boxShadow: '0 4px 12px rgba(255, 193, 7, 0.3)',
+        background: theme.palette.action.main,
+        border: `1px solid ${theme.palette.common.grey}`,
+        color: theme.palette.common.black,
+    },
+    defaultLabel: {
+        color: theme.palette.common.black,
+        fontWeight: theme.typography.fontWeightSemiBold,
+    },
+    noBorder: {
+        border: 'none',
+    },
+    dialogImage: {
+        width: '100%',
+        height: 'auto',
+        maxHeight: '80vh',
+        objectFit: 'contain',
+    },
+    closeButton: {
+        position: 'absolute',
+        right: theme.spacing.unit,
+        top: theme.spacing.unit,
+        color: theme.palette.grey[500],
     },
     examplesContainer: {
         display: 'flex',
@@ -198,8 +222,8 @@ export const claimInfoStyles = theme => ({
             transform: 'translateY(-2px)',
         },
     },
-    separator: Object.freeze({
+    separator: {
         margin: '1px 0',
-        color: COLOURS.GREY,
-    }),
+        color: COLOURS.BLACK,
+    },
 });
