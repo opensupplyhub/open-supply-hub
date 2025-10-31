@@ -120,13 +120,13 @@ describe('ContactInfoStep component', () => {
         expect(emailInputs.length).toBeGreaterThan(0);
     });
 
-    test('enabling public contact prefills contactName and contactEmail', () => {
+    test('enabling public contact prefills point of contact name and point of contact email', () => {
         renderComponent();
 
         const publicSwitch = screen.getByRole('checkbox');
         fireEvent.click(publicSwitch);
 
-        // First call toggles the flag, then prefill name and email
+        // First call toggles the flag, then prefill name and email.
         expect(mockHandleChange).toHaveBeenCalledWith(
             'pointOfContactPubliclyVisible',
             true,
@@ -141,7 +141,7 @@ describe('ContactInfoStep component', () => {
         );
     });
 
-    test('does not prefill contactName when claimantName is empty', () => {
+    test('does not prefill point of contact name when claimant name is empty', () => {
         const props = {
             formData: { ...defaultProps.formData, yourName: '' },
         };
@@ -172,6 +172,10 @@ describe('ContactInfoStep component', () => {
 
         const select = screen.getByTestId('employment-verification-select');
         fireEvent.change(select, { target: { value: 'linkedin-page' } });
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantEmploymentVerificationMethod',
+            linkedinLabel,
+        );
 
         rerender(
             <ContactInfoStep
@@ -203,6 +207,10 @@ describe('ContactInfoStep component', () => {
 
         const select = screen.getByTestId('employment-verification-select');
         fireEvent.change(select, { target: { value: 'employment-letter' } });
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantEmploymentVerificationMethod',
+            letterLabel,
+        );
 
         rerender(
             <ContactInfoStep
