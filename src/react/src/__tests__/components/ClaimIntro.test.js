@@ -10,8 +10,8 @@ beforeAll(() => {
     window.scrollTo = jest.fn();
 });
 
-jest.mock('../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection', () => () => (
-    <div data-testid="claim-info-section">ClaimInfoSection</div>
+jest.mock('../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection', () => ({ children }) => (
+    <div data-testid="claim-info-section">{children}</div>
 ));
 
 describe('ClaimIntro component', () => {
@@ -85,7 +85,7 @@ describe('ClaimIntro component', () => {
             const { getByText } = renderComponent();
 
             expect(getByText('Go Back')).toBeInTheDocument();
-            expect(getByText('Continue to Claim Form')).toBeInTheDocument();
+            expect(getByText('Continue')).toBeInTheDocument();
         });
 
         test('renders ClaimInfoSection component', () => {
@@ -112,7 +112,7 @@ describe('ClaimIntro component', () => {
             };
             global.sessionStorage = sessionStorageMock;
 
-            const continueButton = getByText('Continue to Claim Form');
+            const continueButton = getByText('Continue');
             fireEvent.click(continueButton);
 
             const expectedPath = claimDetailsRoute.replace(':osID', mockOsID);

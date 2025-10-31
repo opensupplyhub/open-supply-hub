@@ -42,8 +42,7 @@ describe('ClaimInfoSection component', () => {
             expect(
                 getByText(/Company website showing your name and role/)
             ).toBeInTheDocument();
-            expect(getByText(/Employee ID badge/)).toBeInTheDocument();
-            expect(getByText(/Employment letter/)).toBeInTheDocument();
+            expect(getByText(/Employee ID badge or employment letter/)).toBeInTheDocument();
         });
 
         test('displays employee examples for Step 2', () => {
@@ -73,8 +72,7 @@ describe('ClaimInfoSection component', () => {
         test('displays company verification OPTIONS', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText(/Business registration/)).toBeInTheDocument();
-            expect(getByText(/Business license/)).toBeInTheDocument();
+            expect(getByText(/Business registration or business license/)).toBeInTheDocument();
             expect(getByText(/Utility bill/)).toBeInTheDocument();
         });
 
@@ -101,17 +99,17 @@ describe('ClaimInfoSection component', () => {
         });
     });
 
-    describe('Step 4 and 5 - Maximum Value section rendering', () => {
-        test('displays Maximum Value badge', () => {
-            const { getByText } = renderComponent();
+    describe('Step 4 and 5 - star badge rendering', () => {
+        test('displays star badges', () => {
+            const { getAllByText } = renderComponent();
 
-            expect(getByText('Maximum Value')).toBeInTheDocument();
+            expect(getAllByText('★').length).toBeGreaterThanOrEqual(2);
         });
 
         test('displays Step 4 - Add Key Details', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText(/Add Key Details:/)).toBeInTheDocument();
+            expect(getByText('Add Key Details')).toBeInTheDocument();
             expect(
                 getByText(/Provide information about the production location/)
             ).toBeInTheDocument();
@@ -120,7 +118,7 @@ describe('ClaimInfoSection component', () => {
         test('displays Step 5 - Get a Credible and Confirmed Profile', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText(/Get a Credible and Confirmed Profile:/)).toBeInTheDocument();
+            expect(getByText('Get a Credible and Confirmed Profile')).toBeInTheDocument();
             expect(
                 getByText(/After the claim is approved, you get a credible/)
             ).toBeInTheDocument();
@@ -130,16 +128,16 @@ describe('ClaimInfoSection component', () => {
     describe('Important Note rendering', () => {
         test('displays important warning box', () => {
             const { getByText } = renderComponent();
-    
+
             expect(getByText('IMPORTANT!')).toBeInTheDocument();
             expect(
                 getByText(/Any documentation appearing to be forged/)
             ).toBeInTheDocument();
         });
-    
+
         test('displays info icon in warning box', () => {
             const { container } = renderComponent();
-    
+
             const svgIcons = container.querySelectorAll('svg');
             expect(svgIcons.length).toBeGreaterThan(0);
         });
@@ -148,18 +146,18 @@ describe('ClaimInfoSection component', () => {
     describe('Image Dialog functionality', () => {
         test('opens dialog when example image is clicked', async () => {
             const { getAllByAltText, getByRole } = renderComponent();
-    
+
             const exampleImage = getAllByAltText('Example employee ID badge')[0];
             const imageButton = exampleImage.closest('button');
-    
+
             fireEvent.click(imageButton);
-    
+
             await waitFor(() => {
                 const dialog = getByRole('dialog');
                 expect(dialog).toBeInTheDocument();
             });
         });
-    
+
         test('displays image in dialog when opened', async () => {
             const { getAllByAltText } = renderComponent();
 
@@ -178,9 +176,11 @@ describe('ClaimInfoSection component', () => {
 
     describe('External link', () => {
         test('displays learn more link', () => {
-            const { getByText } = renderComponent();
+            const { getByRole } = renderComponent();
 
-            const link = getByText('Learn more about claiming your production location');
+            const link = getByRole('link', {
+                name: /Learn more about claiming your production location\.?/,
+            });
             expect(link).toBeInTheDocument();
             expect(link.tagName).toBe('A');
             expect(link).toHaveAttribute('href', 'https://info.opensupplyhub.org/resources/claim-a-facility');
