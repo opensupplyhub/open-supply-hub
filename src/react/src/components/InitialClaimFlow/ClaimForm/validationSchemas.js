@@ -16,8 +16,8 @@ export const eligibilityStepSchema = Yup.object().shape({
 const getEmploymentVerificationLabel = value =>
     EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === value)?.label;
 
-const documentEmploymentVerificationBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
-    getEmploymentVerificationLabel,
+const documentEmploymentVerificationBasedLabels = new Set(
+    DOCUMENT_BASED_VERIFICATION_OPTIONS.map(getEmploymentVerificationLabel),
 );
 
 const getCompanyUrlValidationSchema = label =>
@@ -54,8 +54,7 @@ export const contactStepSchema = Yup.object().shape({
     employmentVerificationDocuments: Yup.array().when(
         'claimantEmploymentVerificationMethod',
         {
-            is: label =>
-                documentEmploymentVerificationBasedLabels.includes(label),
+            is: label => documentEmploymentVerificationBasedLabels.has(label),
             then: schema =>
                 schema
                     .min(1, 'At least one verification document is required')
