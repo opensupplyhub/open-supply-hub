@@ -20,9 +20,8 @@ const documentEmploymentVerificationBasedLabels = DOCUMENT_BASED_VERIFICATION_OP
     getEmploymentVerificationLabel,
 );
 
-const getCompanyUrlValidationSchema = label => {
-    console.log('label for select field: ', label);
-    return Yup.string().when('claimantEmploymentVerificationMethod', {
+const getCompanyUrlValidationSchema = label =>
+    Yup.string().when('claimantEmploymentVerificationMethod', {
         is: value => value === label,
         then: schema =>
             schema
@@ -31,7 +30,6 @@ const getCompanyUrlValidationSchema = label => {
                     'Employment verification URL is required on this employment verification method',
                 ),
     });
-};
 
 export const contactStepSchema = Yup.object().shape({
     // Always required (claimant fields).
@@ -58,9 +56,7 @@ export const contactStepSchema = Yup.object().shape({
         {
             is: label =>
                 documentEmploymentVerificationBasedLabels.includes(label),
-            then: (
-                schema, // NOSONAR
-            ) =>
+            then: schema =>
                 schema
                     .min(1, 'At least one verification document is required')
                     .required('Verification documents are required'),
@@ -75,7 +71,7 @@ export const contactStepSchema = Yup.object().shape({
         'pointOfContactPubliclyVisible',
         {
             is: v => v === true,
-            then: s => s.trim().required('Contact name is required field!'), // NOSONAR
+            then: s => s.trim().required('Contact name is required field!'),
             otherwise: s => s.strip().nullable(),
         },
     ),
@@ -83,7 +79,7 @@ export const contactStepSchema = Yup.object().shape({
         .email('Invalid email address')
         .when('pointOfContactPubliclyVisible', {
             is: v => v === true,
-            then: s => s.required('Contact email is required field!'), // NOSONAR
+            then: s => s.required('Contact email is required field!'),
             otherwise: s => s.strip().nullable(),
         }),
 });

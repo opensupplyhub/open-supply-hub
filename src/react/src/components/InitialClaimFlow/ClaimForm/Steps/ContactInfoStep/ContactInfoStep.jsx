@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { func, object, shape, string, bool, oneOfType } from 'prop-types';
+import {
+    func,
+    object,
+    shape,
+    string,
+    bool,
+    oneOfType,
+    array,
+} from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -75,7 +83,7 @@ const ContactInfoStep = ({
     );
 
     // This checks if the employment verification field has been touched and either has validation errors
-    // or no value selected
+    // or no value selected.
     const isEmploymentVerificationError = !!(
         touched?.claimantEmploymentVerificationMethod &&
         errors?.claimantEmploymentVerificationMethod
@@ -354,9 +362,9 @@ const ContactInfoStep = ({
                                             checked,
                                         );
 
-                                        // When enabling public contact, prefill fields
+                                        // When enabling public contact, prefill fields.
                                         if (checked) {
-                                            // Copy claimantName -> contactName if claimant has data
+                                            // Copy yourName -> contactName if claimant has data.
                                             const claimantHasName = Boolean(
                                                 (formData.yourName || '')
                                                     .toString()
@@ -369,7 +377,7 @@ const ContactInfoStep = ({
                                                 );
                                             }
 
-                                            // Always set contactEmail from userEmail; remains editable
+                                            // Always set contactEmail from userEmail; remains editable.
                                             if (userEmail) {
                                                 handleChange(
                                                     'pointOfContactEmail',
@@ -521,20 +529,37 @@ ContactInfoStep.defaultProps = {
 
 ContactInfoStep.propTypes = {
     classes: object.isRequired,
-    formData: object.isRequired,
+    formData: shape({
+        yourName: string,
+        yourTitle: string,
+        pointOfContactPubliclyVisible: bool,
+        pointOfcontactPersonName: string,
+        pointOfContactEmail: string,
+        claimantEmploymentVerificationMethod: string,
+        claimantLinkedinProfileUrl: string,
+        yourBusinessWebsite: string,
+        employmentVerificationDocuments: array,
+    }).isRequired,
     handleChange: func.isRequired,
     handleBlur: func.isRequired,
+    updateFieldWithoutTouch: func.isRequired,
     errors: shape({
-        claimantName: oneOfType([string, object]),
-        claimantTitle: oneOfType([string, object]),
-        contactEmail: oneOfType([string, object]),
-        contactName: oneOfType([string, object]),
+        yourName: oneOfType([string, object]),
+        yourTitle: oneOfType([string, object]),
+        pointOfContactEmail: oneOfType([string, object]),
+        pointOfcontactPersonName: oneOfType([string, object]),
+        claimantEmploymentVerificationMethod: oneOfType([string, object]),
+        claimantLinkedinProfileUrl: oneOfType([string, object]),
+        yourBusinessWebsite: oneOfType([string, object]),
     }),
     touched: shape({
-        claimantName: bool,
-        claimantTitle: bool,
-        contactEmail: bool,
-        contactName: bool,
+        yourName: bool,
+        yourTitle: bool,
+        pointOfContactEmail: bool,
+        pointOfcontactPersonName: bool,
+        claimantEmploymentVerificationMethod: bool,
+        claimantLinkedinProfileUrl: bool,
+        yourBusinessWebsite: bool,
     }),
     userEmail: string,
 };
