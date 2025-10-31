@@ -89,7 +89,7 @@ export const claimInfoStyles = theme => ({
     boxHeader: {
         fontSize: '36px',
         fontWeight: 700,
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         marginBottom: theme.spacing.unit * 2,
     },
@@ -124,7 +124,6 @@ export const claimInfoStyles = theme => ({
     boxDescription: {
         fontSize: '18px',
         fontWeight: 600,
-        marginTop: '5px',
     },
     boxExamplesContainer: {
         display: 'flex',
@@ -225,5 +224,20 @@ export const claimInfoStyles = theme => ({
     separator: {
         margin: '1px 0',
         color: COLOURS.BLACK,
+    },
+    maxValueBadge: {
+        cursor: 'help',
+        marginLeft: 10,
+        width: 24,
+        height: 24,
+        padding: 0,
+        borderRadius: '50%',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 14,
+        fontWeight: theme.typography.fontWeightBold,
+        backgroundColor: theme.palette.action.main,
+        color: theme.palette.common.black,
     },
 });

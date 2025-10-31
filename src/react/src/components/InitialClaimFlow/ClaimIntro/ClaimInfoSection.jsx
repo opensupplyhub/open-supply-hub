@@ -79,7 +79,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Employee ID badge, Employment letter
+                        Employee ID badge or employment letter
                     </Typography>
                 </li>
                 <li>
@@ -87,7 +87,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Job contract, Business card
+                        Job contract or business card
                     </Typography>
                 </li>
                 <li>
@@ -151,7 +151,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                         variant="body2"
                         className={classes.boxDescription}
                     >
-                        Business registration, Business license
+                        Business registration or business license
                     </Typography>
                 </li>
                 <li>
@@ -170,17 +170,11 @@ const ClaimInfoSection = ({ classes, children }) => (
                         Link to company website or LinkedIn page
                     </Typography>
                 </li>
-                <li>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        <strong>NOTE:</strong> The document must show the same
-                        company name and address as listed on your OS Hub
-                        profile.
-                    </Typography>
-                </li>
             </ul>
+            <Typography variant="body2" className={classes.boxDescription}>
+                <strong>NOTE:</strong> The document must show the same company
+                name and address as listed on your OS Hub profile.
+            </Typography>
             <div className={classes.boxExamplesContainer}>
                 <ExampleImage
                     src={businessRegistrationExample}
@@ -212,6 +206,9 @@ const ClaimInfoSection = ({ classes, children }) => (
                     4
                 </span>
                 <span className={classes.stepTitle}>Add Key Details</span>
+                <span className={classes.maxValueBadge} title="Maximum value">
+                    ★
+                </span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 Provide information about the production location, such as:
@@ -252,6 +249,9 @@ const ClaimInfoSection = ({ classes, children }) => (
                 <span className={classes.stepTitle}>
                     Get a Credible and Confirmed Profile
                 </span>
+                <span className={classes.maxValueBadge} title="Maximum value">
+                    ★
+                </span>
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 After the claim is approved, you get a credible and confirmed
@@ -263,7 +263,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                     rel="noopener noreferrer"
                     className={classes.link}
                 >
-                    Learn more about claiming your production location
+                    Learn more about claiming your production location.
                 </a>
             </Typography>
         </div>

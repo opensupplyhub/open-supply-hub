@@ -101,11 +101,11 @@ describe('ClaimInfoSection component', () => {
         });
     });
 
-    describe('Step 4 and 5 - Maximum Value section rendering', () => {
-        test('displays Maximum Value badge', () => {
-            const { getByText } = renderComponent();
+    describe('Step 4 and 5 - star badge rendering', () => {
+        test('displays star badges', () => {
+            const { getAllByText } = renderComponent();
 
-            expect(getByText('Maximum Value')).toBeInTheDocument();
+            expect(getAllByText('★').length).toBeGreaterThanOrEqual(2);
         });
 
         test('displays Step 4 - Add Key Details', () => {
