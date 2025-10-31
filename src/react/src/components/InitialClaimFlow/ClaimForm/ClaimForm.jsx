@@ -378,7 +378,7 @@ const ClaimForm = ({
                             <Button
                                 variant="contained"
                                 color="primary"
-                                href="/claimed"
+                                onClick={() => history.push('/claimed')}
                                 className={classes.popupButtonStyles}
                             >
                                 View My Approved Claims
@@ -386,7 +386,7 @@ const ClaimForm = ({
                             <Button
                                 variant="contained"
                                 color="primary"
-                                href="/"
+                                onClick={() => history.push('/')}
                                 className={classes.popupButtonStyles}
                             >
                                 Search OS Hub
