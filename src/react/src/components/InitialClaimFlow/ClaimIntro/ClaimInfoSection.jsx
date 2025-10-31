@@ -18,7 +18,12 @@ const ClaimInfoSection = ({ classes, children }) => (
     <div className={classes.root}>
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                1. Confirm Your Eligibility
+                <span className={classes.stepNumber}>1</span>
+                Confirm Your Eligibility
+            </Typography>
+            <Typography variant="body2" className={classes.boxDescription}>
+                Confirm that you are eligible to claim this production location,
+                keeping in mind:
             </Typography>
             <ul className={classes.boxList}>
                 <li>
@@ -38,13 +43,71 @@ const ClaimInfoSection = ({ classes, children }) => (
         </div>
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                2. Prove Your Name and Role
+                <span className={classes.stepNumber}>2</span> Prove Your Name
+                and Role
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
-                <strong>OPTIONS:</strong> Company website showing your name and
-                role, Employee ID badge, Employment letter, Job contract, Link
-                to your LinkedIn profile, Business card, Audit reports.
+                Provide the document about your name and role,{' '}
+                <strong>OPTIONS:</strong>
             </Typography>
+            <ul className={classes.boxList}>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Company website showing your name and role
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Employee ID badge
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Employment letter
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Job contract
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Link to your LinkedIn profile
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Business card
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Audit reports
+                    </Typography>
+                </li>
+            </ul>
             <div className={classes.boxExamplesContainer}>
                 <ExampleImage
                     src={employeeIdExample}
@@ -66,17 +129,65 @@ const ClaimInfoSection = ({ classes, children }) => (
 
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                3. Prove Your Company Name and Address
+                <span className={classes.stepNumber}>3</span> Prove Your Company
+                Name and Address
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
-                <strong>OPTIONS:</strong> Business registration, Business
-                license, Utility bill, link to company website, link to company
-                LinkedIn page.
+                Provide the document about your company name and address,{' '}
+                <strong>OPTIONS:</strong>
             </Typography>
-            <Typography variant="body2" className={classes.boxDescription}>
-                <strong>NOTE:</strong> The document must show the same company
-                name and address as listed on your OS Hub profile.
-            </Typography>
+            <ul className={classes.boxList}>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Business registration
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Business license
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Utility bill
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Link to company website
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Link to company LinkedIn page
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        <strong>NOTE:</strong> The document must show the same
+                        company name and address as listed on your OS Hub
+                        profile.
+                    </Typography>
+                </li>
+            </ul>
             <div className={classes.boxExamplesContainer}>
                 <ExampleImage
                     src={businessRegistrationExample}
@@ -97,18 +208,43 @@ const ClaimInfoSection = ({ classes, children }) => (
         </div>
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                4. Add Key Details
+                <span className={classes.stepNumber}>4</span> Add Key Details
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
-                Provide information about the production location such as
-                Certifications, Number of Workers, Contact Information, and
-                more.
+                Provide information about the production location, such as:
             </Typography>
+            <ul className={classes.boxList}>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Certifications
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Number of Workers
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Contact Information and more.
+                    </Typography>
+                </li>
+            </ul>
         </div>
 
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
-                5. Get a Credible and Confirmed Profile
+                <span className={classes.stepNumber}>5</span> Get a Credible and
+                Confirmed Profile
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 After the claim is approved, you get a credible and confirmed

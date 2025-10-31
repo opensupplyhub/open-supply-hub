@@ -89,20 +89,36 @@ export const claimInfoStyles = theme => ({
     boxHeader: {
         fontSize: '36px',
         fontWeight: 700,
+        display: 'flex',
+        alignItems: 'center',
+    },
+    stepNumber: {
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        display: 'flex',
+        lineHeight: '32px',
+        justifyContent: 'center',
+        fontWeight: theme.typography.fontWeightExtraBold,
+        color: theme.palette.common.black,
+        border: `2px solid ${theme.palette.common.black}`,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+        fontSize: '24px',
+        marginRight: '10px',
     },
     boxList: {
         margin: 0,
-        marginTop: '20px',
         paddingLeft: '25px',
     },
     boxText: {
         fontSize: '18px',
         fontWeight: 600,
+        lineHeight: '1.2',
     },
     boxDescription: {
         fontSize: '18px',
         fontWeight: 600,
-        marginTop: '20px',
+        marginTop: '5px',
     },
     boxExamplesContainer: {
         display: 'flex',

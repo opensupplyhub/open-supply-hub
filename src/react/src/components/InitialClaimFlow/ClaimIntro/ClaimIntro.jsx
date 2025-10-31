@@ -137,3 +137,9 @@ export default connect(
     mapStateToProps,
     mapDispatchToProps,
 )(withRouter(withStyles(claimIntroStyles)(withScrollReset(ClaimIntro))));
+
+// import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+// import DescriptionIcon from '@material-ui/icons/Description';
+// import BusinessIcon from '@material-ui/icons/Business';
+// import EditIcon from '@material-ui/icons/Edit';
+// import VerifiedUserIcon from '@material-ui/icons/VerifiedUser';
