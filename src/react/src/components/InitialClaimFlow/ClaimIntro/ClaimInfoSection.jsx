@@ -16,7 +16,7 @@ import employeeIdExample from '../../../images/employee-id-example.jpg';
 import employmentLetterExample from '../../../images/employment-letter-example.jpg';
 import businessCardExample from '../../../images/business-card-example.jpg';
 
-const ClaimInfoSection = ({ classes }) => (
+const ClaimInfoSection = ({ classes, children }) => (
     <div className={classes.root}>
         <div className={`${classes.stepBox} ${classes.blueStep}`}>
             <div className={classes.stepHeader}>
@@ -234,11 +234,13 @@ const ClaimInfoSection = ({ classes }) => (
                 result in your claim request being denied.
             </Typography>
         </div>
+        <div>{children}</div>
     </div>
 );
 
 ClaimInfoSection.propTypes = {
     classes: PropTypes.object.isRequired,
+    children: PropTypes.node.isRequired,
 };
 
 export default withStyles(claimInfoStyles)(ClaimInfoSection);

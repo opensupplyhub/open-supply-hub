@@ -2,24 +2,14 @@ import COLOURS from '../../../util/COLOURS';
 
 export const claimIntroStyles = theme => ({
     root: {
-        backgroundColor: COLOURS.LIGHT_GREY,
-        minHeight: 'calc(100vh - 64px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: theme.spacing.unit * 0,
-        paddingBottom: theme.spacing.unit * 4,
-    },
-    container: {
-        maxWidth: 1440,
-        width: '100%',
-        padding: theme.spacing.unit * 2,
+        background: theme.palette.background.grey,
+        padding: '48px 5% 120px 5%',
         [theme.breakpoints.down('sm')]: {
-            padding: theme.spacing.unit * 2,
+            padding: '24px 5% 24px 5%',
         },
     },
+    container: {},
     heroSection: {
-        textAlign: 'center',
         marginBottom: theme.spacing.unit * 3,
         marginTop: 0,
         paddingTop: 0,
@@ -30,30 +20,24 @@ export const claimIntroStyles = theme => ({
         color: COLOURS.JET_BLACK,
         marginBottom: theme.spacing.unit,
         [theme.breakpoints.down('sm')]: {
-            fontSize: 24,
+            fontSize: '36px',
         },
     },
     subtitle: {
-        fontSize: 18,
-        color: COLOURS.MEDIUM_GREY,
-        maxWidth: 720,
-        margin: '0 auto',
-        lineHeight: 1.6,
-    },
-    actionsContainer: {
-        backgroundColor: COLOURS.WHITE,
-        padding: theme.spacing.unit * 2,
-        marginTop: theme.spacing.unit * 3,
-        marginBottom: 0,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBold,
+        margin: '24px 0 32px 0',
     },
     actionsInner: {
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'center',
+        gap: '24px',
+        padding: '48px 0',
         [theme.breakpoints.down('sm')]: {
             flexDirection: 'column',
-            gap: theme.spacing.unit * 2,
+            padding: '24px 0',
         },
     },
     backButton: {
@@ -69,28 +53,21 @@ export const claimIntroStyles = theme => ({
         },
     },
     continueButton: {
-        width: 'fit-content',
+        width: '200px',
         height: '49px',
         borderRadius: 0,
         textTransform: 'none',
         backgroundColor: theme.palette.action.main,
         color: theme.palette.common.black,
-        fontSize: '18px',
-        fontWeight: theme.typography.fontWeightExtraBold,
-        boxShadow: 'none',
         '&:hover': {
             backgroundColor: theme.palette.action.dark,
         },
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightExtraBold,
+        boxShadow: 'none',
         [theme.breakpoints.down('sm')]: {
             width: '100%',
         },
-    },
-    icon: {
-        marginLeft: theme.spacing.unit,
-        fontSize: 20,
-        fontWeight: 800,
-        display: 'flex',
-        alignItems: 'center',
     },
 });
 
@@ -98,9 +75,12 @@ export const claimInfoStyles = theme => ({
     root: {
         backgroundColor: COLOURS.WHITE,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        padding: theme.spacing.unit * 3,
-        '& > *:not(:last-child)': {
-            marginBottom: theme.spacing.unit * 3,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '40px 110px 0 110px',
+        borderRadius: '0',
+        [theme.breakpoints.down('sm')]: {
+            padding: '24px 5% 0 5%',
         },
     },
     stepBox: {
