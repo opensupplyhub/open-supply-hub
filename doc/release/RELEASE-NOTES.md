@@ -21,6 +21,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   - Added Company Address Verification section with seven verification method options: company website URL, LinkedIn page URL, utility bill upload, business registration document upload, tax document/license upload, property lease/ownership document upload, and other official documents upload.
   - Implemented dynamic form fields that conditionally display URL input (for website/LinkedIn verification) or document uploader (for document-based verification methods) based on selected verification method.
   - Added comprehensive form validation with real-time error messaging for verification method selection, URL format validation, and required document uploads.
+* [OSDEV-2204](https://opensupplyhub.atlassian.net/browse/OSDEV-2204) - Claim Flow: Contact Info Step. Added a dedicated Contact Info step UI showing:
+  - non-editable prefilled account email
+  - claimant name field
+  - claimant job title field
+  - employment verification select field with one of these options:
+      - for file(s) upload:
+          - Employment letter or contract showing your name, title, and company
+          - Signed and/or stamped letter on company letterhead that confirmis your name, your title with the company, and your email address
+          - Company ID badge or access card (photo showing name and title)
+          - Official organizational chart showing your position
+          - Business card showing your name, title and company
+          - An official company document showing your name and title
+          - Audit reports showing your name and role at the facility
+      - for url input fields
+          - Company website showing your name and title (e.g., About Us, Team page)
+            - If chosen, renders company website input field
+          - Your LinkedIn page showing your name, title and company
+            - If chosen, renders claimant LinkedIn input field
+  - 'Do you want this location's contact info to be public?' toogle button. If switch to 'Yes', renders:
+      - contact name field (required if open). Prepopulates by claimant name if it was set before.
+      - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

@@ -14,7 +14,7 @@ import Business from '@material-ui/icons/Business';
 
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
-import ContactStep from './Steps/ContactStep';
+import ContactInfoStep from './Steps/ContactInfoStep/ContactInfoStep';
 import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
@@ -66,7 +66,7 @@ const getIconComponent = iconName => iconMapping[iconName] || Security;
 
 const stepComponents = {
     [CLAIM_FORM_STEPS.ELIGIBILITY]: EligibilityStep,
-    [CLAIM_FORM_STEPS.CONTACT]: ContactStep,
+    [CLAIM_FORM_STEPS.CONTACT]: ContactInfoStep,
     [CLAIM_FORM_STEPS.BUSINESS]: BusinessStep,
     [CLAIM_FORM_STEPS.PROFILE]: ProfileStep,
 };
