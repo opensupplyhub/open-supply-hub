@@ -130,16 +130,16 @@ describe('ClaimInfoSection component', () => {
     describe('Important Note rendering', () => {
         test('displays important warning box', () => {
             const { getByText } = renderComponent();
-    
+
             expect(getByText('IMPORTANT!')).toBeInTheDocument();
             expect(
                 getByText(/Any documentation appearing to be forged/)
             ).toBeInTheDocument();
         });
-    
+
         test('displays info icon in warning box', () => {
             const { container } = renderComponent();
-    
+
             const svgIcons = container.querySelectorAll('svg');
             expect(svgIcons.length).toBeGreaterThan(0);
         });
@@ -148,18 +148,18 @@ describe('ClaimInfoSection component', () => {
     describe('Image Dialog functionality', () => {
         test('opens dialog when example image is clicked', async () => {
             const { getAllByAltText, getByRole } = renderComponent();
-    
+
             const exampleImage = getAllByAltText('Example employee ID badge')[0];
             const imageButton = exampleImage.closest('button');
-    
+
             fireEvent.click(imageButton);
-    
+
             await waitFor(() => {
                 const dialog = getByRole('dialog');
                 expect(dialog).toBeInTheDocument();
             });
         });
-    
+
         test('displays image in dialog when opened', async () => {
             const { getAllByAltText } = renderComponent();
 

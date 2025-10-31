@@ -109,6 +109,25 @@ export const claimInfoStyles = theme => ({
         gap: theme.spacing.unit * 3,
         marginTop: '20px',
     },
+    boxWarningContainer: {
+        backgroundColor: COLOURS.LIGHT_RED,
+        padding: theme.spacing.unit * 1.5,
+        display: 'flex',
+        alignItems: 'center',
+        marginTop: '20px',
+    },
+    boxWarningText: {
+        fontSize: '18px',
+        display: 'flex',
+        alignItems: 'center',
+    },
+    warningIcon: {
+        color: COLOURS.MATERIAL_RED,
+        marginRight: theme.spacing.unit,
+        fontSize: 16,
+        flexShrink: 0,
+        marginTop: '2px',
+    },
 
     // OLD STYLES
     stepBox: {
@@ -133,61 +152,6 @@ export const claimInfoStyles = theme => ({
         background: COLOURS.LIGHT_AMBER,
         border: `1px solid ${COLOURS.AMBER}`,
         boxShadow: '0 4px 12px rgba(255, 193, 7, 0.3)',
-    },
-    stepNumber: {
-        width: 32,
-        height: 32,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: COLOURS.WHITE,
-        fontWeight: 600,
-        fontSize: 18,
-        marginRight: theme.spacing.unit * 1.5,
-        flexShrink: 0,
-    },
-    blueNumber: {
-        backgroundColor: COLOURS.MATERIAL_BLUE,
-    },
-    purpleNumber: {
-        backgroundColor: COLOURS.MATERIAL_PURPLE,
-    },
-    greenNumber: {
-        backgroundColor: COLOURS.MATERIAL_GREEN,
-    },
-    amberNumber: {
-        background: COLOURS.ORANGE,
-        boxShadow: '0 2px 8px rgba(245, 124, 0, 0.4)',
-    },
-    stepHeader: {
-        display: 'flex',
-        alignItems: 'flex-start',
-        marginBottom: theme.spacing.unit * 1.5,
-    },
-    stepTitle: {
-        fontSize: 24,
-        fontWeight: 600,
-        marginBottom: theme.spacing.unit * 0.5,
-    },
-    stepText: {
-        fontSize: 18,
-        lineHeight: 1.6,
-    },
-    bulletPoint: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: theme.spacing.unit,
-    },
-    bullet: {
-        width: 6,
-        height: 6,
-        borderRadius: '50%',
-        marginRight: theme.spacing.unit,
-        flexShrink: 0,
-    },
-    blueBullet: {
-        backgroundColor: COLOURS.MATERIAL_BLUE,
     },
     examplesContainer: {
         display: 'flex',
@@ -216,83 +180,6 @@ export const claimInfoStyles = theme => ({
         '&:hover': {
             boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
             transform: 'translateY(-2px)',
-        },
-    },
-    purpleBorder: {
-        border: `2px solid ${COLOURS.LIGHT_PURPLE_BORDER}`,
-    },
-    greenBorder: {
-        border: `2px solid ${COLOURS.LIGHT_GREEN_BORDER}`,
-    },
-    exampleLabel: {
-        fontSize: 14,
-        textAlign: 'center',
-        marginTop: theme.spacing.unit,
-        fontWeight: 700,
-        lineHeight: 1.2,
-    },
-    purpleLabel: {
-        color: COLOURS.PURPLE_TEXT,
-    },
-    greenLabel: {
-        color: COLOURS.GREEN_TEXT,
-    },
-    noteBox: {
-        backgroundColor: COLOURS.NOTE_GREEN,
-        padding: theme.spacing.unit * 1.5,
-        marginTop: theme.spacing.unit,
-    },
-    maxValueBadge: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        backgroundColor: COLOURS.ORANGE,
-        color: COLOURS.WHITE,
-        padding: '6px 12px',
-        borderRadius: 20,
-        fontSize: 18,
-        fontWeight: 700,
-        marginBottom: theme.spacing.unit * 1.5,
-        boxShadow: '0 2px 6px rgba(255, 160, 0, 0.4)',
-    },
-    warningBox: {
-        backgroundColor: COLOURS.LIGHT_GREY,
-        padding: theme.spacing.unit * 1.5,
-        display: 'flex',
-        alignItems: 'center',
-    },
-    warningIcon: {
-        color: COLOURS.MATERIAL_RED,
-        marginRight: theme.spacing.unit,
-        fontSize: 16,
-        flexShrink: 0,
-    },
-    link: {
-        color: COLOURS.MATERIAL_BLUE,
-        textDecoration: 'none',
-        fontWeight: 500,
-        '&:hover': {
-            textDecoration: 'underline',
-        },
-    },
-    dialogImage: {
-        width: '100%',
-        height: 'auto',
-        maxHeight: '80vh',
-        objectFit: 'contain',
-    },
-    closeButton: {
-        position: 'absolute',
-        right: theme.spacing.unit,
-        top: theme.spacing.unit,
-        color: theme.palette.grey[500],
-    },
-    twoColumnGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        columnGap: theme.spacing.unit * 3,
-        rowGap: theme.spacing.unit * 2,
-        [theme.breakpoints.down('sm')]: {
-            gridTemplateColumns: '1fr',
         },
     },
 });
