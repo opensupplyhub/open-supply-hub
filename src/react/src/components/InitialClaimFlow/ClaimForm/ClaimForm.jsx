@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -7,6 +7,9 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
 import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
@@ -16,7 +19,7 @@ import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactInfoStep from './Steps/ContactInfoStep/ContactInfoStep';
 import BusinessStep from './Steps/BusinessStep/BusinessStep';
-import ProfileStep from './Steps/ProfileStep';
+import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
@@ -24,6 +27,7 @@ import {
     setActiveClaimFormStep,
     markStepComplete,
     updateClaimFormField,
+    submitClaimFormData,
 } from '../../../actions/claimForm';
 import {
     fetchCountryOptions,
@@ -40,7 +44,7 @@ import {
     STEP_ICONS,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
-import claimFormStyles from './styles';
+import { claimFormStyles, popupDialogStyles } from './styles';
 import {
     isFirstStep,
     isLastStep,
@@ -54,6 +58,7 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
+import COLOURS from '../../../util/COLOURS';
 
 const iconMapping = {
     Security,
@@ -80,6 +85,8 @@ const ClaimForm = ({
     activeStep,
     completedSteps,
     formData,
+    submissionFetching,
+    submissionError,
     countriesOptions,
     facilityProcessingTypeOptions,
     parentCompanyOptions,
@@ -100,7 +107,15 @@ const ClaimForm = ({
     setStep,
     markComplete,
     updateField,
+    submitClaim,
 }) => {
+    // Track emissions validation errors from ProfileStep.
+    const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
+
+    // Track dialog state for success popup.
+    const [dialogIsOpen, setDialogIsOpen] = useState(false);
+    const [submittingForm, setSubmittingForm] = useState(false);
+
     // Redirect to intro page if user accessed form directly via URL.
     useRequireIntroAccess(history, osID);
 
@@ -117,15 +132,21 @@ const ClaimForm = ({
         parentCompanyOptions,
     );
 
-    // Handle form submission.
-    const handleSubmit = values => {
-        // Mark final step as complete.
-        markComplete(activeStep);
+    // Show success dialog when submission completes.
+    useEffect(() => {
+        if (submissionFetching) {
+            setSubmittingForm(true);
+        }
+        if (submittingForm && !submissionFetching && !submissionError) {
+            setSubmittingForm(false);
+            setDialogIsOpen(true);
+        }
+    }, [submittingForm, submissionFetching, submissionError]);
 
-        // TODO: Create action in the claimForm.js to submit the form data to
-        // the backend via api/facilities/{os_id}/claim/ POST endpoint.
-        console.log('Form submitted with values:', values);
-        alert('Claim form submitted successfully! (This is a placeholder)');
+    // Handle form submission.
+    const handleSubmit = () => {
+        markComplete(activeStep);
+        submitClaim(osID, emissionsHasErrors);
     };
 
     // Initialize form with custom hook with Formik inside.
@@ -135,7 +156,13 @@ const ClaimForm = ({
         handleBlur,
         updateFieldWithoutTouch,
         isButtonDisabled,
-    } = useClaimForm(formData, activeStep, updateField, handleSubmit);
+    } = useClaimForm(
+        formData,
+        activeStep,
+        updateField,
+        handleSubmit,
+        emissionsHasErrors,
+    );
 
     // Check authentication.
     if (!userHasSignedIn) {
@@ -266,7 +293,26 @@ const ClaimForm = ({
                             updateFieldWithoutTouch={updateFieldWithoutTouch}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
+                            countryOptions={countriesOptions}
+                            processingTypeOptions={
+                                facilityProcessingTypeOptions
+                            }
+                            parentCompanyOptions={parentCompanyOptions}
+                            onEmissionsValidationChange={setEmissionsHasErrors}
                         />
+                        {submissionError && (
+                            <Typography
+                                variant="body2"
+                                color="error"
+                                style={{
+                                    textAlign: 'center',
+                                    marginTop: '24px',
+                                    fontSize: '16px',
+                                }}
+                            >
+                                An error prevented submitting the form
+                            </Typography>
+                        )}
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
                                 <Button
@@ -305,11 +351,56 @@ const ClaimForm = ({
                     </Paper>
                 </form>
             </div>
+
+            <Dialog open={dialogIsOpen}>
+                {dialogIsOpen && (
+                    <div style={popupDialogStyles.containerStyles}>
+                        <DialogContent>
+                            <Typography
+                                variant="title"
+                                style={popupDialogStyles.titleStyles}
+                            >
+                                Thank you for submitting your claim request!
+                            </Typography>
+                            <Typography style={popupDialogStyles.contentStyles}>
+                                You will receive a notification once it has been
+                                reviewed.
+                            </Typography>
+                            <hr
+                                style={{
+                                    color: COLOURS.GREY,
+                                    backgroundColor: COLOURS.GREY,
+                                    height: 1,
+                                }}
+                            />
+                        </DialogContent>
+                        <DialogActions style={popupDialogStyles.actionStyles}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => history.push('/claimed')}
+                                className={classes.popupButtonStyles}
+                            >
+                                View My Approved Claims
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => history.push('/')}
+                                className={classes.popupButtonStyles}
+                            >
+                                Search OS Hub
+                            </Button>
+                        </DialogActions>
+                    </div>
+                )}
+            </Dialog>
         </div>
     );
 };
 
 ClaimForm.defaultProps = {
+    submissionError: null,
     countriesOptions: [],
     facilityProcessingTypeOptions: [],
     parentCompanyOptions: [],
@@ -327,6 +418,8 @@ ClaimForm.propTypes = {
     activeStep: number.isRequired,
     completedSteps: arrayOf(number).isRequired,
     formData: object.isRequired,
+    submissionFetching: bool.isRequired,
+    submissionError: array,
     countriesOptions: array,
     facilityProcessingTypeOptions: array,
     parentCompanyOptions: array,
@@ -347,10 +440,11 @@ ClaimForm.propTypes = {
     setStep: func.isRequired,
     markComplete: func.isRequired,
     updateField: func.isRequired,
+    submitClaim: func.isRequired,
 };
 
 const mapStateToProps = ({
-    claimForm: { activeStep, completedSteps, formData },
+    claimForm: { activeStep, completedSteps, formData, submissionState },
     filterOptions: {
         countries: {
             data: countriesOptions,
@@ -382,6 +476,8 @@ const mapStateToProps = ({
     activeStep,
     completedSteps,
     formData,
+    submissionFetching: submissionState.fetching,
+    submissionError: submissionState.error,
     countriesOptions,
     facilityProcessingTypeOptions,
     parentCompanyOptions,
@@ -407,6 +503,8 @@ const mapDispatchToProps = dispatch => ({
     setStep: stepIndex => dispatch(setActiveClaimFormStep(stepIndex)),
     markComplete: stepIndex => dispatch(markStepComplete(stepIndex)),
     updateField: payload => dispatch(updateClaimFormField(payload)),
+    submitClaim: (osID, emissionsHasErrors) =>
+        dispatch(submitClaimFormData(osID, emissionsHasErrors)),
 });
 
 export default connect(

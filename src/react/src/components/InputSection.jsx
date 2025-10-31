@@ -81,6 +81,7 @@ const InputSection = ({
     aside,
     selectPlaceholder,
     isClaimFacilityAdditionalDataPage,
+    menuPlacement,
     classes,
 }) => {
     let SelectComponent = null;
@@ -135,6 +136,7 @@ const InputSection = ({
                     styles={selectStyles}
                     isMulti={isMultiSelect}
                     placeholder={selectPlaceholder}
+                    menuPlacement={menuPlacement}
                 />
             </div>
         ) : (
@@ -151,6 +153,7 @@ const InputSection = ({
                     styles={selectStyles}
                     isMulti={isMultiSelect}
                     placeholder={selectPlaceholder}
+                    menuPlacement={menuPlacement}
                 />
             </div>
         );
@@ -203,6 +206,7 @@ InputSection.defaultProps = {
     aside: null,
     selectPlaceholder: 'Select...',
     isClaimFacilityAdditionalDataPage: false,
+    menuPlacement: 'auto',
 };
 
 InputSection.propTypes = {
@@ -222,6 +226,7 @@ InputSection.propTypes = {
     aside: oneOfType([node, oneOf([null])]),
     selectPlaceholder: string,
     isClaimFacilityAdditionalDataPage: bool,
+    menuPlacement: string,
     classes: object.isRequired,
 };
 

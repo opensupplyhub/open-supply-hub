@@ -134,17 +134,91 @@ export const businessStepSchema = Yup.object().shape({
     ),
 });
 
-// Step 4: Profile validation (all optional fields).
+// Step 4: Profile validation.
 export const profileStepSchema = Yup.object().shape({
+    // Production Location Overview
+    localLanguageName: Yup.string().trim(),
+    officePhoneNumber: Yup.string().trim(),
+    businessWebsite: Yup.string().url('Invalid URL'),
+    facilityDescription: Yup.string().trim(),
+
+    // Company Information
+    parentCompanyName: Yup.string(),
+    officeOfficialName: Yup.string().trim(),
+    officeAddress: Yup.string().trim(),
+    officeCountryCode: Yup.string(),
+
+    // Operations & Capabilities
+    sectors: Yup.array(),
+    facilityType: Yup.array(),
+    facilityProductionTypes: Yup.array(),
+    facilityProductTypes: Yup.array(),
     numberOfWorkers: Yup.string()
         .nullable()
-        .test('is-valid-workers', 'Must be at least 1 worker', value => {
-            if (!value || value.trim() === '') return true; // Optional.
+        .test(
+            'is-valid-workers',
+            'Must be a positive integer or an ascending range (e.g., 100-500)',
+            value => {
+                if (!value || value.trim() === '') return true;
 
-            const num = Number(value);
-            return !Number.isNaN(num) && num >= 1 && Number.isInteger(num);
+                const trimmedValue = value.trim();
+
+                const hyphenIndex = trimmedValue.indexOf('-');
+                if (hyphenIndex > 0) {
+                    const parts = trimmedValue
+                        .split('-')
+                        .map(part => part.trim())
+                        .filter(part => part !== '');
+
+                    if (parts.length !== 2) return false;
+
+                    const min = parseInt(parts[0], 10);
+                    const max = parseInt(parts[1], 10);
+
+                    if (
+                        Number.isNaN(min) ||
+                        Number.isNaN(max) ||
+                        min < 1 ||
+                        max < 1
+                    ) {
+                        return false;
+                    }
+
+                    if (parts[0] !== String(min) || parts[1] !== String(max)) {
+                        return false;
+                    }
+
+                    return min < max;
+                }
+
+                const num = parseInt(trimmedValue, 10);
+
+                if (
+                    Number.isNaN(num) ||
+                    num < 1 ||
+                    trimmedValue !== String(num)
+                ) {
+                    return false;
+                }
+
+                return true;
+            },
+        ),
+    facilityFemaleWorkersPercentage: Yup.string()
+        .nullable()
+        .test('is-valid-percentage', 'Must be between 0 and 100', value => {
+            if (!value || value.trim() === '') return true;
+
+            const cleanValue = value.replace('%', '').trim();
+            const num = Number(cleanValue);
+            return !Number.isNaN(num) && num >= 0 && num <= 100;
         }),
-    additionalNotes: Yup.string(),
+    facilityMinimumOrderQuantity: Yup.string().trim(),
+    facilityAverageLeadTime: Yup.string().trim(),
+
+    // Compliance & Partnerships
+    facilityAffiliations: Yup.array(),
+    facilityCertifications: Yup.array(),
 });
 
 export const getValidationSchemaForStep = stepIndex => {

@@ -45,6 +45,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   - 'Do you want this location's contact info to be public?' toogle button. If switch to 'Yes', renders:
       - contact name field (required if open). Prepopulates by claimant name if it was set before.
       - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
+* [OSDEV-2212](https://opensupplyhub.atlassian.net/browse/OSDEV-2212) - Claim Flow: Profile Step
+  - Implemented comprehensive Profile step with four expandable sections: Production Location Overview, Company Information, Operations & Capabilities, and Compliance & Partnerships.
+  - Added dynamic sector-based taxonomy for facility types and processing types that filters options when "Apparel" sector is selected, with fallback to creatable fields for other sectors.
+  - Integrated emissions estimation fields allowing claimants to provide energy consumption data by source type, facility opening/closing dates, and estimated annual throughput.
+  - Added Beta labels with tooltips to premium fields (Company Phone, Production Location Description, Minimum Order Quantity, Average Lead Time, Affiliations, and Certifications) to indicate future Premium offering features.
+  - Implemented form submission functionality with success dialog popup showing "View My Approved Claims" and "Search OS Hub" action buttons upon successful claim submission.
 * [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
 
 ### Release instructions

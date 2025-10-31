@@ -1,38 +1,15 @@
 import React from 'react';
-import { bool, func, object } from 'prop-types';
+import { func, object } from 'prop-types';
 import { connect } from 'react-redux';
-import EmissionsEstimateForm from './EmissionsEstimateForm';
-import {
-    updateClaimOpeningDate,
-    updateClaimClosingDate,
-    updateClaimEstimatedAnnualThroughput,
-    updateClaimEnergyCoal,
-    updateClaimEnergyNaturalGas,
-    updateClaimEnergyDiesel,
-    updateClaimEnergyKerosene,
-    updateClaimEnergyBiomass,
-    updateClaimEnergyCharcoal,
-    updateClaimEnergyAnimalWaste,
-    updateClaimEnergyElectricity,
-    updateClaimEnergyOther,
-    updateClaimEnergyCoalEnabled,
-    updateClaimEnergyNaturalGasEnabled,
-    updateClaimEnergyDieselEnabled,
-    updateClaimEnergyKeroseneEnabled,
-    updateClaimEnergyBiomassEnabled,
-    updateClaimEnergyCharcoalEnabled,
-    updateClaimEnergyAnimalWasteEnabled,
-    updateClaimEnergyElectricityEnabled,
-    updateClaimEnergyOtherEnabled,
-} from '../../actions/claimFacility';
+import EmissionsEstimateForm from '../../../FreeEmissionsEstimate/EmissionsEstimateForm';
+import { updateClaimFormField } from '../../../../actions/claimForm';
 
 /**
- * Wrapper component for EmissionsEstimateForm connected to claimFacility Redux state.
- * Used in the claim facility flow (ClaimFacilityAdditionalData, ClaimFacilityStepper).
+ * Wrapper component for EmissionsEstimateForm connected to claimForm Redux state.
+ * Used in the initial claim flow (ProfileStep).
  */
-const FreeEmissionsEstimate = ({
+const ClaimEmissionsEstimate = ({
     formData,
-    fetching,
     updateOpeningDate,
     updateClosingDate,
     updateEstimatedAnnualThroughput,
@@ -80,13 +57,12 @@ const FreeEmissionsEstimate = ({
         updateEnergyElectricityEnabled={updateEnergyElectricityEnabled}
         updateEnergyOtherEnabled={updateEnergyOtherEnabled}
         onValidationChange={onValidationChange}
-        disabled={fetching}
+        disabled={false}
     />
 );
 
-FreeEmissionsEstimate.propTypes = {
+ClaimEmissionsEstimate.propTypes = {
     formData: object.isRequired,
-    fetching: bool.isRequired,
     updateOpeningDate: func.isRequired,
     updateClosingDate: func.isRequired,
     updateEstimatedAnnualThroughput: func.isRequired,
@@ -111,11 +87,7 @@ FreeEmissionsEstimate.propTypes = {
     onValidationChange: func.isRequired,
 };
 
-const mapStateToProps = ({
-    claimFacility: {
-        claimData: { formData, fetching },
-    },
-}) => ({
+const mapStateToProps = ({ claimForm: { formData } }) => ({
     formData: {
         openingDate: formData.openingDate,
         closingDate: formData.closingDate,
@@ -139,47 +111,104 @@ const mapStateToProps = ({
         energyElectricityEnabled: formData.energyElectricityEnabled,
         energyOtherEnabled: formData.energyOtherEnabled,
     },
-    fetching,
 });
 
 const mapDispatchToProps = dispatch => ({
-    updateOpeningDate: date => dispatch(updateClaimOpeningDate(date)),
-    updateClosingDate: date => dispatch(updateClaimClosingDate(date)),
+    updateOpeningDate: date =>
+        dispatch(updateClaimFormField({ field: 'openingDate', value: date })),
+    updateClosingDate: date =>
+        dispatch(updateClaimFormField({ field: 'closingDate', value: date })),
     updateEstimatedAnnualThroughput: value =>
-        dispatch(updateClaimEstimatedAnnualThroughput(value)),
-    updateEnergyCoal: value => dispatch(updateClaimEnergyCoal(value)),
+        dispatch(
+            updateClaimFormField({
+                field: 'estimatedAnnualThroughput',
+                value,
+            }),
+        ),
+    updateEnergyCoal: value =>
+        dispatch(updateClaimFormField({ field: 'energyCoal', value })),
     updateEnergyNaturalGas: value =>
-        dispatch(updateClaimEnergyNaturalGas(value)),
-    updateEnergyDiesel: value => dispatch(updateClaimEnergyDiesel(value)),
-    updateEnergyKerosene: value => dispatch(updateClaimEnergyKerosene(value)),
-    updateEnergyBiomass: value => dispatch(updateClaimEnergyBiomass(value)),
-    updateEnergyCharcoal: value => dispatch(updateClaimEnergyCharcoal(value)),
+        dispatch(updateClaimFormField({ field: 'energyNaturalGas', value })),
+    updateEnergyDiesel: value =>
+        dispatch(updateClaimFormField({ field: 'energyDiesel', value })),
+    updateEnergyKerosene: value =>
+        dispatch(updateClaimFormField({ field: 'energyKerosene', value })),
+    updateEnergyBiomass: value =>
+        dispatch(updateClaimFormField({ field: 'energyBiomass', value })),
+    updateEnergyCharcoal: value =>
+        dispatch(updateClaimFormField({ field: 'energyCharcoal', value })),
     updateEnergyAnimalWaste: value =>
-        dispatch(updateClaimEnergyAnimalWaste(value)),
+        dispatch(updateClaimFormField({ field: 'energyAnimalWaste', value })),
     updateEnergyElectricity: value =>
-        dispatch(updateClaimEnergyElectricity(value)),
-    updateEnergyOther: value => dispatch(updateClaimEnergyOther(value)),
+        dispatch(updateClaimFormField({ field: 'energyElectricity', value })),
+    updateEnergyOther: value =>
+        dispatch(updateClaimFormField({ field: 'energyOther', value })),
     updateEnergyCoalEnabled: enabled =>
-        dispatch(updateClaimEnergyCoalEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyCoalEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyNaturalGasEnabled: enabled =>
-        dispatch(updateClaimEnergyNaturalGasEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyNaturalGasEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyDieselEnabled: enabled =>
-        dispatch(updateClaimEnergyDieselEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyDieselEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyKeroseneEnabled: enabled =>
-        dispatch(updateClaimEnergyKeroseneEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyKeroseneEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyBiomassEnabled: enabled =>
-        dispatch(updateClaimEnergyBiomassEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyBiomassEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyCharcoalEnabled: enabled =>
-        dispatch(updateClaimEnergyCharcoalEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyCharcoalEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyAnimalWasteEnabled: enabled =>
-        dispatch(updateClaimEnergyAnimalWasteEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyAnimalWasteEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyElectricityEnabled: enabled =>
-        dispatch(updateClaimEnergyElectricityEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyElectricityEnabled',
+                value: enabled,
+            }),
+        ),
     updateEnergyOtherEnabled: enabled =>
-        dispatch(updateClaimEnergyOtherEnabled(enabled)),
+        dispatch(
+            updateClaimFormField({
+                field: 'energyOtherEnabled',
+                value: enabled,
+            }),
+        ),
 });
 
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(FreeEmissionsEstimate);
+)(ClaimEmissionsEstimate);

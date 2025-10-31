@@ -69,6 +69,7 @@ export const useClaimForm = (
     activeStep,
     updateField,
     onSubmit,
+    emissionsHasErrors,
 ) => {
     const formik = useFormik({
         initialValues,
@@ -132,7 +133,7 @@ export const useClaimForm = (
             field => formik.touched[field] && formik.errors[field],
         );
 
-        return hasTouchedFieldErrors;
+        return hasTouchedFieldErrors || emissionsHasErrors;
     };
 
     return {
