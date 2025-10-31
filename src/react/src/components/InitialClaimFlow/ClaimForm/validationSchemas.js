@@ -1,6 +1,10 @@
 import * as Yup from 'yup';
 import { CLAIM_FORM_STEPS } from './constants';
 import {
+    EMPLOYMENT_VERIFICATION_OPTIONS,
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS,
+} from './Steps/ContactInfoStep/constants';
+import {
     COMPANY_ADDRESS_VERIFICATION_OPTIONS,
     DOCUMENT_BASED_VERIFICATION_OPTIONS,
 } from './Steps/BusinessStep/constants';
@@ -17,10 +21,12 @@ const getEmploymentVerificationLabel = value =>
     EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === value)?.label;
 
 const documentEmploymentVerificationBasedLabels = new Set(
-    DOCUMENT_BASED_VERIFICATION_OPTIONS.map(getEmploymentVerificationLabel),
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
+        getEmploymentVerificationLabel,
+    ),
 );
 
-const getCompanyUrlValidationSchema = label =>
+const getClaimantUrlValidationSchema = label =>
     Yup.string().when('claimantEmploymentVerificationMethod', {
         is: value => value === label,
         then: schema =>
@@ -43,11 +49,11 @@ export const contactStepSchema = Yup.object().shape({
     ),
 
     // Company LinkedIn URL required if company LinkedIn page option is selected
-    claimantLinkedinProfileUrl: getCompanyUrlValidationSchema(
+    claimantLinkedinProfileUrl: getClaimantUrlValidationSchema(
         getEmploymentVerificationLabel('linkedin-page'),
     ),
     // Company website URL required if website option is selected
-    yourBusinessWebsite: getCompanyUrlValidationSchema(
+    yourBusinessWebsite: getClaimantUrlValidationSchema(
         getEmploymentVerificationLabel('company-website-address'),
     ),
 

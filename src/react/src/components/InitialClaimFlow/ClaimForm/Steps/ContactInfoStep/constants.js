@@ -40,12 +40,12 @@ const EMPLOYMENT_VERIFICATION_OPTIONS = Object.freeze([
     },
 ]);
 
-const URL_BASED_VERIFICATION_OPTIONS = Object.freeze([
+const EMPLOYMENT_URL_BASED_VERIFICATION_OPTIONS = Object.freeze([
     'company-website-address',
     'linkedin-page',
 ]);
 
-const DOCUMENT_BASED_VERIFICATION_OPTIONS = Object.freeze([
+const EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS = Object.freeze([
     'employment-letter',
     'signed-company-letter',
     'id-badge',
@@ -57,6 +57,6 @@ const DOCUMENT_BASED_VERIFICATION_OPTIONS = Object.freeze([
 
 export {
     EMPLOYMENT_VERIFICATION_OPTIONS,
-    URL_BASED_VERIFICATION_OPTIONS,
-    DOCUMENT_BASED_VERIFICATION_OPTIONS,
+    EMPLOYMENT_URL_BASED_VERIFICATION_OPTIONS,
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS,
 };

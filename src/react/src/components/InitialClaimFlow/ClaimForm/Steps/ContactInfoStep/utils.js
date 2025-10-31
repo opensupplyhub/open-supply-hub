@@ -1,20 +1,20 @@
 import {
     EMPLOYMENT_VERIFICATION_OPTIONS,
-    URL_BASED_VERIFICATION_OPTIONS,
-    DOCUMENT_BASED_VERIFICATION_OPTIONS,
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS,
+    EMPLOYMENT_URL_BASED_VERIFICATION_OPTIONS,
 } from './constants';
 
 /**
  * Determines if the verification method requires a URL input.
  */
 export const requiresUrlInput = verificationMethod =>
-    URL_BASED_VERIFICATION_OPTIONS.includes(verificationMethod);
+    EMPLOYMENT_URL_BASED_VERIFICATION_OPTIONS.includes(verificationMethod);
 
 /**
  * Determines if the verification method requires document upload.
  */
 export const requiresDocumentUpload = verificationMethod =>
-    DOCUMENT_BASED_VERIFICATION_OPTIONS.includes(verificationMethod);
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS.includes(verificationMethod);
 
 /**
  * Gets the placeholder text for URL input based on verification method.
