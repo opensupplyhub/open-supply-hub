@@ -41,6 +41,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                 </li>
             </ul>
         </div>
+        <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
                 <span className={classes.stepNumber}>2</span> Prove Your Name
@@ -126,7 +127,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                 />
             </div>
         </div>
-
+        <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
                 <span className={classes.stepNumber}>3</span> Prove Your Company
@@ -206,6 +207,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                 />
             </div>
         </div>
+        <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
                 <span className={classes.stepNumber}>4</span> Add Key Details
@@ -240,7 +242,7 @@ const ClaimInfoSection = ({ classes, children }) => (
                 </li>
             </ul>
         </div>
-
+        <hr className={classes.separator} />
         <div className={classes.boxContainer}>
             <Typography component="h2" className={classes.boxHeader}>
                 <span className={classes.stepNumber}>5</span> Get a Credible and

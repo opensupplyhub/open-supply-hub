@@ -77,14 +77,14 @@ export const claimInfoStyles = theme => ({
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '0 110px 0 110px',
+        padding: '40px 110px 0 110px',
         borderRadius: '0',
         [theme.breakpoints.down('sm')]: {
             padding: '24px 5% 0 5%',
         },
     },
     boxContainer: Object.freeze({
-        padding: '40px 0 0 0',
+        padding: '20px 0 20px 0',
     }),
     boxHeader: {
         fontSize: '36px',
@@ -198,4 +198,8 @@ export const claimInfoStyles = theme => ({
             transform: 'translateY(-2px)',
         },
     },
+    separator: Object.freeze({
+        margin: '1px 0',
+        color: COLOURS.GREY,
+    }),
 });
