@@ -77,12 +77,40 @@ export const claimInfoStyles = theme => ({
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '40px 110px 0 110px',
+        padding: '0 110px 0 110px',
         borderRadius: '0',
         [theme.breakpoints.down('sm')]: {
             padding: '24px 5% 0 5%',
         },
     },
+    boxContainer: Object.freeze({
+        padding: '40px 0 0 0',
+    }),
+    boxHeader: {
+        fontSize: '36px',
+        fontWeight: 700,
+    },
+    boxList: {
+        margin: 0,
+        marginTop: '20px',
+        paddingLeft: '25px',
+    },
+    boxText: {
+        fontSize: '18px',
+        fontWeight: 600,
+    },
+    boxDescription: {
+        fontSize: '18px',
+        fontWeight: 600,
+        marginTop: '20px',
+    },
+    boxExamplesContainer: {
+        display: 'flex',
+        gap: theme.spacing.unit * 3,
+        marginTop: '20px',
+    },
+
+    // OLD STYLES
     stepBox: {
         padding: theme.spacing.unit * 2,
         marginBottom: 0,
