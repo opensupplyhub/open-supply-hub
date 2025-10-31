@@ -46,6 +46,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
       - contact name field (required if open). Prepopulates by claimant name if it was set before.
       - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
 * [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
+* [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform automatically redirect to the new claim flow intro page (`/claim/:osID/`) instead of the old claim flow.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
