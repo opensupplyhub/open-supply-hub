@@ -73,9 +73,6 @@ const initialState = Object.freeze({
         energyAnimalWasteEnabled: false,
         energyElectricityEnabled: false,
         energyOtherEnabled: false,
-
-        // Files
-        files: [],
     }),
     submissionState: Object.freeze({
         fetching: false,

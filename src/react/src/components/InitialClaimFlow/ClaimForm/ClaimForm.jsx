@@ -134,6 +134,9 @@ const ClaimForm = ({
 
     // Show success dialog when submission completes.
     useEffect(() => {
+        if (submissionFetching) {
+            setSubmittingForm(true);
+        }
         if (submittingForm && !submissionFetching && !submissionError) {
             setSubmittingForm(false);
             setDialogIsOpen(true);
@@ -143,7 +146,6 @@ const ClaimForm = ({
     // Handle form submission.
     const handleSubmit = () => {
         markComplete(activeStep);
-        setSubmittingForm(true);
         submitClaim(osID, emissionsHasErrors);
     };
 
@@ -296,6 +298,19 @@ const ClaimForm = ({
                             parentCompanyOptions={parentCompanyOptions}
                             onEmissionsValidationChange={setEmissionsHasErrors}
                         />
+                        {submissionError && (
+                            <Typography
+                                variant="body2"
+                                color="error"
+                                style={{
+                                    textAlign: 'center',
+                                    marginTop: '24px',
+                                    fontSize: '16px',
+                                }}
+                            >
+                                An error prevented submitting the form
+                            </Typography>
+                        )}
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
                                 <Button
