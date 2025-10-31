@@ -15,7 +15,7 @@ import Business from '@material-ui/icons/Business';
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactStep from './Steps/ContactStep';
-import BusinessStep from './Steps/BusinessStep';
+import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
 import RequireAuthNotice from '../../RequireAuthNotice';
@@ -133,6 +133,7 @@ const ClaimForm = ({
         claimForm,
         handleFieldChange,
         handleBlur,
+        updateFieldWithoutTouch,
         isButtonDisabled,
     } = useClaimForm(formData, activeStep, updateField, handleSubmit);
 
@@ -262,6 +263,7 @@ const ClaimForm = ({
                             formData={claimForm.values}
                             handleChange={handleFieldChange}
                             handleBlur={handleBlur}
+                            updateFieldWithoutTouch={updateFieldWithoutTouch}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
                         />

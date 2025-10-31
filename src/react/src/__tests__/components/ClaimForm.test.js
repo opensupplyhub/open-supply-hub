@@ -30,7 +30,7 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/ContactStep', () =>
     <div data-testid="contact-step">Contact Step</div>
 ));
 
-jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep', () => () => (
+jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep', () => () => (
     <div data-testid="business-step">Business Step</div>
 ));
 

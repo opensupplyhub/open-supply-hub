@@ -1,5 +1,9 @@
 import * as Yup from 'yup';
 import { CLAIM_FORM_STEPS } from './constants';
+import {
+    COMPANY_ADDRESS_VERIFICATION_OPTIONS,
+    DOCUMENT_BASED_VERIFICATION_OPTIONS,
+} from './Steps/BusinessStep/constants';
 
 // Step 1: Eligibility validation.
 export const eligibilityStepSchema = Yup.object().shape({
@@ -17,9 +21,48 @@ export const contactStepSchema = Yup.object().shape({
 });
 
 // Step 3: Business validation.
+const getVerificationLabel = value =>
+    COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(opt => opt.value === value)
+        ?.label;
+
+const companyLinkedinAddressLabel = getVerificationLabel('linkedin-address');
+const companyWebsiteAddressLabel = getVerificationLabel(
+    'company-website-address',
+);
+
+const companyDocumentBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
+    getVerificationLabel,
+);
+
+const getCompanyUrlValidationSchema = label =>
+    Yup.string().when('locationAddressVerificationMethod', {
+        is: value => value === label,
+        then: schema =>
+            schema
+                .url('Invalid URL format')
+                .required(
+                    'The company address verification URL is required when this address verification method is selected',
+                ),
+    });
+
 export const businessStepSchema = Yup.object().shape({
-    businessName: Yup.string().required('Business name is required'),
-    businessWebsite: Yup.string().url('Invalid URL'),
+    locationAddressVerificationMethod: Yup.string().required(
+        'Company address verification method is required',
+    ),
+    businessLinkedinProfile: getCompanyUrlValidationSchema(
+        companyLinkedinAddressLabel,
+    ),
+    businessWebsite: getCompanyUrlValidationSchema(companyWebsiteAddressLabel),
+    companyAddressVerificationDocuments: Yup.array().when(
+        'locationAddressVerificationMethod',
+        {
+            is: value => companyDocumentBasedLabels.includes(value),
+            then: schema =>
+                schema
+                    .min(1, 'At least one verification document is required')
+                    .required('Verification documents are required'),
+        },
+    ),
 });
 
 // Step 4: Profile validation (all optional fields).

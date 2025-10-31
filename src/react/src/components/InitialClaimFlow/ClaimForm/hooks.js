@@ -89,17 +89,16 @@ export const useClaimForm = (
         // Mark fields with values as touched when returning to a step.
         const fieldsToTouch = {};
         currentStepFields.forEach(field => {
-            if (formik.values[field] && formik.values[field] !== '') {
+            if (!isEmpty(formik.values[field])) {
                 fieldsToTouch[field] = true;
             }
         });
 
         if (Object.keys(fieldsToTouch).length > 0) {
             formik.setTouched(fieldsToTouch);
+            // Validate to populate errors for current step.
+            formik.validateForm();
         }
-
-        // Validate to populate errors for current step.
-        formik.validateForm();
     }, [activeStep]);
 
     // Custom field change handler that syncs to Redux.
@@ -113,29 +112,36 @@ export const useClaimForm = (
         formik.setFieldTouched(field, true);
     };
 
+    // Custom field update handler that does not touch the field to prevent
+    // validation errors from showing up when the field is updated.
+    // This is intended to be used to update the field when the user changes
+    // the parent verification method in a step without changing the value
+    // of the field.
+    const updateFieldWithoutTouch = (field, value) => {
+        formik.setFieldValue(field, value);
+        updateField({ field, value });
+        formik.setFieldTouched(field, false, false);
+    };
+
     // Calculate button disabled state for current step.
     const getButtonDisabledState = () => {
         const schema = getValidationSchemaForStep(activeStep);
         const currentStepFields = Object.keys(schema.describe().fields);
 
-        // Check if user has interacted with any field in current step.
-        const hasInteractedWithCurrentStep = currentStepFields.some(
-            field => formik.touched[field],
+        // Check if there are validation errors on touched fields only.
+        // This prevents blocking the button when errors exist on untouched fields.
+        const hasTouchedFieldErrors = currentStepFields.some(
+            field => formik.touched[field] && formik.errors[field],
         );
 
-        // Check if there are validation errors in CURRENT STEP ONLY.
-        const hasCurrentStepErrors = currentStepFields.some(
-            field => formik.errors[field],
-        );
-
-        // Only disable button if user has interacted AND there are errors.
-        return hasInteractedWithCurrentStep && hasCurrentStepErrors;
+        return hasTouchedFieldErrors;
     };
 
     return {
         claimForm: formik,
         handleFieldChange,
         handleBlur,
+        updateFieldWithoutTouch,
         isButtonDisabled: getButtonDisabledState(),
     };
 };
