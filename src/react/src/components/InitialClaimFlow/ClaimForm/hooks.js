@@ -109,9 +109,7 @@ export const useClaimForm = (
         updateField({ field, value });
     };
 
-    const handleBlur = field => {
-        formik.setFieldTouched(field, true);
-    };
+    const handleBlur = field => formik.setFieldTouched(field, true);
 
     // Custom field update handler that does not touch the field to prevent
     // validation errors from showing up when the field is updated.

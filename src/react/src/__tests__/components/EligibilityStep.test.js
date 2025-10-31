@@ -78,7 +78,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         value: null,
         onBlur: () => {},
         placeholder: '',
-        name: 'relationship',
+        name: 'claimantLocationRelationship',
     };
 
     return MockStyledSelect;
@@ -100,7 +100,7 @@ describe('EligibilityStep component', () => {
     const mockOnBack = jest.fn();
 
     const defaultProps = {
-        formData: { relationship: null },
+        formData: { claimantLocationRelationship: null },
         handleChange: mockHandleChange,
         onNext: mockOnNext,
         onBack: mockOnBack,
@@ -254,7 +254,10 @@ describe('EligibilityStep component', () => {
         fireEvent.click(returnButton);
 
         // The dialog should close and NOT reset previously selected valid relationship
-        expect(mockHandleChange).not.toHaveBeenCalledWith('relationship', null);
+        expect(mockHandleChange).not.toHaveBeenCalledWith(
+            'claimantLocationRelationship',
+            null,
+        );
         // And no change should be emitted at all for ineligible selections.
         expect(mockHandleChange).not.toHaveBeenCalled();
     });
@@ -267,7 +270,7 @@ describe('EligibilityStep component', () => {
 
         expect(mockHandleChange).toHaveBeenCalledTimes(1);
         expect(mockHandleChange).toHaveBeenCalledWith(
-            'relationship',
+            'claimantLocationRelationship',
             'I am the owner of this production location',
         );
         expect(
@@ -283,7 +286,7 @@ describe('EligibilityStep component', () => {
 
         expect(mockHandleChange).toHaveBeenCalledTimes(1);
         expect(mockHandleChange).toHaveBeenCalledWith(
-            'relationship',
+            'claimantLocationRelationship',
             'I am a manager working at this production location',
         );
         expect(

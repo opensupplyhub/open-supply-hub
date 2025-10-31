@@ -18,14 +18,14 @@ const eligibilityStepStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
         accountInfoSection: Object.freeze({
-            backgroundColor: '#f9fafb',
-            border: '1px solid #e5e7eb',
+            backgroundColor: COLOURS.LIGHTEST_GREY,
+            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
             padding: theme.spacing.unit * 1.5,
             marginBottom: theme.spacing.unit * 1.5,
         }),
         accountInfoBox: Object.freeze({
-            backgroundColor: '#ffffff',
-            border: '1px solid #e5e7eb',
+            backgroundColor: COLOURS.WHITE,
+            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
             padding: theme.spacing.unit * 1.5,
             marginBottom: theme.spacing.unit * 1.5,
         }),
@@ -41,7 +41,7 @@ const eligibilityStepStyles = theme =>
             fontWeight: theme.typography.fontWeightMedium,
         }),
         accountInfoValue: Object.freeze({
-            color: '#111827',
+            color: COLOURS.ALMOST_BLACK,
             fontWeight: theme.typography.fontWeightMedium,
             marginLeft: theme.spacing.unit,
         }),

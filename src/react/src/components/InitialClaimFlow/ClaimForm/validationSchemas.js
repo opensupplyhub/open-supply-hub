@@ -1,23 +1,92 @@
 import * as Yup from 'yup';
 import { CLAIM_FORM_STEPS } from './constants';
 import {
+    EMPLOYMENT_VERIFICATION_OPTIONS,
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS,
+} from './Steps/ContactInfoStep/constants';
+import {
     COMPANY_ADDRESS_VERIFICATION_OPTIONS,
     DOCUMENT_BASED_VERIFICATION_OPTIONS,
 } from './Steps/BusinessStep/constants';
 
 // Step 1: Eligibility validation.
 export const eligibilityStepSchema = Yup.object().shape({
-    relationship: Yup.string().required(
+    claimantLocationRelationship: Yup.string().required(
         'Please select your relationship to this production location',
     ),
 });
 
 // Step 2: Contact validation.
+const getEmploymentVerificationLabel = value =>
+    EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === value)?.label;
+
+const documentEmploymentVerificationBasedLabels = new Set(
+    EMPLOYMENT_DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
+        getEmploymentVerificationLabel,
+    ),
+);
+
+const getClaimantUrlValidationSchema = label =>
+    Yup.string().when('claimantEmploymentVerificationMethod', {
+        is: value => value === label,
+        then: schema =>
+            schema
+                .url('Invalid URL format')
+                .required(
+                    'Employment verification URL is required on this employment verification method',
+                ),
+    });
+
 export const contactStepSchema = Yup.object().shape({
-    contactEmail: Yup.string()
+    // Always required (claimant fields).
+    yourName: Yup.string().trim().required('Your full name is required field!'),
+    yourTitle: Yup.string()
+        .trim()
+        .required('Your job title is required field!'),
+
+    claimantEmploymentVerificationMethod: Yup.string().required(
+        'Please select an employment verification option',
+    ),
+
+    // Company LinkedIn URL required if company LinkedIn page option is selected
+    claimantLinkedinProfileUrl: getClaimantUrlValidationSchema(
+        getEmploymentVerificationLabel('linkedin-page'),
+    ),
+    // Company website URL required if website option is selected
+    yourBusinessWebsite: getClaimantUrlValidationSchema(
+        getEmploymentVerificationLabel('company-website-address'),
+    ),
+
+    employmentVerificationDocuments: Yup.array().when(
+        'claimantEmploymentVerificationMethod',
+        {
+            is: label => documentEmploymentVerificationBasedLabels.has(label),
+            then: schema =>
+                schema
+                    .min(1, 'At least one verification document is required')
+                    .required('Verification documents are required'),
+        },
+    ),
+
+    // Toggle controlling public contact block visibility.
+    pointOfContactPubliclyVisible: Yup.boolean().nullable(),
+
+    // Required only if public contact block is visible.
+    pointOfcontactPersonName: Yup.string().when(
+        'pointOfContactPubliclyVisible',
+        {
+            is: v => v === true,
+            then: s => s.trim().required('Contact name is required field!'),
+            otherwise: s => s.strip().nullable(),
+        },
+    ),
+    pointOfContactEmail: Yup.string()
         .email('Invalid email address')
-        .required('Contact email is required'),
-    contactPhone: Yup.string(),
+        .when('pointOfContactPubliclyVisible', {
+            is: v => v === true,
+            then: s => s.required('Contact email is required field!'),
+            otherwise: s => s.strip().nullable(),
+        }),
 });
 
 // Step 3: Business validation.

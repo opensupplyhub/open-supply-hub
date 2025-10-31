@@ -35,13 +35,14 @@ const EligibilityStep = ({
 
     const selectedRelationship = findSelectedOption(
         RELATIONSHIP_OPTIONS,
-        formData.relationship,
+        formData.claimantLocationRelationship,
     );
 
     // This checks if the relationship field has been touched and either has validation errors
     // or no value selected
     const isRelationshipError = !!(
-        touched?.relationship && errors?.relationship
+        touched?.claimantLocationRelationship &&
+        errors?.claimantLocationRelationship
     );
 
     const handleCloseIneligibleDialog = () => {
@@ -81,12 +82,14 @@ const EligibilityStep = ({
                     </Typography>
                     <div className={classes.selectWrapper}>
                         <StyledSelect
-                            id="relationship"
-                            name="relationship"
+                            id="claimantLocationRelationship"
+                            name="claimantLocationRelationship"
                             aria-label="Select your relationship to this production location"
                             label={null}
                             options={RELATIONSHIP_OPTIONS}
-                            onBlur={() => handleBlur('relationship')}
+                            onBlur={() =>
+                                handleBlur('claimantLocationRelationship')
+                            }
                             value={selectedRelationship}
                             onChange={valueObject => {
                                 if (
@@ -97,7 +100,7 @@ const EligibilityStep = ({
                                     setIneligibleDialogOpen(true);
                                 } else {
                                     handleChange(
-                                        'relationship',
+                                        'claimantLocationRelationship',
                                         valueObject.label,
                                     );
                                 }
@@ -107,20 +110,25 @@ const EligibilityStep = ({
                             isMulti={false}
                         />
                     </div>
-                    {touched.relationship && errors.relationship && (
-                        <div className={classes.errorWrapStyles}>
-                            <InputErrorText text={errors.relationship} />
-                        </div>
-                    )}
+                    {touched.claimantLocationRelationship &&
+                        errors.claimantLocationRelationship && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText
+                                    text={errors.claimantLocationRelationship}
+                                />
+                            </div>
+                        )}
                 </div>
             </Grid>
 
             <Dialog open={ineligibleDialogOpen}>
-                <DialogTitle>Not Eligible to File Claim</DialogTitle>
+                <DialogTitle className={classes.dialogTitle}>
+                    Not Eligible to File Claim
+                </DialogTitle>
                 <DialogContent>
                     <Typography
                         variant="body1"
-                        style={{ textAlign: 'center', fontSize: '16px' }}
+                        className={classes.dialogBodyText}
                     >
                         You are not eligible to file a claim for this location.
                         Only the owner, manager, authorized employee, or a
@@ -129,7 +137,7 @@ const EligibilityStep = ({
                         to claim directly.
                     </Typography>
                 </DialogContent>
-                <DialogActions style={{ justifyContent: 'center' }}>
+                <DialogActions className={classes.dialogActions}>
                     <Button
                         variant="contained"
                         color="primary"

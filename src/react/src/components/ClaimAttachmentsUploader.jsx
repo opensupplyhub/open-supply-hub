@@ -17,6 +17,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         border: '2px dashed rgb(129, 214, 144)',
         textAlign: 'center',
         cursor: 'pointer',
+        marginBottom: '16px',
     }),
     fileInputHidden: Object.freeze({
         display: 'none',
@@ -31,7 +32,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         textAlign: 'center',
         whiteSpace: 'pre-wrap',
         lineHeight: '1.5em',
-        maxWidth: '50%',
+        maxWidth: '80%',
         margin: '5px auto',
     }),
     secondary: Object.freeze({
@@ -41,6 +42,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     fileListUploaded: Object.freeze({
         listStyle: 'none',
         paddingLeft: 0,
+        margin: 0,
     }),
     removeFileIcon: Object.freeze({
         fontSize: '8px',
@@ -51,7 +53,7 @@ const claimAttachmentsUploaderStyles = Object.freeze({
         padding: '5px 0',
     }),
     hiddenSpace: Object.freeze({
-        paddingTop: '48px',
+        paddingTop: '16px',
     }),
 });
 

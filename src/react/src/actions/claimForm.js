@@ -34,32 +34,6 @@ export const completeSubmitClaimFormData = createAction(
 
 const makeClaimFacilityAPIURL = osID => `/api/facilities/${osID}/claim/`;
 
-/**
- * Temporary transform field name to API format.
- * Remove once proper form fields names are implemented.
- */
-const mapFieldNameToAPI = key => {
-    const specialMappings = {
-        relationship: 'claimant_location_relationship',
-        contactEmail: 'point_of_contact_email',
-    };
-
-    return specialMappings[key] || snakeCase(key);
-};
-
-/**
- * Add temporary mock values for required fields.
- * Remove once proper form fields are implemented.
- */
-const addMockRequiredFields = postData => {
-    if (!postData.has('your_name')) {
-        postData.append('your_name', 'Test Claimant Name');
-    }
-    if (!postData.has('your_title')) {
-        postData.append('your_title', 'Test Title');
-    }
-};
-
 const appendFormField = (postData, key, value) => {
     const arrayFieldsKeys = [
         'sectors',
@@ -74,7 +48,7 @@ const appendFormField = (postData, key, value) => {
         'employment_verification_documents',
     ];
 
-    const formattedKey = mapFieldNameToAPI(key);
+    const formattedKey = snakeCase(key);
 
     if (fileFieldsKeys.includes(formattedKey)) {
         appendFiles(postData, 'files', value);
@@ -103,8 +77,6 @@ export function submitClaimFormData(osID, freeEmissionsEstimateHasErrors) {
         toPairs(filteredFormData).forEach(([key, value]) => {
             appendFormField(postData, key, value);
         });
-
-        addMockRequiredFields(postData);
 
         dispatch(startSubmitClaimFormData());
 
