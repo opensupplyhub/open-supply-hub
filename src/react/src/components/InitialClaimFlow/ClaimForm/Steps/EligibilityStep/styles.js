@@ -30,7 +30,7 @@ const eligibilityStepStyles = theme =>
             marginBottom: theme.spacing.unit * 1.5,
         }),
         accountInfoRow: Object.freeze({
-            fontSize: '14px',
+            fontSize: '16px',
             marginBottom: theme.spacing.unit,
             '&:last-child': {
                 marginBottom: 0,
@@ -46,7 +46,7 @@ const eligibilityStepStyles = theme =>
             marginLeft: theme.spacing.unit,
         }),
         sectionTitle: Object.freeze({
-            fontSize: '18px',
+            fontSize: '20px',
             fontWeight: theme.typography.fontWeightSemiBold,
             marginBottom: theme.spacing.unit * 1.5,
         }),

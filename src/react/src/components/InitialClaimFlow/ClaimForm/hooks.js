@@ -3,7 +3,6 @@ import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
 import { claimIntroRoute } from '../../../util/constants';
-import { hasValue } from './utils';
 
 export const usePrefetchClaimData = (
     fetchCountries,
@@ -91,17 +90,16 @@ export const useClaimForm = (
         // Mark fields with values as touched when returning to a step.
         const fieldsToTouch = {};
         currentStepFields.forEach(field => {
-            if (hasValue(formik.values[field])) {
+            if (!isEmpty(formik.values[field])) {
                 fieldsToTouch[field] = true;
             }
         });
 
         if (Object.keys(fieldsToTouch).length > 0) {
             formik.setTouched(fieldsToTouch);
+            // Validate to populate errors for current step.
+            formik.validateForm();
         }
-
-        // Validate to populate errors for current step.
-        formik.validateForm();
     }, [activeStep]);
 
     // Custom field change handler that syncs to Redux.
@@ -115,6 +113,17 @@ export const useClaimForm = (
         formik.setFieldTouched(field, true);
     };
 
+    // Custom field update handler that does not touch the field to prevent
+    // validation errors from showing up when the field is updated.
+    // This is intended to be used to update the field when the user changes
+    // the parent verification method in a step without changing the value
+    // of the field.
+    const updateFieldWithoutTouch = (field, value) => {
+        formik.setFieldValue(field, value);
+        updateField({ field, value });
+        formik.setFieldTouched(field, false, false);
+    };
+
     // Calculate button disabled state for current step.
     const getButtonDisabledState = () => {
         const schema = getValidationSchemaForStep(activeStep);
@@ -126,9 +135,6 @@ export const useClaimForm = (
             field => formik.touched[field] && formik.errors[field],
         );
 
-        // Disable button if:
-        // 1. User has interacted with fields AND there are Formik validation errors, OR
-        // 2. There are emissions validation errors.
         return hasTouchedFieldErrors || emissionsHasErrors;
     };
 
@@ -136,6 +142,7 @@ export const useClaimForm = (
         claimForm: formik,
         handleFieldChange,
         handleBlur,
+        updateFieldWithoutTouch,
         isButtonDisabled: getButtonDisabledState(),
     };
 };

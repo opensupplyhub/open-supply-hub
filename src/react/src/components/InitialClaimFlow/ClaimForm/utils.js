@@ -1,19 +1,5 @@
 import { CLAIM_FORM_STEPS, TOTAL_STEPS } from './constants';
 
-/**
- * Check if a field has a meaningful value, regardless of type.
- * Type-agnostic: works with strings, arrays, objects, numbers, booleans, etc.
- */
-export const hasValue = value => {
-    if (value === null || value === undefined) return false;
-    if (typeof value === 'string') return value.trim() !== '';
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') return Object.keys(value).length > 0;
-    if (typeof value === 'number') return true;
-    if (typeof value === 'boolean') return true;
-    return false;
-};
-
 export const isStepComplete = (stepIndex, completedSteps) =>
     completedSteps.includes(stepIndex);
 

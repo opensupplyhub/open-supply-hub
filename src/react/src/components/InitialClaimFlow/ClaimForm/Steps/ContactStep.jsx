@@ -82,7 +82,9 @@ const ContactStep = ({
                                 onChange={e =>
                                     handleChange('contactEmail', e.target.value)
                                 }
-                                onBlur={handleBlur}
+                                onBlur={e =>
+                                    handleBlur('contactEmail', e.target.value)
+                                }
                                 className={classes.field}
                                 placeholder="contact@facility.com"
                                 error={
