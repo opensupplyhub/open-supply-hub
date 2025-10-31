@@ -7,7 +7,7 @@ import {
 
 // Step 1: Eligibility validation.
 export const eligibilityStepSchema = Yup.object().shape({
-    relationship: Yup.string().required(
+    claimantLocationRelationship: Yup.string().required(
         'Please select your relationship to this production location',
     ),
 });
@@ -16,60 +16,48 @@ export const eligibilityStepSchema = Yup.object().shape({
 const getEmploymentVerificationLabel = value =>
     EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === value)?.label;
 
-const urlEmploymentVerificationBasedLabels = URL_BASED_VERIFICATION_OPTIONS.map(
-    getEmploymentVerificationLabel,
-);
-
 const documentEmploymentVerificationBasedLabels = DOCUMENT_BASED_VERIFICATION_OPTIONS.map(
     getEmploymentVerificationLabel,
 );
 
-export const contactStepSchema = Yup.object().shape({
-    // Always required (claimant fields).
-    claimantName: Yup.string()
-        .trim()
-        .required('Your full name is required field!'),
-    claimantTitle: Yup.string()
-        .trim()
-        .required('Your job title is required field!'),
-
-    // Toggle controlling public contact block visibility.
-    publicContactEnabled: Yup.boolean().nullable(),
-
-    contactPhone: Yup.string(),
-
-    // Required only if public contact block is visible.
-    contactName: Yup.string().when('publicContactEnabled', {
-        is: v => v === true,
-        then: s => s.trim().required('Contact name is required field!'), // NOSONAR
-        otherwise: s => s.strip().nullable(),
-    }),
-    contactEmail: Yup.string()
-        .email('Invalid email address')
-        .when('publicContactEnabled', {
-            is: v => v === true,
-            then: s => s.required('Contact email is required field!'), // NOSONAR
-            otherwise: s => s.strip().nullable(),
-        }),
-    employmentVerification: Yup.string().required(
-        'Please select an employment verification option',
-    ),
-    employmentVerificationUrl: Yup.string().when('employmentVerification', {
-        is: value => urlEmploymentVerificationBasedLabels.includes(value),
-        then: (
-            schema, // NOSONAR
-        ) =>
+const getCompanyUrlValidationSchema = label => {
+    console.log('label for select field: ', label);
+    return Yup.string().when('claimantEmploymentVerificationMethod', {
+        is: value => value === label,
+        then: schema =>
             schema
                 .url('Invalid URL format')
                 .required(
                     'Employment verification URL is required on this employment verification method',
                 ),
-    }),
+    });
+};
+
+export const contactStepSchema = Yup.object().shape({
+    // Always required (claimant fields).
+    yourName: Yup.string().trim().required('Your full name is required field!'),
+    yourTitle: Yup.string()
+        .trim()
+        .required('Your job title is required field!'),
+
+    claimantEmploymentVerificationMethod: Yup.string().required(
+        'Please select an employment verification option',
+    ),
+
+    // Company LinkedIn URL required if company LinkedIn page option is selected
+    claimantLinkedinProfileUrl: getCompanyUrlValidationSchema(
+        getEmploymentVerificationLabel('linkedin-page'),
+    ),
+    // Company website URL required if website option is selected
+    yourBusinessWebsite: getCompanyUrlValidationSchema(
+        getEmploymentVerificationLabel('company-website-address'),
+    ),
+
     employmentVerificationDocuments: Yup.array().when(
-        'employmentVerification',
+        'claimantEmploymentVerificationMethod',
         {
-            is: value =>
-                documentEmploymentVerificationBasedLabels.includes(value),
+            is: label =>
+                documentEmploymentVerificationBasedLabels.includes(label),
             then: (
                 schema, // NOSONAR
             ) =>
@@ -78,6 +66,26 @@ export const contactStepSchema = Yup.object().shape({
                     .required('Verification documents are required'),
         },
     ),
+
+    // Toggle controlling public contact block visibility.
+    pointOfContactPubliclyVisible: Yup.boolean().nullable(),
+
+    // Required only if public contact block is visible.
+    pointOfcontactPersonName: Yup.string().when(
+        'pointOfContactPubliclyVisible',
+        {
+            is: v => v === true,
+            then: s => s.trim().required('Contact name is required field!'), // NOSONAR
+            otherwise: s => s.strip().nullable(),
+        },
+    ),
+    pointOfContactEmail: Yup.string()
+        .email('Invalid email address')
+        .when('pointOfContactPubliclyVisible', {
+            is: v => v === true,
+            then: s => s.required('Contact email is required field!'), // NOSONAR
+            otherwise: s => s.strip().nullable(),
+        }),
 });
 
 // Step 3: Business validation.

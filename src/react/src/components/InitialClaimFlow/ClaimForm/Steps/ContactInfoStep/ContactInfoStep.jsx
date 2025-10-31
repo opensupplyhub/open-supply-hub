@@ -35,33 +35,38 @@ const ContactInfoStep = ({
     touched,
     userEmail,
 }) => {
-    const isPublic = Boolean(formData.publicContactEnabled);
+    const isPublic = Boolean(formData.pointOfContactPubliclyVisible);
     const employmentOption = findSelectedOption(
         EMPLOYMENT_VERIFICATION_OPTIONS,
-        formData.employmentVerification,
+        formData.claimantEmploymentVerificationMethod,
     );
 
     const [prevVerificationMethod, setPrevVerificationMethod] = useState(
-        formData.employmentVerification || '',
+        formData.claimantEmploymentVerificationMethod || '',
     );
 
     // Update previous verification method when it changes.
     useEffect(() => {
-        if (formData.employmentVerification !== prevVerificationMethod) {
-            setPrevVerificationMethod(formData.employmentVerification);
+        if (
+            formData.claimantEmploymentVerificationMethod !==
+            prevVerificationMethod
+        ) {
+            setPrevVerificationMethod(
+                formData.claimantEmploymentVerificationMethod,
+            );
         }
-    }, [formData.employmentVerification]);
+    }, [formData.claimantEmploymentVerificationMethod]);
 
     // Clear verification URL and documents when verification method changes.
     useVerificationMethodChange(
-        formData.employmentVerification,
+        formData.claimantEmploymentVerificationMethod,
         prevVerificationMethod,
         updateFieldWithoutTouch,
     );
 
     const selectedVerificationMethod = findSelectedOption(
         EMPLOYMENT_VERIFICATION_OPTIONS,
-        formData.employmentVerification,
+        formData.claimantEmploymentVerificationMethod,
     );
 
     const showUrlInput = requiresUrlInput(selectedVerificationMethod?.value);
@@ -72,12 +77,24 @@ const ContactInfoStep = ({
     // This checks if the employment verification field has been touched and either has validation errors
     // or no value selected
     const isEmploymentVerificationError = !!(
-        touched?.employmentVerification && errors?.employmentVerification
+        touched?.claimantEmploymentVerificationMethod &&
+        errors?.claimantEmploymentVerificationMethod
     );
 
     // This checks if the employment verification URL field has been touched and has validation errors.
+    let urlFieldName = null;
+    if (selectedVerificationMethod?.value === 'linkedin-page') {
+        urlFieldName = 'claimantLinkedinProfileUrl';
+    } else if (
+        selectedVerificationMethod?.value === 'company-website-address'
+    ) {
+        urlFieldName = 'yourBusinessWebsite';
+    }
+
     const isEmploymentVerificationUrlError = !!(
-        touched.employmentVerificationUrl && errors.employmentVerificationUrl
+        urlFieldName &&
+        touched[urlFieldName] &&
+        errors[urlFieldName]
     );
 
     return (
@@ -112,16 +129,15 @@ const ContactInfoStep = ({
                             <TextField
                                 fullWidth
                                 required
-                                name="claimantName"
-                                value={formData.claimantName || ''}
+                                name="yourName"
+                                value={formData.yourName || ''}
                                 onChange={e =>
-                                    handleChange('claimantName', e.target.value)
+                                    handleChange('yourName', e.target.value)
                                 }
-                                onBlur={() => handleBlur('claimantName')}
+                                onBlur={() => handleBlur('yourName')}
                                 variant="outlined"
                                 error={
-                                    touched.claimantName &&
-                                    Boolean(errors.claimantName)
+                                    touched.yourName && Boolean(errors.yourName)
                                 }
                                 InputProps={{
                                     classes: {
@@ -132,11 +148,9 @@ const ContactInfoStep = ({
                                 }}
                                 placeholder="Enter your full name"
                             />
-                            {touched.claimantName && errors.claimantName && (
+                            {touched.yourName && errors.yourName && (
                                 <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={errors.claimantName}
-                                    />
+                                    <InputErrorText text={errors.yourName} />
                                 </div>
                             )}
                         </Grid>
@@ -145,19 +159,16 @@ const ContactInfoStep = ({
                             <TextField
                                 fullWidth
                                 required
-                                name="claimantTitle"
-                                value={formData.claimantTitle || ''}
+                                name="yourTitle"
+                                value={formData.yourTitle || ''}
                                 onChange={e =>
-                                    handleChange(
-                                        'claimantTitle',
-                                        e.target.value,
-                                    )
+                                    handleChange('yourTitle', e.target.value)
                                 }
-                                onBlur={() => handleBlur('claimantTitle')}
+                                onBlur={() => handleBlur('yourTitle')}
                                 variant="outlined"
                                 error={
-                                    touched.claimantTitle &&
-                                    Boolean(errors.claimantTitle)
+                                    touched.yourTitle &&
+                                    Boolean(errors.yourTitle)
                                 }
                                 InputProps={{
                                     classes: {
@@ -168,11 +179,9 @@ const ContactInfoStep = ({
                                 }}
                                 placeholder="e.g., Plant Manager, Safety Director"
                             />
-                            {touched.claimantTitle && errors.claimantTitle && (
+                            {touched.yourTitle && errors.yourTitle && (
                                 <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={errors.claimantTitle}
-                                    />
+                                    <InputErrorText text={errors.yourTitle} />
                                 </div>
                             )}
                         </Grid>
@@ -205,18 +214,20 @@ const ContactInfoStep = ({
                         </Typography>
                         <div className={classes.selectWrapper}>
                             <StyledSelect
-                                id="employmentVerification"
-                                name="employmentVerification"
+                                id="claimantEmploymentVerificationMethod"
+                                name="claimantEmploymentVerificationMethod"
                                 aria-label="Select employment verification option"
                                 label={null}
                                 options={EMPLOYMENT_VERIFICATION_OPTIONS}
                                 onBlur={() =>
-                                    handleBlur('employmentVerification')
+                                    handleBlur(
+                                        'claimantEmploymentVerificationMethod',
+                                    )
                                 }
                                 value={employmentOption}
                                 onChange={valueObject =>
                                     handleChange(
-                                        'employmentVerification',
+                                        'claimantEmploymentVerificationMethod',
                                         valueObject.label,
                                     )
                                 }
@@ -227,11 +238,13 @@ const ContactInfoStep = ({
                                 isMulti={false}
                             />
                         </div>
-                        {touched.employmentVerification &&
-                            errors.employmentVerification && (
+                        {touched.claimantEmploymentVerificationMethod &&
+                            errors.claimantEmploymentVerificationMethod && (
                                 <div className={classes.errorWrapStyles}>
                                     <InputErrorText
-                                        text={errors.employmentVerification}
+                                        text={
+                                            errors.claimantEmploymentVerificationMethod
+                                        }
                                     />
                                 </div>
                             )}
@@ -244,20 +257,19 @@ const ContactInfoStep = ({
                                     required
                                     type="url"
                                     variant="outlined"
-                                    name="employmentVerificationUrl"
-                                    // label={getUrlLabel(
-                                    //     formData.employmentVerification,
-                                    // )}
-                                    value={formData.employmentVerificationUrl}
+                                    name={urlFieldName}
+                                    value={
+                                        (urlFieldName &&
+                                            formData[urlFieldName]) ||
+                                        ''
+                                    }
                                     onChange={e =>
                                         handleChange(
-                                            'employmentVerificationUrl',
+                                            urlFieldName,
                                             e.target.value,
                                         )
                                     }
-                                    onBlur={() =>
-                                        handleBlur('employmentVerificationUrl')
-                                    }
+                                    onBlur={() => handleBlur(urlFieldName)}
                                     InputProps={{
                                         classes: {
                                             input: `${classes.inputStyles}`,
@@ -266,19 +278,18 @@ const ContactInfoStep = ({
                                         },
                                     }}
                                     placeholder={getUrlPlaceholder(
-                                        formData.employmentVerification,
+                                        formData.claimantEmploymentVerificationMethod,
                                     )}
                                     error={isEmploymentVerificationUrlError}
                                 />
-                                {touched.employmentVerificationUrl &&
-                                    errors.employmentVerificationUrl && (
+                                {urlFieldName &&
+                                    touched[urlFieldName] &&
+                                    errors[urlFieldName] && (
                                         <div
                                             className={classes.errorWrapStyles}
                                         >
                                             <InputErrorText
-                                                text={
-                                                    errors.employmentVerificationUrl
-                                                }
+                                                text={errors[urlFieldName]}
                                             />
                                         </div>
                                     )}
@@ -339,7 +350,7 @@ const ContactInfoStep = ({
                                     checked={isPublic}
                                     onChange={(_, checked) => {
                                         handleChange(
-                                            'publicContactEnabled',
+                                            'pointOfContactPubliclyVisible',
                                             checked,
                                         );
 
@@ -347,21 +358,21 @@ const ContactInfoStep = ({
                                         if (checked) {
                                             // Copy claimantName -> contactName if claimant has data
                                             const claimantHasName = Boolean(
-                                                (formData.claimantName || '')
+                                                (formData.yourName || '')
                                                     .toString()
                                                     .trim(),
                                             );
                                             if (claimantHasName) {
                                                 handleChange(
-                                                    'contactName',
-                                                    formData.claimantName,
+                                                    'pointOfcontactPersonName',
+                                                    formData.yourName,
                                                 );
                                             }
 
                                             // Always set contactEmail from userEmail; remains editable
                                             if (userEmail) {
                                                 handleChange(
-                                                    'contactEmail',
+                                                    'pointOfContactEmail',
                                                     userEmail,
                                                 );
                                             }
@@ -397,19 +408,23 @@ const ContactInfoStep = ({
                                 </div>
                                 <TextField
                                     fullWidth
-                                    name="contactName"
-                                    value={formData.contactName || ''}
+                                    name="pointOfcontactPersonName"
+                                    value={
+                                        formData.pointOfcontactPersonName || ''
+                                    }
                                     onChange={e =>
                                         handleChange(
-                                            'contactName',
+                                            'pointOfcontactPersonName',
                                             e.target.value,
                                         )
                                     }
-                                    onBlur={() => handleBlur('contactName')}
+                                    onBlur={() =>
+                                        handleBlur('pointOfcontactPersonName')
+                                    }
                                     variant="outlined"
                                     error={
-                                        touched.contactName &&
-                                        Boolean(errors.contactName)
+                                        touched.pointOfcontactPersonName &&
+                                        Boolean(errors.pointOfcontactPersonName)
                                     }
                                     InputProps={{
                                         classes: {
@@ -420,13 +435,18 @@ const ContactInfoStep = ({
                                     }}
                                     placeholder="Contact person's name"
                                 />
-                                {touched.contactName && errors.contactName && (
-                                    <div className={classes.errorWrapStyles}>
-                                        <InputErrorText
-                                            text={errors.contactName}
-                                        />
-                                    </div>
-                                )}
+                                {touched.pointOfcontactPersonName &&
+                                    errors.pointOfcontactPersonName && (
+                                        <div
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={
+                                                    errors.pointOfcontactPersonName
+                                                }
+                                            />
+                                        </div>
+                                    )}
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <div className={classes.labelRow}>
@@ -447,15 +467,17 @@ const ContactInfoStep = ({
                                 <TextField
                                     fullWidth
                                     type="email"
-                                    name="contactEmail"
-                                    value={formData.contactEmail || ''}
+                                    name="pointOfContactEmail"
+                                    value={formData.pointOfContactEmail || ''}
                                     onChange={e =>
                                         handleChange(
-                                            'contactEmail',
+                                            'pointOfContactEmail',
                                             e.target.value,
                                         )
                                     }
-                                    onBlur={() => handleBlur('contactEmail')}
+                                    onBlur={() =>
+                                        handleBlur('pointOfContactEmail')
+                                    }
                                     variant="outlined"
                                     InputProps={{
                                         classes: {
@@ -465,18 +487,23 @@ const ContactInfoStep = ({
                                         },
                                     }}
                                     error={
-                                        touched.contactEmail &&
-                                        Boolean(errors.contactEmail)
+                                        touched.pointOfContactEmail &&
+                                        Boolean(errors.pointOfContactEmail)
                                     }
                                     placeholder="contact@company.com"
                                 />
-                                {touched.contactEmail && errors.contactEmail && (
-                                    <div className={classes.errorWrapStyles}>
-                                        <InputErrorText
-                                            text={errors?.contactEmail}
-                                        />
-                                    </div>
-                                )}
+                                {touched.pointOfContactEmail &&
+                                    errors.pointOfContactEmail && (
+                                        <div
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={
+                                                    errors?.pointOfContactEmail
+                                                }
+                                            />
+                                        </div>
+                                    )}
                             </Grid>
                         </Grid>
                     )}

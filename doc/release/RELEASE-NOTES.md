@@ -41,8 +41,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
           - Your LinkedIn page showing your name, title and company
             - If chosen, renders claimant LinkedIn input field
   - 'Do you want this location's contact info to be public?' toogle button. If switch to 'Yes', renders:
-      - contact name field (non-required). Prepopulates by claimant name if it was set before.
-      - contact email field (non-required). Prepopulates by claimant email, but the field is editable.
+      - contact name field (required if open). Prepopulates by claimant name if it was set before.
+      - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

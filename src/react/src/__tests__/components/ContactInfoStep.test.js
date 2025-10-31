@@ -41,7 +41,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         name: mockPropTypes.string,
     };
 
-    MockStyledSelect.defaultProps = { value: null, onBlur: () => {}, placeholder: '', name: 'employmentVerification' };
+    MockStyledSelect.defaultProps = { value: null, onBlur: () => {}, placeholder: '', name: 'claimantEmploymentVerificationMethod' };
 
     return MockStyledSelect;
 });
@@ -74,14 +74,14 @@ describe('ContactInfoStep component', () => {
 
     const defaultProps = {
         formData: {
-            publicContactEnabled: false,
-            claimantName: 'Alice Smith',
-            claimantTitle: 'Manager',
-            employmentVerification: '',
-            employmentVerificationUrl: '',
+            pointOfContactPubliclyVisible: false,
+            yourName: 'Alice Smith',
+            yourTitle: 'Manager',
+            claimantEmploymentVerificationMethod: '',
+            claimantLinkedinProfileUrl: '',
             employmentVerificationDocuments: [],
-            contactName: '',
-            contactEmail: '',
+            pointOfcontactPersonName: '',
+            pointOfContactEmail: '',
         },
         handleChange: mockHandleChange,
         handleBlur: mockHandleBlur,
@@ -127,24 +127,42 @@ describe('ContactInfoStep component', () => {
         fireEvent.click(publicSwitch);
 
         // First call toggles the flag, then prefill name and email
-        expect(mockHandleChange).toHaveBeenCalledWith('publicContactEnabled', true);
-        expect(mockHandleChange).toHaveBeenCalledWith('contactName', 'Alice Smith');
-        expect(mockHandleChange).toHaveBeenCalledWith('contactEmail', 'test@example.com');
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'pointOfContactPubliclyVisible',
+            true,
+        );
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'pointOfcontactPersonName',
+            'Alice Smith',
+        );
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'pointOfContactEmail',
+            'test@example.com',
+        );
     });
 
     test('does not prefill contactName when claimantName is empty', () => {
         const props = {
-            formData: { ...defaultProps.formData, claimantName: '' },
+            formData: { ...defaultProps.formData, yourName: '' },
         };
         renderComponent(props);
 
         const publicSwitch = screen.getByRole('checkbox');
         fireEvent.click(publicSwitch);
 
-        expect(mockHandleChange).toHaveBeenCalledWith('publicContactEnabled', true);
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'pointOfContactPubliclyVisible',
+            true,
+        );
         // No call with contactName when claimantName is empty.
-        expect(mockHandleChange).not.toHaveBeenCalledWith('contactName', expect.anything());
-        expect(mockHandleChange).toHaveBeenCalledWith('contactEmail', 'test@example.com');
+        expect(mockHandleChange).not.toHaveBeenCalledWith(
+            'pointOfcontactPersonName',
+            expect.anything(),
+        );
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'pointOfContactEmail',
+            'test@example.com',
+        );
     });
 
     test('selecting URL-based verification shows URL input with placeholder and updates value', () => {
@@ -158,7 +176,10 @@ describe('ContactInfoStep component', () => {
         rerender(
             <ContactInfoStep
                 {...defaultProps}
-                formData={{ ...defaultProps.formData, employmentVerification: linkedinLabel }}
+                formData={{
+                    ...defaultProps.formData,
+                    claimantEmploymentVerificationMethod: linkedinLabel,
+                }}
                 handleChange={mockHandleChange}
                 handleBlur={mockHandleBlur}
                 updateFieldWithoutTouch={mockUpdateFieldWithoutTouch}
@@ -169,7 +190,10 @@ describe('ContactInfoStep component', () => {
         expect(urlInput).toBeInTheDocument();
 
         fireEvent.change(urlInput, { target: { value: 'https://linkedin.com/in/alice' } });
-        expect(mockHandleChange).toHaveBeenCalledWith('employmentVerificationUrl', 'https://linkedin.com/in/alice');
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantLinkedinProfileUrl',
+            'https://linkedin.com/in/alice',
+        );
     });
 
     test('selecting document-based verification shows attachments uploader', () => {
@@ -183,7 +207,10 @@ describe('ContactInfoStep component', () => {
         rerender(
             <ContactInfoStep
                 {...defaultProps}
-                formData={{ ...defaultProps.formData, employmentVerification: letterLabel }}
+                formData={{
+                    ...defaultProps.formData,
+                    claimantEmploymentVerificationMethod: letterLabel,
+                }}
                 handleChange={mockHandleChange}
                 handleBlur={mockHandleBlur}
                 updateFieldWithoutTouch={mockUpdateFieldWithoutTouch}
@@ -196,12 +223,18 @@ describe('ContactInfoStep component', () => {
     test('displays validation errors for employment verification and URL', () => {
         const linkedinLabel = EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === 'linkedin-page').label;
         const props = {
-            touched: { employmentVerification: true, employmentVerificationUrl: true },
-            errors: {
-                employmentVerification: 'Please select one option',
-                employmentVerificationUrl: 'Enter a valid URL',
+            touched: {
+                claimantEmploymentVerificationMethod: true,
+                claimantLinkedinProfileUrl: true,
             },
-            formData: { ...defaultProps.formData, employmentVerification: linkedinLabel },
+            errors: {
+                claimantEmploymentVerificationMethod: 'Please select one option',
+                claimantLinkedinProfileUrl: 'Enter a valid URL',
+            },
+            formData: {
+                ...defaultProps.formData,
+                claimantEmploymentVerificationMethod: linkedinLabel,
+            },
         };
 
         renderComponent(props);

@@ -33,21 +33,3 @@ export const getUrlPlaceholder = verificationMethod => {
             return 'https://';
     }
 };
-
-/**
- * Gets the label text for URL input based on verification method.
- */
-export const getUrlLabel = verificationMethod => {
-    switch (verificationMethod) {
-        case EMPLOYMENT_VERIFICATION_OPTIONS.find(
-            option => option.value === 'linkedin-page',
-        )?.label:
-            return 'Your LinkedIn Page URL';
-        case EMPLOYMENT_VERIFICATION_OPTIONS.find(
-            option => option.value === 'company-website-address',
-        )?.label:
-            return 'Website URL';
-        default:
-            return 'Website URL';
-    }
-};

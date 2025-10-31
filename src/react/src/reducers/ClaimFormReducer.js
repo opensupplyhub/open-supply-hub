@@ -13,18 +13,18 @@ const initialState = Object.freeze({
     completedSteps: [],
     formData: Object.freeze({
         // Eligibility step.
-        relationship: null,
+        claimantLocationRelationship: null,
 
         // Contact step.
-        claimantName: '',
-        claimantTitle: '',
-        publicContactEnabled: false,
-        contactName: '',
-        contactEmail: '',
-        contactPhone: '',
-        employmentVerification: null,
-        employmentVerificationUrl: '',
+        pointOfContactEmail: '',
+        yourName: '',
+        yourTitle: '',
+        claimantEmploymentVerificationMethod: null,
         employmentVerificationDocuments: [],
+        yourBusinessWebsite: '',
+        pointOfContactPubliclyVisible: false,
+        pointOfcontactPersonName: '',
+        claimantLinkedinProfileUrl: '',
 
         // Business step.
         locationAddressVerificationMethod: '',
