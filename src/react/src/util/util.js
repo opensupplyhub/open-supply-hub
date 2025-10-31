@@ -895,8 +895,6 @@ export const allListsAreEmpty = (...lists) => negate(some)(lists, size);
 export const makeFacilityDetailLink = (osID, search) =>
     `${facilitiesRoute}/${osID}${search || ''}`;
 
-export const makeClaimFacilityLink = osID => `${facilitiesRoute}/${osID}/claim`;
-
 export const makeClaimFacilityLinkWithFeatureFlag = (
     osID,
     isV1ClaimsFlowEnabled,

@@ -8,9 +8,11 @@ import { withStyles } from '@material-ui/core/styles';
 import BadgeClaimed from './BadgeClaimed';
 import COLOURS from '../util/COLOURS';
 
-import { makeClaimFacilityLinkWithFeatureFlag } from '../util/util';
+import {
+    makeClaimFacilityLinkWithFeatureFlag,
+    convertFeatureFlagsObjectToListOfActiveFlags,
+} from '../util/util';
 import { ENABLE_V1_CLAIMS_FLOW } from '../util/constants';
-import { convertFeatureFlagsObjectToListOfActiveFlags } from '../util/util';
 
 const claimFlagBaseStyles = theme =>
     Object.freeze({

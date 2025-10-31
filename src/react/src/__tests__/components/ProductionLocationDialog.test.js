@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';

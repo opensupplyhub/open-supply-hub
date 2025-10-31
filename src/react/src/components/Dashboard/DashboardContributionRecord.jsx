@@ -496,9 +496,6 @@ const mapStateToProps = ({
     const activeFeatureFlags = convertFeatureFlagsObjectToListOfActiveFlags(
         flags,
     );
-    const isV1ClaimsFlowEnabled = activeFeatureFlags.includes(
-        ENABLE_V1_CLAIMS_FLOW,
-    );
 
     return {
         singleModerationEventItem,
@@ -507,7 +504,9 @@ const mapStateToProps = ({
         potentialMatchFetching,
         fetchModerationEventError,
         fetchPotentialMatchError,
-        isV1ClaimsFlowEnabled,
+        isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
+            ENABLE_V1_CLAIMS_FLOW,
+        ),
     };
 };
 

@@ -28,15 +28,12 @@ import {
     facilityDetailsActions,
     FACILITIES_REQUEST_PAGE_SIZE,
     facilityClaimStatusChoicesEnum,
-    ENABLE_V1_CLAIMS_FLOW,
 } from '../util/constants';
 
 import {
-    makeClaimFacilityLinkWithFeatureFlag,
     getLocationWithoutEmbedParam,
     formatAttribution,
     formatExtendedField,
-    convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -115,7 +112,6 @@ const FacilityDetailsContent = ({
     facilityIsClaimedByCurrentUser,
     embedConfig,
     hideSectorData,
-    isV1ClaimsFlowEnabled,
 }) => {
     useEffect(() => {
         fetchFacility(Number(embed), contributors);
@@ -191,13 +187,10 @@ const FacilityDetailsContent = ({
         return <Redirect to={`/facilities/${data.id}`} />;
     }
 
-    const osId = data.properties.os_id;
     const isPendingClaim =
         data?.properties?.claim_info?.status ===
         facilityClaimStatusChoicesEnum.PENDING;
     const isClaimed = !isPendingClaim && !!data?.properties?.claim_info;
-    const claimFacility = () =>
-        push(makeClaimFacilityLinkWithFeatureFlag(osId, isV1ClaimsFlowEnabled));
 
     return (
         <div className={classes.root}>
@@ -221,7 +214,6 @@ const FacilityDetailsContent = ({
                         facilityIsClaimedByCurrentUser
                     }
                     userHasPendingFacilityClaim={userHasPendingFacilityClaim}
-                    claimFacility={claimFacility}
                     isClosed={data.properties.is_closed}
                 />
                 <FacilityDetailsInteractiveMap />
@@ -301,13 +293,6 @@ function mapStateToProps(
         false,
     );
 
-    const activeFeatureFlags = convertFeatureFlagsObjectToListOfActiveFlags(
-        featureFlags.flags,
-    );
-    const isV1ClaimsFlowEnabled = activeFeatureFlags.includes(
-        ENABLE_V1_CLAIMS_FLOW,
-    );
-
     return {
         data,
         fetching,
@@ -320,7 +305,6 @@ function mapStateToProps(
         facilityIsClaimedByCurrentUser,
         vectorTileFlagIsActive,
         hideSectorData: embed ? config.hide_sector_data : false,
-        isV1ClaimsFlowEnabled,
     };
 }
 
