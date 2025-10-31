@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: November 8, 2025
 
+### Code/API changes
+* [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Removed the usage of the claim flow link in the `FacilityDetailsContent.jsx` React component, as the claim link was unused and only silently passed to its child component.
+
 ### What's new
 * [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
 * [OSDEV-2206](https://opensupplyhub.atlassian.net/browse/OSDEV-2206) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional facility type and processing type data, also added additional fields from `FacilityClaim` model to the endpoint. Updated the `FacilityClaim` model to include the new fields such as `claimant_employment_verification_method`, `claimant_linkedin_profile_url` and `claimant_location_relationship`.
@@ -42,6 +45,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   - 'Do you want this location's contact info to be public?' toogle button. If switch to 'Yes', renders:
       - contact name field (required if open). Prepopulates by claimant name if it was set before.
       - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
+* [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
