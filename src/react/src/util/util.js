@@ -65,6 +65,8 @@ import {
     profileFormFields,
     facilitiesRoute,
     dashboardRoute,
+    claimFacilityRoute,
+    claimIntroRoute,
     DEFAULT_PAGE,
     DEFAULT_ROWS_PER_PAGE,
     ENTER_KEY,
@@ -893,8 +895,13 @@ export const allListsAreEmpty = (...lists) => negate(some)(lists, size);
 export const makeFacilityDetailLink = (osID, search) =>
     `${facilitiesRoute}/${osID}${search || ''}`;
 
-export const makeClaimFacilityLink = osID => `${facilitiesRoute}/${osID}/claim`;
-
+export const makeClaimFacilityLinkWithFeatureFlag = (
+    osID,
+    isV1ClaimsFlowEnabled,
+) =>
+    isV1ClaimsFlowEnabled
+        ? `${claimIntroRoute.replace(':osID', osID)}`
+        : `${claimFacilityRoute.replace(':osID', osID)}`;
 export const makeApprovedClaimDetailsLink = claimID => `/claimed/${claimID}`;
 
 export const makeFacilityClaimDetailsLink = claimID =>

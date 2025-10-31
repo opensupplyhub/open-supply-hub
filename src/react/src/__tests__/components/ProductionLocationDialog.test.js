@@ -1,6 +1,7 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router, useHistory } from 'react-router-dom';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDialog from '../../components/Contribute/ProductionLocationDialog';
 import ProductionLocationDialogCloseButton from '../../components/Contribute/ProductionLocationDialogCloseButton';
 import {
@@ -81,7 +82,7 @@ describe('ProductionLocationDialog', () => {
     });
 
     test('renders dialog content', () => {
-        const { getAllByText, getByText } = render(
+        const { getAllByText, getByText } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog 
                     classes={{}}
@@ -134,7 +135,7 @@ describe('ProductionLocationDialog', () => {
         ['APPROVED', 'pending', true],
         ['APPROVED', 'claimed', true]
     ])('handles moderation status %s and claim status %s correctly', (moderationStatus, claimStatus, shouldBeDisabled) => {
-        const { getByRole } = render(
+        const { getByRole } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog
                     classes={{}}
@@ -150,8 +151,8 @@ describe('ProductionLocationDialog', () => {
         expect(window.getComputedStyle(claimButton).pointerEvents).toBe(shouldBeDisabled ? 'none' : '');
     });
 
-    test('check link to the claim flow for specific production location', () => {
-        const { getByRole } = render(
+    test('check link to the old claim flow when feature flag is disabled', () => {
+        const { getByRole } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog
                     classes={{}}
@@ -167,8 +168,35 @@ describe('ProductionLocationDialog', () => {
         expect(claimButton).toHaveAttribute('href', `/facilities/${defaultProps.osID}/claim`);
     });
 
+    test('check link to the new claim flow when feature flag is enabled', () => {
+        const initialState = {
+            featureFlags: {
+                flags: {
+                    enable_v1_claims_flow: true,
+                },
+                fetching: false,
+            },
+        };
+
+        const { getByRole } = renderWithProviders(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={defaultProps.data}
+                    osID={defaultProps.osID}
+                    moderationStatus='APPROVED'
+                    claimStatus='unclaimed'
+                />
+            </Router>,
+            { preloadedState: initialState }
+        );
+
+        const claimButton = getByRole('button', { name: /Continue to Claim/i });
+        expect(claimButton).toHaveAttribute('href', `/claim/${defaultProps.osID}`);
+    });
+
     test('Search OS Hub button should link to the main page', () => {
-        const { getByRole } = render(
+        const { getByRole } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog
                     classes={{}}
@@ -187,7 +215,7 @@ describe('ProductionLocationDialog', () => {
     });
 
     test('Submit another Location button should link to the SLC search page', () => {
-        const { getByRole } = render(
+        const { getByRole } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog
                     classes={{}}
@@ -206,7 +234,7 @@ describe('ProductionLocationDialog', () => {
     });
 
     test('redirect to the main page when clicking close button', () => {
-        const { getByText, getByRole } = render(
+        const { getByText, getByRole } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog
                     classes={{}}
@@ -260,7 +288,7 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
     ])(
         'renders claim button and pending badge tooltips when moderation event is pending and production location has status: %s',
         async (claimStatus, expectedPendingTooltip, expectedClaimTooltip) => {
-            const { getAllByTestId, getByRole, findByText } = render(
+            const { getAllByTestId, getByRole, findByText } = renderWithProviders(
                 <Router>
                     <ProductionLocationDialog 
                         classes={{}}
@@ -297,7 +325,7 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
     );
 
     test('renders claim button and pending badge tooltips when moderation event is pending and production location is available for claim', async () => {
-        const { getAllByTestId, getByRole, findByText } = render(
+        const { getAllByTestId, getByRole, findByText } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog 
                     classes={{}}
@@ -329,7 +357,7 @@ describe('ProductionLocationDialog tooltip messages for PENDING, CLAIMED and UNC
     });
 
     test('renders claim button and pending badge tooltips when moderation event is pending and production location has\'t been created yet', async () => {
-        const { getAllByTestId, getByRole, findByText } = render(
+        const { getAllByTestId, getByRole, findByText } = renderWithProviders(
             <Router>
                 <ProductionLocationDialog 
                     classes={{}}

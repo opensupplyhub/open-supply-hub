@@ -33,11 +33,16 @@ import {
     confirmPotentialMatchFromModerationEvent,
     cleanupContributionRecord,
 } from '../../actions/dashboardContributionRecord';
-import { makeClaimFacilityLink, makeFacilityDetailLink } from '../../util/util';
+import {
+    makeClaimFacilityLinkWithFeatureFlag,
+    makeFacilityDetailLink,
+    convertFeatureFlagsObjectToListOfActiveFlags,
+} from '../../util/util';
 import DialogTooltip from './../Contribute/DialogTooltip';
 import {
     MODERATION_STATUSES_ENUM,
     MODERATION_ACTIONS_ENUM,
+    ENABLE_V1_CLAIMS_FLOW,
 } from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
@@ -86,6 +91,7 @@ const DashboardContributionRecord = ({
     moderationEventFetching,
     fetchPotentialMatchError,
     handleCleanupContributionRecord,
+    isV1ClaimsFlowEnabled,
 }) => {
     const prevSingleModerationEventItemRef = useRef();
     const [showBackdrop, setShowBackdrop] = useState(false);
@@ -426,8 +432,9 @@ const DashboardContributionRecord = ({
                             className={`${classes.buttonStyles} ${classes.claimButtonStyles}`}
                             onClick={() => {
                                 push(
-                                    makeClaimFacilityLink(
+                                    makeClaimFacilityLinkWithFeatureFlag(
                                         singleModerationEventItem.os_id,
+                                        isV1ClaimsFlowEnabled,
                                     ),
                                 );
                             }}
@@ -468,6 +475,7 @@ DashboardContributionRecord.propTypes = {
     fetchModerationEventError: string,
     fetchPotentialMatchError: string,
     handleCleanupContributionRecord: func.isRequired,
+    isV1ClaimsFlowEnabled: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -483,14 +491,24 @@ const mapStateToProps = ({
             error: fetchPotentialMatchError,
         },
     },
-}) => ({
-    singleModerationEventItem,
-    moderationEventFetching,
-    matches,
-    potentialMatchFetching,
-    fetchModerationEventError,
-    fetchPotentialMatchError,
-});
+    featureFlags: { flags },
+}) => {
+    const activeFeatureFlags = convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    );
+
+    return {
+        singleModerationEventItem,
+        moderationEventFetching,
+        matches,
+        potentialMatchFetching,
+        fetchModerationEventError,
+        fetchPotentialMatchError,
+        isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
+            ENABLE_V1_CLAIMS_FLOW,
+        ),
+    };
+};
 
 const mapDispatchToProps = (
     dispatch,

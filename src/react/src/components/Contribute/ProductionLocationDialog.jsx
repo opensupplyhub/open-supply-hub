@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { number, object, string } from 'prop-types';
+import { number, object, string, bool } from 'prop-types';
 import { withStyles, withTheme } from '@material-ui/core/styles';
+import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { isArray, isEmpty, pickBy, round, size } from 'lodash';
 import Button from '@material-ui/core/Button';
@@ -21,12 +22,14 @@ import {
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
     EMPTY_PLACEHOLDER,
+    ENABLE_V1_CLAIMS_FLOW,
 } from '../../util/constants';
 import { makeProductionLocationDialogStyles } from '../../util/styles';
 import {
     getIsMobile,
-    makeClaimFacilityLink,
+    makeClaimFacilityLinkWithFeatureFlag,
     snakeToTitleCase,
+    convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../../util/util';
 
 const infoIcon = classes => (
@@ -36,7 +39,12 @@ const infoIcon = classes => (
     />
 );
 
-const claimButton = ({ classes, osID = '', isDisabled = true }) => (
+const claimButton = ({
+    classes,
+    osID = '',
+    isDisabled = true,
+    isV1ClaimsFlowEnabled = false,
+}) => (
     <span className={`${classes.claimTooltipWrapper}`}>
         <Button
             variant="contained"
@@ -44,7 +52,10 @@ const claimButton = ({ classes, osID = '', isDisabled = true }) => (
             className={`${classes.button} ${classes.claimButton} ${
                 isDisabled ? classes.claimButton_disabled : ''
             }`}
-            href={makeClaimFacilityLink(osID)}
+            href={makeClaimFacilityLinkWithFeatureFlag(
+                osID,
+                isV1ClaimsFlowEnabled,
+            )}
             target="_blank"
             rel="noopener noreferrer"
         >
@@ -106,6 +117,7 @@ const ProductionLocationDialog = ({
     osID,
     moderationStatus,
     claimStatus,
+    isV1ClaimsFlowEnabled,
 }) => {
     const history = useHistory();
 
@@ -311,6 +323,7 @@ const ProductionLocationDialog = ({
                                         classes,
                                         osID,
                                         isDisabled: false,
+                                        isV1ClaimsFlowEnabled,
                                     })}
                                 </>
                             ) : (
@@ -320,6 +333,7 @@ const ProductionLocationDialog = ({
                                     childComponent={claimButton({
                                         classes,
                                         isDisabled: true,
+                                        isV1ClaimsFlowEnabled,
                                     })}
                                 />
                             )}
@@ -344,8 +358,24 @@ ProductionLocationDialog.propTypes = {
     theme: object.isRequired,
     innerWidth: number.isRequired,
     claimStatus: string,
+    isV1ClaimsFlowEnabled: bool.isRequired,
 };
 
-export default withTheme()(
-    withStyles(makeProductionLocationDialogStyles)(ProductionLocationDialog),
+const mapStateToProps = ({ featureFlags: { flags } }) => {
+    const activeFeatureFlags = convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    );
+    return {
+        isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
+            ENABLE_V1_CLAIMS_FLOW,
+        ),
+    };
+};
+
+export default connect(mapStateToProps)(
+    withTheme()(
+        withStyles(makeProductionLocationDialogStyles)(
+            ProductionLocationDialog,
+        ),
+    ),
 );

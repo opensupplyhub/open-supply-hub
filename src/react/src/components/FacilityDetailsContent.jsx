@@ -31,7 +31,6 @@ import {
 } from '../util/constants';
 
 import {
-    makeClaimFacilityLink,
     getLocationWithoutEmbedParam,
     formatAttribution,
     formatExtendedField,
@@ -188,12 +187,10 @@ const FacilityDetailsContent = ({
         return <Redirect to={`/facilities/${data.id}`} />;
     }
 
-    const osId = data.properties.os_id;
     const isPendingClaim =
         data?.properties?.claim_info?.status ===
         facilityClaimStatusChoicesEnum.PENDING;
     const isClaimed = !isPendingClaim && !!data?.properties?.claim_info;
-    const claimFacility = () => push(makeClaimFacilityLink(osId));
 
     return (
         <div className={classes.root}>
@@ -217,7 +214,6 @@ const FacilityDetailsContent = ({
                         facilityIsClaimedByCurrentUser
                     }
                     userHasPendingFacilityClaim={userHasPendingFacilityClaim}
-                    claimFacility={claimFacility}
                     isClosed={data.properties.is_closed}
                 />
                 <FacilityDetailsInteractiveMap />
