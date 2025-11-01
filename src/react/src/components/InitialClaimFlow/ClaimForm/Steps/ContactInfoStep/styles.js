@@ -16,7 +16,11 @@ const contactInfoStepStyles = theme =>
             marginTop: 0,
         }),
         fieldContainer: Object.freeze({
+            position: 'relative',
             maxWidth: '528px',
+            [theme.breakpoints.down('md')]: {
+                maxWidth: '100%',
+            },
         }),
         boxWarningText: {
             fontSize: '18px',
@@ -58,10 +62,24 @@ const contactInfoStepStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
         sectionTitle: Object.freeze({
-            fontSize: '18px',
+            fontSize: '24px',
             fontWeight: theme.typography.fontWeightSemiBold,
             marginBottom: theme.spacing.unit * 1.5,
         }),
+        sectionDescription: Object.freeze({
+            margin: '0 0 20px 0',
+            fontSize: '18px',
+        }),
+        sectionTitleContainer: Object.freeze({
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: `20px`,
+        }),
+        separator: {
+            margin: '40px 0 15px 0',
+            color: COLOURS.BLACK,
+        },
         accountInfoSection: Object.freeze({
             backgroundColor: COLOURS.LIGHTEST_GREY,
             border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
@@ -140,7 +158,6 @@ const contactInfoStepStyles = theme =>
         betaBadge: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
-            gap: theme.spacing.unit / 2,
             padding: '2px 6px',
             borderRadius: 9999,
             fontSize: '10px',
@@ -148,7 +165,10 @@ const contactInfoStepStyles = theme =>
             color: '#ffffff',
             backgroundImage: `linear-gradient(to right, ${COLOURS.PURPLE_GRADIENT_FROM}, ${COLOURS.PINK_GRADIENT_TO})`,
             cursor: 'pointer',
-            marginLeft: theme.spacing.unit,
+            position: 'absolute',
+            top: 57,
+            right: 13,
+            zIndex: 2,
         }),
         // TODO: use globally
         notchedOutlineStyles: Object.freeze({
