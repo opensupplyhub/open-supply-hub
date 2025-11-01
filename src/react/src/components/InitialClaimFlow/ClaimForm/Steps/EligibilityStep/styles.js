@@ -77,6 +77,10 @@ const eligibilityStepStyles = theme =>
         dialogActions: Object.freeze({
             justifyContent: 'center',
             padding: theme.spacing.unit * 2,
+            [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                gap: '12px',
+            },
         }),
         buttonContainer: Object.freeze({
             display: 'flex',

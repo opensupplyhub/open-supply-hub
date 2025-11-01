@@ -39,7 +39,7 @@ export const claimIntroStyles = theme => ({
         padding: '48px 0',
         [theme.breakpoints.down('sm')]: {
             flexDirection: 'column',
-            padding: '24px 0',
+            gap: '12px',
         },
     },
     backButton: {
