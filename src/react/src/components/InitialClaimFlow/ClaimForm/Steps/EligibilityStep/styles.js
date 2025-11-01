@@ -46,8 +46,9 @@ const eligibilityStepStyles = theme =>
         }),
         sectionTitle: Object.freeze({
             fontSize: '18px',
+            color: theme.palette.text.primary,
             fontWeight: theme.typography.fontWeightSemiBold,
-            marginBottom: theme.spacing.unit * 1.5,
+            margin: '0 0 8px 0',
         }),
         selectWrapper: Object.freeze({
             marginBottom: 0,
