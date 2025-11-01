@@ -34,9 +34,9 @@ export const STEP_DESCRIPTIONS = Object.freeze([
 ]);
 
 export const NEXT_BUTTON_TEXT = Object.freeze({
-    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Continue to Contact Information',
-    [CLAIM_FORM_STEPS.CONTACT]: 'Continue to Business Details',
-    [CLAIM_FORM_STEPS.BUSINESS]: 'Continue to Production Location Details',
+    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Continue',
+    [CLAIM_FORM_STEPS.CONTACT]: 'Continue',
+    [CLAIM_FORM_STEPS.BUSINESS]: 'Continue',
 });
 
 export const STEP_ICONS = Object.freeze({
