@@ -27,10 +27,10 @@ export const STEP_TIME_ESTIMATES = Object.freeze([
 ]);
 
 export const STEP_DESCRIPTIONS = Object.freeze([
-    'Please verify that this account is eligible to claim this production location',
-    'Provide your information and production location contact details',
-    'Verify the company address for this production location',
-    'Detailed information about the production location (Optional)',
+    'Please verify that this account is eligible to claim this production location.',
+    'Provide your information and production location contact details.',
+    'Verify the company address for this production location.',
+    'Detailed information about the production location (Optional).',
 ]);
 
 export const NEXT_BUTTON_TEXT = Object.freeze({

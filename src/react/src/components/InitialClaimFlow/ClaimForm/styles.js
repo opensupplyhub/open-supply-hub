@@ -14,9 +14,6 @@ export const claimFormStyles = theme =>
             display: 'flex',
             flexDirection: 'column',
             borderRadius: '0',
-            [theme.breakpoints.down('sm')]: {
-                padding: '24px 5% 0 5%',
-            },
         }),
         paper: Object.freeze({
             backgroundColor: COLOURS.WHITE,
@@ -24,6 +21,9 @@ export const claimFormStyles = theme =>
             borderRadius: 0,
             marginTop: '32px',
             padding: '40px 110px 0 110px',
+            [theme.breakpoints.down('sm')]: {
+                padding: '24px 5% 0 5%',
+            },
         }),
         title: Object.freeze({
             fontSize: '56px',
@@ -45,6 +45,10 @@ export const claimFormStyles = theme =>
             justifyContent: 'center',
             gap: '24px',
             padding: '48px 0',
+            [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                padding: '24px 0',
+            },
         }),
         buttonBack: Object.freeze({
             width: '200px',
@@ -54,6 +58,9 @@ export const claimFormStyles = theme =>
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
             border: '1px solid #0D1128',
+            [theme.breakpoints.down('sm')]: {
+                width: '100%',
+            },
         }),
         buttonPrimary: Object.freeze({
             height: '49px',
@@ -72,6 +79,9 @@ export const claimFormStyles = theme =>
                 backgroundColor: COLOURS.GREY,
                 color: COLOURS.DARK_GREY,
                 cursor: 'not-allowed',
+            },
+            [theme.breakpoints.down('sm')]: {
+                width: '100%',
             },
         }),
         titleStyles: Object.freeze({
