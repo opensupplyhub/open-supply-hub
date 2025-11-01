@@ -1,8 +1,47 @@
 import COLOURS from '../../../../../util/COLOURS';
 
+const formLabel = Object.freeze({
+    margin: '24px 0 8px 0',
+    fontSize: '21px',
+    fontWeight: 600,
+});
+
 const contactInfoStepStyles = theme =>
     Object.freeze({
-        // Copied base styles from EligibilityStep with minimal extensions
+        formLabel: Object.freeze({
+            ...formLabel,
+        }),
+        formLabelRoot: Object.freeze({
+            ...formLabel,
+            marginTop: 0,
+        }),
+        fieldContainer: Object.freeze({
+            maxWidth: '528px',
+        }),
+        boxWarningText: {
+            fontSize: '18px',
+            display: 'inline-flex',
+            alignItems: 'center',
+        },
+        warningIcon: {
+            color: COLOURS.MATERIAL_RED,
+            marginRight: theme.spacing.unit,
+            fontSize: 16,
+            marginTop: '2px',
+        },
+        boxWarningTextIcon: {
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginRight: theme.spacing.unit,
+        },
+        boxWarningContainer: {
+            backgroundColor: COLOURS.LIGHT_RED,
+            padding: theme.spacing.unit * 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            marginTop: '20px',
+        },
+        // OLD STYLES
         titleSection: Object.freeze({
             fontSize: '36px',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
@@ -56,9 +95,6 @@ const contactInfoStepStyles = theme =>
         }),
         gridSpacing: Object.freeze({
             marginTop: theme.spacing.unit * 2,
-        }),
-        textField: Object.freeze({
-            marginBottom: theme.spacing.unit * 2,
         }),
         infoAlert: Object.freeze({
             backgroundColor: COLOURS.AMBER_50,
