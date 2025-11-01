@@ -27,16 +27,16 @@ export const STEP_TIME_ESTIMATES = Object.freeze([
 ]);
 
 export const STEP_DESCRIPTIONS = Object.freeze([
-    'Please verify that this account is eligible to claim this production location',
-    'Provide your information and production location contact details',
-    'Verify the company address for this production location',
-    'Detailed information about the production location (Optional)',
+    'Please verify that this account is eligible to claim this production location.',
+    'Provide your information and production location contact details.',
+    'Verify the company address for this production location.',
+    'Detailed information about the production location (Optional).',
 ]);
 
 export const NEXT_BUTTON_TEXT = Object.freeze({
-    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Continue to Contact Information',
-    [CLAIM_FORM_STEPS.CONTACT]: 'Continue to Business Details',
-    [CLAIM_FORM_STEPS.BUSINESS]: 'Continue to Production Location Details',
+    [CLAIM_FORM_STEPS.ELIGIBILITY]: 'Continue',
+    [CLAIM_FORM_STEPS.CONTACT]: 'Continue',
+    [CLAIM_FORM_STEPS.BUSINESS]: 'Continue',
 });
 
 export const STEP_ICONS = Object.freeze({

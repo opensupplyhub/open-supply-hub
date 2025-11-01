@@ -256,20 +256,23 @@ const ClaimForm = ({
 
     return (
         <div className={classes.container}>
+            <Typography className={classes.title}>
+                Production Location Claims Process
+            </Typography>
+            <Typography className={classes.description}>
+                Complete all sections to submit your production location claim
+            </Typography>
+
+            <ClaimFormStepper
+                currentStep={activeStep}
+                completedSteps={completedSteps}
+                onStepClick={setStep}
+            />
             <div className={classes.innerContainer}>
-                <Typography className={classes.title}>
-                    Production Location Claims Process
-                </Typography>
-                <Typography className={classes.description}>
-                    Complete all sections to submit your production location
-                    claim
-                </Typography>
-                <ClaimFormStepper
-                    currentStep={activeStep}
-                    completedSteps={completedSteps}
-                    onStepClick={setStep}
-                />
-                <form onSubmit={claimForm.handleSubmit}>
+                <form
+                    onSubmit={claimForm.handleSubmit}
+                    className={classes.form}
+                >
                     <Paper className={classes.paper}>
                         <Typography
                             variant="title"

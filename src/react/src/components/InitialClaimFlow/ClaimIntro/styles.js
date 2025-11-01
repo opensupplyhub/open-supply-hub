@@ -22,11 +22,13 @@ export const claimIntroStyles = theme => ({
         [theme.breakpoints.down('sm')]: {
             fontSize: '36px',
         },
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: '18px',
         fontWeight: theme.typography.fontWeightSemiBold,
         margin: '24px 0 32px 0',
+        textAlign: 'center',
     },
     actionsInner: {
         display: 'flex',
@@ -37,7 +39,7 @@ export const claimIntroStyles = theme => ({
         padding: '48px 0',
         [theme.breakpoints.down('sm')]: {
             flexDirection: 'column',
-            padding: '24px 0',
+            gap: '12px',
         },
     },
     backButton: {
@@ -124,6 +126,7 @@ export const claimInfoStyles = theme => ({
     boxDescription: {
         fontSize: '18px',
         fontWeight: 600,
+        color: COLOURS.DARK_GREY,
     },
     boxExamplesContainer: {
         display: 'flex',
@@ -174,8 +177,9 @@ export const claimInfoStyles = theme => ({
         color: theme.palette.common.black,
     },
     defaultLabel: {
-        color: theme.palette.common.black,
         fontWeight: theme.typography.fontWeightSemiBold,
+        textAlign: 'center',
+        color: COLOURS.DARK_GREY,
     },
     noBorder: {
         border: 'none',

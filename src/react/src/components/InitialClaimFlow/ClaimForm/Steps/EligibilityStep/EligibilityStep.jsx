@@ -3,7 +3,6 @@ import { func, object, string, shape, bool, oneOfType } from 'prop-types';
 import { connect } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -55,75 +54,77 @@ const EligibilityStep = ({
     };
 
     return (
-        <Grid container spacing={24}>
-            <Grid item xs={12}>
-                <div className={classes.accountInfoSection}>
-                    <div className={classes.accountInfoBox}>
-                        <div className={classes.accountInfoRow}>
-                            <span className={classes.accountInfoLabel}>
-                                Account email:
-                            </span>
-                            <span className={classes.accountInfoValue}>
-                                {userEmail || 'Not available'}
-                            </span>
-                        </div>
-                        <div className={classes.accountInfoRow}>
-                            <span className={classes.accountInfoLabel}>
-                                Organization name:
-                            </span>
-                            <span className={classes.accountInfoValue}>
-                                {organizationName || 'Not available'}
-                            </span>
-                        </div>
+        <div className={classes.eligibilityStepContainer}>
+            <div className={classes.accountInfoSection}>
+                <Typography component="h3" className={classes.sectionHeading}>
+                    Account Information
+                </Typography>
+                <div className={classes.accountInfoBox}>
+                    <div className={classes.accountInfoRow}>
+                        <span className={classes.accountInfoLabel}>
+                            Organization:
+                        </span>
+                        <span className={classes.accountInfoValue}>
+                            {organizationName || 'Not available'}
+                        </span>
                     </div>
+                    <div className={classes.accountInfoRow}>
+                        <span className={classes.accountInfoLabel}>
+                            Email address:
+                        </span>
+                        <span className={classes.accountInfoValue}>
+                            {userEmail || 'Not available'}
+                        </span>
+                    </div>
+                </div>
+            </div>
 
-                    <Typography className={classes.sectionTitle}>
-                        Select your relationship to this production location:
-                    </Typography>
-                    <div className={classes.selectWrapper}>
-                        <StyledSelect
-                            id="claimantLocationRelationship"
-                            name="claimantLocationRelationship"
-                            aria-label="Select your relationship to this production location"
-                            label={null}
-                            options={RELATIONSHIP_OPTIONS}
-                            onBlur={() =>
-                                handleBlur('claimantLocationRelationship')
-                            }
-                            value={selectedRelationship}
-                            onChange={valueObject => {
-                                if (
-                                    valueObject &&
-                                    (valueObject.value === 'partner' ||
-                                        valueObject.value === 'other')
-                                ) {
-                                    setIneligibleDialogOpen(true);
-                                } else {
-                                    handleChange(
-                                        'claimantLocationRelationship',
-                                        valueObject.label,
-                                    );
-                                }
-                            }}
-                            styles={getSelectStyles(isRelationshipError)}
-                            placeholder="Select your relationship to this production location"
-                            isMulti={false}
+            <Typography className={classes.sectionTitle}>
+                Select your relationship to this production location{' '}
+                <span className={classes.sectionTitleRequired}>*</span>
+            </Typography>
+            <div className={classes.selectWrapper}>
+                <StyledSelect
+                    id="claimantLocationRelationship"
+                    name="claimantLocationRelationship"
+                    aria-label="Select your relationship to this production location"
+                    label={null}
+                    options={RELATIONSHIP_OPTIONS}
+                    onBlur={() => handleBlur('claimantLocationRelationship')}
+                    value={selectedRelationship}
+                    onChange={valueObject => {
+                        if (
+                            valueObject &&
+                            (valueObject.value === 'partner' ||
+                                valueObject.value === 'other')
+                        ) {
+                            setIneligibleDialogOpen(true);
+                        } else {
+                            handleChange(
+                                'claimantLocationRelationship',
+                                valueObject.label,
+                            );
+                        }
+                    }}
+                    styles={getSelectStyles(isRelationshipError)}
+                    placeholder="Select your relationship to this production location"
+                    isMulti={false}
+                />
+            </div>
+            {touched.claimantLocationRelationship &&
+                errors.claimantLocationRelationship && (
+                    <div className={classes.errorWrapStyles}>
+                        <InputErrorText
+                            text={errors.claimantLocationRelationship}
                         />
                     </div>
-                    {touched.claimantLocationRelationship &&
-                        errors.claimantLocationRelationship && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.claimantLocationRelationship}
-                                />
-                            </div>
-                        )}
-                </div>
-            </Grid>
+                )}
 
             <Dialog open={ineligibleDialogOpen}>
                 <DialogTitle className={classes.dialogTitle}>
-                    Not Eligible to File Claim
+                    <Typography component="h3" className={classes.dialogTitle}>
+                        Not Eligible to File Claim
+                    </Typography>
                 </DialogTitle>
                 <DialogContent>
                     <Typography
@@ -139,22 +140,22 @@ const EligibilityStep = ({
                 </DialogContent>
                 <DialogActions className={classes.dialogActions}>
                     <Button
-                        variant="contained"
-                        color="primary"
+                        variant="outlined"
                         onClick={handleGoToMainPage}
+                        className={classes.backButton}
                     >
-                        Back to Open Supply Hub
+                        Go Back to OS HUB
                     </Button>
                     <Button
                         variant="contained"
-                        color="secondary"
                         onClick={handleCloseIneligibleDialog}
+                        className={classes.continueButton}
                     >
-                        Return to Claims
+                        Continue to Claim
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Grid>
+        </div>
     );
 };
 
