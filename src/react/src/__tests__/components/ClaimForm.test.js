@@ -13,7 +13,7 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/hooks', () => ({
 // Mock window APIs not implemented in JSDOM.
 beforeAll(() => {
     window.scrollTo = jest.fn();
-    
+
     // Mock sessionStorage.
     const sessionStorageMock = {
         getItem: jest.fn(() => 'true'), // Simulate user came from intro.
@@ -278,7 +278,7 @@ describe('ClaimForm component', () => {
             const { getByText } = renderComponent();
 
             expect(getByText('Go Back')).toBeInTheDocument();
-            expect(getByText('Continue to Contact Information')).toBeInTheDocument();
+            expect(getByText('Continue')).toBeInTheDocument();
         });
     });
 
@@ -355,13 +355,13 @@ describe('ClaimForm component', () => {
     });
 
     describe('Button text changes per step', () => {
-        test('shows "Continue to Contact Information" on step 0', () => {
+        test('shows "Continue" on step 0', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText('Continue to Contact Information')).toBeInTheDocument();
+            expect(getByText('Continue')).toBeInTheDocument();
         });
 
-        test('shows "Continue to Business Details" on step 1', () => {
+        test('shows "Continue" on step 1', () => {
             const stateOnStep1 = {
                 ...defaultPreloadedState,
                 claimForm: {
@@ -372,10 +372,10 @@ describe('ClaimForm component', () => {
 
             const { getByText } = renderComponent(stateOnStep1);
 
-            expect(getByText('Continue to Business Details')).toBeInTheDocument();
+            expect(getByText('Continue')).toBeInTheDocument();
         });
 
-        test('shows "Continue to Production Location Details" on step 2', () => {
+        test('shows "Continue" on step 2', () => {
             const stateOnStep2 = {
                 ...defaultPreloadedState,
                 claimForm: {
@@ -386,9 +386,7 @@ describe('ClaimForm component', () => {
 
             const { getByText } = renderComponent(stateOnStep2);
 
-            expect(
-                getByText('Continue to Production Location Details'),
-            ).toBeInTheDocument();
+            expect(getByText('Continue')).toBeInTheDocument();
         });
     });
 
@@ -412,4 +410,3 @@ describe('ClaimForm component', () => {
         });
     });
 });
-

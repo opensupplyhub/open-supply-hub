@@ -138,20 +138,19 @@ describe('EligibilityStep component', () => {
     test('renders component with user information', () => {
         renderComponent();
 
-        expect(screen.getByText('Account email:')).toBeInTheDocument();
+        expect(screen.getByText('Email address:')).toBeInTheDocument();
         expect(screen.getByText('test@example.com')).toBeInTheDocument();
-        expect(screen.getByText('Organization name:')).toBeInTheDocument();
+        expect(screen.getByText('Organization:')).toBeInTheDocument();
         expect(screen.getByText('Test Organization')).toBeInTheDocument();
     });
 
     test('renders select field with placeholder', () => {
         renderComponent();
 
-        expect(
-            screen.getByText(
-                'Select your relationship to this production location:'
-            )
-        ).toBeInTheDocument();
+        const elements = screen.getAllByText(
+            'Select your relationship to this production location', { exact: false }
+        );
+        expect(elements.length).toBeGreaterThan(0);
 
         const selectField = screen.getByTestId('relationship-select');
         expect(selectField).toBeInTheDocument();
@@ -218,21 +217,21 @@ describe('EligibilityStep component', () => {
             screen.getByText(/Only the owner, manager, authorized employee/i)
         ).toBeInTheDocument();
         expect(
-            screen.getByRole('button', { name: /Back to Open Supply Hub/i })
+            screen.getByRole('button', { name: /Go Back to OS HUB/i })
         ).toBeInTheDocument();
         expect(
-            screen.getByRole('button', { name: /Return to Claims/i })
+            screen.getByRole('button', { name: /Continue to Claim/i })
         ).toBeInTheDocument();
     });
 
-    test('navigates to main page when "Back to Open Supply Hub" is clicked', () => {
+    test('navigates to main page when "Go Back to OS HUB" is clicked', () => {
         renderComponent();
 
         const selectField = screen.getByTestId('relationship-select');
         fireEvent.change(selectField, { target: { value: 'partner' } });
 
         const backButton = screen.getByRole('button', {
-            name: /Back to Open Supply Hub/i,
+            name: /Go Back to OS HUB/i,
         });
         backButton.click();
 
@@ -240,7 +239,7 @@ describe('EligibilityStep component', () => {
         expect(mockHistoryPush).toHaveBeenCalledWith(mainRoute);
     });
 
-    test('closes dialog without resetting selection when "Return to Claims" is clicked', () => {
+    test('closes dialog without resetting selection when "Continue to Claim" is clicked', () => {
         renderComponent();
 
         const selectField = screen.getByTestId('relationship-select');
@@ -249,7 +248,7 @@ describe('EligibilityStep component', () => {
         expect(screen.getByText('Not Eligible to File Claim')).toBeInTheDocument();
 
         const returnButton = screen.getByRole('button', {
-            name: /Return to Claims/i,
+            name: /Continue to Claim/i,
         });
         fireEvent.click(returnButton);
 
@@ -320,4 +319,3 @@ describe('EligibilityStep component', () => {
         ).not.toBeInTheDocument();
     });
 });
-
