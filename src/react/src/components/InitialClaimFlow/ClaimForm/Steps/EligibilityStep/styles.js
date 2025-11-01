@@ -104,9 +104,9 @@ const eligibilityStepStyles = theme =>
             },
         }),
         sectionTitleRequired: Object.freeze({
-            color: theme.palette.error.main,
+            margin: '0 0 8px 0',
             fontSize: '21px',
-            fontWeight: theme.typography.fontWeightSemiBold,
+            fontWeight: 600,
         }),
         continueButton: Object.freeze({
             height: '49px',
