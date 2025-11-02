@@ -90,7 +90,7 @@ const BusinessStep = ({
     );
 
     return (
-        <div className={classes.businessStepContainer}>
+        <div>
             <div className={classes.formFieldContainer}>
                 <FormFieldTitle
                     label="OS ID"
@@ -281,18 +281,23 @@ const BusinessStep = ({
                     />
                 )}
             </div>
-            <div className={classes.boxWarningContainer}>
-                <Typography variant="body2" className={classes.boxWarningText}>
-                    <span className={classes.boxWarningTextIcon}>
-                        <Warning className={classes.warningIcon} />
-                        <strong>IMPORTANT!</strong>
-                    </span>
-                    <span>
-                        &nbsp;Verification documents must show the same name and
-                        address as listed on Open Supply Hub.
-                    </span>
-                </Typography>
-            </div>
+            {showDocumentUpload && (
+                <div className={classes.boxWarningContainer}>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxWarningText}
+                    >
+                        <span className={classes.boxWarningTextIcon}>
+                            <Warning className={classes.warningIcon} />
+                            <strong>IMPORTANT!</strong>
+                        </span>
+                        <span>
+                            &nbsp;Verification documents must show the same name
+                            and address as listed on Open Supply Hub.
+                        </span>
+                    </Typography>
+                </div>
+            )}
         </div>
     );
 };
