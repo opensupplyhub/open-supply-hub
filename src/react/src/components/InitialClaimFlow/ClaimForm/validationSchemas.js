@@ -109,9 +109,7 @@ const getCompanyUrlValidationSchema = label =>
         then: schema =>
             schema
                 .url('Invalid URL format')
-                .required(
-                    'The company address verification URL is required when this address verification method is selected',
-                ),
+                .required('The company address verification URL is required'),
     });
 
 export const businessStepSchema = Yup.object().shape({
