@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import InfoIcon from '@material-ui/icons/Info';
-import StarIcon from '@material-ui/icons/Star';
-import COLOURS from '../../../util/COLOURS';
+import DialogTooltip from '../../Contribute/DialogTooltip';
 import { ClaimFacilityInfoLink } from '../../../util/constants';
 import { claimInfoStyles } from './styles';
 import ExampleImage from './ExampleImage';
@@ -16,229 +15,286 @@ import employeeIdExample from '../../../images/employee-id-example.jpg';
 import employmentLetterExample from '../../../images/employment-letter-example.jpg';
 import businessCardExample from '../../../images/business-card-example.jpg';
 
-const ClaimInfoSection = ({ classes }) => (
+const ClaimInfoSection = ({ classes, children }) => (
     <div className={classes.root}>
-        <div className={`${classes.stepBox} ${classes.blueStep}`}>
-            <div className={classes.stepHeader}>
-                <div className={`${classes.stepNumber} ${classes.blueNumber}`}>
+        <div className={classes.boxContainer}>
+            <Typography component="h2" className={classes.boxHeader}>
+                <span className={`${classes.stepNumber} ${classes.blueStep}`}>
                     1
-                </div>
-                <div>
-                    <Typography
-                        variant="title"
-                        className={classes.stepTitle}
-                        style={{ color: COLOURS.DARK_BLUE }}
-                    >
-                        Confirm Your Eligibility
-                    </Typography>
-                    <div>
-                        <div className={classes.bulletPoint}>
-                            <span
-                                className={`${classes.bullet} ${classes.blueBullet}`}
-                            />
-                            <Typography
-                                variant="body2"
-                                className={classes.stepText}
-                                style={{ color: COLOURS.LIGHT_MATERIAL_BLUE }}
-                            >
-                                Claim requests must be submitted by a current
-                                employee of the location or its parent company.
-                            </Typography>
-                        </div>
-                        <div className={classes.bulletPoint}>
-                            <span
-                                className={`${classes.bullet} ${classes.blueBullet}`}
-                            />
-                            <Typography
-                                variant="body2"
-                                className={classes.stepText}
-                                style={{ color: COLOURS.LIGHT_MATERIAL_BLUE }}
-                            >
-                                If you&apos;re not an owner or manager, you can
-                                still proceed by providing your
-                                supervisor&apos;s contact information for
-                                verification.
-                            </Typography>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div className={classes.twoColumnGrid}>
-            <div className={`${classes.stepBox} ${classes.purpleStep}`}>
-                <div className={classes.stepHeader}>
-                    <div
-                        className={`${classes.stepNumber} ${classes.purpleNumber}`}
-                    >
-                        2
-                    </div>
-                    <Typography
-                        variant="title"
-                        className={classes.stepTitle}
-                        style={{ color: COLOURS.DARK_PURPLE }}
-                    >
-                        Prove Your Name and Role
-                    </Typography>
-                </div>
-                <Typography
-                    variant="body2"
-                    className={classes.stepText}
-                    style={{ color: COLOURS.PURPLE_TEXT, marginBottom: 16 }}
-                >
-                    <strong>OPTIONS:</strong> Company website showing your name
-                    and role, Employee ID badge, Employment letter, Job
-                    contract, Link to your LinkedIn profile, Business card,
-                    Audit reports.
-                </Typography>
-                <div className={classes.examplesContainer}>
-                    <ExampleImage
-                        src={employeeIdExample}
-                        alt="Example employee ID badge"
-                        label="Employee ID Badge"
-                        borderClass="purpleBorder"
-                        labelColorClass="purpleLabel"
-                    />
-                    <ExampleImage
-                        src={employmentLetterExample}
-                        alt="Example employment letter"
-                        label="Employment Letter"
-                        borderClass="purpleBorder"
-                        labelColorClass="purpleLabel"
-                    />
-                    <ExampleImage
-                        src={businessCardExample}
-                        alt="Example business card"
-                        label="Business Card"
-                        borderClass="purpleBorder"
-                        labelColorClass="purpleLabel"
-                    />
-                </div>
-            </div>
-            <div className={`${classes.stepBox} ${classes.greenStep}`}>
-                <div className={classes.stepHeader}>
-                    <div
-                        className={`${classes.stepNumber} ${classes.greenNumber}`}
-                    >
-                        3
-                    </div>
-                    <Typography
-                        variant="title"
-                        className={classes.stepTitle}
-                        style={{ color: COLOURS.DARK_MATERIAL_GREEN }}
-                    >
-                        Prove Your Company Name and Address
-                    </Typography>
-                </div>
-                <Typography
-                    variant="body2"
-                    className={classes.stepText}
-                    style={{ color: COLOURS.GREEN_TEXT, marginBottom: 8 }}
-                >
-                    <strong>OPTIONS:</strong> Business registration, Business
-                    license, Utility bill, link to company website, link to
-                    company LinkedIn page.
-                </Typography>
-                <div className={classes.noteBox}>
+                </span>
+                <span className={classes.stepTitle}>
+                    Confirm Your Eligibility
+                </span>
+            </Typography>
+            <Typography variant="body2" className={classes.boxDescription}>
+                Confirm that you are eligible to claim this production location,
+                keeping in mind:
+            </Typography>
+            <ul className={classes.boxList}>
+                <li>
                     <Typography
                         variant="body2"
-                        className={classes.stepText}
-                        style={{ color: COLOURS.GREEN_TEXT }}
+                        className={classes.boxDescription}
                     >
-                        <strong>NOTE:</strong> The document must show the same
-                        company name and address as listed on your OS Hub
-                        profile.
+                        Claim requests must be submitted by a current employee
+                        of the location or its parent company
                     </Typography>
-                </div>
-                <div className={classes.examplesContainer}>
-                    <ExampleImage
-                        src={businessRegistrationExample}
-                        alt="Example business registration certificate"
-                        label="Business Registration"
-                        borderClass="greenBorder"
-                        labelColorClass="greenLabel"
-                    />
-                    <ExampleImage
-                        src={businessLicenseExample}
-                        alt="Example business license"
-                        label="Business License"
-                        borderClass="greenBorder"
-                        labelColorClass="greenLabel"
-                    />
-                    <ExampleImage
-                        src={utilityBillExample}
-                        alt="Example utility bill"
-                        label="Utility Bill"
-                        borderClass="greenBorder"
-                        labelColorClass="greenLabel"
-                    />
-                </div>
-            </div>
-        </div>
-        <div className={`${classes.stepBox} ${classes.amberStep}`}>
-            <div style={{ textAlign: 'center' }}>
-                <span className={classes.maxValueBadge}>
-                    <StarIcon style={{ fontSize: 16, marginRight: 4 }} />
-                    Maximum Value
-                </span>
-            </div>
-
-            <div className={classes.stepHeader}>
-                <div className={`${classes.stepNumber} ${classes.amberNumber}`}>
-                    4
-                </div>
-                <Typography
-                    variant="body2"
-                    className={classes.stepText}
-                    style={{ color: COLOURS.DEEP_ORANGE }}
-                >
-                    <strong style={{ fontSize: 20 }}>Add Key Details:</strong>{' '}
-                    Provide information about the production location such as
-                    Certifications, Number of Workers, Contact Information, and
-                    more.
-                </Typography>
-            </div>
-
-            <div className={classes.stepHeader}>
-                <div className={`${classes.stepNumber} ${classes.amberNumber}`}>
-                    5
-                </div>
-                <Typography
-                    variant="body2"
-                    className={classes.stepText}
-                    style={{ color: COLOURS.DEEP_ORANGE }}
-                >
-                    <strong style={{ fontSize: 20 }}>
-                        Get a Credible and Confirmed Profile:
-                    </strong>{' '}
-                    After the claim is approved, you get a credible and
-                    confirmed profile—with a green banner and Claimed badge—that
-                    helps buyers trust and find your company.{' '}
-                    <a
-                        href={ClaimFacilityInfoLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={classes.link}
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
                     >
-                        Learn more about claiming your production location
-                    </a>
-                </Typography>
+                        If you&apos;re not an owner or manager, you can still
+                        proceed by providing your supervisor&apos;s contact
+                        information for verification
+                    </Typography>
+                </li>
+            </ul>
+        </div>
+        <hr className={classes.separator} />
+        <div className={classes.boxContainer}>
+            <Typography component="h2" className={classes.boxHeader}>
+                <span className={`${classes.stepNumber} ${classes.purpleStep}`}>
+                    2
+                </span>
+                <span className={classes.stepTitle}>
+                    Prove Your Name and Role
+                </span>
+            </Typography>
+            <Typography variant="body2" className={classes.boxDescription}>
+                Provide the document about your name and role,{' '}
+                <strong>OPTIONS:</strong>
+            </Typography>
+            <ul className={classes.boxList}>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Company website showing your name and role
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Employee ID badge or employment letter
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Job contract or business card
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Link to your LinkedIn profile
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Audit reports
+                    </Typography>
+                </li>
+            </ul>
+            <div className={classes.boxExamplesContainer}>
+                <ExampleImage
+                    src={employeeIdExample}
+                    alt="Example employee ID badge"
+                    label="Employee ID Badge"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
+                />
+                <ExampleImage
+                    src={employmentLetterExample}
+                    alt="Example employment letter"
+                    label="Employment Letter"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
+                />
+                <ExampleImage
+                    src={businessCardExample}
+                    alt="Example business card"
+                    label="Business Card"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
+                />
             </div>
         </div>
-        <div className={classes.warningBox}>
-            <InfoIcon className={classes.warningIcon} />
-            <Typography variant="subheading" style={{ fontSize: 16 }}>
-                <strong style={{ color: COLOURS.MATERIAL_RED, fontSize: 16 }}>
-                    IMPORTANT!
-                </strong>{' '}
-                Any documentation appearing to be forged or counterfeit may
-                result in your claim request being denied.
+        <hr className={classes.separator} />
+        <div className={classes.boxContainer}>
+            <Typography component="h2" className={classes.boxHeader}>
+                <span className={`${classes.stepNumber} ${classes.greenStep}`}>
+                    3
+                </span>
+                <span className={classes.stepTitle}>
+                    Prove Your Company Name and Address
+                </span>
+            </Typography>
+            <Typography variant="body2" className={classes.boxDescription}>
+                Provide the document about your company name and address,{' '}
+                <strong>OPTIONS:</strong>
+            </Typography>
+            <ul className={classes.boxList}>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Business registration or business license
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Utility bill
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Link to company website or LinkedIn page
+                    </Typography>
+                </li>
+            </ul>
+            <Typography variant="body2" className={classes.boxDescription}>
+                <strong>NOTE:</strong> The document must show the same company
+                name and address as listed on your OS Hub profile.
+            </Typography>
+            <div className={classes.boxExamplesContainer}>
+                <ExampleImage
+                    src={businessRegistrationExample}
+                    alt="Example business registration certificate"
+                    label="Business Registration"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
+                />
+                <ExampleImage
+                    src={businessLicenseExample}
+                    alt="Example business license"
+                    label="Business License"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
+                />
+                <ExampleImage
+                    src={utilityBillExample}
+                    alt="Example utility bill"
+                    label="Utility Bill"
+                    labelColorClass="defaultLabel"
+                    borderClass="noBorder"
+                />
+            </div>
+        </div>
+        <hr className={classes.separator} />
+        <div className={classes.boxContainer}>
+            <Typography component="h2" className={classes.boxHeader}>
+                <span className={`${classes.stepNumber} ${classes.amberStep}`}>
+                    4
+                </span>
+                <span className={classes.stepTitle}>Add Key Details</span>
+                <DialogTooltip
+                    text="For maximum value, add key details to your production location to help others find you online."
+                    childComponent={
+                        <span className={classes.maxValueBadge}>★</span>
+                    }
+                />
+            </Typography>
+            <Typography variant="body2" className={classes.boxDescription}>
+                Provide information about the production location, such as:
+            </Typography>
+            <ul className={classes.boxList}>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Certifications
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Number of Workers
+                    </Typography>
+                </li>
+                <li>
+                    <Typography
+                        variant="body2"
+                        className={classes.boxDescription}
+                    >
+                        Contact Information and more.
+                    </Typography>
+                </li>
+            </ul>
+        </div>
+        <hr className={classes.separator} />
+        <div className={classes.boxContainer}>
+            <Typography component="h2" className={classes.boxHeader}>
+                <span className={`${classes.stepNumber} ${classes.amberStep}`}>
+                    5
+                </span>
+                <span className={classes.stepTitle}>
+                    Get a Credible and Confirmed Profile
+                </span>
+                <DialogTooltip
+                    text="After the claim is approved, you get a credible and confirmed profile—with a green banner and Claimed badge—that helps others trust and find your company."
+                    childComponent={
+                        <span className={classes.maxValueBadge}>★</span>
+                    }
+                />
+            </Typography>
+            <Typography variant="body2" className={classes.boxDescription}>
+                After the claim is approved, you get a credible and confirmed
+                profile—with a green banner and Claimed badge—that helps buyers
+                trust and find your company.{' '}
+                <a
+                    href={ClaimFacilityInfoLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={classes.link}
+                >
+                    Learn more about claiming your production location.
+                </a>
             </Typography>
         </div>
+        <div
+            className={`${classes.boxContainer} ${classes.boxWarningContainer}`}
+        >
+            <Typography variant="body2" className={classes.boxWarningText}>
+                <span className={classes.boxWarningTextIcon}>
+                    <InfoIcon className={classes.warningIcon} />
+                    <strong>IMPORTANT!</strong>
+                </span>
+                <span>
+                    &nbsp;Any documentation appearing to be forged or
+                    counterfeit may result in your claim request being denied.
+                </span>
+            </Typography>
+        </div>
+        <div>{children}</div>
     </div>
 );
 
 ClaimInfoSection.propTypes = {
     classes: PropTypes.object.isRequired,
+    children: PropTypes.node.isRequired,
 };
 
 export default withStyles(claimInfoStyles)(ClaimInfoSection);
