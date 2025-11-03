@@ -80,6 +80,28 @@ const ProfileStep = ({
         isCompanyInformationVisible,
         setIsCompanyInformationVisible,
     ] = useState(true);
+    console.log({
+        isOverviewVisible,
+        isCompanyInformationVisible,
+    });
+
+    const [
+        isOperationsCapabilitiesVisible,
+        setIsOperationsCapabilitiesVisible,
+    ] = useState(true);
+    console.log({
+        isOperationsCapabilitiesVisible,
+        setIsOperationsCapabilitiesVisible,
+    });
+
+    const [
+        isCompliancePartnershipsVisible,
+        setIsCompliancePartnershipsVisible,
+    ] = useState(true);
+    console.log({
+        isCompliancePartnershipsVisible,
+        setIsCompliancePartnershipsVisible,
+    });
 
     return (
         <div>
@@ -581,6 +603,137 @@ const ProfileStep = ({
                     </div>
                 </section>
             )}
+            <hr className={classes.separator} />
+            <div className={classes.sectionContainer}>
+                <div className={classes.sectionTitleContainer}>
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
+                    >
+                        <div
+                            className={`${classes.sectionIconWrapper} ${classes.blueBg}`}
+                        >
+                            <Build
+                                className={`${classes.sectionIcon} ${classes.blueIcon}`}
+                            />
+                        </div>
+                        Operations & Capabilities
+                    </Typography>
+                    <div className={classes.switchContainer}>
+                        <Switch
+                            checked={isOperationsCapabilitiesVisible}
+                            onChange={(_, checked) => {
+                                setIsOperationsCapabilitiesVisible(checked);
+                            }}
+                            color="primary"
+                        />
+                    </div>
+                </div>
+                <Typography className={classes.sectionDescription}>
+                    Production and operations details for your location.
+                </Typography>
+            </div>
+
+            {isOperationsCapabilitiesVisible && (
+                <section>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label="Industry / Sectors"
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <StyledSelect
+                            id="sectors"
+                            name="sectors"
+                            aria-label="Select sector"
+                            isMulti
+                            options={
+                                mapDjangoChoiceTuplesToSelectOptions(
+                                    mockedSectors,
+                                ) || []
+                            }
+                            value={formData.sectors || []}
+                            onChange={values => handleChange('sectors', values)}
+                            placeholder="Select sectors..."
+                            styles={getSelectStyles(
+                                touched.sectors && !!errors.sectors,
+                                selectStyles,
+                            )}
+                        />
+                        {touched.sectors && errors.sectors && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText text={errors.sectors} />
+                            </div>
+                        )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Location Type(s)
+                                    <Tooltip
+                                        title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        {enabledTaxonomy ? (
+                            <StyledSelect
+                                id="location_type"
+                                name="location-type"
+                                aria-label="Location type"
+                                isMulti
+                                options={mapFacilityTypeOptions(
+                                    processingTypeOptions || [],
+                                    formData.facilityProductionTypes || [],
+                                )}
+                                value={formData.facilityType || []}
+                                onChange={values =>
+                                    handleChange('facilityType', values)
+                                }
+                                placeholder="Select location type(s)"
+                                styles={getSelectStyles(
+                                    touched.facilityType &&
+                                        !!errors.facilityType,
+                                    selectStyles,
+                                )}
+                            />
+                        ) : (
+                            <StyledSelect
+                                creatable
+                                isMulti
+                                name="location-type"
+                                aria-label="Location type"
+                                value={formData.facilityType || []}
+                                onChange={values =>
+                                    handleChange('facilityType', values)
+                                }
+                                placeholder="Enter location type(s)"
+                                styles={getSelectStyles(
+                                    touched.facilityType &&
+                                        !!errors.facilityType,
+                                    selectStyles,
+                                )}
+                            />
+                        )}
+                    </div>
+                </section>
+            )}
             <br />
             <br />
             <Grid item xs={12}>
@@ -589,139 +742,10 @@ const ProfileStep = ({
                     className={classes.expansionPanel}
                     defaultExpanded
                 >
-                    <ExpansionPanelSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        className={classes.expansionPanelSummary}
-                    >
-                        <div className={classes.sectionHeader}>
-                            <div
-                                className={`${classes.sectionIconWrapper} ${classes.blueBg}`}
-                            >
-                                <Build
-                                    className={`${classes.sectionIcon} ${classes.blueIcon}`}
-                                />
-                            </div>
-                            <div className={classes.sectionTitleWrapper}>
-                                <Typography className={classes.sectionTitle}>
-                                    Operations & Capabilities
-                                </Typography>
-                                <Typography
-                                    className={classes.sectionDescription}
-                                >
-                                    Production and operations details for your
-                                    location
-                                </Typography>
-                            </div>
-                        </div>
-                    </ExpansionPanelSummary>
                     <ExpansionPanelDetails
                         className={classes.expansionPanelDetails}
                     >
                         <Grid container spacing={24}>
-                            {/* Sector */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Industry / Sectors
-                                        </Typography>
-                                    </div>
-                                    <StyledSelect
-                                        id="sectors"
-                                        name="sectors"
-                                        aria-label="Select sector"
-                                        isMulti
-                                        options={
-                                            mapDjangoChoiceTuplesToSelectOptions(
-                                                mockedSectors,
-                                            ) || []
-                                        }
-                                        value={formData.sectors || []}
-                                        onChange={values =>
-                                            handleChange('sectors', values)
-                                        }
-                                        placeholder="Select sectors..."
-                                        styles={selectStyles}
-                                    />
-                                </div>
-                            </Grid>
-
-                            {/* Location Type */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Location Type(s)
-                                        </Typography>
-                                        <Tooltip
-                                            title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    {enabledTaxonomy ? (
-                                        <StyledSelect
-                                            id="location_type"
-                                            name="location-type"
-                                            aria-label="Location type"
-                                            isMulti
-                                            options={mapFacilityTypeOptions(
-                                                processingTypeOptions || [],
-                                                formData.facilityProductionTypes ||
-                                                    [],
-                                            )}
-                                            value={formData.facilityType || []}
-                                            onChange={values =>
-                                                handleChange(
-                                                    'facilityType',
-                                                    values,
-                                                )
-                                            }
-                                            placeholder="Select location type(s)"
-                                            styles={selectStyles}
-                                        />
-                                    ) : (
-                                        <StyledSelect
-                                            creatable
-                                            isMulti
-                                            name="location-type"
-                                            aria-label="Location type"
-                                            value={formData.facilityType || []}
-                                            onChange={values =>
-                                                handleChange(
-                                                    'facilityType',
-                                                    values,
-                                                )
-                                            }
-                                            placeholder="Enter location type(s)"
-                                            styles={selectStyles}
-                                        />
-                                    )}
-                                </div>
-                            </Grid>
-
                             {/* Processing Type */}
                             <Grid item xs={12} md={6}>
                                 <div className={classes.field}>
