@@ -14,7 +14,6 @@ import Nature from '@material-ui/icons/Nature';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
-import Star from '@material-ui/icons/Star';
 import IconButton from '@material-ui/core/IconButton';
 import Switch from '@material-ui/core/Switch';
 import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
@@ -1179,61 +1178,41 @@ const ProfileStep = ({
                             }
                         />
                     </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label="Certifications / Standards / Regulations"
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <StyledSelect
+                            id="certifications"
+                            name="certifications"
+                            aria-label="Certifications"
+                            isMulti
+                            options={CERTIFICATIONS_OPTIONS}
+                            value={formData.facilityCertifications || []}
+                            onChange={values =>
+                                handleChange('facilityCertifications', values)
+                            }
+                            placeholder="Select certifications..."
+                            styles={getSelectStyles(
+                                touched.facilityCertifications &&
+                                    !!errors.facilityCertifications,
+                                selectStyles,
+                            )}
+                        />
+                        <DialogTooltip
+                            text={BETA_TOOLTIP_TEXT}
+                            childComponent={
+                                <span className={classes.betaBadge}>BETA</span>
+                            }
+                        />
+                    </div>
                 </section>
             )}
 
             <br />
             <br />
             <Grid item xs={12}>
-                {/* Section 4: Compliance & Partnerships */}
-                <ExpansionPanel
-                    className={classes.expansionPanel}
-                    defaultExpanded
-                >
-                    <ExpansionPanelDetails
-                        className={classes.expansionPanelDetails}
-                    >
-                        {/* Certifications */}
-                        <div className={classes.field}>
-                            <div className={classes.fieldLabel}>
-                                <Typography
-                                    variant="body2"
-                                    component="label"
-                                    style={{ fontSize: '16px' }}
-                                >
-                                    Certifications / Standards / Regulations
-                                </Typography>
-                                <Tooltip
-                                    title={BETA_TOOLTIP_TEXT}
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <div className={classes.betaLabel}>
-                                        <Star className={classes.betaIcon} />
-                                        BETA
-                                    </div>
-                                </Tooltip>
-                            </div>
-                            <StyledSelect
-                                id="certifications"
-                                name="certifications"
-                                aria-label="Certifications"
-                                isMulti
-                                options={CERTIFICATIONS_OPTIONS}
-                                value={formData.facilityCertifications || []}
-                                onChange={values =>
-                                    handleChange(
-                                        'facilityCertifications',
-                                        values,
-                                    )
-                                }
-                                placeholder="Select certifications..."
-                                styles={selectStyles}
-                            />
-                        </div>
-                    </ExpansionPanelDetails>
-                </ExpansionPanel>
-
                 {/* Section 5: Environmental Data */}
                 <ExpansionPanel
                     className={classes.expansionPanel}
