@@ -27,6 +27,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         placeholder = '',
         name = 'select',
         isMulti = false,
+        // eslint-disable-next-line no-unused-vars
         creatable = false,
         // eslint-disable-next-line no-unused-vars
         styles,
