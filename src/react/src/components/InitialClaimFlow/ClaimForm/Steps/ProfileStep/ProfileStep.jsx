@@ -963,6 +963,73 @@ const ProfileStep = ({
                                 </div>
                             )}
                     </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Minimum Order Quantity
+                                    <Tooltip
+                                        title="Smallest order quantity this production location will accept from customers"
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.facilityMinimumOrderQuantity || ''}
+                            onChange={e =>
+                                handleChange(
+                                    'facilityMinimumOrderQuantity',
+                                    e.target.value,
+                                )
+                            }
+                            onBlur={handleBlur}
+                            placeholder="e.g., 1000 units"
+                            error={
+                                touched.facilityMinimumOrderQuantity &&
+                                !!errors.facilityMinimumOrderQuantity
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.facilityMinimumOrderQuantity &&
+                            errors.facilityMinimumOrderQuantity && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={
+                                            errors.facilityMinimumOrderQuantity
+                                        }
+                                    />
+                                </div>
+                            )}
+                        <DialogTooltip
+                            text={BETA_TOOLTIP_TEXT}
+                            childComponent={
+                                <span className={classes.betaBadge}>BETA</span>
+                            }
+                        />
+                    </div>
                 </section>
             )}
             <br />
@@ -977,84 +1044,6 @@ const ProfileStep = ({
                         className={classes.expansionPanelDetails}
                     >
                         <Grid container spacing={24}>
-                            {/* Minimum Order Quantity */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Minimum Order Quantity
-                                        </Typography>
-                                        <Tooltip
-                                            title={BETA_TOOLTIP_TEXT}
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <div className={classes.betaLabel}>
-                                                <Star
-                                                    className={classes.betaIcon}
-                                                />
-                                                BETA
-                                            </div>
-                                        </Tooltip>
-                                        <Tooltip
-                                            title="Smallest order quantity this production location will accept from customers"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={
-                                            formData.facilityMinimumOrderQuantity ||
-                                            ''
-                                        }
-                                        onChange={e =>
-                                            handleChange(
-                                                'facilityMinimumOrderQuantity',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="e.g., 1000 units"
-                                        error={
-                                            touched.facilityMinimumOrderQuantity &&
-                                            !!errors.facilityMinimumOrderQuantity
-                                        }
-                                        helperText={
-                                            touched.facilityMinimumOrderQuantity &&
-                                            errors.facilityMinimumOrderQuantity && (
-                                                <InputErrorText
-                                                    text={
-                                                        errors.facilityMinimumOrderQuantity
-                                                    }
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-
                             {/* Average Lead Time */}
                             <Grid item xs={12} md={6}>
                                 <div className={classes.field}>
