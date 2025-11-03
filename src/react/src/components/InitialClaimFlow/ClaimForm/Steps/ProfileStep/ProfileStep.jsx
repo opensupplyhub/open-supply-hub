@@ -73,27 +73,20 @@ const ProfileStep = ({
         isCompanyInformationVisible,
         setIsCompanyInformationVisible,
     ] = useState(true);
-    console.log({
-        isOverviewVisible,
-        isCompanyInformationVisible,
-    });
-
     const [
         isOperationsCapabilitiesVisible,
         setIsOperationsCapabilitiesVisible,
     ] = useState(true);
-    console.log({
-        isOperationsCapabilitiesVisible,
-        setIsOperationsCapabilitiesVisible,
-    });
-
     const [
         isCompliancePartnershipsVisible,
         setIsCompliancePartnershipsVisible,
     ] = useState(true);
-    console.log({
-        isCompliancePartnershipsVisible,
-        setIsCompliancePartnershipsVisible,
+
+    const getBetaSelectStyles = (isErrorState, extendedStyles) => ({
+        ...getSelectStyles(isErrorState, extendedStyles),
+        indicatorsContainer: () => ({
+            display: 'none',
+        }),
     });
 
     return (
@@ -1159,7 +1152,7 @@ const ProfileStep = ({
                                 handleChange('facilityAffiliations', values)
                             }
                             placeholder="Select affiliations..."
-                            styles={getSelectStyles(
+                            styles={getBetaSelectStyles(
                                 touched.facilityAffiliations &&
                                     !!errors.facilityAffiliations,
                                 selectStyles,
@@ -1188,7 +1181,7 @@ const ProfileStep = ({
                                 handleChange('facilityCertifications', values)
                             }
                             placeholder="Select certifications..."
-                            styles={getSelectStyles(
+                            styles={getBetaSelectStyles(
                                 touched.facilityCertifications &&
                                     !!errors.facilityCertifications,
                                 selectStyles,
