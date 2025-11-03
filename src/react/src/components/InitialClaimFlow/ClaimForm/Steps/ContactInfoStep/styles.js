@@ -56,7 +56,7 @@ const contactInfoStepStyles = theme =>
         }),
         sectionTitleContainer: Object.freeze({
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-start',
             alignItems: 'center',
             marginTop: `20px`,
         }),
@@ -94,6 +94,9 @@ const contactInfoStepStyles = theme =>
             fontWeight: theme.typography.fontWeightSemiBold,
             lineHeight: '22px',
             padding: '16px',
+        }),
+        switchContainer: Object.freeze({
+            margin: '0 0 5px 0',
         }),
     });
 

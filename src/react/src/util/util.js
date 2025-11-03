@@ -1638,7 +1638,7 @@ export const getLastPathParameter = url => {
 
 export const isRequiredFieldValid = val => !isEmpty(trim(val));
 
-export const getSelectStyles = (isErrorState = false) => ({
+export const getSelectStyles = (isErrorState = false, extendedStyles = {}) => ({
     control: (provided, state) => {
         let borderColor;
         if (isErrorState) {
@@ -1669,6 +1669,15 @@ export const getSelectStyles = (isErrorState = false) => ({
         ...provided,
         opacity: 0.7,
         color: isErrorState ? COLOURS.RED : provided.color,
+        ...extendedStyles,
+    }),
+    option: provided => ({
+        ...provided,
+        ...extendedStyles,
+    }),
+    singleValue: provided => ({
+        ...provided,
+        ...extendedStyles,
     }),
 });
 

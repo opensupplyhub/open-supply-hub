@@ -1,5 +1,5 @@
 import React from 'react';
-import { string, bool, shape } from 'prop-types';
+import { string, bool, shape, any } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import RequiredAsterisk from '../../../RequiredAsterisk';
@@ -17,7 +17,7 @@ FormFieldTitle.defaultProps = {
 };
 
 FormFieldTitle.propTypes = {
-    label: string.isRequired,
+    label: any.isRequired,
     required: bool,
     classes: shape({
         title: string.isRequired,

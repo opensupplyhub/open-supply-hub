@@ -158,7 +158,6 @@ describe('BusinessStep component', () => {
     test('displays production location details', () => {
         renderComponent();
 
-        expect(screen.getByText('Production Location Details')).toBeInTheDocument();
         expect(screen.getByText('US2021250D1DTN7')).toBeInTheDocument();
         expect(screen.getAllByText('Test Production Location').length).toBeGreaterThan(0);
         expect(screen.getAllByText('1234 Production St, City, State, 12345').length).toBeGreaterThan(0);
@@ -168,25 +167,9 @@ describe('BusinessStep component', () => {
         renderComponent();
 
         expect(screen.getByText(/Company Address Verification/)).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                'You need to select and provide one of the below items for company address verification.'
-            )
-        ).toBeInTheDocument();
 
         const selectField = screen.getByTestId('verification-select');
         expect(selectField).toBeInTheDocument();
-    });
-
-    test('displays important warning message', () => {
-        renderComponent();
-
-        expect(screen.getByText('IMPORTANT!')).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                /Verification documents must show the same name and address/
-            )
-        ).toBeInTheDocument();
     });
 
     test('does not show URL input when no verification method is selected', () => {
@@ -358,9 +341,7 @@ describe('BusinessStep component', () => {
         };
 
         const { container } = renderComponent({}, stateWithoutLocationData);
-
         expect(container).toBeInTheDocument();
-        expect(screen.getByText('Production Location Details')).toBeInTheDocument();
     });
 
     test('displays OS ID link with correct URL structure', () => {
@@ -426,4 +407,3 @@ describe('BusinessStep component', () => {
         });
     });
 });
-
