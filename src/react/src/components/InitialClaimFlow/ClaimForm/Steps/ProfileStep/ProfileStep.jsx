@@ -847,6 +847,59 @@ const ProfileStep = ({
                             )}
                         />
                     </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Number of Workers
+                                    <Tooltip
+                                        title="Total number of employees working at this production location, can be a number or a range (e.g., 100, 100-150)"
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.numberOfWorkers || ''}
+                            onChange={e =>
+                                handleChange('numberOfWorkers', e.target.value)
+                            }
+                            onBlur={handleBlur}
+                            placeholder="e.g., 500"
+                            error={
+                                touched.numberOfWorkers &&
+                                !!errors.numberOfWorkers
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.numberOfWorkers && errors.numberOfWorkers && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText text={errors.numberOfWorkers} />
+                            </div>
+                        )}
+                    </div>
                 </section>
             )}
             <br />
@@ -861,67 +914,6 @@ const ProfileStep = ({
                         className={classes.expansionPanelDetails}
                     >
                         <Grid container spacing={24}>
-                            {/* Number of Workers */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Number of Workers
-                                        </Typography>
-                                        <Tooltip
-                                            title="Total number of employees working at this production location"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.numberOfWorkers || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'numberOfWorkers',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="e.g., 500"
-                                        error={
-                                            touched.numberOfWorkers &&
-                                            !!errors.numberOfWorkers
-                                        }
-                                        helperText={
-                                            touched.numberOfWorkers &&
-                                            errors.numberOfWorkers && (
-                                                <InputErrorText
-                                                    text={
-                                                        errors.numberOfWorkers
-                                                    }
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-
                             {/* Female Workers */}
                             <Grid item xs={12} md={6}>
                                 <div className={classes.field}>
