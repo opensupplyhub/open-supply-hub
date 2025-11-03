@@ -255,11 +255,6 @@ const BusinessStep = ({
                         InputProps={{
                             classes: {
                                 notchedOutline: classes.notchedOutlineStyles,
-                                input: `
-                                                    ${
-                                                        isCompanyAddressVerificationUrlError &&
-                                                        classes.errorInput
-                                                    }`,
                             },
                         }}
                         placeholder={getUrlPlaceholder(

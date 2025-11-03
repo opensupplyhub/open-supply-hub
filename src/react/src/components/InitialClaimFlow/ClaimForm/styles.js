@@ -122,28 +122,61 @@ export const claimFormStyles = theme =>
         form: Object.freeze({
             padding: '0',
         }),
+        dialogTitle: Object.freeze({
+            fontSize: '36px',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+            display: 'flex',
+            alignItems: 'center',
+            textAlign: 'center',
+            justifyContent: 'center',
+        }),
+        dialogBodyText: Object.freeze({
+            textAlign: 'center',
+            fontSize: '18px',
+        }),
+        dialogActions: Object.freeze({
+            justifyContent: 'center',
+            padding: theme.spacing.unit * 2,
+            gap: '24px',
+            [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+                gap: '12px',
+            },
+        }),
+        backButton: Object.freeze({
+            width: '200px',
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            border: '1px solid #0D1128',
+            [theme.breakpoints.down('sm')]: {
+                width: '100%',
+            },
+        }),
+        continueButton: Object.freeze({
+            height: '49px',
+            borderRadius: 0,
+            textTransform: 'none',
+            backgroundColor: theme.palette.action.main,
+            color: theme.palette.common.black,
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            width: '200px',
+            boxShadow: 'none',
+            '&:hover': {
+                backgroundColor: theme.palette.action.dark,
+            },
+            '&:disabled': {
+                backgroundColor: COLOURS.GREY,
+                color: COLOURS.DARK_GREY,
+                cursor: 'not-allowed',
+            },
+            [theme.breakpoints.down('sm')]: {
+                width: '100%',
+            },
+        }),
     });
 
-export const popupDialogStyles = Object.freeze({
-    containerStyles: Object.freeze({
-        padding: '35px',
-    }),
-    titleStyles: Object.freeze({
-        margin: 'auto',
-        textAlign: 'center',
-        color: COLOURS.NEAR_BLACK,
-        paddingBottom: '10px',
-        fontSize: '2.125rem',
-        fontWeight: '400',
-        lineHeight: '1.20588em',
-    }),
-    contentStyles: Object.freeze({
-        fontSize: '20px',
-        margin: 'auto',
-        textAlign: 'center',
-        paddingTop: '10px',
-    }),
-    actionStyles: Object.freeze({
-        justifyContent: 'center',
-    }),
-});
+export default claimFormStyles;

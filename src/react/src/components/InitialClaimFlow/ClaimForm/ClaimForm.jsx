@@ -10,6 +10,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
+import DialogTitle from '@material-ui/core/DialogTitle';
 import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
@@ -44,7 +45,7 @@ import {
     STEP_ICONS,
 } from './constants';
 import { getValidationSchemaForStep } from './validationSchemas';
-import { claimFormStyles, popupDialogStyles } from './styles';
+import { claimFormStyles } from './styles';
 import {
     isFirstStep,
     isLastStep,
@@ -58,7 +59,6 @@ import {
     useRequireIntroAccess,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
-import COLOURS from '../../../util/COLOURS';
 
 const iconMapping = {
     Security,
@@ -354,49 +354,39 @@ const ClaimForm = ({
                     </Paper>
                 </form>
             </div>
-
             <Dialog open={dialogIsOpen}>
-                {dialogIsOpen && (
-                    <div style={popupDialogStyles.containerStyles}>
-                        <DialogContent>
-                            <Typography
-                                variant="title"
-                                style={popupDialogStyles.titleStyles}
-                            >
-                                Thank you for submitting your claim request!
-                            </Typography>
-                            <Typography style={popupDialogStyles.contentStyles}>
-                                You will receive a notification once it has been
-                                reviewed.
-                            </Typography>
-                            <hr
-                                style={{
-                                    color: COLOURS.GREY,
-                                    backgroundColor: COLOURS.GREY,
-                                    height: 1,
-                                }}
-                            />
-                        </DialogContent>
-                        <DialogActions style={popupDialogStyles.actionStyles}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => history.push('/claimed')}
-                                className={classes.popupButtonStyles}
-                            >
-                                View My Approved Claims
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => history.push('/')}
-                                className={classes.popupButtonStyles}
-                            >
-                                Search OS Hub
-                            </Button>
-                        </DialogActions>
-                    </div>
-                )}
+                <DialogTitle className={classes.dialogTitle}>
+                    <Typography component="h3" className={classes.dialogTitle}>
+                        Thank you for submitting your claim request!
+                    </Typography>
+                </DialogTitle>
+                <DialogContent>
+                    <Typography
+                        variant="body1"
+                        className={classes.dialogBodyText}
+                    >
+                        You will receive a notification once it has been
+                        reviewed.
+                    </Typography>
+                </DialogContent>
+                <DialogActions className={classes.dialogActions}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => history.push('/claimed')}
+                        className={classes.backButton}
+                    >
+                        To My Claims
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => history.push('/')}
+                        className={classes.continueButton}
+                    >
+                        Search OS Hub
+                    </Button>
+                </DialogActions>
             </Dialog>
         </div>
     );
