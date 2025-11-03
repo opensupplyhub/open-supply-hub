@@ -4,6 +4,8 @@ const stepperStyles = () => ({
     stepperRoot: Object.freeze({
         backgroundColor: 'transparent',
         padding: 0,
+        display: 'flex',
+        justifyContent: 'flex-start',
     }),
     stepIconContainer: Object.freeze({
         '& > svg': {
