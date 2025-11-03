@@ -62,7 +62,7 @@ export const profileStepStyles = theme =>
             position: 'absolute',
             top: 57,
             right: 13,
-            zIndex: 2,
+            zIndex: 1,
         }),
         textareaFieldContainer: Object.freeze({
             position: 'relative',
@@ -73,6 +73,10 @@ export const profileStepStyles = theme =>
         }),
         multilineInputStyles: Object.freeze({
             padding: '0',
+        }),
+        emissionsEstimateContainer: Object.freeze({
+            marginTop: `40px`,
+            maxWidth: '1252px',
         }),
         // OLD STYLES
         expansionPanel: Object.freeze({

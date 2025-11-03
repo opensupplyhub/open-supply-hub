@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { array, func, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Business from '@material-ui/icons/Business';
 import Build from '@material-ui/icons/Build';
-import Nature from '@material-ui/icons/Nature';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
@@ -1210,50 +1204,11 @@ const ProfileStep = ({
                 </section>
             )}
 
-            <br />
-            <br />
-            <Grid item xs={12}>
-                {/* Section 5: Environmental Data */}
-                <ExpansionPanel
-                    className={classes.expansionPanel}
-                    defaultExpanded
-                >
-                    <ExpansionPanelSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        className={classes.expansionPanelSummary}
-                    >
-                        <div className={classes.sectionHeader}>
-                            <div
-                                className={`${classes.sectionIconWrapper} ${classes.greenBg}`}
-                            >
-                                <Nature
-                                    className={`${classes.sectionIcon} ${classes.greenIcon}`}
-                                />
-                            </div>
-                            <div className={classes.sectionTitleWrapper}>
-                                <Typography className={classes.sectionTitle}>
-                                    Environmental Data
-                                </Typography>
-                                <Typography
-                                    className={classes.sectionDescription}
-                                >
-                                    Emissions estimates and energy consumption
-                                    data
-                                </Typography>
-                            </div>
-                        </div>
-                    </ExpansionPanelSummary>
-                    <ExpansionPanelDetails
-                        className={classes.expansionPanelDetails}
-                    >
-                        <ClaimEmissionsEstimate
-                            onValidationChange={
-                                setClaimEmissionsEstimateHasErrors
-                            }
-                        />
-                    </ExpansionPanelDetails>
-                </ExpansionPanel>
-            </Grid>
+            <div className={classes.emissionsEstimateContainer}>
+                <ClaimEmissionsEstimate
+                    onValidationChange={setClaimEmissionsEstimateHasErrors}
+                />
+            </div>
         </div>
     );
 };
