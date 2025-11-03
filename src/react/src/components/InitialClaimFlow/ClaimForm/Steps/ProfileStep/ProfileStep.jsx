@@ -20,7 +20,6 @@ import Switch from '@material-ui/core/Switch';
 import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
-import InputSection from '../../../../InputSection';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import ClaimEmissionsEstimate from '../../ClaimEmissionsEstimate/ClaimEmissionsEstimate';
@@ -29,13 +28,15 @@ import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
+    getSelectStyles,
 } from '../../../../../util/util';
 import {
     BETA_TOOLTIP_TEXT,
     AFFILIATIONS_OPTIONS,
     CERTIFICATIONS_OPTIONS,
 } from './constants';
-import { profileStepStyles, selectStyles } from './styles';
+import { profileStepStyles } from './styles';
+import { selectStyles } from '../../styles';
 
 const ProfileStep = ({
     classes,
@@ -75,6 +76,10 @@ const ProfileStep = ({
     }, [formData.sectors]);
 
     const [isOverviewVisible, setIsOverviewVisible] = useState(true);
+    const [
+        isCompanyInformationVisible,
+        setIsCompanyInformationVisible,
+    ] = useState(true);
 
     return (
         <div>
@@ -369,218 +374,216 @@ const ProfileStep = ({
                     </div>
                 </section>
             )}
-
+            <hr className={classes.separator} />
+            <div className={classes.sectionContainer}>
+                <div className={classes.sectionTitleContainer}>
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
+                    >
+                        <div
+                            className={`${classes.sectionIconWrapper} ${classes.amberBg}`}
+                        >
+                            <Business
+                                className={`${classes.sectionIcon} ${classes.amberIcon}`}
+                            />
+                        </div>
+                        Company Information
+                    </Typography>
+                    <div className={classes.switchContainer}>
+                        <Switch
+                            checked={isCompanyInformationVisible}
+                            onChange={(_, checked) => {
+                                setIsCompanyInformationVisible(checked);
+                            }}
+                            color="primary"
+                        />
+                    </div>
+                </div>
+                <Typography className={classes.sectionDescription}>
+                    Parent company and office information (if office is
+                    different from production location).
+                </Typography>
+            </div>
+            {isCompanyInformationVisible && (
+                <section>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label="Parent Company Name / Supplier Group"
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <StyledSelect
+                            id="parentCompanyName"
+                            name="parentCompanyName"
+                            aria-label="Parent company name"
+                            options={parentCompanyOptions || []}
+                            value={formData.parentCompanyName || ''}
+                            styles={getSelectStyles(
+                                touched.parentCompanyName &&
+                                    !!errors.parentCompanyName,
+                                selectStyles,
+                            )}
+                            onChange={option =>
+                                handleChange(
+                                    'parentCompanyName',
+                                    option?.value || '',
+                                )
+                            }
+                            placeholder="Select parent company..."
+                        />
+                        {touched.parentCompanyName && errors.parentCompanyName && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText
+                                    text={errors.parentCompanyName}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Office Name
+                                    <Tooltip
+                                        title="Name of the corporate office or headquarters"
+                                        placement="top"
+                                        classes={{ tooltip: classes.tooltip }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.officeOfficialName || ''}
+                            onChange={e =>
+                                handleChange(
+                                    'officeOfficialName',
+                                    e.target.value,
+                                )
+                            }
+                            onBlur={handleBlur}
+                            placeholder="Office name"
+                            error={
+                                touched.officeOfficialName &&
+                                !!errors.officeOfficialName
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.officeOfficialName &&
+                            errors.officeOfficialName && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.officeOfficialName}
+                                    />
+                                </div>
+                            )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Office Address
+                                    <Tooltip
+                                        title="Physical address of the office location"
+                                        placement="top"
+                                        classes={{ tooltip: classes.tooltip }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.officeAddress || ''}
+                            onChange={e =>
+                                handleChange('officeAddress', e.target.value)
+                            }
+                            onBlur={handleBlur}
+                            placeholder="Office address"
+                            error={
+                                touched.officeAddress && !!errors.officeAddress
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.officeAddress && errors.officeAddress && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText text={errors.officeAddress} />
+                            </div>
+                        )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label="Office Country"
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <StyledSelect
+                            id="officeCountryCode"
+                            name="officeCountryCode"
+                            aria-label="Office country"
+                            isMulti={false}
+                            options={countryOptions || []}
+                            onChange={option =>
+                                handleChange(
+                                    'officeCountryCode',
+                                    option?.value || '',
+                                )
+                            }
+                            placeholder="Select country..."
+                            styles={getSelectStyles(
+                                touched.officeCountryCode &&
+                                    !!errors.officeCountryCode,
+                                selectStyles,
+                            )}
+                        />
+                        {touched.officeCountryCode && errors.officeCountryCode && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText
+                                    text={errors.officeCountryCode}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
             <br />
             <br />
             <Grid item xs={12}>
-                {/* Section 2: Company Information */}
-                <ExpansionPanel
-                    className={classes.expansionPanel}
-                    defaultExpanded
-                >
-                    <ExpansionPanelSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        className={classes.expansionPanelSummary}
-                    >
-                        <div className={classes.sectionHeader}>
-                            <div
-                                className={`${classes.sectionIconWrapper} ${classes.amberBg}`}
-                            >
-                                <Business
-                                    className={`${classes.sectionIcon} ${classes.amberIcon}`}
-                                />
-                            </div>
-                            <div className={classes.sectionTitleWrapper}>
-                                <Typography className={classes.sectionTitle}>
-                                    Company Information
-                                </Typography>
-                                <Typography
-                                    className={classes.sectionDescription}
-                                >
-                                    Parent company and office information
-                                </Typography>
-                            </div>
-                        </div>
-                    </ExpansionPanelSummary>
-                    <ExpansionPanelDetails
-                        className={classes.expansionPanelDetails}
-                    >
-                        {/* Parent Company Information */}
-                        <Typography className={classes.subsectionTitle}>
-                            Parent Company / Owner Information
-                        </Typography>
-
-                        <Grid container spacing={16}>
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <InputSection
-                                        label="Parent Company Name / Supplier Group"
-                                        isSelect
-                                        selectOptions={
-                                            parentCompanyOptions || []
-                                        }
-                                        value={formData.parentCompanyName || ''}
-                                        onChange={option =>
-                                            handleChange(
-                                                'parentCompanyName',
-                                                option?.value || '',
-                                            )
-                                        }
-                                        selectPlaceholder="Select parent company..."
-                                    />
-                                </div>
-                            </Grid>
-                        </Grid>
-
-                        {/* Office Information */}
-                        <Typography className={classes.subsectionTitle}>
-                            Office Information{' '}
-                            <span className={classes.subsectionSubtitle}>
-                                (if different from production location)
-                            </span>
-                        </Typography>
-
-                        <Grid container spacing={16}>
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Office Name
-                                        </Typography>
-                                        <Tooltip
-                                            title="Name of the corporate office or headquarters"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={
-                                            formData.officeOfficialName || ''
-                                        }
-                                        onChange={e =>
-                                            handleChange(
-                                                'officeOfficialName',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="Office name"
-                                        error={
-                                            touched.officeOfficialName &&
-                                            !!errors.officeOfficialName
-                                        }
-                                        helperText={
-                                            touched.officeOfficialName &&
-                                            errors.officeOfficialName && (
-                                                <InputErrorText
-                                                    text={
-                                                        errors.officeOfficialName
-                                                    }
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Office Address
-                                        </Typography>
-                                        <Tooltip
-                                            title="Physical address of the office location"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.officeAddress || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'officeAddress',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="Office address"
-                                        error={
-                                            touched.officeAddress &&
-                                            !!errors.officeAddress
-                                        }
-                                        helperText={
-                                            touched.officeAddress &&
-                                            errors.officeAddress && (
-                                                <InputErrorText
-                                                    text={errors.officeAddress}
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <InputSection
-                                        label="Office Country"
-                                        isSelect
-                                        selectOptions={countryOptions || []}
-                                        value={formData.officeCountryCode || ''}
-                                        onChange={option =>
-                                            handleChange(
-                                                'officeCountryCode',
-                                                option?.value || '',
-                                            )
-                                        }
-                                        selectPlaceholder="Select country..."
-                                        menuPlacement="top"
-                                    />
-                                </div>
-                            </Grid>
-                        </Grid>
-                    </ExpansionPanelDetails>
-                </ExpansionPanel>
-
                 {/* Section 3: Operations & Capabilities */}
                 <ExpansionPanel
                     className={classes.expansionPanel}

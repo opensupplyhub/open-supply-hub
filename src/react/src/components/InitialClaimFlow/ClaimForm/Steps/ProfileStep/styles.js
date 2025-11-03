@@ -195,28 +195,4 @@ export const profileStepStyles = theme =>
         }),
     });
 
-export const selectStyles = {
-    control: provided => ({
-        ...provided,
-        minHeight: '56px',
-        borderRadius: '4px',
-        borderColor: 'rgba(0, 0, 0, 0.23)',
-        '&:hover': {
-            borderColor: 'rgba(0, 0, 0, 0.87)',
-        },
-        boxShadow: 'none',
-    }),
-    valueContainer: provided => ({
-        ...provided,
-        padding: '18.5px 14px',
-    }),
-    placeholder: provided => ({
-        ...provided,
-        color: 'rgba(0, 0, 0, 0.54)',
-    }),
-    input: provided => ({
-        ...provided,
-        margin: 0,
-        padding: 0,
-    }),
-};
+export default profileStepStyles;
