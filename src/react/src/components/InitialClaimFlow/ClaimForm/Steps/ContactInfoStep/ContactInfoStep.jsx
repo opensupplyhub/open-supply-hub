@@ -31,6 +31,7 @@ import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
 import findSelectedOption from '../utils';
 import InputErrorText from '../../../../Contribute/InputErrorText';
+import { selectStyles } from '../../styles';
 
 const ContactInfoStep = ({
     classes,
@@ -227,8 +228,11 @@ const ContactInfoStep = ({
                                 valueObject.label,
                             )
                         }
-                        styles={getSelectStyles(isEmploymentVerificationError)}
-                        placeholder="You need to select and provide one of the below items for employment verification"
+                        styles={getSelectStyles(
+                            isEmploymentVerificationError,
+                            selectStyles,
+                        )}
+                        placeholder="You need to provide one of the below items for employment verification"
                         isMulti={false}
                     />
                     {touched.claimantEmploymentVerificationMethod &&
@@ -330,40 +334,42 @@ const ContactInfoStep = ({
                             Do you want this location&apos;s contact info to be
                             public?
                         </Typography>
-                        <Switch
-                            checked={isPublic}
-                            onChange={(_, checked) => {
-                                handleChange(
-                                    'pointOfContactPubliclyVisible',
-                                    checked,
-                                );
-
-                                // When enabling public contact, prefill fields.
-                                if (checked) {
-                                    // Copy yourName -> contactName if claimant has data.
-                                    const claimantHasName = Boolean(
-                                        (formData.yourName || '')
-                                            .toString()
-                                            .trim(),
+                        <div className={classes.switchContainer}>
+                            <Switch
+                                checked={isPublic}
+                                onChange={(_, checked) => {
+                                    handleChange(
+                                        'pointOfContactPubliclyVisible',
+                                        checked,
                                     );
-                                    if (claimantHasName) {
-                                        handleChange(
-                                            'pointOfcontactPersonName',
-                                            formData.yourName,
-                                        );
-                                    }
 
-                                    // Always set contactEmail from userEmail; remains editable.
-                                    if (userEmail) {
-                                        handleChange(
-                                            'pointOfContactEmail',
-                                            userEmail,
+                                    // When enabling public contact, prefill fields.
+                                    if (checked) {
+                                        // Copy yourName -> contactName if claimant has data.
+                                        const claimantHasName = Boolean(
+                                            (formData.yourName || '')
+                                                .toString()
+                                                .trim(),
                                         );
+                                        if (claimantHasName) {
+                                            handleChange(
+                                                'pointOfcontactPersonName',
+                                                formData.yourName,
+                                            );
+                                        }
+
+                                        // Always set contactEmail from userEmail; remains editable.
+                                        if (userEmail) {
+                                            handleChange(
+                                                'pointOfContactEmail',
+                                                userEmail,
+                                            );
+                                        }
                                     }
-                                }
-                            }}
-                            color="primary"
-                        />
+                                }}
+                                color="primary"
+                            />
+                        </div>
                     </div>
                     <Typography className={classes.sectionDescription}>
                         Toggle &quot;Yes&quot; to add public contact details.

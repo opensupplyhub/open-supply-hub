@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import InfoIcon from '@material-ui/icons/Info';
+import DialogTooltip from '../../Contribute/DialogTooltip';
 import { ClaimFacilityInfoLink } from '../../../util/constants';
 import { claimInfoStyles } from './styles';
 import ExampleImage from './ExampleImage';
@@ -206,9 +207,12 @@ const ClaimInfoSection = ({ classes, children }) => (
                     4
                 </span>
                 <span className={classes.stepTitle}>Add Key Details</span>
-                <span className={classes.maxValueBadge} title="Maximum value">
-                    ★
-                </span>
+                <DialogTooltip
+                    text="For maximum value, add key details to your production location to help others find you online."
+                    childComponent={
+                        <span className={classes.maxValueBadge}>★</span>
+                    }
+                />
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 Provide information about the production location, such as:
@@ -249,9 +253,12 @@ const ClaimInfoSection = ({ classes, children }) => (
                 <span className={classes.stepTitle}>
                     Get a Credible and Confirmed Profile
                 </span>
-                <span className={classes.maxValueBadge} title="Maximum value">
-                    ★
-                </span>
+                <DialogTooltip
+                    text="After the claim is approved, you get a credible and confirmed profile—with a green banner and Claimed badge—that helps others trust and find your company."
+                    childComponent={
+                        <span className={classes.maxValueBadge}>★</span>
+                    }
+                />
             </Typography>
             <Typography variant="body2" className={classes.boxDescription}>
                 After the claim is approved, you get a credible and confirmed

@@ -1,6 +1,11 @@
 import COLOURS from '../../../util/COLOURS';
 import { HEADER_HEIGHT } from '../../../util/constants';
 
+export const selectStyles = Object.freeze({
+    fontSize: '18px',
+    fontWeight: '600',
+});
+
 export const claimFormStyles = theme =>
     Object.freeze({
         container: Object.freeze({

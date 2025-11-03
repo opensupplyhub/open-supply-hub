@@ -52,9 +52,8 @@ const businessStepStyles = theme =>
             cursor: 'default',
             boxSizing: 'border-box',
             padding: theme.spacing.unit * 2,
-            backgroundColor: '#f5f5f5',
             fontWeight: 600,
-            fontSize: '17px',
+            fontSize: '18px',
             borderRadius: '0',
         }),
         linkField: Object.freeze({
@@ -62,7 +61,6 @@ const businessStepStyles = theme =>
             width: '100%',
             boxSizing: 'border-box',
             padding: theme.spacing.unit * 2,
-            backgroundColor: '#f5f5f5',
             border: '1px solid rgba(0, 0, 0, 0.23)',
             borderRadius: '0',
             color: '#1976d2',
@@ -71,7 +69,6 @@ const businessStepStyles = theme =>
             fontSize: '19px',
             '&:hover': {
                 textDecoration: 'underline',
-                backgroundColor: '#eeeeee',
             },
         }),
         notchedOutlineStyles: Object.freeze({

@@ -27,6 +27,7 @@ import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
 import findSelectedOption from '../utils';
 import { facilityDetailsRoute } from '../../../../../util/constants';
+import { selectStyles } from '../../styles';
 
 const BusinessStep = ({
     classes,
@@ -114,13 +115,13 @@ const BusinessStep = ({
                 />
                 <TextField
                     fullWidth
-                    disabled
                     variant="outlined"
                     multiline
                     name="companyName"
                     value={locationName}
                     InputProps={{
                         className: classes.disabledField,
+                        readOnly: true,
                         classes: {
                             notchedOutline: classes.notchedOutlineStyles,
                         },
@@ -135,13 +136,13 @@ const BusinessStep = ({
                 />
                 <TextField
                     fullWidth
-                    disabled
                     variant="outlined"
                     multiline
                     name="companyAddress"
                     value={locationAddress}
                     InputProps={{
                         className: classes.disabledField,
+                        readOnly: true,
                         classes: {
                             notchedOutline: classes.notchedOutlineStyles,
                         },
@@ -169,8 +170,11 @@ const BusinessStep = ({
                     onBlur={() =>
                         handleBlur('locationAddressVerificationMethod')
                     }
-                    styles={getSelectStyles(isCompanyAddressVerificationError)}
-                    placeholder=" You need to select and provide one of the below items for verification"
+                    styles={getSelectStyles(
+                        isCompanyAddressVerificationError,
+                        selectStyles,
+                    )}
+                    placeholder="You need to provide one of the below items for address verification"
                     isMulti={false}
                 />
                 {isCompanyAddressVerificationError && (
