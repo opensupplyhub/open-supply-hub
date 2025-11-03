@@ -18,6 +18,8 @@ import eligibilityStepStyles from './styles';
 import RELATIONSHIP_OPTIONS from './constants';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import findSelectedOption from '../utils';
+import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import { selectStyles } from '../../styles';
 
 const EligibilityStep = ({
     classes,
@@ -79,10 +81,11 @@ const EligibilityStep = ({
                 </div>
             </div>
 
-            <Typography className={classes.sectionTitle}>
-                Select your relationship to this production location{' '}
-                <span className={classes.sectionTitleRequired}>*</span>
-            </Typography>
+            <FormFieldTitle
+                label="Your Relationship to this Production Location"
+                classes={{ title: classes.sectionTitleRequired }}
+                required
+            />
             <div className={classes.selectWrapper}>
                 <StyledSelect
                     id="claimantLocationRelationship"
@@ -106,7 +109,7 @@ const EligibilityStep = ({
                             );
                         }
                     }}
-                    styles={getSelectStyles(isRelationshipError)}
+                    styles={getSelectStyles(isRelationshipError, selectStyles)}
                     placeholder="Select your relationship to this production location"
                     isMulti={false}
                 />
