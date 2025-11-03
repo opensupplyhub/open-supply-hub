@@ -900,6 +900,69 @@ const ProfileStep = ({
                             </div>
                         )}
                     </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Percentage of Female Workers
+                                    <Tooltip
+                                        title="Percentage of female employees out of the total workforce at this location"
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={
+                                formData.facilityFemaleWorkersPercentage || ''
+                            }
+                            onChange={e =>
+                                handleChange(
+                                    'facilityFemaleWorkersPercentage',
+                                    e.target.value,
+                                )
+                            }
+                            onBlur={handleBlur}
+                            placeholder="e.g., 45%"
+                            error={
+                                touched.facilityFemaleWorkersPercentage &&
+                                !!errors.facilityFemaleWorkersPercentage
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.facilityFemaleWorkersPercentage &&
+                            errors.facilityFemaleWorkersPercentage && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={
+                                            errors.facilityFemaleWorkersPercentage
+                                        }
+                                    />
+                                </div>
+                            )}
+                    </div>
                 </section>
             )}
             <br />
@@ -913,72 +976,6 @@ const ProfileStep = ({
                     <ExpansionPanelDetails
                         className={classes.expansionPanelDetails}
                     >
-                        <Grid container spacing={24}>
-                            {/* Female Workers */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            % of Female Workers
-                                        </Typography>
-                                        <Tooltip
-                                            title="Percentage of female employees out of the total workforce at this location"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={
-                                            formData.facilityFemaleWorkersPercentage ||
-                                            ''
-                                        }
-                                        onChange={e =>
-                                            handleChange(
-                                                'facilityFemaleWorkersPercentage',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="e.g., 45%"
-                                        error={
-                                            touched.facilityFemaleWorkersPercentage &&
-                                            !!errors.facilityFemaleWorkersPercentage
-                                        }
-                                        helperText={
-                                            touched.facilityFemaleWorkersPercentage &&
-                                            errors.facilityFemaleWorkersPercentage && (
-                                                <InputErrorText
-                                                    text={
-                                                        errors.facilityFemaleWorkersPercentage
-                                                    }
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-                        </Grid>
-
                         <Grid container spacing={24}>
                             {/* Minimum Order Quantity */}
                             <Grid item xs={12} md={6}>
