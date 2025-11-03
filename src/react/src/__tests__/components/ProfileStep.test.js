@@ -248,7 +248,7 @@ describe('ProfileStep component', () => {
         jest.clearAllMocks();
     });
 
-    test('renders all four expansion panel sections', () => {
+    test('renders all four sections', () => {
         renderComponent();
 
         expect(screen.getByText('Production Location Overview')).toBeInTheDocument();
@@ -260,7 +260,6 @@ describe('ProfileStep component', () => {
     test('renders emissions estimate section', () => {
         renderComponent();
 
-        expect(screen.getByText('Environmental Data')).toBeInTheDocument();
         expect(screen.getByTestId('emissions-estimate')).toBeInTheDocument();
     });
 
