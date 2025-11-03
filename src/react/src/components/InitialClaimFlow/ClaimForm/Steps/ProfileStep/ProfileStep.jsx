@@ -16,7 +16,9 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import Star from '@material-ui/icons/Star';
 import IconButton from '@material-ui/core/IconButton';
-
+import Switch from '@material-ui/core/Switch';
+import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputSection from '../../../../InputSection';
 import InputErrorText from '../../../../Contribute/InputErrorText';
@@ -72,122 +74,170 @@ const ProfileStep = ({
         );
     }, [formData.sectors]);
 
+    const [isOverviewVisible, setIsOverviewVisible] = useState(true);
+
     return (
-        <Grid container spacing={24}>
-            <Grid item xs={12}>
-                {/* Section 1: Production Location Overview */}
-                <ExpansionPanel
-                    className={classes.expansionPanel}
-                    defaultExpanded
-                >
-                    <ExpansionPanelSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        className={classes.expansionPanelSummary}
+        <div>
+            <hr className={classes.separator} />
+            <div className={classes.sectionContainer}>
+                <div className={classes.sectionTitleContainer}>
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
                     >
-                        <div className={classes.sectionHeader}>
-                            <div
-                                className={`${classes.sectionIconWrapper} ${classes.blueBg}`}
-                            >
-                                <Business
-                                    className={`${classes.sectionIcon} ${classes.blueIcon}`}
-                                />
-                            </div>
-                            <div className={classes.sectionTitleWrapper}>
-                                <Typography className={classes.sectionTitle}>
-                                    Production Location Overview
-                                </Typography>
-                                <Typography
-                                    className={classes.sectionDescription}
-                                >
-                                    Basic facility identification and contact
-                                    information
-                                </Typography>
-                            </div>
-                        </div>
-                    </ExpansionPanelSummary>
-                    <ExpansionPanelDetails
-                        className={classes.expansionPanelDetails}
-                    >
-                        {/* Local Language Name */}
-                        <div className={classes.field}>
-                            <div className={classes.fieldLabel}>
-                                <Typography
-                                    variant="body2"
-                                    component="label"
-                                    style={{ fontSize: '16px' }}
-                                >
-                                    Production Location Name in Native Language
-                                </Typography>
-                                <Tooltip
-                                    title="Enter the production location name in the local language if different from the English name"
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <IconButton
-                                        size="small"
-                                        disableRipple
-                                        className={classes.helpIconButton}
-                                    >
-                                        <HelpOutline
-                                            className={classes.helpIcon}
-                                        />
-                                    </IconButton>
-                                </Tooltip>
-                            </div>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                value={formData.localLanguageName || ''}
-                                onChange={e =>
-                                    handleChange(
-                                        'localLanguageName',
-                                        e.target.value,
-                                    )
-                                }
-                                placeholder="Enter location name in native language (if different from English)"
-                                error={
-                                    touched.localLanguageName &&
-                                    !!errors.localLanguageName
-                                }
-                                helperText={
-                                    touched.localLanguageName &&
-                                    errors.localLanguageName && (
-                                        <InputErrorText
-                                            text={errors.localLanguageName}
-                                        />
-                                    )
-                                }
+                        <div
+                            className={`${classes.sectionIconWrapper} ${classes.blueBg}`}
+                        >
+                            <Business
+                                className={`${classes.sectionIcon} ${classes.blueIcon}`}
                             />
                         </div>
-
-                        <Grid container spacing={24}>
-                            {/* Facility Phone */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
+                        Production Location Overview
+                    </Typography>
+                    <div className={classes.switchContainer}>
+                        <Switch
+                            checked={isOverviewVisible}
+                            onChange={(_, checked) => {
+                                setIsOverviewVisible(checked);
+                            }}
+                            color="primary"
+                        />
+                    </div>
+                </div>
+                <Typography className={classes.sectionDescription}>
+                    Basic facility identification and contact information.
+                </Typography>
+            </div>
+            {isOverviewVisible && (
+                <section>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Production Location Name in Native Language
+                                    <Tooltip
+                                        title="Enter the production location name in the local language if different from the English name"
+                                        placement="top"
+                                        classes={{ tooltip: classes.tooltip }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
                                         >
-                                            Company Phone
-                                        </Typography>
-                                        <Tooltip
-                                            title={BETA_TOOLTIP_TEXT}
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.localLanguageName || ''}
+                            onChange={e =>
+                                handleChange(
+                                    'localLanguageName',
+                                    e.target.value,
+                                )
+                            }
+                            placeholder="Enter location name in native language (if different from English)"
+                            error={
+                                touched.localLanguageName &&
+                                !!errors.localLanguageName
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.localLanguageName && errors.localLanguageName && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText
+                                    text={errors.localLanguageName}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Company Phone
+                                    <Tooltip
+                                        title="Main phone number for contacting this production location directly"
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
                                         >
-                                            <div className={classes.betaLabel}>
-                                                <Star
-                                                    className={classes.betaIcon}
-                                                />
-                                                BETA
-                                            </div>
-                                        </Tooltip>
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.officePhoneNumber || ''}
+                            onChange={e =>
+                                handleChange(
+                                    'officePhoneNumber',
+                                    e.target.value,
+                                )
+                            }
+                            onBlur={handleBlur}
+                            placeholder="+1 (555) 123-4567"
+                            error={
+                                touched.officePhoneNumber &&
+                                !!errors.officePhoneNumber
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.officePhoneNumber && errors.officePhoneNumber && (
+                            <div className={classes.errorWrapStyles}>
+                                <InputErrorText
+                                    text={errors.officePhoneNumber}
+                                />
+                            </div>
+                        )}
+                        <DialogTooltip
+                            text={BETA_TOOLTIP_TEXT}
+                            childComponent={
+                                <span className={classes.betaBadge}>BETA</span>
+                            }
+                        />
+                    </div>
+                    {!shouldHideBusinessWebsite && (
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Company Website
                                         <Tooltip
-                                            title="Main phone number for contacting this production location directly"
+                                            title="Official website URL for this specific production location (if available)"
                                             placement="top"
                                             classes={{
                                                 tooltip: classes.tooltip,
@@ -205,176 +255,124 @@ const ProfileStep = ({
                                                 />
                                             </IconButton>
                                         </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={formData.officePhoneNumber || ''}
-                                        onChange={e =>
-                                            handleChange(
-                                                'officePhoneNumber',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="+1 (555) 123-4567"
-                                        error={
-                                            touched.officePhoneNumber &&
-                                            !!errors.officePhoneNumber
-                                        }
-                                        helperText={
-                                            touched.officePhoneNumber &&
-                                            errors.officePhoneNumber && (
-                                                <InputErrorText
-                                                    text={
-                                                        errors.officePhoneNumber
-                                                    }
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-
-                            {/* Facility Website - Hidden if businessWebsite is already provided */}
-                            {!shouldHideBusinessWebsite && (
-                                <Grid item xs={12} md={6}>
-                                    <div className={classes.field}>
-                                        <div className={classes.fieldLabel}>
-                                            <Typography
-                                                variant="body2"
-                                                component="label"
-                                                style={{ fontSize: '16px' }}
-                                            >
-                                                Company Website
-                                            </Typography>
-                                            <Tooltip
-                                                title="Official website URL for this specific production location (if available)"
-                                                placement="top"
-                                                classes={{
-                                                    tooltip: classes.tooltip,
-                                                }}
-                                            >
-                                                <IconButton
-                                                    size="small"
-                                                    disableRipple
-                                                    className={
-                                                        classes.helpIconButton
-                                                    }
-                                                >
-                                                    <HelpOutline
-                                                        className={
-                                                            classes.helpIcon
-                                                        }
-                                                    />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </div>
-                                        <TextField
-                                            fullWidth
-                                            type="url"
-                                            variant="outlined"
-                                            value={
-                                                formData.businessWebsite || ''
-                                            }
-                                            onChange={e =>
-                                                handleChange(
-                                                    'businessWebsite',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            onBlur={handleBlur}
-                                            placeholder="https://company.com"
-                                            error={
-                                                touched.businessWebsite &&
-                                                !!errors.businessWebsite
-                                            }
-                                            helperText={
-                                                touched.businessWebsite &&
-                                                errors.businessWebsite && (
-                                                    <InputErrorText
-                                                        text={
-                                                            errors.businessWebsite
-                                                        }
-                                                    />
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </Grid>
-                            )}
-                        </Grid>
-
-                        {/* Description */}
-                        <div
-                            className={classes.field}
-                            style={{ paddingRight: '28px' }}
-                        >
-                            <div className={classes.fieldLabel}>
-                                <Typography
-                                    variant="body2"
-                                    component="label"
-                                    style={{ fontSize: '16px' }}
-                                >
-                                    Production Location Description
-                                </Typography>
-                                <Tooltip
-                                    title={BETA_TOOLTIP_TEXT}
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <div className={classes.betaLabel}>
-                                        <Star className={classes.betaIcon} />
-                                        BETA
-                                    </div>
-                                </Tooltip>
-                                <Tooltip
-                                    title="Provide a brief overview of what this production location manufactures and its main business activities"
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <IconButton
-                                        size="small"
-                                        disableRipple
-                                        className={classes.helpIconButton}
-                                    >
-                                        <HelpOutline
-                                            className={classes.helpIcon}
-                                        />
-                                    </IconButton>
-                                </Tooltip>
-                            </div>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
                             <TextField
                                 fullWidth
-                                multiline
-                                rows={4}
+                                type="url"
                                 variant="outlined"
-                                value={formData.facilityDescription || ''}
+                                value={formData.businessWebsite || ''}
                                 onChange={e =>
                                     handleChange(
-                                        'facilityDescription',
+                                        'businessWebsite',
                                         e.target.value,
                                     )
                                 }
                                 onBlur={handleBlur}
-                                placeholder="Brief description of what this production location produces or its main activities"
+                                placeholder="https://company.com"
                                 error={
-                                    touched.facilityDescription &&
-                                    !!errors.facilityDescription
+                                    touched.businessWebsite &&
+                                    !!errors.businessWebsite
                                 }
-                                helperText={
-                                    touched.facilityDescription &&
-                                    errors.facilityDescription && (
-                                        <InputErrorText
-                                            text={errors.facilityDescription}
-                                        />
-                                    )
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                            />
+                            {touched.businessWebsite && errors.businessWebsite && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.businessWebsite}
+                                    />
+                                </div>
+                            )}
+                            <DialogTooltip
+                                text={BETA_TOOLTIP_TEXT}
+                                childComponent={
+                                    <span className={classes.betaBadge}>
+                                        BETA
+                                    </span>
                                 }
                             />
                         </div>
-                    </ExpansionPanelDetails>
-                </ExpansionPanel>
+                    )}
+                    <div className={classes.textareaFieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Production Location Description
+                                    <Tooltip
+                                        title="Provide a brief overview of what this production location manufactures and its main business activities"
+                                        placement="top"
+                                        classes={{ tooltip: classes.tooltip }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={4}
+                            variant="outlined"
+                            value={formData.facilityDescription || ''}
+                            onChange={e =>
+                                handleChange(
+                                    'facilityDescription',
+                                    e.target.value,
+                                )
+                            }
+                            onBlur={handleBlur}
+                            placeholder="Brief description of what this production location produces or its main activities"
+                            error={
+                                touched.facilityDescription &&
+                                !!errors.facilityDescription
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                    multiline: classes.multilineInputStyles,
+                                },
+                            }}
+                        />
+                        {touched.facilityDescription &&
+                            errors.facilityDescription && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.facilityDescription}
+                                    />
+                                </div>
+                            )}
+                        <DialogTooltip
+                            text={BETA_TOOLTIP_TEXT}
+                            childComponent={
+                                <span className={classes.betaBadge}>BETA</span>
+                            }
+                        />
+                    </div>
+                </section>
+            )}
 
+            <br />
+            <br />
+            <Grid item xs={12}>
                 {/* Section 2: Company Information */}
                 <ExpansionPanel
                     className={classes.expansionPanel}
@@ -1303,7 +1301,7 @@ const ProfileStep = ({
                     </ExpansionPanelDetails>
                 </ExpansionPanel>
             </Grid>
-        </Grid>
+        </div>
     );
 };
 
