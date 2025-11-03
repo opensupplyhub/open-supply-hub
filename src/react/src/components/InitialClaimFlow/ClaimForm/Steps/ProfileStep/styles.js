@@ -78,21 +78,6 @@ export const profileStepStyles = theme =>
             marginTop: `40px`,
             maxWidth: '1252px',
         }),
-        // OLD STYLES
-        expansionPanel: Object.freeze({
-            marginBottom: theme.spacing.unit * 2,
-            boxShadow: 'none',
-            border: `1px solid ${COLOURS.GREY}`,
-            '&:before': {
-                display: 'none',
-            },
-        }),
-        expansionPanelSummary: Object.freeze({
-            padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 2}px`,
-            '&:hover': {
-                backgroundColor: 'transparent',
-            },
-        }),
         sectionIconWrapper: Object.freeze({
             padding: theme.spacing.unit,
             display: 'inline-flex',
@@ -109,9 +94,6 @@ export const profileStepStyles = theme =>
         purpleBg: Object.freeze({
             backgroundColor: COLOURS.LIGHT_PURPLE_BG,
         }),
-        greenBg: Object.freeze({
-            backgroundColor: COLOURS.LIGHT_GREEN,
-        }),
         sectionIcon: Object.freeze({
             fontSize: '1.25rem',
         }),
@@ -124,34 +106,6 @@ export const profileStepStyles = theme =>
         purpleIcon: Object.freeze({
             color: COLOURS.DARK_PURPLE,
         }),
-        greenIcon: Object.freeze({
-            color: COLOURS.MATERIAL_GREEN,
-        }),
-        sectionHeader: Object.freeze({
-            display: 'flex',
-            alignItems: 'flex-start',
-        }),
-        sectionTitleWrapper: Object.freeze({
-            flex: 1,
-        }),
-        expansionPanelDetails: Object.freeze({
-            padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${
-                theme.spacing.unit * 3
-            }px`,
-            display: 'block',
-        }),
-        field: Object.freeze({
-            marginBottom: theme.spacing.unit * 3,
-        }),
-        fieldLabel: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: theme.spacing.unit,
-            fontSize: '16px',
-            '& .MuiTypography-root': {
-                fontSize: '16px',
-            },
-        }),
         helpIcon: Object.freeze({
             fontSize: '1rem',
             color: COLOURS.DARK_GREY,
@@ -163,22 +117,6 @@ export const profileStepStyles = theme =>
                 backgroundColor: 'transparent',
             },
         }),
-        betaLabel: Object.freeze({
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '2px 10px',
-            borderRadius: '12px',
-            background: 'linear-gradient(90deg, #7B2CBF 0%, #E91E63 100%)',
-            color: COLOURS.WHITE,
-            fontSize: '12px',
-            fontWeight: 600,
-            marginLeft: theme.spacing.unit,
-            cursor: 'pointer',
-        }),
-        betaIcon: Object.freeze({
-            fontSize: '12px',
-            marginRight: '2px',
-        }),
         tooltip: Object.freeze({
             fontSize: '14px',
             backgroundColor: COLOURS.WHITE,
@@ -186,16 +124,6 @@ export const profileStepStyles = theme =>
             border: `1px solid ${COLOURS.GREY}`,
             padding: theme.spacing.unit * 1.5,
             maxWidth: 300,
-        }),
-        subsectionTitle: Object.freeze({
-            fontWeight: 500,
-            fontSize: '16px',
-            marginBottom: theme.spacing.unit * 2,
-            marginTop: theme.spacing.unit * 2,
-        }),
-        subsectionSubtitle: Object.freeze({
-            color: COLOURS.DARK_GREY,
-            fontWeight: 'normal',
         }),
     });
 
