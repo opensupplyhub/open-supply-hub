@@ -732,6 +732,121 @@ const ProfileStep = ({
                             />
                         )}
                     </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Processing Type(s)
+                                    <Tooltip
+                                        title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        {enabledTaxonomy ? (
+                            <StyledSelect
+                                id="processing_type"
+                                name="processing-type"
+                                aria-label="Processing Type"
+                                isMulti
+                                options={mapProcessingTypeOptions(
+                                    processingTypeOptions || [],
+                                    formData.facilityType || [],
+                                )}
+                                value={formData.facilityProductionTypes || []}
+                                onChange={values =>
+                                    handleChange(
+                                        'facilityProductionTypes',
+                                        values,
+                                    )
+                                }
+                                placeholder="Select processing type(s)"
+                                styles={getSelectStyles(
+                                    touched.facilityProductionTypes &&
+                                        !!errors.facilityProductionTypes,
+                                    selectStyles,
+                                )}
+                            />
+                        ) : (
+                            <StyledSelect
+                                creatable
+                                isMulti
+                                name="processing-type"
+                                aria-label="Processing Type"
+                                value={formData.facilityProductionTypes || []}
+                                onChange={values =>
+                                    handleChange(
+                                        'facilityProductionTypes',
+                                        values,
+                                    )
+                                }
+                                placeholder="Enter processing type(s)"
+                                styles={getSelectStyles(
+                                    touched.facilityProductionTypes &&
+                                        !!errors.facilityProductionTypes,
+                                    selectStyles,
+                                )}
+                            />
+                        )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Product Types
+                                    <Tooltip
+                                        title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <StyledSelect
+                            creatable
+                            isMulti
+                            name="product-types"
+                            aria-label="Product Types"
+                            value={formData.facilityProductTypes || []}
+                            onChange={values =>
+                                handleChange('facilityProductTypes', values)
+                            }
+                            placeholder="Enter product types..."
+                            styles={getSelectStyles(
+                                touched.facilityProductTypes &&
+                                    !!errors.facilityProductTypes,
+                                selectStyles,
+                            )}
+                        />
+                    </div>
                 </section>
             )}
             <br />
@@ -745,136 +860,6 @@ const ProfileStep = ({
                     <ExpansionPanelDetails
                         className={classes.expansionPanelDetails}
                     >
-                        <Grid container spacing={24}>
-                            {/* Processing Type */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Processing Type(s)
-                                        </Typography>
-                                        <Tooltip
-                                            title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    {enabledTaxonomy ? (
-                                        <StyledSelect
-                                            id="processing_type"
-                                            name="processing-type"
-                                            aria-label="Processing Type"
-                                            isMulti
-                                            options={mapProcessingTypeOptions(
-                                                processingTypeOptions || [],
-                                                formData.facilityType || [],
-                                            )}
-                                            value={
-                                                formData.facilityProductionTypes ||
-                                                []
-                                            }
-                                            onChange={values =>
-                                                handleChange(
-                                                    'facilityProductionTypes',
-                                                    values,
-                                                )
-                                            }
-                                            placeholder="Select processing type(s)"
-                                            styles={selectStyles}
-                                        />
-                                    ) : (
-                                        <StyledSelect
-                                            creatable
-                                            isMulti
-                                            name="processing-type"
-                                            aria-label="Processing Type"
-                                            value={
-                                                formData.facilityProductionTypes ||
-                                                []
-                                            }
-                                            onChange={values =>
-                                                handleChange(
-                                                    'facilityProductionTypes',
-                                                    values,
-                                                )
-                                            }
-                                            placeholder="Enter processing type(s)"
-                                            styles={selectStyles}
-                                        />
-                                    )}
-                                </div>
-                            </Grid>
-
-                            {/* Product Types */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Product Types
-                                        </Typography>
-                                        <Tooltip
-                                            title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <StyledSelect
-                                        creatable
-                                        isMulti
-                                        name="product-types"
-                                        aria-label="Product Types"
-                                        value={
-                                            formData.facilityProductTypes || []
-                                        }
-                                        onChange={values =>
-                                            handleChange(
-                                                'facilityProductTypes',
-                                                values,
-                                            )
-                                        }
-                                        placeholder="Enter product types..."
-                                        styles={selectStyles}
-                                    />
-                                </div>
-                            </Grid>
-                        </Grid>
-
                         <Grid container spacing={24}>
                             {/* Number of Workers */}
                             <Grid item xs={12} md={6}>
