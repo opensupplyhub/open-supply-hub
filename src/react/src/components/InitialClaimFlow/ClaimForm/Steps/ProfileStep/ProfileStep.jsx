@@ -1030,101 +1030,76 @@ const ProfileStep = ({
                             }
                         />
                     </div>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Average Lead Time
+                                    <Tooltip
+                                        title="Typical time required from order confirmation to product delivery"
+                                        placement="top"
+                                        classes={{
+                                            tooltip: classes.tooltip,
+                                        }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            value={formData.facilityAverageLeadTime || ''}
+                            onChange={e =>
+                                handleChange(
+                                    'facilityAverageLeadTime',
+                                    e.target.value,
+                                )
+                            }
+                            onBlur={handleBlur}
+                            placeholder="e.g., 30 days"
+                            error={
+                                touched.facilityAverageLeadTime &&
+                                !!errors.facilityAverageLeadTime
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
+                        />
+                        {touched.facilityAverageLeadTime &&
+                            errors.facilityAverageLeadTime && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.facilityAverageLeadTime}
+                                    />
+                                </div>
+                            )}
+                        <DialogTooltip
+                            text={BETA_TOOLTIP_TEXT}
+                            childComponent={
+                                <span className={classes.betaBadge}>BETA</span>
+                            }
+                        />
+                    </div>
                 </section>
             )}
             <br />
             <br />
             <Grid item xs={12}>
-                {/* Section 3: Operations & Capabilities */}
-                <ExpansionPanel
-                    className={classes.expansionPanel}
-                    defaultExpanded
-                >
-                    <ExpansionPanelDetails
-                        className={classes.expansionPanelDetails}
-                    >
-                        <Grid container spacing={24}>
-                            {/* Average Lead Time */}
-                            <Grid item xs={12} md={6}>
-                                <div className={classes.field}>
-                                    <div className={classes.fieldLabel}>
-                                        <Typography
-                                            variant="body2"
-                                            component="label"
-                                            style={{ fontSize: '16px' }}
-                                        >
-                                            Average Lead Time
-                                        </Typography>
-                                        <Tooltip
-                                            title={BETA_TOOLTIP_TEXT}
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <div className={classes.betaLabel}>
-                                                <Star
-                                                    className={classes.betaIcon}
-                                                />
-                                                BETA
-                                            </div>
-                                        </Tooltip>
-                                        <Tooltip
-                                            title="Typical time required from order confirmation to product delivery"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </div>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        value={
-                                            formData.facilityAverageLeadTime ||
-                                            ''
-                                        }
-                                        onChange={e =>
-                                            handleChange(
-                                                'facilityAverageLeadTime',
-                                                e.target.value,
-                                            )
-                                        }
-                                        onBlur={handleBlur}
-                                        placeholder="e.g., 30 days"
-                                        error={
-                                            touched.facilityAverageLeadTime &&
-                                            !!errors.facilityAverageLeadTime
-                                        }
-                                        helperText={
-                                            touched.facilityAverageLeadTime &&
-                                            errors.facilityAverageLeadTime && (
-                                                <InputErrorText
-                                                    text={
-                                                        errors.facilityAverageLeadTime
-                                                    }
-                                                />
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </Grid>
-                        </Grid>
-                    </ExpansionPanelDetails>
-                </ExpansionPanel>
-
                 {/* Section 4: Compliance & Partnerships */}
                 <ExpansionPanel
                     className={classes.expansionPanel}
