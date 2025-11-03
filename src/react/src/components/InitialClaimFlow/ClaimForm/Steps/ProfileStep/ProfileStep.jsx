@@ -1097,6 +1097,91 @@ const ProfileStep = ({
                     </div>
                 </section>
             )}
+
+            <hr className={classes.separator} />
+            <div className={classes.sectionContainer}>
+                <div className={classes.sectionTitleContainer}>
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
+                    >
+                        <div
+                            className={`${classes.sectionIconWrapper} ${classes.purpleBg}`}
+                        >
+                            <VerifiedUser
+                                className={`${classes.sectionIcon} ${classes.purpleIcon}`}
+                            />
+                        </div>
+                        Compliance & Partnerships
+                    </Typography>
+                    <div className={classes.switchContainer}>
+                        <Switch
+                            checked={isCompliancePartnershipsVisible}
+                            onChange={(_, checked) => {
+                                setIsCompliancePartnershipsVisible(checked);
+                            }}
+                            color="primary"
+                        />
+                    </div>
+                </div>
+                <Typography className={classes.sectionDescription}>
+                    Certifications, affiliations, and industry standards.
+                </Typography>
+            </div>
+            {isCompliancePartnershipsVisible && (
+                <section>
+                    <div className={classes.fieldContainer}>
+                        <FormFieldTitle
+                            label={
+                                <>
+                                    Affiliations
+                                    <Tooltip
+                                        title="Organizations, parent companies, or partner entities your facility is formally connected to"
+                                        placement="top"
+                                        classes={{ tooltip: classes.tooltip }}
+                                    >
+                                        <IconButton
+                                            size="small"
+                                            disableRipple
+                                            className={classes.helpIconButton}
+                                        >
+                                            <HelpOutline
+                                                className={classes.helpIcon}
+                                            />
+                                        </IconButton>
+                                    </Tooltip>
+                                </>
+                            }
+                            classes={{ title: classes.formLabel }}
+                        />
+                        <StyledSelect
+                            id="affiliations"
+                            name="affiliations"
+                            aria-label="Affiliations"
+                            isMulti
+                            options={AFFILIATIONS_OPTIONS}
+                            value={formData.facilityAffiliations || []}
+                            onChange={values =>
+                                handleChange('facilityAffiliations', values)
+                            }
+                            placeholder="Select affiliations..."
+                            styles={getSelectStyles(
+                                touched.facilityAffiliations &&
+                                    !!errors.facilityAffiliations,
+                                selectStyles,
+                            )}
+                        />
+                        <DialogTooltip
+                            text={BETA_TOOLTIP_TEXT}
+                            childComponent={
+                                <span className={classes.betaBadge}>BETA</span>
+                            }
+                        />
+                    </div>
+                </section>
+            )}
+
             <br />
             <br />
             <Grid item xs={12}>
@@ -1105,85 +1190,9 @@ const ProfileStep = ({
                     className={classes.expansionPanel}
                     defaultExpanded
                 >
-                    <ExpansionPanelSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        className={classes.expansionPanelSummary}
-                    >
-                        <div className={classes.sectionHeader}>
-                            <div
-                                className={`${classes.sectionIconWrapper} ${classes.purpleBg}`}
-                            >
-                                <VerifiedUser
-                                    className={`${classes.sectionIcon} ${classes.purpleIcon}`}
-                                />
-                            </div>
-                            <div className={classes.sectionTitleWrapper}>
-                                <Typography className={classes.sectionTitle}>
-                                    Compliance & Partnerships
-                                </Typography>
-                                <Typography
-                                    className={classes.sectionDescription}
-                                >
-                                    Certifications, affiliations, and industry
-                                    standards
-                                </Typography>
-                            </div>
-                        </div>
-                    </ExpansionPanelSummary>
                     <ExpansionPanelDetails
                         className={classes.expansionPanelDetails}
                     >
-                        {/* Affiliations */}
-                        <div className={classes.field}>
-                            <div className={classes.fieldLabel}>
-                                <Typography
-                                    variant="body2"
-                                    component="label"
-                                    style={{ fontSize: '16px' }}
-                                >
-                                    Affiliations
-                                </Typography>
-                                <Tooltip
-                                    title={BETA_TOOLTIP_TEXT}
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <div className={classes.betaLabel}>
-                                        <Star className={classes.betaIcon} />
-                                        BETA
-                                    </div>
-                                </Tooltip>
-                                <Tooltip
-                                    title="Organizations, parent companies, or partner entities your facility is formally connected to"
-                                    placement="top"
-                                    classes={{ tooltip: classes.tooltip }}
-                                >
-                                    <IconButton
-                                        size="small"
-                                        disableRipple
-                                        className={classes.helpIconButton}
-                                    >
-                                        <HelpOutline
-                                            className={classes.helpIcon}
-                                        />
-                                    </IconButton>
-                                </Tooltip>
-                            </div>
-                            <StyledSelect
-                                id="affiliations"
-                                name="affiliations"
-                                aria-label="Affiliations"
-                                isMulti
-                                options={AFFILIATIONS_OPTIONS}
-                                value={formData.facilityAffiliations || []}
-                                onChange={values =>
-                                    handleChange('facilityAffiliations', values)
-                                }
-                                placeholder="Select affiliations..."
-                                styles={selectStyles}
-                            />
-                        </div>
-
                         {/* Certifications */}
                         <div className={classes.field}>
                             <div className={classes.fieldLabel}>
