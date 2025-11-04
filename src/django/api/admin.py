@@ -246,6 +246,8 @@ class PartnerFieldAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'label', 'unit', 'created_at')
     search_fields = ('name', 'type', 'label', 'unit')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+
 class EmailAddressAdmin(admin.ModelAdmin):
     list_display = ('email', 'user', 'primary', 'verified')
     search_fields = ('email', 'user__email')
