@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.core.cache import cache
+from ckeditor.fields import RichTextField
 from api.constants import PARTNER_FIELD_NAMES_LIST_KEY
 
 
@@ -48,6 +49,8 @@ class PartnerField(models.Model):
         max_length=200,
         blank=True,
         help_text=('The partner field label.'))
+    
+    source_by = RichTextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

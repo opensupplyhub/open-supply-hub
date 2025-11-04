@@ -135,6 +135,7 @@ INSTALLED_APPS = [
     'web',
     'ecsmanage',
     'django_bleach',
+    'ckeditor',
 ]
 
 # For allauth
