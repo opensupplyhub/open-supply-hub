@@ -49,11 +49,15 @@ class PartnerField(models.Model):
         max_length=200,
         blank=True,
         help_text=('The partner field label.'))
-    
+
     source_by = RichTextField(
         blank=True,
+        null=True,
         config_name='default',
-        help_text='Rich text field describing the source of this partner field.'
+        help_text=(
+            'Rich text field describing '
+            'the source of this partner field.'
+        )
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

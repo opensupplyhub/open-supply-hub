@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='partnerfield',
             name='source_by',
-            field=ckeditor.fields.RichTextField(blank=True, config_name='default'),
+            field=ckeditor.fields.RichTextField(blank=True, null=True, config_name='default'),
         ),
     ]
 

@@ -33,6 +33,13 @@ const detailsStyles = theme =>
             lineHeight: '17px',
             paddingTop: theme.spacing.unit,
         },
+        sourceText: {
+            overflowWrap: 'anywhere',
+            fontWeight: 500,
+            fontSize: '16px',
+            lineHeight: '19px',
+            paddingTop: theme.spacing.unit,
+        },
     });
 
 const CLAIM_EXPLANATORY_TEXT =
@@ -72,7 +79,7 @@ const FacilityDetailsDetail = ({
             </Typography>
             {sourceBy ? (
                 <Typography
-                    className={classes.secondaryText}
+                    className={classes.sourceText}
                     component="div"
                     dangerouslySetInnerHTML={{ __html: sourceBy }}
                 />

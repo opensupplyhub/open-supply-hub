@@ -513,6 +513,10 @@ CKEDITOR_CONFIGS = {
         'height': 250,
         'width': '100%',
         'removePlugins': 'uploadimage,uploadfile,image,flash,smiley',
+        'enterMode': 2,
+        'shiftEnterMode': 2,
+        'autoParagraph': False,
+        'fillEmptyBlocks': False,
     }
 }
 

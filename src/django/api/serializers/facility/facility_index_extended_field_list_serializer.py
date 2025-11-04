@@ -50,7 +50,8 @@ class FacilityIndexExtendedFieldListSerializer:
                 elif field == 'verified_count':
                     serialized_extended_field[field] = \
                         self._get_verified_count(extended_field)
-                elif field == 'source_by' and self.context.get('source_by', None) is not None:
+                elif (field == 'source_by' and
+                      self.context.get('source_by', None) is not None):
                     serialized_extended_field[field] = \
                         self.context.get('source_by')
                 else:
