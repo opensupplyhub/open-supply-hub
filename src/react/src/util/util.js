@@ -1780,6 +1780,7 @@ export const formatExtendedField = ({
     value,
     field_name,
     created_at,
+    source_by,
     contributor_name,
     is_from_claim,
     is_verified,
@@ -1791,6 +1792,7 @@ export const formatExtendedField = ({
     return {
         primary,
         secondary,
+        sourceBy: source_by,
         embeddedSecondary: formatAttribution(created_at),
         isVerified: is_verified,
         isFromClaim: is_from_claim,

@@ -38,6 +38,7 @@ const FacilityDetailsItem = ({
     lng,
     locationLabeled,
     secondary,
+    sourceBy,
     classes,
     embed,
     isVerified,
@@ -60,6 +61,7 @@ const FacilityDetailsItem = ({
                 lng={lng}
                 locationLabeled={locationLabeled}
                 secondary={!embed ? secondary : null}
+                sourceBy={sourceBy}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
             />
@@ -93,6 +95,7 @@ const FacilityDetailsItem = ({
                         <FacilityDetailsDetail
                             primary={primary || `${lat}, ${lng}` || null}
                             secondary={!embed ? secondary : null}
+                            sourceBy={!embed ? sourceBy : null}
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}
                         />

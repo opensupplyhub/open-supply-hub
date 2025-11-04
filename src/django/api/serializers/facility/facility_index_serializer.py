@@ -203,7 +203,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             PartnerField.objects.all()
         )
 
-        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 300)
+        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
 
         return partner_fields
 

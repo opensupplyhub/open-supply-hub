@@ -46,6 +46,7 @@ const FacilityDetailsDetail = ({
     primary,
     locationLabeled,
     secondary,
+    sourceBy,
     isVerified,
     isFromClaim,
     classes,
@@ -69,6 +70,13 @@ const FacilityDetailsDetail = ({
             <Typography className={classes.primaryText}>
                 {primary || locationLabeled}
             </Typography>
+            {sourceBy ? (
+                <Typography
+                    className={classes.secondaryText}
+                    component="div"
+                    dangerouslySetInnerHTML={{ __html: sourceBy }}
+                />
+            ) : null}
             {secondary ? (
                 <Typography className={classes.secondaryText}>
                     {secondary}
