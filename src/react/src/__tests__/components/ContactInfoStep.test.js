@@ -80,7 +80,7 @@ describe('ContactInfoStep component', () => {
             claimantEmploymentVerificationMethod: '',
             claimantLinkedinProfileUrl: '',
             employmentVerificationDocuments: [],
-            pointOfcontactPersonName: '',
+            pointOfContactPersonName: '',
             pointOfContactEmail: '',
         },
         handleChange: mockHandleChange,
@@ -132,7 +132,7 @@ describe('ContactInfoStep component', () => {
             true,
         );
         expect(mockHandleChange).toHaveBeenCalledWith(
-            'pointOfcontactPersonName',
+            'pointOfContactPersonName',
             'Alice Smith',
         );
         expect(mockHandleChange).toHaveBeenCalledWith(
@@ -156,7 +156,7 @@ describe('ContactInfoStep component', () => {
         );
         // No call with contactName when claimantName is empty.
         expect(mockHandleChange).not.toHaveBeenCalledWith(
-            'pointOfcontactPersonName',
+            'pointOfContactPersonName',
             expect.anything(),
         );
         expect(mockHandleChange).toHaveBeenCalledWith(

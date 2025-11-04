@@ -72,7 +72,7 @@ export const contactStepSchema = Yup.object().shape({
     pointOfContactPubliclyVisible: Yup.boolean().nullable(),
 
     // Required only if public contact block is visible.
-    pointOfcontactPersonName: Yup.string().when(
+    pointOfContactPersonName: Yup.string().when(
         'pointOfContactPubliclyVisible',
         {
             is: v => v === true,
