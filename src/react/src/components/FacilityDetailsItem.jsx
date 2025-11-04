@@ -61,7 +61,7 @@ const FacilityDetailsItem = ({
                 lng={lng}
                 locationLabeled={locationLabeled}
                 secondary={!embed ? secondary : null}
-                sourceBy={sourceBy}
+                sourceBy={!embed ? sourceBy : null}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
             />
