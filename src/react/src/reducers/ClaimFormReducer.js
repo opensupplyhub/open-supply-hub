@@ -26,7 +26,7 @@ const initialState = Object.freeze({
         employmentVerificationDocuments: [],
         yourBusinessWebsite: '',
         pointOfContactPubliclyVisible: false,
-        pointOfcontactPersonName: '',
+        pointOfContactPersonName: '',
         claimantLinkedinProfileUrl: '',
 
         // Business step.
