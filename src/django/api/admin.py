@@ -244,11 +244,14 @@ class SectorGroupAdmin(admin.ModelAdmin):
 
 
 class PartnerFieldAdminForm(forms.ModelForm):
-    source_by = forms.CharField(widget=CKEditorWidget())
+    source_by = forms.CharField(
+        required=False,
+        widget=CKEditorWidget()
+    )
 
     class Meta:
         model = PartnerField
-        fields = "__all__"
+        fields = ['name', 'type', 'unit', 'label', 'source_by']
 
 
 class PartnerFieldAdmin(admin.ModelAdmin):
