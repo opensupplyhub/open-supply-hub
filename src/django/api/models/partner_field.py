@@ -2,7 +2,7 @@ import uuid
 from django.db import models
 from django.core.cache import cache
 from ckeditor.fields import RichTextField
-from api.constants import PARTNER_FIELD_NAMES_LIST_KEY
+from api.constants import PARTNER_FIELD_LIST_KEY
 
 
 class PartnerField(models.Model):
@@ -64,9 +64,9 @@ class PartnerField(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
+        cache.delete(PARTNER_FIELD_LIST_KEY)
 
     def delete(self, *args, **kwargs):
         result = super().delete(*args, **kwargs)
-        cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
+        cache.delete(PARTNER_FIELD_LIST_KEY)
         return result
