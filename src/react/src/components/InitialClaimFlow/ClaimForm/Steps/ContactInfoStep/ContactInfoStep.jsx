@@ -353,7 +353,7 @@ const ContactInfoStep = ({
                                         );
                                         if (claimantHasName) {
                                             handleChange(
-                                                'pointOfcontactPersonName',
+                                                'pointOfContactPersonName',
                                                 formData.yourName,
                                             );
                                         }
@@ -400,21 +400,21 @@ const ContactInfoStep = ({
                     {isPublic && (
                         <TextField
                             fullWidth
-                            name="pointOfcontactPersonName"
-                            value={formData.pointOfcontactPersonName || ''}
+                            name="pointOfContactPersonName"
+                            value={formData.pointOfContactPersonName || ''}
                             onChange={e =>
                                 handleChange(
-                                    'pointOfcontactPersonName',
+                                    'pointOfContactPersonName',
                                     e.target.value,
                                 )
                             }
                             onBlur={() =>
-                                handleBlur('pointOfcontactPersonName')
+                                handleBlur('pointOfContactPersonName')
                             }
                             variant="outlined"
                             error={
-                                touched.pointOfcontactPersonName &&
-                                Boolean(errors.pointOfcontactPersonName)
+                                touched.pointOfContactPersonName &&
+                                Boolean(errors.pointOfContactPersonName)
                             }
                             InputProps={{
                                 classes: {
@@ -427,11 +427,11 @@ const ContactInfoStep = ({
                         />
                     )}
                     {isPublic &&
-                        touched.pointOfcontactPersonName &&
-                        errors.pointOfcontactPersonName && (
+                        touched.pointOfContactPersonName &&
+                        errors.pointOfContactPersonName && (
                             <div className={classes.errorWrapStyles}>
                                 <InputErrorText
-                                    text={errors.pointOfcontactPersonName}
+                                    text={errors.pointOfContactPersonName}
                                 />
                             </div>
                         )}
@@ -510,7 +510,7 @@ ContactInfoStep.propTypes = {
         yourName: string,
         yourTitle: string,
         pointOfContactPubliclyVisible: bool,
-        pointOfcontactPersonName: string,
+        pointOfContactPersonName: string,
         pointOfContactEmail: string,
         claimantEmploymentVerificationMethod: string,
         claimantLinkedinProfileUrl: string,
@@ -524,7 +524,7 @@ ContactInfoStep.propTypes = {
         yourName: oneOfType([string, object]),
         yourTitle: oneOfType([string, object]),
         pointOfContactEmail: oneOfType([string, object]),
-        pointOfcontactPersonName: oneOfType([string, object]),
+        pointOfContactPersonName: oneOfType([string, object]),
         claimantEmploymentVerificationMethod: oneOfType([string, object]),
         claimantLinkedinProfileUrl: oneOfType([string, object]),
         yourBusinessWebsite: oneOfType([string, object]),
@@ -533,7 +533,7 @@ ContactInfoStep.propTypes = {
         yourName: bool,
         yourTitle: bool,
         pointOfContactEmail: bool,
-        pointOfcontactPersonName: bool,
+        pointOfContactPersonName: bool,
         claimantEmploymentVerificationMethod: bool,
         claimantLinkedinProfileUrl: bool,
         yourBusinessWebsite: bool,
