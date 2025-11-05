@@ -59,7 +59,11 @@ const contactInfoStepStyles = theme =>
             justifyContent: 'flex-start',
             alignItems: 'center',
         }),
-        publicInfoContainer: Object.freeze({}),
+        publicInfoContainer: Object.freeze({
+            background: COLOURS.LIGHT_AMBER,
+            padding: '10px 20px 15px 20px',
+            marginTop: '15px',
+        }),
         separator: {
             margin: '40px 0 15px 0',
             color: COLOURS.BLACK,

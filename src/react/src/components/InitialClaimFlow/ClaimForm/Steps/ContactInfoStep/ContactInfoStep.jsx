@@ -120,7 +120,6 @@ const ContactInfoStep = ({
                         required
                         variant="outlined"
                         InputProps={{
-                            readOnly: true,
                             disabled: true,
                             classes: {
                                 root: classes.inputRoot,
