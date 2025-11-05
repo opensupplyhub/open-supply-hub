@@ -6,9 +6,7 @@ export const profileStepStyles = theme =>
             margin: '40px 0 15px 0',
             color: COLOURS.BLACK,
         }),
-        sectionContainer: Object.freeze({
-            marginBottom: theme.spacing.unit * 2,
-        }),
+        sectionContainer: Object.freeze({}),
         sectionTitleContainer: Object.freeze({
             display: 'flex',
             justifyContent: 'flex-start',
@@ -21,7 +19,7 @@ export const profileStepStyles = theme =>
             marginBottom: theme.spacing.unit * 1.5,
         }),
         sectionDescription: Object.freeze({
-            margin: '0 0 20px 0',
+            margin: '0',
             fontSize: '18px',
         }),
         fieldContainer: Object.freeze({
@@ -88,7 +86,6 @@ export const profileStepStyles = theme =>
             padding: '0',
         }),
         emissionsEstimateContainer: Object.freeze({
-            marginTop: `40px`,
             maxWidth: '1071px',
         }),
         sectionIconWrapper: Object.freeze({
@@ -118,6 +115,12 @@ export const profileStepStyles = theme =>
         }),
         purpleIcon: Object.freeze({
             color: COLOURS.DARK_PURPLE,
+        }),
+        greenIcon: Object.freeze({
+            color: COLOURS.DARK_MATERIAL_GREEN,
+        }),
+        greenBg: Object.freeze({
+            backgroundColor: COLOURS.LIGHT_GREEN,
         }),
         helpIcon: Object.freeze({
             fontSize: '1rem',

@@ -6,6 +6,8 @@ import TextField from '@material-ui/core/TextField';
 import Business from '@material-ui/icons/Business';
 import Build from '@material-ui/icons/Build';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
+import Spa from '@material-ui/icons/Spa';
+
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import IconButton from '@material-ui/core/IconButton';
@@ -87,6 +89,11 @@ const ProfileStep = ({
             display: 'none',
         }),
     });
+
+    const [
+        isFreeEmissionsEstimateVisible,
+        setIsFreeEmissionsEstimateVisible,
+    ] = useState(true);
 
     return (
         <div>
@@ -655,7 +662,6 @@ const ProfileStep = ({
                     Production and operations details for your location.
                 </Typography>
             </div>
-
             {isOperationsCapabilitiesVisible && (
                 <section>
                     <div className={classes.doubleFieldContainer}>
@@ -1176,7 +1182,6 @@ const ProfileStep = ({
                     </div>
                 </section>
             )}
-
             <hr className={classes.separator} />
             <div className={classes.sectionContainer}>
                 <div className={classes.sectionTitleContainer}>
@@ -1305,12 +1310,44 @@ const ProfileStep = ({
                     </div>
                 </section>
             )}
-
-            <div className={classes.emissionsEstimateContainer}>
-                <ClaimEmissionsEstimate
-                    onValidationChange={setClaimEmissionsEstimateHasErrors}
-                />
+            <hr className={classes.separator} />
+            <div className={classes.sectionContainer}>
+                <div className={classes.sectionTitleContainer}>
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
+                    >
+                        <div
+                            className={`${classes.sectionIconWrapper} ${classes.greenBg}`}
+                        >
+                            <Spa
+                                className={`${classes.sectionIcon} ${classes.greenIcon}`}
+                            />
+                        </div>
+                        Environmental Data
+                    </Typography>
+                    <div className={classes.switchContainer}>
+                        <Switch
+                            checked={isFreeEmissionsEstimateVisible}
+                            onChange={(_, checked) => {
+                                setIsFreeEmissionsEstimateVisible(checked);
+                            }}
+                            color="primary"
+                        />
+                    </div>
+                </div>
+                <Typography className={classes.sectionDescription}>
+                    Emissions estimate and energy consumption data.
+                </Typography>
             </div>
+            {isFreeEmissionsEstimateVisible && (
+                <div className={classes.emissionsEstimateContainer}>
+                    <ClaimEmissionsEstimate
+                        onValidationChange={setClaimEmissionsEstimateHasErrors}
+                    />
+                </div>
+            )}
         </div>
     );
 };
