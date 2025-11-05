@@ -88,10 +88,14 @@ export const claimInfoStyles = theme => ({
     boxContainerWrapper: {
         display: 'flex',
         maxWidth: '1252px',
-        justifyContent: 'space-even',
         marginBottom: '10px',
         margin: '0 auto',
         width: '100%',
+    },
+    boxContainerWrapperColumn: {
+        [theme.breakpoints.down('sm')]: {
+            flexDirection: 'column',
+        },
     },
     boxContainer: {
         padding: '20px',
@@ -99,7 +103,6 @@ export const claimInfoStyles = theme => ({
         width: '100%',
     },
     boxContainerHalf: {
-        width: '50%',
         display: 'flex',
         flex: 1,
         marginRight: '10px',
@@ -151,6 +154,9 @@ export const claimInfoStyles = theme => ({
         fontWeight: 600,
         color: COLOURS.DARK_GREY,
     },
+    boxDescriptionMargin: {
+        marginBottom: '15px',
+    },
     boxExamplesContainer: {
         display: 'flex',
         gap: theme.spacing.unit * 3,
@@ -178,18 +184,6 @@ export const claimInfoStyles = theme => ({
         display: 'inline-flex',
         alignItems: 'center',
         marginRight: theme.spacing.unit,
-    },
-    blueIcon: {
-        backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
-    },
-    purpleIcon: {
-        backgroundColor: COLOURS.LIGHT_PURPLE,
-    },
-    greenIcon: {
-        backgroundColor: COLOURS.LIGHT_GREEN,
-    },
-    amberIcon: {
-        backgroundColor: COLOURS.LIGHT_AMBER,
     },
     blueStep: {
         backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
@@ -274,5 +268,6 @@ export const claimInfoStyles = theme => ({
         fontWeight: theme.typography.fontWeightBold,
         backgroundColor: theme.palette.action.main,
         color: theme.palette.common.black,
+        flexShrink: 0,
     },
 });

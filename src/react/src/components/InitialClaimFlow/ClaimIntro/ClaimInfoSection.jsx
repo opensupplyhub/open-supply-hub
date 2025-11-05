@@ -20,18 +20,10 @@ const ClaimInfoSection = ({ classes, children }) => (
         <div className={classes.boxContainerWrapper}>
             <div className={`${classes.boxContainer} ${classes.blueStep}`}>
                 <Typography component="h2" className={classes.boxHeader}>
-                    <span
-                        className={`${classes.stepNumber} ${classes.blueIcon}`}
-                    >
-                        1
-                    </span>
+                    <span className={classes.stepNumber}>1</span>
                     <span className={classes.stepTitle}>
                         Confirm Your Eligibility
                     </span>
-                </Typography>
-                <Typography variant="body2" className={classes.boxDescription}>
-                    Confirm that you are eligible to claim this production
-                    location, keeping in mind:
                 </Typography>
                 <ul className={classes.boxList}>
                     <li>
@@ -57,27 +49,18 @@ const ClaimInfoSection = ({ classes, children }) => (
             </div>
         </div>
 
-        <div className={classes.boxContainerWrapper}>
+        <div
+            className={`${classes.boxContainerWrapper} ${classes.boxContainerWrapperColumn}`}
+        >
             <div className={classes.boxContainerHalf}>
                 <div
                     className={`${classes.boxContainer} ${classes.purpleStep}`}
                 >
                     <Typography component="h2" className={classes.boxHeader}>
-                        <span
-                            className={`${classes.stepNumber} ${classes.purpleIcon}`}
-                        >
-                            2
-                        </span>
+                        <span className={classes.stepNumber}>2</span>
                         <span className={classes.stepTitle}>
                             Prove Your Name and Role
                         </span>
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        Provide the document about your name and role,{' '}
-                        <strong>OPTIONS:</strong>
                     </Typography>
                     <ul className={classes.boxList}>
                         <li>
@@ -149,21 +132,10 @@ const ClaimInfoSection = ({ classes, children }) => (
             <div className={classes.boxContainerHalf}>
                 <div className={`${classes.boxContainer} ${classes.greenStep}`}>
                     <Typography component="h2" className={classes.boxHeader}>
-                        <span
-                            className={`${classes.stepNumber} ${classes.greenIcon}`}
-                        >
-                            3
-                        </span>
+                        <span className={classes.stepNumber}>3</span>
                         <span className={classes.stepTitle}>
                             Prove Company Name and Address
                         </span>
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        Provide the document about your company name and
-                        address, <strong>OPTIONS:</strong>
                     </Typography>
                     <ul className={classes.boxList}>
                         <li>
@@ -226,94 +198,50 @@ const ClaimInfoSection = ({ classes, children }) => (
             </div>
         </div>
         <div className={classes.boxContainerWrapper}>
-            <div className={classes.boxContainerHalf}>
-                <div className={`${classes.boxContainer} ${classes.amberStep}`}>
-                    <Typography component="h2" className={classes.boxHeader}>
-                        <span
-                            className={`${classes.stepNumber} ${classes.amberIcon}`}
-                        >
-                            4
-                        </span>
-                        <span className={classes.stepTitle}>
-                            Add Key Details
-                        </span>
-                        <DialogTooltip
-                            text="For maximum value, add key details to your production location to help others find you online."
-                            childComponent={
-                                <span className={classes.maxValueBadge}>★</span>
-                            }
-                        />
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
+            <div className={`${classes.boxContainer} ${classes.amberStep}`}>
+                <Typography component="h2" className={classes.boxHeader}>
+                    <span className={classes.stepNumber}>4</span>
+                    <span className={classes.stepTitle}>Add Key Details</span>
+                    <DialogTooltip
+                        text="For maximum value, add key details to your production location to help others find you online."
+                        childComponent={
+                            <span className={classes.maxValueBadge}>★</span>
+                        }
+                    />
+                </Typography>
+                <Typography
+                    variant="body2"
+                    className={`${classes.boxDescription} ${classes.boxDescriptionMargin}`}
+                >
+                    Provide information about the production location such as
+                    Certifications, Number of Workers, Contact Information, and
+                    more.
+                </Typography>
+                <Typography component="h2" className={classes.boxHeader}>
+                    <span className={classes.stepNumber}>5</span>
+                    <span className={classes.stepTitle}>
+                        Get a Credible and Confirmed Profile
+                    </span>
+                    <DialogTooltip
+                        text="After the claim is approved, you get a credible and confirmed profile—with a green banner and Claimed badge—that helps others trust and find your company."
+                        childComponent={
+                            <span className={classes.maxValueBadge}>★</span>
+                        }
+                    />
+                </Typography>
+                <Typography variant="body2" className={classes.boxDescription}>
+                    After the claim is approved, you get a credible and
+                    confirmed profile—with a green banner and Claimed badge—that
+                    helps buyers trust and find your company.{' '}
+                    <a
+                        href={ClaimFacilityInfoLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={classes.link}
                     >
-                        Provide information about the production location, such
-                        as:
-                    </Typography>
-                    <ul className={classes.boxList}>
-                        <li>
-                            <Typography
-                                variant="body2"
-                                className={classes.boxDescription}
-                            >
-                                Certifications
-                            </Typography>
-                        </li>
-                        <li>
-                            <Typography
-                                variant="body2"
-                                className={classes.boxDescription}
-                            >
-                                Number of Workers
-                            </Typography>
-                        </li>
-                        <li>
-                            <Typography
-                                variant="body2"
-                                className={classes.boxDescription}
-                            >
-                                Contact Information and more.
-                            </Typography>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            <div className={classes.boxContainerHalf}>
-                <div className={`${classes.boxContainer} ${classes.amberStep}`}>
-                    <Typography component="h2" className={classes.boxHeader}>
-                        <span
-                            className={`${classes.stepNumber} ${classes.amberIcon}`}
-                        >
-                            5
-                        </span>
-                        <span className={classes.stepTitle}>
-                            Get a Credible and Confirmed Profile
-                        </span>
-                        <DialogTooltip
-                            text="After the claim is approved, you get a credible and confirmed profile—with a green banner and Claimed badge—that helps others trust and find your company."
-                            childComponent={
-                                <span className={classes.maxValueBadge}>★</span>
-                            }
-                        />
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxDescription}
-                    >
-                        After the claim is approved, you get a credible and
-                        confirmed profile—with a green banner and Claimed
-                        badge—that helps buyers trust and find your company.{' '}
-                        <a
-                            href={ClaimFacilityInfoLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={classes.link}
-                        >
-                            Learn more about claiming your production location.
-                        </a>
-                    </Typography>
-                </div>
+                        Learn more about claiming your production location.
+                    </a>
+                </Typography>
             </div>
         </div>
         <div className={classes.boxContainerWrapper}>
