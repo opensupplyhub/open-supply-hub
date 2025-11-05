@@ -48,18 +48,18 @@ const contactInfoStepStyles = theme =>
         sectionTitle: Object.freeze({
             fontSize: '24px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            marginBottom: theme.spacing.unit * 1.5,
+            marginTop: '25px',
         }),
         sectionDescription: Object.freeze({
-            margin: '0 0 20px 0',
             fontSize: '18px',
+            marginBottom: '10px',
         }),
         sectionTitleContainer: Object.freeze({
             display: 'flex',
             justifyContent: 'flex-start',
             alignItems: 'center',
-            marginTop: `20px`,
         }),
+        publicInfoContainer: Object.freeze({}),
         separator: {
             margin: '40px 0 15px 0',
             color: COLOURS.BLACK,
@@ -97,6 +97,9 @@ const contactInfoStepStyles = theme =>
         }),
         switchContainer: Object.freeze({
             margin: '0 0 5px 0',
+        }),
+        subDescription: Object.freeze({
+            marginTop: '0',
         }),
     });
 
