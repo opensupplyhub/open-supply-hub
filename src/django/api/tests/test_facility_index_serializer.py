@@ -138,7 +138,8 @@ class FacilityIndexSerializerTest(TestCase):
         )
 
     def test_partner_fields_includes_source_by(self):
-        self.partner_field_1.source_by = '<strong>Climate TRACE</strong> source'
+        self.partner_field_1.source_by = \
+            '<strong>Climate TRACE</strong> source'
         self.partner_field_1.save()
 
         extended_field = ExtendedField.objects.create(
