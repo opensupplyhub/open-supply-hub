@@ -178,78 +178,14 @@ const ProfileStep = ({
                             </div>
                         )}
                     </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Company Phone
-                                    <Tooltip
-                                        title="Main phone number for contacting this production location directly"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.officePhoneNumber || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'officePhoneNumber',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={handleBlur}
-                            placeholder="+1 (555) 123-4567"
-                            error={
-                                touched.officePhoneNumber &&
-                                !!errors.officePhoneNumber
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.officePhoneNumber && errors.officePhoneNumber && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.officePhoneNumber}
-                                />
-                            </div>
-                        )}
-                        <DialogTooltip
-                            text={BETA_TOOLTIP_TEXT}
-                            childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
-                            }
-                        />
-                    </div>
-                    {!shouldHideBusinessWebsite && (
+                    <div className={classes.doubleFieldContainer}>
                         <div className={classes.fieldContainer}>
                             <FormFieldTitle
                                 label={
                                     <>
-                                        Company Website
+                                        Company Phone
                                         <Tooltip
-                                            title="Official website URL for this specific production location (if available)"
+                                            title="Main phone number for contacting this production location directly"
                                             placement="top"
                                             classes={{
                                                 tooltip: classes.tooltip,
@@ -273,20 +209,19 @@ const ProfileStep = ({
                             />
                             <TextField
                                 fullWidth
-                                type="url"
                                 variant="outlined"
-                                value={formData.businessWebsite || ''}
+                                value={formData.officePhoneNumber || ''}
                                 onChange={e =>
                                     handleChange(
-                                        'businessWebsite',
+                                        'officePhoneNumber',
                                         e.target.value,
                                     )
                                 }
                                 onBlur={handleBlur}
-                                placeholder="https://company.com"
+                                placeholder="+1 (555) 123-4567"
                                 error={
-                                    touched.businessWebsite &&
-                                    !!errors.businessWebsite
+                                    touched.officePhoneNumber &&
+                                    !!errors.officePhoneNumber
                                 }
                                 InputProps={{
                                     classes: {
@@ -296,23 +231,104 @@ const ProfileStep = ({
                                     },
                                 }}
                             />
-                            {touched.businessWebsite && errors.businessWebsite && (
-                                <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={errors.businessWebsite}
-                                    />
-                                </div>
-                            )}
+                            {touched.officePhoneNumber &&
+                                errors.officePhoneNumber && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.officePhoneNumber}
+                                        />
+                                    </div>
+                                )}
                             <DialogTooltip
                                 text={BETA_TOOLTIP_TEXT}
                                 childComponent={
-                                    <span className={classes.betaBadge}>
+                                    <span
+                                        className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                    >
                                         BETA
                                     </span>
                                 }
                             />
                         </div>
-                    )}
+                        {!shouldHideBusinessWebsite && (
+                            <div className={classes.fieldContainer}>
+                                <FormFieldTitle
+                                    label={
+                                        <>
+                                            Company Website
+                                            <Tooltip
+                                                title="Official website URL for this specific production location (if available)"
+                                                placement="top"
+                                                classes={{
+                                                    tooltip: classes.tooltip,
+                                                }}
+                                            >
+                                                <IconButton
+                                                    size="small"
+                                                    disableRipple
+                                                    className={
+                                                        classes.helpIconButton
+                                                    }
+                                                >
+                                                    <HelpOutline
+                                                        className={
+                                                            classes.helpIcon
+                                                        }
+                                                    />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </>
+                                    }
+                                    classes={{ title: classes.formLabel }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    type="url"
+                                    variant="outlined"
+                                    value={formData.businessWebsite || ''}
+                                    onChange={e =>
+                                        handleChange(
+                                            'businessWebsite',
+                                            e.target.value,
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    placeholder="https://company.com"
+                                    error={
+                                        touched.businessWebsite &&
+                                        !!errors.businessWebsite
+                                    }
+                                    InputProps={{
+                                        classes: {
+                                            input: classes.inputStyles,
+                                            notchedOutline:
+                                                classes.notchedOutlineStyles,
+                                        },
+                                    }}
+                                />
+                                {touched.businessWebsite &&
+                                    errors.businessWebsite && (
+                                        <div
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={errors.businessWebsite}
+                                            />
+                                        </div>
+                                    )}
+                                <DialogTooltip
+                                    text={BETA_TOOLTIP_TEXT}
+                                    childComponent={
+                                        <span
+                                            className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                        >
+                                            BETA
+                                        </span>
+                                    }
+                                />
+                            </div>
+                        )}
+                    </div>
                     <div className={classes.textareaFieldContainer}>
                         <FormFieldTitle
                             label={
@@ -1193,7 +1209,7 @@ const ProfileStep = ({
                 </Typography>
             </div>
             {isCompliancePartnershipsVisible && (
-                <section>
+                <section className={classes.doubleFieldContainer}>
                     <div className={classes.fieldContainer}>
                         <FormFieldTitle
                             label={
@@ -1242,7 +1258,11 @@ const ProfileStep = ({
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
                             childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
+                                <span
+                                    className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                >
+                                    BETA
+                                </span>
                             }
                         />
                     </div>
@@ -1275,7 +1295,11 @@ const ProfileStep = ({
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
                             childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
+                                <span
+                                    className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                >
+                                    BETA
+                                </span>
                             }
                         />
                     </div>
