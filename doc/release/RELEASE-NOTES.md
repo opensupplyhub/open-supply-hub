@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.16.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 15, 2025
+
+#### Migrations
+* 0184_add_source_by_to_partner_field.py - This migration adds a `source_by` RichTextField to the `PartnerField` model, allowing administrators to document the data source for each partner field using rich text formatting (bold, italic, links, lists). The field is optional and uses CKEditor for content editing.
+
+### What's new
+* [OSDEV-2185](https://opensupplyhub.atlassian.net/browse/OSDEV-2185) - Enhanced partner field display on production location profiles by adding a `source_by` field to the `PartnerField` model. This allows administrators to provide rich text descriptions of data sources. The source information is displayed on the facility details page below each partner field value, supporting HTML formatting for links, emphasis, and lists. Updated the facility index serializer to include `source_by` in the partner fields response only when the field contains content.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.15.0
 
 ## Introduction
