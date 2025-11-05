@@ -9,6 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: November 15, 2025
 
+### Database changes
+
 #### Migrations
 * 0184_add_source_by_to_partner_field.py - This migration adds a `source_by` RichTextField to the `PartnerField` model, allowing administrators to document the data source for each partner field using rich text formatting (bold, italic, links, lists). The field is optional and uses CKEditor for content editing.
 
