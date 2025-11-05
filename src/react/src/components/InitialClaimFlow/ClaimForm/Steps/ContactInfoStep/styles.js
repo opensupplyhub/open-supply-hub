@@ -39,6 +39,8 @@ const contactInfoStepStyles = theme =>
             marginRight: theme.spacing.unit,
         },
         boxWarningContainer: {
+            maxWidth: '1071px',
+            boxSizing: 'border-box',
             backgroundColor: COLOURS.LIGHT_RED,
             padding: theme.spacing.unit * 1.5,
             display: 'flex',
@@ -60,6 +62,8 @@ const contactInfoStepStyles = theme =>
             alignItems: 'center',
         }),
         publicInfoContainer: Object.freeze({
+            boxSizing: 'border-box',
+            maxWidth: '1071px',
             background: COLOURS.LIGHT_AMBER,
             padding: '10px 20px 15px 20px',
             marginTop: '15px',

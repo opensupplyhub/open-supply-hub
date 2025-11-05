@@ -79,7 +79,7 @@ export const profileStepStyles = theme =>
         }),
         textareaFieldContainer: Object.freeze({
             position: 'relative',
-            maxWidth: '1252px',
+            maxWidth: '1071px',
             [theme.breakpoints.down('md')]: {
                 maxWidth: '100%',
             },
@@ -89,7 +89,7 @@ export const profileStepStyles = theme =>
         }),
         emissionsEstimateContainer: Object.freeze({
             marginTop: `40px`,
-            maxWidth: '1252px',
+            maxWidth: '1071px',
         }),
         sectionIconWrapper: Object.freeze({
             padding: theme.spacing.unit,

@@ -87,7 +87,7 @@ export const claimInfoStyles = theme => ({
     },
     boxContainerWrapper: {
         display: 'flex',
-        maxWidth: '1252px',
+        maxWidth: '1071px',
         marginBottom: '10px',
         margin: '0 auto',
         width: '100%',
@@ -163,11 +163,12 @@ export const claimInfoStyles = theme => ({
         marginTop: '20px',
     },
     boxWarningContainer: {
+        maxWidth: '1071px',
+        boxSizing: 'border-box',
         backgroundColor: COLOURS.LIGHT_RED,
         padding: theme.spacing.unit * 1.5,
         display: 'flex',
         alignItems: 'center',
-        // marginTop: '20px',
     },
     boxWarningText: {
         fontSize: '18px',

@@ -23,9 +23,11 @@ const businessStepStyles = theme =>
             },
         }),
         documentUploadContainer: Object.freeze({
-            maxWidth: '1252px',
+            maxWidth: '1071px',
         }),
         boxWarningContainer: Object.freeze({
+            maxWidth: '1071px',
+            boxSizing: 'border-box',
             backgroundColor: COLOURS.LIGHT_RED,
             padding: theme.spacing.unit * 1.5,
             display: 'flex',
