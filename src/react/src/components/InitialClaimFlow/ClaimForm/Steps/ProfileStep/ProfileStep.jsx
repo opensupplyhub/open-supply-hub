@@ -739,6 +739,10 @@ const ProfileStep = ({
                                             !!errors.facilityType,
                                         selectStyles,
                                     )}
+                                    components={{
+                                        DropdownIndicator: null,
+                                        IndicatorSeparator: null,
+                                    }}
                                 />
                             )}
                         </div>
@@ -819,6 +823,10 @@ const ProfileStep = ({
                                             !!errors.facilityProductionTypes,
                                         selectStyles,
                                     )}
+                                    components={{
+                                        DropdownIndicator: null,
+                                        IndicatorSeparator: null,
+                                    }}
                                 />
                             )}
                         </div>
@@ -865,6 +873,10 @@ const ProfileStep = ({
                                         !!errors.facilityProductTypes,
                                     selectStyles,
                                 )}
+                                components={{
+                                    DropdownIndicator: null,
+                                    IndicatorSeparator: null,
+                                }}
                             />
                         </div>
                     </div>
@@ -1222,6 +1234,10 @@ const ProfileStep = ({
                                     !!errors.facilityAffiliations,
                                 selectStyles,
                             )}
+                            components={{
+                                DropdownIndicator: null,
+                                IndicatorSeparator: null,
+                            }}
                         />
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
@@ -1251,6 +1267,10 @@ const ProfileStep = ({
                                     !!errors.facilityCertifications,
                                 selectStyles,
                             )}
+                            components={{
+                                DropdownIndicator: null,
+                                IndicatorSeparator: null,
+                            }}
                         />
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
