@@ -56,6 +56,10 @@ const businessStepStyles = theme =>
             fontSize: '18px',
             borderRadius: '0',
         }),
+        sectionDescription: Object.freeze({
+            fontSize: '18px',
+            marginBottom: '10px',
+        }),
         linkField: Object.freeze({
             display: 'block',
             width: '100%',

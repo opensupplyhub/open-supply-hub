@@ -155,6 +155,10 @@ const BusinessStep = ({
                     classes={{ title: classes.formLabel }}
                     required
                 />
+                <Typography variant="p" className={classes.sectionDescription}>
+                    You need to select and provide one of the below items for
+                    company address verification.
+                </Typography>
                 <StyledSelect
                     id="locationAddressVerificationMethod"
                     name="locationAddressVerificationMethod"
