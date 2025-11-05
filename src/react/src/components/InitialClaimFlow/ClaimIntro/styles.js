@@ -85,8 +85,30 @@ export const claimInfoStyles = theme => ({
             padding: '24px 5% 0 5%',
         },
     },
+    boxContainerWrapper: {
+        display: 'flex',
+        maxWidth: '1252px',
+        justifyContent: 'space-even',
+        marginBottom: '10px',
+        margin: '0 auto',
+        width: '100%',
+    },
     boxContainer: {
-        padding: '40px 0 40px 0',
+        padding: '20px',
+        border: '1px solid #E0E0E0',
+        width: '100%',
+    },
+    boxContainerHalf: {
+        width: '50%',
+        display: 'flex',
+        flex: 1,
+        marginRight: '10px',
+        '&:last-child': {
+            marginRight: 0,
+        },
+        [theme.breakpoints.down('sm')]: {
+            marginRight: '0',
+        },
     },
     boxHeader: {
         fontSize: '36px',
@@ -97,6 +119,7 @@ export const claimInfoStyles = theme => ({
     },
     stepTitle: {
         lineHeight: '1.2',
+        fontSize: '26px',
     },
     stepNumber: {
         width: 36,
@@ -138,7 +161,7 @@ export const claimInfoStyles = theme => ({
         padding: theme.spacing.unit * 1.5,
         display: 'flex',
         alignItems: 'center',
-        marginTop: '20px',
+        // marginTop: '20px',
     },
     boxWarningText: {
         fontSize: '18px',
@@ -156,13 +179,25 @@ export const claimInfoStyles = theme => ({
         alignItems: 'center',
         marginRight: theme.spacing.unit,
     },
+    blueIcon: {
+        backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
+    },
+    purpleIcon: {
+        backgroundColor: COLOURS.LIGHT_PURPLE,
+    },
+    greenIcon: {
+        backgroundColor: COLOURS.LIGHT_GREEN,
+    },
+    amberIcon: {
+        backgroundColor: COLOURS.LIGHT_AMBER,
+    },
     blueStep: {
         backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
         border: `1px solid ${theme.palette.common.black}`,
         color: theme.palette.common.black,
     },
     purpleStep: {
-        backgroundColor: COLOURS.LIGHT_PURPLE_BG,
+        backgroundColor: COLOURS.LIGHT_PURPLE,
         border: `1px solid ${theme.palette.common.black}`,
         color: theme.palette.common.black,
     },
@@ -172,8 +207,8 @@ export const claimInfoStyles = theme => ({
         color: theme.palette.common.black,
     },
     amberStep: {
-        background: theme.palette.action.main,
-        border: `1px solid ${theme.palette.common.grey}`,
+        background: COLOURS.LIGHT_AMBER,
+        border: `1px solid ${theme.palette.common.black}`,
         color: theme.palette.common.black,
     },
     defaultLabel: {
@@ -224,10 +259,6 @@ export const claimInfoStyles = theme => ({
             boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
             transform: 'translateY(-2px)',
         },
-    },
-    separator: {
-        margin: '1px 0',
-        color: COLOURS.BLACK,
     },
     maxValueBadge: {
         cursor: 'help',
