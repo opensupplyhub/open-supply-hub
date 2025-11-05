@@ -27,8 +27,18 @@ export const profileStepStyles = theme =>
         fieldContainer: Object.freeze({
             position: 'relative',
             maxWidth: '528px',
+            width: '100%',
             [theme.breakpoints.down('md')]: {
                 maxWidth: '100%',
+            },
+            '&:first-child': {
+                marginRight: '15px',
+            },
+        }),
+        doubleFieldContainer: Object.freeze({
+            display: 'flex',
+            [theme.breakpoints.down('md')]: {
+                flexDirection: 'column',
             },
         }),
         formLabel: Object.freeze({
@@ -63,6 +73,9 @@ export const profileStepStyles = theme =>
             top: 57,
             right: 13,
             zIndex: 1,
+        }),
+        betaBadgeColumn: Object.freeze({
+            top: '80px',
         }),
         textareaFieldContainer: Object.freeze({
             position: 'relative',
