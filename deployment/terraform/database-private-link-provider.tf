@@ -12,5 +12,4 @@ module "database_private_link_provider" {
   db_password                = var.rds_database_password
   db_port                    = module.database_enc.port
   database_security_group_id = module.database_enc.database_security_group_id
-  db_proxy_debug_logging     = true
 }
