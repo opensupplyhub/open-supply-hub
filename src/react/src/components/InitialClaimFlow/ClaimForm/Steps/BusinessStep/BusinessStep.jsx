@@ -121,7 +121,7 @@ const BusinessStep = ({
                     value={locationName}
                     InputProps={{
                         className: classes.disabledField,
-                        readOnly: true,
+                        disabled: true,
                         classes: {
                             notchedOutline: classes.notchedOutlineStyles,
                         },
@@ -142,7 +142,7 @@ const BusinessStep = ({
                     value={locationAddress}
                     InputProps={{
                         className: classes.disabledField,
-                        readOnly: true,
+                        disabled: true,
                         classes: {
                             notchedOutline: classes.notchedOutlineStyles,
                         },
@@ -155,6 +155,10 @@ const BusinessStep = ({
                     classes={{ title: classes.formLabel }}
                     required
                 />
+                <Typography variant="p" className={classes.sectionDescription}>
+                    You need to select and provide one of the below items for
+                    company address verification.
+                </Typography>
                 <StyledSelect
                     id="locationAddressVerificationMethod"
                     name="locationAddressVerificationMethod"

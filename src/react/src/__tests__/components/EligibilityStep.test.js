@@ -217,21 +217,21 @@ describe('EligibilityStep component', () => {
             screen.getByText(/Only the owner, manager, authorized employee/i)
         ).toBeInTheDocument();
         expect(
-            screen.getByRole('button', { name: /Go Back to OS HUB/i })
+            screen.getByRole('button', { name: /Go Back to Open Supply Hub/i })
         ).toBeInTheDocument();
         expect(
             screen.getByRole('button', { name: /Continue to Claim/i })
         ).toBeInTheDocument();
     });
 
-    test('navigates to main page when "Go Back to OS HUB" is clicked', () => {
+    test('navigates to main page when "Go Back to Open Supply Hub" is clicked', () => {
         renderComponent();
 
         const selectField = screen.getByTestId('relationship-select');
         fireEvent.change(selectField, { target: { value: 'partner' } });
 
         const backButton = screen.getByRole('button', {
-            name: /Go Back to OS HUB/i,
+            name: /Go Back to Open Supply Hub/i,
         });
         backButton.click();
 
