@@ -65,17 +65,6 @@ const EnergySourceInput = ({
                         );
                     }}
                     error={hasError}
-                    helperText={
-                        hasError && (
-                            <InputErrorText
-                                text={
-                                    freeEmissionsEstimateForm.errors[
-                                        valueFieldName
-                                    ]
-                                }
-                            />
-                        )
-                    }
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
@@ -96,6 +85,19 @@ const EnergySourceInput = ({
                     variant="outlined"
                     fullWidth
                 />
+            </Grid>
+            <Grid
+                item
+                xs={12}
+                sm={8}
+                md={9}
+                className={classes.errorTextContainer}
+            >
+                {hasError && (
+                    <InputErrorText
+                        text={freeEmissionsEstimateForm.errors[valueFieldName]}
+                    />
+                )}
             </Grid>
         </Grid>
     );

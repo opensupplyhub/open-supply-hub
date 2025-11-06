@@ -105,6 +105,18 @@ export const energySourceInputStyles = Object.freeze({
     }),
     inputStyles,
     notchedOutlineStyles,
+    errorTextContainer: Object.freeze({
+        marginLeft: '25%',
+        marginTop: '5px',
+        '@media (max-width: 900px)': {
+            marginLeft: '32%',
+            marginTop: '5px',
+        },
+        '@media (max-width: 700px)': {
+            marginLeft: '0',
+            marginTop: '5px',
+        },
+    }),
 });
 
 export const yearPickerStyles = Object.freeze({
