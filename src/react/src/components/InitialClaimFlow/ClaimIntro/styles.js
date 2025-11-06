@@ -81,6 +81,9 @@ export const claimInfoStyles = theme => ({
         flexDirection: 'column',
         padding: '40px 110px 0 110px',
         borderRadius: '0',
+        [theme.breakpoints.down('lg')]: {
+            padding: '40px 4% 0 4%',
+        },
         [theme.breakpoints.down('sm')]: {
             padding: '24px 5% 0 5%',
         },

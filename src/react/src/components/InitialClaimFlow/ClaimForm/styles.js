@@ -26,8 +26,11 @@ export const claimFormStyles = theme =>
             borderRadius: 0,
             marginTop: '32px',
             padding: '40px 110px 0 110px',
+            [theme.breakpoints.down('lg')]: {
+                padding: '40px 4% 0 4%',
+            },
             [theme.breakpoints.down('sm')]: {
-                padding: '24px 5% 0 5%',
+                padding: '24px 4% 0 4%',
             },
         }),
         title: Object.freeze({
