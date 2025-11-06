@@ -15,6 +15,7 @@ import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
 import Business from '@material-ui/icons/Business';
+import Warning from '@material-ui/icons/Warning';
 
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
@@ -304,17 +305,22 @@ const ClaimForm = ({
                             onEmissionsValidationChange={setEmissionsHasErrors}
                         />
                         {submissionError && (
-                            <Typography
-                                variant="body2"
-                                color="error"
-                                style={{
-                                    textAlign: 'center',
-                                    marginTop: '24px',
-                                    fontSize: '16px',
-                                }}
-                            >
-                                An error prevented submitting the form
-                            </Typography>
+                            <div className={`${classes.boxWarningContainer}`}>
+                                <Typography
+                                    variant="body2"
+                                    className={classes.boxWarningText}
+                                >
+                                    <span
+                                        className={classes.boxWarningTextIcon}
+                                    >
+                                        <Warning
+                                            className={classes.warningIcon}
+                                        />
+                                        <strong>ERROR!</strong>
+                                    </span>
+                                    <span>{submissionError}</span>
+                                </Typography>
+                            </div>
                         )}
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
@@ -322,6 +328,7 @@ const ClaimForm = ({
                                     variant="outlined"
                                     onClick={handleBack}
                                     className={classes.buttonBack}
+                                    disabled={submissionFetching}
                                 >
                                     {isFirstStep(activeStep)
                                         ? 'Go Back'
@@ -344,9 +351,14 @@ const ClaimForm = ({
                                         variant="contained"
                                         type="submit"
                                         className={classes.buttonPrimary}
-                                        disabled={isButtonDisabled}
+                                        disabled={
+                                            isButtonDisabled ||
+                                            submissionFetching
+                                        }
                                     >
-                                        Submit Claim
+                                        {submissionFetching
+                                            ? 'Submitting...'
+                                            : 'Submit Claim'}
                                     </Button>
                                 )}
                             </Grid>
