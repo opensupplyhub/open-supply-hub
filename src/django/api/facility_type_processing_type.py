@@ -13,7 +13,6 @@ OFFICE = 'office'
 OFFICE_HQ = 'office hq'
 SOURCING_AGENT = 'sourcing agent'
 TRADING = 'trading'
-
 RECRUITMENT_AGENCY = 'recruitment agency'
 UNION_HQ_OFFICE = 'union headquarters/office'
 
