@@ -37,6 +37,10 @@ const EnergySourceInput = ({
                             name={enabledFieldName}
                             onChange={freeEmissionsEstimateForm.handleChange}
                             disabled={disabled}
+                            classes={{
+                                root: classes.checkbox,
+                                checked: classes.checkboxChecked,
+                            }}
                         />
                     }
                     label={`${source.label}:`}

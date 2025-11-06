@@ -1,3 +1,5 @@
+import COLOURS from '../../util/COLOURS';
+
 export const labelStyles = Object.freeze({
     labelContainer: Object.freeze({
         flexWrap: 'nowrap',
@@ -102,6 +104,12 @@ export const energySourceInputStyles = Object.freeze({
     checkboxLabel: Object.freeze({
         fontSize: '18px',
         fontWeight: 600,
+    }),
+    checkbox: Object.freeze({
+        color: `${COLOURS.DARK_MATERIAL_GREEN} !important`,
+    }),
+    checkboxChecked: Object.freeze({
+        color: `${COLOURS.DARK_MATERIAL_GREEN} !important`,
     }),
     inputStyles,
     notchedOutlineStyles,
