@@ -120,7 +120,7 @@ const ContactInfoStep = ({
                         required
                         variant="outlined"
                         InputProps={{
-                            readOnly: true,
+                            disabled: true,
                             classes: {
                                 root: classes.inputRoot,
                                 input: classes.input,
@@ -212,6 +212,13 @@ const ContactInfoStep = ({
                         classes={{ title: classes.formLabel }}
                         required
                     />
+                    <Typography
+                        variant="p"
+                        className={classes.sectionDescription}
+                    >
+                        You need to select and provide one of the below items
+                        for employment verification.
+                    </Typography>
                     <StyledSelect
                         id="claimantEmploymentVerificationMethod"
                         name="claimantEmploymentVerificationMethod"
@@ -232,7 +239,7 @@ const ContactInfoStep = ({
                             isEmploymentVerificationError,
                             selectStyles,
                         )}
-                        placeholder="You need to provide one of the below items for employment verification"
+                        placeholder="Choose one"
                         isMulti={false}
                     />
                     {touched.claimantEmploymentVerificationMethod &&
@@ -325,173 +332,189 @@ const ContactInfoStep = ({
                 <hr className={classes.separator} />
 
                 <div className={classes.sectionContainer}>
-                    <div className={classes.sectionTitleContainer}>
-                        <Typography
-                            variant="title"
-                            component="h3"
-                            className={classes.sectionTitle}
-                        >
-                            Do you want this location&apos;s contact info to be
-                            public?
-                        </Typography>
-                        <div className={classes.switchContainer}>
-                            <Switch
-                                checked={isPublic}
-                                onChange={(_, checked) => {
-                                    handleChange(
-                                        'pointOfContactPubliclyVisible',
-                                        checked,
-                                    );
-
-                                    // When enabling public contact, prefill fields.
-                                    if (checked) {
-                                        // Copy yourName -> contactName if claimant has data.
-                                        const claimantHasName = Boolean(
-                                            (formData.yourName || '')
-                                                .toString()
-                                                .trim(),
-                                        );
-                                        if (claimantHasName) {
-                                            handleChange(
-                                                'pointOfContactPersonName',
-                                                formData.yourName,
-                                            );
-                                        }
-
-                                        // Always set contactEmail from userEmail; remains editable.
-                                        if (userEmail) {
-                                            handleChange(
-                                                'pointOfContactEmail',
-                                                userEmail,
-                                            );
-                                        }
-                                    }
-                                }}
-                                color="primary"
-                            />
-                        </div>
-                    </div>
-                    <Typography className={classes.sectionDescription}>
-                        Toggle &quot;Yes&quot; to add public contact details.
-                        When enabled, contact info will be visible on your Open
-                        Supply Hub profile for sourcing requests, general
-                        inquiries, and potential business opportunities.
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
+                    >
+                        Production Location Contact Person
                     </Typography>
-                </div>
-                <div className={classes.fieldContainer}>
-                    {isPublic && (
-                        <DialogTooltip
-                            text={
-                                "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active."
-                            }
-                            childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
-                            }
-                        />
-                    )}
-                    {isPublic && (
-                        <FormFieldTitle
-                            label="Contact Name"
-                            classes={{ title: classes.formLabel }}
-                            required
-                        />
-                    )}
+                    <div className={classes.publicInfoContainer}>
+                        <div className={classes.sectionTitleContainer}>
+                            <Typography
+                                variant="title"
+                                component="p"
+                                className={classes.subDescription}
+                            >
+                                Do you want this location&apos;s contact info to
+                                be public?
+                            </Typography>
+                            <div className={classes.switchContainer}>
+                                <Switch
+                                    checked={isPublic}
+                                    onChange={(_, checked) => {
+                                        handleChange(
+                                            'pointOfContactPubliclyVisible',
+                                            checked,
+                                        );
 
-                    {isPublic && (
-                        <TextField
-                            fullWidth
-                            name="pointOfContactPersonName"
-                            value={formData.pointOfContactPersonName || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'pointOfContactPersonName',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={() =>
-                                handleBlur('pointOfContactPersonName')
-                            }
-                            variant="outlined"
-                            error={
-                                touched.pointOfContactPersonName &&
-                                Boolean(errors.pointOfContactPersonName)
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: `${classes.inputStyles}`,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                            placeholder="Contact person's name"
-                        />
-                    )}
-                    {isPublic &&
-                        touched.pointOfContactPersonName &&
-                        errors.pointOfContactPersonName && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.pointOfContactPersonName}
+                                        // When enabling public contact, prefill fields.
+                                        if (checked) {
+                                            // Copy yourName -> contactName if claimant has data.
+                                            const claimantHasName = Boolean(
+                                                (formData.yourName || '')
+                                                    .toString()
+                                                    .trim(),
+                                            );
+                                            if (claimantHasName) {
+                                                handleChange(
+                                                    'pointOfContactPersonName',
+                                                    formData.yourName,
+                                                );
+                                            }
+
+                                            // Always set contactEmail from userEmail; remains editable.
+                                            if (userEmail) {
+                                                handleChange(
+                                                    'pointOfContactEmail',
+                                                    userEmail,
+                                                );
+                                            }
+                                        }
+                                    }}
+                                    color="primary"
                                 />
                             </div>
-                        )}
+                        </div>
+                        <Typography className={classes.sectionDescription}>
+                            Toggle &quot;Yes&quot; to add public contact
+                            details. When enabled, contact info will be visible
+                            on your Open Supply Hub profile for sourcing
+                            requests, general inquiries, and potential business
+                            opportunities.
+                        </Typography>
+                    </div>
                 </div>
-                <div className={classes.fieldContainer}>
-                    {isPublic && (
-                        <DialogTooltip
-                            text={
-                                "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active."
-                            }
-                            childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
-                            }
-                        />
-                    )}
-
-                    {isPublic && (
-                        <FormFieldTitle
-                            label="Contact Email"
-                            classes={{ title: classes.formLabel }}
-                            required
-                        />
-                    )}
-                    {isPublic && (
-                        <TextField
-                            fullWidth
-                            type="email"
-                            name="pointOfContactEmail"
-                            value={formData.pointOfContactEmail || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'pointOfContactEmail',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={() => handleBlur('pointOfContactEmail')}
-                            variant="outlined"
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                            error={
-                                touched.pointOfContactEmail &&
-                                Boolean(errors.pointOfContactEmail)
-                            }
-                            placeholder="contact@company.com"
-                        />
-                    )}
-                    {isPublic &&
-                        touched.pointOfContactEmail &&
-                        errors.pointOfContactEmail && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors?.pointOfContactEmail}
-                                />
-                            </div>
+                <div className={classes.doubleFieldContainer}>
+                    <div className={classes.fieldContainer}>
+                        {isPublic && (
+                            <DialogTooltip
+                                text={
+                                    "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active."
+                                }
+                                childComponent={
+                                    <span className={classes.betaBadge}>
+                                        BETA
+                                    </span>
+                                }
+                            />
                         )}
+                        {isPublic && (
+                            <FormFieldTitle
+                                label="Contact Name"
+                                classes={{ title: classes.formLabel }}
+                                required
+                            />
+                        )}
+
+                        {isPublic && (
+                            <TextField
+                                fullWidth
+                                name="pointOfContactPersonName"
+                                value={formData.pointOfContactPersonName || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'pointOfContactPersonName',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={() =>
+                                    handleBlur('pointOfContactPersonName')
+                                }
+                                variant="outlined"
+                                error={
+                                    touched.pointOfContactPersonName &&
+                                    Boolean(errors.pointOfContactPersonName)
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: `${classes.inputStyles}`,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                                placeholder="Contact person's name"
+                            />
+                        )}
+                        {isPublic &&
+                            touched.pointOfContactPersonName &&
+                            errors.pointOfContactPersonName && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.pointOfContactPersonName}
+                                    />
+                                </div>
+                            )}
+                    </div>
+                    <div className={classes.fieldContainer}>
+                        {isPublic && (
+                            <DialogTooltip
+                                text={
+                                    "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active."
+                                }
+                                childComponent={
+                                    <span className={classes.betaBadge}>
+                                        BETA
+                                    </span>
+                                }
+                            />
+                        )}
+
+                        {isPublic && (
+                            <FormFieldTitle
+                                label="Contact Email"
+                                classes={{ title: classes.formLabel }}
+                                required
+                            />
+                        )}
+                        {isPublic && (
+                            <TextField
+                                fullWidth
+                                type="email"
+                                name="pointOfContactEmail"
+                                value={formData.pointOfContactEmail || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'pointOfContactEmail',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={() => handleBlur('pointOfContactEmail')}
+                                variant="outlined"
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                                error={
+                                    touched.pointOfContactEmail &&
+                                    Boolean(errors.pointOfContactEmail)
+                                }
+                                placeholder="contact@company.com"
+                            />
+                        )}
+                        {isPublic &&
+                            touched.pointOfContactEmail &&
+                            errors.pointOfContactEmail && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors?.pointOfContactEmail}
+                                    />
+                                </div>
+                            )}
+                    </div>
                 </div>
             </Grid>
         </Grid>

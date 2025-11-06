@@ -16,10 +16,14 @@ const contactInfoStepStyles = theme =>
             marginTop: 0,
         }),
         fieldContainer: Object.freeze({
+            width: '100%',
             position: 'relative',
             maxWidth: '528px',
             [theme.breakpoints.down('md')]: {
                 maxWidth: '100%',
+            },
+            '&:first-child': {
+                marginRight: '15px',
             },
         }),
         boxWarningText: {
@@ -39,6 +43,8 @@ const contactInfoStepStyles = theme =>
             marginRight: theme.spacing.unit,
         },
         boxWarningContainer: {
+            maxWidth: '1071px',
+            boxSizing: 'border-box',
             backgroundColor: COLOURS.LIGHT_RED,
             padding: theme.spacing.unit * 1.5,
             display: 'flex',
@@ -48,17 +54,23 @@ const contactInfoStepStyles = theme =>
         sectionTitle: Object.freeze({
             fontSize: '24px',
             fontWeight: theme.typography.fontWeightSemiBold,
-            marginBottom: theme.spacing.unit * 1.5,
+            marginTop: '25px',
         }),
         sectionDescription: Object.freeze({
-            margin: '0 0 20px 0',
             fontSize: '18px',
+            marginBottom: '10px',
         }),
         sectionTitleContainer: Object.freeze({
             display: 'flex',
             justifyContent: 'flex-start',
             alignItems: 'center',
-            marginTop: `20px`,
+        }),
+        publicInfoContainer: Object.freeze({
+            boxSizing: 'border-box',
+            maxWidth: '1071px',
+            background: COLOURS.LIGHT_AMBER,
+            padding: '10px 20px 15px 20px',
+            marginTop: '15px',
         }),
         separator: {
             margin: '40px 0 15px 0',
@@ -78,7 +90,7 @@ const contactInfoStepStyles = theme =>
             backgroundImage: `linear-gradient(to right, ${COLOURS.PURPLE_GRADIENT_FROM}, ${COLOURS.PINK_GRADIENT_TO})`,
             cursor: 'pointer',
             position: 'absolute',
-            top: 57,
+            top: 80,
             right: 13,
             zIndex: 2,
         }),
@@ -97,6 +109,15 @@ const contactInfoStepStyles = theme =>
         }),
         switchContainer: Object.freeze({
             margin: '0 0 5px 0',
+        }),
+        subDescription: Object.freeze({
+            marginTop: '0',
+        }),
+        doubleFieldContainer: Object.freeze({
+            display: 'flex',
+            [theme.breakpoints.down('md')]: {
+                flexDirection: 'column',
+            },
         }),
     });
 
