@@ -42,7 +42,13 @@ const EnergySourceInput = ({
                     label={`${source.label}:`}
                 />
             </Grid>
-            <Grid item xs={12} sm={8} md={9}>
+            <Grid
+                item
+                xs={12}
+                sm={8}
+                md={9}
+                className={classes.energySourceInputContainer}
+            >
                 <TextField
                     value={value}
                     placeholder={source.placeholder}
@@ -73,11 +79,17 @@ const EnergySourceInput = ({
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
-                                <Typography className={classes.unitText}>
+                                <Typography
+                                    variant="body1"
+                                    className={classes.unitText}
+                                >
                                     {source.unit}
                                 </Typography>
                             </InputAdornment>
                         ),
+                        classes: {
+                            root: classes.energySourceInputRoot,
+                        },
                     }}
                     variant="outlined"
                     fullWidth

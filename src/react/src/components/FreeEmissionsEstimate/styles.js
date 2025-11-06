@@ -73,11 +73,20 @@ export const energySourceInputStyles = Object.freeze({
     unitText: Object.freeze({
         minWidth: '50px',
         marginLeft: '8px',
-        fontSize: '14px',
+        fontSize: '18px',
+        fontWeight: 600,
         color: '#64748b',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    }),
+    energySourceInputRoot: Object.freeze({
+        boxSizing: 'border-box',
     }),
     energySourceInputContainer: Object.freeze({
+        display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
     }),
     checkboxLabel: Object.freeze({
         fontSize: '18px',
