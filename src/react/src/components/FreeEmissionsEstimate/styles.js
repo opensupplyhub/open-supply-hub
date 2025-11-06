@@ -37,11 +37,20 @@ export const labelStyles = Object.freeze({
     }),
 });
 
+const inputStyles = Object.freeze({
+    fontSize: '18px',
+    fontWeight: 600,
+});
+
+const notchedOutlineStyles = Object.freeze({
+    borderRadius: 0,
+});
+
 export const freeEmissionsEstimateStyles = Object.freeze({
     emissionsSection: Object.freeze({
         background: 'linear-gradient(to right, #f0fdf4, #eff6ff)',
         padding: '19px 24px 24px 24px',
-        borderRadius: '8px',
+        borderRadius: '0px',
         border: '1px solid #bbf7d0',
         marginTop: '16px',
     }),
@@ -67,6 +76,8 @@ export const freeEmissionsEstimateStyles = Object.freeze({
     estimatedAnnualThroughputContainer: Object.freeze({
         marginBottom: '10px',
     }),
+    inputStyles,
+    notchedOutlineStyles,
 });
 
 export const energySourceInputStyles = Object.freeze({
@@ -92,6 +103,8 @@ export const energySourceInputStyles = Object.freeze({
         fontSize: '18px',
         fontWeight: 600,
     }),
+    inputStyles,
+    notchedOutlineStyles,
 });
 
 export const yearPickerStyles = Object.freeze({

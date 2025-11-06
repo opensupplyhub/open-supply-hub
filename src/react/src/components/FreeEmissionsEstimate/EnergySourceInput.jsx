@@ -89,6 +89,8 @@ const EnergySourceInput = ({
                         ),
                         classes: {
                             root: classes.energySourceInputRoot,
+                            input: classes.inputStyles,
+                            notchedOutline: classes.notchedOutlineStyles,
                         },
                     }}
                     variant="outlined"

@@ -343,6 +343,12 @@ const EmissionsEstimateForm = ({
                         }}
                         variant="outlined"
                         fullWidth
+                        InputProps={{
+                            classes: {
+                                input: classes.inputStyles,
+                                notchedOutline: classes.notchedOutlineStyles,
+                            },
+                        }}
                     />
                 </Grid>
             </Grid>
