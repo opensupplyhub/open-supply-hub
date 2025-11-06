@@ -1,5 +1,7 @@
 import React from 'react';
 
+const energySourcePlaceholder = 'Enter value in Joules (J)';
+
 export const freeEmissionsEstimateFormConfig = Object.freeze({
     title: Object.freeze({
         label: '🌍 Free Emissions Estimates',
@@ -46,7 +48,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Coal',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyCoalEnabled',
             valueFieldName: 'energyCoal',
@@ -55,7 +57,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Natural Gas',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyNaturalGasEnabled',
             valueFieldName: 'energyNaturalGas',
@@ -64,7 +66,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Diesel',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyDieselEnabled',
             valueFieldName: 'energyDiesel',
@@ -73,7 +75,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Kerosene',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyKeroseneEnabled',
             valueFieldName: 'energyKerosene',
@@ -82,7 +84,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Biomass',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyBiomassEnabled',
             valueFieldName: 'energyBiomass',
@@ -91,7 +93,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Charcoal',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyCharcoalEnabled',
             valueFieldName: 'energyCharcoal',
@@ -100,7 +102,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Animal Waste',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyAnimalWasteEnabled',
             valueFieldName: 'energyAnimalWaste',
@@ -118,7 +120,7 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
             source: Object.freeze({
                 label: 'Other',
                 unit: 'J',
-                placeholder: 'Enter value in Joules (J)',
+                placeholder: energySourcePlaceholder,
             }),
             enabledFieldName: 'energyOtherEnabled',
             valueFieldName: 'energyOther',

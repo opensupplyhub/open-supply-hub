@@ -6,6 +6,30 @@ export const selectStyles = Object.freeze({
     fontWeight: '600',
 });
 
+const primaryButtonStyles = theme =>
+    Object.freeze({
+        height: '49px',
+        borderRadius: 0,
+        textTransform: 'none',
+        backgroundColor: theme.palette.action.main,
+        color: theme.palette.common.black,
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightExtraBold,
+        width: '200px',
+        boxShadow: 'none',
+        '&:hover': {
+            backgroundColor: theme.palette.action.dark,
+        },
+        '&:disabled': {
+            backgroundColor: COLOURS.GREY,
+            color: COLOURS.DARK_GREY,
+            cursor: 'not-allowed',
+        },
+        [theme.breakpoints.down('sm')]: {
+            width: '100%',
+        },
+    });
+
 export const claimFormStyles = theme =>
     Object.freeze({
         container: Object.freeze({
@@ -70,28 +94,7 @@ export const claimFormStyles = theme =>
                 width: '100%',
             },
         }),
-        buttonPrimary: Object.freeze({
-            height: '49px',
-            borderRadius: 0,
-            textTransform: 'none',
-            backgroundColor: theme.palette.action.main,
-            color: theme.palette.common.black,
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightExtraBold,
-            width: '200px',
-            boxShadow: 'none',
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-            '&:disabled': {
-                backgroundColor: COLOURS.GREY,
-                color: COLOURS.DARK_GREY,
-                cursor: 'not-allowed',
-            },
-            [theme.breakpoints.down('sm')]: {
-                width: '100%',
-            },
-        }),
+        buttonPrimary: primaryButtonStyles(theme),
         titleStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
@@ -158,28 +161,7 @@ export const claimFormStyles = theme =>
                 width: '100%',
             },
         }),
-        continueButton: Object.freeze({
-            height: '49px',
-            borderRadius: 0,
-            textTransform: 'none',
-            backgroundColor: theme.palette.action.main,
-            color: theme.palette.common.black,
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightExtraBold,
-            width: '200px',
-            boxShadow: 'none',
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-            '&:disabled': {
-                backgroundColor: COLOURS.GREY,
-                color: COLOURS.DARK_GREY,
-                cursor: 'not-allowed',
-            },
-            [theme.breakpoints.down('sm')]: {
-                width: '100%',
-            },
-        }),
+        continueButton: primaryButtonStyles(theme),
         boxWarningContainer: Object.freeze({
             maxWidth: '1071px',
             boxSizing: 'border-box',
