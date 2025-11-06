@@ -118,7 +118,7 @@ export const claimInfoStyles = theme => ({
         fontWeight: 700,
         display: 'inline-flex',
         alignItems: 'center',
-        marginBottom: theme.spacing.unit * 2,
+        marginBottom: '5px',
     },
     stepTitle: {
         lineHeight: '1.2',

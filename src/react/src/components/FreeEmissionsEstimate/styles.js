@@ -1,6 +1,7 @@
 export const labelStyles = Object.freeze({
     labelContainer: Object.freeze({
         flexWrap: 'nowrap',
+        marginBottom: '5px',
     }),
     label: Object.freeze({
         marginRight: '8px',
@@ -14,6 +15,7 @@ export const labelStyles = Object.freeze({
     }),
     tooltipPopper: Object.freeze({
         opacity: 1,
+        maxWidth: '512px',
     }),
     tooltip: Object.freeze({
         marginLeft: '8px',

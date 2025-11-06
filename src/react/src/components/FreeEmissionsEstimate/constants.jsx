@@ -38,6 +38,8 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
     }),
     energyConsumptionLabel: Object.freeze({
         label: 'Actual Annual Energy Consumption',
+        tooltipText:
+            "Report your facility's total annual energy consumption by source. You can enter a mix of various energy sources with the checkbox selection. Solid and liquid fuel sources are shown in Joules (J) such as Coal, Natural Gas, Diesel, Kerosene, Biomass, Charcoal, Animal Waste, and Other sources. Electricity is shown in megawatt-hours (MWh).",
     }),
     energySourcesData: Object.freeze([
         Object.freeze({

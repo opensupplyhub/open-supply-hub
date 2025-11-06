@@ -348,12 +348,11 @@ const EmissionsEstimateForm = ({
             </Grid>
             <Grid container spacing={8}>
                 <Grid item xs={12}>
-                    <Typography
-                        variant="subheading"
+                    <LabelWithTooltip
+                        label={energyConsumptionLabel.label}
                         className={classes.energyConsumptionTitle}
-                    >
-                        {energyConsumptionLabel.label}
-                    </Typography>
+                        tooltipText={energyConsumptionLabel.tooltipText}
+                    />
                 </Grid>
                 {energySourcesData.map(energyData => (
                     <Grid item xs={12} key={energyData.source.label}>

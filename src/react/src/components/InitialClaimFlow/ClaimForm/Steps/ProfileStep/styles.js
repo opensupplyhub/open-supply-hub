@@ -86,6 +86,7 @@ export const profileStepStyles = theme =>
             padding: '0',
         }),
         emissionsEstimateContainer: Object.freeze({
+            marginTop: '24px',
             maxWidth: '1071px',
         }),
         sectionIconWrapper: Object.freeze({
