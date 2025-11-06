@@ -147,7 +147,7 @@ const EligibilityStep = ({
                         onClick={handleGoToMainPage}
                         className={classes.backButton}
                     >
-                        Go Back to OS HUB
+                        Go Back to Open Supply Hub
                     </Button>
                     <Button
                         variant="contained"

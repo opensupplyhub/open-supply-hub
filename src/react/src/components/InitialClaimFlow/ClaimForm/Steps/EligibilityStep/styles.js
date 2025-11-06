@@ -27,6 +27,7 @@ const eligibilityStepStyles = theme =>
         accountInfoBox: Object.freeze({
             display: 'flex',
             justifyContent: 'flex-start',
+            flexWrap: 'wrap',
         }),
         accountInfoRow: Object.freeze({
             display: 'flex',
@@ -43,6 +44,9 @@ const eligibilityStepStyles = theme =>
         accountInfoValue: Object.freeze({
             color: COLOURS.ALMOST_BLACK,
             fontWeight: theme.typography.fontWeightBold,
+            textWrap: 'wrap',
+            wordWrap: 'break-word',
+            maxWidth: '300px',
         }),
         sectionTitle: Object.freeze({
             fontSize: '18px',
@@ -92,7 +96,7 @@ const eligibilityStepStyles = theme =>
             },
         }),
         backButton: Object.freeze({
-            width: '200px',
+            width: '250px',
             height: '49px',
             borderRadius: 0,
             textTransform: 'none',
