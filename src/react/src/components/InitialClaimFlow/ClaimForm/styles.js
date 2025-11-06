@@ -180,6 +180,31 @@ export const claimFormStyles = theme =>
                 width: '100%',
             },
         }),
+        boxWarningContainer: Object.freeze({
+            maxWidth: '1071px',
+            boxSizing: 'border-box',
+            backgroundColor: COLOURS.LIGHT_RED,
+            padding: theme.spacing.unit * 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            marginTop: '20px',
+        }),
+        boxWarningText: Object.freeze({
+            fontSize: '18px',
+            display: 'inline-flex',
+            alignItems: 'center',
+        }),
+        warningIcon: Object.freeze({
+            color: COLOURS.MATERIAL_RED,
+            marginRight: theme.spacing.unit,
+            fontSize: 16,
+            marginTop: '2px',
+        }),
+        boxWarningTextIcon: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginRight: theme.spacing.unit,
+        }),
     });
 
 export default claimFormStyles;
