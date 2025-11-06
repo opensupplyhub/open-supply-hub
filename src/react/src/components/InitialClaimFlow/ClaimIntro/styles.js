@@ -81,6 +81,9 @@ export const claimInfoStyles = theme => ({
         flexDirection: 'column',
         padding: '40px 110px 0 110px',
         borderRadius: '0',
+        [theme.breakpoints.down('lg')]: {
+            padding: '40px 4% 0 4%',
+        },
         [theme.breakpoints.down('sm')]: {
             padding: '24px 5% 0 5%',
         },
@@ -118,7 +121,7 @@ export const claimInfoStyles = theme => ({
         fontWeight: 700,
         display: 'inline-flex',
         alignItems: 'center',
-        marginBottom: theme.spacing.unit * 2,
+        marginBottom: '5px',
     },
     stepTitle: {
         lineHeight: '1.2',

@@ -37,12 +37,22 @@ const EnergySourceInput = ({
                             name={enabledFieldName}
                             onChange={freeEmissionsEstimateForm.handleChange}
                             disabled={disabled}
+                            classes={{
+                                root: classes.checkbox,
+                                checked: classes.checkboxChecked,
+                            }}
                         />
                     }
                     label={`${source.label}:`}
                 />
             </Grid>
-            <Grid item xs={12} sm={8} md={9}>
+            <Grid
+                item
+                xs={12}
+                sm={8}
+                md={9}
+                className={classes.energySourceInputContainer}
+            >
                 <TextField
                     value={value}
                     placeholder={source.placeholder}
@@ -59,29 +69,39 @@ const EnergySourceInput = ({
                         );
                     }}
                     error={hasError}
-                    helperText={
-                        hasError && (
-                            <InputErrorText
-                                text={
-                                    freeEmissionsEstimateForm.errors[
-                                        valueFieldName
-                                    ]
-                                }
-                            />
-                        )
-                    }
                     InputProps={{
                         endAdornment: (
                             <InputAdornment position="end">
-                                <Typography className={classes.unitText}>
+                                <Typography
+                                    variant="body1"
+                                    className={classes.unitText}
+                                >
                                     {source.unit}
                                 </Typography>
                             </InputAdornment>
                         ),
+                        classes: {
+                            root: classes.energySourceInputRoot,
+                            input: classes.inputStyles,
+                            notchedOutline: classes.notchedOutlineStyles,
+                        },
                     }}
                     variant="outlined"
                     fullWidth
                 />
+            </Grid>
+            <Grid
+                item
+                xs={12}
+                sm={8}
+                md={9}
+                className={classes.errorTextContainer}
+            >
+                {hasError && (
+                    <InputErrorText
+                        text={freeEmissionsEstimateForm.errors[valueFieldName]}
+                    />
+                )}
             </Grid>
         </Grid>
     );
