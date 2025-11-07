@@ -40,9 +40,9 @@ def get_facility_and_processing_type_extendfield_value(
             )
 
         if isinstance(field_value, str):
-            field_values_separated = field_value.split("|")
+            separated_vals = field_value.split("|")
             field_value_capitalized = (
-                [value.strip().capitalize() for value in field_values_separated]
+                [value.strip().capitalize() for value in separated_vals]
             )
 
         raw_values = '|'.join(field_value_capitalized)

@@ -101,9 +101,6 @@ from api.views.facility.facility_parameters import (
     facilities_list_parameters,
     facilities_create_parameters,
 )
-from api.facility_type_processing_type import (
-    get_facility_and_processing_type,
-)
 
 log = logging.getLogger(__name__)
 
