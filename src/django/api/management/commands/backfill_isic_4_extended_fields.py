@@ -31,6 +31,10 @@ class Command(BaseCommand):
             '--contributor-id', type=int, default=None,
             help='Restrict to a single contributor_id'
         )
+        parser.add_argument(
+            '--reset', action='store_true', default=False,
+            help="Delete existing isic_4 extended fields before backfill"
+        )
 
     def handle(self, *args, **options):
         self.stdout.write('Backfilling isic_4 extended fields (ORM)...')
@@ -49,6 +53,16 @@ class Command(BaseCommand):
         if not contributor_ids:
             self.stdout.write('No contributors configured with isic_4; nothing to do.')
             return
+
+        # Optionally reset existing data first
+        if options['reset'] and not dry_run:
+            reset_qs = ExtendedField.objects.filter(field_name=ExtendedField.ISIC_4)
+            if contributor_filter:
+                reset_qs = reset_qs.filter(
+                    contributor_id__in=contributor_ids
+                )
+            deleted, _ = reset_qs.delete()
+            self.stdout.write(self.style.WARNING(f"Reset: deleted {deleted} existing isic_4 rows."))
 
         existing_fli_ids = set(
             ExtendedField.objects
@@ -120,10 +134,16 @@ class Command(BaseCommand):
         last_log = timezone.now()
         for item in items_qs.iterator(chunk_size=batch_size):
             stats['scanned'] += 1
-            value = item.raw_json.get('isic_4')
-            if value in (None, ''):
+            raw = item.raw_json.get('isic_4')
+            if raw in (None, ''):
                 stats['skipped_empty_value'] += 1
                 continue
+
+            # Normalize value: if a single object, store the object; if multiple, store list
+            if isinstance(raw, list):
+                value = raw[0] if len(raw) == 1 else raw
+            else:
+                value = raw
 
             ef = ExtendedField(
                 contributor=item.source.contributor,
