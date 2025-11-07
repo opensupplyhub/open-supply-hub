@@ -966,29 +966,13 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_production_types=validated_data.get(
                     "facility_production_types", []
                 ),
+                facility_type=validated_data.get("facility_type"),
             )
 
             sectors = validated_data.get("sectors")
 
             if sectors and len(sectors) > 0:
                 facility_claim.sector = sectors
-
-            facility_type = validated_data.get("facility_type")
-
-            if facility_type:
-                (_, __, facility_type_value, processing_type_value) = (
-                    get_facility_and_processing_type(
-                        facility_type, sectors,
-                    )
-                )
-
-                if facility_type_value:
-                    facility_claim.facility_type = facility_type_value
-
-                if processing_type_value:
-                    facility_claim.facility_production_types.append(
-                        processing_type_value,
-                    )
 
             facility_claim.save()
 

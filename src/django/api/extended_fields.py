@@ -32,9 +32,19 @@ def get_facility_and_processing_type_extendfield_value(
     is_claim_edit=False
 ):
     if is_claim_edit:
-        field_value_capitalized = (
-            [value.capitalize() for value in field_value]
-        )
+        field_value_capitalized = []
+
+        if isinstance(field_value, list):
+            field_value_capitalized = (
+                [value.capitalize() for value in field_value]
+            )
+
+        if isinstance(field_value, str):
+            field_values_separated = field_value.split("|")
+            field_value_capitalized = (
+                [value.strip().capitalize() for value in field_values_separated]
+            )
+
         raw_values = '|'.join(field_value_capitalized)
         results = get_matched_values(field_value_capitalized, sector)
     else:
