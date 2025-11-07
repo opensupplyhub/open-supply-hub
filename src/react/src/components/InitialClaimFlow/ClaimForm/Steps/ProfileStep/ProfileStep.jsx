@@ -217,18 +217,18 @@ const ProfileStep = ({
                             <TextField
                                 fullWidth
                                 variant="outlined"
-                                value={formData.officePhoneNumber || ''}
+                                value={formData.facilityPhoneNumber || ''}
                                 onChange={e =>
                                     handleChange(
-                                        'officePhoneNumber',
+                                        'facilityPhoneNumber',
                                         e.target.value,
                                     )
                                 }
                                 onBlur={handleBlur}
                                 placeholder="+1 (555) 123-4567"
                                 error={
-                                    touched.officePhoneNumber &&
-                                    !!errors.officePhoneNumber
+                                    touched.facilityPhoneNumber &&
+                                    !!errors.facilityPhoneNumber
                                 }
                                 InputProps={{
                                     classes: {
@@ -238,11 +238,11 @@ const ProfileStep = ({
                                     },
                                 }}
                             />
-                            {touched.officePhoneNumber &&
-                                errors.officePhoneNumber && (
+                            {touched.facilityPhoneNumber &&
+                                errors.facilityPhoneNumber && (
                                     <div className={classes.errorWrapStyles}>
                                         <InputErrorText
-                                            text={errors.officePhoneNumber}
+                                            text={errors.facilityPhoneNumber}
                                         />
                                     </div>
                                 )}

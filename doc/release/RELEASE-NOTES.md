@@ -58,6 +58,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2251](https://opensupplyhub.atlassian.net/browse/OSDEV-2251) - Added the `EmailAddress` model to the Django admin panel, allowing administrators to manage user email records directly. This ensures consistency between the `User` and `EmailAddress` tables when updating user email addresses.
 
 ### Bugfix
+* [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Compnany Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
 * [OSDEV-2262](https://opensupplyhub.atlassian.net/browse/OSDEV-2262): Prevented unintended submission of the last-step claim form when pressing Enter in an input while the Submit button is not focused. Updated `src/react/src/components/InitialClaimFlow/ClaimForm/ClaimForm.jsx` to remove implicit form submission and trigger Formik submission explicitly via the Submit button, aligning with Material UI semantics.
 
 ### Release instructions
