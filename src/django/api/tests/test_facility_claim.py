@@ -301,7 +301,7 @@ class FacilityClaimTest(APITestCase):
             "claimant_employment_verification_method": "Work ID badge",
             "location_address_verification_method": "Utility bill",
             "claimant_linkedin_profile_url": "https://linkedin.com/in/person",
-            "office_phone_number": "+1-555-1234",
+            "facility_phone_number": "+1-555-1234",
             "facility_description": "A facility for garment manufacturing.",
             "office_official_name": "HQ Offices Inc.",
             "office_address": "123 Main Street, City, ST",
@@ -344,7 +344,7 @@ class FacilityClaimTest(APITestCase):
             claim.claimant_linkedin_profile_url,
             "https://linkedin.com/in/person",
         )
-        self.assertEqual(claim.office_phone_number, "+1-555-1234")
+        self.assertEqual(claim.facility_phone_number, "+1-555-1234")
         self.assertEqual(
             claim.facility_description,
             "A facility for garment manufacturing.",
