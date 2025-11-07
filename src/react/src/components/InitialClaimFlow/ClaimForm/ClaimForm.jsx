@@ -270,10 +270,7 @@ const ClaimForm = ({
                 onStepClick={setStep}
             />
             <div className={classes.innerContainer}>
-                <form
-                    onSubmit={claimForm.handleSubmit}
-                    className={classes.form}
-                >
+                <form className={classes.form}>
                     <Paper className={classes.paper}>
                         <Typography
                             variant="title"
@@ -349,7 +346,8 @@ const ClaimForm = ({
                                 {isLastStep(activeStep) && (
                                     <Button
                                         variant="contained"
-                                        type="submit"
+                                        type="button"
+                                        onClick={claimForm.handleSubmit}
                                         className={classes.buttonPrimary}
                                         disabled={
                                             isButtonDisabled ||
