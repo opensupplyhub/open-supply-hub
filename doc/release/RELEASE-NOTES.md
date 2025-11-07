@@ -9,11 +9,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: November 8, 2025
 
+### Database changes
+
+#### Migrations
+* 0184_remove_facilityclaim_facility_type_choices.py - This migration removed the `choices` constraint from the `facility_type` field of the FacilityClaim model to allow the display of location types that may differ from the predefined taxonomy options in the Django admin panel.
+
 ### Code/API changes
 * [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Removed the usage of the claim flow link in the `FacilityDetailsContent.jsx` React component, as the claim link was unused and only silently passed to its child component.
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Disabled the `debug_logging` setting for the RDS proxy connected to the Production Postgres database. This feature was generating detailed SQL statement logs that were not being utilized or monitored. Disabling this unnecessary logging will reduce CloudWatch log volume and associated costs without impacting proxy functionality. Reduced the AWS Batch job resources for the RBA database sync script from 8GB memory and 4 vCPUs to 2GB memory and 1 vCPU. Monitoring data showed that the task was only reserving about 25% of allocated resources, making this a 75% reduction in compute costs with no performance impact.
+
+### Bugfix
+* [OSDEV-2231](https://opensupplyhub.atlassian.net/browse/OSDEV-2231) - Fixed Django admin panel not displaying location type values for claims when they didn't match the predefined taxonomy. Removed the restrictive `choices` constraint to allow all location types to be visible.
 
 ### What's new
 * [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
