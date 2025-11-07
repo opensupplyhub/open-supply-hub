@@ -9,11 +9,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: November 8, 2025
 
+### Database changes
+
+#### Migrations
+* 0184_remove_facilityclaim_facility_type_choices.py - This migration removed the `choices` constraint from the `facility_type` field of the FacilityClaim model to allow the display of location types that may differ from the predefined taxonomy options in the Django admin panel.
+
 ### Code/API changes
 * [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Removed the usage of the claim flow link in the `FacilityDetailsContent.jsx` React component, as the claim link was unused and only silently passed to its child component.
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Disabled the `debug_logging` setting for the RDS proxy connected to the Production Postgres database. This feature was generating detailed SQL statement logs that were not being utilized or monitored. Disabling this unnecessary logging will reduce CloudWatch log volume and associated costs without impacting proxy functionality. Reduced the AWS Batch job resources for the RBA database sync script from 8GB memory and 4 vCPUs to 2GB memory and 1 vCPU. Monitoring data showed that the task was only reserving about 25% of allocated resources, making this a 75% reduction in compute costs with no performance impact.
+
+### Bugfix
+* [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Compnany Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
+* [OSDEV-2262](https://opensupplyhub.atlassian.net/browse/OSDEV-2262): Prevented unintended submission of the last-step claim form when pressing Enter in an input while the Submit button is not focused. Updated `src/react/src/components/InitialClaimFlow/ClaimForm/ClaimForm.jsx` to remove implicit form submission and trigger Formik submission explicitly via the Submit button, aligning with Material UI semantics.
+* [OSDEV-2231](https://opensupplyhub.atlassian.net/browse/OSDEV-2231) - Fixed Django admin panel not displaying location type values for claims when they didn't match the predefined taxonomy. Removed the restrictive `choices` constraint to allow all location types to be visible.
 
 ### What's new
 * [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
@@ -56,10 +66,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   - Implemented form submission functionality with success dialog popup showing "View My Approved Claims" and "Search OS Hub" action buttons upon successful claim submission.
 * [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform and in emails automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
 * [OSDEV-2251](https://opensupplyhub.atlassian.net/browse/OSDEV-2251) - Added the `EmailAddress` model to the Django admin panel, allowing administrators to manage user email records directly. This ensures consistency between the `User` and `EmailAddress` tables when updating user email addresses.
-
-### Bugfix
-* [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Compnany Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
-* [OSDEV-2262](https://opensupplyhub.atlassian.net/browse/OSDEV-2262): Prevented unintended submission of the last-step claim form when pressing Enter in an input while the Submit button is not focused. Updated `src/react/src/components/InitialClaimFlow/ClaimForm/ClaimForm.jsx` to remove implicit form submission and trigger Formik submission explicitly via the Submit button, aligning with Material UI semantics.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
