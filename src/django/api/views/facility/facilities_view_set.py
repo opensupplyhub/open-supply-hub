@@ -961,7 +961,7 @@ class FacilitiesViewSet(ListModelMixin,
                     "facility_product_types"
                 ),
                 facility_production_types=validated_data.get(
-                    "facility_production_types", []
+                    "facility_production_types"
                 ),
                 facility_type=validated_data.get("facility_type"),
             )
