@@ -1329,7 +1329,7 @@ export const appendFacilityType = (postData, formattedKey, value) => {
     }
 
     const extractedValues = value.map(extractSelectValue);
-    postData.append(formattedKey, extractedValues.join(', '));
+    postData.append(formattedKey, extractedValues.join('|'));
 };
 
 /**
