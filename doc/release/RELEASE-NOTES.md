@@ -57,6 +57,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform and in emails automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
 * [OSDEV-2251](https://opensupplyhub.atlassian.net/browse/OSDEV-2251) - Added the `EmailAddress` model to the Django admin panel, allowing administrators to manage user email records directly. This ensures consistency between the `User` and `EmailAddress` tables when updating user email addresses.
 
+### Bugfix
+* [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Compnany Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
