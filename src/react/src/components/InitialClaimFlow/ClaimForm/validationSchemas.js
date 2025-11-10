@@ -136,7 +136,7 @@ export const businessStepSchema = Yup.object().shape({
 export const profileStepSchema = Yup.object().shape({
     // Production Location Overview
     localLanguageName: Yup.string().trim(),
-    officePhoneNumber: Yup.string().trim(),
+    facilityPhoneNumber: Yup.string().trim(),
     businessWebsite: Yup.string().url('Invalid URL'),
     facilityDescription: Yup.string().trim(),
 

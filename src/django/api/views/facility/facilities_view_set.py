@@ -927,8 +927,8 @@ class FacilitiesViewSet(ListModelMixin,
                 claimant_linkedin_profile_url=validated_data.get(
                     "claimant_linkedin_profile_url"
                 ),
-                office_phone_number=validated_data.get(
-                    "office_phone_number"
+                facility_phone_number=validated_data.get(
+                    "facility_phone_number"
                 ),
                 facility_description=validated_data.get(
                     "facility_description", ""

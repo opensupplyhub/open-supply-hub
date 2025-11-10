@@ -200,7 +200,7 @@ describe('ProfileStep component', () => {
     const defaultProps = {
         formData: {
             localLanguageName: '',
-            officePhoneNumber: '',
+            facilityPhoneNumber: '',
             businessWebsite: '',
             facilityDescription: '',
             parentCompanyName: '',
