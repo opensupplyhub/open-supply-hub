@@ -40,6 +40,14 @@ const detailsStyles = theme =>
             lineHeight: '19px',
             paddingTop: theme.spacing.unit,
         },
+        unitText: {
+            display: 'inline-block',
+            marginLeft: theme.spacing.unit,
+            fontWeight: 400,
+            fontSize: '18px',
+            lineHeight: '21px',
+            verticalAlign: 'baseline',
+        },
     });
 
 const CLAIM_EXPLANATORY_TEXT =
@@ -54,6 +62,7 @@ const FacilityDetailsDetail = ({
     locationLabeled,
     secondary,
     sourceBy,
+    unit,
     isVerified,
     isFromClaim,
     classes,
@@ -74,8 +83,9 @@ const FacilityDetailsDetail = ({
             </div>
         </ShowOnly>
         <div>
-            <Typography className={classes.primaryText}>
+            <Typography className={classes.primaryText} component="div">
                 {primary || locationLabeled}
+                {unit ? <span className={classes.unitText}>{unit}</span> : null}
             </Typography>
             {sourceBy ? (
                 <Typography

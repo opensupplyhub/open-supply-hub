@@ -55,6 +55,7 @@ describe('FacilityDetailsDetail', () => {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
                 sourceText: 'sourceText',
+                unitText: 'unitText',
             },
         };
 
@@ -75,6 +76,7 @@ describe('FacilityDetailsDetail', () => {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
                 sourceText: 'sourceText',
+                unitText: 'unitText',
             },
         };
 
@@ -94,6 +96,7 @@ describe('FacilityDetailsDetail', () => {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
                 sourceText: 'sourceText',
+                unitText: 'unitText',
             },
         };
 
@@ -113,6 +116,7 @@ describe('FacilityDetailsDetail', () => {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
                 sourceText: 'sourceText',
+                unitText: 'unitText',
             },
         };
 
@@ -120,6 +124,44 @@ describe('FacilityDetailsDetail', () => {
 
         const sourceElement = container.querySelector('.sourceText');
         expect(sourceElement).not.toBeInTheDocument();
+    });
+
+    test('renders unit text inline with primary value', () => {
+        const props = {
+            primary: '100',
+            unit: 'kg',
+            classes: {
+                detailsContainer: 'detailsContainer',
+                primaryText: 'primaryText',
+                unitText: 'unitText',
+            },
+        };
+
+        const { container } = render(<FacilityDetailsDetail {...props} />);
+
+        const primaryElement = container.querySelector('.primaryText');
+        expect(primaryElement).toBeInTheDocument();
+        expect(primaryElement.textContent).toBe('100kg');
+
+        const unitElement = container.querySelector('.unitText');
+        expect(unitElement).toBeInTheDocument();
+        expect(unitElement.textContent).toBe('kg');
+    });
+
+    test('does not render unit text when unit is null', () => {
+        const props = {
+            primary: 'Test Primary',
+            unit: null,
+            classes: {
+                detailsContainer: 'detailsContainer',
+                primaryText: 'primaryText',
+                unitText: 'unitText',
+            },
+        };
+
+        const { container } = render(<FacilityDetailsDetail {...props} />);
+
+        expect(container.querySelector('.unitText')).not.toBeInTheDocument();
     });
 });
 

@@ -151,7 +151,7 @@ const FacilityDetailsGeneralFields = ({
             <Grid item xs={12} md={6} key={`partner-${label}`}>
                 <FacilityDetailsItem
                     {...topValue}
-                    label={label}
+                    label={topValue.label ? topValue.label : label}
                     additionalContent={values.slice(1).map(formatField)}
                     embed={embed}
                 />
