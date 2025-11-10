@@ -105,6 +105,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         for field in partner_fields:
             field_name = field.name
             source_by = field.source_by
+            unit = field.unit
+            label = field.label
             fields = grouped_fields.get(field_name, [])
             if not fields:
                 continue
@@ -115,7 +117,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                     context={
                         'user_can_see_detail': user_can_see_detail,
                         'embed_mode_active': embed_mode_active,
-                        'source_by': source_by
+                        'source_by': source_by,
+                        'unit': unit,
+                        'label': label
                     },
                     exclude_fields=(
                         ['created_at'] if not use_main_created_at else []

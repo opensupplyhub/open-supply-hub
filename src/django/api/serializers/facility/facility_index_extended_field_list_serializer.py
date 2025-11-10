@@ -18,7 +18,8 @@ class FacilityIndexExtendedFieldListSerializer:
         self.fields: list = ['id', 'is_verified', 'value', 'created_at',
                              'updated_at', 'contributor_name',
                              'contributor_id', 'value_count', 'is_from_claim',
-                             'field_name', 'verified_count', 'source_by']
+                             'field_name', 'verified_count', 'source_by',
+                             'unit', 'label']
         self.data: list = []
 
         if exclude_fields:
@@ -54,6 +55,14 @@ class FacilityIndexExtendedFieldListSerializer:
                       self.context.get('source_by', None) is not None):
                     serialized_extended_field[field] = \
                         self.context.get('source_by')
+                elif (field == 'unit' and
+                      self.context.get('unit', None) is not None):
+                    serialized_extended_field[field] = \
+                        self.context.get('unit')
+                elif (field == 'label' and
+                      self.context.get('label', None) is not None):
+                    serialized_extended_field[field] = \
+                        self.context.get('label')
                 else:
                     serialized_extended_field[field] = extended_field.get(
                         field)
