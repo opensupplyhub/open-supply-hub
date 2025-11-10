@@ -6,6 +6,30 @@ export const selectStyles = Object.freeze({
     fontWeight: '600',
 });
 
+const primaryButtonStyles = theme =>
+    Object.freeze({
+        height: '49px',
+        borderRadius: 0,
+        textTransform: 'none',
+        backgroundColor: theme.palette.action.main,
+        color: theme.palette.common.black,
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightExtraBold,
+        width: '200px',
+        boxShadow: 'none',
+        '&:hover': {
+            backgroundColor: theme.palette.action.dark,
+        },
+        '&:disabled': {
+            backgroundColor: COLOURS.GREY,
+            color: COLOURS.DARK_GREY,
+            cursor: 'not-allowed',
+        },
+        [theme.breakpoints.down('sm')]: {
+            width: '100%',
+        },
+    });
+
 export const claimFormStyles = theme =>
     Object.freeze({
         container: Object.freeze({
@@ -26,8 +50,11 @@ export const claimFormStyles = theme =>
             borderRadius: 0,
             marginTop: '32px',
             padding: '40px 110px 0 110px',
+            [theme.breakpoints.down('lg')]: {
+                padding: '40px 4% 0 4%',
+            },
             [theme.breakpoints.down('sm')]: {
-                padding: '24px 5% 0 5%',
+                padding: '24px 4% 0 4%',
             },
         }),
         title: Object.freeze({
@@ -67,28 +94,7 @@ export const claimFormStyles = theme =>
                 width: '100%',
             },
         }),
-        buttonPrimary: Object.freeze({
-            height: '49px',
-            borderRadius: 0,
-            textTransform: 'none',
-            backgroundColor: theme.palette.action.main,
-            color: theme.palette.common.black,
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightExtraBold,
-            width: '200px',
-            boxShadow: 'none',
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-            '&:disabled': {
-                backgroundColor: COLOURS.GREY,
-                color: COLOURS.DARK_GREY,
-                cursor: 'not-allowed',
-            },
-            [theme.breakpoints.down('sm')]: {
-                width: '100%',
-            },
-        }),
+        buttonPrimary: primaryButtonStyles(theme),
         titleStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',
@@ -155,27 +161,31 @@ export const claimFormStyles = theme =>
                 width: '100%',
             },
         }),
-        continueButton: Object.freeze({
-            height: '49px',
-            borderRadius: 0,
-            textTransform: 'none',
-            backgroundColor: theme.palette.action.main,
-            color: theme.palette.common.black,
+        continueButton: primaryButtonStyles(theme),
+        boxWarningContainer: Object.freeze({
+            maxWidth: '1071px',
+            boxSizing: 'border-box',
+            backgroundColor: COLOURS.LIGHT_RED,
+            padding: theme.spacing.unit * 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            marginTop: '20px',
+        }),
+        boxWarningText: Object.freeze({
             fontSize: '18px',
-            fontWeight: theme.typography.fontWeightExtraBold,
-            width: '200px',
-            boxShadow: 'none',
-            '&:hover': {
-                backgroundColor: theme.palette.action.dark,
-            },
-            '&:disabled': {
-                backgroundColor: COLOURS.GREY,
-                color: COLOURS.DARK_GREY,
-                cursor: 'not-allowed',
-            },
-            [theme.breakpoints.down('sm')]: {
-                width: '100%',
-            },
+            display: 'inline-flex',
+            alignItems: 'center',
+        }),
+        warningIcon: Object.freeze({
+            color: COLOURS.MATERIAL_RED,
+            marginRight: theme.spacing.unit,
+            fontSize: 16,
+            marginTop: '2px',
+        }),
+        boxWarningTextIcon: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginRight: theme.spacing.unit,
         }),
     });
 

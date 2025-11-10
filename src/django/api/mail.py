@@ -2,6 +2,7 @@ from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import get_template
+from waffle import switch_is_active
 from api.models import (
     FacilityList,
     FacilityClaim,
@@ -37,12 +38,13 @@ def make_facility_list_url(request, list_id):
     return '{}/lists/{}'.format(make_oshub_url(request), list_id)
 
 
-def make_claimed_url(request):
-    return '{}/claimed'.format(make_oshub_url(request))
-
-
 def make_claim_url(request: Request, location: Facility):
-    return '{}/claim'.format(make_facility_url(request, location))
+    if switch_is_active('enable_v1_claims_flow'):
+        # New claim flow: /claim/{os_id}.
+        return '{}/claim/{}'.format(make_oshub_url(request), location.id)
+    else:
+        # Old claim flow: /facilities/{os_id}/claim.
+        return '{}/claim'.format(make_facility_url(request, location))
 
 
 def make_pl_search_url(request):

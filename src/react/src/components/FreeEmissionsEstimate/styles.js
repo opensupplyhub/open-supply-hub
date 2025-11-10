@@ -1,6 +1,9 @@
+import COLOURS from '../../util/COLOURS';
+
 export const labelStyles = Object.freeze({
     labelContainer: Object.freeze({
         flexWrap: 'nowrap',
+        marginBottom: '5px',
     }),
     label: Object.freeze({
         marginRight: '8px',
@@ -14,6 +17,7 @@ export const labelStyles = Object.freeze({
     }),
     tooltipPopper: Object.freeze({
         opacity: 1,
+        maxWidth: '512px',
     }),
     tooltip: Object.freeze({
         marginLeft: '8px',
@@ -35,11 +39,20 @@ export const labelStyles = Object.freeze({
     }),
 });
 
+const inputStyles = Object.freeze({
+    fontSize: '18px',
+    fontWeight: 600,
+});
+
+const notchedOutlineStyles = Object.freeze({
+    borderRadius: 0,
+});
+
 export const freeEmissionsEstimateStyles = Object.freeze({
     emissionsSection: Object.freeze({
         background: 'linear-gradient(to right, #f0fdf4, #eff6ff)',
         padding: '19px 24px 24px 24px',
-        borderRadius: '8px',
+        borderRadius: '0px',
         border: '1px solid #bbf7d0',
         marginTop: '16px',
     }),
@@ -65,21 +78,52 @@ export const freeEmissionsEstimateStyles = Object.freeze({
     estimatedAnnualThroughputContainer: Object.freeze({
         marginBottom: '10px',
     }),
+    inputStyles,
+    notchedOutlineStyles,
 });
 
 export const energySourceInputStyles = Object.freeze({
     unitText: Object.freeze({
         minWidth: '50px',
         marginLeft: '8px',
-        fontSize: '14px',
+        fontSize: '18px',
+        fontWeight: 600,
         color: '#64748b',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    }),
+    energySourceInputRoot: Object.freeze({
+        boxSizing: 'border-box',
     }),
     energySourceInputContainer: Object.freeze({
+        display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
     }),
     checkboxLabel: Object.freeze({
         fontSize: '18px',
         fontWeight: 600,
+    }),
+    checkbox: Object.freeze({
+        color: `${COLOURS.DARK_MATERIAL_GREEN} !important`,
+    }),
+    checkboxChecked: Object.freeze({
+        color: `${COLOURS.DARK_MATERIAL_GREEN} !important`,
+    }),
+    inputStyles,
+    notchedOutlineStyles,
+    errorTextContainer: Object.freeze({
+        marginLeft: '25%',
+        marginTop: '5px',
+        '@media (max-width: 900px)': {
+            marginLeft: '32%',
+            marginTop: '5px',
+        },
+        '@media (max-width: 700px)': {
+            marginLeft: '0',
+            marginTop: '5px',
+        },
     }),
 });
 

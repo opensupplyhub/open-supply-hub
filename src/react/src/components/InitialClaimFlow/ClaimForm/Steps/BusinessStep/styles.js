@@ -23,9 +23,11 @@ const businessStepStyles = theme =>
             },
         }),
         documentUploadContainer: Object.freeze({
-            maxWidth: '1252px',
+            maxWidth: '1071px',
         }),
         boxWarningContainer: Object.freeze({
+            maxWidth: '1071px',
+            boxSizing: 'border-box',
             backgroundColor: COLOURS.LIGHT_RED,
             padding: theme.spacing.unit * 1.5,
             display: 'flex',
@@ -55,6 +57,10 @@ const businessStepStyles = theme =>
             fontWeight: 600,
             fontSize: '18px',
             borderRadius: '0',
+        }),
+        sectionDescription: Object.freeze({
+            fontSize: '18px',
+            marginBottom: '10px',
         }),
         linkField: Object.freeze({
             display: 'block',

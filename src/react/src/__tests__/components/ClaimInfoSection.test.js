@@ -60,12 +60,12 @@ describe('ClaimInfoSection component', () => {
         });
     });
 
-    describe('Step 3 - Prove Your Company Name and Address rendering', () => {
+    describe('Step 3 - Prove Company Name and Address rendering', () => {
         test('displays Step 3 title', () => {
             const { getByText } = renderComponent();
 
             expect(
-                getByText('Prove Your Company Name and Address')
+                getByText('Prove Company Name and Address')
             ).toBeInTheDocument();
         });
 

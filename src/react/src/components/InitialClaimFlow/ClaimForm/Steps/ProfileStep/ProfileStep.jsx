@@ -6,6 +6,8 @@ import TextField from '@material-ui/core/TextField';
 import Business from '@material-ui/icons/Business';
 import Build from '@material-ui/icons/Build';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
+import Spa from '@material-ui/icons/Spa';
+
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import IconButton from '@material-ui/core/IconButton';
@@ -40,7 +42,6 @@ const ProfileStep = ({
     errors,
     countryOptions,
     processingTypeOptions,
-    parentCompanyOptions,
     onEmissionsValidationChange,
 }) => {
     const [
@@ -88,6 +89,11 @@ const ProfileStep = ({
             display: 'none',
         }),
     });
+
+    const [
+        isFreeEmissionsEstimateVisible,
+        setIsFreeEmissionsEstimateVisible,
+    ] = useState(true);
 
     return (
         <div>
@@ -179,78 +185,14 @@ const ProfileStep = ({
                             </div>
                         )}
                     </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Company Phone
-                                    <Tooltip
-                                        title="Main phone number for contacting this production location directly"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.officePhoneNumber || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'officePhoneNumber',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={handleBlur}
-                            placeholder="+1 (555) 123-4567"
-                            error={
-                                touched.officePhoneNumber &&
-                                !!errors.officePhoneNumber
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.officePhoneNumber && errors.officePhoneNumber && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.officePhoneNumber}
-                                />
-                            </div>
-                        )}
-                        <DialogTooltip
-                            text={BETA_TOOLTIP_TEXT}
-                            childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
-                            }
-                        />
-                    </div>
-                    {!shouldHideBusinessWebsite && (
+                    <div className={classes.doubleFieldContainer}>
                         <div className={classes.fieldContainer}>
                             <FormFieldTitle
                                 label={
                                     <>
-                                        Company Website
+                                        Company Phone
                                         <Tooltip
-                                            title="Official website URL for this specific production location (if available)"
+                                            title="Main phone number for contacting this production location directly"
                                             placement="top"
                                             classes={{
                                                 tooltip: classes.tooltip,
@@ -274,20 +216,19 @@ const ProfileStep = ({
                             />
                             <TextField
                                 fullWidth
-                                type="url"
                                 variant="outlined"
-                                value={formData.businessWebsite || ''}
+                                value={formData.officePhoneNumber || ''}
                                 onChange={e =>
                                     handleChange(
-                                        'businessWebsite',
+                                        'officePhoneNumber',
                                         e.target.value,
                                     )
                                 }
                                 onBlur={handleBlur}
-                                placeholder="https://company.com"
+                                placeholder="+1 (555) 123-4567"
                                 error={
-                                    touched.businessWebsite &&
-                                    !!errors.businessWebsite
+                                    touched.officePhoneNumber &&
+                                    !!errors.officePhoneNumber
                                 }
                                 InputProps={{
                                     classes: {
@@ -297,23 +238,104 @@ const ProfileStep = ({
                                     },
                                 }}
                             />
-                            {touched.businessWebsite && errors.businessWebsite && (
-                                <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={errors.businessWebsite}
-                                    />
-                                </div>
-                            )}
+                            {touched.officePhoneNumber &&
+                                errors.officePhoneNumber && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.officePhoneNumber}
+                                        />
+                                    </div>
+                                )}
                             <DialogTooltip
                                 text={BETA_TOOLTIP_TEXT}
                                 childComponent={
-                                    <span className={classes.betaBadge}>
+                                    <span
+                                        className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                    >
                                         BETA
                                     </span>
                                 }
                             />
                         </div>
-                    )}
+                        {!shouldHideBusinessWebsite && (
+                            <div className={classes.fieldContainer}>
+                                <FormFieldTitle
+                                    label={
+                                        <>
+                                            Company Website
+                                            <Tooltip
+                                                title="Official website URL for this specific production location (if available)"
+                                                placement="top"
+                                                classes={{
+                                                    tooltip: classes.tooltip,
+                                                }}
+                                            >
+                                                <IconButton
+                                                    size="small"
+                                                    disableRipple
+                                                    className={
+                                                        classes.helpIconButton
+                                                    }
+                                                >
+                                                    <HelpOutline
+                                                        className={
+                                                            classes.helpIcon
+                                                        }
+                                                    />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </>
+                                    }
+                                    classes={{ title: classes.formLabel }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    type="url"
+                                    variant="outlined"
+                                    value={formData.businessWebsite || ''}
+                                    onChange={e =>
+                                        handleChange(
+                                            'businessWebsite',
+                                            e.target.value,
+                                        )
+                                    }
+                                    onBlur={handleBlur}
+                                    placeholder="https://company.com"
+                                    error={
+                                        touched.businessWebsite &&
+                                        !!errors.businessWebsite
+                                    }
+                                    InputProps={{
+                                        classes: {
+                                            input: classes.inputStyles,
+                                            notchedOutline:
+                                                classes.notchedOutlineStyles,
+                                        },
+                                    }}
+                                />
+                                {touched.businessWebsite &&
+                                    errors.businessWebsite && (
+                                        <div
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={errors.businessWebsite}
+                                            />
+                                        </div>
+                                    )}
+                                <DialogTooltip
+                                    text={BETA_TOOLTIP_TEXT}
+                                    childComponent={
+                                        <span
+                                            className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                        >
+                                            BETA
+                                        </span>
+                                    }
+                                />
+                            </div>
+                        )}
+                    </div>
                     <div className={classes.textareaFieldContainer}>
                         <FormFieldTitle
                             label={
@@ -421,24 +443,28 @@ const ProfileStep = ({
                             label="Parent Company Name / Supplier Group"
                             classes={{ title: classes.formLabel }}
                         />
-                        <StyledSelect
-                            id="parentCompanyName"
-                            name="parentCompanyName"
-                            aria-label="Parent company name"
-                            options={parentCompanyOptions || []}
-                            value={formData.parentCompanyName || ''}
-                            styles={getSelectStyles(
-                                touched.parentCompanyName &&
-                                    !!errors.parentCompanyName,
-                                selectStyles,
-                            )}
-                            onChange={option =>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            onChange={e =>
                                 handleChange(
                                     'parentCompanyName',
-                                    option?.value || '',
+                                    e.target.value,
                                 )
                             }
-                            placeholder="Select parent company..."
+                            onBlur={handleBlur}
+                            placeholder="Parent company name"
+                            error={
+                                touched.parentCompanyName &&
+                                !!errors.parentCompanyName
+                            }
+                            InputProps={{
+                                classes: {
+                                    input: classes.inputStyles,
+                                    notchedOutline:
+                                        classes.notchedOutlineStyles,
+                                },
+                            }}
                         />
                         {touched.parentCompanyName && errors.parentCompanyName && (
                             <div className={classes.errorWrapStyles}>
@@ -448,112 +474,128 @@ const ProfileStep = ({
                             </div>
                         )}
                     </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Office Name
-                                    <Tooltip
-                                        title="Name of the corporate office or headquarters"
-                                        placement="top"
-                                        classes={{ tooltip: classes.tooltip }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
+                    <div className={classes.doubleFieldContainer}>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Office Name
+                                        <Tooltip
+                                            title="Name of the corporate office or headquarters"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
                                         >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.officeOfficialName || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'officeOfficialName',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={handleBlur}
-                            placeholder="Office name"
-                            error={
-                                touched.officeOfficialName &&
-                                !!errors.officeOfficialName
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.officeOfficialName &&
-                            errors.officeOfficialName && (
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={formData.officeOfficialName || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'officeOfficialName',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                placeholder="Office name"
+                                error={
+                                    touched.officeOfficialName &&
+                                    !!errors.officeOfficialName
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                            />
+                            {touched.officeOfficialName &&
+                                errors.officeOfficialName && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.officeOfficialName}
+                                        />
+                                    </div>
+                                )}
+                        </div>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Office Address
+                                        <Tooltip
+                                            title="Physical address of the office location"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={formData.officeAddress || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'officeAddress',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                placeholder="Office address"
+                                error={
+                                    touched.officeAddress &&
+                                    !!errors.officeAddress
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                            />
+                            {touched.officeAddress && errors.officeAddress && (
                                 <div className={classes.errorWrapStyles}>
                                     <InputErrorText
-                                        text={errors.officeOfficialName}
+                                        text={errors.officeAddress}
                                     />
                                 </div>
                             )}
-                    </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Office Address
-                                    <Tooltip
-                                        title="Physical address of the office location"
-                                        placement="top"
-                                        classes={{ tooltip: classes.tooltip }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.officeAddress || ''}
-                            onChange={e =>
-                                handleChange('officeAddress', e.target.value)
-                            }
-                            onBlur={handleBlur}
-                            placeholder="Office address"
-                            error={
-                                touched.officeAddress && !!errors.officeAddress
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.officeAddress && errors.officeAddress && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText text={errors.officeAddress} />
-                            </div>
-                        )}
+                        </div>
                     </div>
                     <div className={classes.fieldContainer}>
                         <FormFieldTitle
@@ -620,470 +662,526 @@ const ProfileStep = ({
                     Production and operations details for your location.
                 </Typography>
             </div>
-
             {isOperationsCapabilitiesVisible && (
                 <section>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label="Industry / Sectors"
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <StyledSelect
-                            id="sectors"
-                            name="sectors"
-                            aria-label="Select sector"
-                            isMulti
-                            options={
-                                mapDjangoChoiceTuplesToSelectOptions(
-                                    mockedSectors,
-                                ) || []
-                            }
-                            value={formData.sectors || []}
-                            onChange={values => handleChange('sectors', values)}
-                            placeholder="Select sectors..."
-                            styles={getSelectStyles(
-                                touched.sectors && !!errors.sectors,
-                                selectStyles,
-                            )}
-                        />
-                        {touched.sectors && errors.sectors && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText text={errors.sectors} />
-                            </div>
-                        )}
-                    </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Location Type(s)
-                                    <Tooltip
-                                        title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        {enabledTaxonomy ? (
+                    <div className={classes.doubleFieldContainer}>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label="Industry / Sectors"
+                                classes={{ title: classes.formLabel }}
+                            />
                             <StyledSelect
-                                id="location_type"
-                                name="location-type"
-                                aria-label="Location type"
+                                id="sectors"
+                                name="sectors"
+                                aria-label="Select sector"
                                 isMulti
-                                options={mapFacilityTypeOptions(
-                                    processingTypeOptions || [],
-                                    formData.facilityProductionTypes || [],
-                                )}
-                                value={formData.facilityType || []}
-                                onChange={values =>
-                                    handleChange('facilityType', values)
+                                options={
+                                    mapDjangoChoiceTuplesToSelectOptions(
+                                        mockedSectors,
+                                    ) || []
                                 }
-                                placeholder="Select location type(s)"
+                                value={formData.sectors || []}
+                                onChange={values =>
+                                    handleChange('sectors', values)
+                                }
+                                placeholder="Select sectors..."
                                 styles={getSelectStyles(
-                                    touched.facilityType &&
-                                        !!errors.facilityType,
+                                    touched.sectors && !!errors.sectors,
                                     selectStyles,
                                 )}
                             />
-                        ) : (
+                            {touched.sectors && errors.sectors && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText text={errors.sectors} />
+                                </div>
+                            )}
+                        </div>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Location Type(s)
+                                        <Tooltip
+                                            title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            {enabledTaxonomy ? (
+                                <StyledSelect
+                                    id="location_type"
+                                    name="location-type"
+                                    aria-label="Location type"
+                                    isMulti
+                                    options={mapFacilityTypeOptions(
+                                        processingTypeOptions || [],
+                                        formData.facilityProductionTypes || [],
+                                    )}
+                                    value={formData.facilityType || []}
+                                    onChange={values =>
+                                        handleChange('facilityType', values)
+                                    }
+                                    placeholder="Select location type(s)"
+                                    styles={getSelectStyles(
+                                        touched.facilityType &&
+                                            !!errors.facilityType,
+                                        selectStyles,
+                                    )}
+                                />
+                            ) : (
+                                <StyledSelect
+                                    creatable
+                                    isMulti
+                                    name="location-type"
+                                    aria-label="Location type"
+                                    value={formData.facilityType || []}
+                                    onChange={values =>
+                                        handleChange('facilityType', values)
+                                    }
+                                    placeholder="Enter location type(s)"
+                                    styles={getSelectStyles(
+                                        touched.facilityType &&
+                                            !!errors.facilityType,
+                                        selectStyles,
+                                    )}
+                                    components={{
+                                        DropdownIndicator: null,
+                                        IndicatorSeparator: null,
+                                    }}
+                                />
+                            )}
+                        </div>
+                    </div>
+                    <div className={classes.doubleFieldContainer}>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Processing Type(s)
+                                        <Tooltip
+                                            title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            {enabledTaxonomy ? (
+                                <StyledSelect
+                                    id="processing_type"
+                                    name="processing-type"
+                                    aria-label="Processing Type"
+                                    isMulti
+                                    options={mapProcessingTypeOptions(
+                                        processingTypeOptions || [],
+                                        formData.facilityType || [],
+                                    )}
+                                    value={
+                                        formData.facilityProductionTypes || []
+                                    }
+                                    onChange={values =>
+                                        handleChange(
+                                            'facilityProductionTypes',
+                                            values,
+                                        )
+                                    }
+                                    placeholder="Select processing type(s)"
+                                    styles={getSelectStyles(
+                                        touched.facilityProductionTypes &&
+                                            !!errors.facilityProductionTypes,
+                                        selectStyles,
+                                    )}
+                                />
+                            ) : (
+                                <StyledSelect
+                                    creatable
+                                    isMulti
+                                    name="processing-type"
+                                    aria-label="Processing Type"
+                                    value={
+                                        formData.facilityProductionTypes || []
+                                    }
+                                    onChange={values =>
+                                        handleChange(
+                                            'facilityProductionTypes',
+                                            values,
+                                        )
+                                    }
+                                    placeholder="Enter processing type(s)"
+                                    styles={getSelectStyles(
+                                        touched.facilityProductionTypes &&
+                                            !!errors.facilityProductionTypes,
+                                        selectStyles,
+                                    )}
+                                    components={{
+                                        DropdownIndicator: null,
+                                        IndicatorSeparator: null,
+                                    }}
+                                />
+                            )}
+                        </div>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Product Types
+                                        <Tooltip
+                                            title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
                             <StyledSelect
                                 creatable
                                 isMulti
-                                name="location-type"
-                                aria-label="Location type"
-                                value={formData.facilityType || []}
+                                name="product-types"
+                                aria-label="Product Types"
+                                value={formData.facilityProductTypes || []}
                                 onChange={values =>
-                                    handleChange('facilityType', values)
+                                    handleChange('facilityProductTypes', values)
                                 }
-                                placeholder="Enter location type(s)"
+                                placeholder="Enter product types..."
                                 styles={getSelectStyles(
-                                    touched.facilityType &&
-                                        !!errors.facilityType,
+                                    touched.facilityProductTypes &&
+                                        !!errors.facilityProductTypes,
                                     selectStyles,
                                 )}
+                                components={{
+                                    DropdownIndicator: null,
+                                    IndicatorSeparator: null,
+                                }}
                             />
-                        )}
+                        </div>
                     </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Processing Type(s)
-                                    <Tooltip
-                                        title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
+                    <div className={classes.doubleFieldContainer}>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Number of Workers
+                                        <Tooltip
+                                            title="Total number of employees working at this production location, can be a number or a range (e.g., 100, 100-150)"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
                                         >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        {enabledTaxonomy ? (
-                            <StyledSelect
-                                id="processing_type"
-                                name="processing-type"
-                                aria-label="Processing Type"
-                                isMulti
-                                options={mapProcessingTypeOptions(
-                                    processingTypeOptions || [],
-                                    formData.facilityType || [],
-                                )}
-                                value={formData.facilityProductionTypes || []}
-                                onChange={values =>
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={formData.numberOfWorkers || ''}
+                                onChange={e =>
                                     handleChange(
-                                        'facilityProductionTypes',
-                                        values,
+                                        'numberOfWorkers',
+                                        e.target.value,
                                     )
                                 }
-                                placeholder="Select processing type(s)"
-                                styles={getSelectStyles(
-                                    touched.facilityProductionTypes &&
-                                        !!errors.facilityProductionTypes,
-                                    selectStyles,
-                                )}
+                                onBlur={handleBlur}
+                                placeholder="e.g., 500"
+                                error={
+                                    touched.numberOfWorkers &&
+                                    !!errors.numberOfWorkers
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
                             />
-                        ) : (
-                            <StyledSelect
-                                creatable
-                                isMulti
-                                name="processing-type"
-                                aria-label="Processing Type"
-                                value={formData.facilityProductionTypes || []}
-                                onChange={values =>
+                            {touched.numberOfWorkers && errors.numberOfWorkers && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.numberOfWorkers}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Percentage of Female Workers
+                                        <Tooltip
+                                            title="Percentage of female employees out of the total workforce at this location"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
+                                        >
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={
+                                    formData.facilityFemaleWorkersPercentage ||
+                                    ''
+                                }
+                                onChange={e =>
                                     handleChange(
-                                        'facilityProductionTypes',
-                                        values,
+                                        'facilityFemaleWorkersPercentage',
+                                        e.target.value,
                                     )
                                 }
-                                placeholder="Enter processing type(s)"
-                                styles={getSelectStyles(
-                                    touched.facilityProductionTypes &&
-                                        !!errors.facilityProductionTypes,
-                                    selectStyles,
-                                )}
+                                onBlur={handleBlur}
+                                placeholder="e.g., 45%"
+                                error={
+                                    touched.facilityFemaleWorkersPercentage &&
+                                    !!errors.facilityFemaleWorkersPercentage
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
                             />
-                        )}
+                            {touched.facilityFemaleWorkersPercentage &&
+                                errors.facilityFemaleWorkersPercentage && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={
+                                                errors.facilityFemaleWorkersPercentage
+                                            }
+                                        />
+                                    </div>
+                                )}
+                        </div>
                     </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Product Types
-                                    <Tooltip
-                                        title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
+                    <div className={classes.doubleFieldContainer}>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Minimum Order Quantity
+                                        <Tooltip
+                                            title="Smallest order quantity this production location will accept from customers"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
                                         >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <StyledSelect
-                            creatable
-                            isMulti
-                            name="product-types"
-                            aria-label="Product Types"
-                            value={formData.facilityProductTypes || []}
-                            onChange={values =>
-                                handleChange('facilityProductTypes', values)
-                            }
-                            placeholder="Enter product types..."
-                            styles={getSelectStyles(
-                                touched.facilityProductTypes &&
-                                    !!errors.facilityProductTypes,
-                                selectStyles,
-                            )}
-                        />
-                    </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Number of Workers
-                                    <Tooltip
-                                        title="Total number of employees working at this production location, can be a number or a range (e.g., 100, 100-150)"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={
+                                    formData.facilityMinimumOrderQuantity || ''
+                                }
+                                onChange={e =>
+                                    handleChange(
+                                        'facilityMinimumOrderQuantity',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                placeholder="e.g., 1000 units"
+                                error={
+                                    touched.facilityMinimumOrderQuantity &&
+                                    !!errors.facilityMinimumOrderQuantity
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                            />
+                            {touched.facilityMinimumOrderQuantity &&
+                                errors.facilityMinimumOrderQuantity && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={
+                                                errors.facilityMinimumOrderQuantity
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            <DialogTooltip
+                                text={BETA_TOOLTIP_TEXT}
+                                childComponent={
+                                    <span
+                                        className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
                                     >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
+                                        BETA
+                                    </span>
+                                }
+                            />
+                        </div>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Average Lead Time
+                                        <Tooltip
+                                            title="Typical time required from order confirmation to product delivery"
+                                            placement="top"
+                                            classes={{
+                                                tooltip: classes.tooltip,
+                                            }}
                                         >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.numberOfWorkers || ''}
-                            onChange={e =>
-                                handleChange('numberOfWorkers', e.target.value)
-                            }
-                            onBlur={handleBlur}
-                            placeholder="e.g., 500"
-                            error={
-                                touched.numberOfWorkers &&
-                                !!errors.numberOfWorkers
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.numberOfWorkers && errors.numberOfWorkers && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText text={errors.numberOfWorkers} />
-                            </div>
-                        )}
-                    </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Percentage of Female Workers
-                                    <Tooltip
-                                        title="Percentage of female employees out of the total workforce at this location"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
+                                            <IconButton
+                                                size="small"
+                                                disableRipple
+                                                className={
+                                                    classes.helpIconButton
+                                                }
+                                            >
+                                                <HelpOutline
+                                                    className={classes.helpIcon}
+                                                />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                value={formData.facilityAverageLeadTime || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'facilityAverageLeadTime',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                placeholder="e.g., 30 days"
+                                error={
+                                    touched.facilityAverageLeadTime &&
+                                    !!errors.facilityAverageLeadTime
+                                }
+                                InputProps={{
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                            />
+                            {touched.facilityAverageLeadTime &&
+                                errors.facilityAverageLeadTime && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={
+                                                errors.facilityAverageLeadTime
+                                            }
+                                        />
+                                    </div>
+                                )}
+                            <DialogTooltip
+                                text={BETA_TOOLTIP_TEXT}
+                                childComponent={
+                                    <span
+                                        className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
                                     >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={
-                                formData.facilityFemaleWorkersPercentage || ''
-                            }
-                            onChange={e =>
-                                handleChange(
-                                    'facilityFemaleWorkersPercentage',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={handleBlur}
-                            placeholder="e.g., 45%"
-                            error={
-                                touched.facilityFemaleWorkersPercentage &&
-                                !!errors.facilityFemaleWorkersPercentage
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.facilityFemaleWorkersPercentage &&
-                            errors.facilityFemaleWorkersPercentage && (
-                                <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={
-                                            errors.facilityFemaleWorkersPercentage
-                                        }
-                                    />
-                                </div>
-                            )}
-                    </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Minimum Order Quantity
-                                    <Tooltip
-                                        title="Smallest order quantity this production location will accept from customers"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.facilityMinimumOrderQuantity || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'facilityMinimumOrderQuantity',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={handleBlur}
-                            placeholder="e.g., 1000 units"
-                            error={
-                                touched.facilityMinimumOrderQuantity &&
-                                !!errors.facilityMinimumOrderQuantity
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.facilityMinimumOrderQuantity &&
-                            errors.facilityMinimumOrderQuantity && (
-                                <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={
-                                            errors.facilityMinimumOrderQuantity
-                                        }
-                                    />
-                                </div>
-                            )}
-                        <DialogTooltip
-                            text={BETA_TOOLTIP_TEXT}
-                            childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
-                            }
-                        />
-                    </div>
-                    <div className={classes.fieldContainer}>
-                        <FormFieldTitle
-                            label={
-                                <>
-                                    Average Lead Time
-                                    <Tooltip
-                                        title="Typical time required from order confirmation to product delivery"
-                                        placement="top"
-                                        classes={{
-                                            tooltip: classes.tooltip,
-                                        }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
-                                </>
-                            }
-                            classes={{ title: classes.formLabel }}
-                        />
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            value={formData.facilityAverageLeadTime || ''}
-                            onChange={e =>
-                                handleChange(
-                                    'facilityAverageLeadTime',
-                                    e.target.value,
-                                )
-                            }
-                            onBlur={handleBlur}
-                            placeholder="e.g., 30 days"
-                            error={
-                                touched.facilityAverageLeadTime &&
-                                !!errors.facilityAverageLeadTime
-                            }
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputStyles,
-                                    notchedOutline:
-                                        classes.notchedOutlineStyles,
-                                },
-                            }}
-                        />
-                        {touched.facilityAverageLeadTime &&
-                            errors.facilityAverageLeadTime && (
-                                <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={errors.facilityAverageLeadTime}
-                                    />
-                                </div>
-                            )}
-                        <DialogTooltip
-                            text={BETA_TOOLTIP_TEXT}
-                            childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
-                            }
-                        />
+                                        BETA
+                                    </span>
+                                }
+                            />
+                        </div>
                     </div>
                 </section>
             )}
-
             <hr className={classes.separator} />
             <div className={classes.sectionContainer}>
                 <div className={classes.sectionTitleContainer}>
@@ -1116,7 +1214,7 @@ const ProfileStep = ({
                 </Typography>
             </div>
             {isCompliancePartnershipsVisible && (
-                <section>
+                <section className={classes.doubleFieldContainer}>
                     <div className={classes.fieldContainer}>
                         <FormFieldTitle
                             label={
@@ -1157,11 +1255,19 @@ const ProfileStep = ({
                                     !!errors.facilityAffiliations,
                                 selectStyles,
                             )}
+                            components={{
+                                DropdownIndicator: null,
+                                IndicatorSeparator: null,
+                            }}
                         />
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
                             childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
+                                <span
+                                    className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                >
+                                    BETA
+                                </span>
                             }
                         />
                     </div>
@@ -1186,22 +1292,62 @@ const ProfileStep = ({
                                     !!errors.facilityCertifications,
                                 selectStyles,
                             )}
+                            components={{
+                                DropdownIndicator: null,
+                                IndicatorSeparator: null,
+                            }}
                         />
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
                             childComponent={
-                                <span className={classes.betaBadge}>BETA</span>
+                                <span
+                                    className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                >
+                                    BETA
+                                </span>
                             }
                         />
                     </div>
                 </section>
             )}
-
-            <div className={classes.emissionsEstimateContainer}>
-                <ClaimEmissionsEstimate
-                    onValidationChange={setClaimEmissionsEstimateHasErrors}
-                />
+            <hr className={classes.separator} />
+            <div className={classes.sectionContainer}>
+                <div className={classes.sectionTitleContainer}>
+                    <Typography
+                        variant="title"
+                        component="h3"
+                        className={classes.sectionTitle}
+                    >
+                        <div
+                            className={`${classes.sectionIconWrapper} ${classes.greenBg}`}
+                        >
+                            <Spa
+                                className={`${classes.sectionIcon} ${classes.greenIcon}`}
+                            />
+                        </div>
+                        Environmental Data
+                    </Typography>
+                    <div className={classes.switchContainer}>
+                        <Switch
+                            checked={isFreeEmissionsEstimateVisible}
+                            onChange={(_, checked) => {
+                                setIsFreeEmissionsEstimateVisible(checked);
+                            }}
+                            color="primary"
+                        />
+                    </div>
+                </div>
+                <Typography className={classes.sectionDescription}>
+                    Emissions estimate and energy consumption data.
+                </Typography>
             </div>
+            {isFreeEmissionsEstimateVisible && (
+                <div className={classes.emissionsEstimateContainer}>
+                    <ClaimEmissionsEstimate
+                        onValidationChange={setClaimEmissionsEstimateHasErrors}
+                    />
+                </div>
+            )}
         </div>
     );
 };
@@ -1215,7 +1361,6 @@ ProfileStep.propTypes = {
     errors: object,
     countryOptions: array,
     processingTypeOptions: array,
-    parentCompanyOptions: array,
     onEmissionsValidationChange: func,
 };
 
@@ -1224,7 +1369,6 @@ ProfileStep.defaultProps = {
     errors: {},
     countryOptions: null,
     processingTypeOptions: null,
-    parentCompanyOptions: null,
     onEmissionsValidationChange: null,
 };
 
