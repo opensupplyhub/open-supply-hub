@@ -407,10 +407,12 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                     reverse=True
                 )
 
-            # For ISIC-4, return only the raw value objects (no metadata)
+            # For ISIC-4, return only the raw value objects (no metadata).
             if field_name == ExtendedField.ISIC_4:
                 grouped_data[field_name] = [
-                    item.get('value') for item in data if item.get('value') is not None
+                    item.get('value')
+                    for item in data
+                    if item.get('value') is not None
                 ]
             else:
                 grouped_data[field_name] = data

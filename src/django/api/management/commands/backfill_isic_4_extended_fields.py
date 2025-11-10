@@ -51,18 +51,26 @@ class Command(BaseCommand):
         contributor_ids = set(nsf_qs.values_list('contributor_id', flat=True))
 
         if not contributor_ids:
-            self.stdout.write('No contributors configured with isic_4; nothing to do.')
+            self.stdout.write(
+                'No contributors configured with isic_4; nothing to do.'
+            )
             return
 
-        # Optionally reset existing data first
+        # Optionally reset existing data first.
         if options['reset'] and not dry_run:
-            reset_qs = ExtendedField.objects.filter(field_name=ExtendedField.ISIC_4)
+            reset_qs = ExtendedField.objects.filter(
+                field_name=ExtendedField.ISIC_4
+            )
             if contributor_filter:
                 reset_qs = reset_qs.filter(
                     contributor_id__in=contributor_ids
                 )
             deleted, _ = reset_qs.delete()
-            self.stdout.write(self.style.WARNING(f"Reset: deleted {deleted} existing isic_4 rows."))
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Reset: deleted {deleted} existing isic_4 rows."
+                )
+            )
 
         existing_fli_ids = set(
             ExtendedField.objects
@@ -107,7 +115,9 @@ class Command(BaseCommand):
 
             try:
                 with transaction.atomic():
-                    ExtendedField.objects.bulk_create(to_create, batch_size=batch_size)
+                    ExtendedField.objects.bulk_create(
+                        to_create, batch_size=batch_size
+                    )
                 stats['inserted'] += len(to_create)
                 to_create.clear()
             except (IntegrityError, DatabaseError) as exc:
@@ -127,9 +137,13 @@ class Command(BaseCommand):
                         stats['inserted'] += 1
                     except Exception as row_exc:
                         stats['row_failures'] += 1
-                        self.stderr.write(self.style.ERROR(
-                            f'Row insert failed (fli_id={row.facility_list_item_id}): {row_exc}'
-                        ))
+                        self.stderr.write(
+                            self.style.ERROR(
+                                'Row insert failed '
+                                f'(fli_id={row.facility_list_item_id}): '
+                                f'{row_exc}'
+                            )
+                        )
 
         last_log = timezone.now()
         for item in items_qs.iterator(chunk_size=batch_size):
@@ -139,7 +153,8 @@ class Command(BaseCommand):
                 stats['skipped_empty_value'] += 1
                 continue
 
-            # Normalize value: if a single object, store the object; if multiple, store list
+            # Normalize value: if a single object, store the object;
+            # if multiple, store list
             if isinstance(raw, list):
                 value = raw[0] if len(raw) == 1 else raw
             else:
@@ -173,10 +188,13 @@ class Command(BaseCommand):
 
         flush_batch()
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Done. scanned={stats['scanned']} queued={stats['queued']} "
-            f"inserted={stats['inserted']} bulk_failures={stats['bulk_failures']} "
-            f"row_failures={stats['row_failures']} skipped_empty_value={stats['skipped_empty_value']}"
-        ))
-
-
+        self.stdout.write(
+            self.style.SUCCESS(
+                "Done. "
+                f"scanned={stats['scanned']} queued={stats['queued']} "
+                f"inserted={stats['inserted']} "
+                f"bulk_failures={stats['bulk_failures']} "
+                f"row_failures={stats['row_failures']} "
+                f"skipped_empty_value={stats['skipped_empty_value']}"
+            )
+        )
