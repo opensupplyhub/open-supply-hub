@@ -1,9 +1,12 @@
 #!/bin/bash
 
+# Default to Production if not provided from GH Action input.
+ENV_TAG="${ENVIRONMENT:-Production}"
+
 bastion="$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD \
            AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD \
            AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_PROD \
-           aws ec2 describe-instances --filters "Name=tag:Environment,Values=Production" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
+           aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENV_TAG" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
 
 echo "Bastion: $bastion"
 ssh-keyscan $bastion > ~/.ssh/known_hosts
@@ -15,7 +18,13 @@ chmod 600 ~/.pgpass
 chmod 600 /keys/key
 ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
 
-pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5433 -f /dumps/osh_prod_large.dump -w --verbose
+if [ "$ENV_TAG" = "Rba" ]; then
+  DUMP_BASE="osh_rba_large"
+else
+  DUMP_BASE="osh_prod_large"
+fi
+
+pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5433 -f "/dumps/${DUMP_BASE}.dump" -w --verbose
 ls -la /dumps
 
 echo "Start anonymization"
@@ -63,9 +72,9 @@ BEGIN
 END \$\$;"
 
 
-pg_restore --verbose --clean --if-exists --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < /dumps/osh_prod_large.dump
+pg_restore --verbose --clean --if-exists --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < "/dumps/${DUMP_BASE}.dump"
 psql -U anondb -d anondb -h localhost -p 5432 -c "$SQL_SCRIPT"
-pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f /dumps/osh_prod_large_anonymized.dump -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f "/dumps/${DUMP_BASE}_anonymized.dump" -w --verbose
 
 ls -la /dumps
 
@@ -74,4 +83,4 @@ echo "Finished anonymization"
 AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST \
     AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST \
     AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_TEST \
-    aws s3 cp /dumps/osh_prod_large_anonymized.dump s3://oshub-dumps-anonymized/osh_prod_large_anon.dump
+    aws s3 cp "/dumps/${DUMP_BASE}_anonymized.dump" "s3://oshub-dumps-anonymized/${DUMP_BASE}_anon.dump"

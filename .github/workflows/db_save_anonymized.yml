@@ -2,6 +2,14 @@ name: "DB - Save Anonymized DB"
 
 on:
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Environment to dump"
+        required: true
+        type: choice
+        options:
+          - Production
+          - Rba
 
 jobs:
   save-anonymized-db:
@@ -15,7 +23,7 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Dump database for ${{ vars.ENV_NAME }}
+      - name: Dump database for ${{ github.event.inputs.target_env }}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
@@ -28,6 +36,7 @@ jobs:
               -e AWS_ACCESS_KEY_ID_TEST=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY_TEST=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e AWS_DEFAULT_REGION_TEST=eu-west-1 \
+              -e ENVIRONMENT=${{ github.event.inputs.target_env }} \
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
