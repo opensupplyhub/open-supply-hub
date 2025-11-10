@@ -10,6 +10,7 @@ on:
         options:
           - Production
           - Rba
+          - Development
 
 jobs:
   save-anonymized-db:

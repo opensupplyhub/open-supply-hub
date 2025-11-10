@@ -18,11 +18,17 @@ chmod 600 ~/.pgpass
 chmod 600 /keys/key
 ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
 
-if [ "$ENV_TAG" = "Rba" ]; then
-  DUMP_BASE="osh_rba_large"
-else
-  DUMP_BASE="osh_prod_large"
-fi
+case "$ENV_TAG" in
+  "Rba")
+    DUMP_BASE="osh_rba_large"
+    ;;
+  "Development")
+    DUMP_BASE="osh_dev_large"
+    ;;
+  *)
+    DUMP_BASE="osh_prod_large"
+    ;;
+ esac
 
 pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5433 -f "/dumps/${DUMP_BASE}.dump" -w --verbose
 ls -la /dumps
