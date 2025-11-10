@@ -3,14 +3,15 @@ name: "DB - Save Anonymized DB"
 on:
   workflow_dispatch:
     inputs:
-      target_env:
-        description: "Environment to dump"
+      deploy-env:
+        description: "Environment to save anonymized db"
         required: true
         type: choice
         options:
-          - Production
           - Rba
+          - Production
           - Development
+        default: Production
 
 jobs:
   save-anonymized-db:
