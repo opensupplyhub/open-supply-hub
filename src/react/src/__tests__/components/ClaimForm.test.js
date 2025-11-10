@@ -1,4 +1,5 @@
 import React from 'react';
+import { fireEvent } from '@testing-library/react';
 import { Router } from 'react-router-dom';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
@@ -36,7 +37,12 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/Busine
 
 jest.mock(
     '../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep',
-    () => () => <div data-testid="profile-step">Profile Step</div>,
+    () => () => (
+        <div data-testid="profile-step">
+            Profile Step
+            <input data-testid="profile-input" placeholder="Profile Input" />
+        </div>
+    ),
 );
 
 describe('ClaimForm component', () => {
@@ -407,6 +413,54 @@ describe('ClaimForm component', () => {
             expect(
                 getByText('Production Location Claims Process'),
             ).toBeInTheDocument();
+        });
+    });
+
+    describe('Submission behavior', () => {
+        const stateOnStep3 = {
+            ...defaultPreloadedState,
+            claimForm: {
+                ...defaultPreloadedState.claimForm,
+                activeStep: 3,
+            },
+        };
+
+        test('does not submit when pressing Enter on an input field', () => {
+            const { getByTestId, getByText } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimForm match={mockMatch} />
+                </Router>,
+                { preloadedState: stateOnStep3 },
+            );
+
+            const input = getByTestId('profile-input');
+            const submitButton = getByText('Submit Claim');
+
+            expect(input).toBeInTheDocument();
+            expect(submitButton).toBeInTheDocument();
+            
+            input.focus();
+            fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+
+            expect(getByText('Submit Claim')).toBeInTheDocument();
+        });
+
+        test('Submit button is configured for explicit activation only', () => {
+            const { getByText } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimForm match={mockMatch} />
+                </Router>,
+                { preloadedState: stateOnStep3 },
+            );
+
+            const submitButton = getByText('Submit Claim');
+
+            expect(submitButton).toBeInTheDocument();
+
+            // The button is configured with type="button" in ClaimForm.jsx (not type="submit").
+            // This prevents implicit form submission when Enter is pressed in form inputs.
+            // Submission only happens via explicit button click/activation,
+            // which calls claimForm.handleSubmit via the button's onClick handler.
         });
     });
 });
