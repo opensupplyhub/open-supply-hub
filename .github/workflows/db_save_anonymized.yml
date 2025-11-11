@@ -2,6 +2,16 @@ name: "DB - Save Anonymized DB"
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy-env:
+        description: "Environment to save anonymized db"
+        required: true
+        type: choice
+        options:
+          - Rba
+          - Production
+          - Development
+        default: Production
 
 jobs:
   save-anonymized-db:
@@ -15,11 +25,27 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Dump database for ${{ vars.ENV_NAME }}
+      - name: Dump database for ${{ github.event.inputs['deploy-env'] }}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
-          echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
+          ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
+          if [ "$ENV_NAME" = "Development" ]; then
+            printf "%s" "${{ secrets.KEY_FILE_DEV }}" | tr -d '\r' > ./keys/key
+          elif [ "$ENV_NAME" = "Rba" ]; then
+            printf "%s" "${{ secrets.KEY_FILE }}" | tr -d '\r' > ./keys/key
+          else
+            printf "%s" "${{ secrets.KEY_FILE_PROD }}" | tr -d '\r' > ./keys/key
+          fi
+          chmod 600 ./keys/key
+
+          # Select DB password based on environment
+          if [ "$ENV_NAME" = "Development" ]; then
+            DB_PASS="${{ secrets.DATABASE_PASSWORD_DEV }}"
+          else
+            DB_PASS="${{ secrets.DATABASE_PASSWORD }}"
+          fi
+
           docker build -t dump_image -f Dockerfile.dump .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID_PROD }} \
@@ -28,7 +54,8 @@ jobs:
               -e AWS_ACCESS_KEY_ID_TEST=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY_TEST=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e AWS_DEFAULT_REGION_TEST=eu-west-1 \
+              -e ENVIRONMENT=${{ github.event.inputs['deploy-env'] }} \
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
-              -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              -e DATABASE_PASSWORD="$DB_PASS" \
               dump_image
