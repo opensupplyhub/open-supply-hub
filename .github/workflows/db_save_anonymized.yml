@@ -29,7 +29,14 @@ jobs:
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
-          echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
+          ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
+          if [ "$ENV_NAME" = "Development" ]; then
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./keys/key
+          elif [ "$ENV_NAME" = "Rba" ]; then
+            echo "${{ secrets.KEY_FILE }}" > ./keys/key
+          else
+            echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
+          fi
           docker build -t dump_image -f Dockerfile.dump .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID_PROD }} \
