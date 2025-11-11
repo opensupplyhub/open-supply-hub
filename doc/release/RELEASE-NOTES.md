@@ -7,7 +7,21 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: November 15, 2025
+* Release date: November 29, 2025
+
+### What's new
+* [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+## Release 2.15.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 14, 2025
 
 ### Database changes
 
@@ -15,14 +29,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0184_add_source_by_to_partner_field.py - This migration adds a `source_by` RichTextField to the `PartnerField` model, allowing administrators to document the data source for each partner field using rich text formatting (bold, italic, links, lists). The field is optional and uses CKEditor for content editing.
 
 ### What's new
-* [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
 * [OSDEV-2185](https://opensupplyhub.atlassian.net/browse/OSDEV-2185) - Enhanced partner field display on production location profiles by adding a `source_by` field to the `PartnerField` model. This allows administrators to provide rich text descriptions of data sources. The source information is displayed on the facility details page below each partner field value, supporting HTML formatting for links, emphasis, and lists. Updated the facility index serializer to include `source_by` in the partner fields response only when the field contains content.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-
 
 ## Release 2.15.0
 
