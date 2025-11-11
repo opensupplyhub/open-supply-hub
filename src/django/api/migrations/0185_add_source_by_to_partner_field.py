@@ -7,7 +7,7 @@ import ckeditor.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0183_add_claim_fields_for_new_process'),
+        ('api', '0184_remove_facilityclaim_facility_type_choices'),
     ]
 
     operations = [
