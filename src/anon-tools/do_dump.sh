@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-set -euo pipefail
+set -eu
 
 # Default to Production if not provided from GH Action input.
 ENV_TAG="${ENVIRONMENT:-Production}"
@@ -32,7 +32,7 @@ if [ -z "${bastion}" ] || [ "${bastion}" = "None" ]; then
 fi
 
 echo "Bastion: $bastion"
-ssh-keyscan $bastion > ~/.ssh/known_hosts
+ssh-keyscan "$bastion" > ~/.ssh/known_hosts
 
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
@@ -48,25 +48,24 @@ else
   echo "If this is a passphrase-protected key or has invalid formatting/line-endings, SSH may fail."
 fi
 
-# Try SSH port-forward with common usernames
-SSH_USERS=(ec2-user ubuntu)
+# Try SSH port-forward with common usernames (POSIX loop)
 SSH_OK=0
-for USER in "${SSH_USERS[@]}"; do
+SSH_USER=""
+for USER in ec2-user ubuntu; do
   echo "Attempting SSH port-forward as user: $USER"
   if ssh -f -i /keys/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
-       -L 5433:database.service.osh.internal:5432 -N ${USER}@$bastion 2>/dev/null; then
+       -L 5433:database.service.osh.internal:5432 -N "${USER}@${bastion}" 2>/dev/null; then
     SSH_OK=1
     SSH_USER="$USER"
     break
   fi
   echo "SSH as $USER failed; trying next user if available..."
-  # Clean up any backgrounded failed attempts
-  pkill -f "ssh -f -i /keys/key" || true
+  # brief pause
   sleep 1
 done
 
 if [ "$SSH_OK" -ne 1 ]; then
-  echo "ERROR: Failed to start SSH port-forward to database via bastion with users: ${SSH_USERS[*]}"
+  echo "ERROR: Failed to start SSH port-forward to database via bastion with users: ec2-user ubuntu"
   echo "Check that /keys/key matches the bastion authorized_keys and that the correct username is used."
   exit 1
 fi
@@ -77,7 +76,7 @@ echo "SSH port-forward established using user: $SSH_USER"
 max_tries=20
 try=1
 until pg_isready -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" >/dev/null 2>&1; do
-  if [ $try -ge $max_tries ]; then
+  if [ "$try" -ge "$max_tries" ]; then
     echo "ERROR: Database tunnel to localhost:5433 not ready after $max_tries attempts."; exit 1
   fi
   echo "Waiting for database tunnel (attempt $try/$max_tries)..."
@@ -99,7 +98,7 @@ case "$ENV_TAG" in
     ;;
  esac
 
-pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d $DATABASE_NAME -U $DATABASE_USERNAME -p 5433 -f "/dumps/${DUMP_BASE}.dump" -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -h localhost  -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -p 5433 -f "/dumps/${DUMP_BASE}.dump" -w --verbose
 ls -la /dumps
 
 echo "Start anonymization"
@@ -149,7 +148,7 @@ END \$\$;"
 
 pg_restore --verbose --clean --if-exists --no-acl --no-owner -d anondb -U anondb -h localhost -p 5432 < "/dumps/${DUMP_BASE}.dump"
 psql -U anondb -d anondb -h localhost -p 5432 -c "$SQL_SCRIPT"
-pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb  -f "/dumps/${DUMP_BASE}_anonymized.dump" -w --verbose
+pg_dump --clean --no-owner --no-privileges -Fc -d anondb -U anondb -f "/dumps/${DUMP_BASE}_anonymized.dump" -w --verbose
 
 ls -la /dumps
 
