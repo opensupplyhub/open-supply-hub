@@ -227,8 +227,8 @@ const FacilityDetailsGeneralFields = ({
                 <Grid container>
                     <Grid item xs={12} md={6}>
                         <FacilityDetailsItem
-                            label="Name"
                             {...nameField}
+                            label="Name"
                             additionalContent={otherNames}
                             embed={embed}
                         />
