@@ -29,43 +29,33 @@ class FacilityIndexExtendedFieldListSerializer:
         self._serialize_extended_field_list()
 
     def _serialize_extended_field_list(self) -> None:
+        field_serializers = {
+            'created_at': self._get_created_at,
+            'updated_at': self._get_updated_at,
+            'contributor_name': self._get_contributor_name,
+            'contributor_id': self._get_contributor_id,
+            'is_from_claim': self._get_is_from_claim,
+            'verified_count': self._get_verified_count,
+        }
+        context_overrides = {'source_by', 'unit', 'label'}
+
         for extended_field in self.extended_field_list:
             serialized_extended_field = {}
 
             for field in self.fields:
-                if field == 'created_at':
-                    serialized_extended_field[field] = \
-                        self._get_created_at(extended_field)
-                elif field == 'updated_at':
-                    serialized_extended_field[field] = \
-                        self._get_updated_at(extended_field)
-                elif field == 'contributor_name':
-                    serialized_extended_field[field] = \
-                        self._get_contributor_name(extended_field)
-                elif field == 'contributor_id':
-                    serialized_extended_field[field] = \
-                        self._get_contributor_id(extended_field)
-                elif field == 'is_from_claim':
-                    serialized_extended_field[field] = \
-                        self._get_is_from_claim(extended_field)
-                elif field == 'verified_count':
-                    serialized_extended_field[field] = \
-                        self._get_verified_count(extended_field)
-                elif (field == 'source_by' and
-                      self.context.get('source_by', None) is not None):
-                    serialized_extended_field[field] = \
-                        self.context.get('source_by')
-                elif (field == 'unit' and
-                      self.context.get('unit', None) is not None):
-                    serialized_extended_field[field] = \
-                        self.context.get('unit')
-                elif (field == 'label' and
-                      self.context.get('label', None) is not None):
-                    serialized_extended_field[field] = \
-                        self.context.get('label')
-                else:
-                    serialized_extended_field[field] = extended_field.get(
-                        field)
+                if field in field_serializers:
+                    serialized_extended_field[field] = field_serializers[field](
+                        extended_field
+                    )
+                    continue
+
+                if field in context_overrides:
+                    context_value = self.context.get(field)
+                    if context_value is not None:
+                        serialized_extended_field[field] = context_value
+                        continue
+
+                serialized_extended_field[field] = extended_field.get(field)
 
             self.data.append(serialized_extended_field)
 
