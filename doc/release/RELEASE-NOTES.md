@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2185](https://opensupplyhub.atlassian.net/browse/OSDEV-2185) - Enhanced partner field display on production location profiles by adding a `source_by` field to the `PartnerField` model. This allows administrators to provide rich text descriptions of data sources. The source information is displayed on the facility details page below each partner field value, supporting HTML formatting for links, emphasis, and lists. Updated the facility index serializer to include `source_by` in the partner fields response only when the field contains content.
+* [OSDEV-2199](https://opensupplyhub.atlassian.net/browse/OSDEV-2199) - Added `unit` and `label` metadata from `PartnerField` to the serialized partner fields payload. Production Location detail pages now render the `unit` inline with field values and display custom partner field `label`.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
