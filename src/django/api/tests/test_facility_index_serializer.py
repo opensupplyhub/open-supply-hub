@@ -218,3 +218,159 @@ class FacilityIndexSerializerTest(TestCase):
             test_data_field[0]['source_by'],
             None
         )
+
+    def test_partner_fields_includes_unit(self):
+        self.partner_field_1.unit = 'kg'
+        self.partner_field_1.save()
+
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value={'raw_value': 'Test Value'},
+            contributor=self.contrib_one
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': {'raw_value': 'Test Value'},
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+
+        data = FacilityIndexSerializer(facility_index).data
+        partner_fields = data["properties"]["partner_fields"]
+        test_data_field = partner_fields['test_data_field']
+
+        self.assertEqual(len(test_data_field), 1)
+        self.assertIn('unit', test_data_field[0])
+        self.assertEqual(test_data_field[0]['unit'], 'kg')
+
+    def test_partner_fields_unit_is_none_when_not_set(self):
+        self.partner_field_1.unit = ''
+        self.partner_field_1.save()
+
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value={'raw_value': 'Test Value'},
+            contributor=self.contrib_one
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': {'raw_value': 'Test Value'},
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+
+        data = FacilityIndexSerializer(facility_index).data
+        partner_fields = data["properties"]["partner_fields"]
+        test_data_field = partner_fields['test_data_field']
+
+        self.assertEqual(len(test_data_field), 1)
+        self.assertIn('unit', test_data_field[0])
+        self.assertEqual(test_data_field[0]['unit'], '')
+
+    def test_partner_fields_includes_label(self):
+        self.partner_field_1.label = 'Emissions Data'
+        self.partner_field_1.save()
+
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value={'raw_value': 'Test Value'},
+            contributor=self.contrib_one
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': {'raw_value': 'Test Value'},
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+
+        data = FacilityIndexSerializer(facility_index).data
+        partner_fields = data["properties"]["partner_fields"]
+        test_data_field = partner_fields['test_data_field']
+
+        self.assertEqual(len(test_data_field), 1)
+        self.assertIn('label', test_data_field[0])
+        self.assertEqual(test_data_field[0]['label'], 'Emissions Data')
+
+    def test_partner_fields_label_is_empty_when_not_set(self):
+        self.partner_field_1.label = ''
+        self.partner_field_1.save()
+
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value={'raw_value': 'Test Value'},
+            contributor=self.contrib_one
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': {'raw_value': 'Test Value'},
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+
+        data = FacilityIndexSerializer(facility_index).data
+        partner_fields = data["properties"]["partner_fields"]
+        test_data_field = partner_fields['test_data_field']
+
+        self.assertEqual(len(test_data_field), 1)
+        self.assertIn('label', test_data_field[0])
+        self.assertEqual(test_data_field[0]['label'], '')
