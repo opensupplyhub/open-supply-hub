@@ -13,7 +13,6 @@ from api.constants import (
     Affiliations,
     Certifications
 )
-from api.facility_type_processing_type import ALL_FACILITY_TYPE_CHOICES
 
 
 class FacilityClaim(models.Model):
@@ -304,7 +303,6 @@ class FacilityClaim(models.Model):
         max_length=300,
         null=True,
         blank=True,
-        choices=ALL_FACILITY_TYPE_CHOICES,
         help_text='The editable facility type for this claim.',
         verbose_name='facility type')
     other_facility_type = models.CharField(
