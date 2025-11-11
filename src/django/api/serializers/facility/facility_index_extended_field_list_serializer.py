@@ -44,9 +44,10 @@ class FacilityIndexExtendedFieldListSerializer:
 
             for field in self.fields:
                 if field in field_serializers:
-                    serialized_extended_field[field] = field_serializers[field](
-                        extended_field
-                    )
+                    serialized_extended_field[field] = \
+                        field_serializers[field](
+                            extended_field
+                        )
                     continue
 
                 if field in context_overrides:
