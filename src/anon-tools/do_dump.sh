@@ -1,12 +1,35 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Default to Production if not provided from GH Action input.
 ENV_TAG="${ENVIRONMENT:-Production}"
 
-bastion="$(AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_PROD \
-           AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_PROD \
-           AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_PROD \
-           aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENV_TAG" --query 'Reservations[0].Instances[0].PublicDnsName' --output text)"
+echo "Selected ENVIRONMENT: $ENV_TAG"
+
+# Choose AWS credentials for bastion lookup based on environment
+if [ "$ENV_TAG" = "Development" ]; then
+  AWS_ID="$AWS_ACCESS_KEY_ID_TEST"
+  AWS_SECRET="$AWS_SECRET_ACCESS_KEY_TEST"
+  AWS_REGION="$AWS_DEFAULT_REGION_TEST"
+  echo "Using TEST AWS credentials for bastion lookup"
+else
+  AWS_ID="$AWS_ACCESS_KEY_ID_PROD"
+  AWS_SECRET="$AWS_SECRET_ACCESS_KEY_PROD"
+  AWS_REGION="$AWS_DEFAULT_REGION_PROD"
+  echo "Using PROD AWS credentials for bastion lookup"
+fi
+
+bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
+           AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
+           AWS_DEFAULT_REGION="$AWS_REGION" \
+           aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENV_TAG" --query 'Reservations[0].Instances[0].PublicDnsName' --output text || true)"
+
+if [ -z "${bastion}" ] || [ "${bastion}" = "None" ]; then
+  echo "ERROR: Could not resolve bastion host for Environment=$ENV_TAG (region=$AWS_REGION)."
+  echo "Ensure correct AWS credentials/region and that the bastion is tagged Environment=$ENV_TAG."
+  exit 1
+fi
 
 echo "Bastion: $bastion"
 ssh-keyscan $bastion > ~/.ssh/known_hosts
@@ -14,9 +37,24 @@ ssh-keyscan $bastion > ~/.ssh/known_hosts
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-
 chmod 600 /keys/key
-ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion
+# Start SSH port-forward in the background
+ssh -f -i /keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion || {
+  echo "ERROR: Failed to start SSH port-forward to database via bastion."; exit 1; }
+
+# Wait for the local tunnel to become ready
+max_tries=20
+try=1
+until pg_isready -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" >/dev/null 2>&1; do
+  if [ $try -ge $max_tries ]; then
+    echo "ERROR: Database tunnel to localhost:5433 not ready after $max_tries attempts."; exit 1
+  fi
+  echo "Waiting for database tunnel (attempt $try/$max_tries)..."
+  sleep 2
+  try=$((try+1))
+done
+
+echo "Database tunnel is ready. Proceeding with pg_dump."
 
 case "$ENV_TAG" in
   "Rba")
