@@ -25,7 +25,7 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Dump database for ${{ github.event.inputs.target_env }}
+      - name: Dump database for ${{ github.event.inputs['deploy-env'] }}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
@@ -38,7 +38,7 @@ jobs:
               -e AWS_ACCESS_KEY_ID_TEST=${{ secrets.AWS_ACCESS_KEY_ID }} \
               -e AWS_SECRET_ACCESS_KEY_TEST=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
               -e AWS_DEFAULT_REGION_TEST=eu-west-1 \
-              -e ENVIRONMENT=${{ github.event.inputs.target_env }} \
+              -e ENVIRONMENT=${{ github.event.inputs['deploy-env'] }} \
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
