@@ -20,6 +20,15 @@ else
   echo "Using PROD AWS credentials for bastion lookup"
 fi
 
+# Choose SSH user based on environment
+if [ "$ENV_TAG" = "Development" ]; then
+  SSH_USER="ubuntu"
+else
+  SSH_USER="ec2-user"
+fi
+
+echo "Using SSH user: $SSH_USER"
+
 bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
            AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
            AWS_DEFAULT_REGION="$AWS_REGION" \
@@ -46,7 +55,7 @@ fi
 
 # Start SSH port-forward in the background using the pre-mounted key at /keys/key
 ssh -f -i /keys/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
-  -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion || {
+  -L 5433:database.service.osh.internal:5432 -N ${SSH_USER}@$bastion || {
   echo "ERROR: Failed to start SSH port-forward to database via bastion."; exit 1; }
 
 # Wait for the local tunnel to become ready

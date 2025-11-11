@@ -31,12 +31,13 @@ jobs:
           mkdir -p ./keys
           ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
           if [ "$ENV_NAME" = "Development" ]; then
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./keys/key
+            printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ./keys/key
           elif [ "$ENV_NAME" = "Rba" ]; then
-            echo "${{ secrets.KEY_FILE }}" > ./keys/key
+            printf "%s" "${{ secrets.KEY_FILE }}" | tr -d '\r' > ./keys/key
           else
-            echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
+            printf "%s" "${{ secrets.KEY_FILE_PROD }}" | tr -d '\r' > ./keys/key
           fi
+          chmod 600 ./keys/key
           docker build -t dump_image -f Dockerfile.dump .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID_PROD }} \
