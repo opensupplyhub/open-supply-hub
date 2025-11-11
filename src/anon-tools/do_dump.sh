@@ -118,6 +118,13 @@ docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
 sleep 15s
 pg_isready -d anondb -U anondb -h localhost -p 5432
 
+echo "[info] Pre-dropping PostGIS extensions to avoid dependency issues"
+psql -U anondb -d anondb -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "\
+  DROP EXTENSION IF EXISTS postgis_tiger_geocoder CASCADE;\
+  DROP EXTENSION IF EXISTS postgis_topology CASCADE;\
+  DROP EXTENSION IF EXISTS postgis CASCADE;\
+"
+
 echo "[info] Restoring into local anonymization DB"
 # Capture restore stderr and continue to report errors
 set +e
