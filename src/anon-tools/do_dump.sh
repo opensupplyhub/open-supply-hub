@@ -37,24 +37,16 @@ ssh-keyscan $bastion > ~/.ssh/known_hosts
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
-mkdir -p ./keys
-# Write key without printing its content
-if [ "$ENV_NAME" = "Development" ]; then
-  printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ./keys/key
-elif [ "$ENV_NAME" = "Rba" ]; then
-  printf "%s" "${{ secrets.KEY_FILE }}" | tr -d '\r' > ./keys/key
+# Safely log SSH key fingerprint (no key content)
+if FP=$(ssh-keygen -y -f /keys/key 2>/dev/null | ssh-keygen -lf - 2>/dev/null | awk '{print $2}'); then
+  echo "Using SSH key fingerprint: $FP"
 else
-  printf "%s" "${{ secrets.KEY_FILE_PROD }}" | tr -d '\r' > ./keys/key
+  echo "WARNING: Could not compute SSH key fingerprint from /keys/key"
 fi
-chmod 600 ./keys/key
 
-# Log only a fingerprint (safe)
-FP=$(ssh-keygen -y -f ./keys/key 2>/dev/null | ssh-keygen -lf - | awk '{print $2}')
-echo "Using SSH key fingerprint: $FP"
-
-# Start SSH port-forward in the background
-ssh -f -i ./keys/key -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion || {
+# Start SSH port-forward in the background using the pre-mounted key at /keys/key
+ssh -f -i /keys/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
+  -L 5433:database.service.osh.internal:5432 -N ec2-user@$bastion || {
   echo "ERROR: Failed to start SSH port-forward to database via bastion."; exit 1; }
 
 # Wait for the local tunnel to become ready
