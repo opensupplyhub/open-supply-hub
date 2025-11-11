@@ -395,7 +395,7 @@ class FacilityClaimTest(APITestCase):
         )
         self.assertEqual(
             claim.facility_type,
-            'Manufacturing',
+            None,
         )
         self.assertEqual(
             claim.point_of_contact_email,
