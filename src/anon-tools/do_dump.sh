@@ -20,15 +20,6 @@ else
   echo "Using PROD AWS credentials for bastion lookup"
 fi
 
-# Choose SSH user based on environment
-if [ "$ENV_TAG" = "Development" ]; then
-  SSH_USER="ubuntu"
-else
-  SSH_USER="ec2-user"
-fi
-
-echo "Using SSH user: $SSH_USER"
-
 bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
            AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
            AWS_DEFAULT_REGION="$AWS_REGION" \
@@ -46,17 +37,41 @@ ssh-keyscan $bastion > ~/.ssh/known_hosts
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
 
+# Ensure key perms inside container
+chmod 600 /keys/key || true
+
 # Safely log SSH key fingerprint (no key content)
 if FP=$(ssh-keygen -y -f /keys/key 2>/dev/null | ssh-keygen -lf - 2>/dev/null | awk '{print $2}'); then
   echo "Using SSH key fingerprint: $FP"
 else
   echo "WARNING: Could not compute SSH key fingerprint from /keys/key"
+  echo "If this is a passphrase-protected key or has invalid formatting/line-endings, SSH may fail."
 fi
 
-# Start SSH port-forward in the background using the pre-mounted key at /keys/key
-ssh -f -i /keys/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
-  -L 5433:database.service.osh.internal:5432 -N ${SSH_USER}@$bastion || {
-  echo "ERROR: Failed to start SSH port-forward to database via bastion."; exit 1; }
+# Try SSH port-forward with common usernames
+SSH_USERS=(ec2-user ubuntu)
+SSH_OK=0
+for USER in "${SSH_USERS[@]}"; do
+  echo "Attempting SSH port-forward as user: $USER"
+  if ssh -f -i /keys/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
+       -L 5433:database.service.osh.internal:5432 -N ${USER}@$bastion 2>/dev/null; then
+    SSH_OK=1
+    SSH_USER="$USER"
+    break
+  fi
+  echo "SSH as $USER failed; trying next user if available..."
+  # Clean up any backgrounded failed attempts
+  pkill -f "ssh -f -i /keys/key" || true
+  sleep 1
+done
+
+if [ "$SSH_OK" -ne 1 ]; then
+  echo "ERROR: Failed to start SSH port-forward to database via bastion with users: ${SSH_USERS[*]}"
+  echo "Check that /keys/key matches the bastion authorized_keys and that the correct username is used."
+  exit 1
+fi
+
+echo "SSH port-forward established using user: $SSH_USER"
 
 # Wait for the local tunnel to become ready
 max_tries=20
