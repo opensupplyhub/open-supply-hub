@@ -23,10 +23,24 @@ fi
 
 echo "[info] AWS region: $AWS_REGION"
 
-bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
-           AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
-           AWS_DEFAULT_REGION="$AWS_REGION" \
-           aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENV_TAG" --query 'Reservations[0].Instances[0].PublicDnsName' --output text || true)"
+# Resolve bastion:
+# - Prefer explicit instance ID if provided
+# - Otherwise fall back to Environment tag lookup
+if [ -n "${BASTION_INSTANCE_ID:-}" ]; then
+  echo "[info] Resolving bastion by instance ID: $BASTION_INSTANCE_ID"
+  bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
+             AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
+             AWS_DEFAULT_REGION="$AWS_REGION" \
+             aws ec2 describe-instances \
+               --instance-ids "$BASTION_INSTANCE_ID" \
+               --query 'Reservations[0].Instances[0].PublicDnsName' \
+               --output text || true)"
+else
+  bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
+             AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
+             AWS_DEFAULT_REGION="$AWS_REGION" \
+             aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENV_TAG" --query 'Reservations[0].Instances[0].PublicDnsName' --output text || true)"
+fi
 
 if [ -z "${bastion}" ] || [ "${bastion}" = "None" ]; then
   echo "[error] Could not resolve bastion host for Environment=$ENV_TAG (region=$AWS_REGION)."

@@ -30,6 +30,11 @@ jobs:
           cd ./src/anon-tools
           mkdir -p ./keys
           ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
+          # Prepare optional bastion override for Rba
+          EXTRA_ENV=""
+          if [ "$ENV_NAME" = "Rba" ]; then
+            EXTRA_ENV="-e BASTION_INSTANCE_ID=${{ secrets.RBA_BASTION_ID }}"
+          fi
           if [ "$ENV_NAME" = "Development" ]; then
             printf "%s" "${{ secrets.KEY_FILE_DEV }}" | tr -d '\r' > ./keys/key
           elif [ "$ENV_NAME" = "Rba" ]; then
@@ -60,4 +65,5 @@ jobs:
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
               -e DATABASE_PASSWORD="$DB_PASS" \
+              $EXTRA_ENV \
               dump_image
