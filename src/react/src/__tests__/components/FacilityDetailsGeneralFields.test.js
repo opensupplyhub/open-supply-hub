@@ -319,6 +319,7 @@ describe('FacilityDetailsGeneralFields component', () => {
             properties: {
                 ...mockData.properties,
                 partner_fields: {
+                    ...mockData.properties.partner_fields,
                     climate_trace: [
                         {
                             value: { raw_value: 'Scope 1 emissions: 123' },
@@ -350,6 +351,7 @@ describe('FacilityDetailsGeneralFields component', () => {
             properties: {
                 ...mockData.properties,
                 partner_fields: {
+                    ...mockData.properties.partner_fields,
                     climate_trace: [
                         {
                             value: { raw_value: 'Scope 2 emissions: 456' },
