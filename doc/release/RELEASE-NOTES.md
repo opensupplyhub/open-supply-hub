@@ -7,10 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: November 15, 2025
-
-### Architecture/Environment changes
-* [OSDEV-2265](https://opensupplyhub.atlassian.net/browse/OSDEV-2265) - `DB - Save Anonymized DB` GitHub action now supports Production/Rba selection.
+* Release date: November 29, 2025
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
