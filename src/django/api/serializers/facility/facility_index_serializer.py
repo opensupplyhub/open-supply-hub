@@ -193,7 +193,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         return grouped
 
     @staticmethod
-    def __get_partner_fields():
+    def __get_cached_partner_fields():
         cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
 
         if cached_names is not None:
@@ -432,7 +432,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
-        partner_fields = self.__get_partner_fields()
+        partner_fields = self.__get_cached_partner_fields()
 
         return self.__serialize_and_sort_partner_fields(
             grouped_fields,
