@@ -8,7 +8,8 @@ ENV_TAG="${ENVIRONMENT:-Production}"
 echo "[info] Selected ENVIRONMENT: $ENV_TAG"
 
 # Choose AWS credentials for bastion lookup based on environment.
-if [ "$ENV_TAG" = "Development" ] || [ "$ENV_TAG" = "Rba" ]; then
+# Only Development uses TEST creds; Rba and Production use PROD creds.
+if [ "$ENV_TAG" = "Development" ]; then
   AWS_ID="$AWS_ACCESS_KEY_ID_TEST"
   AWS_SECRET="$AWS_SECRET_ACCESS_KEY_TEST"
   AWS_REGION="$AWS_DEFAULT_REGION_TEST"
@@ -113,7 +114,7 @@ fi
 
 echo "[info] Start anonymization"
 
-docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
+/docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
 
 sleep 15s
 pg_isready -d anondb -U anondb -h localhost -p 5432
@@ -149,7 +150,6 @@ if [ "$RESTORE_CODE" -ne 0 ]; then
   else
     echo "[info] No explicit 'error:' lines found; see /dumps/restore.err"
   fi
-  # Continue; anonymization may still succeed for partial restores.
 fi
 
 echo "[info] Applying anonymization SQL"
