@@ -16,7 +16,7 @@ on:
 jobs:
   save-anonymized-db:
     runs-on: self-hosted
-    environment: Test
+    environment: ${{ github.event.inputs['deploy-env'] == 'Rba' && 'Rba' || 'Test' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -33,7 +33,7 @@ jobs:
           if [ "$ENV_NAME" = "Development" ]; then
             printf "%s" "${{ secrets.KEY_FILE_DEV }}" | tr -d '\r' > ./keys/key
           elif [ "$ENV_NAME" = "Rba" ]; then
-            printf "%s" "${{ secrets.KEY_FILE }}" | tr -d '\r' > ./keys/key
+            printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > ./keys/key
           else
             printf "%s" "${{ secrets.KEY_FILE_PROD }}" | tr -d '\r' > ./keys/key
           fi
@@ -42,6 +42,8 @@ jobs:
           # Select DB password based on environment
           if [ "$ENV_NAME" = "Development" ]; then
             DB_PASS="${{ secrets.DATABASE_PASSWORD_DEV }}"
+          elif [ "$ENV_NAME" = "Rba" ]; then
+            DB_PASS="${{ secrets.DATABASE_PASSWORD_RBA }}"
           else
             DB_PASS="${{ secrets.DATABASE_PASSWORD }}"
           fi

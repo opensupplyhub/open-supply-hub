@@ -7,8 +7,8 @@ ENV_TAG="${ENVIRONMENT:-Production}"
 
 echo "[info] Selected ENVIRONMENT: $ENV_TAG"
 
-# Choose AWS credentials for bastion lookup based on environment
-if [ "$ENV_TAG" = "Development" ]; then
+# Choose AWS credentials for bastion lookup based on environment.
+if [ "$ENV_TAG" = "Development" ] || [ "$ENV_TAG" = "Rba" ]; then
   AWS_ID="$AWS_ACCESS_KEY_ID_TEST"
   AWS_SECRET="$AWS_SECRET_ACCESS_KEY_TEST"
   AWS_REGION="$AWS_DEFAULT_REGION_TEST"
@@ -39,10 +39,10 @@ ssh-keyscan "$bastion" > ~/.ssh/known_hosts
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-# Ensure key perms inside container
+# Ensure key perms inside container.
 chmod 600 /keys/key || true
 
-# Safe fingerprint & key size
+# Safe fingerprint & key size.
 KEY_BYTES=$(wc -c < /keys/key || echo 0)
 echo "[info] SSH key bytes: $KEY_BYTES"
 if FP=$(ssh-keygen -y -f /keys/key 2>/dev/null | ssh-keygen -lf - 2>/dev/null | awk '{print $2}'); then
@@ -52,7 +52,7 @@ else
   echo "[hint] If passphrase-protected or malformed (e.g., CRLF), SSH will fail."
 fi
 
-# Try SSH port-forward with common usernames (POSIX loop)
+# Try SSH port-forward with common usernames (POSIX loop).
 SSH_OK=0
 SSH_USER=""
 for USER in ec2-user ubuntu; do
@@ -74,7 +74,7 @@ if [ "$SSH_OK" -ne 1 ]; then
   exit 1
 fi
 
-# Wait for the local tunnel to become ready
+# Wait for the local tunnel to become ready.
 max_tries=20
 try=1
 until pg_isready -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" >/dev/null 2>&1; do
@@ -126,7 +126,7 @@ psql -U anondb -d anondb -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "\
 "
 
 echo "[info] Restoring into local anonymization DB"
-# Capture restore stderr and continue to report errors
+# Capture restore stderr and continue to report errors.
 set +e
 pg_restore --verbose --clean --if-exists --no-acl --no-owner \
   -d anondb -U anondb -h localhost -p 5432 "$DUMP_PATH" \
@@ -149,7 +149,7 @@ if [ "$RESTORE_CODE" -ne 0 ]; then
   else
     echo "[info] No explicit 'error:' lines found; see /dumps/restore.err"
   fi
-  # continue; anonymization may still succeed for partial restores
+  # Continue; anonymization may still succeed for partial restores.
 fi
 
 echo "[info] Applying anonymization SQL"
