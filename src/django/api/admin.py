@@ -1,5 +1,6 @@
 import json
 
+from django import forms
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
@@ -15,6 +16,7 @@ from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
+from ckeditor.widgets import CKEditorWidget
 
 from api import models
 
@@ -242,9 +244,21 @@ class SectorGroupAdmin(admin.ModelAdmin):
         return ['name']
 
 
+class PartnerFieldAdminForm(forms.ModelForm):
+    source_by = forms.CharField(
+        required=False,
+        widget=CKEditorWidget()
+    )
+
+    class Meta:
+        model = PartnerField
+        fields = ['name', 'type', 'unit', 'label', 'source_by']
+
+
 class PartnerFieldAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'label', 'unit', 'created_at')
-    search_fields = ('name', 'type', 'label', 'unit')
+    form = PartnerFieldAdminForm
+    list_display = ('name', 'type', 'label', 'unit', 'source_by', 'created_at')
+    search_fields = ('name', 'type', 'label', 'unit', 'source_by')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
 
 

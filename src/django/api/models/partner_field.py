@@ -1,7 +1,8 @@
 import uuid
 from django.db import models
 from django.core.cache import cache
-from api.constants import PARTNER_FIELD_NAMES_LIST_KEY
+from ckeditor.fields import RichTextField
+from api.constants import PARTNER_FIELD_LIST_KEY
 
 
 class PartnerField(models.Model):
@@ -49,6 +50,16 @@ class PartnerField(models.Model):
         blank=True,
         help_text=('The partner field label.'))
 
+    source_by = RichTextField(
+        blank=True,
+        null=True,
+        config_name='default',
+        help_text=(
+            'Rich text field describing '
+            'the source of this partner field.'
+        )
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -57,9 +68,9 @@ class PartnerField(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
+        cache.delete(PARTNER_FIELD_LIST_KEY)
 
     def delete(self, *args, **kwargs):
         result = super().delete(*args, **kwargs)
-        cache.delete(PARTNER_FIELD_NAMES_LIST_KEY)
+        cache.delete(PARTNER_FIELD_LIST_KEY)
         return result
