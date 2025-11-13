@@ -128,10 +128,33 @@ fi
 
 echo "[info] Start anonymization"
 
-/docker-entrypoint.sh -c 'shared_buffers=2048MB' -c 'max_connections=10' &
+# Start local Postgres inside the container.
+ENTRYPOINT_BIN="$(command -v docker-entrypoint.sh || true)"
+if [ -z "$ENTRYPOINT_BIN" ]; then
+  if [ -x /usr/local/bin/docker-entrypoint.sh ]; then
+    ENTRYPOINT_BIN="/usr/local/bin/docker-entrypoint.sh"
+  elif [ -x /usr/local/bin/docker-entrypoint ]; then
+    ENTRYPOINT_BIN="/usr/local/bin/docker-entrypoint"
+  else
+    echo "[error] docker-entrypoint.sh not found in PATH or /usr/local/bin"
+    exit 1
+  fi
+fi
 
-sleep 15s
-pg_isready -d anondb -U anondb -h localhost -p 5432
+"$ENTRYPOINT_BIN" -c 'shared_buffers=2048MB' -c 'max_connections=10' &
+
+# Wait for local Postgres on 5432 to be ready.
+max_tries=30
+try=1
+until pg_isready -d anondb -U anondb -h localhost -p 5432 >/dev/null 2>&1; do
+  if [ "$try" -ge "$max_tries" ]; then
+    echo "[error] Local Postgres on 5432 not ready after $max_tries attempts."
+    exit 1
+  fi
+  echo "[info] Waiting for local Postgres (attempt $try/$max_tries)..."
+  sleep 2
+  try=$((try+1))
+done
 
 echo "[info] Pre-dropping PostGIS extensions to avoid dependency issues"
 psql -U anondb -d anondb -h localhost -p 5432 -v ON_ERROR_STOP=1 -c "\
