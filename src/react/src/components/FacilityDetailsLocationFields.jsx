@@ -73,8 +73,8 @@ const FacilityDetailsLocationFields = ({
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <FacilityDetailsItem
-                        label="Address"
                         {...addressField}
+                        label="Address"
                         primary={`${addressField.primary} - ${get(
                             data,
                             'properties.country_name',

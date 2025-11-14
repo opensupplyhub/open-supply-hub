@@ -227,6 +227,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=200
     )
+    facility_phone_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
     office_phone_number = serializers.CharField(
         required=False,
         allow_blank=True,
