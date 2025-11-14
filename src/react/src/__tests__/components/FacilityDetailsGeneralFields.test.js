@@ -157,6 +157,26 @@ describe('FacilityDetailsGeneralFields component', () => {
                         verified_count: 0,
                     }
                 ],
+                isic_4: [
+                    {
+                        id: 83090,
+                        is_verified: false,
+                        value: {
+                            section: 'C',
+                            division: '14',
+                            group: '141',
+                            class: '1410',
+                        },
+                        created_at: '2025-05-01T10:49:15.174025Z',
+                        updated_at: '2025-05-01T10:58:25.043413Z',
+                        contributor_name: 'Test Org',
+                        contributor_id: 1139,
+                        value_count: 1,
+                        is_from_claim: false,
+                        field_name: 'isic_4',
+                        verified_count: 0,
+                    },
+                ],
             },
             created_from: {
                 created_at: '2025-04-18T11:21:15.877648Z',
@@ -375,5 +395,15 @@ describe('FacilityDetailsGeneralFields component', () => {
 
         expect(getByText('Climate Trace')).toBeInTheDocument();
         expect(getByText('Scope 2 emissions: 456')).toBeInTheDocument();
+    });
+
+    test('renders ISIC 4 field with formatted section, division, group, and class', () => {
+        const { getByText } = renderComponent();
+
+        expect(getByText('ISIC 4')).toBeInTheDocument();
+        expect(getByText('Section: C')).toBeInTheDocument();
+        expect(getByText('Division: 14')).toBeInTheDocument();
+        expect(getByText('Group: 141')).toBeInTheDocument();
+        expect(getByText('Class: 1410')).toBeInTheDocument();
     });
 });
