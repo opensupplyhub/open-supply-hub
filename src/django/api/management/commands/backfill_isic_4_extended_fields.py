@@ -35,6 +35,10 @@ class Command(BaseCommand):
             '--reset', action='store_true', default=False,
             help="Delete existing isic_4 extended fields before backfill"
         )
+        parser.add_argument(
+            '--singleisic', action='store_true', default=False,
+            help='If set, backfill only one isic_4 extended field and print the related facility OS ID'
+        )
 
     def handle(self, *args, **options):
         self.stdout.write('Backfilling isic_4 extended fields (ORM)...')
@@ -43,6 +47,10 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         continue_on_error = options['continue_on_error']
         contributor_filter = options['contributor_id']
+        single_only = options['singleisic']
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING('DRY-RUN enabled: no database writes will be performed.'))
 
         nsf_qs = NonstandardField.objects.filter(column_name='isic_4')
         if contributor_filter:
@@ -93,11 +101,63 @@ class Command(BaseCommand):
             .order_by('id')
         )
 
+        # If only one record should be backfilled, handle here and exit.
+        if single_only:
+            item = items_qs.first()
+            if item is None:
+                self.stdout.write('No eligible items found for single backfill.')
+                return
+
+            raw = item.raw_json.get('isic_4')
+            if raw in (None, ''):
+                self.stdout.write('Eligible item does not contain isic_4; nothing to do.')
+                return
+
+            # Normalize value: if a single object, store the object; if multiple, store list
+            if isinstance(raw, list):
+                value = raw[0] if len(raw) == 1 else raw
+            else:
+                value = raw
+
+            if dry_run:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"[DRY-RUN] Would backfill one isic_4 row for OS ID {item.facility.id}"
+                    )
+                )
+                return
+
+            try:
+                with transaction.atomic():
+                    ef = ExtendedField(
+                        contributor=item.source.contributor,
+                        facility=item.facility,
+                        facility_list_item=item,
+                        facility_claim=None,
+                        is_verified=False,
+                        field_name=ExtendedField.ISIC_4,
+                        value=value,
+                        origin_source=item.origin_source,
+                    )
+                    ef.save()
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"Backfilled 1 isic_4 row. OS ID: {item.facility.id}"
+                    )
+                )
+            except (IntegrityError, DatabaseError) as exc:
+                self.stderr.write(self.style.ERROR(
+                    f'Failed to insert single isic_4 row: {exc}'
+                ))
+                raise
+            return
+
         to_create = []
         stats = {
             'scanned': 0,
             'queued': 0,
             'inserted': 0,
+            'would_insert': 0,
             'bulk_failures': 0,
             'row_failures': 0,
             'skipped_empty_value': 0,
@@ -109,7 +169,7 @@ class Command(BaseCommand):
             nonlocal stats
 
             if dry_run:
-                stats['inserted'] += len(to_create)
+                stats['would_insert'] += len(to_create)
                 to_create.clear()
                 return
 
@@ -178,23 +238,43 @@ class Command(BaseCommand):
 
             now = timezone.now()
             if (now - last_log).total_seconds() >= 10:
-                self.stdout.write(
-                    f"Progress: scanned={stats['scanned']} "
-                    f"queued={stats['queued']} inserted={stats['inserted']} "
-                    f"bulk_failures={stats['bulk_failures']} "
-                    f"row_failures={stats['row_failures']}"
-                )
+                if dry_run:
+                    self.stdout.write(
+                        f"Progress [DRY-RUN]: scanned={stats['scanned']} "
+                        f"queued={stats['queued']} would_insert={stats['would_insert']} "
+                        f"bulk_failures={stats['bulk_failures']} "
+                        f"row_failures={stats['row_failures']}"
+                    )
+                else:
+                    self.stdout.write(
+                        f"Progress: scanned={stats['scanned']} "
+                        f"queued={stats['queued']} inserted={stats['inserted']} "
+                        f"bulk_failures={stats['bulk_failures']} "
+                        f"row_failures={stats['row_failures']}"
+                    )
                 last_log = now
 
         flush_batch()
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Done. "
-                f"scanned={stats['scanned']} queued={stats['queued']} "
-                f"inserted={stats['inserted']} "
-                f"bulk_failures={stats['bulk_failures']} "
-                f"row_failures={stats['row_failures']} "
-                f"skipped_empty_value={stats['skipped_empty_value']}"
+        if dry_run:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Done [DRY-RUN]. No changes written. "
+                    f"scanned={stats['scanned']} queued={stats['queued']} "
+                    f"would_insert={stats['would_insert']} inserted=0 "
+                    f"bulk_failures={stats['bulk_failures']} "
+                    f"row_failures={stats['row_failures']} "
+                    f"skipped_empty_value={stats['skipped_empty_value']}"
+                )
             )
-        )
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Done. "
+                    f"scanned={stats['scanned']} queued={stats['queued']} "
+                    f"inserted={stats['inserted']} "
+                    f"bulk_failures={stats['bulk_failures']} "
+                    f"row_failures={stats['row_failures']} "
+                    f"skipped_empty_value={stats['skipped_empty_value']}"
+                )
+            )
