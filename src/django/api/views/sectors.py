@@ -1,11 +1,11 @@
-from django.db.models import F, Func
+from django.db.models import Func
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 
 from api.constants import FacilityClaimStatuses
-from api.models.facility.facility_index import FacilityIndex
+from api.models.sector import Sector
 from api.models.sector_group import SectorGroup
 from api.views.sectors_swagger_schema import (
     sectors_manual_parameters,
@@ -84,12 +84,12 @@ def get_claim_sectors(contributor):
 
 
 def get_all_submitted_sectors():
+    """
+    Get all valid sectors from the Sector model.
+    This ensures only admin-managed, validated sectors are returned.
+    """
     return set(
-        FacilityIndex.objects.annotate(
-            all_sectors=Func(F('sector'), function='unnest')
-        )
-        .values_list('all_sectors', flat=True)
-        .distinct()
+        Sector.objects.values_list('name', flat=True)
     )
 
 
