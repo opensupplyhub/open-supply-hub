@@ -166,6 +166,7 @@ RAW_DATA_FIELDS = (
     ExtendedField.DUNS_ID,
     ExtendedField.LEI_ID,
     ExtendedField.RBA_ID,
+    ExtendedField.ISIC_4,
 )
 
 
