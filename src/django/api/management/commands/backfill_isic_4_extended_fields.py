@@ -24,8 +24,9 @@ class Command(BaseCommand):
             help='Do not write to DB; just report what would be done'
         )
         parser.add_argument(
-            '--continue-on-error', action='store_true', default=True,
-            help='On bulk insert error, try per-row inserts and continue'
+            '--no-continue-on-error', action='store_false', dest='continue_on_error',
+            default=True,
+            help='On bulk insert error, stop instead of trying per-row inserts'
         )
         parser.add_argument(
             '--contributor-id', type=int, default=None,
