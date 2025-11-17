@@ -414,24 +414,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                     reverse=True
                 )
 
-            if field_name == ExtendedField.ISIC_4:
-                # Keep full objects like number_of_workers. If the stored value
-                # is a single-element list, unwrap it to an object.
-                normalized = []
-                for item in data:
-                    value = item.get('value')
-                    if isinstance(value, list):
-                        if len(value) == 1:
-                            copied = dict(item)
-                            copied['value'] = value[0]
-                            normalized.append(copied)
-                        else:
-                            normalized.append(item)
-                    else:
-                        normalized.append(item)
-                grouped_data[field_name] = normalized
-            else:
-                grouped_data[field_name] = data
+            grouped_data[field_name] = data
 
         return grouped_data
 

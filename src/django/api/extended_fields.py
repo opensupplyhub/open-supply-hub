@@ -117,6 +117,16 @@ def create_extendedfield(field, field_value, item, contributor):
             field_value = {
                 'raw_value': field_value,
             }
+        elif field == ExtendedField.ISIC_4:
+            # Normalize: if single-element list, unwrap to object;
+            # if multiple elements, keep as list
+            if isinstance(field_value, list):
+                normalized_value = field_value[0] if len(field_value) == 1 else field_value
+            else:
+                normalized_value = field_value
+            field_value = {
+                'raw_value': normalized_value,
+            }
 
         ExtendedField.objects.create(
             contributor=contributor,

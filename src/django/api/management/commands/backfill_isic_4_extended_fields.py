@@ -113,11 +113,17 @@ class Command(BaseCommand):
                 self.stdout.write('Eligible item does not contain isic_4; nothing to do.')
                 return
 
-            # Normalize value: if a single object, store the object; if multiple, store list
+            # Normalize value: if single-element list, unwrap to object;
+            # if multiple elements, keep as list
             if isinstance(raw, list):
-                value = raw[0] if len(raw) == 1 else raw
+                normalized_value = raw[0] if len(raw) == 1 else raw
             else:
-                value = raw
+                normalized_value = raw
+
+            # Save in the same format as duns_id/lei_id/rba_id
+            value = {
+                'raw_value': normalized_value,
+            }
 
             if dry_run:
                 self.stdout.write(
@@ -213,12 +219,17 @@ class Command(BaseCommand):
                 stats['skipped_empty_value'] += 1
                 continue
 
-            # Normalize value: if a single object, store the object;
-            # if multiple, store list
+            # Normalize value: if single-element list, unwrap to object;
+            # if multiple elements, keep as list
             if isinstance(raw, list):
-                value = raw[0] if len(raw) == 1 else raw
+                normalized_value = raw[0] if len(raw) == 1 else raw
             else:
-                value = raw
+                normalized_value = raw
+
+            # Save in the same format as duns_id/lei_id/rba_id
+            value = {
+                'raw_value': normalized_value,
+            }
 
             ef = ExtendedField(
                 contributor=item.source.contributor,
