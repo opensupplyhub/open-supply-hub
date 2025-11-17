@@ -301,8 +301,6 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             self.assertEqual(extended_field.facility_id, item.facility_id)
 
         isic_field = extended_fields.get(field_name=ExtendedField.ISIC_4)
-        # ISIC_4 is stored in the same format as duns_id/lei_id/rba_id:
-        # {'raw_value': ...} with single-element lists unwrapped
         expected_value = {
             'raw_value': self.moderation_event.cleaned_data['fields']['isic_4'][0]
         }
