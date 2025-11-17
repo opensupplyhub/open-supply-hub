@@ -252,7 +252,10 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
     class Meta:
         model = PartnerField
-        fields = ['name', 'type', 'unit', 'label', 'source_by']
+        fields = ['name', 'type', 'unit', 'label', 'source_by', 'json_schema']
+        widgets = {
+            'json_schema': forms.Textarea(attrs={'rows': 10, 'cols': 80}),
+        }
 
 
 class PartnerFieldAdmin(admin.ModelAdmin):

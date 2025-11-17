@@ -10,6 +10,8 @@ from api.moderation_event_actions.creation.location_contribution \
 from api.moderation_event_actions.creation.location_contribution \
     .processors.geocoding_processor import GeocodingProcessor
 from api.moderation_event_actions.creation.location_contribution \
+    .processors.partner_type_processor import PartnerTypeProcessor
+from api.moderation_event_actions.creation.location_contribution \
     .processors.permission_processor import PermissionProcessor
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
@@ -37,6 +39,7 @@ class LocationContribution(EventCreationStrategy):
     def __setup_location_data_processors() -> ContributionProcessor:
         location_data_processors = (
             PermissionProcessor(),
+            PartnerTypeProcessor(),
             SourceProcessor(),
             ProductionLocationDataProcessor(),
             GeocodingProcessor()
