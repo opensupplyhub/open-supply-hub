@@ -114,13 +114,13 @@ class Command(BaseCommand):
                 return
 
             # Normalize value: if single-element list, unwrap to object;
-            # if multiple elements, keep as list
+            # if multiple elements, keep as list.
             if isinstance(raw, list):
                 normalized_value = raw[0] if len(raw) == 1 else raw
             else:
                 normalized_value = raw
 
-            # Save in the same format as duns_id/lei_id/rba_id
+            # Save in the same format as duns_id/lei_id/rba_id.
             value = {
                 'raw_value': normalized_value,
             }
@@ -226,7 +226,7 @@ class Command(BaseCommand):
             else:
                 normalized_value = raw
 
-            # Save in the same format as duns_id/lei_id/rba_id
+            # Save in the same format as duns_id/lei_id/rba_id.
             value = {
                 'raw_value': normalized_value,
             }
