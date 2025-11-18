@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
@@ -45,7 +46,10 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
         partner_fields_data: Dict[str, Dict] = {
             field["name"]: {
                 "type": field["type"],
-                "json_schema": field["json_schema"]
+                "json_schema": PartnerFieldTypeProcessor \
+                    .__parse_json_schema(
+                        field["json_schema"]
+                    )
             }
             for field in partner_fields_qs
         }
@@ -180,6 +184,22 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
             f'Field {field_name} must be {field_type}, '
             f'not {type(value).__name__}.'
         )
+
+    @staticmethod
+    def __parse_json_schema(json_schema: object) -> Optional[dict]:
+        if json_schema is None:
+            return None
+
+        if isinstance(json_schema, dict):
+            return json_schema
+
+        if isinstance(json_schema, str):
+            try:
+                return json.loads(json_schema)
+            except (json.JSONDecodeError, TypeError):
+                return None
+
+        return None
 
     @staticmethod
     def __transform_validation_errors(
