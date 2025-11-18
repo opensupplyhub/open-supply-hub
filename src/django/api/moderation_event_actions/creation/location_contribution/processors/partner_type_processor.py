@@ -2,6 +2,7 @@ from typing import Dict, List, Mapping, Tuple
 
 import jsonschema
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
+from jsonschema.validators import Draft202012Validator
 from rest_framework import status
 
 from api.moderation_event_actions.creation.location_contribution \
@@ -24,6 +25,8 @@ class PartnerTypeProcessor(ContributionProcessor):
             value, (dict, list)
         ),
     }
+
+    FORMAT_CHECKER = jsonschema.FormatChecker()
 
     def process(
             self,
@@ -100,12 +103,21 @@ class PartnerTypeProcessor(ContributionProcessor):
             )
 
             if use_json_schema:
-                # Use JSON Schema validation
+                # Use JSON Schema validation with format checker
                 try:
-                    jsonschema.validate(instance=value, schema=json_schema)
+                    # Use Draft202012Validator which supports format validation
+                    validator = Draft202012Validator(
+                        schema=json_schema,
+                        format_checker=PartnerTypeProcessor.FORMAT_CHECKER
+                    )
+                    validator.validate(instance=value)
                 except JsonSchemaValidationError as e:
                     error_message = e.message
-                    if e.path:
+                    # Extract error path from the error's absolute_path
+                    if hasattr(e, 'absolute_path') and e.absolute_path:
+                        error_path = ".".join(str(p) for p in e.absolute_path)
+                        error_message = f"{error_path}: {error_message}"
+                    elif hasattr(e, 'path') and e.path:
                         error_path = ".".join(str(p) for p in e.path)
                         error_message = f"{error_path}: {error_message}"
                     validation_errors.append((field_name, error_message))
