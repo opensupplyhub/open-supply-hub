@@ -24,9 +24,14 @@ class Command(BaseCommand):
             help='Do not write to DB; just report what would be done'
         )
         parser.add_argument(
-            '--no-continue-on-error', action='store_false', dest='continue_on_error',
+            '--no-continue-on-error',
+            action='store_false',
+            dest='continue_on_error',
             default=True,
-            help='On bulk insert error, stop instead of trying per-row inserts'
+            help=(
+                'On bulk insert error, stop instead of trying '
+                'per-row inserts'
+            )
         )
         parser.add_argument(
             '--contributor-id', type=int, default=None,
@@ -38,7 +43,10 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--singleisic', action='store_true', default=False,
-            help='If set, backfill only one isic_4 extended field and print the related facility OS ID'
+            help=(
+                'If set, backfill only one isic_4 extended field and '
+                'print the related facility OS ID'
+            )
         )
 
     def handle(self, *args, **options):
@@ -51,7 +59,9 @@ class Command(BaseCommand):
         single_only = options['singleisic']
 
         if dry_run:
-            self.stdout.write(self.style.WARNING('DRY-RUN enabled: no database writes will be performed.'))
+            self.stdout.write(self.style.WARNING(
+                'DRY-RUN enabled: no database writes will be performed.'
+            ))
 
         nsf_qs = NonstandardField.objects.filter(column_name='isic_4')
         if contributor_filter:
@@ -106,12 +116,16 @@ class Command(BaseCommand):
         if single_only:
             item = items_qs.first()
             if item is None:
-                self.stdout.write('No eligible items found for single backfill.')
+                self.stdout.write(
+                    'No eligible items found for single backfill.'
+                )
                 return
 
             raw = item.raw_json.get('isic_4')
-            if raw in (None, ''):
-                self.stdout.write('Eligible item does not contain isic_4; nothing to do.')
+            if raw in (None, '', []):
+                self.stdout.write(
+                    'Eligible item does not contain isic_4; nothing to do.'
+                )
                 return
 
             # Normalize value: if single-element list, unwrap to object;
@@ -129,7 +143,8 @@ class Command(BaseCommand):
             if dry_run:
                 self.stdout.write(
                     self.style.WARNING(
-                        f"[DRY-RUN] Would backfill one isic_4 row for OS ID {item.facility.id}"
+                        "[DRY-RUN] Would backfill one isic_4 row for OS ID "
+                        f"{item.facility.id}"
                     )
                 )
                 return
@@ -216,7 +231,7 @@ class Command(BaseCommand):
         for item in items_qs.iterator(chunk_size=batch_size):
             stats['scanned'] += 1
             raw = item.raw_json.get('isic_4')
-            if raw in (None, ''):
+            if raw in (None, '', []):
                 stats['skipped_empty_value'] += 1
                 continue
 
@@ -252,15 +267,19 @@ class Command(BaseCommand):
             if (now - last_log).total_seconds() >= 10:
                 if dry_run:
                     self.stdout.write(
-                        f"Progress [DRY-RUN]: scanned={stats['scanned']} "
-                        f"queued={stats['queued']} would_insert={stats['would_insert']} "
+                        "Progress [DRY-RUN]: "
+                        f"scanned={stats['scanned']} "
+                        f"queued={stats['queued']} "
+                        f"would_insert={stats['would_insert']} "
                         f"bulk_failures={stats['bulk_failures']} "
                         f"row_failures={stats['row_failures']}"
                     )
                 else:
                     self.stdout.write(
-                        f"Progress: scanned={stats['scanned']} "
-                        f"queued={stats['queued']} inserted={stats['inserted']} "
+                        "Progress: "
+                        f"scanned={stats['scanned']} "
+                        f"queued={stats['queued']} "
+                        f"inserted={stats['inserted']} "
                         f"bulk_failures={stats['bulk_failures']} "
                         f"row_failures={stats['row_failures']}"
                     )

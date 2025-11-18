@@ -261,10 +261,18 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         ] = 'Parent Company'
         self.moderation_event.cleaned_data['fields']['isic_4'] = [
             {
-                "class": "2818 - Manufacture of other special-purpose machinery",
-                "group": "282 - Manufacture of other special-purpose machinery",
+                "class": (
+                    "2818 - Manufacture of other special-purpose "
+                    "machinery"
+                ),
+                "group": (
+                    "282 - Manufacture of other special-purpose "
+                    "machinery"
+                ),
                 "section": "C - Manufacturing",
-                "division": "28 - Manufacture of machinery and equipment n.e.c."
+                "division": (
+                    "28 - Manufacture of machinery and equipment n.e.c."
+                )
             }
         ]
         self.moderation_event.cleaned_data['fields']['product_type'] = [
@@ -302,7 +310,9 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
 
         isic_field = extended_fields.get(field_name=ExtendedField.ISIC_4)
         expected_value = {
-            'raw_value': self.moderation_event.cleaned_data['fields']['isic_4'][0]
+            'raw_value': self.moderation_event.cleaned_data[
+                'fields'
+            ]['isic_4'][0]
         }
         self.assertEqual(isic_field.value, expected_value)
 

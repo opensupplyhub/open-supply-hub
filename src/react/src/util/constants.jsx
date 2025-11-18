@@ -1130,13 +1130,19 @@ export const EXTENDED_FIELD_TYPES = [
     {
         label: 'ISIC 4',
         fieldName: 'isic_4',
-        formatValue: ({ section, division, group, class: isicClass }) =>
-            [
+        formatValue: value => {
+            const obj =
+                value && value.raw_value !== undefined
+                    ? value.raw_value
+                    : value;
+            const { section, division, group, class: isicClass } = obj || {};
+            return [
                 section && `Section: ${section}`,
                 division && `Division: ${division}`,
                 group && `Group: ${group}`,
                 isicClass && `Class: ${isicClass}`,
-            ].filter(Boolean),
+            ].filter(Boolean);
+        },
     },
 ];
 
