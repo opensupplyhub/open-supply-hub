@@ -17,6 +17,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 from ckeditor.widgets import CKEditorWidget
+from jsoneditor.forms import JSONEditor
 
 from api import models
 
@@ -251,42 +252,12 @@ class PartnerFieldAdminForm(forms.ModelForm):
     )
     json_schema = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={
-            'rows': 20,
-            'cols': 100,
-            'style': 'font-family: monospace; font-size: 13px; white-space: pre;',
-            'class': 'json-editor'
-        }),
-        help_text='JSON Schema for validating object type partner fields. Used when type is "object".'
+        widget=JSONEditor()
     )
 
     class Meta:
         model = PartnerField
         fields = ['name', 'type', 'unit', 'label', 'source_by', 'json_schema']
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Format JSON for display if it exists
-        if self.instance and self.instance.pk and self.instance.json_schema:
-            try:
-                formatted_json = json.dumps(self.instance.json_schema, indent=2)
-                self.initial['json_schema'] = formatted_json
-            except (TypeError, ValueError):
-                pass
-
-    def clean_json_schema(self):
-        json_schema = self.cleaned_data.get('json_schema')
-        if not json_schema:
-            return None
-        
-        # Parse and validate JSON
-        try:
-            if isinstance(json_schema, str):
-                parsed = json.loads(json_schema)
-                return parsed
-            return json_schema
-        except json.JSONDecodeError as e:
-            raise forms.ValidationError(f'Invalid JSON: {str(e)}')
 
 
 class PartnerFieldAdmin(admin.ModelAdmin):

@@ -13,7 +13,7 @@ from api.models.partner_field import PartnerField
 from api.constants import APIV1CommonErrorMessages
 
 
-class PartnerTypeProcessor(ContributionProcessor):
+class PartnerFieldTypeProcessor(ContributionProcessor):
 
     TYPE_VALIDATORS = {
         'int': lambda value: isinstance(value, int)
@@ -53,8 +53,6 @@ class PartnerTypeProcessor(ContributionProcessor):
         if not partner_fields_data:
             return super().process(event_dto)
 
-        # Validate all fields: use type validation or JSON Schema validation
-        # based on field type and json_schema presence
         validation_errors = self.__validate_partner_fields(
             raw,
             partner_fields_data
@@ -74,18 +72,7 @@ class PartnerTypeProcessor(ContributionProcessor):
         raw: Mapping[str, object],
         partner_fields_data: Dict[str, Dict]
     ) -> List[Tuple[str, str]]:
-        """
-        Validates partner fields using either type validation or JSON Schema
-        validation based on field type and json_schema presence.
 
-        Logic:
-        - If type is NOT object → use type validation
-        - If type is object AND json_schema is empty → use type validation
-        - If type is object AND json_schema is NOT empty → use JSON Schema validation
-
-        Returns a list of tuples (field_name, error_message) for fields
-        that fail validation.
-        """
         validation_errors: List[Tuple[str, str]] = []
 
         for field_name, field_info in partner_fields_data.items():
@@ -96,24 +83,21 @@ class PartnerTypeProcessor(ContributionProcessor):
             if value is None:
                 continue
 
-            # Check if we should use JSON Schema validation
-            # Only if type is object AND json_schema is not empty
+
             use_json_schema = (
                 field_type == PartnerField.OBJECT and json_schema
             )
 
             if use_json_schema:
-                # Use JSON Schema validation with format checker
+                # JSON Schema validation
                 try:
-                    # Use Draft202012Validator which supports format validation
                     validator = Draft202012Validator(
                         schema=json_schema,
-                        format_checker=PartnerTypeProcessor.FORMAT_CHECKER
+                        format_checker=PartnerFieldTypeProcessor.FORMAT_CHECKER
                     )
                     validator.validate(instance=value)
                 except JsonSchemaValidationError as e:
                     error_message = e.message
-                    # Extract error path from the error's absolute_path
                     if hasattr(e, 'absolute_path') and e.absolute_path:
                         error_path = ".".join(str(p) for p in e.absolute_path)
                         error_message = f"{error_path}: {error_message}"
@@ -122,14 +106,13 @@ class PartnerTypeProcessor(ContributionProcessor):
                         error_message = f"{error_path}: {error_message}"
                     validation_errors.append((field_name, error_message))
                 except Exception as e:
-                    # Handle schema errors (invalid JSON schema itself)
                     validation_errors.append(
                         (field_name, f"Schema validation error: {str(e)}")
                     )
             else:
-                # Use type validation
-                if field_type in PartnerTypeProcessor.TYPE_VALIDATORS:
-                    validator = PartnerTypeProcessor.TYPE_VALIDATORS[field_type]
+                # Type validation
+                if field_type in PartnerFieldTypeProcessor.TYPE_VALIDATORS:
+                    validator = PartnerFieldTypeProcessor.TYPE_VALIDATORS[field_type]
                     if not validator(value):
                         validation_errors.append(
                             (
@@ -145,9 +128,6 @@ class PartnerTypeProcessor(ContributionProcessor):
     def __transform_validation_errors(
         validation_errors: List[Tuple[str, str]]
     ) -> Dict:
-        """
-        Transforms validation errors into the standard error format.
-        """
         return {
             'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
             'errors': [

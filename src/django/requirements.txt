@@ -48,3 +48,4 @@ django-bleach==2.0.0
 stripe==12.2.0
 jsonschema==4.17.3
 rfc3987==1.3.8
+django-jsoneditor==0.2.2
