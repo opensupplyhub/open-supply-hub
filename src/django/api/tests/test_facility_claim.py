@@ -391,11 +391,11 @@ class FacilityClaimTest(APITestCase):
         )
         self.assertEqual(
             claim.facility_production_types,
-            ["Cutting", "Sewing", "Manufacturing"],
+            ["Cutting", "Sewing"],
         )
         self.assertEqual(
             claim.facility_type,
-            None,
+            'Manufacturing',
         )
         self.assertEqual(
             claim.point_of_contact_email,
