@@ -46,10 +46,11 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
         partner_fields_data: Dict[str, Dict] = {
             field["name"]: {
                 "type": field["type"],
-                "json_schema": PartnerFieldTypeProcessor \
-                    .__parse_json_schema(
+                "json_schema": (
+                    PartnerFieldTypeProcessor.__parse_json_schema(
                         field["json_schema"]
                     )
+                )
             }
             for field in partner_fields_qs
         }
