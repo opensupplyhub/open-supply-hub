@@ -1,4 +1,4 @@
-from typing import Dict, List, Mapping, Tuple
+from typing import Dict, List, Mapping, Optional, Tuple
 
 import jsonschema
 from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
@@ -76,54 +76,109 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
         validation_errors: List[Tuple[str, str]] = []
 
         for field_name, field_info in partner_fields_data.items():
-            field_type = field_info.get("type")
-            json_schema = field_info.get("json_schema")
             value = raw.get(field_name)
-
             if value is None:
                 continue
 
-            use_json_schema = (
-                field_type == PartnerField.OBJECT and json_schema
-            )
+            field_type = field_info.get("type")
+            json_schema = field_info.get("json_schema")
 
-            if use_json_schema:
-                # JSON Schema validation
-                try:
-                    validator = Draft202012Validator(
-                        schema=json_schema,
-                        format_checker=PartnerFieldTypeProcessor.FORMAT_CHECKER
-                    )
-                    validator.validate(instance=value)
-                except JsonSchemaValidationError as e:
-                    error_message = e.message
-                    if hasattr(e, 'absolute_path') and e.absolute_path:
-                        error_path = ".".join(str(p) for p in e.absolute_path)
-                        error_message = f"{error_path}: {error_message}"
-                    elif hasattr(e, 'path') and e.path:
-                        error_path = ".".join(str(p) for p in e.path)
-                        error_message = f"{error_path}: {error_message}"
-                    validation_errors.append((field_name, error_message))
-                except Exception as e:
-                    validation_errors.append(
-                        (field_name, f"Schema validation error: {str(e)}")
-                    )
-            else:
-                # Type validation
-                if field_type in PartnerFieldTypeProcessor.TYPE_VALIDATORS:
-                    validator = PartnerFieldTypeProcessor.TYPE_VALIDATORS[
-                        field_type
-                    ]
-                    if not validator(value):
-                        validation_errors.append(
-                            (
-                                field_name,
-                                f'Field {field_name} must be {field_type}, '
-                                f'not {type(value).__name__}.'
-                            )
-                        )
+            error = PartnerFieldTypeProcessor.__validate_single_field(
+                field_name, value, field_type, json_schema
+            )
+            if error:
+                validation_errors.append(error)
 
         return validation_errors
+
+    @staticmethod
+    def __validate_single_field(
+        field_name: str,
+        value: object,
+        field_type: str,
+        json_schema: object
+    ) -> Optional[Tuple[str, str]]:
+
+        use_json_schema = (
+            field_type == PartnerField.OBJECT and json_schema
+        )
+
+        if use_json_schema:
+            return PartnerFieldTypeProcessor.__validate_with_json_schema(
+                field_name, value, json_schema
+            )
+
+        return PartnerFieldTypeProcessor.__validate_with_type_validator(
+            field_name, value, field_type
+        )
+
+    @staticmethod
+    def __validate_with_json_schema(
+        field_name: str,
+        value: object,
+        json_schema: object
+    ) -> Optional[Tuple[str, str]]:
+
+        try:
+            validator = Draft202012Validator(
+                schema=json_schema,
+                format_checker=PartnerFieldTypeProcessor.FORMAT_CHECKER
+            )
+            validator.validate(instance=value)
+            return None
+        except JsonSchemaValidationError as e:
+            error_message = PartnerFieldTypeProcessor.__format_json_schema_error(
+                e
+            )
+            return (field_name, error_message)
+        except Exception as e:
+            return (field_name, f"Schema validation error: {str(e)}")
+
+    @staticmethod
+    def __format_json_schema_error(
+        error: JsonSchemaValidationError
+    ) -> str:
+
+        error_message = error.message
+        error_path = PartnerFieldTypeProcessor.__extract_error_path(error)
+
+        if error_path:
+            return f"{error_path}: {error_message}"
+
+        return error_message
+
+    @staticmethod
+    def __extract_error_path(
+        error: JsonSchemaValidationError
+    ) -> Optional[str]:
+
+        if hasattr(error, 'absolute_path') and error.absolute_path:
+            return ".".join(str(p) for p in error.absolute_path)
+
+        if hasattr(error, 'path') and error.path:
+            return ".".join(str(p) for p in error.path)
+
+        return None
+
+    @staticmethod
+    def __validate_with_type_validator(
+        field_name: str,
+        value: object,
+        field_type: str
+    ) -> Optional[Tuple[str, str]]:
+
+        if field_type not in PartnerFieldTypeProcessor.TYPE_VALIDATORS:
+            return None
+
+        validator = PartnerFieldTypeProcessor.TYPE_VALIDATORS[field_type]
+        if validator(value):
+            return None
+
+        return (
+            field_name,
+            f'Field {field_name} must be {field_type}, '
+            f'not {type(value).__name__}.'
+        )
 
     @staticmethod
     def __transform_validation_errors(
