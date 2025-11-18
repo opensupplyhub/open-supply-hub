@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='partnerfield',
             name='json_schema',
-            field=models.JSONField(blank=True, help_text='JSON Schema for validating object type partner fields. Used when type is "object".'),
+            field=models.JSONField(blank=True, null=True, help_text='JSON Schema for validating object type partner fields. Used when type is "object".'),
         ),
     ]
 

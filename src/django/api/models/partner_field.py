@@ -62,6 +62,7 @@ class PartnerField(models.Model):
 
     json_schema = models.JSONField(
         blank=True,
+        null=True,
         help_text=(
             'JSON Schema for validating object type partner fields. '
             'Used when type is "object".'
