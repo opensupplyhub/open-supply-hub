@@ -299,4 +299,4 @@ SINGLE_PAID_DOWNLOAD_RECORDS = 10000
 # Use this for frontend compatibility.
 JS_MAX_SAFE_INTEGER = 9007199254740991
 
-PARTNER_FIELD_NAMES_LIST_KEY = 'partner_field_names_list'
+PARTNER_FIELD_LIST_KEY = 'partner_field_list'

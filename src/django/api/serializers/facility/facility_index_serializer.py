@@ -13,7 +13,7 @@ from rest_framework.serializers import (
 )
 
 from countries.lib.countries import COUNTRY_NAMES
-from api.constants import PARTNER_FIELD_NAMES_LIST_KEY
+from api.constants import PARTNER_FIELD_LIST_KEY
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
@@ -95,14 +95,18 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     def __serialize_and_sort_partner_fields(
         self,
         grouped_fields: Dict[str, List[Dict[str, Any]]],
-        partner_field_names: List[str],
+        partner_fields: List[PartnerField],
         user_can_see_detail: bool,
         embed_mode_active: bool,
         use_main_created_at: bool,
         date_field_to_sort: str
     ) -> Dict[str, List[Dict[str, Any]]]:
         grouped_data = {}
-        for field_name in partner_field_names:
+        for field in partner_fields:
+            field_name = field.name
+            source_by = field.source_by
+            unit = field.unit
+            label = field.label
             fields = grouped_fields.get(field_name, [])
             if not fields:
                 continue
@@ -113,6 +117,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                     context={
                         'user_can_see_detail': user_can_see_detail,
                         'embed_mode_active': embed_mode_active,
+                        'source_by': source_by,
+                        'unit': unit,
+                        'label': label
                     },
                     exclude_fields=(
                         ['created_at'] if not use_main_created_at else []
@@ -190,19 +197,19 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         return grouped
 
     @staticmethod
-    def __get_partner_field_names():
-        cached_names = cache.get(PARTNER_FIELD_NAMES_LIST_KEY)
+    def __get_cached_partner_fields():
+        cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
 
         if cached_names is not None:
             return cached_names
 
-        names = list(
-            PartnerField.objects.values_list("name", flat=True)
+        partner_fields = list(
+            PartnerField.objects.all()
         )
 
-        cache.set(PARTNER_FIELD_NAMES_LIST_KEY, names, 600)
+        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
 
-        return names
+        return partner_fields
 
     def get_location(self, facility):
         return facility.location
@@ -429,11 +436,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
-        field_names = self.__get_partner_field_names()
+        partner_fields = self.__get_cached_partner_fields()
 
         return self.__serialize_and_sort_partner_fields(
             grouped_fields,
-            field_names,
+            partner_fields,
             user_can_see_detail,
             embed_mode_active,
             use_main_created_at,

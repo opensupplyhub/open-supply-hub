@@ -135,6 +135,7 @@ INSTALLED_APPS = [
     'web',
     'ecsmanage',
     'django_bleach',
+    'ckeditor',
 ]
 
 # For allauth
@@ -499,6 +500,24 @@ ECSMANAGE_ENVIRONMENTS = {
         },
         'AWS_REGION': 'eu-west-1',
     },
+}
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': [
+            ['Bold', 'Italic', 'Underline', 'Strike'],
+            ['NumberedList', 'BulletedList'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source'],
+        ],
+        'height': 250,
+        'width': '100%',
+        'removePlugins': 'uploadimage,uploadfile,image,flash,smiley',
+        'enterMode': 2,
+        'shiftEnterMode': 2,
+        'autoParagraph': False,
+        'fillEmptyBlocks': False,
+    }
 }
 
 # Application settings
