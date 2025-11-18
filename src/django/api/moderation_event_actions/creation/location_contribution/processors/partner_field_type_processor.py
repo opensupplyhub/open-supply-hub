@@ -127,9 +127,10 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
             validator.validate(instance=value)
             return None
         except JsonSchemaValidationError as e:
-            error_message = PartnerFieldTypeProcessor.__format_json_schema_error(
-                e
-            )
+            error_message = PartnerFieldTypeProcessor \
+                .__format_json_schema_error(
+                    e
+                )
             return (field_name, error_message)
         except Exception as e:
             return (field_name, f"Schema validation error: {str(e)}")
