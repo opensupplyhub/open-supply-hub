@@ -27,7 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     4. You'll get an updated production location os id in logs. Verify that it contains `isic_4` field(s).
     5. Run dry-run `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields --dry-run`.
     6. Make sure no errors appear.
-    7. Finally, run real `isic_4` backfilling using this command for all field: `backfill_isic_4_extended_fields`.
+    7. Finally, run real `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields`.
     8. Make sure no errors appear.
 
 ## Release 2.15.1
