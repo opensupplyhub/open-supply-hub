@@ -252,7 +252,9 @@ class PartnerFieldAdminForm(forms.ModelForm):
     )
     json_schema = forms.CharField(
         required=False,
-        widget=JSONEditor()
+        widget=JSONEditor(
+            init_options={"mode": "code", "modes": ["code", "tree"]},
+        )
     )
 
     class Meta:
