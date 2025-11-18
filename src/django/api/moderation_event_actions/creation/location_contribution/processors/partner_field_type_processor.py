@@ -83,7 +83,6 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
             if value is None:
                 continue
 
-
             use_json_schema = (
                 field_type == PartnerField.OBJECT and json_schema
             )
@@ -112,7 +111,9 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
             else:
                 # Type validation
                 if field_type in PartnerFieldTypeProcessor.TYPE_VALIDATORS:
-                    validator = PartnerFieldTypeProcessor.TYPE_VALIDATORS[field_type]
+                    validator = PartnerFieldTypeProcessor.TYPE_VALIDATORS[
+                        field_type
+                    ]
                     if not validator(value):
                         validation_errors.append(
                             (
@@ -138,4 +139,3 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
                 for field_name, error_message in validation_errors
             ],
         }
-
