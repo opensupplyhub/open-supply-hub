@@ -1127,6 +1127,17 @@ export const EXTENDED_FIELD_TYPES = [
         fieldName: 'parent_company_os_id',
         formatValue: value => value.raw_values,
     },
+    {
+        label: 'ISIC 4',
+        fieldName: 'isic_4',
+        formatValue: ({ section, division, group, class: isicClass }) =>
+            [
+                section && `Section: ${section}`,
+                division && `Division: ${division}`,
+                group && `Group: ${group}`,
+                isicClass && `Class: ${isicClass}`,
+            ].filter(Boolean),
+    },
 ];
 
 export const ADDITIONAL_IDENTIFIERS = Object.freeze([

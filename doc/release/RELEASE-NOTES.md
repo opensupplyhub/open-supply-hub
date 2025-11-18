@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
+* [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Implemented frontend formatting for the ISIC 4 extended field to display Section, Division, Group, and Class as separate labeled entries, building the full ISIC 4 hierarchy on production location profile pages.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
