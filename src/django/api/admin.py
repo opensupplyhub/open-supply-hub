@@ -254,6 +254,9 @@ class PartnerFieldAdminForm(forms.ModelForm):
         required=False,
         widget=JSONEditor(
             init_options={"mode": "code", "modes": ["code", "tree"]},
+            attrs={
+                'style': 'width: 100%; height: 400px;'
+            }
         )
     )
 
