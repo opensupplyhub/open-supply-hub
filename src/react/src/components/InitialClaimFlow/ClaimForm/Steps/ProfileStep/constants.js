@@ -1,5 +1,5 @@
 export const BETA_TOOLTIP_TEXT =
-    "What does beta mean? Open Supply Hub is developing a Premium offering for facilities, to help you use your OS Hub profile to connect with more customers and build your business. Once live, all fields that say beta will be a part of this new package. For now, these beta fields will appear on your profile just like all the others. Once the Premium offering is live, you'll receive next steps about how it will work and whether you will want to keep these beta fields live.";
+    "We're making a Premium package for connecting with customers and growing your business. Beta fields preview part of this package and currently appear on your profile. Once the new package is live, you'll get details on keeping those fields active.";
 
 export const AFFILIATIONS_OPTIONS = [
     {
