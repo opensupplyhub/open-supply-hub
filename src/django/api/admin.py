@@ -250,7 +250,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
         required=False,
         widget=CKEditorWidget()
     )
-    json_schema = forms.CharField(
+    json_schema = forms.JSONField(
         required=False,
         widget=JSONEditor(
             init_options={"mode": "code", "modes": ["code", "tree"]},
