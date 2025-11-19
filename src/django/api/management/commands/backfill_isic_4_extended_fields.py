@@ -59,11 +59,17 @@ class Command(BaseCommand):
                 'DRY-RUN enabled: no database writes will be performed.'
             ))
 
-        nonstandard_fields_qs = NonstandardField.objects.filter(column_name='isic_4')
+        nonstandard_fields_qs = NonstandardField.objects.filter(
+            column_name='isic_4'
+        )
         if contributor_filter:
-            nonstandard_fields_qs = nonstandard_fields_qs.filter(contributor_id=contributor_filter)
+            nonstandard_fields_qs = nonstandard_fields_qs.filter(
+                contributor_id=contributor_filter
+            )
 
-        contributor_ids = set(nonstandard_fields_qs.values_list('contributor_id', flat=True))
+        contributor_ids = set(
+            nonstandard_fields_qs.values_list('contributor_id', flat=True)
+        )
 
         if not contributor_ids:
             self.stdout.write(

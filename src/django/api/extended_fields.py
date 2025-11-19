@@ -57,6 +57,7 @@ def get_facility_and_processing_type_extendfield_value(
         'matched_values': results,
     }
 
+
 def get_isic_4_extendedfield_value(field_value):
     if isinstance(field_value, list):
         normalized_value = (
@@ -67,6 +68,7 @@ def get_isic_4_extendedfield_value(field_value):
     return {
         'raw_value': normalized_value,
     }
+
 
 def get_parent_company_extendedfield_value(field_value):
     matches = Contributor.objects.filter_by_name(field_value)
