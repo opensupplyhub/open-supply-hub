@@ -57,6 +57,16 @@ def get_facility_and_processing_type_extendfield_value(
         'matched_values': results,
     }
 
+def get_isic_4_extendedfield_value(field_value):
+    if isinstance(field_value, list):
+        normalized_value = (
+            field_value[0] if len(field_value) == 1 else field_value
+        )
+    else:
+        normalized_value = field_value
+    return {
+        'raw_value': normalized_value,
+    }
 
 def get_parent_company_extendedfield_value(field_value):
     matches = Contributor.objects.filter_by_name(field_value)
@@ -128,15 +138,7 @@ def create_extendedfield(field, field_value, item, contributor):
                 'raw_value': field_value,
             }
         elif field == ExtendedField.ISIC_4:
-            if isinstance(field_value, list):
-                normalized_value = (
-                    field_value[0] if len(field_value) == 1 else field_value
-                )
-            else:
-                normalized_value = field_value
-            field_value = {
-                'raw_value': normalized_value,
-            }
+            field_value = get_isic_4_extendedfield_value(field_value)
 
         ExtendedField.objects.create(
             contributor=contributor,

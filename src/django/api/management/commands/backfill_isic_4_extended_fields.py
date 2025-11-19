@@ -38,10 +38,6 @@ class Command(BaseCommand):
             help='Restrict to a single contributor_id'
         )
         parser.add_argument(
-            '--reset', action='store_true', default=False,
-            help="Delete existing isic_4 extended fields before backfill"
-        )
-        parser.add_argument(
             '--singleisic', action='store_true', default=False,
             help=(
                 'If set, backfill only one isic_4 extended field and '
@@ -63,33 +59,17 @@ class Command(BaseCommand):
                 'DRY-RUN enabled: no database writes will be performed.'
             ))
 
-        nsf_qs = NonstandardField.objects.filter(column_name='isic_4')
+        nonstandard_fields_qs = NonstandardField.objects.filter(column_name='isic_4')
         if contributor_filter:
-            nsf_qs = nsf_qs.filter(contributor_id=contributor_filter)
+            nonstandard_fields_qs = nonstandard_fields_qs.filter(contributor_id=contributor_filter)
 
-        contributor_ids = set(nsf_qs.values_list('contributor_id', flat=True))
+        contributor_ids = set(nonstandard_fields_qs.values_list('contributor_id', flat=True))
 
         if not contributor_ids:
             self.stdout.write(
                 'No contributors configured with isic_4; nothing to do.'
             )
             return
-
-        # Optionally reset existing data first.
-        if options['reset'] and not dry_run:
-            reset_qs = ExtendedField.objects.filter(
-                field_name=ExtendedField.ISIC_4
-            )
-            if contributor_filter:
-                reset_qs = reset_qs.filter(
-                    contributor_id__in=contributor_ids
-                )
-            deleted, _ = reset_qs.delete()
-            self.stdout.write(
-                self.style.WARNING(
-                    f"Reset: deleted {deleted} existing isic_4 rows."
-                )
-            )
 
         existing_fli_ids = set(
             ExtendedField.objects
@@ -247,7 +227,7 @@ class Command(BaseCommand):
                 'raw_value': normalized_value,
             }
 
-            ef = ExtendedField(
+            extended_field = ExtendedField(
                 contributor=item.source.contributor,
                 facility=item.facility,
                 facility_list_item=item,
@@ -257,7 +237,7 @@ class Command(BaseCommand):
                 value=value,
                 origin_source=item.origin_source,
             )
-            to_create.append(ef)
+            to_create.append(extended_field)
             stats['queued'] += 1
 
             if len(to_create) >= batch_size:
