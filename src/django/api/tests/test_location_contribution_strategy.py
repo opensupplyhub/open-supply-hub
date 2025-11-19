@@ -1955,6 +1955,10 @@ class TestLocationContributionStrategy(APITestCase):
                 'name': 'John Doe',
                 'age': 30,
                 'email': 'john@example.com'
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
             }
         }
 
@@ -2047,6 +2051,10 @@ class TestLocationContributionStrategy(APITestCase):
             'country': 'US',
             'schema_field': {
                 'name': 'John Doe'
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
             }
         }
 
@@ -2077,6 +2085,10 @@ class TestLocationContributionStrategy(APITestCase):
             'schema_field': {
                 'name': 123,
                 'age': 30
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
             }
         }
 
@@ -2192,6 +2204,10 @@ class TestLocationContributionStrategy(APITestCase):
                         'email': 'invalid-email'
                     }
                 }
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
             }
         }
 
