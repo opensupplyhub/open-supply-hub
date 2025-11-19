@@ -43,7 +43,7 @@ else
 fi
 
 if [ -z "${bastion}" ] || [ "${bastion}" = "None" ]; then
-  echo "[error] Could not resolve bastion host for Environment=$ENV_TAG (region=$AWS_REGION)."
+  echo "[error] Could not resolve bastion host for Environment=$ENV_TAG (region=$AWS_REGION)." >&2
   echo "[hint] Ensure correct AWS credentials/region and that the bastion is tagged Environment=$ENV_TAG."
   exit 1
 fi
@@ -84,7 +84,7 @@ for USER in ec2-user ubuntu; do
 done
 
 if [ "$SSH_OK" -ne 1 ]; then
-  echo "[error] Failed to start SSH port-forward to database via bastion with users: ec2-user ubuntu"
+  echo "[error] Failed to start SSH port-forward to database via bastion with users: ec2-user ubuntu" >&2
   echo "[hint] Check that /keys/key matches bastion authorized_keys and the username is correct."
   exit 1
 fi
@@ -94,7 +94,7 @@ max_tries=20
 try=1
 until pg_isready -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" >/dev/null 2>&1; do
   if [ "$try" -ge "$max_tries" ]; then
-    echo "[error] Database tunnel to localhost:5433 not ready after $max_tries attempts."
+    echo "[error] Database tunnel to localhost:5433 not ready after $max_tries attempts." >&2
     exit 1
   fi
   echo "[info] Waiting for database tunnel (attempt $try/$max_tries)..."
@@ -136,7 +136,7 @@ if [ -z "$ENTRYPOINT_BIN" ]; then
   elif [ -x /usr/local/bin/docker-entrypoint ]; then
     ENTRYPOINT_BIN="/usr/local/bin/docker-entrypoint"
   else
-    echo "[error] docker-entrypoint.sh not found in PATH or /usr/local/bin"
+    echo "[error] docker-entrypoint.sh not found in PATH or /usr/local/bin" >&2
     exit 1
   fi
 fi
@@ -148,7 +148,7 @@ max_tries=30
 try=1
 until pg_isready -d anondb -U anondb -h localhost -p 5432 >/dev/null 2>&1; do
   if [ "$try" -ge "$max_tries" ]; then
-    echo "[error] Local Postgres on 5432 not ready after $max_tries attempts."
+    echo "[error] Local Postgres on 5432 not ready after $max_tries attempts." >&2
     exit 1
   fi
   echo "[info] Waiting for local Postgres (attempt $try/$max_tries)..."
@@ -173,7 +173,7 @@ RESTORE_CODE=$?
 set -e
 
 if [ "$RESTORE_CODE" -ne 0 ]; then
-  echo "[error] pg_restore exited with code: $RESTORE_CODE"
+  echo "[error] pg_restore exited with code: $RESTORE_CODE" >&2
   if grep -qi "error:" /dumps/restore.err; then
     echo "==== pg_restore first error (context) ===="
     LINE=$(grep -n -i "error:" -m 1 /dumps/restore.err | cut -d: -f1)
