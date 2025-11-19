@@ -175,17 +175,17 @@ set -e
 if [ "$RESTORE_CODE" -ne 0 ]; then
   echo "[error] pg_restore exited with code: $RESTORE_CODE" >&2
   if grep -qi "error:" /dumps/restore.err; then
-    echo "==== pg_restore first error (context) ===="
+    echo "==== pg_restore first error (context) ====" >&2
     LINE=$(grep -n -i "error:" -m 1 /dumps/restore.err | cut -d: -f1)
     if [ -n "$LINE" ]; then
       START=$((LINE>5 ? LINE-5 : 1))
       sed -n "${START},${LINE}p" /dumps/restore.err
     else
-      echo "[info] Could not locate error line"
+      echo "[info] Could not locate error line" >&2
     fi
     echo "========================================="
   else
-    echo "[info] No explicit 'error:' lines found; see /dumps/restore.err"
+    echo "[info] No explicit 'error:' lines found; see /dumps/restore.err" >&2
   fi
 fi
 
