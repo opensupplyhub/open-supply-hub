@@ -3,6 +3,7 @@ from django.db import transaction, IntegrityError, DatabaseError
 from django.utils import timezone
 
 from api.models.extended_field import ExtendedField
+from api.extended_fields import get_isic_4_extendedfield_value
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.nonstandard_field import NonstandardField
 
@@ -114,17 +115,9 @@ class Command(BaseCommand):
                 )
                 return
 
-            # Normalize value: if single-element list, unwrap to object;
-            # if multiple elements, keep as list.
-            if isinstance(raw, list):
-                normalized_value = raw[0] if len(raw) == 1 else raw
-            else:
-                normalized_value = raw
-
-            # Save in the same format as duns_id/lei_id/rba_id.
-            value = {
-                'raw_value': normalized_value,
-            }
+            # Normalize via shared helper, then wrap in {'raw_value': ...}.
+            normalized_value = get_isic_4_extendedfield_value(raw)['raw_value']
+            value = {'raw_value': normalized_value}
 
             if dry_run:
                 self.stdout.write(
@@ -221,17 +214,9 @@ class Command(BaseCommand):
                 stats['skipped_empty_value'] += 1
                 continue
 
-            # Normalize value: if single-element list, unwrap to object;
-            # if multiple elements, keep as list
-            if isinstance(raw, list):
-                normalized_value = raw[0] if len(raw) == 1 else raw
-            else:
-                normalized_value = raw
-
-            # Save in the same format as duns_id/lei_id/rba_id.
-            value = {
-                'raw_value': normalized_value,
-            }
+            # Normalize via shared helper, then wrap in {'raw_value': ...}.
+            normalized_value = get_isic_4_extendedfield_value(raw)['raw_value']
+            value = {'raw_value': normalized_value}
 
             extended_field = ExtendedField(
                 contributor=item.source.contributor,
