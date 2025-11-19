@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
@@ -143,4 +143,50 @@ export const useClaimForm = (
         updateFieldWithoutTouch,
         isButtonDisabled: getButtonDisabledState(),
     };
+};
+
+/**
+ * Hook to manage claim form state cleanup and success submission dialog.
+ */
+export const useClaimFormSubmission = (
+    submissionFetching,
+    submissionError,
+    osID,
+    resetForm,
+) => {
+    const [submittingForm, setSubmittingForm] = useState(false);
+    const [dialogIsOpen, setDialogIsOpen] = useState(false);
+
+    // Show success dialog and reset form when submission completes.
+    useEffect(() => {
+        if (submissionFetching) {
+            setSubmittingForm(true);
+        }
+        if (submittingForm && !submissionFetching && !submissionError) {
+            setSubmittingForm(false);
+            sessionStorage.removeItem(`claim-form-access-${osID}`);
+            resetForm();
+            setDialogIsOpen(true);
+        }
+    }, [submittingForm, submissionFetching, submissionError, osID, resetForm]);
+
+    return {
+        dialogIsOpen,
+        setDialogIsOpen,
+    };
+};
+
+/**
+ * Hook to clean up filters and production location data on unmount.
+ * These values may be prefilled in other pages/components where
+ * filterOptions and singleProductionLocation must remain empty or refreshed.
+ */
+export const useClaimFormCleanup = (resetFilters, resetProductionLocation) => {
+    useEffect(
+        () => () => {
+            resetFilters();
+            resetProductionLocation();
+        },
+        [resetFilters, resetProductionLocation],
+    );
 };
