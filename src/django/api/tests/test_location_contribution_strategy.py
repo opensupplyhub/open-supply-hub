@@ -1921,6 +1921,31 @@ class TestLocationContributionStrategy(APITestCase):
         existing_location_contributor.partner_fields.add(schema_field)
         existing_location_contributor.save()
 
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
         input_data = {
             'source': 'API',
             'name': 'Blue Horizon Facility',
@@ -1936,7 +1961,8 @@ class TestLocationContributionStrategy(APITestCase):
         event_dto = CreateModerationEventDTO(
             contributor=existing_location_contributor,
             raw_data=input_data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
         )
 
         result = self.moderation_event_creator.perform_event_creation(
@@ -1989,6 +2015,31 @@ class TestLocationContributionStrategy(APITestCase):
         existing_location_contributor.partner_fields.add(schema_field)
         existing_location_contributor.save()
 
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
         input_data_missing_required = {
             'source': 'API',
             'name': 'Blue Horizon Facility',
@@ -2002,7 +2053,8 @@ class TestLocationContributionStrategy(APITestCase):
         event_dto = CreateModerationEventDTO(
             contributor=existing_location_contributor,
             raw_data=input_data_missing_required,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
         )
 
         result = self.moderation_event_creator.perform_event_creation(
@@ -2031,7 +2083,8 @@ class TestLocationContributionStrategy(APITestCase):
         event_dto = CreateModerationEventDTO(
             contributor=existing_location_contributor,
             raw_data=input_data_wrong_type,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
         )
 
         result = self.moderation_event_creator.perform_event_creation(
@@ -2102,6 +2155,31 @@ class TestLocationContributionStrategy(APITestCase):
         existing_location_contributor.partner_fields.add(schema_field)
         existing_location_contributor.save()
 
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
         input_data = {
             'source': 'API',
             'name': 'Blue Horizon Facility',
@@ -2120,7 +2198,8 @@ class TestLocationContributionStrategy(APITestCase):
         event_dto = CreateModerationEventDTO(
             contributor=existing_location_contributor,
             raw_data=input_data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
         )
 
         result = self.moderation_event_creator.perform_event_creation(
