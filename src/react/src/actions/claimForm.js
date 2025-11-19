@@ -20,6 +20,7 @@ export const markStepComplete = createAction('MARK_CLAIM_FORM_STEP_COMPLETE');
 // Form data actions.
 export const updateClaimFormField = createAction('UPDATE_CLAIM_FORM_FIELD');
 export const resetClaimForm = createAction('RESET_CLAIM_FORM');
+export const updateOsIdToClaim = createAction('UPDATE_OS_ID_TO_CLAIM');
 
 // Submission actions.
 export const startSubmitClaimFormData = createAction(
