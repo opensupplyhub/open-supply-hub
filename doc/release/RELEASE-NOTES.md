@@ -72,7 +72,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Company Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
 * [OSDEV-2262](https://opensupplyhub.atlassian.net/browse/OSDEV-2262) - Prevented unintended submission of the last-step claim form when pressing Enter in an input while the Submit button is not focused. Updated `src/react/src/components/InitialClaimFlow/ClaimForm/ClaimForm.jsx` to remove implicit form submission and trigger Formik submission explicitly via the Submit button, aligning with Material UI semantics.
 * [OSDEV-2231](https://opensupplyhub.atlassian.net/browse/OSDEV-2231) - Fixed Django admin panel not displaying location type values for claims when they didn't match the predefined taxonomy. Removed the restrictive `choices` constraint to allow all location types to be visible.
+<<<<<<< HEAD
 * [OSDEV-2260](https://opensupplyhub.atlassian.net/browse/OSDEV-2260) - Removed the unnecessary `facility_type` checks in the `facilities_view_set.py` to support proper saving of the data. The function assumed that the value is an array and that caused errors in the creation of extended fields. On front-end data format has been changed to send array values as a pipe-separated (`|`) string instead of a comma-separated one. The `extended_fields.py` file has been updated to correctly parse this new pipe-delimited format, ensuring data is handled correctly.
+=======
+* [OSDEV-2264](https://opensupplyhub.atlassian.net/browse/OSDEV-2264) - Fixed an issue where the processing type field was being saved to the database (`api_extendedfield` table) as an empty list. Now it's not saved if the list is empty.
+>>>>>>> d009243c ([OSDEV-2264] Prevent saving empty lists for facility production types (#805))
 
 ### What's new
 * [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
