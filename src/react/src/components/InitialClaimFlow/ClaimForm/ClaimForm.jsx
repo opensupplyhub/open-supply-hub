@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -30,14 +30,18 @@ import {
     markStepComplete,
     updateClaimFormField,
     submitClaimFormData,
+    resetClaimForm,
 } from '../../../actions/claimForm';
 import {
     fetchCountryOptions,
     fetchFacilityProcessingTypeOptions,
     fetchParentCompanyOptions,
+    resetFilterOptions,
 } from '../../../actions/filterOptions';
-import { fetchProductionLocationByOsId } from '../../../actions/contributeProductionLocation';
-
+import {
+    fetchProductionLocationByOsId,
+    resetSingleProductionLocation,
+} from '../../../actions/contributeProductionLocation';
 import {
     CLAIM_FORM_STEPS,
     STEP_NAMES,
@@ -58,6 +62,8 @@ import {
     usePrefetchClaimData,
     useClaimForm,
     useRequireIntroAccess,
+    useClaimFormSubmission,
+    useClaimFormCleanup,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
 
@@ -109,13 +115,12 @@ const ClaimForm = ({
     markComplete,
     updateField,
     submitClaim,
+    resetForm,
+    resetFilters,
+    resetProductionLocation,
 }) => {
     // Track emissions validation errors from ProfileStep.
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
-
-    // Track dialog state for success popup.
-    const [dialogIsOpen, setDialogIsOpen] = useState(false);
-    const [submittingForm, setSubmittingForm] = useState(false);
 
     // Redirect to intro page if user accessed form directly via URL.
     useRequireIntroAccess(history, osID);
@@ -133,16 +138,16 @@ const ClaimForm = ({
         parentCompanyOptions,
     );
 
-    // Show success dialog when submission completes.
-    useEffect(() => {
-        if (submissionFetching) {
-            setSubmittingForm(true);
-        }
-        if (submittingForm && !submissionFetching && !submissionError) {
-            setSubmittingForm(false);
-            setDialogIsOpen(true);
-        }
-    }, [submittingForm, submissionFetching, submissionError]);
+    // Clean up filters and production location data on unmount.
+    useClaimFormCleanup(resetFilters, resetProductionLocation);
+
+    // Handle form state cleanup and success submission dialog.
+    const { dialogIsOpen } = useClaimFormSubmission(
+        submissionFetching,
+        submissionError,
+        osID,
+        resetForm,
+    );
 
     // Handle form submission.
     const handleSubmit = () => {
@@ -366,7 +371,7 @@ const ClaimForm = ({
             </div>
             <Dialog open={dialogIsOpen}>
                 <DialogTitle className={classes.dialogTitle}>
-                    <Typography component="h3" className={classes.dialogTitle}>
+                    <Typography className={classes.dialogTitle}>
                         Thank you for submitting your claim request!
                     </Typography>
                 </DialogTitle>
@@ -444,6 +449,9 @@ ClaimForm.propTypes = {
     markComplete: func.isRequired,
     updateField: func.isRequired,
     submitClaim: func.isRequired,
+    resetForm: func.isRequired,
+    resetFilters: func.isRequired,
+    resetProductionLocation: func.isRequired,
 };
 
 const mapStateToProps = ({
@@ -508,6 +516,9 @@ const mapDispatchToProps = dispatch => ({
     updateField: payload => dispatch(updateClaimFormField(payload)),
     submitClaim: (osID, emissionsHasErrors) =>
         dispatch(submitClaimFormData(osID, emissionsHasErrors)),
+    resetFilters: () => dispatch(resetFilterOptions()),
+    resetProductionLocation: () => dispatch(resetSingleProductionLocation()),
+    resetForm: () => dispatch(resetClaimForm()),
 });
 
 export default connect(
