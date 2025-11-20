@@ -11,13 +11,12 @@ import AppOverflow from '../../AppOverflow';
 import RequireAuthNotice from '../../RequireAuthNotice';
 import { claimIntroStyles } from './styles';
 import withScrollReset from '../HOCs/withScrollReset';
+import { resetClaimForm, updateOsIdToClaim } from '../../../actions/claimForm';
 import {
     claimDetailsRoute,
     facilityDetailsRoute,
 } from '../../../util/constants';
-import { resetClaimForm } from '../../../actions/claimForm';
-import { resetFilterOptions } from '../../../actions/filterOptions';
-import { resetSingleProductionLocation } from '../../../actions/contributeProductionLocation';
+import useClaimIntroOsIdTracking from './hooks';
 
 const ClaimIntro = ({
     classes,
@@ -25,9 +24,12 @@ const ClaimIntro = ({
     osID,
     userHasSignedIn,
     resetForm,
-    resetFilters,
-    resetProductionLocation,
+    updateOsId,
+    osIdToClaim,
 }) => {
+    // Track OS ID changes and reset form when switching between locations.
+    useClaimIntroOsIdTracking(osID, osIdToClaim, updateOsId, resetForm);
+
     if (!userHasSignedIn) {
         return (
             <RequireAuthNotice
@@ -38,11 +40,6 @@ const ClaimIntro = ({
     }
 
     const handleGoBack = () => {
-        // Reset form, filters, and production location data when going back.
-        resetForm();
-        resetFilters();
-        resetProductionLocation();
-
         history.push(facilityDetailsRoute.replace(':osID', osID));
     };
 
@@ -107,8 +104,8 @@ ClaimIntro.propTypes = {
         push: PropTypes.func.isRequired,
     }).isRequired,
     resetForm: PropTypes.func.isRequired,
-    resetFilters: PropTypes.func.isRequired,
-    resetProductionLocation: PropTypes.func.isRequired,
+    updateOsId: PropTypes.func.isRequired,
+    osIdToClaim: PropTypes.string.isRequired,
 };
 
 const mapStateToProps = (
@@ -116,6 +113,7 @@ const mapStateToProps = (
         auth: {
             user: { user },
         },
+        claimForm: { osIdToClaim },
     },
     {
         match: {
@@ -125,12 +123,12 @@ const mapStateToProps = (
 ) => ({
     osID,
     userHasSignedIn: !user.isAnon,
+    osIdToClaim,
 });
 
-const mapDispatchToProps = dispatch => ({
+export const mapDispatchToProps = dispatch => ({
     resetForm: () => dispatch(resetClaimForm()),
-    resetFilters: () => dispatch(resetFilterOptions()),
-    resetProductionLocation: () => dispatch(resetSingleProductionLocation()),
+    updateOsId: osID => dispatch(updateOsIdToClaim(osID)),
 });
 
 export default connect(

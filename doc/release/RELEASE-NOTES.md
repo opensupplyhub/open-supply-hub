@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.15.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 21, 2025
+
+### Bugfix
+* [OSDEV-2240](https://opensupplyhub.atlassian.net/browse/OSDEV-2240) - Implemented form state reset in the new claim flow when the OS ID changes or after a successful submission, ensuring that users do not see previously entered data when they start a new form for another OS ID or begin a new claim flow for location A in the same browser tab session - even if they were previously completing the form for location B and exited mid-form. However, if the user exits mid-form for location A without refreshing the page and then returns to the claim form for the same location A in the same tab session, the previously entered data will still be present.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.15.1
 
 ## Introduction
