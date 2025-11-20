@@ -1132,7 +1132,7 @@ export const EXTENDED_FIELD_TYPES = [
         fieldName: 'isic_4',
         formatValue: value => {
             const { section, division, group, class: isicClass } =
-                value?.raw_value || {};
+                value?.raw_value || value || {};
             return [
                 section && `Section: ${section}`,
                 division && `Division: ${division}`,
