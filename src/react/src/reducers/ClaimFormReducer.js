@@ -9,11 +9,13 @@ import {
     startSubmitClaimFormData,
     failSubmitClaimFormData,
     completeSubmitClaimFormData,
+    updateOsIdToClaim,
 } from '../actions/claimForm';
 
 const initialState = Object.freeze({
     activeStep: 0,
     completedSteps: [],
+    osIdToClaim: '',
     formData: Object.freeze({
         // Eligibility step.
         claimantLocationRelationship: null,
@@ -96,7 +98,6 @@ const claimFormReducer = createReducer(
             update(state, {
                 activeStep: { $set: stepIndex },
             }),
-
         [markStepComplete]: (state, stepIndex) => {
             const completedSteps = state.completedSteps.includes(stepIndex)
                 ? state.completedSteps
@@ -106,16 +107,13 @@ const claimFormReducer = createReducer(
                 completedSteps: { $set: completedSteps },
             });
         },
-
         [updateClaimFormField]: (state, { field, value }) =>
             update(state, {
                 formData: {
                     [field]: { $set: value },
                 },
             }),
-
         [resetClaimForm]: () => initialState,
-
         [startSubmitClaimFormData]: state =>
             update(state, {
                 submissionState: {
@@ -124,7 +122,6 @@ const claimFormReducer = createReducer(
                     data: { $set: null },
                 },
             }),
-
         [failSubmitClaimFormData]: (state, error) =>
             update(state, {
                 submissionState: {
@@ -132,7 +129,6 @@ const claimFormReducer = createReducer(
                     error: { $set: error },
                 },
             }),
-
         [completeSubmitClaimFormData]: (state, data) =>
             update(state, {
                 submissionState: {
@@ -140,6 +136,10 @@ const claimFormReducer = createReducer(
                     error: { $set: null },
                     data: { $set: data },
                 },
+            }),
+        [updateOsIdToClaim]: (state, osId) =>
+            update(state, {
+                osIdToClaim: { $set: osId },
             }),
     },
     initialState,

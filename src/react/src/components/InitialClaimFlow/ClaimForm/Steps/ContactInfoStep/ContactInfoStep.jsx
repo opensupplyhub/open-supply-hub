@@ -213,7 +213,7 @@ const ContactInfoStep = ({
                         required
                     />
                     <Typography
-                        variant="p"
+                        variant="body1"
                         className={classes.sectionDescription}
                     >
                         You need to select and provide one of the below items
