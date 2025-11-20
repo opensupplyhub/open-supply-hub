@@ -2,7 +2,7 @@
     'use strict';
 
     function findJsonSchemaFieldRow() {
-        var jsonSchemaField = $('#id_json_schema');
+        const jsonSchemaField = $('#id_json_schema');
         
         if (jsonSchemaField.length) {
             return jsonSchemaField.closest('.field-json_schema, tr, .form-row').first();
@@ -12,8 +12,8 @@
     }
 
     function toggleJsonSchemaField() {
-        var typeField = $('#id_type');
-        var jsonSchemaFieldRow = findJsonSchemaFieldRow();
+        const typeField = $('#id_type');
+        const jsonSchemaFieldRow = findJsonSchemaFieldRow();
         
         if (!typeField.length) {
             return false;
@@ -23,7 +23,7 @@
             return false;
         }
         
-        var currentType = typeField.val();
+        const currentType = typeField.val();
         
         if (currentType === 'object') {
             jsonSchemaFieldRow.show();
@@ -35,14 +35,14 @@
     }
 
     function setupJsonSchemaToggle() {
-        var typeField = $('#id_type');
-        var jsonSchemaField = $('#id_json_schema');
+        const typeField = $('#id_type');
+        const jsonSchemaField = $('#id_json_schema');
         
         if (!typeField.length || !jsonSchemaField.length) {
             return false;
         }
         
-        var jsonSchemaFieldRow = findJsonSchemaFieldRow();
+        const jsonSchemaFieldRow = findJsonSchemaFieldRow();
         if (!jsonSchemaFieldRow.length) {
             return false;
         }
