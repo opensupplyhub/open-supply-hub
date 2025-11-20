@@ -22,6 +22,7 @@ class ExtendedField(models.Model):
     DUNS_ID = 'duns_id'
     LEI_ID = 'lei_id'
     RBA_ID = 'rba_id'
+    ISIC_4 = 'isic_4'
 
     FIELD_CHOICES = (
         (NAME, NAME),
@@ -35,7 +36,8 @@ class ExtendedField(models.Model):
         (PARENT_COMPANY_OS_ID, PARENT_COMPANY_OS_ID),
         (DUNS_ID, DUNS_ID),
         (LEI_ID, LEI_ID),
-        (RBA_ID, RBA_ID)
+        (RBA_ID, RBA_ID),
+        (ISIC_4, ISIC_4)
     )
 
     uuid = models.UUIDField(

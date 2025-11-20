@@ -259,6 +259,22 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.moderation_event.cleaned_data['fields'][
             'parent_company'
         ] = 'Parent Company'
+        self.moderation_event.cleaned_data['fields']['isic_4'] = [
+            {
+                "class": (
+                    "2818 - Manufacture of other special-purpose "
+                    "machinery"
+                ),
+                "group": (
+                    "282 - Manufacture of other special-purpose "
+                    "machinery"
+                ),
+                "section": "C - Manufacturing",
+                "division": (
+                    "28 - Manufacture of machinery and equipment n.e.c."
+                )
+            }
+        ]
         self.moderation_event.cleaned_data['fields']['product_type'] = [
             "Product Type"
         ]
@@ -278,7 +294,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         extended_fields = ExtendedField.objects.filter(
             facility_list_item=item.id
         )
-        self.assertEqual(6, extended_fields.count())
+        self.assertEqual(7, extended_fields.count())
 
         field_names = [field.field_name for field in extended_fields]
         self.assertIn(ExtendedField.NUMBER_OF_WORKERS, field_names)
@@ -287,9 +303,18 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertIn(ExtendedField.PRODUCT_TYPE, field_names)
         self.assertIn(ExtendedField.FACILITY_TYPE, field_names)
         self.assertIn(ExtendedField.PROCESSING_TYPE, field_names)
+        self.assertIn(ExtendedField.ISIC_4, field_names)
 
         for extended_field in extended_fields:
             self.assertEqual(extended_field.facility_id, item.facility_id)
+
+        isic_field = extended_fields.get(field_name=ExtendedField.ISIC_4)
+        expected_value = {
+            'raw_value': self.moderation_event.cleaned_data[
+                'fields'
+            ]['isic_4'][0]
+        }
+        self.assertEqual(isic_field.value, expected_value)
 
     def assert_facilitymatch_creation(
         self, response, status_code, match_type, match_status, model
