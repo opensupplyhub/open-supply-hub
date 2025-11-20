@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, waitFor, act } from '@testing-library/react';
 import { Router } from 'react-router-dom';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
@@ -18,6 +18,8 @@ beforeAll(() => {
     // Mock sessionStorage.
     const sessionStorageMock = {
         getItem: jest.fn(() => 'true'), // Simulate user came from intro.
+        removeItem: jest.fn(),
+        setItem: jest.fn(),
     };
     global.sessionStorage = sessionStorageMock;
 });
@@ -461,6 +463,209 @@ describe('ClaimForm component', () => {
             // This prevents implicit form submission when Enter is pressed in form inputs.
             // Submission only happens via explicit button click/activation,
             // which calls claimForm.handleSubmit via the button's onClick handler.
+        });
+    });
+
+    describe('Successful submission and form reset', () => {
+        test('resets form data when submission completes successfully', async () => {
+            // Start with form that has data and is submitting.
+            const submittingState = {
+                ...defaultPreloadedState,
+                claimForm: {
+                    ...defaultPreloadedState.claimForm,
+                    activeStep: 3,
+                    formData: {
+                        ...defaultPreloadedState.claimForm.formData,
+                        yourName: 'John Doe',
+                        facilityDescription: 'Test facility description',
+                    },
+                    completedSteps: [0, 1, 2],
+                    submissionState: {
+                        fetching: true,
+                        error: null,
+                        data: null,
+                    },
+                },
+            };
+
+            const { reduxStore } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimForm match={mockMatch} />
+                </Router>,
+                { preloadedState: submittingState },
+            );
+
+            // Verify initial state has data.
+            let state = reduxStore.getState();
+            expect(state.claimForm.formData.yourName).toBe('John Doe');
+            expect(state.claimForm.completedSteps).toEqual([0, 1, 2]);
+
+            // Simulate successful submission by dispatching actions.
+            await act(async () => {
+                reduxStore.dispatch({
+                    type: 'COMPLETE_SUBMIT_CLAIM_FORM_DATA',
+                    payload: { success: true },
+                });
+                // Wait for the hook to process the state change and reset form.
+                await new Promise(resolve => setTimeout(resolve, 100));
+            });
+
+            // Check that form was reset.
+            state = reduxStore.getState();
+            expect(state.claimForm.formData.yourName).toBe('');
+            expect(state.claimForm.formData.facilityDescription).toBe('');
+            expect(state.claimForm.completedSteps).toEqual([]);
+            expect(state.claimForm.activeStep).toBe(0);
+        });
+
+        test('shows success dialog with navigation buttons after successful submission', async () => {
+            // Start with fetching state.
+            const fetchingState = {
+                ...defaultPreloadedState,
+                claimForm: {
+                    ...defaultPreloadedState.claimForm,
+                    activeStep: 3,
+                    submissionState: {
+                        fetching: true,
+                        error: null,
+                        data: null,
+                    },
+                },
+            };
+
+            const { reduxStore, getByText } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimForm match={mockMatch} />
+                </Router>,
+                { preloadedState: fetchingState },
+            );
+
+            // Complete submission successfully.
+            await act(async () => {
+                reduxStore.dispatch({
+                    type: 'COMPLETE_SUBMIT_CLAIM_FORM_DATA',
+                    payload: { success: true },
+                });
+                await new Promise(resolve => setTimeout(resolve, 50));
+            });
+
+            // Check dialog is shown with navigation buttons.
+            await waitFor(() => {
+                expect(getByText('To My Claims')).toBeInTheDocument();
+            });
+            expect(getByText('Search OS Hub')).toBeInTheDocument();
+            expect(
+                getByText('Thank you for submitting your claim request!')
+            ).toBeInTheDocument();
+        });
+
+        test('removes session storage item after successful submission', async () => {
+            const fetchingState = {
+                ...defaultPreloadedState,
+                claimForm: {
+                    ...defaultPreloadedState.claimForm,
+                    activeStep: 3,
+                    submissionState: {
+                        fetching: true,
+                        error: null,
+                        data: null,
+                    },
+                },
+            };
+
+            const removeItemSpy = jest.spyOn(global.sessionStorage, 'removeItem');
+
+            const { reduxStore } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimForm match={mockMatch} />
+                </Router>,
+                { preloadedState: fetchingState },
+            );
+
+            // Complete submission successfully.
+            await act(async () => {
+                reduxStore.dispatch({
+                    type: 'COMPLETE_SUBMIT_CLAIM_FORM_DATA',
+                    payload: { success: true },
+                });
+                await new Promise(resolve => setTimeout(resolve, 100));
+            });
+
+            // Check that session storage was cleared.
+            await waitFor(() => {
+                expect(removeItemSpy).toHaveBeenCalledWith(`claim-form-access-${mockOsID}`);
+            });
+
+            removeItemSpy.mockRestore();
+        });
+    });
+
+    describe('Cleanup on unmount', () => {
+        test('resets filters and production location when component unmounts', () => {
+            const stateWithData = {
+                ...defaultPreloadedState,
+                filterOptions: {
+                    countries: {
+                        data: [
+                            { value: 'US', label: 'United States' },
+                            { value: 'CA', label: 'Canada' },
+                        ],
+                        fetching: false,
+                        error: null,
+                    },
+                    facilityProcessingType: {
+                        data: [
+                            { value: 'assembly', label: 'Assembly' },
+                            { value: 'sewing', label: 'Sewing' },
+                        ],
+                        fetching: false,
+                        error: null,
+                    },
+                    parentCompanies: {
+                        data: [
+                            { value: '1', label: 'Company Inc.' },
+                            { value: '2', label: 'Another Corp.' },
+                        ],
+                        fetching: false,
+                        error: null,
+                    },
+                },
+                contributeProductionLocation: {
+                    singleProductionLocation: {
+                        data: {
+                            name: 'Test Facility',
+                            address: '123 Test St',
+                            osID: mockOsID,
+                        },
+                        fetching: false,
+                        error: null,
+                    },
+                },
+            };
+
+            const { reduxStore, unmount } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimForm match={mockMatch} />
+                </Router>,
+                { preloadedState: stateWithData },
+            );
+
+            // Verify initial state has data.
+            let state = reduxStore.getState();
+            expect(state.filterOptions.countries.data.length).toBeGreaterThan(0);
+            expect(state.contributeProductionLocation.singleProductionLocation.data.name).toBe('Test Facility');
+
+            // Unmount component.
+            unmount();
+
+            // Check that filters and production location were reset to initial state.
+            state = reduxStore.getState();
+            // Filters reset to null (as per FilterOptionsReducer initialState).
+            expect(state.filterOptions.countries.data).toBeNull();
+            expect(state.filterOptions.facilityProcessingType.data).toBeNull();
+            expect(state.filterOptions.parentCompanies.data).toBeNull();
+            // Production location resets to empty object.
+            expect(state.contributeProductionLocation.singleProductionLocation.data).toEqual({});
         });
     });
 });
