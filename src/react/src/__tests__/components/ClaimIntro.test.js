@@ -127,4 +127,85 @@ describe('ClaimIntro component', () => {
             expect(container.firstChild).toBeInTheDocument();
         });
     });
+
+    describe('OS ID tracking and form reset', () => {
+        test('resets form and updates osIdToClaim when OS ID changes from a different production location', () => {
+            // Initial render with first OS ID and some form data.
+            const firstOsID = 'LOCATION_001';
+            const preloadedState = {
+                auth: {
+                    user: {
+                        user: {
+                            isAnon: false,
+                        },
+                    },
+                },
+                claimForm: {
+                    osIdToClaim: firstOsID,
+                    formData: {
+                        facilityDescription: 'Some description',
+                        yourName: 'John Doe',
+                    },
+                    completedSteps: [0, 1],
+                },
+            };
+
+            const { reduxStore, rerender } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimIntro match={{ params: { osID: firstOsID } }} />
+                </Router>,
+                { preloadedState }
+            );
+
+            // Verify initial state has data.
+            let state = reduxStore.getState();
+            expect(state.claimForm.osIdToClaim).toBe(firstOsID);
+            expect(state.claimForm.formData.yourName).toBe('John Doe');
+            expect(state.claimForm.completedSteps).toContain(0);
+            
+            // Change to a different OS ID - this should trigger resetForm
+            // and then updateOsId.
+            const secondOsID = 'LOCATION_002';
+            rerender(
+                <Router history={history}>
+                    <ClaimIntro match={{ params: { osID: secondOsID } }} />
+                </Router>
+            );
+
+            // Check that the form was reset and osIdToClaim updated to
+            // new location.
+            state = reduxStore.getState();
+            expect(state.claimForm.osIdToClaim).toBe(secondOsID);
+            // Form data should be reset to initial values.
+            expect(state.claimForm.formData.yourName).toBe('');
+            expect(state.claimForm.completedSteps).toEqual([]);
+        });
+
+        test('updates osIdToClaim when it is not set initially', () => {
+            const testOsID = 'LOCATION_003';
+            const preloadedState = {
+                auth: {
+                    user: {
+                        user: {
+                            isAnon: false,
+                        },
+                    },
+                },
+                claimForm: {
+                    osIdToClaim: '', // Empty OS ID to claim.
+                },
+            };
+
+            const { reduxStore } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimIntro match={{ params: { osID: testOsID } }} />
+                </Router>,
+                { preloadedState }
+            );
+
+            // Check that osIdToClaim was updated in state.
+            const state = reduxStore.getState();
+            expect(state.claimForm.osIdToClaim).toBe(testOsID);
+        });
+    });
 });

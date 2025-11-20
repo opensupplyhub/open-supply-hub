@@ -17,10 +17,36 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Schema changes
 * [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - The `PartnerField` model has been updated. Field `json_schema` added with a type JSONField.
 
+### Architecture/Environment changes
+* [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Added `backfill_isic_4_extended_fields.py` to insert `isic_4` to `api_extendedfield` table of RBA instance. Show `isic_4` field in `GET api/facilities` response.
+
 ### What's new
 * [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
 * [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Implemented frontend formatting for the ISIC 4 extended field to display Section, Division, Group, and Class as separate labeled entries, building the full ISIC 4 hierarchy on production location profile pages.
 * [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - Added JSON schema validation support for object type partner fields. Partner fields with object type can now have an associated JSON schema that validates the structure and content of contributed data, providing detailed error messages for validation failures.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Connect to the RBA Django container using `django-ecsmanage` to run backfill script for RBA environment. Follow these steps:
+    1. Run dry-run `isic_4` backfilling using this command for single field: `backfill_isic_4_extended_fields --singleisic --dry-run`.
+    2. Make sure no errors appear.
+    3. Run real `isic_4` backfilling using this command for the single field: `backfill_isic_4_extended_fields --singleisic`.
+    4. You'll get an updated production location os id in logs. Verify that it contains `isic_4` field(s).
+    5. Run dry-run `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields --dry-run`.
+    6. Make sure no errors appear.
+    7. Finally, run real `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields`.
+    8. Make sure no errors appear.
+
+## Release 2.15.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 21, 2025
+
+### Bugfix
+* [OSDEV-2240](https://opensupplyhub.atlassian.net/browse/OSDEV-2240) - Implemented form state reset in the new claim flow when the OS ID changes or after a successful submission, ensuring that users do not see previously entered data when they start a new form for another OS ID or begin a new claim flow for location A in the same browser tab session - even if they were previously completing the form for location B and exited mid-form. However, if the user exits mid-form for location A without refreshing the page and then returns to the claim form for the same location A in the same tab session, the previously entered data will still be present.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
