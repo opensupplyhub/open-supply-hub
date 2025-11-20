@@ -255,7 +255,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
         widget=JSONEditor(
             init_options={"mode": "code", "modes": ["code", "tree"]},
             attrs={
-                'style': 'width: 100%; height: 400px;'
+                'style': 'width: 800px; height: 400px;'
             }
         )
     )
@@ -264,12 +264,21 @@ class PartnerFieldAdminForm(forms.ModelForm):
         model = PartnerField
         fields = ['name', 'type', 'unit', 'label', 'source_by', 'json_schema']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
 class PartnerFieldAdmin(admin.ModelAdmin):
     form = PartnerFieldAdminForm
     list_display = ('name', 'type', 'label', 'unit', 'source_by', 'created_at')
     search_fields = ('name', 'type', 'label', 'unit', 'source_by')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+    class Media:
+        js = (
+            'admin/js/jquery.init.js',
+            'admin/js/partner_field_admin.js',
+        )
 
 
 class EmailAddressAdmin(admin.ModelAdmin):

@@ -14,6 +14,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 * 0186_add_json_schema_to_partner_field.py - This migration adds a `json_schema` JSONField to the `PartnerField` model, allowing administrators to define JSON schemas for validating object type partner fields. The field is optional and is used to validate the structure and content of contributed data when the partner field type is `object`.
 
+#### Schema changes
+* [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - The `PartnerField` model has been updated. Field `json_schema` added with a type JSONField.
+
 ### What's new
 * [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
 * [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Implemented frontend formatting for the ISIC 4 extended field to display Section, Division, Group, and Class as separate labeled entries, building the full ISIC 4 hierarchy on production location profile pages.
