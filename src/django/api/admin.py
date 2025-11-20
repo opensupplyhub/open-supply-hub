@@ -17,6 +17,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 from ckeditor.widgets import CKEditorWidget
+from jsoneditor.forms import JSONEditor
 
 from api import models
 
@@ -249,10 +250,22 @@ class PartnerFieldAdminForm(forms.ModelForm):
         required=False,
         widget=CKEditorWidget()
     )
+    json_schema = forms.JSONField(
+        required=False,
+        widget=JSONEditor(
+            init_options={"mode": "code", "modes": ["code", "tree"]},
+            attrs={
+                'style': 'width: 800px; height: 400px;'
+            }
+        )
+    )
 
     class Meta:
         model = PartnerField
-        fields = ['name', 'type', 'unit', 'label', 'source_by']
+        fields = ['name', 'type', 'unit', 'label', 'source_by', 'json_schema']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class PartnerFieldAdmin(admin.ModelAdmin):
@@ -260,6 +273,12 @@ class PartnerFieldAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'label', 'unit', 'source_by', 'created_at')
     search_fields = ('name', 'type', 'label', 'unit', 'source_by')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+    class Media:
+        js = (
+            'admin/js/jquery.init.js',
+            'admin/js/partner_field_admin.js',
+        )
 
 
 class EmailAddressAdmin(admin.ModelAdmin):
