@@ -102,6 +102,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         date_field_to_sort: str
     ) -> Dict[str, List[Dict[str, Any]]]:
         grouped_data = {}
+        print(f'@@@ Partner fields: {partner_fields}')
         for field in partner_fields:
             field_name = field.name
             source_by = field.source_by

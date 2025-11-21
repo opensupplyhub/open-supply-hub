@@ -49,7 +49,16 @@ class PartnerField(models.Model):
         max_length=200,
         blank=True,
         help_text=('The partner field label.'))
-
+    base_url = models.URLField(
+        max_length=2000,
+        blank=True,
+        null=True
+    )
+    display_text = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
     source_by = RichTextField(
         blank=True,
         null=True,
