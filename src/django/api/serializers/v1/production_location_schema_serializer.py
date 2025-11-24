@@ -1,9 +1,49 @@
 from api.serializers.v1.coordinates_serializer \
-  import CoordinatesSerializer
+    import CoordinatesSerializer
 from api.serializers.v1.number_of_workers_serializer \
-  import NumberOfWorkersSerializer
+    import NumberOfWorkersSerializer
 from api.serializers.v1.string_or_list_field import StringOrListField
 from rest_framework import serializers
+
+
+class ISIC4EntrySerializer(serializers.Serializer):
+    isic_class = serializers.CharField(
+        source='class',
+        required=False,
+        allow_blank=False,
+        error_messages={
+            'required': 'Field class is required for isic_4.',
+            'blank': 'Field class must be a non-empty string.',
+            'invalid': 'Field class must be a valid string.',
+        },
+    )
+    group = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        error_messages={
+            'required': 'Field group is required for isic_4.',
+            'blank': 'Field group must be a non-empty string.',
+            'invalid': 'Field group must be a valid string.',
+        },
+    )
+    section = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        error_messages={
+            'required': 'Field section is required for isic_4.',
+            'blank': 'Field section must be a non-empty string.',
+            'invalid': 'Field section must be a valid string.',
+        },
+    )
+    division = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        error_messages={
+            'required': 'Field division is required for isic_4.',
+            'blank': 'Field division must be a non-empty string.',
+            'invalid': 'Field division must be a valid string.',
+        },
+    )
 
 
 class ProductionLocationSchemaSerializer(serializers.Serializer):
@@ -51,6 +91,19 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         error_messages={
             'required': 'The lat and lng fields are required!',
             'invalid': 'Field coordinates must be a valid geopoint.'
+        },
+    )
+    isic_4 = serializers.ListField(
+        child=ISIC4EntrySerializer(),
+        required=False,
+        allow_empty=False,
+        min_length=1,
+        max_length=1,
+        error_messages={
+            'min_length': 'Provide exactly one isic_4 object.',
+            'max_length': 'Provide exactly one isic_4 object.',
+            'invalid': 'Field isic_4 must be a list of objects.',
+            'empty': 'Field isic_4 cannot be empty.',
         },
     )
 
