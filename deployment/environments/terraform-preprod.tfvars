@@ -60,8 +60,8 @@ dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 app_cc_ecs_desired_count = 0
-app_dd_fargate_cpu = 4096
-app_dd_fargate_memory = 30720
+app_dd_fargate_cpu = 8192
+app_dd_fargate_memory = 40960
 app_dd_ecs_desired_count = 1
 
 opensearch_instance_type = "m6g.large.search"
