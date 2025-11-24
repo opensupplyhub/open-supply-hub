@@ -1,7 +1,7 @@
 FROM logstash:8.15.3
 
 # Install a specific version of the OpenSearch output plugin for Logstash.
-# Temporarily increase heap size for plugin installation
+# Temporarily increase heap size for plugin installation.
 RUN LS_JAVA_OPTS="-Xmx2g" bin/logstash-plugin install --version 2.0.2 logstash-output-opensearch
 
 ENV LS_JAVA_OPTS="-XX:MaxDirectMemorySize=512m"
