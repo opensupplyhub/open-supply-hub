@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Added `backfill_isic_4_extended_fields.py` to insert `isic_4` to `api_extendedfield` table of RBA instance. Show `isic_4` field in `GET api/facilities` response.
+* [OSDEV-2281](https://opensupplyhub.atlassian.net/browse/OSDEV-2281) - Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Production`, `Pre-prod`, and `RBA` environments.
 
 ### Bugfix
 * [OSDEV-2284](https://opensupplyhub.atlassian.net/browse/OSDEV-2284) - Temporarily increase heap size for logstash plugin installation.
