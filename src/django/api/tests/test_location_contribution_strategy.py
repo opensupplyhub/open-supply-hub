@@ -1872,3 +1872,367 @@ class TestLocationContributionStrategy(APITestCase):
             'Field object_field must be object, not str.',
             detail
         )
+
+    def test_partner_field_json_schema_with_valid_data(self):
+
+        existing_location_user_email = 'test7@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        json_schema = {
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'},
+                'age': {'type': 'integer'},
+                'email': {
+                    'type': 'string',
+                    'format': 'email'
+                }
+            },
+            'required': ['name', 'age']
+        }
+
+        schema_field = PartnerField.objects.create(
+            name='schema_field',
+            type=PartnerField.OBJECT,
+            label='Schema Field',
+            json_schema=json_schema
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 7',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(schema_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'schema_field': {
+                'name': 'John Doe',
+                'age': 30,
+                'email': 'john@example.com'
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+
+    def test_partner_field_json_schema_with_invalid_data(self):
+        existing_location_user_email = 'test8@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        json_schema = {
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'},
+                'age': {'type': 'integer'},
+                'email': {'type': 'string', 'format': 'email'}
+            },
+            'required': ['name', 'age']
+        }
+
+        schema_field = PartnerField.objects.create(
+            name='schema_field',
+            type=PartnerField.OBJECT,
+            label='Schema Field',
+            json_schema=json_schema
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 8',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(schema_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data_missing_required = {
+            'source': 'API',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'schema_field': {
+                'name': 'John Doe'
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_missing_required,
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIn('errors', result.errors)
+        self.assertEqual(len(result.errors['errors']), 1)
+        self.assertEqual(result.errors['errors'][0]['field'], 'schema_field')
+        self.assertIn('age', result.errors['errors'][0]['detail'])
+
+        input_data_wrong_type = {
+            'source': 'API',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'schema_field': {
+                'name': 123,
+                'age': 30
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data_wrong_type,
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIn('errors', result.errors)
+        self.assertEqual(len(result.errors['errors']), 1)
+        self.assertEqual(result.errors['errors'][0]['field'], 'schema_field')
+        self.assertIn('name', result.errors['errors'][0]['detail'])
+
+    def test_partner_field_json_schema_with_nested_errors(self):
+        existing_location_user_email = 'test9@example.com'
+        existing_location_user_password = '4567test'
+        existing_location_user = User.objects.create(
+            email=existing_location_user_email
+        )
+        existing_location_user.set_password(
+            existing_location_user_password
+        )
+        existing_location_user.save()
+
+        EmailAddress.objects.create(
+            user=existing_location_user,
+            email=existing_location_user_email,
+            verified=True,
+            primary=True
+        )
+
+        json_schema = {
+            'type': 'object',
+            'properties': {
+                'user': {
+                    'type': 'object',
+                    'properties': {
+                        'name': {'type': 'string'},
+                        'contact': {
+                            'type': 'object',
+                            'properties': {
+                                'email': {
+                                    'type': 'string',
+                                    'format': 'email'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            'required': ['user']
+        }
+
+        schema_field = PartnerField.objects.create(
+            name='nested_schema_field',
+            type=PartnerField.OBJECT,
+            label='Nested Schema Field',
+            json_schema=json_schema
+        )
+
+        existing_location_contributor = Contributor.objects.create(
+            admin=existing_location_user,
+            name='test contributor 9',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        existing_location_contributor.partner_fields.add(schema_field)
+        existing_location_contributor.save()
+
+        list = FacilityList.objects.create(
+            header='header', file_name='one', name='New List Test'
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=list,
+            contributor=existing_location_contributor
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Gamma Tech Manufacturing Plant',
+            address='1574 Quantum Avenue, Building 4B, Technopolis',
+            country_code='YT',
+            sector=['Apparel'],
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source
+        )
+        production_location = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
+            country_code=list_item.country_code,
+            location=Point(0, 0),
+            created_from=list_item
+        )
+
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'nested_schema_field': {
+                'user': {
+                    'name': 'John Doe',
+                    'contact': {
+                        'email': 'invalid-email'
+                    }
+                }
+            },
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=existing_location_contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            os=production_location
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertIn('errors', result.errors)
+        self.assertEqual(len(result.errors['errors']), 1)
+        self.assertEqual(
+            result.errors['errors'][0]['field'],
+            'nested_schema_field'
+        )
+
+        detail = result.errors['errors'][0]['detail']
+        self.assertTrue(
+            'email' in detail.lower() or 'contact' in detail.lower()
+        )
