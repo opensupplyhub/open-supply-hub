@@ -2,6 +2,16 @@ name: "DB - Save Anonymized DB"
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy-env:
+        description: "Environment to save anonymized db"
+        required: true
+        type: choice
+        options:
+          - Rba
+          - Production
+          - Development
+        default: Production
 
 jobs:
   save-anonymized-db:
@@ -15,20 +25,59 @@ jobs:
           string: ${{ vars.ENV_NAME }}
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Dump database for ${{ vars.ENV_NAME }}
+      - name: Dump database for ${{ github.event.inputs['deploy-env'] }}
+        env:
+          KEY_FILE_DEV: ${{ secrets.KEY_FILE_DEV }}
+          KEY_FILE_RBA: ${{ secrets.KEY_FILE_RBA }}
+          KEY_FILE_PROD: ${{ secrets.KEY_FILE_PROD }}
+          DATABASE_PASSWORD_DEV: ${{ secrets.DATABASE_PASSWORD_DEV }}
+          DATABASE_PASSWORD_RBA: ${{ secrets.DATABASE_PASSWORD_RBA }}
+          DATABASE_PASSWORD_PROD: ${{ secrets.DATABASE_PASSWORD }}
+          AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION_PROD: eu-west-1
+          AWS_ACCESS_KEY_ID_TEST: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY_TEST: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION_TEST: eu-west-1
+          BASTION_INSTANCE_ID: ${{ secrets.RBA_BASTION_ID }}
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
-          echo "${{ secrets.KEY_FILE_PROD }}" > ./keys/key
+          ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
+          # Prepare optional bastion override for Rba
+          EXTRA_ENV=""
+          if [ "$ENV_NAME" = "Rba" ]; then
+            EXTRA_ENV="-e BASTION_INSTANCE_ID"
+          fi
+          if [ "$ENV_NAME" = "Development" ]; then
+            printf "%s" "$KEY_FILE_DEV" | tr -d '\r' > ./keys/key
+          elif [ "$ENV_NAME" = "Rba" ]; then
+            printf "%s" "$KEY_FILE_RBA" | tr -d '\r' > ./keys/key
+          else
+            printf "%s" "$KEY_FILE_PROD" | tr -d '\r' > ./keys/key
+          fi
+          chmod 600 ./keys/key
+
+          # Select DB password based on environment
+          if [ "$ENV_NAME" = "Development" ]; then
+            DB_PASS="$DATABASE_PASSWORD_DEV"
+          elif [ "$ENV_NAME" = "Rba" ]; then
+            DB_PASS="$DATABASE_PASSWORD_RBA"
+          else
+            DB_PASS="$DATABASE_PASSWORD_PROD"
+          fi
+
           docker build -t dump_image -f Dockerfile.dump .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID_PROD=${{ secrets.AWS_ACCESS_KEY_ID_PROD }} \
-              -e AWS_SECRET_ACCESS_KEY_PROD=${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }} \
-              -e AWS_DEFAULT_REGION_PROD=eu-west-1 \
-              -e AWS_ACCESS_KEY_ID_TEST=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY_TEST=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION_TEST=eu-west-1 \
+              -e AWS_ACCESS_KEY_ID_PROD \
+              -e AWS_SECRET_ACCESS_KEY_PROD \
+              -e AWS_DEFAULT_REGION_PROD \
+              -e AWS_ACCESS_KEY_ID_TEST \
+              -e AWS_SECRET_ACCESS_KEY_TEST \
+              -e AWS_DEFAULT_REGION_TEST \
+              -e ENVIRONMENT="$ENV_NAME" \
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME=opensupplyhub \
-              -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              -e DATABASE_PASSWORD="$DB_PASS" \
+              $EXTRA_ENV \
               dump_image
