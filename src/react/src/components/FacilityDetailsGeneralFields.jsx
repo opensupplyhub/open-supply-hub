@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useMemo } from 'react';
 import Grid from '@material-ui/core/Grid';
 import get from 'lodash/get';
@@ -226,8 +227,26 @@ const FacilityDetailsGeneralFields = ({
     };
 
     const renderPartnerField = ({ label, fieldName, formatValue }) => {
-        const values = get(data, `properties.partner_fields.${fieldName}`, []);
+        // const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
+        const val = get(data, `properties.partner_fields.${fieldName}[0]`);
+        console.log('val is ', val);
+
+        if (!val) return null;
+
+        // If partner field contain JSON schema AND contain "format": "uri-reference"
+        // Render specific FacilityDetailsItem, maybe create another component
+        if (
+            val.json_schema &&
+            val.json_schema?.type === 'object' &&
+            val.json_schema?.properties?.value?.format === 'uri-reference'
+        ) {
+            return (
+                <Grid item xs={12} md={6} key={`partner-${label}`}>
+                    {val.json_schema?.properties?.value?.format}
+                </Grid>
+            );
+        }
         const formatField = item =>
             formatExtendedField({
                 ...item,
@@ -243,12 +262,14 @@ const FacilityDetailsGeneralFields = ({
                 <FacilityDetailsItem
                     {...topValue}
                     label={topValue.label ? topValue.label : label}
-                    additionalContent={values.slice(1).map(formatField)}
+                    additionalContent={formatField(val)}
                     embed={embed}
                 />
             </Grid>
         );
     };
+
+    const renderPartnerFieldWithURLSchema = () => {};
 
     const contributorFields = filter(
         get(data, 'properties.contributor_fields', null),
@@ -295,6 +316,11 @@ const FacilityDetailsGeneralFields = ({
                 .replace(/\b\w/g, l => l.toUpperCase()),
             formatValue: formatPartnerFieldValue,
         }));
+
+        const partnerFieldsWithURIReference = partnerFieldNames.map(
+            fieldName => ({}),
+        );
+        console.log('partnerFields: ', partnerFields);
 
         return (
             <FeatureFlag

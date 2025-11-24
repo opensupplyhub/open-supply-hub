@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 import React, { useState } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
@@ -84,7 +85,8 @@ const FacilityDetailsItem = ({
                         : additionalContentTextPlural}
                 </Button>
             </ShowOnly>
-            <TitledDrawer
+            {/* TODO: Adjust sidebar to render url referencse partner fields as well */}
+            {/* <TitledDrawer
                 open={isOpen}
                 anchor="right"
                 onClose={() => setIsOpen(false)}
@@ -113,7 +115,7 @@ const FacilityDetailsItem = ({
                             </div>
                         ))}
                 </div>
-            </TitledDrawer>
+            </TitledDrawer> */}
         </div>
     );
 };

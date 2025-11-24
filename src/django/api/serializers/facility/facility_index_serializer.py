@@ -102,12 +102,13 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         date_field_to_sort: str
     ) -> Dict[str, List[Dict[str, Any]]]:
         grouped_data = {}
-        print(f'@@@ Partner fields: {partner_fields}')
         for field in partner_fields:
             field_name = field.name
             source_by = field.source_by
             unit = field.unit
             label = field.label
+            base_url = getattr(field, 'base_url', None)
+            display_text = getattr(field, 'display_text', None)
             json_schema = field.json_schema
             fields = grouped_fields.get(field_name, [])
             if not fields:
@@ -122,6 +123,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                         'source_by': source_by,
                         'unit': unit,
                         'label': label,
+                        'base_url': base_url,
+                        'display_text': display_text,
                         'json_schema': json_schema
                     },
                     exclude_fields=(
