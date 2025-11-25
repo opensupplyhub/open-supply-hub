@@ -1,6 +1,6 @@
 import React from 'react';
 
-import FacilityDetailsClaimedInfo from '../../components/FacilityDetailsClaimedInfo';
+import FacilityDetailsClaimedInfo from '../../components/FacilityDetailsClaimedInfo/FacilityDetailsClaimedInfo';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 
 describe('FacilityDetailsClaimedInfo component', () => {
