@@ -137,11 +137,21 @@ const FacilityDetailsGeneralFields = ({
         );
     };
 
-    const renderPartnerField = ({ label, fieldName, formatValue }) => {
+    const renderPartnerField = ({
+        label,
+        fieldName,
+        formatValue,
+        jsonSchema,
+    }) => {
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
-        const formatField = item =>
-            formatExtendedField({ ...item, formatValue });
+        const formatField = item => {
+            const customFormatValue = value => formatValue(value, jsonSchema);
+            return formatExtendedField({
+                ...item,
+                formatValue: customFormatValue,
+            });
+        };
 
         if (!values.length || !values[0]) return null;
 
@@ -197,13 +207,23 @@ const FacilityDetailsGeneralFields = ({
             get(data, 'properties.partner_fields', {}),
         );
 
-        const partnerFields = partnerFieldNames.map(fieldName => ({
-            fieldName,
-            label: fieldName
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase()),
-            formatValue: formatPartnerFieldValue,
-        }));
+        const partnerFields = partnerFieldNames.map(fieldName => {
+            const firstValue = get(
+                data,
+                `properties.partner_fields.${fieldName}[0]`,
+                {},
+            );
+            const jsonSchema = firstValue.json_schema || null;
+
+            return {
+                fieldName,
+                label: fieldName
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase()),
+                formatValue: formatPartnerFieldValue,
+                jsonSchema,
+            };
+        });
 
         return (
             <FeatureFlag

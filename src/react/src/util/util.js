@@ -94,6 +94,7 @@ import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
 import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
 import COLOURS from './COLOURS';
+import formatPartnerFieldWithSchema from './partnerFieldFormatter';
 
 export function DownloadXLSX(data, fileName) {
     import('file-saver').then(({ saveAs }) => {
@@ -1898,8 +1899,15 @@ const formatRawValues = rawValues => {
     return rawValues.toString().split('|');
 };
 
-export const formatPartnerFieldValue = value => {
+export const formatPartnerFieldValue = (value, jsonSchema = null) => {
     const { raw_values, raw_value } = value;
+
+    if (jsonSchema && (raw_value || raw_values)) {
+        const objectValue = raw_value || raw_values;
+        if (typeof objectValue === 'object' && !Array.isArray(objectValue)) {
+            return formatPartnerFieldWithSchema(objectValue, jsonSchema);
+        }
+    }
 
     if (raw_values !== undefined) {
         return formatRawValues(raw_values);

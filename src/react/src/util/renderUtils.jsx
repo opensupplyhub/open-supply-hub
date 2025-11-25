@@ -10,6 +10,10 @@ const renderUniqueListItems = (fieldValue, fieldName = '') => {
         return fieldValue;
     }
 
+    if (fieldValue.length > 0 && React.isValidElement(fieldValue[0])) {
+        return fieldValue;
+    }
+
     const uniqueValues = [...new Set(fieldValue)];
 
     return uniqueValues.map(value =>
