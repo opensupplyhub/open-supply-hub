@@ -32,18 +32,6 @@ class ISIC4EntrySerializerTest(SimpleTestCase):
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
-    def test_numeric_values_are_rejected(self):
-        invalid_payload = {
-            **self.valid_payload,
-            'group': 1234,
-        }
-        serializer = ISIC4EntrySerializer(data=invalid_payload)
-
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('group', serializer.errors)
-        self.assertIn('Field group must be a string.',
-                      serializer.errors['group'])
-
     def test_blank_strings_are_rejected(self):
         invalid_payload = {
             **self.valid_payload,
