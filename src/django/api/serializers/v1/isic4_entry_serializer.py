@@ -52,4 +52,3 @@ class ISIC4EntrySerializer(serializers.Serializer):
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
-

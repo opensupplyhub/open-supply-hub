@@ -88,4 +88,3 @@ class ProductionLocationSchemaIsic4Test(SimpleTestCase):
             'Provide exactly one isic_4 object.',
             serializer.errors['isic_4'],
         )
-
