@@ -1,49 +1,11 @@
+from api.serializers.v1.isic4_entry_serializer \
+    import ISIC4EntrySerializer
 from api.serializers.v1.coordinates_serializer \
     import CoordinatesSerializer
 from api.serializers.v1.number_of_workers_serializer \
     import NumberOfWorkersSerializer
 from api.serializers.v1.string_or_list_field import StringOrListField
 from rest_framework import serializers
-
-
-class ISIC4EntrySerializer(serializers.Serializer):
-    isic_class = serializers.CharField(
-        source='class',
-        required=False,
-        allow_blank=False,
-        error_messages={
-            'required': 'Field class is required for isic_4.',
-            'blank': 'Field class must be a non-empty string.',
-            'invalid': 'Field class must be a valid string.',
-        },
-    )
-    group = serializers.CharField(
-        required=False,
-        allow_blank=False,
-        error_messages={
-            'required': 'Field group is required for isic_4.',
-            'blank': 'Field group must be a non-empty string.',
-            'invalid': 'Field group must be a valid string.',
-        },
-    )
-    section = serializers.CharField(
-        required=False,
-        allow_blank=False,
-        error_messages={
-            'required': 'Field section is required for isic_4.',
-            'blank': 'Field section must be a non-empty string.',
-            'invalid': 'Field section must be a valid string.',
-        },
-    )
-    division = serializers.CharField(
-        required=False,
-        allow_blank=False,
-        error_messages={
-            'required': 'Field division is required for isic_4.',
-            'blank': 'Field division must be a non-empty string.',
-            'invalid': 'Field division must be a valid string.',
-        },
-    )
 
 
 class ProductionLocationSchemaSerializer(serializers.Serializer):

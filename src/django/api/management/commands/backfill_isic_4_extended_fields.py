@@ -15,6 +15,36 @@ class Command(BaseCommand):
         "where the contributor has a corresponding NonstandardField('isic_4')."
     )
 
+    @staticmethod
+    def _normalize_isic_entries(raw_value):
+        if isinstance(raw_value, list):
+            entries = raw_value
+        else:
+            entries = [raw_value]
+
+        normalized_entries = []
+        for entry in entries:
+            if entry in (None, '', {}):
+                continue
+            normalized_entry = (
+                get_isic_4_extendedfield_value(entry)['raw_value']
+            )
+            normalized_entries.append(normalized_entry)
+        return normalized_entries
+
+    @staticmethod
+    def _build_extended_field(item, normalized_entry):
+        return ExtendedField(
+            contributor=item.source.contributor,
+            facility=item.facility,
+            facility_list_item=item,
+            facility_claim=None,
+            is_verified=False,
+            field_name=ExtendedField.ISIC_4,
+            value={'raw_value': normalized_entry},
+            origin_source=item.origin_source,
+        )
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--batch-size', type=int, default=1000,
@@ -115,14 +145,24 @@ class Command(BaseCommand):
                 )
                 return
 
-            # Normalize via shared helper, then wrap in {'raw_value': ...}.
-            normalized_value = get_isic_4_extendedfield_value(raw)['raw_value']
-            value = {'raw_value': normalized_value}
+            normalized_entries = self._normalize_isic_entries(raw)
+            if not normalized_entries:
+                self.stdout.write(
+                    'Eligible item does not contain valid isic_4; '
+                    'nothing to do.'
+                )
+                return
+
+            extended_fields = [
+                self._build_extended_field(item, normalized_entry)
+                for normalized_entry in normalized_entries
+            ]
 
             if dry_run:
                 self.stdout.write(
                     self.style.WARNING(
-                        "[DRY-RUN] Would backfill one isic_4 row for OS ID "
+                        "[DRY-RUN] Would backfill "
+                        f"{len(extended_fields)} isic_4 row(s) for OS ID "
                         f"{item.facility.id}"
                     )
                 )
@@ -130,20 +170,12 @@ class Command(BaseCommand):
 
             try:
                 with transaction.atomic():
-                    ef = ExtendedField(
-                        contributor=item.source.contributor,
-                        facility=item.facility,
-                        facility_list_item=item,
-                        facility_claim=None,
-                        is_verified=False,
-                        field_name=ExtendedField.ISIC_4,
-                        value=value,
-                        origin_source=item.origin_source,
-                    )
-                    ef.save()
+                    ExtendedField.objects.bulk_create(extended_fields)
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"Backfilled 1 isic_4 row. OS ID: {item.facility.id}"
+                        "Backfilled "
+                        f"{len(extended_fields)} isic_4 row(s). "
+                        f"OS ID: {item.facility.id}"
                     )
                 )
             except (IntegrityError, DatabaseError) as exc:
@@ -214,22 +246,19 @@ class Command(BaseCommand):
                 stats['skipped_empty_value'] += 1
                 continue
 
-            # Normalize via shared helper, then wrap in {'raw_value': ...}.
-            normalized_value = get_isic_4_extendedfield_value(raw)['raw_value']
-            value = {'raw_value': normalized_value}
+            normalized_entries = self._normalize_isic_entries(raw)
+            if not normalized_entries:
+                stats['skipped_empty_value'] += 1
+                continue
 
-            extended_field = ExtendedField(
-                contributor=item.source.contributor,
-                facility=item.facility,
-                facility_list_item=item,
-                facility_claim=None,
-                is_verified=False,
-                field_name=ExtendedField.ISIC_4,
-                value=value,
-                origin_source=item.origin_source,
-            )
-            to_create.append(extended_field)
-            stats['queued'] += 1
+            for normalized_entry in normalized_entries:
+                extended_field = self._build_extended_field(
+                    item,
+                    normalized_entry,
+                )
+                to_create.append(extended_field)
+
+            stats['queued'] += len(normalized_entries)
 
             if len(to_create) >= batch_size:
                 flush_batch()
