@@ -1,5 +1,48 @@
 import React from 'react';
 
+const ITEM_STYLE = Object.freeze({
+    marginBottom: '8px',
+});
+
+/**
+ * Format constants for JSON Schema
+ * Can be extended in the future for other format types (e.g., 'uri-reference', 'email', etc.)
+ */
+const FORMAT_TYPES = Object.freeze({
+    URI: 'uri',
+});
+
+/**
+ * Extracts properties with specific format from JSON schema
+ */
+const extractPropertiesByFormat = (schemaProperties, formatType) => {
+    const fields = new Set();
+    Object.keys(schemaProperties).forEach(propName => {
+        const propSchema = schemaProperties[propName];
+        if (propSchema?.format === formatType) {
+            fields.add(propName);
+        }
+    });
+    return fields;
+};
+
+/**
+ * Formats a property value with optional label from schema
+ */
+const formatValueWithLabel = (title, value) => {
+    const stringValue = String(value || '');
+    return title ? `${title}: ${stringValue}` : stringValue;
+};
+
+/**
+ * Renders a property value as a div element
+ */
+const renderPropertyDiv = (key, propValue, displayText) => (
+    <div key={`${key}-${propValue}`} style={ITEM_STYLE}>
+        {displayText}
+    </div>
+);
+
 /**
  * Formats an object value, displaying property values with optional labels from schema
  */
@@ -8,15 +51,35 @@ const formatPlainObjectValue = (value, schemaProperties = {}) =>
         const propValue = value[key];
         const propSchema = schemaProperties[key] || {};
         const { title } = propSchema;
+        const displayText = formatValueWithLabel(title, propValue);
 
-        return (
-            <div key={`${key}-${propValue}`} style={{ marginBottom: '8px' }}>
-                {title
-                    ? `${title}: ${String(propValue || '')}`
-                    : String(propValue || '')}
-            </div>
-        );
+        return renderPropertyDiv(key, propValue, displayText);
     });
+
+/**
+ * Renders a URI property as a clickable link
+ */
+const renderUriLink = (key, uriValue, linkText) => (
+    <div key={`${key}-uri-${uriValue}`} style={ITEM_STYLE}>
+        <a href={uriValue} target="_blank" rel="noopener noreferrer">
+            {linkText}
+        </a>
+    </div>
+);
+
+/**
+ * Checks if a key is a text property for a URI field
+ */
+const isUriTextProperty = (key, uriFields) =>
+    key.endsWith('_text') && uriFields.has(key.slice(0, -5));
+
+/**
+ * Gets the display text for a URI property, checking for _text sibling
+ */
+const getUriLinkText = (key, uriValue, value) => {
+    const textKey = `${key}_text`;
+    return value[textKey] || uriValue;
+};
 
 /**
  * Formats an object value with URI fields rendered as clickable links
@@ -26,57 +89,28 @@ const formatObjectWithLinks = (value, uriFields, schemaProperties = {}) =>
         .map(key => {
             const propValue = value[key];
 
-            if (key.endsWith('_text') && uriFields.has(key.slice(0, -5))) {
+            if (isUriTextProperty(key, uriFields)) {
                 return null;
             }
 
             if (uriFields.has(key)) {
-                const uriValue = propValue;
-                const textKey = `${key}_text`;
-                const linkText = value[textKey] || uriValue;
-
-                if (uriValue) {
-                    return (
-                        <div
-                            key={`${key}-uri-${uriValue}`}
-                            style={{ marginBottom: '8px' }}
-                        >
-                            <a
-                                href={uriValue}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {linkText}
-                            </a>
-                        </div>
-                    );
+                if (propValue) {
+                    const linkText = getUriLinkText(key, propValue, value);
+                    return renderUriLink(key, propValue, linkText);
                 }
+                return null;
             }
 
-            if (!key.endsWith('_text') || !uriFields.has(key.slice(0, -5))) {
-                const propSchema = schemaProperties[key] || {};
-                const { title } = propSchema;
-                const displayText = title
-                    ? `${title}: ${String(propValue || '')}`
-                    : String(propValue || '');
+            const propSchema = schemaProperties[key] || {};
+            const { title } = propSchema;
+            const displayText = formatValueWithLabel(title, propValue);
 
-                return (
-                    <div
-                        key={`${key}-text-${propValue}`}
-                        style={{ marginBottom: '8px' }}
-                    >
-                        {displayText}
-                    </div>
-                );
-            }
-
-            return null;
+            return renderPropertyDiv(key, propValue, displayText);
         })
         .filter(Boolean);
 
 /**
  * Formats partner field values based on JSON schema.
- * Renders URI properties (format: "uri") as clickable links.
  */
 const formatPartnerFieldWithSchema = (value, jsonSchema) => {
     if (
@@ -89,14 +123,10 @@ const formatPartnerFieldWithSchema = (value, jsonSchema) => {
     }
 
     const schemaProperties = jsonSchema?.properties || {};
-    const uriFields = new Set();
-
-    Object.keys(schemaProperties).forEach(propName => {
-        const propSchema = schemaProperties[propName];
-        if (propSchema?.format === 'uri') {
-            uriFields.add(propName);
-        }
-    });
+    const uriFields = extractPropertiesByFormat(
+        schemaProperties,
+        FORMAT_TYPES.URI,
+    );
 
     if (uriFields.size === 0) {
         return formatPlainObjectValue(value, schemaProperties);
