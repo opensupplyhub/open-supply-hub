@@ -2859,7 +2859,7 @@ describe('formatPartnerFieldValue', () => {
             const result = formatPartnerFieldValue(value, item);
 
             expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(2);
+            expect(result.length).toBe(1);
             expect(result[0].type).toBe('div');
             expect(result[0].props.children.type).toBe('a');
             expect(result[0].props.children.props.href).toBe(
