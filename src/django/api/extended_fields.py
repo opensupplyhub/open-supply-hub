@@ -51,7 +51,6 @@ def get_facility_and_processing_type_extendfield_value(
         processed_values = field_value.get('processed_values')
         raw_values = field_value.get('raw_values')
         results = get_matched_values(processed_values, sector)
-
     return {
         'raw_values': raw_values,
         'matched_values': results,
@@ -59,15 +58,25 @@ def get_facility_and_processing_type_extendfield_value(
 
 
 def get_isic_4_extendedfield_value(field_value):
+    if field_value is None:
+        return []
+
     if isinstance(field_value, list):
-        normalized_value = (
-            field_value[0] if len(field_value) == 1 else field_value
-        )
+        entries = field_value
     else:
-        normalized_value = field_value
-    return {
-        'raw_value': normalized_value,
-    }
+        entries = [field_value]
+
+    normalized_entries = []
+    for entry in entries:
+        if entry in (None, '', {}):
+            continue
+        if not isinstance(entry, dict):
+            continue
+        if all_values_empty(entry):
+            continue
+        normalized_entries.append(entry)
+
+    return normalized_entries
 
 
 def get_parent_company_extendedfield_value(field_value):
@@ -140,7 +149,17 @@ def create_extendedfield(field, field_value, item, contributor):
                 'raw_value': field_value,
             }
         elif field == ExtendedField.ISIC_4:
-            field_value = get_isic_4_extendedfield_value(field_value)
+            isic_entries = get_isic_4_extendedfield_value(field_value)
+            if not isic_entries:
+                return
+            for entry in isic_entries:
+                ExtendedField.objects.create(
+                    contributor=contributor,
+                    facility_list_item=item,
+                    field_name=field,
+                    value={'raw_value': entry}
+                )
+            return
 
         ExtendedField.objects.create(
             contributor=contributor,

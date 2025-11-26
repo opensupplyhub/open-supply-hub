@@ -17,20 +17,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def _normalize_isic_entries(raw_value):
-        if isinstance(raw_value, list):
-            entries = raw_value
-        else:
-            entries = [raw_value]
-
-        normalized_entries = []
-        for entry in entries:
-            if entry in (None, '', {}):
-                continue
-            normalized_entry = (
-                get_isic_4_extendedfield_value(entry)['raw_value']
-            )
-            normalized_entries.append(normalized_entry)
-        return normalized_entries
+        return get_isic_4_extendedfield_value(raw_value)
 
     @staticmethod
     def _build_extended_field(item, normalized_entry):
