@@ -1,15 +1,19 @@
 import React from 'react';
 
 /**
- * Formats an object value, displaying only the property values
+ * Formats an object value, displaying property values with optional labels from schema
  */
-const formatPlainObjectValue = value =>
+const formatPlainObjectValue = (value, schemaProperties = {}) =>
     Object.keys(value).map(key => {
         const propValue = value[key];
+        const propSchema = schemaProperties[key] || {};
+        const { title } = propSchema;
 
         return (
             <div key={`${key}-${propValue}`} style={{ marginBottom: '8px' }}>
-                {String(propValue || '')}
+                {title
+                    ? `${title}: ${String(propValue || '')}`
+                    : String(propValue || '')}
             </div>
         );
     });
@@ -17,7 +21,7 @@ const formatPlainObjectValue = value =>
 /**
  * Formats an object value with URI fields rendered as clickable links
  */
-const formatObjectWithLinks = (value, uriFields) =>
+const formatObjectWithLinks = (value, uriFields, schemaProperties = {}) =>
     Object.keys(value)
         .map(key => {
             const propValue = value[key];
@@ -50,12 +54,18 @@ const formatObjectWithLinks = (value, uriFields) =>
             }
 
             if (!key.endsWith('_text') || !uriFields.has(key.slice(0, -5))) {
+                const propSchema = schemaProperties[key] || {};
+                const { title } = propSchema;
+                const displayText = title
+                    ? `${title}: ${String(propValue || '')}`
+                    : String(propValue || '');
+
                 return (
                     <div
                         key={`${key}-text-${propValue}`}
                         style={{ marginBottom: '8px' }}
                     >
-                        {String(propValue || '')}
+                        {displayText}
                     </div>
                 );
             }
@@ -89,10 +99,10 @@ const formatPartnerFieldWithSchema = (value, jsonSchema) => {
     });
 
     if (uriFields.size === 0) {
-        return formatPlainObjectValue(value);
+        return formatPlainObjectValue(value, schemaProperties);
     }
 
-    return formatObjectWithLinks(value, uriFields);
+    return formatObjectWithLinks(value, uriFields, schemaProperties);
 };
 
 export default formatPartnerFieldWithSchema;
