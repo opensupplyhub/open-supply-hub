@@ -2736,99 +2736,321 @@ describe('processDromoResults', () => {
 });
 
 describe('formatPartnerFieldValue', () => {
+    const emptyItem = {};
+
     it('formats raw_value as a single value', () => {
         const value = { raw_value: 'Test Value' };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('Test Value');
     });
 
     it('formats raw_value with number', () => {
         const value = { raw_value: 100 };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe(100);
     });
 
     it('formats raw_values as array joined by comma', () => {
         const value = { raw_values: ['Value 1', 'Value 2', 'Value 3'] };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('Value 1, Value 2, Value 3');
     });
 
     it('formats empty array as empty string', () => {
         const value = { raw_values: [] };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('');
     });
 
     it('formats single-item array as string without comma', () => {
         const value = { raw_values: ['Single Value'] };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('Single Value');
     });
 
     it('formats raw_values as object with key-value pairs', () => {
         const value = { raw_values: { test_1: '1', test_2: '2' } };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('test_1: 1, test_2: 2');
     });
 
     it('formats empty object as empty string', () => {
         const value = { raw_values: {} };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('');
     });
 
     it('formats raw_values object with nested values', () => {
         const value = { raw_values: { key1: 'value1', key2: 100, key3: 'value3' } };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('key1: value1, key2: 100, key3: value3');
     });
 
     it('formats pipe-delimited string into array (legacy format)', () => {
         const value = { raw_values: 'value1|value2|value3' };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toEqual(['value1', 'value2', 'value3']);
     });
 
     it('formats single string value without pipe', () => {
         const value = { raw_values: 'single value' };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toEqual(['single value']);
     });
 
     it('returns plain value if no raw_value or raw_values property', () => {
         const value = 'Plain String Value';
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('Plain String Value');
     });
 
     it('returns numeric value if no raw_value or raw_values property', () => {
         const value = 42;
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe(42);
     });
 
     it('prefers raw_values over raw_value when both exist', () => {
         const value = { raw_value: 'ignored', raw_values: ['preferred'] };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('preferred');
     });
 
     it('falls back to raw_value when raw_values is undefined', () => {
         const value = { raw_value: 'fallback value' };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('fallback value');
     });
 
     it('formats array with mixed types', () => {
         const value = { raw_values: ['string', 123, 'another'] };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('string, 123, another');
     });
 
     it('formats object with boolean and null values', () => {
         const value = { raw_values: { active: true, deleted: false, notes: null } };
-        const result = formatPartnerFieldValue(value);
+        const result = formatPartnerFieldValue(value, emptyItem);
         expect(result).toBe('active: true, deleted: false, notes: null');
+    });
+
+    describe('with JSON schema formatting', () => {
+        it('formats URI field with _text property as clickable link', () => {
+            const value = {
+                raw_value: {
+                    url: 'https://example.com/audit-123',
+                    url_text: 'View Audit Report',
+                },
+            };
+            const item = {
+                json_schema: {
+                    type: 'object',
+                    properties: {
+                        url: {
+                            type: 'string',
+                            format: 'uri',
+                        },
+                        url_text: {
+                            type: 'string',
+                        },
+                    },
+                },
+            };
+            const result = formatPartnerFieldValue(value, item);
+
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(2);
+            expect(result[0].type).toBe('div');
+            expect(result[0].props.children.type).toBe('a');
+            expect(result[0].props.children.props.href).toBe(
+                'https://example.com/audit-123',
+            );
+            expect(result[0].props.children.props.children).toBe(
+                'View Audit Report',
+            );
+            expect(result[0].props.children.props.target).toBe('_blank');
+            expect(result[0].props.children.props.rel).toBe(
+                'noopener noreferrer',
+            );
+        });
+
+        it('formats URI field without _text property, using URI as link text', () => {
+            const value = {
+                raw_value: {
+                    mit_data_url: 'https://livingwage.mit.edu/locations/123',
+                },
+            };
+            const item = {
+                json_schema: {
+                    type: 'object',
+                    properties: {
+                        mit_data_url: {
+                            type: 'string',
+                            format: 'uri',
+                        },
+                    },
+                },
+            };
+            const result = formatPartnerFieldValue(value, item);
+
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(1);
+            expect(result[0].type).toBe('div');
+            expect(result[0].props.children.type).toBe('a');
+            expect(result[0].props.children.props.href).toBe(
+                'https://livingwage.mit.edu/locations/123',
+            );
+            expect(result[0].props.children.props.children).toBe(
+                'https://livingwage.mit.edu/locations/123',
+            );
+        });
+
+        it('formats non-URI field with title as "Title: value"', () => {
+            const value = {
+                raw_value: {
+                    internal_id: 'abc-123-xyz',
+                },
+            };
+            const item = {
+                json_schema: {
+                    type: 'object',
+                    properties: {
+                        internal_id: {
+                            type: 'string',
+                            title: 'Internal ID',
+                        },
+                    },
+                },
+            };
+            const result = formatPartnerFieldValue(value, item);
+
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(1);
+            expect(result[0].type).toBe('div');
+            expect(result[0].props.children).toBe('Internal ID: abc-123-xyz');
+        });
+
+        it('formats non-URI field without title as plain value', () => {
+            const value = {
+                raw_value: {
+                    notes: 'Some notes here',
+                },
+            };
+            const item = {
+                json_schema: {
+                    type: 'object',
+                    properties: {
+                        notes: {
+                            type: 'string',
+                        },
+                    },
+                },
+            };
+            const result = formatPartnerFieldValue(value, item);
+
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(1);
+            expect(result[0].type).toBe('div');
+            expect(result[0].props.children).toBe('Some notes here');
+        });
+
+        it('formats mixed URI and non-URI fields with titles', () => {
+            const value = {
+                raw_value: {
+                    url: 'https://example.com/report',
+                    url_text: 'View Report',
+                    internal_id: 'ABC-123',
+                    status: 'active',
+                },
+            };
+            const item = {
+                json_schema: {
+                    type: 'object',
+                    properties: {
+                        url: {
+                            type: 'string',
+                            format: 'uri',
+                        },
+                        url_text: {
+                            type: 'string',
+                        },
+                        internal_id: {
+                            type: 'string',
+                            title: 'Internal ID',
+                        },
+                        status: {
+                            type: 'string',
+                            title: 'Status',
+                        },
+                    },
+                },
+            };
+            const result = formatPartnerFieldValue(value, item);
+
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(3); // url, internal_id, status (url_text is skipped)
+
+            const urlElement = result.find(
+                r =>
+                    r.props.children?.type === 'a' &&
+                    r.props.children?.props?.href ===
+                        'https://example.com/report',
+            );
+            expect(urlElement).toBeDefined();
+            expect(urlElement.props.children.props.children).toBe(
+                'View Report',
+            );
+
+            const internalIdElement = result.find(
+                r =>
+                    typeof r.props.children === 'string' &&
+                    r.props.children.includes('Internal ID: ABC-123'),
+            );
+            expect(internalIdElement).toBeDefined();
+
+            const statusElement = result.find(
+                r =>
+                    typeof r.props.children === 'string' &&
+                    r.props.children.includes('Status: active'),
+            );
+            expect(statusElement).toBeDefined();
+        });
+
+        it('formats object without URI fields using plain formatting with titles', () => {
+            const value = {
+                raw_value: {
+                    name: 'John Doe',
+                    age: 30,
+                    email: 'john@example.com',
+                },
+            };
+            const item = {
+                json_schema: {
+                    type: 'object',
+                    properties: {
+                        name: {
+                            type: 'string',
+                            title: 'Full Name',
+                        },
+                        age: {
+                            type: 'integer',
+                            title: 'Age',
+                        },
+                        email: {
+                            type: 'string',
+                            title: 'Email Address',
+                        },
+                    },
+                },
+            };
+            const result = formatPartnerFieldValue(value, item);
+
+            expect(Array.isArray(result)).toBe(true);
+            expect(result.length).toBe(3);
+
+            expect(result[0].props.children).toBe('Full Name: John Doe');
+            expect(result[1].props.children).toBe('Age: 30');
+            expect(result[2].props.children).toBe('Email Address: john@example.com');
+        });
     });
 });

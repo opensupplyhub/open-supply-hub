@@ -137,16 +137,11 @@ const FacilityDetailsGeneralFields = ({
         );
     };
 
-    const renderPartnerField = ({
-        label,
-        fieldName,
-        formatValue,
-        jsonSchema,
-    }) => {
+    const renderPartnerField = ({ label, fieldName, formatValue }) => {
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
         const formatField = item => {
-            const customFormatValue = value => formatValue(value, jsonSchema);
+            const customFormatValue = value => formatValue(value, item);
             return formatExtendedField({
                 ...item,
                 formatValue: customFormatValue,
@@ -207,23 +202,13 @@ const FacilityDetailsGeneralFields = ({
             get(data, 'properties.partner_fields', {}),
         );
 
-        const partnerFields = partnerFieldNames.map(fieldName => {
-            const firstValue = get(
-                data,
-                `properties.partner_fields.${fieldName}[0]`,
-                {},
-            );
-            const jsonSchema = firstValue.json_schema || null;
-
-            return {
-                fieldName,
-                label: fieldName
-                    .replace(/_/g, ' ')
-                    .replace(/\b\w/g, l => l.toUpperCase()),
-                formatValue: formatPartnerFieldValue,
-                jsonSchema,
-            };
-        });
+        const partnerFields = partnerFieldNames.map(fieldName => ({
+            fieldName,
+            label: fieldName
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase()),
+            formatValue: formatPartnerFieldValue,
+        }));
 
         return (
             <FeatureFlag
