@@ -265,13 +265,10 @@ class ModerationEventsAddProductionLocationTest(
             field_name=ExtendedField.ISIC_4,
         )
 
-        self.assertEqual(isic_fields.count(), len(isic_entries))
+        self.assertEqual(isic_fields.count(), 1)
 
-        stored_values = [
-            field.value.get('raw_value')
-            for field in isic_fields
-        ]
-        self.assertCountEqual(stored_values, isic_entries)
+        stored_values = isic_fields[0].value.get('raw_value')
+        self.assertEqual(stored_values, isic_entries)
 
     def test_creation_of_facilitymatch(self):
         self.login_as_superuser()

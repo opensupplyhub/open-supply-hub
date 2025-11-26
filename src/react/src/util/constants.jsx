@@ -1149,7 +1149,7 @@ export const EXTENDED_FIELD_TYPES = [
                 }
 
                 if (acc.length && index > 0) {
-                    acc.push('');
+                    return acc.concat(['', ...lines]);
                 }
 
                 return acc.concat(lines);
