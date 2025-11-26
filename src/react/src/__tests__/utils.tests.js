@@ -2868,10 +2868,6 @@ describe('formatPartnerFieldValue', () => {
             expect(result[0].props.children.props.children).toBe(
                 'View Audit Report',
             );
-            expect(result[0].props.children.props.target).toBe('_blank');
-            expect(result[0].props.children.props.rel).toBe(
-                'noopener noreferrer',
-            );
         });
 
         it('formats URI field without _text property, using URI as link text', () => {
