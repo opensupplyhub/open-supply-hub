@@ -20,9 +20,10 @@ export const formatEnergySourceName = key =>
  * Pluralize unit based on value.
  */
 export const pluralizeUnit = (unit, value) => {
-    if (value === 1) return unit;
     // Special cases that don't pluralize.
+    if (value === 1) return unit;
     if (unit === 'MWh') return unit;
+
     return `${unit}s`;
 };
 

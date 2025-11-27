@@ -1,8 +1,8 @@
 import React from 'react';
-import { object } from 'prop-types';
+import { object, shape, oneOfType, oneOf } from 'prop-types';
 
 import ClaimInfoSection from './ClaimInfoSection';
-import { getLocationFieldsConfig } from './utils';
+import { getLocationFieldsConfig } from './utils.jsx';
 
 const FacilityDetailsClaimedInfo = ({ data }) => {
     if (!data) {
@@ -33,7 +33,11 @@ FacilityDetailsClaimedInfo.defaultProps = {
 };
 
 FacilityDetailsClaimedInfo.propTypes = {
-    data: object,
+    data: shape({
+        facility: object,
+        contact: oneOfType([object, oneOf([null])]),
+        office: oneOfType([object, oneOf([null])]),
+    }),
 };
 
 export default FacilityDetailsClaimedInfo;
