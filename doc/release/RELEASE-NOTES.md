@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.17.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 13, 2025
+
+### What's new
+* [OSDEV-2269](https://opensupplyhub.atlassian.net/browse/OSDEV-2269) - Added URI format support for partner fields with JSON schema. Properties defined with `"format": "uri"` are rendered as clickable links on production location profile pages.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.16.0
 
 ## Introduction
@@ -42,6 +57,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     6. Make sure no errors appear.
     7. Finally, run real `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields`.
     8. Make sure no errors appear.
+
 
 ## Release 2.15.2
 
