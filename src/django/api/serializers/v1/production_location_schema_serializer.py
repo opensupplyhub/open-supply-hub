@@ -60,10 +60,10 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         required=False,
         allow_empty=False,
         min_length=1,
-        max_length=1,
+        max_length=15,
         error_messages={
-            'min_length': 'Provide exactly one isic_4 object.',
-            'max_length': 'Provide exactly one isic_4 object.',
+            'min_length': 'Provide at least one isic_4 object.',
+            'max_length': 'Provide at most 15 isic_4 objects.',
             'invalid': 'Field isic_4 must be a list of objects.',
             'empty': 'Field isic_4 cannot be empty.',
         },

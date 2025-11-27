@@ -1788,7 +1788,10 @@ export const formatExtendedField = ({
     is_verified,
     formatValue = rawValue => rawValue,
 }) => {
-    const primary = renderUniqueListItems(formatValue(value), field_name);
+    const formattedValue = formatValue(value);
+    const primary = renderUniqueListItems(formattedValue, field_name, {
+        preserveOrder: field_name === 'isic_4',
+    });
     const secondary = formatAttribution(created_at, contributor_name);
 
     return {

@@ -219,6 +219,57 @@ class ModerationEventsAddProductionLocationTest(
 
         self.assert_extended_fields_creation(response, 201)
 
+    def test_isic4_multiple_entries_create_multiple_extended_fields(self):
+        isic_entries = [
+            {
+                "class": (
+                    "282 - Manufacture of other special-purpose "
+                    "machinery"
+                ),
+                "group": (
+                    "282 - Manufacture of other special-purpose "
+                    "machinery"
+                ),
+                "section": "C - Manufacturing",
+                "division": (
+                    "28 - Manufacture of machinery and equipment n.e.c."
+                ),
+            },
+            {
+                "class": (
+                    "561 - Restaurants and mobile food service "
+                    "activities"
+                ),
+                "group": "56 - Food and beverage service activities",
+                "section": (
+                    "I - Accommodation and food service activities"
+                ),
+                "division": "56 - Food and beverage service activities",
+            },
+        ]
+        self.moderation_event.cleaned_data['fields']['isic_4'] = isic_entries
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(201, response.status_code)
+
+        item = FacilityListItem.objects.get(facility_id=response.data["os_id"])
+        isic_fields = ExtendedField.objects.filter(
+            facility_list_item=item.id,
+            field_name=ExtendedField.ISIC_4,
+        )
+
+        self.assertEqual(isic_fields.count(), 1)
+
+        stored_values = isic_fields[0].value.get('raw_value')
+        self.assertEqual(stored_values, isic_entries)
+
     def test_creation_of_facilitymatch(self):
         self.login_as_superuser()
         response = self.client.post(

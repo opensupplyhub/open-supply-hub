@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction, IntegrityError, DatabaseError
 from django.utils import timezone
 
@@ -17,20 +17,9 @@ class Command(BaseCommand):
 
     @staticmethod
     def _normalize_isic_entries(raw_value):
-        if isinstance(raw_value, list):
-            entries = raw_value
-        else:
-            entries = [raw_value]
-
-        normalized_entries = []
-        for entry in entries:
-            if entry in (None, '', {}):
-                continue
-            normalized_entry = (
-                get_isic_4_extendedfield_value(entry)['raw_value']
-            )
-            normalized_entries.append(normalized_entry)
-        return normalized_entries
+        normalized = get_isic_4_extendedfield_value(raw_value)
+        entries = normalized.get('raw_value', [])
+        return entries
 
     @staticmethod
     def _build_extended_field(item, normalized_entry):
@@ -75,6 +64,15 @@ class Command(BaseCommand):
                 'print the related facility OS ID'
             )
         )
+        parser.add_argument(
+            '--os-id',
+            type=str,
+            default=None,
+            help=(
+                'Available only with --singleisic. If provided, backfill only '
+                'the specified OS ID.'
+            )
+        )
 
     def handle(self, *args, **options):
         self.stdout.write('Backfilling isic_4 extended fields (ORM)...')
@@ -84,6 +82,12 @@ class Command(BaseCommand):
         continue_on_error = options['continue_on_error']
         contributor_filter = options['contributor_id']
         single_only = options['singleisic']
+        os_id_filter = options['os_id']
+
+        if os_id_filter and not single_only:
+            raise CommandError(
+                '--os-id can only be used together with --singleisic.'
+            )
 
         if dry_run:
             self.stdout.write(self.style.WARNING(
@@ -131,7 +135,11 @@ class Command(BaseCommand):
 
         # If only one record should be backfilled, handle here and exit.
         if single_only:
-            item = items_qs.first()
+            single_qs = items_qs
+            if os_id_filter:
+                single_qs = single_qs.filter(facility__id=os_id_filter)
+
+            item = single_qs.first()
             if item is None:
                 self.stdout.write(
                     'No eligible items found for single backfill.'
@@ -154,8 +162,7 @@ class Command(BaseCommand):
                 return
 
             extended_fields = [
-                self._build_extended_field(item, normalized_entry)
-                for normalized_entry in normalized_entries
+                self._build_extended_field(item, normalized_entries)
             ]
 
             if dry_run:
@@ -251,14 +258,13 @@ class Command(BaseCommand):
                 stats['skipped_empty_value'] += 1
                 continue
 
-            for normalized_entry in normalized_entries:
-                extended_field = self._build_extended_field(
-                    item,
-                    normalized_entry,
-                )
-                to_create.append(extended_field)
+            extended_field = self._build_extended_field(
+                item,
+                normalized_entries
+            )
+            to_create.append(extended_field)
 
-            stats['queued'] += len(normalized_entries)
+            stats['queued'] += 1
 
             if len(to_create) >= batch_size:
                 flush_batch()

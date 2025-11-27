@@ -60,7 +60,7 @@ class ProductionLocationSchemaIsic4Test(SimpleTestCase):
             'country': 'US',
         }
 
-    def test_multiple_isic_entries_rejected(self):
+    def test_multiple_isic_entries_allowed(self):
         payload = {
             **self.base_payload,
             'isic_4': [
@@ -70,9 +70,4 @@ class ProductionLocationSchemaIsic4Test(SimpleTestCase):
         }
         serializer = ProductionLocationPostSchemaSerializer(data=payload)
 
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('isic_4', serializer.errors)
-        self.assertIn(
-            'Provide exactly one isic_4 object.',
-            serializer.errors['isic_4'],
-        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
