@@ -6,6 +6,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
+import IconButton from '@material-ui/core/IconButton';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import CloseIcon from '@material-ui/icons/Close';
 import LabelWithTooltip from './LabelWithTooltip.jsx';
 import { useInfiniteYearScroll } from './hooks.js';
 import { yearPickerStyles } from './styles.js';
@@ -55,6 +58,11 @@ const YearPicker = ({
         }
     };
 
+    const handleClear = event => {
+        event.stopPropagation();
+        onChange('');
+    };
+
     return (
         <div>
             {label && tooltipText && (
@@ -74,6 +82,20 @@ const YearPicker = ({
                             onScroll: handleScroll,
                         },
                     }}
+                    endAdornment={
+                        displayYear && !disabled ? (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    onClick={handleClear}
+                                    size="small"
+                                    className={classes.clearButton}
+                                    aria-label="Clear year selection"
+                                >
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            </InputAdornment>
+                        ) : null
+                    }
                 >
                     {years.map(year => (
                         <MenuItem key={year.value} value={year.value}>

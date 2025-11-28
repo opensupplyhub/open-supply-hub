@@ -154,4 +154,11 @@ export const yearPickerStyles = Object.freeze({
         fontStyle: 'italic',
         fontSize: '12px',
     }),
+    clearButton: Object.freeze({
+        marginRight: '8px',
+        padding: '4px',
+        '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+        },
+    }),
 });

@@ -1,9 +1,13 @@
 import React from 'react';
-import { string, func, bool, node } from 'prop-types';
+import { string, func, bool, node, object } from 'prop-types';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import CloseIcon from '@material-ui/icons/Close';
+import { withStyles } from '@material-ui/core/styles';
 import LabelWithTooltip from './LabelWithTooltip.jsx';
 import { MONTHS } from './constants.jsx';
 import YearPicker from './YearPicker.jsx';
@@ -18,6 +22,7 @@ const MonthYearPicker = ({
     disabled,
     error,
     onChange,
+    classes,
 }) => {
     // Extract month and year from ISO date string (YYYY-MM-DD) for display.
     const date = value ? new Date(value) : null;
@@ -62,6 +67,11 @@ const MonthYearPicker = ({
         }
     };
 
+    const handleClear = event => {
+        event.stopPropagation();
+        onChange('');
+    };
+
     const renderMonthValue = selected => {
         if (!selected) {
             return placeholderMonth;
@@ -83,6 +93,20 @@ const MonthYearPicker = ({
                             disabled={disabled}
                             displayEmpty
                             renderValue={renderMonthValue}
+                            endAdornment={
+                                value && !disabled ? (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={handleClear}
+                                            size="small"
+                                            className={classes.clearButton}
+                                            aria-label="Clear date selection"
+                                        >
+                                            <CloseIcon fontSize="small" />
+                                        </IconButton>
+                                    </InputAdornment>
+                                ) : null
+                            }
                         >
                             {MONTHS.map(month => (
                                 <MenuItem key={month.value} value={month.value}>
@@ -117,6 +141,7 @@ MonthYearPicker.propTypes = {
     disabled: bool,
     placeholderMonth: string.isRequired,
     placeholderYear: string.isRequired,
+    classes: object.isRequired,
 };
 
 MonthYearPicker.defaultProps = {
@@ -126,4 +151,14 @@ MonthYearPicker.defaultProps = {
     disabled: false,
 };
 
-export default MonthYearPicker;
+const monthYearPickerStyles = {
+    clearButton: {
+        marginRight: '8px',
+        padding: '4px',
+        '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+        },
+    },
+};
+
+export default withStyles(monthYearPickerStyles)(MonthYearPicker);
