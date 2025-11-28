@@ -14,7 +14,6 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Switch from '@material-ui/core/Switch';
-import Warning from '@material-ui/icons/Warning';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import contactInfoStepStyles from './styles';
 import { EMPLOYMENT_VERIFICATION_OPTIONS } from './constants';
@@ -28,7 +27,8 @@ import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
-import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
+import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import findSelectedOption from '../utils';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
@@ -191,20 +191,8 @@ const ContactInfoStep = ({
                         </div>
                     )}
                 </div>
-                <div className={`${classes.boxWarningContainer}`}>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxWarningText}
-                    >
-                        <span className={classes.boxWarningTextIcon}>
-                            <Warning className={classes.warningIcon} />
-                            <strong>IMPORTANT!</strong>
-                        </span>
-                        <span>
-                            &nbsp;Your name and job title must match the person
-                            associated with the email address provided above.
-                        </span>
-                    </Typography>
+                <div className={classes.importantNoteWrapper}>
+                    <ImportantNote text="Your name and job title must match the person associated with the email address provided above." />
                 </div>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
@@ -300,6 +288,9 @@ const ContactInfoStep = ({
                 <div>
                     {showDocumentUpload && (
                         <Grid item xs={12} className={classes.gridSpacing}>
+                            <div className={classes.importantNoteWrapper}>
+                                <ImportantNote text="We do NOT require and you should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers. Only submit business documents." />
+                            </div>
                             <ClaimAttachmentsUploader
                                 inputId="employment-verification-upload"
                                 title={

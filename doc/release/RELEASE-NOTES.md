@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.17.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 13, 2025
+
+### Code/API changes
+* [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Introduced a new reusable `ImportantNote` component in the new claim flow to replace custom implementations of important notes across multiple components (`BusinessStep`, `ContactInfoStep`, and `ClaimInfoSection`), improving code maintainability and consistency.
+
+### What's new
+* [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection. 
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.16.0
 
 ## Introduction

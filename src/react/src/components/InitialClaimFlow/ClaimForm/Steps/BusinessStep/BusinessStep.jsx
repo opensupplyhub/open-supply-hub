@@ -5,10 +5,10 @@ import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
-import Warning from '@material-ui/icons/Warning';
 import { Link } from 'react-router-dom';
 
-import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
+import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
@@ -195,6 +195,7 @@ const BusinessStep = ({
             <div className={classes.documentUploadContainer}>
                 {showDocumentUpload && (
                     <Grid item xs={12}>
+                        <ImportantNote text="We do NOT require and you should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers. Only submit business documents." />
                         <ClaimAttachmentsUploader
                             inputId="company-address-verification-documents"
                             title="Upload your documents"
@@ -218,6 +219,9 @@ const BusinessStep = ({
                                 />
                             </div>
                         )}
+                        <div className={classes.importantNoteWrapper}>
+                            <ImportantNote text="Verification documents must show the same name and address as listed on Open Supply Hub." />
+                        </div>
                     </Grid>
                 )}
             </div>
@@ -287,23 +291,6 @@ const BusinessStep = ({
                     />
                 )}
             </div>
-            {showDocumentUpload && (
-                <div className={classes.boxWarningContainer}>
-                    <Typography
-                        variant="body2"
-                        className={classes.boxWarningText}
-                    >
-                        <span className={classes.boxWarningTextIcon}>
-                            <Warning className={classes.warningIcon} />
-                            <strong>IMPORTANT!</strong>
-                        </span>
-                        <span>
-                            &nbsp;Verification documents must show the same name
-                            and address as listed on Open Supply Hub.
-                        </span>
-                    </Typography>
-                </div>
-            )}
         </div>
     );
 };
