@@ -36,7 +36,7 @@ describe('FacilityDetailsClaimedInfo component', () => {
             },
             contact: {
                 name: 'John',
-                email: 'Doe',
+                email: 'doe@example.com',
             },
             office: {
                 name: 'Sample office name',
