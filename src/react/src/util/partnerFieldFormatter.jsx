@@ -1,9 +1,5 @@
 import React from 'react';
 
-const ITEM_STYLE = Object.freeze({
-    marginBottom: '8px',
-});
-
 /**
  * Format constants for JSON Schema
  * Can be extended in the future for other format types (e.g., 'uri-reference', 'email', etc.)
@@ -35,15 +31,6 @@ const formatValueWithLabel = (title, value) => {
 };
 
 /**
- * Renders a property value as a div element
- */
-const renderPropertyDiv = (key, propValue, displayText) => (
-    <div key={`${key}-${propValue}`} style={ITEM_STYLE}>
-        {displayText}
-    </div>
-);
-
-/**
  * Formats an object value, displaying property values with optional labels from schema
  */
 const formatPlainObjectValue = (value, schemaProperties = {}) =>
@@ -51,20 +38,21 @@ const formatPlainObjectValue = (value, schemaProperties = {}) =>
         const propValue = value[key];
         const propSchema = schemaProperties[key] || {};
         const { title } = propSchema;
-        const displayText = formatValueWithLabel(title, propValue);
-
-        return renderPropertyDiv(key, propValue, displayText);
+        return formatValueWithLabel(title, propValue);
     });
 
 /**
  * Renders a URI property as a clickable link
  */
 const renderUriLink = (key, uriValue, linkText) => (
-    <div key={`${key}-uri-${uriValue}`} style={ITEM_STYLE}>
-        <a href={uriValue} target="_blank" rel="noopener noreferrer">
-            {linkText}
-        </a>
-    </div>
+    <a
+        key={`${key}-uri-${uriValue}`}
+        href={uriValue}
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        {linkText}
+    </a>
 );
 
 /**
@@ -103,9 +91,7 @@ const formatObjectWithLinks = (value, uriFields, schemaProperties = {}) =>
 
             const propSchema = schemaProperties[key] || {};
             const { title } = propSchema;
-            const displayText = formatValueWithLabel(title, propValue);
-
-            return renderPropertyDiv(key, propValue, displayText);
+            return formatValueWithLabel(title, propValue);
         })
         .filter(Boolean);
 

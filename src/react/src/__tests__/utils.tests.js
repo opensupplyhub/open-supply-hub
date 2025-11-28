@@ -2860,14 +2860,9 @@ describe('formatPartnerFieldValue', () => {
 
             expect(Array.isArray(result)).toBe(true);
             expect(result.length).toBe(1);
-            expect(result[0].type).toBe('div');
-            expect(result[0].props.children.type).toBe('a');
-            expect(result[0].props.children.props.href).toBe(
-                'https://example.com/audit-123',
-            );
-            expect(result[0].props.children.props.children).toBe(
-                'View Audit Report',
-            );
+            expect(result[0].type).toBe('a');
+            expect(result[0].props.href).toBe('https://example.com/audit-123');
+            expect(result[0].props.children).toBe('View Audit Report');
         });
 
         it('formats URI field without _text property, using URI as link text', () => {
@@ -2891,12 +2886,11 @@ describe('formatPartnerFieldValue', () => {
 
             expect(Array.isArray(result)).toBe(true);
             expect(result.length).toBe(1);
-            expect(result[0].type).toBe('div');
-            expect(result[0].props.children.type).toBe('a');
-            expect(result[0].props.children.props.href).toBe(
+            expect(result[0].type).toBe('a');
+            expect(result[0].props.href).toBe(
                 'https://livingwage.mit.edu/locations/123',
             );
-            expect(result[0].props.children.props.children).toBe(
+            expect(result[0].props.children).toBe(
                 'https://livingwage.mit.edu/locations/123',
             );
         });
@@ -2922,8 +2916,7 @@ describe('formatPartnerFieldValue', () => {
 
             expect(Array.isArray(result)).toBe(true);
             expect(result.length).toBe(1);
-            expect(result[0].type).toBe('div');
-            expect(result[0].props.children).toBe('Internal ID: abc-123-xyz');
+            expect(result[0]).toBe('Internal ID: abc-123-xyz');
         });
 
         it('formats non-URI field without title as plain value', () => {
@@ -2946,8 +2939,7 @@ describe('formatPartnerFieldValue', () => {
 
             expect(Array.isArray(result)).toBe(true);
             expect(result.length).toBe(1);
-            expect(result[0].type).toBe('div');
-            expect(result[0].props.children).toBe('Some notes here');
+            expect(result[0]).toBe('Some notes here');
         });
 
         it('formats mixed URI and non-URI fields with titles', () => {
@@ -2987,29 +2979,22 @@ describe('formatPartnerFieldValue', () => {
             expect(result.length).toBe(3); // url, internal_id, status (url_text is skipped)
 
             const urlElement = result.find(
-                r =>
-                    r.props.children?.type === 'a' &&
-                    r.props.children?.props?.href ===
-                        'https://example.com/report',
+                r => r.type === 'a' && r.props.href === 'https://example.com/report',
             );
             expect(urlElement).toBeDefined();
-            expect(urlElement.props.children.props.children).toBe(
-                'View Report',
-            );
+            expect(urlElement.props.children).toBe('View Report');
 
             const internalIdElement = result.find(
-                r =>
-                    typeof r.props.children === 'string' &&
-                    r.props.children.includes('Internal ID: ABC-123'),
+                r => typeof r === 'string' && r.includes('Internal ID: ABC-123'),
             );
             expect(internalIdElement).toBeDefined();
+            expect(internalIdElement).toBe('Internal ID: ABC-123');
 
             const statusElement = result.find(
-                r =>
-                    typeof r.props.children === 'string' &&
-                    r.props.children.includes('Status: active'),
+                r => typeof r === 'string' && r.includes('Status: active'),
             );
             expect(statusElement).toBeDefined();
+            expect(statusElement).toBe('Status: active');
         });
 
         it('formats object without URI fields using plain formatting with titles', () => {
@@ -3044,9 +3029,9 @@ describe('formatPartnerFieldValue', () => {
             expect(Array.isArray(result)).toBe(true);
             expect(result.length).toBe(3);
 
-            expect(result[0].props.children).toBe('Full Name: John Doe');
-            expect(result[1].props.children).toBe('Age: 30');
-            expect(result[2].props.children).toBe('Email Address: john@example.com');
+            expect(result[0]).toBe('Full Name: John Doe');
+            expect(result[1]).toBe('Age: 30');
+            expect(result[2]).toBe('Email Address: john@example.com');
         });
     });
 });
