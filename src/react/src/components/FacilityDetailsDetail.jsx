@@ -68,6 +68,7 @@ const FacilityDetailsDetail = ({
     isVerified,
     isFromClaim,
     classes,
+    urlReference,
 }) => (
     <div className={classes.root} data-testid="facility-details-detail">
         <ShowOnly when={isVerified || isFromClaim}>

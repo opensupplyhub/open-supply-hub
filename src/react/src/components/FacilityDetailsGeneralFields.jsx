@@ -95,7 +95,9 @@ const FacilityDetailsGeneralFields = ({
     }, [data]);
 
     const renderExtendedField = ({ label, fieldName, formatValue }) => {
+        // You probably can use just a single value here, double-check
         let values = get(data, `properties.extended_fields.${fieldName}`, []);
+        if (!values.length || !values[0]) return null;
 
         const formatField = item =>
             formatExtendedField({ ...item, formatValue });
@@ -227,12 +229,12 @@ const FacilityDetailsGeneralFields = ({
     };
 
     const renderPartnerField = ({ label, fieldName, formatValue }) => {
-        // const values = get(data, `properties.partner_fields.${fieldName}`, []);
+        const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
-        const val = get(data, `properties.partner_fields.${fieldName}[0]`);
-        console.log('val is ', val);
+        if (!values.length || !values[0]) return null;
 
-        if (!val) return null;
+        const formatField = item =>
+            formatExtendedField({ ...item, formatValue });
 
         // If partner field contain JSON schema AND contain "format": "uri-reference"
         // Render specific FacilityDetailsItem, maybe create another component
@@ -243,7 +245,15 @@ const FacilityDetailsGeneralFields = ({
         ) {
             return (
                 <Grid item xs={12} md={6} key={`partner-${label}`}>
-                    {val.json_schema?.properties?.value?.format}
+                    <FacilityDetailsItem
+                        {...topValue}
+                        label={label}
+                        /* TODO Primary can act as URI reference */
+                        // primary={val.base_url}
+                        urlReference={values[0].base_url}
+                        additionalContent={values.slice(1).map(formatField)}
+                        embed={embed}
+                    />
                 </Grid>
             );
         }
@@ -262,14 +272,12 @@ const FacilityDetailsGeneralFields = ({
                 <FacilityDetailsItem
                     {...topValue}
                     label={topValue.label ? topValue.label : label}
-                    additionalContent={formatField(val)}
+                    additionalContent={values.slice(1).map(formatField)}
                     embed={embed}
                 />
             </Grid>
         );
     };
-
-    const renderPartnerFieldWithURLSchema = () => {};
 
     const contributorFields = filter(
         get(data, 'properties.contributor_fields', null),
@@ -316,11 +324,6 @@ const FacilityDetailsGeneralFields = ({
                 .replace(/\b\w/g, l => l.toUpperCase()),
             formatValue: formatPartnerFieldValue,
         }));
-
-        const partnerFieldsWithURIReference = partnerFieldNames.map(
-            fieldName => ({}),
-        );
-        console.log('partnerFields: ', partnerFields);
 
         return (
             <FeatureFlag

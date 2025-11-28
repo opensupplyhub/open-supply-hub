@@ -48,10 +48,15 @@ const FacilityDetailsItem = ({
     isFromClaim,
     additionalContentText = 'entry',
     additionalContentTextPlural = 'entries',
+    urlReference,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
     const additionalContentCount = additionalContent?.length;
+
+    console.log(
+        `Additional content for ${label}: ${JSON.stringify(additionalContent)}`,
+    );
 
     return (
         <div className={classes.item}>
@@ -69,6 +74,7 @@ const FacilityDetailsItem = ({
                 jsonSchema={!embed ? jsonSchema : null}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
+                urlReference={urlReference}
             />
             <ShowOnly when={hasAdditionalContent}>
                 <Button
@@ -85,8 +91,7 @@ const FacilityDetailsItem = ({
                         : additionalContentTextPlural}
                 </Button>
             </ShowOnly>
-            {/* TODO: Adjust sidebar to render url referencse partner fields as well */}
-            {/* <TitledDrawer
+            <TitledDrawer
                 open={isOpen}
                 anchor="right"
                 onClose={() => setIsOpen(false)}
@@ -99,6 +104,7 @@ const FacilityDetailsItem = ({
                 <div className={classes.drawer}>
                     <div className={classes.itemWrapper}>
                         <FacilityDetailsDetail
+                            urlReference={urlReference}
                             primary={primary || `${lat}, ${lng}` || null}
                             secondary={!embed ? secondary : null}
                             sourceBy={!embed ? sourceBy : null}
@@ -109,13 +115,19 @@ const FacilityDetailsItem = ({
                         />
                     </div>
                     {isOpen &&
-                        additionalContent.map(item => (
-                            <div className={classes.itemWrapper} key={item.key}>
-                                <FacilityDetailsDetail {...item} />
-                            </div>
-                        ))}
+                        additionalContent.map(item => {
+                            console.log('item: ', item);
+                            return (
+                                <div
+                                    className={classes.itemWrapper}
+                                    key={item.key}
+                                >
+                                    <FacilityDetailsDetail {...item} />
+                                </div>
+                            );
+                        })}
                 </div>
-            </TitledDrawer> */}
+            </TitledDrawer>
         </div>
     );
 };
