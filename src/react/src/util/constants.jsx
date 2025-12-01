@@ -1131,14 +1131,29 @@ export const EXTENDED_FIELD_TYPES = [
         label: 'ISIC 4',
         fieldName: 'isic_4',
         formatValue: value => {
-            const { section, division, group, class: isicClass } =
-                value?.raw_value || value || {};
-            return [
-                section && `Section: ${section}`,
-                division && `Division: ${division}`,
-                group && `Group: ${group}`,
-                isicClass && `Class: ${isicClass}`,
-            ].filter(Boolean);
+            const rawValue = value?.raw_value ?? value ?? {};
+            const entries = Array.isArray(rawValue) ? rawValue : [rawValue];
+
+            return entries.reduce((acc, entry, index) => {
+                const { section, division, group, class: isicClass } =
+                    entry || {};
+                const lines = [
+                    section && `Section: ${section}`,
+                    division && `Division: ${division}`,
+                    group && `Group: ${group}`,
+                    isicClass && `Class: ${isicClass}`,
+                ].filter(Boolean);
+
+                if (!lines.length) {
+                    return acc;
+                }
+
+                if (acc.length && index > 0) {
+                    return acc.concat(['', ...lines]);
+                }
+
+                return acc.concat(lines);
+            }, []);
         },
     },
 ];

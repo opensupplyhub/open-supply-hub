@@ -312,7 +312,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         expected_value = {
             'raw_value': self.moderation_event.cleaned_data[
                 'fields'
-            ]['isic_4'][0]
+            ]['isic_4']
         }
         self.assertEqual(isic_field.value, expected_value)
 

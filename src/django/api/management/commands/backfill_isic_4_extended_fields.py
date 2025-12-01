@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction, IntegrityError, DatabaseError
 from django.utils import timezone
 
@@ -14,6 +14,25 @@ class Command(BaseCommand):
         "ExtendedField for items that are MATCHED or CONFIRMED_MATCH, "
         "where the contributor has a corresponding NonstandardField('isic_4')."
     )
+
+    @staticmethod
+    def _normalize_isic_entries(raw_value):
+        normalized = get_isic_4_extendedfield_value(raw_value)
+        entries = normalized.get('raw_value', [])
+        return entries
+
+    @staticmethod
+    def _build_extended_field(item, normalized_entry):
+        return ExtendedField(
+            contributor=item.source.contributor,
+            facility=item.facility,
+            facility_list_item=item,
+            facility_claim=None,
+            is_verified=False,
+            field_name=ExtendedField.ISIC_4,
+            value={'raw_value': normalized_entry},
+            origin_source=item.origin_source,
+        )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -45,6 +64,15 @@ class Command(BaseCommand):
                 'print the related facility OS ID'
             )
         )
+        parser.add_argument(
+            '--os-id',
+            type=str,
+            default=None,
+            help=(
+                'Available only with --singleisic. If provided, backfill only '
+                'the specified OS ID.'
+            )
+        )
 
     def handle(self, *args, **options):
         self.stdout.write('Backfilling isic_4 extended fields (ORM)...')
@@ -54,6 +82,12 @@ class Command(BaseCommand):
         continue_on_error = options['continue_on_error']
         contributor_filter = options['contributor_id']
         single_only = options['singleisic']
+        os_id_filter = options['os_id']
+
+        if os_id_filter and not single_only:
+            raise CommandError(
+                '--os-id can only be used together with --singleisic.'
+            )
 
         if dry_run:
             self.stdout.write(self.style.WARNING(
@@ -101,7 +135,11 @@ class Command(BaseCommand):
 
         # If only one record should be backfilled, handle here and exit.
         if single_only:
-            item = items_qs.first()
+            single_qs = items_qs
+            if os_id_filter:
+                single_qs = single_qs.filter(facility__id=os_id_filter)
+
+            item = single_qs.first()
             if item is None:
                 self.stdout.write(
                     'No eligible items found for single backfill.'
@@ -115,14 +153,23 @@ class Command(BaseCommand):
                 )
                 return
 
-            # Normalize via shared helper, then wrap in {'raw_value': ...}.
-            normalized_value = get_isic_4_extendedfield_value(raw)['raw_value']
-            value = {'raw_value': normalized_value}
+            normalized_entries = self._normalize_isic_entries(raw)
+            if not normalized_entries:
+                self.stdout.write(
+                    'Eligible item does not contain valid isic_4; '
+                    'nothing to do.'
+                )
+                return
+
+            extended_fields = [
+                self._build_extended_field(item, normalized_entries)
+            ]
 
             if dry_run:
                 self.stdout.write(
                     self.style.WARNING(
-                        "[DRY-RUN] Would backfill one isic_4 row for OS ID "
+                        "[DRY-RUN] Would backfill "
+                        f"{len(extended_fields)} isic_4 row(s) for OS ID "
                         f"{item.facility.id}"
                     )
                 )
@@ -130,20 +177,12 @@ class Command(BaseCommand):
 
             try:
                 with transaction.atomic():
-                    ef = ExtendedField(
-                        contributor=item.source.contributor,
-                        facility=item.facility,
-                        facility_list_item=item,
-                        facility_claim=None,
-                        is_verified=False,
-                        field_name=ExtendedField.ISIC_4,
-                        value=value,
-                        origin_source=item.origin_source,
-                    )
-                    ef.save()
+                    ExtendedField.objects.bulk_create(extended_fields)
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"Backfilled 1 isic_4 row. OS ID: {item.facility.id}"
+                        "Backfilled "
+                        f"{len(extended_fields)} isic_4 row(s). "
+                        f"OS ID: {item.facility.id}"
                     )
                 )
             except (IntegrityError, DatabaseError) as exc:
@@ -214,21 +253,17 @@ class Command(BaseCommand):
                 stats['skipped_empty_value'] += 1
                 continue
 
-            # Normalize via shared helper, then wrap in {'raw_value': ...}.
-            normalized_value = get_isic_4_extendedfield_value(raw)['raw_value']
-            value = {'raw_value': normalized_value}
+            normalized_entries = self._normalize_isic_entries(raw)
+            if not normalized_entries:
+                stats['skipped_empty_value'] += 1
+                continue
 
-            extended_field = ExtendedField(
-                contributor=item.source.contributor,
-                facility=item.facility,
-                facility_list_item=item,
-                facility_claim=None,
-                is_verified=False,
-                field_name=ExtendedField.ISIC_4,
-                value=value,
-                origin_source=item.origin_source,
+            extended_field = self._build_extended_field(
+                item,
+                normalized_entries
             )
             to_create.append(extended_field)
+
             stats['queued'] += 1
 
             if len(to_create) >= batch_size:
