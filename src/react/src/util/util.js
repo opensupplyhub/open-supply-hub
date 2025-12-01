@@ -1899,10 +1899,10 @@ const formatRawValues = rawValues => {
     return rawValues.toString().split('|');
 };
 
-export const formatPartnerFieldValue = (value, item) => {
-    const { raw_values, raw_value } = value;
+export const formatPartnerFieldValue = (fieldValueData, fieldConfig) => {
+    const { raw_values, raw_value } = fieldValueData;
 
-    const schema = item?.json_schema || null;
+    const schema = fieldConfig?.json_schema || null;
 
     if (schema && (raw_value || raw_values)) {
         const objectValue = raw_value || raw_values;
@@ -1915,7 +1915,7 @@ export const formatPartnerFieldValue = (value, item) => {
         return formatRawValues(raw_values);
     }
     if (raw_value !== undefined) {
-        return value.raw_value;
+        return fieldValueData.raw_value;
     }
-    return value;
+    return fieldValueData;
 };

@@ -1,15 +1,15 @@
 import React from 'react';
 
 /**
- * Format constants for JSON Schema
- * Can be extended in the future for other format types (e.g., 'uri-reference', 'email', etc.)
+ * Format constants for JSON Schema.
+ * Can be extended in the future for other format types (e.g., 'uri-reference', 'email', etc.).
  */
 const FORMAT_TYPES = Object.freeze({
     URI: 'uri',
 });
 
 /**
- * Extracts properties with specific format from JSON schema
+ * Extracts properties with specific format from JSON schema.
  */
 const extractPropertiesByFormat = (schemaProperties, formatType) => {
     const fields = new Set();
@@ -23,7 +23,7 @@ const extractPropertiesByFormat = (schemaProperties, formatType) => {
 };
 
 /**
- * Formats a property value with optional label from schema
+ * Formats a property value with optional label from schema.
  */
 const formatValueWithLabel = (title, value) => {
     const stringValue = String(value || '');
@@ -31,7 +31,7 @@ const formatValueWithLabel = (title, value) => {
 };
 
 /**
- * Formats an object value, displaying property values with optional labels from schema
+ * Formats an object value, displaying property values with optional labels from schema.
  */
 const formatPlainObjectValue = (value, schemaProperties = {}) =>
     Object.keys(value).map(key => {
@@ -42,7 +42,7 @@ const formatPlainObjectValue = (value, schemaProperties = {}) =>
     });
 
 /**
- * Renders a URI property as a clickable link
+ * Renders a URI property as a clickable link.
  */
 const renderUriLink = (key, uriValue, linkText) => (
     <a
@@ -56,13 +56,13 @@ const renderUriLink = (key, uriValue, linkText) => (
 );
 
 /**
- * Checks if a key is a text property for a URI field
+ * Checks if a key is a text property for a URI field.
  */
 const isUriTextProperty = (key, uriFields) =>
     key.endsWith('_text') && uriFields.has(key.slice(0, -5));
 
 /**
- * Gets the display text for a URI property, checking for _text sibling
+ * Gets the display text for a URI property, checking for _text sibling.
  */
 const getUriLinkText = (key, uriValue, value) => {
     const textKey = `${key}_text`;
@@ -70,7 +70,7 @@ const getUriLinkText = (key, uriValue, value) => {
 };
 
 /**
- * Formats an object value with URI fields rendered as clickable links
+ * Formats an object value with URI fields rendered as clickable links.
  */
 const formatObjectWithLinks = (value, uriFields, schemaProperties = {}) =>
     Object.keys(value)

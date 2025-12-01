@@ -5,7 +5,11 @@ const blockStyle = Object.freeze({
     display: 'block',
 });
 
-const renderUniqueListItems = (fieldValue, fieldName = '') => {
+const renderUniqueListItems = (
+    fieldValue,
+    fieldName = '',
+    { preserveOrder = false } = {},
+) => {
     if (!Array.isArray(fieldValue)) {
         return fieldValue;
     }
@@ -14,9 +18,9 @@ const renderUniqueListItems = (fieldValue, fieldName = '') => {
         return fieldValue;
     }
 
-    const uniqueValues = [...new Set(fieldValue)];
+    const values = preserveOrder ? fieldValue : [...new Set(fieldValue)];
 
-    return uniqueValues.map(value =>
+    return values.map(value =>
         fieldName === 'parent_company_os_id' ? (
             <a
                 href={`/facilities/${value}`}
