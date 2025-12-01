@@ -133,7 +133,6 @@ class Contributor(models.Model):
     partner_fields = models.ManyToManyField(
         'PartnerField',
         blank=True,
-        null=True,
         help_text='Partner fields that this contributor can access'
     )
 
