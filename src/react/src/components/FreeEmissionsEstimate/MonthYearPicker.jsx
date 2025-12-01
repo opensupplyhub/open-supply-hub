@@ -5,7 +5,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
 import CloseIcon from '@material-ui/icons/Close';
 import { withStyles } from '@material-ui/core/styles';
 import LabelWithTooltip from './LabelWithTooltip.jsx';
@@ -56,8 +55,7 @@ const MonthYearPicker = ({
     };
 
     const handleYearChange = isoDate => {
-        // VirtualizedYearSelect already provides ISO date
-        // Extract the year and combine with current month
+        // Extract the year and combine with current month.
         const selectedYear = new Date(isoDate).getFullYear();
         if (selectedYear && displayMonth) {
             updateDate(displayMonth, selectedYear);
@@ -85,7 +83,7 @@ const MonthYearPicker = ({
         <div>
             <LabelWithTooltip label={label} tooltipText={tooltipText} />
             <Grid container spacing={8}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                     <FormControl fullWidth variant="outlined" error={error}>
                         <Select
                             value={displayMonth}
@@ -93,20 +91,6 @@ const MonthYearPicker = ({
                             disabled={disabled}
                             displayEmpty
                             renderValue={renderMonthValue}
-                            endAdornment={
-                                value && !disabled ? (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            onClick={handleClear}
-                                            size="small"
-                                            className={classes.clearButton}
-                                            aria-label="Clear date selection"
-                                        >
-                                            <CloseIcon fontSize="small" />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ) : null
-                            }
                         >
                             {MONTHS.map(month => (
                                 <MenuItem key={month.value} value={month.value}>
@@ -116,14 +100,26 @@ const MonthYearPicker = ({
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                     <YearPicker
                         value={value}
                         onChange={handleYearChange}
                         error={error}
                         disabled={disabled}
                         placeholder={placeholderYear}
+                        showClearButton={false}
                     />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <IconButton
+                        onClick={handleClear}
+                        size="small"
+                        className={classes.clearButton}
+                        aria-label="Clear date selection"
+                    >
+                        <CloseIcon fontSize="small" />
+                        Clear Month and Year
+                    </IconButton>
                 </Grid>
             </Grid>
             {error && helperText}

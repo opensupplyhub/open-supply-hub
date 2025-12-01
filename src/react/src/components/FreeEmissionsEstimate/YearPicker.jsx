@@ -22,6 +22,7 @@ const YearPicker = ({
     disabled,
     error,
     onChange,
+    showClearButton,
     classes,
 }) => {
     const {
@@ -83,7 +84,7 @@ const YearPicker = ({
                         },
                     }}
                     endAdornment={
-                        displayYear && !disabled ? (
+                        displayYear && !disabled && showClearButton ? (
                             <InputAdornment position="end">
                                 <IconButton
                                     onClick={handleClear}
@@ -141,6 +142,7 @@ YearPicker.propTypes = {
     error: bool,
     helperText: node,
     disabled: bool,
+    showClearButton: bool,
     classes: object.isRequired,
 };
 
@@ -151,6 +153,7 @@ YearPicker.defaultProps = {
     error: false,
     helperText: null,
     disabled: false,
+    showClearButton: true,
 };
 
 export default withStyles(yearPickerStyles)(YearPicker);
