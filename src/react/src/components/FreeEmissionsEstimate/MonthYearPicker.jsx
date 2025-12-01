@@ -1,12 +1,12 @@
 import React from 'react';
 import { string, func, bool, node, object } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-import { withStyles } from '@material-ui/core/styles';
 
 import LabelWithTooltip from './LabelWithTooltip.jsx';
 import YearPicker from './YearPicker.jsx';

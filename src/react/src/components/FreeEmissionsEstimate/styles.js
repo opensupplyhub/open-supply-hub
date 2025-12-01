@@ -129,6 +129,7 @@ export const energySourceInputStyles = Object.freeze({
 
 export const clearButtonStyles = Object.freeze({
     clearButton: Object.freeze({
+        marginLeft: '10px',
         padding: '4px',
         '&:hover': {
             backgroundColor: 'rgba(0, 0, 0, 0.05)',
