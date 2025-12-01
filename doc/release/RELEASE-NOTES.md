@@ -20,12 +20,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [Follow-up][OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Removed the `null=True` parameter from the `Contributor.partner_fields` ManyToManyField definition in the model class to resolve Django system check warning W340. The parameter had no effect on the field behavior as ManyToManyFields store relationships in an intermediary table rather than as a database column that could contain NULL values.
 
 ### What's new
-<<<<<<< HEAD
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
-=======
-* [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection. 
-* [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information. 
->>>>>>> 99e74c8c (Updated test and release notes)
+* [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
