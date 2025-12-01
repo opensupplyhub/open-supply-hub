@@ -1915,7 +1915,7 @@ export const formatPartnerFieldValue = (fieldValueData, fieldConfig) => {
         return formatRawValues(raw_values);
     }
     if (raw_value !== undefined) {
-        return fieldValueData.raw_value;
+        return raw_value;
     }
     return fieldValueData;
 };
