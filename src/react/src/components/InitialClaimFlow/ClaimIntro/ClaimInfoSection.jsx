@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import InfoIcon from '@material-ui/icons/Info';
 import DialogTooltip from '../../Contribute/DialogTooltip';
+import ImportantNote from '../Shared/ImportantNote/ImportantNote';
 import { ClaimFacilityInfoLink } from '../../../util/constants';
 import { claimInfoStyles } from './styles';
 import ExampleImage from './ExampleImage';
@@ -245,21 +245,10 @@ const ClaimInfoSection = ({ classes, children }) => (
             </div>
         </div>
         <div className={classes.boxContainerWrapper}>
-            <div
-                className={`${classes.boxContainer} ${classes.boxWarningContainer}`}
-            >
-                <Typography variant="body2" className={classes.boxWarningText}>
-                    <span className={classes.boxWarningTextIcon}>
-                        <InfoIcon className={classes.warningIcon} />
-                        <strong>IMPORTANT!</strong>
-                    </span>
-                    <span>
-                        &nbsp;Any documentation appearing to be forged or
-                        counterfeit may result in your claim request being
-                        denied.
-                    </span>
-                </Typography>
-            </div>
+            <ImportantNote
+                text="Any documentation appearing to be forged or counterfeit may result in your claim request being denied."
+                iconType="info"
+            />
         </div>
         <div>{children}</div>
     </div>

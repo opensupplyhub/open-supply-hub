@@ -165,30 +165,6 @@ export const claimInfoStyles = theme => ({
         gap: theme.spacing.unit * 3,
         marginTop: '20px',
     },
-    boxWarningContainer: {
-        maxWidth: '1071px',
-        boxSizing: 'border-box',
-        backgroundColor: COLOURS.LIGHT_RED,
-        padding: theme.spacing.unit * 1.5,
-        display: 'flex',
-        alignItems: 'center',
-    },
-    boxWarningText: {
-        fontSize: '18px',
-        display: 'inline-flex',
-        alignItems: 'center',
-    },
-    warningIcon: {
-        color: COLOURS.MATERIAL_RED,
-        marginRight: theme.spacing.unit,
-        fontSize: 16,
-        marginTop: '2px',
-    },
-    boxWarningTextIcon: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        marginRight: theme.spacing.unit,
-    },
     blueStep: {
         backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
         border: `1px solid ${theme.palette.common.black}`,

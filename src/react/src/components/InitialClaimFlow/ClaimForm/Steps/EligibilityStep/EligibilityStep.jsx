@@ -18,7 +18,7 @@ import eligibilityStepStyles from './styles';
 import RELATIONSHIP_OPTIONS from './constants';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import findSelectedOption from '../utils';
-import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import { selectStyles } from '../../styles';
 
 const EligibilityStep = ({
