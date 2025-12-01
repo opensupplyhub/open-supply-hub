@@ -7,9 +7,12 @@ import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import { withStyles } from '@material-ui/core/styles';
+
 import LabelWithTooltip from './LabelWithTooltip.jsx';
-import { MONTHS } from './constants.jsx';
 import YearPicker from './YearPicker.jsx';
+import ShowOnly from '../ShowOnly.jsx';
+import { MONTHS } from './constants.jsx';
+import { monthYearPickerStyles } from './styles.js';
 
 const MonthYearPicker = ({
     value,
@@ -82,8 +85,12 @@ const MonthYearPicker = ({
     return (
         <div>
             <LabelWithTooltip label={label} tooltipText={tooltipText} />
-            <Grid container spacing={8}>
-                <Grid item xs={12} md={4}>
+            <Grid
+                container
+                spacing={8}
+                className={classes.monthYearPickerContainer}
+            >
+                <Grid item xs={5}>
                     <FormControl fullWidth variant="outlined" error={error}>
                         <Select
                             value={displayMonth}
@@ -100,7 +107,7 @@ const MonthYearPicker = ({
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={5}>
                     <YearPicker
                         value={value}
                         onChange={handleYearChange}
@@ -110,17 +117,20 @@ const MonthYearPicker = ({
                         showClearButton={false}
                     />
                 </Grid>
-                <Grid item xs={12} md={4}>
-                    <IconButton
-                        onClick={handleClear}
-                        size="small"
-                        className={classes.clearButton}
-                        aria-label="Clear date selection"
-                    >
-                        <CloseIcon fontSize="small" />
-                        Clear Month and Year
-                    </IconButton>
-                </Grid>
+                <ShowOnly
+                    when={Boolean(displayMonth && displayYear && !disabled)}
+                >
+                    <Grid item xs={2}>
+                        <IconButton
+                            onClick={handleClear}
+                            size="small"
+                            className={classes.clearButton}
+                            aria-label="Clear date selection"
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Grid>
+                </ShowOnly>
             </Grid>
             {error && helperText}
         </div>
@@ -145,16 +155,6 @@ MonthYearPicker.defaultProps = {
     error: false,
     helperText: null,
     disabled: false,
-};
-
-const monthYearPickerStyles = {
-    clearButton: {
-        marginRight: '8px',
-        padding: '4px',
-        '&:hover': {
-            backgroundColor: 'rgba(0, 0, 0, 0.04)',
-        },
-    },
 };
 
 export default withStyles(monthYearPickerStyles)(MonthYearPicker);

@@ -7,9 +7,11 @@ import FormControl from '@material-ui/core/FormControl';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
 import CloseIcon from '@material-ui/icons/Close';
+import Grid from '@material-ui/core/Grid';
+
 import LabelWithTooltip from './LabelWithTooltip.jsx';
+import ShowOnly from '../ShowOnly.jsx';
 import { useInfiniteYearScroll } from './hooks.js';
 import { yearPickerStyles } from './styles.js';
 
@@ -66,69 +68,76 @@ const YearPicker = ({
 
     return (
         <div>
-            {label && tooltipText && (
+            <ShowOnly when={Boolean(label && tooltipText)}>
                 <LabelWithTooltip label={label} tooltipText={tooltipText} />
-            )}
-            <FormControl fullWidth variant="outlined" error={error}>
-                <Select
-                    value={displayYear}
-                    onChange={handleYearChange}
-                    disabled={disabled}
-                    displayEmpty
-                    renderValue={selected =>
-                        !selected ? placeholder : selected
-                    }
-                    MenuProps={{
-                        PaperProps: {
-                            onScroll: handleScroll,
-                        },
-                    }}
-                    endAdornment={
-                        displayYear && !disabled && showClearButton ? (
-                            <InputAdornment position="end">
-                                <IconButton
-                                    onClick={handleClear}
-                                    size="small"
-                                    className={classes.clearButton}
-                                    aria-label="Clear year selection"
+            </ShowOnly>
+            <Grid container spacing={8} className={classes.yearPickerContainer}>
+                <Grid item xs={showClearButton ? 9 : 12}>
+                    <FormControl fullWidth variant="outlined" error={error}>
+                        <Select
+                            value={displayYear}
+                            onChange={handleYearChange}
+                            disabled={disabled}
+                            displayEmpty
+                            renderValue={selected =>
+                                !selected ? placeholder : selected
+                            }
+                            MenuProps={{
+                                PaperProps: {
+                                    onScroll: handleScroll,
+                                },
+                            }}
+                        >
+                            {years.map(year => (
+                                <MenuItem key={year.value} value={year.value}>
+                                    {year.label}
+                                </MenuItem>
+                            ))}
+                            {isLoading && (
+                                <MenuItem
+                                    disabled
+                                    className={classes.loadingItem}
                                 >
-                                    <CloseIcon fontSize="small" />
-                                </IconButton>
-                            </InputAdornment>
-                        ) : null
-                    }
+                                    <CircularProgress
+                                        size={8}
+                                        className={classes.loadingSpinner}
+                                    />
+                                    <Typography
+                                        variant="body2"
+                                        className={classes.loadingText}
+                                    >
+                                        Loading more years...
+                                    </Typography>
+                                </MenuItem>
+                            )}
+                            {!hasMore && years.length > 0 && (
+                                <MenuItem disabled className={classes.endItem}>
+                                    <Typography
+                                        variant="body2"
+                                        className={classes.endText}
+                                    >
+                                        Reached minimum year (1000)
+                                    </Typography>
+                                </MenuItem>
+                            )}
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <ShowOnly
+                    when={Boolean(showClearButton && displayYear && !disabled)}
                 >
-                    {years.map(year => (
-                        <MenuItem key={year.value} value={year.value}>
-                            {year.label}
-                        </MenuItem>
-                    ))}
-                    {isLoading && (
-                        <MenuItem disabled className={classes.loadingItem}>
-                            <CircularProgress
-                                size={8}
-                                className={classes.loadingSpinner}
-                            />
-                            <Typography
-                                variant="body2"
-                                className={classes.loadingText}
-                            >
-                                Loading more years...
-                            </Typography>
-                        </MenuItem>
-                    )}
-                    {!hasMore && years.length > 0 && (
-                        <MenuItem disabled className={classes.endItem}>
-                            <Typography
-                                variant="body2"
-                                className={classes.endText}
-                            >
-                                Reached minimum year (1000)
-                            </Typography>
-                        </MenuItem>
-                    )}
-                </Select>
-            </FormControl>
+                    <Grid item xs={3}>
+                        <IconButton
+                            onClick={handleClear}
+                            size="small"
+                            className={classes.clearButton}
+                            aria-label="Clear year selection"
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Grid>
+                </ShowOnly>
+            </Grid>
             {error && helperText}
         </div>
     );
