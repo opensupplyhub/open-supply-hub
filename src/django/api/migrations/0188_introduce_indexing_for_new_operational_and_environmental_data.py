@@ -17,7 +17,7 @@ def update_indexing_function(apps, schema_editor):
     '''
 
     helper.run_sql_files([
-        '0187_index_claim_info.sql'
+        '0188_index_claim_info.sql'
     ])
 
 
@@ -30,7 +30,7 @@ def revert_updating_indexing_function(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0186_add_json_schema_to_partner_field'),
+        ('api', '0187_remove_null_from_contributor_partner_fields'),
     ]
 
     operations = [
