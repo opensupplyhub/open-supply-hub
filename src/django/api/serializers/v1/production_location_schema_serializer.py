@@ -1,7 +1,9 @@
+from api.serializers.v1.isic4_entry_serializer \
+    import ISIC4EntrySerializer
 from api.serializers.v1.coordinates_serializer \
-  import CoordinatesSerializer
+    import CoordinatesSerializer
 from api.serializers.v1.number_of_workers_serializer \
-  import NumberOfWorkersSerializer
+    import NumberOfWorkersSerializer
 from api.serializers.v1.string_or_list_field import StringOrListField
 from rest_framework import serializers
 
@@ -51,6 +53,19 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         error_messages={
             'required': 'The lat and lng fields are required!',
             'invalid': 'Field coordinates must be a valid geopoint.'
+        },
+    )
+    isic_4 = serializers.ListField(
+        child=ISIC4EntrySerializer(),
+        required=False,
+        allow_empty=False,
+        min_length=1,
+        max_length=15,
+        error_messages={
+            'min_length': 'Provide at least one isic_4 object.',
+            'max_length': 'Provide at most 15 isic_4 objects.',
+            'invalid': 'Field isic_4 must be a list of objects.',
+            'empty': 'Field isic_4 cannot be empty.',
         },
     )
 
