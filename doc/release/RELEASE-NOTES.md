@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0187_remove_null_from_contributor_partner_fields.py - This migration removes the unnecessary `null=True` parameter from the `partner_fields` ManyToManyField on the Contributor model.
+* 0188_introduce_indexing_for_new_operational_and_environmental_data.py - Updated the `index_claim_info` function to collect new environmental data (opening_date, closing_date, estimated_annual_throughput, actual_annual_energy_consumption) for the `api_facilityindex.claim_info` column. 
 
 ### Code/API changes
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Introduced a new reusable `ImportantNote` component in the new claim flow to replace custom implementations of important notes across multiple components (`BusinessStep`, `ContactInfoStep`, and `ClaimInfoSection`), improving code maintainability and consistency.
@@ -20,12 +21,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
+* [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information.
 * [OSDEV-2269](https://opensupplyhub.atlassian.net/browse/OSDEV-2269) - Added URI format support for partner fields with JSON schema. Properties defined with `"format": "uri"` are rendered as clickable links on production location profile pages.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `index_facilities_new`
 
 
 ## Release 2.16.0

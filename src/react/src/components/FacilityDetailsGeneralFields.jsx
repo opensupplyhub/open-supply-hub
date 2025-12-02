@@ -6,7 +6,7 @@ import filter from 'lodash/filter';
 import { withStyles } from '@material-ui/core/styles';
 
 import FacilityDetailsItem from './FacilityDetailsItem';
-import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo';
+import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo/FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
 import {
