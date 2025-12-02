@@ -57,7 +57,10 @@ class Command(BaseCommand):
 
         # Extract location IDs (facility_id field).
         location_ids = list(
-            approved_claims_with_env_data.values_list('facility_id', flat=True)
+            approved_claims_with_env_data
+            .order_by('facility_id')
+            .values_list('facility_id', flat=True)
+            .distinct()
         )
 
         if not location_ids:
