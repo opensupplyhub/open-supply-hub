@@ -1903,22 +1903,24 @@ const formatRawValues = rawValues => {
     return rawValues.toString().split('|');
 };
 
-export const formatPartnerFieldValue = (fieldValueData, json_schema) => {
-    const { raw_values, raw_value } = fieldValueData;
+export const formatPartnerFieldValue = (fieldValueData, jsonSchema = null) => {
+    const { raw_values: rawValues, raw_value: rawValue } = fieldValueData;
 
-    if (raw_values !== undefined) {
-        if (
-            json_schema &&
-            json_schema.properties &&
-            Object.keys(json_schema.properties).length > 0 &&
-            !Array.isArray(raw_values)
-        ) {
-            return raw_values;
+    const hasJsonProps =
+        isObject(jsonSchema) &&
+        isObject(jsonSchema.properties) &&
+        !isEmpty(jsonSchema.properties);
+
+    if (!isNil(rawValues)) {
+        if (hasJsonProps && !Array.isArray(rawValues)) {
+            return rawValues;
         }
-        return formatRawValues(raw_values);
+        return formatRawValues(rawValues);
     }
-    if (raw_value !== undefined) {
-        return raw_value;
+
+    if (!isNil(rawValue)) {
+        return rawValue;
     }
+
     return fieldValueData;
 };

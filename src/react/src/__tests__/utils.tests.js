@@ -2736,101 +2736,99 @@ describe('processDromoResults', () => {
 });
 
 describe('formatPartnerFieldValue', () => {
-    const emptyItem = {};
-
     it('formats raw_value as a single value', () => {
         const value = { raw_value: 'Test Value' };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('Test Value');
     });
 
     it('formats raw_value with number', () => {
         const value = { raw_value: 100 };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe(100);
     });
 
     it('formats raw_values as array joined by comma', () => {
         const value = { raw_values: ['Value 1', 'Value 2', 'Value 3'] };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('Value 1, Value 2, Value 3');
     });
 
     it('formats empty array as empty string', () => {
         const value = { raw_values: [] };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('');
     });
 
     it('formats single-item array as string without comma', () => {
         const value = { raw_values: ['Single Value'] };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('Single Value');
     });
 
     it('formats raw_values as object with key-value pairs', () => {
         const value = { raw_values: { test_1: '1', test_2: '2' } };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('test_1: 1, test_2: 2');
     });
 
     it('formats empty object as empty string', () => {
         const value = { raw_values: {} };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('');
     });
 
     it('formats raw_values object with nested values', () => {
         const value = { raw_values: { key1: 'value1', key2: 100, key3: 'value3' } };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('key1: value1, key2: 100, key3: value3');
     });
 
     it('formats pipe-delimited string into array (legacy format)', () => {
         const value = { raw_values: 'value1|value2|value3' };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toEqual(['value1', 'value2', 'value3']);
     });
 
     it('formats single string value without pipe', () => {
         const value = { raw_values: 'single value' };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toEqual(['single value']);
     });
 
     it('returns plain value if no raw_value or raw_values property', () => {
         const value = 'Plain String Value';
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('Plain String Value');
     });
 
     it('returns numeric value if no raw_value or raw_values property', () => {
         const value = 42;
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe(42);
     });
 
     it('prefers raw_values over raw_value when both exist', () => {
         const value = { raw_value: 'ignored', raw_values: ['preferred'] };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('preferred');
     });
 
     it('falls back to raw_value when raw_values is undefined', () => {
         const value = { raw_value: 'fallback value' };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('fallback value');
     });
 
     it('formats array with mixed types', () => {
         const value = { raw_values: ['string', 123, 'another'] };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('string, 123, another');
     });
 
     it('formats object with boolean and null values', () => {
         const value = { raw_values: { active: true, deleted: false, notes: null } };
-        const result = formatPartnerFieldValue(value, emptyItem);
+        const result = formatPartnerFieldValue(value);
         expect(result).toBe('active: true, deleted: false, notes: null');
     });
 
