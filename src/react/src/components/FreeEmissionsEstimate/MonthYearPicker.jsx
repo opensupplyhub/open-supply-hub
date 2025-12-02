@@ -58,7 +58,7 @@ const MonthYearPicker = ({
     };
 
     const handleYearChange = isoDate => {
-        // Extract the year and combine with current month.
+        // Extract the year and combine with the month.
         const selectedYear = new Date(isoDate).getFullYear();
         if (selectedYear && displayMonth) {
             updateDate(displayMonth, selectedYear);
