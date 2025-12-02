@@ -10,15 +10,19 @@ const FORMAT_TYPES = Object.freeze({
 /**
  * Component for rendering URI format properties.
  */
-const UriProperty = ({ propertyKey, propertyValue, value }) => {
+const UriProperty = ({ propertyKey, value, schemaProperties }) => {
+    const propertyValue = value[propertyKey];
     if (!propertyValue) {
         return null;
     }
 
     const textKey = `${propertyKey}_text`;
-    const linkText = Object.prototype.hasOwnProperty.call(value, textKey)
-        ? value[textKey]
-        : propertyValue;
+    const textPropertyDefined = schemaProperties && schemaProperties[textKey];
+    const linkText =
+        textPropertyDefined &&
+        Object.prototype.hasOwnProperty.call(value, textKey)
+            ? value[textKey]
+            : propertyValue;
 
     return (
         <a
@@ -35,8 +39,10 @@ const UriProperty = ({ propertyKey, propertyValue, value }) => {
 /**
  * Component for rendering default format properties (no format or unsupported format).
  */
-const DefaultProperty = ({ propertyKey, propertyValue, propertySchema }) => {
-    const { title } = propertySchema || {};
+const DefaultProperty = ({ propertyKey, value, schemaProperties }) => {
+    const propertyValue = value[propertyKey];
+    const propertySchema = schemaProperties[propertyKey] || {};
+    const { title } = propertySchema;
     const stringValue = String(propertyValue || '');
     const displayText = title ? `${title}: ${stringValue}` : stringValue;
 
@@ -62,9 +68,13 @@ const FORMAT_COMPONENTS = Object.freeze({
 const getFormatFromSchema = propertySchema => propertySchema?.format || null;
 
 /**
- * Checks if a property key should be skipped (e.g., _text properties for URI fields).
+ * Checks if a property key should be skipped.
  */
-const shouldSkipProperty = (propertyKey, propertySchema, schemaProperties) => {
+const shouldSkipProperty = (propertyKey, schemaProperties) => {
+    if (!Object.prototype.hasOwnProperty.call(schemaProperties, propertyKey)) {
+        return true;
+    }
+
     if (propertyKey.endsWith('_text')) {
         const baseKey = propertyKey.slice(0, -5);
         const baseSchema = schemaProperties[baseKey];
@@ -91,22 +101,21 @@ const getFormatComponent = format => {
 /**
  * Renders a single property based on format strategy.
  */
-const renderProperty = (propertyKey, propertyValue, propertySchema, value) => {
-    const format = getFormatFromSchema(propertySchema);
-
+const renderProperty = (propertyKey, value, schemaProperties) => {
     if (!Object.prototype.hasOwnProperty.call(value, propertyKey)) {
         return null;
     }
 
+    const propertySchema = schemaProperties[propertyKey] || {};
+    const format = getFormatFromSchema(propertySchema);
     const FormatComponent = getFormatComponent(format);
 
     return (
         <FormatComponent
             key={propertyKey}
             propertyKey={propertyKey}
-            propertyValue={propertyValue}
-            propertySchema={propertySchema}
             value={value}
+            schemaProperties={schemaProperties}
         />
     );
 };
@@ -127,24 +136,12 @@ const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
     const schemaProperties = jsonSchema?.properties || {};
 
     const renderedItems = Object.keys(value)
-        .filter(propertyKey => {
-            const propertySchema = schemaProperties[propertyKey] || {};
-            return !shouldSkipProperty(
-                propertyKey,
-                propertySchema,
-                schemaProperties,
-            );
-        })
-        .map(propertyKey => {
-            const propertyValue = value[propertyKey];
-            const propertySchema = schemaProperties[propertyKey] || {};
-            return renderProperty(
-                propertyKey,
-                propertyValue,
-                propertySchema,
-                value,
-            );
-        })
+        .filter(
+            propertyKey => !shouldSkipProperty(propertyKey, schemaProperties),
+        )
+        .map(propertyKey =>
+            renderProperty(propertyKey, value, schemaProperties),
+        )
         .filter(Boolean);
 
     return <>{renderedItems}</>;
