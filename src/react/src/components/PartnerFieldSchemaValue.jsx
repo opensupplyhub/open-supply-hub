@@ -16,7 +16,7 @@ const UriProperty = ({ propertyKey, propertyValue, value }) => {
     }
 
     const textKey = `${propertyKey}_text`;
-    const linkText = Object.prototype.hasOwnProperty.call(value, textKey)
+    const linkText = Object.hasOwn(value, textKey)
         ? value[textKey]
         : propertyValue;
 
@@ -94,7 +94,7 @@ const getFormatComponent = format => {
 const renderProperty = (propertyKey, propertyValue, propertySchema, value) => {
     const format = getFormatFromSchema(propertySchema);
 
-    if (!Object.prototype.hasOwnProperty.call(value, propertyKey)) {
+    if (!Object.hasOwn(value, propertyKey)) {
         return null;
     }
 
