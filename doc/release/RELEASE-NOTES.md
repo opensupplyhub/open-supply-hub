@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Introduced a new reusable `ImportantNote` component in the new claim flow to replace custom implementations of important notes across multiple components (`BusinessStep`, `ContactInfoStep`, and `ClaimInfoSection`), improving code maintainability and consistency.
 * [Follow-up][OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Removed the `null=True` parameter from the `Contributor.partner_fields` ManyToManyField definition in the model class to resolve Django system check warning W340. The parameter had no effect on the field behavior as ManyToManyFields store relationships in an intermediary table rather than as a database column that could contain NULL values.
+* [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Added the `reindex_locations_with_environmental_data` management command to perform a one-time reindexing of locations that have approved claims containing the new environmental data fields (opening/closing dates, throughput, energy consumption). This ensures that the already contributed environmental data will be displayed on the location profile once the environmental data display feature is released in version `2.17.0`. The command also includes a `--dry-run` flag to preview the affected location IDs before execution.
 
 ### What's new
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
@@ -27,7 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-    * `index_facilities_new`
+    * `reindex_locations_with_environmental_data`
 
 
 ## Release 2.16.0
