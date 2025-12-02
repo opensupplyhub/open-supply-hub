@@ -1907,7 +1907,12 @@ export const formatPartnerFieldValue = (fieldValueData, json_schema) => {
     const { raw_values, raw_value } = fieldValueData;
 
     if (raw_values !== undefined) {
-        if (json_schema && !Array.isArray(raw_values)) {
+        if (
+            json_schema &&
+            json_schema.properties &&
+            Object.keys(json_schema.properties).length > 0 &&
+            !Array.isArray(raw_values)
+        ) {
             return raw_values;
         }
         return formatRawValues(raw_values);
