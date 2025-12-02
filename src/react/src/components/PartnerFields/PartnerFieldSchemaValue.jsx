@@ -50,7 +50,7 @@ const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
         typeof value !== 'object' ||
         Array.isArray(value)
     ) {
-        return value;
+        return value ?? null;
     }
 
     const schemaProperties = jsonSchema?.properties || {};
