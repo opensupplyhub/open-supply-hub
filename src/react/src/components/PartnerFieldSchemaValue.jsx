@@ -43,7 +43,7 @@ const DefaultProperty = ({ propertyKey, value, schemaProperties }) => {
     const propertyValue = value[propertyKey];
     const propertySchema = schemaProperties[propertyKey] || {};
     const { title } = propertySchema;
-    const stringValue = String(propertyValue || '');
+    const stringValue = propertyValue != null ? String(propertyValue) : '';
     const displayText = title ? `${title}: ${stringValue}` : stringValue;
 
     return (
