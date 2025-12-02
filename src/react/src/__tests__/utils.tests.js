@@ -2834,204 +2834,30 @@ describe('formatPartnerFieldValue', () => {
         expect(result).toBe('active: true, deleted: false, notes: null');
     });
 
-    describe('with JSON schema formatting', () => {
-        it('formats URI field with _text property as clickable link', () => {
-            const value = {
-                raw_value: {
-                    url: 'https://example.com/audit-123',
-                    url_text: 'View Audit Report',
+    it('formats object with schema', () => {
+        const value = {
+            raw_value: {
+                url: 'https://example.com/report',
+                url_text: 'View Report',
+            },
+        };
+        const jsonSchema = {
+            type: 'object',
+            properties: {
+                url: {
+                    type: 'string',
+                    format: 'uri',
                 },
-            };
-            const item = {
-                json_schema: {
-                    type: 'object',
-                    properties: {
-                        url: {
-                            type: 'string',
-                            format: 'uri',
-                        },
-                        url_text: {
-                            type: 'string',
-                        },
-                    },
+                url_text: {
+                    type: 'string',
                 },
-            };
-            const result = formatPartnerFieldValue(value, item);
+            },
+        };
+        const result = formatPartnerFieldValue(value, jsonSchema);
 
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(1);
-            expect(result[0].type).toBe('a');
-            expect(result[0].props.href).toBe('https://example.com/audit-123');
-            expect(result[0].props.children).toBe('View Audit Report');
-        });
-
-        it('formats URI field without _text property, using URI as link text', () => {
-            const value = {
-                raw_value: {
-                    mit_data_url: 'https://livingwage.mit.edu/locations/123',
-                },
-            };
-            const item = {
-                json_schema: {
-                    type: 'object',
-                    properties: {
-                        mit_data_url: {
-                            type: 'string',
-                            format: 'uri',
-                        },
-                    },
-                },
-            };
-            const result = formatPartnerFieldValue(value, item);
-
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(1);
-            expect(result[0].type).toBe('a');
-            expect(result[0].props.href).toBe(
-                'https://livingwage.mit.edu/locations/123',
-            );
-            expect(result[0].props.children).toBe(
-                'https://livingwage.mit.edu/locations/123',
-            );
-        });
-
-        it('formats non-URI field with title as "Title: value"', () => {
-            const value = {
-                raw_value: {
-                    internal_id: 'abc-123-xyz',
-                },
-            };
-            const item = {
-                json_schema: {
-                    type: 'object',
-                    properties: {
-                        internal_id: {
-                            type: 'string',
-                            title: 'Internal ID',
-                        },
-                    },
-                },
-            };
-            const result = formatPartnerFieldValue(value, item);
-
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(1);
-            expect(result[0]).toBe('Internal ID: abc-123-xyz');
-        });
-
-        it('formats non-URI field without title as plain value', () => {
-            const value = {
-                raw_value: {
-                    notes: 'Some notes here',
-                },
-            };
-            const item = {
-                json_schema: {
-                    type: 'object',
-                    properties: {
-                        notes: {
-                            type: 'string',
-                        },
-                    },
-                },
-            };
-            const result = formatPartnerFieldValue(value, item);
-
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(1);
-            expect(result[0]).toBe('Some notes here');
-        });
-
-        it('formats mixed URI and non-URI fields with titles', () => {
-            const value = {
-                raw_value: {
-                    url: 'https://example.com/report',
-                    url_text: 'View Report',
-                    internal_id: 'ABC-123',
-                    status: 'active',
-                },
-            };
-            const item = {
-                json_schema: {
-                    type: 'object',
-                    properties: {
-                        url: {
-                            type: 'string',
-                            format: 'uri',
-                        },
-                        url_text: {
-                            type: 'string',
-                        },
-                        internal_id: {
-                            type: 'string',
-                            title: 'Internal ID',
-                        },
-                        status: {
-                            type: 'string',
-                            title: 'Status',
-                        },
-                    },
-                },
-            };
-            const result = formatPartnerFieldValue(value, item);
-
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(3); // url, internal_id, status (url_text is skipped)
-
-            const urlElement = result.find(
-                r => r.type === 'a' && r.props.href === 'https://example.com/report',
-            );
-            expect(urlElement).toBeDefined();
-            expect(urlElement.props.children).toBe('View Report');
-
-            const internalIdElement = result.find(
-                r => typeof r === 'string' && r.includes('Internal ID: ABC-123'),
-            );
-            expect(internalIdElement).toBeDefined();
-            expect(internalIdElement).toBe('Internal ID: ABC-123');
-
-            const statusElement = result.find(
-                r => typeof r === 'string' && r.includes('Status: active'),
-            );
-            expect(statusElement).toBeDefined();
-            expect(statusElement).toBe('Status: active');
-        });
-
-        it('formats object without URI fields using plain formatting with titles', () => {
-            const value = {
-                raw_value: {
-                    name: 'John Doe',
-                    age: 30,
-                    email: 'john@example.com',
-                },
-            };
-            const item = {
-                json_schema: {
-                    type: 'object',
-                    properties: {
-                        name: {
-                            type: 'string',
-                            title: 'Full Name',
-                        },
-                        age: {
-                            type: 'integer',
-                            title: 'Age',
-                        },
-                        email: {
-                            type: 'string',
-                            title: 'Email Address',
-                        },
-                    },
-                },
-            };
-            const result = formatPartnerFieldValue(value, item);
-
-            expect(Array.isArray(result)).toBe(true);
-            expect(result.length).toBe(3);
-
-            expect(result[0]).toBe('Full Name: John Doe');
-            expect(result[1]).toBe('Age: 30');
-            expect(result[2]).toBe('Email Address: john@example.com');
+        expect(result).toEqual({
+            url: 'https://example.com/report',
+            url_text: 'View Report',
         });
     });
 });

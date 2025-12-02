@@ -228,13 +228,11 @@ const FacilityDetailsGeneralFields = ({
     const renderPartnerField = ({ label, fieldName, formatValue }) => {
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
-        const formatField = item => {
-            const customFormatValue = value => formatValue(value, item);
-            return formatExtendedField({
+        const formatField = item =>
+            formatExtendedField({
                 ...item,
-                formatValue: customFormatValue,
+                formatValue,
             });
-        };
 
         if (!values.length || !values[0]) return null;
 

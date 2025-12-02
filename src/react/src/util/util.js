@@ -94,7 +94,6 @@ import { createFacilitiesCSV, formatDataForCSV } from './util.facilitiesCSV';
 import formatFacilityClaimsDataForXLSX from './util.facilityClaimsXLSX';
 import formatModerationEventsDataForXLSX from './util.moderationEventsXLSX';
 import COLOURS from './COLOURS';
-import formatPartnerFieldWithSchema from './partnerFieldFormatter';
 
 export function DownloadXLSX(data, fileName) {
     import('file-saver').then(({ saveAs }) => {
@@ -1784,12 +1783,16 @@ export const formatExtendedField = ({
     source_by,
     unit,
     label,
+    json_schema,
     contributor_name,
     is_from_claim,
     is_verified,
     formatValue = rawValue => rawValue,
 }) => {
-    const primary = renderUniqueListItems(formatValue(value), field_name);
+    const primary = renderUniqueListItems(
+        formatValue(value, json_schema),
+        field_name,
+    );
     const secondary = formatAttribution(created_at, contributor_name);
 
     return {
@@ -1798,6 +1801,7 @@ export const formatExtendedField = ({
         sourceBy: source_by,
         unit,
         label,
+        jsonSchema: json_schema,
         embeddedSecondary: formatAttribution(created_at),
         isVerified: is_verified,
         isFromClaim: is_from_claim,
@@ -1899,19 +1903,13 @@ const formatRawValues = rawValues => {
     return rawValues.toString().split('|');
 };
 
-export const formatPartnerFieldValue = (fieldValueData, fieldConfig) => {
+export const formatPartnerFieldValue = (fieldValueData, json_schema) => {
     const { raw_values, raw_value } = fieldValueData;
 
-    const schema = fieldConfig?.json_schema || null;
-
-    if (schema && (raw_value || raw_values)) {
-        const objectValue = raw_value || raw_values;
-        if (typeof objectValue === 'object' && !Array.isArray(objectValue)) {
-            return formatPartnerFieldWithSchema(objectValue, schema);
-        }
-    }
-
     if (raw_values !== undefined) {
+        if (json_schema && !Array.isArray(raw_values)) {
+            return raw_values;
+        }
         return formatRawValues(raw_values);
     }
     if (raw_value !== undefined) {
