@@ -68,10 +68,7 @@ const MonthYearPicker = ({
         }
     };
 
-    const handleClear = event => {
-        event.stopPropagation();
-        onChange('');
-    };
+    const handleClear = () => onChange('');
 
     const renderMonthValue = selected => {
         if (!selected) {

@@ -61,10 +61,7 @@ const YearPicker = ({
         }
     };
 
-    const handleClear = event => {
-        event.stopPropagation();
-        onChange('');
-    };
+    const handleClear = () => onChange('');
 
     return (
         <div>
