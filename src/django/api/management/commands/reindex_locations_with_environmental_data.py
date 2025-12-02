@@ -52,7 +52,6 @@ class Command(BaseCommand):
             .filter(status=FacilityClaimStatuses.APPROVED)
             .filter(environmental_fields_filter)
             .select_related('facility')
-            .distinct()
         )
 
         # Extract location IDs (facility_id field).
