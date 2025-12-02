@@ -118,4 +118,3 @@ describe('PartnerFieldSchemaValue', () => {
         expect(urlTextElements.length).toBe(1);
     });
 });
-
