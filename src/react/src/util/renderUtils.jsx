@@ -14,6 +14,10 @@ const renderUniqueListItems = (
         return fieldValue;
     }
 
+    if (fieldValue.length > 0 && React.isValidElement(fieldValue[0])) {
+        return fieldValue;
+    }
+
     const values = preserveOrder ? fieldValue : [...new Set(fieldValue)];
 
     return values.map(value =>

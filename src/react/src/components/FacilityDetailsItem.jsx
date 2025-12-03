@@ -40,6 +40,7 @@ const FacilityDetailsItem = ({
     secondary,
     sourceBy,
     unit,
+    jsonSchema,
     classes,
     embed,
     isVerified,
@@ -64,6 +65,7 @@ const FacilityDetailsItem = ({
                 secondary={!embed ? secondary : null}
                 sourceBy={!embed ? sourceBy : null}
                 unit={!embed ? unit : null}
+                jsonSchema={!embed ? jsonSchema : null}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
             />
@@ -99,6 +101,7 @@ const FacilityDetailsItem = ({
                             secondary={!embed ? secondary : null}
                             sourceBy={!embed ? sourceBy : null}
                             unit={!embed ? unit : null}
+                            jsonSchema={!embed ? jsonSchema : null}
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}
                         />

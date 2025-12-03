@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
 * [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information.
+* [OSDEV-2269](https://opensupplyhub.atlassian.net/browse/OSDEV-2269) - Added URI format support for partner fields with JSON schema. Properties defined with `"format": "uri"` are rendered as clickable links on production location profile pages.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -70,6 +71,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     6. Make sure no errors appear.
     7. Finally, run real `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields`.
     8. Make sure no errors appear.
+
 
 ## Release 2.15.2
 

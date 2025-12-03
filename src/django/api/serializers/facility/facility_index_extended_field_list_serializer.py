@@ -19,7 +19,7 @@ class FacilityIndexExtendedFieldListSerializer:
                              'updated_at', 'contributor_name',
                              'contributor_id', 'value_count', 'is_from_claim',
                              'field_name', 'verified_count', 'source_by',
-                             'unit', 'label']
+                             'unit', 'label', 'json_schema']
         self.data: list = []
 
         if exclude_fields:
@@ -37,7 +37,7 @@ class FacilityIndexExtendedFieldListSerializer:
             'is_from_claim': self._get_is_from_claim,
             'verified_count': self._get_verified_count,
         }
-        context_overrides = {'source_by', 'unit', 'label'}
+        context_overrides = {'source_by', 'unit', 'label', 'json_schema'}
 
         for extended_field in self.extended_field_list:
             serialized_extended_field = {}

@@ -2831,4 +2831,31 @@ describe('formatPartnerFieldValue', () => {
         const result = formatPartnerFieldValue(value);
         expect(result).toBe('active: true, deleted: false, notes: null');
     });
+
+    it('formats object with schema', () => {
+        const value = {
+            raw_value: {
+                url: 'https://example.com/report',
+                url_text: 'View Report',
+            },
+        };
+        const jsonSchema = {
+            type: 'object',
+            properties: {
+                url: {
+                    type: 'string',
+                    format: 'uri',
+                },
+                url_text: {
+                    type: 'string',
+                },
+            },
+        };
+        const result = formatPartnerFieldValue(value, jsonSchema);
+
+        expect(result).toEqual({
+            url: 'https://example.com/report',
+            url_text: 'View Report',
+        });
+    });
 });
