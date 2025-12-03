@@ -62,10 +62,10 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         min_length=1,
         max_length=15,
         error_messages={
-            'min_length': 'Provide at least one isic_4 object.',
-            'max_length': 'Provide at most 15 isic_4 objects.',
-            'invalid': 'Field isic_4 must be a list of objects.',
-            'empty': 'Field isic_4 cannot be empty.',
+            'not_a_list': 'Field isic_4 must be a list of objects.',
+            'min_length': 'Provide at least one ISIC-4 object.',
+            'max_length': 'Provide at most 15 ISIC-4 objects.',
+            'empty': 'Field isic_4 cannot be empty if provided.',
         },
     )
 
@@ -94,6 +94,23 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
                 "detail": f"Field {field_name} must be a string, not a number."
             }
         return None
+
+    def validate_isic_4(self, value):
+        """Validate that there are no duplicate ISIC-4 objects."""
+        seen = []
+
+        for isic_obj in value:
+            # Convert to a comparable format (sorted tuple of items)
+            # to detect duplicates regardless of field order.
+            isic_tuple = tuple(sorted(isic_obj.items()))
+            if isic_tuple in seen:
+                raise serializers.ValidationError(
+                    "Duplicate ISIC-4 objects are not allowed "
+                    "within the same array."
+                )
+            seen.append(isic_tuple)
+
+        return value
 
     def validate(self, data):
         errors = []
