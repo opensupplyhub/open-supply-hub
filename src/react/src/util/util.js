@@ -1783,12 +1783,16 @@ export const formatExtendedField = ({
     source_by,
     unit,
     label,
+    json_schema,
     contributor_name,
     is_from_claim,
     is_verified,
     formatValue = rawValue => rawValue,
 }) => {
-    const primary = renderUniqueListItems(formatValue(value), field_name);
+    const primary = renderUniqueListItems(
+        formatValue(value, json_schema),
+        field_name,
+    );
     const secondary = formatAttribution(created_at, contributor_name);
 
     return {
@@ -1797,6 +1801,7 @@ export const formatExtendedField = ({
         sourceBy: source_by,
         unit,
         label,
+        jsonSchema: json_schema,
         embeddedSecondary: formatAttribution(created_at),
         isVerified: is_verified,
         isFromClaim: is_from_claim,
@@ -1898,14 +1903,24 @@ const formatRawValues = rawValues => {
     return rawValues.toString().split('|');
 };
 
-export const formatPartnerFieldValue = value => {
-    const { raw_values, raw_value } = value;
+export const formatPartnerFieldValue = (fieldValueData, jsonSchema = null) => {
+    const { raw_values: rawValues, raw_value: rawValue } = fieldValueData;
 
-    if (raw_values !== undefined) {
-        return formatRawValues(raw_values);
+    const hasJsonProps =
+        isObject(jsonSchema) &&
+        isObject(jsonSchema.properties) &&
+        !isEmpty(jsonSchema.properties);
+
+    if (!isNil(rawValues)) {
+        if (hasJsonProps && !Array.isArray(rawValues)) {
+            return rawValues;
+        }
+        return formatRawValues(rawValues);
     }
-    if (raw_value !== undefined) {
-        return value.raw_value;
+
+    if (!isNil(rawValue)) {
+        return rawValue;
     }
-    return value;
+
+    return fieldValueData;
 };

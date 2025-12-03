@@ -12,7 +12,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import IconButton from '@material-ui/core/IconButton';
 import Switch from '@material-ui/core/Switch';
-import FormFieldTitle from '../../../Shared/FormFieldTitle.jsx/FormFieldTitle';
+import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';

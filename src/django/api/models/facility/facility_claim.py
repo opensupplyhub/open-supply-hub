@@ -412,7 +412,6 @@ class FacilityClaim(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
-
     opening_date = models.DateField(
         null=True,
         blank=True,

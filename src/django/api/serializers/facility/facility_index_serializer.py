@@ -108,6 +108,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             source_by = field.source_by
             unit = field.unit
             label = field.label
+            json_schema = field.json_schema
             fields = grouped_fields.get(field_name, [])
             if not fields:
                 continue
@@ -120,7 +121,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                         'embed_mode_active': embed_mode_active,
                         'source_by': source_by,
                         'unit': unit,
-                        'label': label
+                        'label': label,
+                        'json_schema': json_schema
                     },
                     exclude_fields=(
                         ['created_at'] if not use_main_created_at else []

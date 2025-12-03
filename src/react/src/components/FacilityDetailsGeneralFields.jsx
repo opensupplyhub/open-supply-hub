@@ -6,7 +6,7 @@ import filter from 'lodash/filter';
 import { withStyles } from '@material-ui/core/styles';
 
 import FacilityDetailsItem from './FacilityDetailsItem';
-import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo';
+import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo/FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
 import {
@@ -108,6 +108,94 @@ const FacilityDetailsGeneralFields = ({
 
         if (!values.length || !values[0]) return null;
 
+        if (fieldName === 'isic_4') {
+            const groupedContributions = [];
+            values.forEach(item => {
+                const targetCount = item?.value_count || 1;
+                const contributorKey =
+                    item?.contributor_id ??
+                    item?.contributor_name ??
+                    item?.source_by ??
+                    'unknown';
+                const lastGroup =
+                    groupedContributions[groupedContributions.length - 1];
+                if (
+                    lastGroup &&
+                    lastGroup.contributorKey === contributorKey &&
+                    lastGroup.remaining > 0
+                ) {
+                    lastGroup.items.push(item);
+                    lastGroup.remaining -= 1;
+                } else {
+                    groupedContributions.push({
+                        contributorKey,
+                        remaining: targetCount - 1,
+                        items: [item],
+                    });
+                }
+            });
+
+            const formattedGroups = groupedContributions
+                .map(group => {
+                    const formattedEntries = group.items
+                        .map(formatField)
+                        .filter(Boolean);
+
+                    if (!formattedEntries.length) {
+                        return null;
+                    }
+
+                    const primary = formattedEntries.reduce(
+                        (acc, value, index) => {
+                            if (index > 0) {
+                                acc.push('');
+                            }
+                            if (Array.isArray(value.primary)) {
+                                return acc.concat(value.primary);
+                            }
+                            acc.push(value.primary);
+                            return acc;
+                        },
+                        [],
+                    );
+
+                    const groupKeyParts = [
+                        fieldName,
+                        group.contributorKey,
+                        formattedEntries[0]?.secondary,
+                        formattedEntries.length,
+                    ]
+                        .filter(Boolean)
+                        .join('-');
+
+                    return {
+                        ...formattedEntries[0],
+                        primary,
+                        key: groupKeyParts,
+                    };
+                })
+                .filter(Boolean);
+
+            if (!formattedGroups.length) {
+                return null;
+            }
+
+            const [topGroup, ...restGroups] = formattedGroups;
+
+            return (
+                <Grid item xs={12} md={6} key={fieldName}>
+                    <FacilityDetailsItem
+                        {...topGroup}
+                        label={label}
+                        additionalContent={restGroups}
+                        additionalContentText="entry"
+                        additionalContentTextPlural="entries"
+                        embed={embed}
+                    />
+                </Grid>
+            );
+        }
+
         const topValue = formatField(values[0]);
 
         return (
@@ -141,7 +229,10 @@ const FacilityDetailsGeneralFields = ({
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
         const formatField = item =>
-            formatExtendedField({ ...item, formatValue });
+            formatExtendedField({
+                ...item,
+                formatValue,
+            });
 
         if (!values.length || !values[0]) return null;
 

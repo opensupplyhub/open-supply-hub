@@ -6,6 +6,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import ShowOnly from './ShowOnly';
 import BadgeVerified from './BadgeVerified';
 import FeatureFlag from './FeatureFlag';
+import PartnerFieldSchemaValue from './PartnerFields/PartnerFieldSchemaValue';
 
 import { CLAIM_A_FACILITY } from '../util/constants';
 
@@ -63,6 +64,7 @@ const FacilityDetailsDetail = ({
     secondary,
     sourceBy,
     unit,
+    jsonSchema,
     isVerified,
     isFromClaim,
     classes,
@@ -84,7 +86,14 @@ const FacilityDetailsDetail = ({
         </ShowOnly>
         <div>
             <Typography className={classes.primaryText} component="div">
-                {primary || locationLabeled}
+                {jsonSchema ? (
+                    <PartnerFieldSchemaValue
+                        value={primary}
+                        jsonSchema={jsonSchema}
+                    />
+                ) : (
+                    primary || locationLabeled
+                )}
                 {unit ? <span className={classes.unitText}>{unit}</span> : null}
             </Typography>
             {sourceBy ? (
