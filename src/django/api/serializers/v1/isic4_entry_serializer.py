@@ -5,7 +5,7 @@ from rest_framework.serializers import (
 )
 
 
-class ISIC4EntrySerializer(Serializer):    
+class ISIC4EntrySerializer(Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Define 'class' field directly since it's a Python reserved keyword.
@@ -51,7 +51,7 @@ class ISIC4EntrySerializer(Serializer):
         field_names = ('class', 'group', 'section', 'division')
 
         # Check for unknown fields.
-        unknown_fields = set(data.keys()) - field_names
+        unknown_fields = set(data.keys()) - set(field_names)
         if unknown_fields:
             errors = {}
             for field in unknown_fields:
