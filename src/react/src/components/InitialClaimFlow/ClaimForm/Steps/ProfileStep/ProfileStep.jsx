@@ -13,6 +13,7 @@ import HelpOutline from '@material-ui/icons/HelpOutline';
 import IconButton from '@material-ui/core/IconButton';
 import Switch from '@material-ui/core/Switch';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
+import FormFieldHint from '../../../Shared/FormFieldHint/FormFieldHint';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
@@ -1239,6 +1240,7 @@ const ProfileStep = ({
                             }
                             classes={{ title: classes.formLabel }}
                         />
+                        <FormFieldHint text="Select any relevant options" />
                         <StyledSelect
                             id="affiliations"
                             name="affiliations"
@@ -1264,7 +1266,7 @@ const ProfileStep = ({
                             text={BETA_TOOLTIP_TEXT}
                             childComponent={
                                 <span
-                                    className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                    className={`${classes.betaBadge} ${classes.betaBadgeColumnWithHint}`}
                                 >
                                     BETA
                                 </span>
@@ -1276,6 +1278,7 @@ const ProfileStep = ({
                             label="Certifications / Standards / Regulations"
                             classes={{ title: classes.formLabel }}
                         />
+                        <FormFieldHint text="Select any relevant options" />
                         <StyledSelect
                             id="certifications"
                             name="certifications"
@@ -1301,7 +1304,7 @@ const ProfileStep = ({
                             text={BETA_TOOLTIP_TEXT}
                             childComponent={
                                 <span
-                                    className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                    className={`${classes.betaBadge} ${classes.betaBadgeColumnWithHint}`}
                                 >
                                     BETA
                                 </span>

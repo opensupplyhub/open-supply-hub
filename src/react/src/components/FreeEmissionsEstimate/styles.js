@@ -127,7 +127,21 @@ export const energySourceInputStyles = Object.freeze({
     }),
 });
 
+export const clearButtonStyles = Object.freeze({
+    clearButton: Object.freeze({
+        marginLeft: '10px',
+        padding: '4px',
+        '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+        },
+    }),
+});
+
 export const yearPickerStyles = Object.freeze({
+    ...clearButtonStyles,
+    yearPickerContainer: Object.freeze({
+        alignItems: 'center',
+    }),
     loadingItem: Object.freeze({
         display: 'flex',
         alignItems: 'center',
@@ -153,5 +167,12 @@ export const yearPickerStyles = Object.freeze({
         color: '#64748b',
         fontStyle: 'italic',
         fontSize: '12px',
+    }),
+});
+
+export const monthYearPickerStyles = Object.freeze({
+    ...clearButtonStyles,
+    monthYearPickerContainer: Object.freeze({
+        alignItems: 'center',
     }),
 });

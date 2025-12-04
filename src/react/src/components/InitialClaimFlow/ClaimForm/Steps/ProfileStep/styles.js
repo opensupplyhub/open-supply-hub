@@ -75,6 +75,9 @@ export const profileStepStyles = theme =>
         betaBadgeColumn: Object.freeze({
             top: '80px',
         }),
+        betaBadgeColumnWithHint: Object.freeze({
+            top: '105px',
+        }),
         textareaFieldContainer: Object.freeze({
             position: 'relative',
             maxWidth: '1071px',

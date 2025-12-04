@@ -1,12 +1,18 @@
 import React from 'react';
-import { string, func, bool, node } from 'prop-types';
+import { string, func, bool, node, object } from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@material-ui/icons/Close';
+
 import LabelWithTooltip from './LabelWithTooltip.jsx';
-import { MONTHS } from './constants.jsx';
 import YearPicker from './YearPicker.jsx';
+import ShowOnly from '../ShowOnly.jsx';
+import { MONTHS } from './constants.jsx';
+import { monthYearPickerStyles } from './styles.js';
 
 const MonthYearPicker = ({
     value,
@@ -18,6 +24,7 @@ const MonthYearPicker = ({
     disabled,
     error,
     onChange,
+    classes,
 }) => {
     // Extract month and year from ISO date string (YYYY-MM-DD) for display.
     const date = value ? new Date(value) : null;
@@ -51,8 +58,7 @@ const MonthYearPicker = ({
     };
 
     const handleYearChange = isoDate => {
-        // VirtualizedYearSelect already provides ISO date
-        // Extract the year and combine with current month
+        // Extract the year and combine with the month.
         const selectedYear = new Date(isoDate).getFullYear();
         if (selectedYear && displayMonth) {
             updateDate(displayMonth, selectedYear);
@@ -61,6 +67,8 @@ const MonthYearPicker = ({
             updateDate(1, selectedYear);
         }
     };
+
+    const handleClear = () => onChange('');
 
     const renderMonthValue = selected => {
         if (!selected) {
@@ -74,8 +82,12 @@ const MonthYearPicker = ({
     return (
         <div>
             <LabelWithTooltip label={label} tooltipText={tooltipText} />
-            <Grid container spacing={8}>
-                <Grid item xs={12} md={6}>
+            <Grid
+                container
+                spacing={8}
+                className={classes.monthYearPickerContainer}
+            >
+                <Grid item xs={5}>
                     <FormControl fullWidth variant="outlined" error={error}>
                         <Select
                             value={displayMonth}
@@ -92,15 +104,30 @@ const MonthYearPicker = ({
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={5}>
                     <YearPicker
                         value={value}
                         onChange={handleYearChange}
                         error={error}
                         disabled={disabled}
                         placeholder={placeholderYear}
+                        showClearButton={false}
                     />
                 </Grid>
+                <ShowOnly
+                    when={Boolean(displayMonth && displayYear && !disabled)}
+                >
+                    <Grid item xs={2}>
+                        <IconButton
+                            onClick={handleClear}
+                            size="small"
+                            className={classes.clearButton}
+                            aria-label="Clear date selection"
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Grid>
+                </ShowOnly>
             </Grid>
             {error && helperText}
         </div>
@@ -117,6 +144,7 @@ MonthYearPicker.propTypes = {
     disabled: bool,
     placeholderMonth: string.isRequired,
     placeholderYear: string.isRequired,
+    classes: object.isRequired,
 };
 
 MonthYearPicker.defaultProps = {
@@ -126,4 +154,4 @@ MonthYearPicker.defaultProps = {
     disabled: false,
 };
 
-export default MonthYearPicker;
+export default withStyles(monthYearPickerStyles)(MonthYearPicker);

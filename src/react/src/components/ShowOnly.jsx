@@ -1,36 +1,27 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
+import { bool, object, node } from 'prop-types';
 
-export default class ShowOnly extends PureComponent {
-    render() {
-        const { style, children, when } = this.props;
-
-        if (when) {
-            return (
-                <React.Fragment>
-                    {Object.keys(style).length ? (
-                        <span style={style}> {children} </span>
-                    ) : (
-                        children
-                    )}
-                </React.Fragment>
-            );
-        }
-
+const ShowOnly = ({ style, children, when }) => {
+    if (!when) {
         return null;
     }
-}
 
-ShowOnly.defaultProps = {
-    when: false,
+    if (Object.keys(style).length) {
+        return <span style={style}> {children} </span>;
+    }
+
+    return children;
 };
 
 ShowOnly.propTypes = {
-    when: PropTypes.bool,
-    style: PropTypes.object, // eslint-disable-line react/forbid-prop-types
-    children: PropTypes.node.isRequired,
+    when: bool,
+    style: object,
+    children: node.isRequired,
 };
 
 ShowOnly.defaultProps = {
+    when: false,
     style: {},
 };
+
+export default React.memo(ShowOnly);
