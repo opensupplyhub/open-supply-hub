@@ -68,7 +68,8 @@ const FacilityDetailsDetail = ({
     isVerified,
     isFromClaim,
     classes,
-    urlReference,
+    baseUrl,
+    displayText,
 }) => (
     <div className={classes.root} data-testid="facility-details-detail">
         <ShowOnly when={isVerified || isFromClaim}>
@@ -91,6 +92,8 @@ const FacilityDetailsDetail = ({
                     <PartnerFieldSchemaValue
                         value={primary}
                         jsonSchema={jsonSchema}
+                        baseUrl={baseUrl}
+                        displayText={displayText}
                     />
                 ) : (
                     primary || locationLabeled

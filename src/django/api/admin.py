@@ -262,7 +262,16 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
     class Meta:
         model = PartnerField
-        fields = ['name', 'type', 'unit', 'label', 'source_by', 'base_url', 'display_text', 'json_schema']
+        fields = [
+            'name',
+            'type',
+            'unit',
+            'label',
+            'source_by',
+            'base_url',
+            'display_text',
+            'json_schema'
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

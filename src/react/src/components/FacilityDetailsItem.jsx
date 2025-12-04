@@ -49,14 +49,12 @@ const FacilityDetailsItem = ({
     additionalContentText = 'entry',
     additionalContentTextPlural = 'entries',
     urlReference,
+    baseUrl,
+    displayText,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
     const additionalContentCount = additionalContent?.length;
-
-    console.log(
-        `Additional content for ${label}: ${JSON.stringify(additionalContent)}`,
-    );
 
     return (
         <div className={classes.item}>
@@ -75,6 +73,8 @@ const FacilityDetailsItem = ({
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
                 urlReference={urlReference}
+                baseUrl={baseUrl}
+                displayText={displayText}
             />
             <ShowOnly when={hasAdditionalContent}>
                 <Button
@@ -112,20 +112,20 @@ const FacilityDetailsItem = ({
                             jsonSchema={!embed ? jsonSchema : null}
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}
+                            baseUrl={baseUrl}
+                            displayText={displayText}
                         />
                     </div>
                     {isOpen &&
-                        additionalContent.map(item => {
-                            console.log('item: ', item);
-                            return (
-                                <div
-                                    className={classes.itemWrapper}
-                                    key={item.key}
-                                >
-                                    <FacilityDetailsDetail {...item} />
-                                </div>
-                            );
-                        })}
+                        additionalContent.map(item => (
+                            <div className={classes.itemWrapper} key={item.key}>
+                                <FacilityDetailsDetail
+                                    {...item}
+                                    baseUrl={baseUrl}
+                                    displayText={displayText}
+                                />
+                            </div>
+                        ))}
                 </div>
             </TitledDrawer>
         </div>

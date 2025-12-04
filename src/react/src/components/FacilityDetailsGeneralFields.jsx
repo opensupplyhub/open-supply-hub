@@ -228,35 +228,17 @@ const FacilityDetailsGeneralFields = ({
         );
     };
 
-    const renderPartnerField = ({ label, fieldName, formatValue }) => {
+    const renderPartnerField = ({
+        label,
+        fieldName,
+        formatValue,
+        baseUrl,
+        displayText,
+    }) => {
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
         if (!values.length || !values[0]) return null;
 
-        const formatField = item =>
-            formatExtendedField({ ...item, formatValue });
-
-        // If partner field contain JSON schema AND contain "format": "uri-reference"
-        // Render specific FacilityDetailsItem, maybe create another component
-        if (
-            val.json_schema &&
-            val.json_schema?.type === 'object' &&
-            val.json_schema?.properties?.value?.format === 'uri-reference'
-        ) {
-            return (
-                <Grid item xs={12} md={6} key={`partner-${label}`}>
-                    <FacilityDetailsItem
-                        {...topValue}
-                        label={label}
-                        /* TODO Primary can act as URI reference */
-                        // primary={val.base_url}
-                        urlReference={values[0].base_url}
-                        additionalContent={values.slice(1).map(formatField)}
-                        embed={embed}
-                    />
-                </Grid>
-            );
-        }
         const formatField = item =>
             formatExtendedField({
                 ...item,
@@ -274,6 +256,8 @@ const FacilityDetailsGeneralFields = ({
                     label={topValue.label ? topValue.label : label}
                     additionalContent={values.slice(1).map(formatField)}
                     embed={embed}
+                    baseUrl={baseUrl}
+                    displayText={displayText}
                 />
             </Grid>
         );
@@ -283,6 +267,7 @@ const FacilityDetailsGeneralFields = ({
         get(data, 'properties.contributor_fields', null),
         field => field.value !== null,
     );
+
     const renderEmbedFields = () => {
         const fields = embedConfig?.embed_fields?.filter(f => f.visible) || [];
         return fields.map(({ column_name: fieldName, display_name: label }) => {
@@ -317,13 +302,31 @@ const FacilityDetailsGeneralFields = ({
             get(data, 'properties.partner_fields', {}),
         );
 
-        const partnerFields = partnerFieldNames.map(fieldName => ({
-            fieldName,
-            label: fieldName
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase()),
-            formatValue: formatPartnerFieldValue,
-        }));
+        const partnerFields = partnerFieldNames.map(fieldName => {
+            /* 
+            We have to rely on the first element of the partner-field list
+            because the backend isn’t configured to store partner-specific
+            settings in a separate metadata object.
+            */
+            const {
+                base_url: baseUrl, // eslint-disable-line camelcase
+                display_text: displayText, // eslint-disable-line camelcase
+            } = get(data, `properties.partner_fields.${fieldName}[0]`);
+
+            // let uriReference;
+            // if (baseUrl) {
+            //     uriReference = constructUrlFromPartnerField(baseUrl, value);
+            // }
+            return {
+                fieldName,
+                label: fieldName
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase()),
+                formatValue: formatPartnerFieldValue,
+                baseUrl,
+                displayText,
+            };
+        });
 
         return (
             <FeatureFlag

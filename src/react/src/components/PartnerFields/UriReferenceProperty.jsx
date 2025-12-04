@@ -1,12 +1,18 @@
+/* eslint no-unused-vars: 0 */
 import React from 'react';
+import { constructUrlFromPartnerField } from './utils.js';
 
 /**
- * Component for rendering URI format properties.
+ * Component for rendering URI-reference format properties.
  */
-const UriReferenceProperty = ({ propertyKey, value, schemaProperties }) => {
+const UriReferenceProperty = ({
+    propertyKey,
+    value,
+    schemaProperties,
+    baseUrl,
+    displayText,
+}) => {
     const propertyValue = value[propertyKey];
-    console.log('propertyValue: ', propertyValue);
-    console.log('schemaProperties in UriReferenceProperty: ', schemaProperties);
     if (!propertyValue) {
         return null;
     }
@@ -14,34 +20,28 @@ const UriReferenceProperty = ({ propertyKey, value, schemaProperties }) => {
     const textKey = `${propertyKey}_text`;
     const textPropertyDefined = schemaProperties && schemaProperties[textKey];
 
-    console.log('textKey: ', textKey);
+    const {
+        value: { description },
+    } = schemaProperties;
 
     const linkText =
         textPropertyDefined && textKey in value
             ? value[textKey]
             : propertyValue;
-
-    console.log('Link text: ', linkText);
-
-    const {
-        value: { description },
-    } = schemaProperties;
-
-    console.log(description);
-
-    if (description) {
-        console.log(description);
-    }
+    const absoluteURI = constructUrlFromPartnerField(baseUrl, linkText);
 
     return (
-        <a
-            key={`${propertyKey}-uri-${propertyValue}`}
-            href={propertyValue}
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            {linkText}
-        </a>
+        <>
+            {description ? <p>{description}</p> : null}
+            <a
+                key={`${propertyKey}-uri-${propertyValue}`}
+                href={absoluteURI}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                {displayText ? <p>{displayText}</p> : null}
+            </a>
+        </>
     );
 };
 

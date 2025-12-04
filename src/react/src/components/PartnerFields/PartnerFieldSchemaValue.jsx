@@ -1,5 +1,6 @@
 import React from 'react';
 import UriProperty from './UriProperty';
+import UriReferenceProperty from './UriReferenceProperty';
 import DefaultProperty from './DefaultProperty';
 import { FORMAT_TYPES, getFormatFromSchema, shouldSkipProperty } from './utils';
 
@@ -9,6 +10,7 @@ import { FORMAT_TYPES, getFormatFromSchema, shouldSkipProperty } from './utils';
  */
 const FORMAT_COMPONENTS = {
     [FORMAT_TYPES.URI]: UriProperty,
+    [FORMAT_TYPES.URI_REFERENCE]: UriReferenceProperty,
     // Add more format components here in the future
 };
 
@@ -25,7 +27,13 @@ const getFormatComponent = format => {
 /**
  * Renders a single property based on format strategy.
  */
-const renderProperty = (propertyKey, value, schemaProperties) => {
+const renderProperty = (
+    propertyKey,
+    value,
+    schemaProperties,
+    baseUrl,
+    displayText,
+) => {
     const propertySchema = schemaProperties[propertyKey] || {};
     const format = getFormatFromSchema(propertySchema);
     const FormatComponent = getFormatComponent(format);
@@ -36,6 +44,8 @@ const renderProperty = (propertyKey, value, schemaProperties) => {
             propertyKey={propertyKey}
             value={value}
             schemaProperties={schemaProperties}
+            baseUrl={baseUrl}
+            displayText={displayText}
         />
     );
 };
@@ -43,7 +53,12 @@ const renderProperty = (propertyKey, value, schemaProperties) => {
 /**
  * Component to render partner field values based on JSON schema.
  */
-const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
+const PartnerFieldSchemaValue = ({
+    value,
+    jsonSchema,
+    baseUrl,
+    displayText,
+}) => {
     if (
         !jsonSchema ||
         !value ||
@@ -59,7 +74,13 @@ const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
         if (shouldSkipProperty(propertyKey, schemaProperties)) {
             return acc;
         }
-        const rendered = renderProperty(propertyKey, value, schemaProperties);
+        const rendered = renderProperty(
+            propertyKey,
+            value,
+            schemaProperties,
+            baseUrl,
+            displayText,
+        );
         if (rendered) {
             acc.push(rendered);
         }

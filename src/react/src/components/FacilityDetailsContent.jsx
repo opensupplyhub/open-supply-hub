@@ -121,8 +121,6 @@ const FacilityDetailsContent = ({
     // Clears the selected facility when unmounted
     useEffect(() => () => clearFacility(), []);
 
-    console.log(data);
-
     const createdFrom = embed
         ? formatAttribution(get(data, 'properties.created_from.created_at', ''))
         : formatAttribution(
