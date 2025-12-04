@@ -1,5 +1,6 @@
-/* eslint no-unused-vars: 0 */
 import React from 'react';
+import { withStyles } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
 import { constructUrlFromPartnerField } from './utils.js';
 
 /**
@@ -11,6 +12,7 @@ const UriReferenceProperty = ({
     schemaProperties,
     baseUrl,
     displayText,
+    classes,
 }) => {
     const propertyValue = value[propertyKey];
     if (!propertyValue) {
@@ -28,21 +30,35 @@ const UriReferenceProperty = ({
         textPropertyDefined && textKey in value
             ? value[textKey]
             : propertyValue;
-    const absoluteURI = constructUrlFromPartnerField(baseUrl, linkText);
+
+    let absoluteURI;
+    if (baseUrl) {
+        absoluteURI = constructUrlFromPartnerField(baseUrl, linkText);
+    }
 
     return (
         <>
-            {description ? <p>{description}</p> : null}
-            <a
-                key={`${propertyKey}-uri-${propertyValue}`}
-                href={absoluteURI}
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                {displayText ? <p>{displayText}</p> : null}
-            </a>
+            {description ? (
+                <Typography className={classes.primaryText} variant="div">
+                    {description}
+                </Typography>
+            ) : null}
+            {displayText ? (
+                <>
+                    <a
+                        key={`${propertyKey}-uri-${propertyValue}`}
+                        href={absoluteURI}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        {displayText}
+                    </a>
+                </>
+            ) : (
+                <>{linkText}</>
+            )}
         </>
     );
 };
 
-export default UriReferenceProperty;
+export default withStyles()(UriReferenceProperty);
