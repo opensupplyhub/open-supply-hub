@@ -406,4 +406,74 @@ describe('FacilityDetailsGeneralFields component', () => {
         expect(getByText('Group: 141')).toBeInTheDocument();
         expect(getByText('Class: 1410')).toBeInTheDocument();
     });
+
+    test('does not render ISIC 4 section when object contains no valid ISIC-4 fields', () => {
+        const dataWithInvalidIsic4 = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    isic_4: [
+                        {
+                            id: 83091,
+                            is_verified: false,
+                            value: {
+                                invalid_field_1: 'some value',
+                                invalid_field_2: 'another value',
+                            },
+                            created_at: '2025-05-01T10:49:15.174025Z',
+                            updated_at: '2025-05-01T10:58:25.043413Z',
+                            contributor_name: 'Test Org',
+                            contributor_id: 1139,
+                            value_count: 1,
+                            is_from_claim: false,
+                            field_name: 'isic_4',
+                            verified_count: 0,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const { queryByText } = renderComponent({ data: dataWithInvalidIsic4 });
+
+        expect(queryByText('ISIC 4')).not.toBeInTheDocument();
+    });
+
+    test('does not render ISIC 4 section when all ISIC-4 fields are empty', () => {
+        const dataWithEmptyIsic4 = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    isic_4: [
+                        {
+                            id: 83092,
+                            is_verified: false,
+                            value: {
+                                section: '',
+                                division: '',
+                                group: '',
+                                class: '',
+                            },
+                            created_at: '2025-05-01T10:49:15.174025Z',
+                            updated_at: '2025-05-01T10:58:25.043413Z',
+                            contributor_name: 'Test Org',
+                            contributor_id: 1139,
+                            value_count: 1,
+                            is_from_claim: false,
+                            field_name: 'isic_4',
+                            verified_count: 0,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const { queryByText } = renderComponent({ data: dataWithEmptyIsic4 });
+
+        expect(queryByText('ISIC 4')).not.toBeInTheDocument();
+    });
 });
