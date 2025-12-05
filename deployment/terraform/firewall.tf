@@ -252,15 +252,15 @@ resource "aws_security_group_rule" "app_cc_http_egress_local" {
   security_group_id = aws_security_group.app_cc.id
 }
 
-resource "aws_security_group_rule" "app_rds_enc_egress" {
-  type      = "egress"
-  from_port = module.database_enc.port
-  to_port   = module.database_enc.port
-  protocol  = "tcp"
+# resource "aws_security_group_rule" "app_rds_enc_egress" {
+#   type      = "egress"
+#   from_port = module.database_enc.port
+#   to_port   = module.database_enc.port
+#   protocol  = "tcp"
 
-  security_group_id        = aws_security_group.app.id
-  source_security_group_id = module.database_enc.database_security_group_id
-}
+#   security_group_id        = aws_security_group.app.id
+#   source_security_group_id = module.database_enc.database_security_group_id
+# }
 
 resource "aws_security_group_rule" "app_opensearch_egress" {
   type      = "egress"
