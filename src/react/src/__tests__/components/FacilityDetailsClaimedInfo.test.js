@@ -20,8 +20,8 @@ describe('FacilityDetailsClaimedInfo component', () => {
                 phone_number: '+123 456 7890',
                 minimum_order: '18',
                 average_lead_time: '120 days',
-                opening_date: '2020-01-15',
-                closing_date: '2025-12-31',
+                opening_date: '2020',
+                closing_date: '2025-12',
                 estimated_annual_throughput: 50000,
                 actual_annual_energy_consumption: {
                     electricity: 1200,
@@ -84,8 +84,8 @@ describe('FacilityDetailsClaimedInfo component', () => {
         });
 
         // Test opening and closing dates.
-        expect(getByText('January 15, 2020', { exact: true })).toBeInTheDocument();
-        expect(getByText('December 31, 2025', { exact: true })).toBeInTheDocument();
+        expect(getByText('2020', { exact: true })).toBeInTheDocument();
+        expect(getByText('December 2025', { exact: true })).toBeInTheDocument();
 
         // Test estimated annual throughput.
         expect(getByText('50000 kg/year', { exact: true })).toBeInTheDocument();
