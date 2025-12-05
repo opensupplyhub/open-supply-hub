@@ -43,7 +43,11 @@ const UriReferenceProperty = ({
     return (
         <>
             {description ? (
-                <Typography className={classes.primaryText} variant="div">
+                <Typography
+                    className={classes.primaryText}
+                    variant="body2"
+                    component="div"
+                >
                     {description}
                 </Typography>
             ) : null}
