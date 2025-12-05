@@ -79,9 +79,15 @@ SELECT
 		ELSE NULL
 	END,
 	    'opening_date',
-    afc.opening_date,
+    CASE
+        WHEN afc.opening_date IS NOT NULL THEN to_char(afc.opening_date, 'YYYY')
+        ELSE NULL
+    END,
     'closing_date',
-    afc.closing_date,
+    CASE
+        WHEN afc.closing_date IS NOT NULL THEN to_char(afc.closing_date, 'YYYY-MM')
+        ELSE NULL
+    END,
     'estimated_annual_throughput',
     afc.estimated_annual_throughput,
     'actual_annual_energy_consumption',
