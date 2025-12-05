@@ -195,7 +195,7 @@ const BusinessStep = ({
             <div className={classes.documentUploadContainer}>
                 {showDocumentUpload && (
                     <Grid item xs={12}>
-                        <ImportantNote text="We do NOT require and you should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers. Only submit business documents." />
+                        <ImportantNote text="We do NOT require and you should NOT submit documents containing sensitive personal information such as salary information, personal phone numbers, home addresses, or personal ID numbers." />
                         <ClaimAttachmentsUploader
                             inputId="company-address-verification-documents"
                             title="Upload your documents"
