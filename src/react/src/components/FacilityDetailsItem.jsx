@@ -48,9 +48,7 @@ const FacilityDetailsItem = ({
     isFromClaim,
     additionalContentText = 'entry',
     additionalContentTextPlural = 'entries',
-    urlReference,
-    baseUrl,
-    displayText,
+    partnerConfigFields,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
@@ -72,9 +70,7 @@ const FacilityDetailsItem = ({
                 jsonSchema={!embed ? jsonSchema : null}
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
-                urlReference={urlReference}
-                baseUrl={baseUrl}
-                displayText={displayText}
+                partnerConfigFields={partnerConfigFields}
             />
             <ShowOnly when={hasAdditionalContent}>
                 <Button
@@ -104,7 +100,6 @@ const FacilityDetailsItem = ({
                 <div className={classes.drawer}>
                     <div className={classes.itemWrapper}>
                         <FacilityDetailsDetail
-                            urlReference={urlReference}
                             primary={primary || `${lat}, ${lng}` || null}
                             secondary={!embed ? secondary : null}
                             sourceBy={!embed ? sourceBy : null}
@@ -112,8 +107,7 @@ const FacilityDetailsItem = ({
                             jsonSchema={!embed ? jsonSchema : null}
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}
-                            baseUrl={baseUrl}
-                            displayText={displayText}
+                            partnerConfigFields={partnerConfigFields}
                         />
                     </div>
                     {isOpen &&
@@ -121,8 +115,7 @@ const FacilityDetailsItem = ({
                             <div className={classes.itemWrapper} key={item.key}>
                                 <FacilityDetailsDetail
                                     {...item}
-                                    baseUrl={baseUrl}
-                                    displayText={displayText}
+                                    partnerConfigFields={partnerConfigFields}
                                 />
                             </div>
                         ))}

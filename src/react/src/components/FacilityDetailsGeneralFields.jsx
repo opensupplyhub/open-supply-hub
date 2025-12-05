@@ -232,8 +232,7 @@ const FacilityDetailsGeneralFields = ({
         label,
         fieldName,
         formatValue,
-        baseUrl,
-        displayText,
+        partnerConfigFields,
     }) => {
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
 
@@ -256,8 +255,7 @@ const FacilityDetailsGeneralFields = ({
                     label={topValue.label ? topValue.label : label}
                     additionalContent={values.slice(1).map(formatField)}
                     embed={embed}
-                    baseUrl={baseUrl}
-                    displayText={displayText}
+                    partnerConfigFields={partnerConfigFields}
                 />
             </Grid>
         );
@@ -313,18 +311,15 @@ const FacilityDetailsGeneralFields = ({
                 display_text: displayText, // eslint-disable-line camelcase
             } = get(data, `properties.partner_fields.${fieldName}[0]`);
 
-            // let uriReference;
-            // if (baseUrl) {
-            //     uriReference = constructUrlFromPartnerField(baseUrl, value);
-            // }
+            const partnerConfigFields = { baseUrl, displayText };
+
             return {
                 fieldName,
                 label: fieldName
                     .replace(/_/g, ' ')
                     .replace(/\b\w/g, l => l.toUpperCase()),
                 formatValue: formatPartnerFieldValue,
-                baseUrl,
-                displayText,
+                partnerConfigFields,
             };
         });
 

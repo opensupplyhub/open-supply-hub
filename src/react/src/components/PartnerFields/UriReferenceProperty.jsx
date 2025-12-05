@@ -1,7 +1,10 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import { constructUrlFromPartnerField } from './utils.js';
+import {
+    constructUrlFromPartnerField,
+    showFieldDefaultDisplayText,
+} from './utils';
 
 /**
  * Component for rendering URI-reference format properties.
@@ -10,8 +13,7 @@ const UriReferenceProperty = ({
     propertyKey,
     value,
     schemaProperties,
-    baseUrl,
-    displayText,
+    partnerConfigFields,
     classes,
 }) => {
     const propertyValue = value[propertyKey];
@@ -31,6 +33,8 @@ const UriReferenceProperty = ({
             ? value[textKey]
             : propertyValue;
 
+    const { baseUrl, displayText } = partnerConfigFields;
+
     let absoluteURI;
     if (baseUrl) {
         absoluteURI = constructUrlFromPartnerField(baseUrl, linkText);
@@ -43,20 +47,20 @@ const UriReferenceProperty = ({
                     {description}
                 </Typography>
             ) : null}
-            {displayText ? (
-                <>
-                    <a
-                        key={`${propertyKey}-uri-${propertyValue}`}
-                        href={absoluteURI}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {displayText}
-                    </a>
-                </>
-            ) : (
-                <>{linkText}</>
-            )}
+            <a
+                key={`${propertyKey}-uri-${propertyValue}`}
+                href={absoluteURI}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                {baseUrl
+                    ? displayText || absoluteURI
+                    : showFieldDefaultDisplayText(
+                          schemaProperties,
+                          propertyValue,
+                          propertyKey,
+                      )}
+            </a>
         </>
     );
 };

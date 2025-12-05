@@ -31,8 +31,7 @@ const renderProperty = (
     propertyKey,
     value,
     schemaProperties,
-    baseUrl,
-    displayText,
+    partnerConfigFields,
 ) => {
     const propertySchema = schemaProperties[propertyKey] || {};
     const format = getFormatFromSchema(propertySchema);
@@ -44,8 +43,7 @@ const renderProperty = (
             propertyKey={propertyKey}
             value={value}
             schemaProperties={schemaProperties}
-            baseUrl={baseUrl}
-            displayText={displayText}
+            partnerConfigFields={partnerConfigFields}
         />
     );
 };
@@ -56,8 +54,7 @@ const renderProperty = (
 const PartnerFieldSchemaValue = ({
     value,
     jsonSchema,
-    baseUrl,
-    displayText,
+    partnerConfigFields,
 }) => {
     if (
         !jsonSchema ||
@@ -78,8 +75,7 @@ const PartnerFieldSchemaValue = ({
             propertyKey,
             value,
             schemaProperties,
-            baseUrl,
-            displayText,
+            partnerConfigFields,
         );
         if (rendered) {
             acc.push(rendered);
