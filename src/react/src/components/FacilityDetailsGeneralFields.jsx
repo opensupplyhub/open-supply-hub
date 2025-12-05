@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import React, { useMemo } from 'react';
 import Grid from '@material-ui/core/Grid';
 import get from 'lodash/get';
@@ -95,7 +94,6 @@ const FacilityDetailsGeneralFields = ({
     }, [data]);
 
     const renderExtendedField = ({ label, fieldName, formatValue }) => {
-        // You probably can use just a single value here, double-check
         let values = get(data, `properties.extended_fields.${fieldName}`, []);
         if (!values.length || !values[0]) return null;
 
@@ -108,8 +106,6 @@ const FacilityDetailsGeneralFields = ({
                 v?.value?.matched_values?.some(mv => mv[2]),
             );
         }
-
-        if (!values.length || !values[0]) return null;
 
         if (fieldName === 'isic_4') {
             const groupedContributions = [];
@@ -243,8 +239,6 @@ const FacilityDetailsGeneralFields = ({
                 ...item,
                 formatValue,
             });
-
-        if (!values.length || !values[0]) return null;
 
         const topValue = formatField(values[0]);
 

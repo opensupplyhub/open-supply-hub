@@ -117,4 +117,88 @@ describe('PartnerFieldSchemaValue', () => {
         const urlTextElements = screen.queryAllByText('View Report');
         expect(urlTextElements.length).toBe(1);
     });
+
+    it('renders uri-reference fields using partner configuration display text', () => {
+        const value = {
+            value: 'report-42',
+            status: 'active',
+        };
+        const jsonSchema = {
+            type: 'object',
+            properties: {
+                value: {
+                    type: 'string',
+                    format: 'uri-reference',
+                    title: 'Partner Report',
+                    description: 'Latest partner-provided report.',
+                },
+                value_text: {
+                    type: 'string',
+                },
+                status: {
+                    type: 'string',
+                    title: 'Status',
+                },
+            },
+        };
+        const partnerConfigFields = {
+            baseUrl: 'https://portal.example.com/reports',
+            displayText: 'Open report',
+        };
+
+        render(
+            <PartnerFieldSchemaValue
+                value={value}
+                jsonSchema={jsonSchema}
+                partnerConfigFields={partnerConfigFields}
+            />,
+        );
+
+        const link = screen.getByRole('link', { name: 'Open report' });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute(
+            'href',
+            'https://portal.example.com/reports/report-42',
+        );
+        expect(screen.getByText('Status: active')).toBeInTheDocument();
+    });
+
+    it('falls back to default renderer when schema loses uri-reference format', () => {
+        const value = {
+            partner_field: 'report-42',
+        };
+        const jsonSchema = {
+            type: 'object',
+            properties: {
+                partner_field: {
+                    type: 'string',
+                    title: 'Partner field',
+                },
+            },
+        };
+        const partnerConfigFields = {
+            baseUrl: 'https://portal.example.com/reports',
+            displayText: 'Open report',
+        };
+
+        render(
+            <PartnerFieldSchemaValue
+                value={value}
+                jsonSchema={jsonSchema}
+                partnerConfigFields={partnerConfigFields}
+            />,
+        );
+
+        const text = screen.getByText('Partner field: report-42');
+        expect(text).toBeInTheDocument();
+        expect(text.tagName).toBe('SPAN');
+    });
+
+    it('returns primitive values when schema or object data is missing', () => {
+        const { container } = render(
+            <PartnerFieldSchemaValue value="Raw text value" />,
+        );
+
+        expect(container).toHaveTextContent('Raw text value');
+    });
 });

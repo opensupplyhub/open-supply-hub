@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information.
 * [OSDEV-2269](https://opensupplyhub.atlassian.net/browse/OSDEV-2269) - Added URI format support for partner fields with JSON schema. Properties defined with `"format": "uri"` are rendered as clickable links on production location profile pages.
 * [OSDEV-2225](https://opensupplyhub.atlassian.net/browse/OSDEV-2225) - Added a clear button to the opening and closing date inputs in the environmental data section within the claim form to allow users to remove selected opening and closing dates.
+* [OSDEV-2268](https://opensupplyhub.atlassian.net/browse/OSDEV-2268) - Added URI-Reference format support for partner fields with JSON schema. Properties defined with `"format": "uri-reference"` are rendered on production location profile pages as clickable links wrapped by the text from admin `Partner field` configuration page.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

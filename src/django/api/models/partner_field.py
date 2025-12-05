@@ -57,7 +57,6 @@ class PartnerField(models.Model):
     display_text = models.CharField(
         max_length=500,
         blank=True,
-        null=True
     )
     source_by = RichTextField(
         blank=True,

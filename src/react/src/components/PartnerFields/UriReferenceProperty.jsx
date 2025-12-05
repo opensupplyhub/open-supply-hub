@@ -6,6 +6,8 @@ import {
     showFieldDefaultDisplayText,
 } from './utils';
 
+const styles = () => ({});
+
 /**
  * Component for rendering URI-reference format properties.
  */
@@ -65,4 +67,4 @@ const UriReferenceProperty = ({
     );
 };
 
-export default withStyles()(UriReferenceProperty);
+export default withStyles(styles)(UriReferenceProperty);
