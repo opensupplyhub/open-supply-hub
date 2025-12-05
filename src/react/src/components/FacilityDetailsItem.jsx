@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
@@ -122,6 +123,52 @@ const FacilityDetailsItem = ({
             </TitledDrawer>
         </div>
     );
+};
+
+FacilityDetailsItem.propTypes = {
+    additionalContent: PropTypes.arrayOf(
+        PropTypes.shape({
+            key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        }),
+    ),
+    label: PropTypes.string,
+    primary: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    lat: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    lng: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    locationLabeled: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    secondary: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    sourceBy: PropTypes.string,
+    unit: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    jsonSchema: PropTypes.object,
+    classes: PropTypes.object.isRequired,
+    embed: PropTypes.bool,
+    isVerified: PropTypes.bool,
+    isFromClaim: PropTypes.bool,
+    additionalContentText: PropTypes.string,
+    additionalContentTextPlural: PropTypes.string,
+    partnerConfigFields: PropTypes.shape({
+        base_url: PropTypes.string,
+        display_text: PropTypes.string,
+    }),
+};
+
+FacilityDetailsItem.defaultProps = {
+    additionalContent: [],
+    label: '',
+    primary: null,
+    lat: null,
+    lng: null,
+    locationLabeled: null,
+    secondary: null,
+    sourceBy: null,
+    unit: null,
+    jsonSchema: null,
+    embed: false,
+    isVerified: false,
+    isFromClaim: false,
+    additionalContentText: 'entry',
+    additionalContentTextPlural: 'entries',
+    partnerConfigFields: null,
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsItem);

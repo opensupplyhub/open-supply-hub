@@ -306,10 +306,12 @@ const FacilityDetailsGeneralFields = ({
             because the backend isn’t configured to store partner-specific
             settings in a separate metadata object.
             */
+            const firstEntry =
+                get(data, `properties.partner_fields.${fieldName}[0]`) || {};
             const {
                 base_url: baseUrl, // eslint-disable-line camelcase
                 display_text: displayText, // eslint-disable-line camelcase
-            } = get(data, `properties.partner_fields.${fieldName}[0]`);
+            } = firstEntry;
 
             const partnerConfigFields = { baseUrl, displayText };
 

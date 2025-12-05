@@ -14,8 +14,8 @@ const styles = () => ({});
 const UriReferenceProperty = ({
     propertyKey,
     value,
-    schemaProperties,
-    partnerConfigFields,
+    schemaProperties: incomingSchemaProperties,
+    partnerConfigFields: incomingPartnerConfigFields,
     classes,
 }) => {
     const propertyValue = value[propertyKey];
@@ -23,12 +23,12 @@ const UriReferenceProperty = ({
         return null;
     }
 
+    const schemaProperties = incomingSchemaProperties || {};
+    const partnerConfigFields = incomingPartnerConfigFields || {};
     const textKey = `${propertyKey}_text`;
-    const textPropertyDefined = schemaProperties && schemaProperties[textKey];
-
-    const {
-        value: { description },
-    } = schemaProperties;
+    const textPropertyDefined = !!schemaProperties[textKey];
+    const propertySchema = schemaProperties[propertyKey] || {};
+    const description = propertySchema.description;
 
     const linkText =
         textPropertyDefined && textKey in value
@@ -37,10 +37,9 @@ const UriReferenceProperty = ({
 
     const { baseUrl, displayText } = partnerConfigFields;
 
-    let absoluteURI;
-    if (baseUrl) {
-        absoluteURI = constructUrlFromPartnerField(baseUrl, linkText);
-    }
+    const absoluteURI = baseUrl
+        ? constructUrlFromPartnerField(baseUrl, propertyValue)
+        : undefined;
 
     return (
         <>
