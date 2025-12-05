@@ -139,7 +139,13 @@ const FacilityDetailsGeneralFields = ({
                 .map(group => {
                     const formattedEntries = group.items
                         .map(formatField)
-                        .filter(Boolean);
+                        .filter(entry => {
+                            if (!entry) return false;
+                            if (Array.isArray(entry.primary)) {
+                                return entry.primary.length > 0;
+                            }
+                            return !!entry.primary;
+                        });
 
                     if (!formattedEntries.length) {
                         return null;
