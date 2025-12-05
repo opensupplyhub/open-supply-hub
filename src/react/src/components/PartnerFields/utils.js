@@ -41,7 +41,7 @@ export const showFieldDefaultDisplayText = (
 ) => {
     const propertySchema = schemaProperties[propertyKey] || {};
     const { title } = propertySchema;
-    const stringValue = propertyValue != null ? String(propertyValue) : '';
+    const stringValue = propertyValue == null ? '' : String(propertyValue);
     return title ? `${title}: ${stringValue}` : stringValue;
 };
 
