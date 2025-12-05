@@ -70,7 +70,7 @@ describe('UriReferenceProperty', () => {
         });
 
         const expectedHref = 'https://example.com/base/abc123';
-        const link = screen.getByRole('link', { name: expectedHref });
+        const link = screen.getByRole('link', { name: 'abc123' });
         expect(link).toHaveAttribute('href', expectedHref);
     });
 

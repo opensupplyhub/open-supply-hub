@@ -27,8 +27,7 @@ const UriReferenceProperty = ({
     const partnerConfigFields = incomingPartnerConfigFields || {};
     const textKey = `${propertyKey}_text`;
     const textPropertyDefined = !!schemaProperties[textKey];
-    const propertySchema = schemaProperties[propertyKey] || {};
-    const description = propertySchema.description;
+    const { description } = schemaProperties[propertyKey] || {};
 
     const linkText =
         textPropertyDefined && textKey in value
@@ -55,7 +54,7 @@ const UriReferenceProperty = ({
                 rel="noopener noreferrer"
             >
                 {baseUrl
-                    ? displayText || absoluteURI
+                    ? displayText || linkText || absoluteURI
                     : showFieldDefaultDisplayText(
                           schemaProperties,
                           propertyValue,
