@@ -95,6 +95,7 @@ const FacilityDetailsGeneralFields = ({
 
     const renderExtendedField = ({ label, fieldName, formatValue }) => {
         let values = get(data, `properties.extended_fields.${fieldName}`, []);
+        if (!values.length || !values[0]) return null;
 
         const formatField = item =>
             formatExtendedField({ ...item, formatValue });
@@ -105,8 +106,6 @@ const FacilityDetailsGeneralFields = ({
                 v?.value?.matched_values?.some(mv => mv[2]),
             );
         }
-
-        if (!values.length || !values[0]) return null;
 
         if (fieldName === 'isic_4') {
             const groupedContributions = [];
@@ -231,16 +230,21 @@ const FacilityDetailsGeneralFields = ({
         );
     };
 
-    const renderPartnerField = ({ label, fieldName, formatValue }) => {
+    const renderPartnerField = ({
+        label,
+        fieldName,
+        formatValue,
+        partnerConfigFields,
+    }) => {
         const values = get(data, `properties.partner_fields.${fieldName}`, []);
+
+        if (!values.length || !values[0]) return null;
 
         const formatField = item =>
             formatExtendedField({
                 ...item,
                 formatValue,
             });
-
-        if (!values.length || !values[0]) return null;
 
         const topValue = formatField(values[0]);
 
@@ -251,6 +255,7 @@ const FacilityDetailsGeneralFields = ({
                     label={topValue.label ? topValue.label : label}
                     additionalContent={values.slice(1).map(formatField)}
                     embed={embed}
+                    partnerConfigFields={partnerConfigFields}
                 />
             </Grid>
         );
@@ -260,6 +265,7 @@ const FacilityDetailsGeneralFields = ({
         get(data, 'properties.contributor_fields', null),
         field => field.value !== null,
     );
+
     const renderEmbedFields = () => {
         const fields = embedConfig?.embed_fields?.filter(f => f.visible) || [];
         return fields.map(({ column_name: fieldName, display_name: label }) => {
@@ -294,13 +300,30 @@ const FacilityDetailsGeneralFields = ({
             get(data, 'properties.partner_fields', {}),
         );
 
-        const partnerFields = partnerFieldNames.map(fieldName => ({
-            fieldName,
-            label: fieldName
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase()),
-            formatValue: formatPartnerFieldValue,
-        }));
+        const partnerFields = partnerFieldNames.map(fieldName => {
+            /* 
+            We have to rely on the first element of the partner-field list
+            because the backend isn’t configured to store partner-specific
+            settings in a separate metadata object.
+            */
+            const firstEntry =
+                get(data, `properties.partner_fields.${fieldName}[0]`) || {};
+            const {
+                base_url: baseUrl, // eslint-disable-line camelcase
+                display_text: displayText, // eslint-disable-line camelcase
+            } = firstEntry;
+
+            const partnerConfigFields = { baseUrl, displayText };
+
+            return {
+                fieldName,
+                label: fieldName
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, l => l.toUpperCase()),
+                formatValue: formatPartnerFieldValue,
+                partnerConfigFields,
+            };
+        });
 
         return (
             <FeatureFlag

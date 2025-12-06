@@ -68,6 +68,7 @@ const FacilityDetailsDetail = ({
     isVerified,
     isFromClaim,
     classes,
+    partnerConfigFields,
 }) => (
     <div className={classes.root} data-testid="facility-details-detail">
         <ShowOnly when={isVerified || isFromClaim}>
@@ -90,6 +91,7 @@ const FacilityDetailsDetail = ({
                     <PartnerFieldSchemaValue
                         value={primary}
                         jsonSchema={jsonSchema}
+                        partnerConfigFields={partnerConfigFields}
                     />
                 ) : (
                     primary || locationLabeled

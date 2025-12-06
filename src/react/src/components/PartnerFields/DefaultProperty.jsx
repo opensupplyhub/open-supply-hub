@@ -1,14 +1,16 @@
 import React from 'react';
+import { showFieldDefaultDisplayText } from './utils';
 
 /**
  * Component for rendering default format properties (no format or unsupported format).
  */
 const DefaultProperty = ({ propertyKey, value, schemaProperties }) => {
     const propertyValue = value[propertyKey];
-    const propertySchema = schemaProperties[propertyKey] || {};
-    const { title } = propertySchema;
-    const stringValue = propertyValue != null ? String(propertyValue) : '';
-    const displayText = title ? `${title}: ${stringValue}` : stringValue;
+    const displayText = showFieldDefaultDisplayText(
+        schemaProperties,
+        propertyValue,
+        propertyKey,
+    );
 
     return (
         <span key={`${propertyKey}-default`} style={{ display: 'block' }}>
