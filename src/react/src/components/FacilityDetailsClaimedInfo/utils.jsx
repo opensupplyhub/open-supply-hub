@@ -154,17 +154,14 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'opening_date',
         label: 'Opening Date',
-        getValue: () =>
-            location.opening_date
-                ? moment(location.opening_date).format('LL')
-                : null,
+        getValue: () => location.opening_date || null,
     },
     {
         key: 'closing_date',
         label: 'Closing Date',
         getValue: () =>
             location.closing_date
-                ? moment(location.closing_date).format('LL')
+                ? moment(location.closing_date, 'YYYY-MM').format('MMMM YYYY')
                 : null,
     },
     {
