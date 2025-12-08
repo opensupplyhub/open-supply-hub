@@ -1,5 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import UriProperty from './UriProperty';
+import UriReferenceProperty from './UriReferenceProperty';
 import DefaultProperty from './DefaultProperty';
 import { FORMAT_TYPES, getFormatFromSchema, shouldSkipProperty } from './utils';
 
@@ -9,6 +11,7 @@ import { FORMAT_TYPES, getFormatFromSchema, shouldSkipProperty } from './utils';
  */
 const FORMAT_COMPONENTS = {
     [FORMAT_TYPES.URI]: UriProperty,
+    [FORMAT_TYPES.URI_REFERENCE]: UriReferenceProperty,
     // Add more format components here in the future
 };
 
@@ -25,7 +28,12 @@ const getFormatComponent = format => {
 /**
  * Renders a single property based on format strategy.
  */
-const renderProperty = (propertyKey, value, schemaProperties) => {
+const renderProperty = (
+    propertyKey,
+    value,
+    schemaProperties,
+    partnerConfigFields,
+) => {
     const propertySchema = schemaProperties[propertyKey] || {};
     const format = getFormatFromSchema(propertySchema);
     const FormatComponent = getFormatComponent(format);
@@ -36,6 +44,7 @@ const renderProperty = (propertyKey, value, schemaProperties) => {
             propertyKey={propertyKey}
             value={value}
             schemaProperties={schemaProperties}
+            partnerConfigFields={partnerConfigFields}
         />
     );
 };
@@ -43,7 +52,11 @@ const renderProperty = (propertyKey, value, schemaProperties) => {
 /**
  * Component to render partner field values based on JSON schema.
  */
-const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
+const PartnerFieldSchemaValue = ({
+    value,
+    jsonSchema,
+    partnerConfigFields,
+}) => {
     if (
         !jsonSchema ||
         !value ||
@@ -59,7 +72,12 @@ const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
         if (shouldSkipProperty(propertyKey, schemaProperties)) {
             return acc;
         }
-        const rendered = renderProperty(propertyKey, value, schemaProperties);
+        const rendered = renderProperty(
+            propertyKey,
+            value,
+            schemaProperties,
+            partnerConfigFields,
+        );
         if (rendered) {
             acc.push(rendered);
         }
@@ -67,6 +85,27 @@ const PartnerFieldSchemaValue = ({ value, jsonSchema }) => {
     }, []);
 
     return <>{renderedItems}</>;
+};
+
+PartnerFieldSchemaValue.propTypes = {
+    value: PropTypes.oneOfType([
+        PropTypes.object,
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.bool,
+    ]).isRequired,
+    jsonSchema: PropTypes.shape({
+        properties: PropTypes.object,
+    }),
+    partnerConfigFields: PropTypes.shape({
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
+    }),
+};
+
+PartnerFieldSchemaValue.defaultProps = {
+    jsonSchema: null,
+    partnerConfigFields: null,
 };
 
 export default PartnerFieldSchemaValue;
