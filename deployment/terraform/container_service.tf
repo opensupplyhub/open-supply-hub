@@ -35,7 +35,7 @@ resource "aws_security_group" "app_cc" {
   vpc_id = module.vpc.id
 
   tags = {
-    Name        = "sgAppEcsService"
+    Name        = "sgAppCcEcsService"
     Project     = var.project
     Environment = var.environment
   }
