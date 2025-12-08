@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -113,5 +114,44 @@ const FacilityDetailsDetail = ({
         </div>
     </div>
 );
+
+FacilityDetailsDetail.propTypes = {
+    primary: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.node,
+        PropTypes.object,
+    ]),
+    locationLabeled: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    secondary: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    sourceBy: PropTypes.string,
+    unit: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    jsonSchema: PropTypes.object,
+    isVerified: PropTypes.bool,
+    isFromClaim: PropTypes.bool,
+    partnerConfigFields: PropTypes.shape({
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
+    }),
+    classes: PropTypes.shape({
+        root: PropTypes.string,
+        badgeWrapper: PropTypes.string,
+        primaryText: PropTypes.string,
+        secondaryText: PropTypes.string,
+        sourceText: PropTypes.string,
+        unitText: PropTypes.string,
+    }).isRequired,
+};
+
+FacilityDetailsDetail.defaultProps = {
+    primary: null,
+    locationLabeled: null,
+    secondary: null,
+    sourceBy: null,
+    unit: null,
+    jsonSchema: null,
+    isVerified: false,
+    isFromClaim: false,
+    partnerConfigFields: null,
+};
 
 export default withStyles(detailsStyles)(FacilityDetailsDetail);

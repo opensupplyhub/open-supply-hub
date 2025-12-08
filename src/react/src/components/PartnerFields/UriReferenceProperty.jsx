@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import {
@@ -70,3 +71,21 @@ const UriReferenceProperty = ({
 };
 
 export default withStyles(styles)(UriReferenceProperty);
+
+UriReferenceProperty.propTypes = {
+    propertyKey: PropTypes.string.isRequired,
+    value: PropTypes.object.isRequired,
+    schemaProperties: PropTypes.object,
+    partnerConfigFields: PropTypes.shape({
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
+    }),
+    classes: PropTypes.shape({
+        primaryText: PropTypes.string,
+    }).isRequired,
+};
+
+UriReferenceProperty.defaultProps = {
+    schemaProperties: {},
+    partnerConfigFields: null,
+};

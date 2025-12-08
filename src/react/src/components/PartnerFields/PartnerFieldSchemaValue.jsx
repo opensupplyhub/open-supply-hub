@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import UriProperty from './UriProperty';
 import UriReferenceProperty from './UriReferenceProperty';
 import DefaultProperty from './DefaultProperty';
@@ -84,6 +85,27 @@ const PartnerFieldSchemaValue = ({
     }, []);
 
     return <>{renderedItems}</>;
+};
+
+PartnerFieldSchemaValue.propTypes = {
+    value: PropTypes.oneOfType([
+        PropTypes.object,
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.bool,
+    ]).isRequired,
+    jsonSchema: PropTypes.shape({
+        properties: PropTypes.object,
+    }),
+    partnerConfigFields: PropTypes.shape({
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
+    }),
+};
+
+PartnerFieldSchemaValue.defaultProps = {
+    jsonSchema: null,
+    partnerConfigFields: null,
 };
 
 export default PartnerFieldSchemaValue;

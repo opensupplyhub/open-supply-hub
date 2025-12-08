@@ -132,7 +132,11 @@ FacilityDetailsItem.propTypes = {
         }),
     ),
     label: PropTypes.string,
-    primary: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    primary: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.node,
+        PropTypes.object,
+    ]),
     lat: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     lng: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     locationLabeled: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
@@ -147,8 +151,8 @@ FacilityDetailsItem.propTypes = {
     additionalContentText: PropTypes.string,
     additionalContentTextPlural: PropTypes.string,
     partnerConfigFields: PropTypes.shape({
-        base_url: PropTypes.string,
-        display_text: PropTypes.string,
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
     }),
 };
 
