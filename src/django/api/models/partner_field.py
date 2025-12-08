@@ -52,7 +52,6 @@ class PartnerField(models.Model):
     base_url = models.URLField(
         max_length=2000,
         blank=True,
-        null=True
     )
     display_text = models.CharField(
         max_length=500,

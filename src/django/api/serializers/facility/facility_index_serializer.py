@@ -107,8 +107,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             source_by = field.source_by
             unit = field.unit
             label = field.label
-            base_url = getattr(field, 'base_url', None)
-            display_text = getattr(field, 'display_text', None)
+            base_url = field.base_url
+            display_text = field.display_text
             json_schema = field.json_schema
             fields = grouped_fields.get(field_name, [])
             if not fields:

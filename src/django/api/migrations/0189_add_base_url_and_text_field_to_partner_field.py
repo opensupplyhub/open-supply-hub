@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='partnerfield',
             name='base_url',
-            field=models.URLField(blank=True, max_length=2000, null=True),
+            field=models.URLField(blank=True, max_length=2000),
         ),
         migrations.AddField(
             model_name='partnerfield',
