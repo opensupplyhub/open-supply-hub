@@ -49,3 +49,13 @@ export const constructUrlFromPartnerField = (baseUrl, value = '') => {
     if (endsWith(baseUrl, '/')) return baseUrl + value.trim();
     return `${baseUrl}/${value.trim()}`;
 };
+
+export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
+    const textKey = `${propertyKey}_text`;
+    const textPropertyDefined =
+        schemaProperties && Boolean(schemaProperties[textKey]);
+    if (textPropertyDefined && textKey in value) {
+        return value[textKey];
+    }
+    return value[propertyKey];
+};

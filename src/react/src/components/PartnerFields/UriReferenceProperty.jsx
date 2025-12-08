@@ -5,6 +5,7 @@ import Typography from '@material-ui/core/Typography';
 import {
     constructUrlFromPartnerField,
     showFieldDefaultDisplayText,
+    getLinkTextFromSchema,
 } from './utils';
 
 const styles = () => ({});
@@ -26,14 +27,12 @@ const UriReferenceProperty = ({
 
     const schemaProperties = incomingSchemaProperties || {};
     const partnerConfigFields = incomingPartnerConfigFields || {};
-    const textKey = `${propertyKey}_text`;
-    const textPropertyDefined = !!schemaProperties[textKey];
     const { description } = schemaProperties[propertyKey] || {};
-
-    const linkText =
-        textPropertyDefined && textKey in value
-            ? value[textKey]
-            : propertyValue;
+    const linkText = getLinkTextFromSchema(
+        propertyKey,
+        value,
+        schemaProperties,
+    );
 
     const { baseUrl, displayText } = partnerConfigFields;
 

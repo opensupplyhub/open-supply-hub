@@ -1,4 +1,5 @@
 import React from 'react';
+import { getLinkTextFromSchema } from './utils';
 
 /**
  * Component for rendering URI format properties.
@@ -9,12 +10,11 @@ const UriProperty = ({ propertyKey, value, schemaProperties }) => {
         return null;
     }
 
-    const textKey = `${propertyKey}_text`;
-    const textPropertyDefined = schemaProperties && schemaProperties[textKey];
-    const linkText =
-        textPropertyDefined && textKey in value
-            ? value[textKey]
-            : propertyValue;
+    const linkText = getLinkTextFromSchema(
+        propertyKey,
+        value,
+        schemaProperties,
+    );
 
     return (
         <a
