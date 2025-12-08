@@ -13,7 +13,7 @@ from ..models.facility.facility_index import FacilityIndex
 @throttle_classes([])
 def parent_companies(_):
     """
-    Returns list parent companies submitted by contributors, as a list of
+    Returns list of existing parent companies submitted by contributors, as a list of
     tuples of Key and contributor name (suitable for populating a choice list),
     sorted alphabetically.
 
@@ -22,7 +22,6 @@ def parent_companies(_):
 
         [
             [1, "Brand A"],
-            ["Non-Contributor", "Non-Contributor"],
             [2, "Contributor B"]
         ]
 
@@ -45,19 +44,5 @@ def parent_companies(_):
         .values('name')
         .values_list('id', 'name')
     )
-    contrib_lookup = {name: id for (id, name) in contributors}
 
-    names = (
-        FacilityIndex
-        .objects
-        .annotate(
-            parent_companies=Func(F('parent_company_name'), function='unnest')
-        )
-        .values_list('parent_companies', flat=True)
-        .order_by('parent_companies')
-        .distinct()
-    )
-    return Response([
-        (contrib_lookup[name] if name in contrib_lookup else name, name)
-        for name in names
-    ])
+    return Response(list(contributors))
