@@ -1,63 +1,83 @@
 (function($) {
     'use strict';
 
-    function findJsonSchemaFieldRow() {
-        const jsonSchemaField = $('#id_json_schema');
-        
-        if (jsonSchemaField.length) {
-            return jsonSchemaField.closest('.field-json_schema, tr, .form-row').first();
+    function findFieldRow(fieldSelector, fieldClassSelector) {
+        const field = $(fieldSelector);
+
+        if (field.length) {
+            const row = field
+                .closest(`${fieldClassSelector}, tr, .form-row`)
+                .first();
+            if (row.length) {
+                return row;
+            }
         }
-        
-        return $('.field-json_schema').first();
+
+        if (fieldClassSelector) {
+            const fallbackRow = $(fieldClassSelector).first();
+            if (fallbackRow.length) {
+                return fallbackRow;
+            }
+        }
+
+        return $();
     }
 
-    function toggleJsonSchemaField() {
+    function setupPartnerFieldOptionsToggle() {
         const typeField = $('#id_type');
-        const jsonSchemaFieldRow = findJsonSchemaFieldRow();
-        
+
         if (!typeField.length) {
             return false;
         }
-        
-        if (!jsonSchemaFieldRow.length) {
-            return false;
-        }
-        
-        const currentType = typeField.val();
-        
-        if (currentType === 'object') {
-            jsonSchemaFieldRow.show();
-            return true;
-        } else {
-            jsonSchemaFieldRow.hide();
-            return true;
-        }
-    }
 
-    function setupJsonSchemaToggle() {
-        const typeField = $('#id_type');
-        const jsonSchemaField = $('#id_json_schema');
-        
-        if (!typeField.length || !jsonSchemaField.length) {
+        const jsonSchemaFieldRow = findFieldRow(
+            '#id_json_schema',
+            '.field-json_schema'
+        );
+        const baseUrlFieldRow = findFieldRow(
+            '#id_base_url',
+            '.field-base_url'
+        );
+        const displayTextFieldRow = findFieldRow(
+            '#id_display_text',
+            '.field-display_text'
+        );
+
+        if (
+            !jsonSchemaFieldRow.length &&
+            !baseUrlFieldRow.length &&
+            !displayTextFieldRow.length
+        ) {
             return false;
         }
-        
-        const jsonSchemaFieldRow = findJsonSchemaFieldRow();
-        if (!jsonSchemaFieldRow.length) {
-            return false;
-        }
-        
-        toggleJsonSchemaField();
-        
+
+        const toggleFields = function() {
+            const shouldShow = typeField.val() === 'object';
+            [jsonSchemaFieldRow, baseUrlFieldRow, displayTextFieldRow].forEach(
+                function(row) {
+                    if (!row.length) {
+                        return;
+                    }
+                    if (shouldShow) {
+                        row.show();
+                    } else {
+                        row.hide();
+                    }
+                }
+            );
+        };
+
+        toggleFields();
+
         typeField.on('change', function() {
-            toggleJsonSchemaField();
+            toggleFields();
         });
-        
+
         return true;
     }
 
     $(document).ready(function() {
-        setupJsonSchemaToggle();
+        setupPartnerFieldOptionsToggle();
     });
 })(django.jQuery || jQuery);
 

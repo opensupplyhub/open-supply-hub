@@ -1,8 +1,10 @@
+import endsWith from 'lodash/endsWith';
 /**
  * Format constants for JSON Schema.
  */
 export const FORMAT_TYPES = {
     URI: 'uri',
+    URI_REFERENCE: 'uri-reference',
 };
 
 /**
@@ -30,4 +32,30 @@ export const shouldSkipProperty = (propertyKey, schemaProperties) => {
     }
 
     return false;
+};
+
+export const showFieldDefaultDisplayText = (
+    schemaProperties,
+    propertyValue,
+    propertyKey,
+) => {
+    const propertySchema = schemaProperties[propertyKey] || {};
+    const { title } = propertySchema;
+    const stringValue = propertyValue == null ? '' : String(propertyValue);
+    return title ? `${title}: ${stringValue}` : stringValue;
+};
+
+export const constructUrlFromPartnerField = (baseUrl, value = '') => {
+    if (endsWith(baseUrl, '/')) return baseUrl + value.trim();
+    return `${baseUrl}/${value.trim()}`;
+};
+
+export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
+    const textKey = `${propertyKey}_text`;
+    const textPropertyDefined =
+        schemaProperties && Boolean(schemaProperties[textKey]);
+    if (textPropertyDefined && textKey in value) {
+        return value[textKey];
+    }
+    return value[propertyKey];
 };
