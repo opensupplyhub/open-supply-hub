@@ -16,21 +16,12 @@ const pathsToProxy = Object.freeze([
     '/tile',
 ]);
 
-const pathsCCToProxy = Object.freeze(['/cc']);
-
 const djangoProxyTarget = Object.freeze({ target: 'http://django:8081' });
-const contriCleanerProxyTarget = Object.freeze({
-    target: 'http://contricleaner:80',
-});
 
-const createProxies = function (app) {
-    const proxies = _.forEach(pathsToProxy, path =>
+const createProxy = function (app) {
+    _.forEach(pathsToProxy, path =>
         app.use(proxy(path, djangoProxyTarget)),
     );
-    const ccProxies = _.forEach(pathsCCToProxy, path =>
-        app.use(proxy(path, contriCleanerProxyTarget)),
-    );
-    return _.merge(proxies, ccProxies);
 };
 
-module.exports = createProxies;
+module.exports = createProxy;
