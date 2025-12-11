@@ -1,7 +1,15 @@
+import os
 import csv
+import base64
+import json
 import logging
+import tempfile
 from pathlib import Path
 from django.core.management.base import BaseCommand
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+import io
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -20,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        "Load data from a local CSV file (MVP version). "
+        "Load data from a CSV file stored in Google Drive. "
         "CSV must contain two columns: 'os_id' and 'us_geoid_county'. "
         "Only processes existing facilities."
     )
@@ -39,14 +47,86 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
-            "--csv_path",
+            "--file_id",
             type=str,
-            help=(
-                "Path to the CSV file. "
-                "Defaults to test_osid_geoid_df.csv in project root"
-            ),
-            default=None,
+            help="The Google Drive file ID to load CSV from.",
+            required=True,
         )
+
+    def _get_google_drive_service(self):
+        """Initialize and return Google Drive API service."""
+        SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+
+        base64_gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64")
+
+        if base64_gdrive_creds is None:
+            raise ValueError("Google Service Account credentials not found!")
+
+        decoded_creds = base64.b64decode(base64_gdrive_creds).decode("utf-8")
+
+        credentials = service_account.Credentials.from_service_account_info(
+            info=json.loads(decoded_creds),
+            scopes=SCOPES,
+        )
+        logger.info("Initialized Google service account credentials")
+
+        service = build("drive", "v3", credentials=credentials)
+        logger.info("Built Google Drive service")
+        return service
+
+    def _download_csv_from_google_drive(self, file_id):
+        """Download CSV file from Google Drive and return file path."""
+        service = self._get_google_drive_service()
+
+        logger.info(f"Downloading CSV file from Google Drive with ID: {file_id}")
+
+        try:
+            # Get file metadata
+            file_metadata = service.files().get(
+                fileId=file_id,
+                fields="name, mimeType"
+            ).execute()
+
+            file_name = file_metadata.get("name", "downloaded_file.csv")
+            mime_type = file_metadata.get("mimeType", "")
+
+            logger.info(
+                f"File name: '{file_name}', MIME type: '{mime_type}'"
+            )
+
+            # Download file content
+            request = service.files().get_media(fileId=file_id)
+            file_content = io.BytesIO()
+            downloader = MediaIoBaseDownload(file_content, request)
+
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
+                if status:
+                    logger.info(
+                        f"Download progress: {int(status.progress() * 100)}%"
+                    )
+
+            file_content.seek(0)
+
+            # Create temporary file
+            temp_file = tempfile.NamedTemporaryFile(
+                mode='w+b',
+                suffix='.csv',
+                delete=False
+            )
+            temp_file.write(file_content.read())
+            temp_file.close()
+
+            logger.info(
+                f"Downloaded CSV file to temporary location: {temp_file.name}"
+            )
+
+            return Path(temp_file.name)
+
+        except Exception as error:
+            logger.error(f"Error downloading file from Google Drive: {str(error)}")
+            raise
 
     def handle(self, *args, **options):
         user_id = options["user_id"]
@@ -73,22 +153,14 @@ class Command(BaseCommand):
 
         contributor = cont_user.contributor
 
-        # Determine CSV file path
-        if options["csv_path"]:
-            csv_path = Path(options["csv_path"])
-        else:
-            # Default to project root/test_osid_geoid_df.csv
-            # Navigate from command file to project root
-            # Command file location: .../api/management/commands/load_data_from_csv.py
-            # Go up 4 levels to reach project root
-            command_file = Path(__file__)
-            project_root = command_file.parent.parent.parent.parent
-            csv_path = project_root / "test_osid_geoid_df.csv"
+        # Download CSV file from Google Drive
+        csv_path = self._download_csv_from_google_drive(options["file_id"])
+        temp_file_created = True
 
         if not csv_path.exists():
             raise ValueError(
                 f"CSV file not found at: {csv_path}. "
-                "Please provide a valid path using --csv_path."
+                "Failed to download from Google Drive."
             )
 
         logger.info(f"Reading data from CSV file: {csv_path}")
@@ -96,7 +168,7 @@ class Command(BaseCommand):
         # Read CSV file
         with open(csv_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
-            
+
             if not reader.fieldnames:
                 raise ValueError("CSV file is empty or has no headers.")
 
@@ -221,3 +293,12 @@ class Command(BaseCommand):
 
         logger.info(f"Completed processing CSV file: {csv_path}")
 
+        # Clean up temporary file if downloaded from Google Drive
+        if temp_file_created and csv_path.exists():
+            try:
+                csv_path.unlink()
+                logger.info(f"Cleaned up temporary file: {csv_path}")
+            except Exception as error:
+                logger.warning(
+                    f"Failed to delete temporary file {csv_path}: {str(error)}"
+                )
