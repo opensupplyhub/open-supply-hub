@@ -11,7 +11,9 @@
       "--contributor_email",
       "${contributor_email}",
       "--file_id",
-      "${file_id}"
+      "${file_id}",
+      "--columns",
+      "${columns}"
     ],
     "environment": [
         { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },

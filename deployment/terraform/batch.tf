@@ -433,6 +433,7 @@ data "template_file" "load_csv_data_job_definition" {
     user_id                             = var.load_csv_data_user_id
     contributor_email                   = var.load_csv_data_contributor_email
     file_id                             = var.load_csv_data_file_id
+    columns                             = var.load_csv_data_columns
     opensearch_host                     = aws_opensearch_domain.opensearch.endpoint
     opensearch_port                     = var.opensearch_port
     opensearch_ssl                      = var.opensearch_ssl

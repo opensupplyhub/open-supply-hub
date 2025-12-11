@@ -851,6 +851,11 @@ variable "load_csv_data_user_id" {
   description = "User ID for load_csv_data"
 }
 
+variable "load_csv_data_columns" {
+  type        = string
+  description = "Comma-separated list of columns to read from CSV for load_csv_data"
+}
+
 # Stripe variables
 
 variable "stripe_secret_key" {

@@ -20,17 +20,38 @@ from api.moderation_event_actions.creation.location_contribution \
     .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.moderation_event_actions.approval.add_production_location \
+    import AddProductionLocation
 from api.moderation_event_actions.approval.update_production_location \
     import UpdateProductionLocation
 
 logger = logging.getLogger(__name__)
 
 
+class AddProductionLocationWithOsID(AddProductionLocation):
+    """Helper class to allow specifying os_id when creating a new facility."""
+    def __init__(
+        self,
+        moderation_event: ModerationEvent,
+        moderator: User,
+        os_id: str = None
+    ) -> None:
+        super().__init__(moderation_event, moderator)
+        self.__os_id = os_id
+
+    def _get_os_id(self, country_code: str) -> str:
+        if self.__os_id is not None:
+            return self.__os_id
+        # If os_id is None, use parent's method to generate one
+        return super()._get_os_id(country_code)
+
+
 class Command(BaseCommand):
     help = (
         "Load data from a CSV file stored in Google Drive. "
-        "CSV must contain two columns: 'os_id' and 'us_geoid_county'. "
-        "Only processes existing facilities."
+        "CSV must contain columns specified in --columns argument. "
+        "If 'os_id' is provided, updates existing facilities. "
+        "If 'os_id' is not provided, creates new facilities."
     )
 
     def add_arguments(self, parser):
@@ -50,6 +71,12 @@ class Command(BaseCommand):
             "--file_id",
             type=str,
             help="The Google Drive file ID to load CSV from.",
+            required=True,
+        )
+        parser.add_argument(
+            "--columns",
+            type=str,
+            help="Comma-separated list of columns to read from.",
             required=True,
         )
 
@@ -153,6 +180,14 @@ class Command(BaseCommand):
 
         contributor = cont_user.contributor
 
+        # Parse columns from argument
+        columns = []
+        for col in options["columns"].split(","):
+            columns.append(col.strip())
+
+        if not columns:
+            raise ValueError("No columns specified for data loading.")
+
         # Download CSV file from Google Drive
         csv_path = self._download_csv_from_google_drive(options["file_id"])
         temp_file_created = True
@@ -175,9 +210,8 @@ class Command(BaseCommand):
             logger.info(f"CSV columns: {', '.join(reader.fieldnames)}")
 
             # Validate required columns exist in CSV
-            required_columns = ["os_id", "us_geoid_county"]
             missing_columns = [
-                col for col in required_columns if col not in reader.fieldnames
+                col for col in columns if col not in reader.fieldnames
             ]
             if missing_columns:
                 raise ValueError(
@@ -191,64 +225,73 @@ class Command(BaseCommand):
                 row_idx += 1
                 logger.info(f"Processing row: {row_idx}")
 
-                # Validate required columns
-                if "os_id" not in row or not row["os_id"]:
-                    logger.warning(
-                        f"Row {row_idx}: Missing 'os_id', skipping."
-                    )
-                    continue
-
-                if "us_geoid_county" not in row or not row["us_geoid_county"]:
-                    logger.warning(
-                        f"Row {row_idx}: Missing 'us_geoid_county', skipping."
-                    )
-                    continue
-
-                os_id = row["os_id"].strip()
-                us_geoid_county = row["us_geoid_county"].strip()
-
-                # Check if facility exists
+                # Check if os_id is provided (optional)
+                os_id = None
                 facility = None
-                try:
-                    facility = Facility.objects.get(id=os_id)
-                except Facility.DoesNotExist:
-                    logger.warning(
-                        f"Row {row_idx}: Facility does not exist "
-                        f"with os_id: '{os_id}'. Skipping (MVP only processes "
-                        "existing facilities)."
-                    )
-                    continue
+                if "os_id" in row and row["os_id"]:
+                    os_id = row["os_id"].strip()
+                    # Check if facility exists
+                    try:
+                        facility = Facility.objects.get(id=os_id)
+                    except Facility.DoesNotExist:
+                        logger.info(
+                            f"Row {row_idx}: Facility does not exist "
+                            f"with os_id: '{os_id}'. Will create new facility."
+                        )
 
-                logger.info(
-                    f"Row {row_idx}: Processing os_id='{os_id}', "
-                    f"us_geoid_county='{us_geoid_county}'"
-                )
-
-                # Build raw_data from CSV row
-                # For MVP, we're only processing os_id and us_geoid_county
-                # Since we're updating existing facilities, we need minimal data
+                # Build raw_data from CSV row dynamically based on columns
                 raw_data = {
                     "source": ModerationEvent.Source.API.value,
                 }
 
-                # Store us_geoid_county (for future processing)
-                raw_data["us_geoid_county"] = { "value": str(us_geoid_county) }
+                # Process each column from the columns list
+                for column in columns:
+                    if column == "os_id":
+                        # Skip os_id as it's used for facility lookup only
+                        continue
+
+                    if column in row and row[column]:
+                        value = row[column].strip()
+                        
+                        # Special handling for us_geoid_county
+                        if column == "us_geoid_county":
+                            raw_data[column] = {"value": str(value)}
+                        else:
+                            # Default structure for other columns
+                            raw_data[column] = value
+
+                # Determine request type and facility
+                req_types = ModerationEvent.RequestType
+                if facility:
+                    # Update existing facility
+                    request_type = req_types.UPDATE.value
+                    log_message = f"Row {row_idx}: Updating facility os_id='{os_id}'"
+                else:
+                    # Create new facility
+                    request_type = req_types.CREATE.value
+                    if os_id:
+                        log_message = f"Row {row_idx}: Creating new facility with os_id='{os_id}'"
+                    else:
+                        log_message = f"Row {row_idx}: Creating new facility"
+
                 logger.info(
-                    f"Row {row_idx}: us_geoid_county value: '{us_geoid_county}'"
+                    f"{log_message} with columns: "
+                    f"{', '.join([col for col in columns if col != 'os_id'])}"
                 )
 
-                # Create moderation event for updating existing facility
-                # Note: MVP version only updates existing facilities with geoid data
+                # Create moderation event
                 me_creator = ModerationEventCreator(
                     LocationContribution(),
                 )
-                req_types = ModerationEvent.RequestType
                 event_dto = CreateModerationEventDTO(
                     contributor=contributor,
                     raw_data=raw_data,
-                    request_type=req_types.UPDATE.value,
-                    os=facility,
+                    request_type=request_type,
                 )
+
+                # Only set os if facility exists (for UPDATE)
+                if facility:
+                    event_dto.os = facility
 
                 try:
                     ec_result = me_creator.perform_event_creation(event_dto)
@@ -265,12 +308,21 @@ class Command(BaseCommand):
                     )
                     continue
 
-                # Process moderation event (always updating existing facility)
-                processor = UpdateProductionLocation(
-                    ec_result.moderation_event,
-                    user,
-                    facility.id,
-                )
+                # Process moderation event
+                if facility:
+                    # Update existing facility
+                    processor = UpdateProductionLocation(
+                        ec_result.moderation_event,
+                        user,
+                        facility.id,
+                    )
+                else:
+                    # Create new facility
+                    processor = AddProductionLocationWithOsID(
+                        ec_result.moderation_event,
+                        user,
+                        os_id,
+                    )
 
                 try:
                     item = processor.process_moderation_event()
