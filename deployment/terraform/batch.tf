@@ -408,6 +408,53 @@ resource "aws_batch_job_definition" "direct_data_load" {
   }
 }
 
+data "template_file" "load_csv_data_job_definition" {
+  template = file("job-definitions/load_csv_data.json")
+
+  vars = {
+    image_url                           = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
+    aws_region                          = var.aws_region
+    aws_storage_bucket_name             = local.files_bucket_name
+    postgres_host                       = aws_route53_record.database.name
+    postgres_port                       = module.database_enc.port
+    postgres_user                       = var.rds_database_username
+    postgres_password                   = var.rds_database_password
+    postgres_db                         = var.rds_database_name
+    environment                         = var.environment
+    django_secret_key                   = var.django_secret_key
+    google_server_side_api_key          = var.google_server_side_api_key
+    oar_client_key                      = var.oar_client_key
+    external_domain                     = local.domain_name
+    batch_job_queue_name                = "queue${local.short}Default"
+    batch_job_def_name                  = "job${local.short}LoadCsvData"
+    log_group_name                      = "log${local.short}Batch"
+    google_service_account_creds_base64 = var.google_service_account_creds_base64
+    google_drive_shared_directory_id    = var.google_drive_shared_directory_id
+    user_id                             = var.load_csv_data_user_id
+    contributor_email                   = var.load_csv_data_contributor_email
+    file_id                             = var.load_csv_data_file_id
+    opensearch_host                     = aws_opensearch_domain.opensearch.endpoint
+    opensearch_port                     = var.opensearch_port
+    opensearch_ssl                      = var.opensearch_ssl
+    opensearch_ssl_cert_verification    = var.opensearch_ssl_cert_verification
+    instance_source                     = var.instance_source
+  }
+}
+
+resource "aws_batch_job_definition" "load_csv_data" {
+  name           = "job${local.short}LoadCsvData"
+  type           = "container"
+  propagate_tags = true
+
+  platform_capabilities = ["EC2"]
+
+  container_properties = data.template_file.load_csv_data_job_definition.rendered
+
+  retry_strategy {
+    attempts = 2
+  }
+}
+
 # AWS Batch for Database Sync
 
 resource "aws_batch_compute_environment" "db_sync" {

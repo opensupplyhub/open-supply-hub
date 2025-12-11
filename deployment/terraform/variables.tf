@@ -834,6 +834,23 @@ variable "direct_data_load_tab_id" {
   description = "Tab ID of the Google Sheet for direct data load"
 }
 
+# Load CSV data variables
+
+variable "load_csv_data_file_id" {
+  type        = string
+  description = "Google Drive file ID for load_csv_data"
+}
+
+variable "load_csv_data_contributor_email" {
+  type        = string
+  description = "Contributor email for load_csv_data"
+}
+
+variable "load_csv_data_user_id" {
+  type        = number
+  description = "User ID for load_csv_data"
+}
+
 # Stripe variables
 
 variable "stripe_secret_key" {
