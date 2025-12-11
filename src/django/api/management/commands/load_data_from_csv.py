@@ -1,7 +1,15 @@
+import os
 import csv
+import base64
+import json
 import logging
+import tempfile
 from pathlib import Path
 from django.core.management.base import BaseCommand
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
+import io
 from api.models.facility.facility import Facility
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -20,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = (
-        "Load data from a local CSV file (MVP version). "
+        "Load data from a CSV file stored in Google Drive. "
         "CSV must contain two columns: 'os_id' and 'us_geoid_county'. "
         "Only processes existing facilities."
     )
@@ -39,14 +47,86 @@ class Command(BaseCommand):
             required=True,
         )
         parser.add_argument(
-            "--csv_path",
+            "--file_id",
             type=str,
-            help=(
-                "Path to the CSV file. "
-                "Defaults to test_osid_geoid_df.csv in project root"
-            ),
-            default=None,
+            help="The Google Drive file ID to load CSV from.",
+            required=True,
         )
+
+    def _get_google_drive_service(self):
+        """Initialize and return Google Drive API service."""
+        SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+
+        base64_gdrive_creds = os.getenv("GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAib3MtaHViLWludGVybmFsLTQ4MDkwOSIsCiAgInByaXZhdGVfa2V5X2lkIjogIjJhMTQ5NGZmYjQzY2VjNWRmYjFkZDg2YjVkNzFlNmVhOWI5MGRjODciLAogICJwcml2YXRlX2tleSI6ICItLS0tLUJFR0lOIFBSSVZBVEUgS0VZLS0tLS1cbk1JSUV2d0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktrd2dnU2xBZ0VBQW9JQkFRQzVlblllNGI2TVBKVEJcbjBwVEF3MTdvb0prMjB4YUtXM1BxaUMwWERlWHdKNGt2Znl3L3NlRTFxaVg1ZDYyVS9DRkVIb1JDeHpxUVNaWkhcbkxCYjJvdVlJVnF5RzZGb3diaGJyYWUrbjR0L1dibjJJb3RtV2FrZEJGQ1k5M3FyMWpvQmQ3VUl3eWRTM09GUkNcbktpeWFqbXJVSGcyUG9Ca0Z5RzZ6RTJmZnY4MEJIU1poNHRlR1c3NGx5UiszdXNZM3RQb2NZRFBjM2d5Tnl2cWtcblBDdkxpSlNEWEhaSGNtY0JaaHhUWCtXZnZXSExIWUV1OUtPenBhNmtSU2JZeHhteHdKbjg4UTg3VkRaVnNwS0JcbkdwMk9EMzV3UDZRb2I5ZmxMNUZ2WWxVMUNXU3FUSGo2S25wb043OXBrVGxBbFNBR0ROQmhIak14dEt2UXlhYStcblM4My9WV3duQWdNQkFBRUNnZ0VBTk8zYmMyaWNSY3lyN3J1M00yTU5YSGtuLzlzeEhYNkhqN0FZbmZHYlluTUZcbjFRWUhqSTJvWlBZUExDZVk0MkVuNVJhSVM3NHEyaTRGc24zRWQ5RjRyM3g4YzJzdkFZOEkvMWtWeU9VWFYwdmtcbml1OWVCR3lEdFBDWkVTTFB5bzlGMW9mMFVaUG5IZm4zSVlLRGcvK01RTWZxdXNmSEhEMWNTY0lKN0hJQmdJVmlcbkRYaHQ0L1hFMUJIQ0U4cmxza2pIMFdXa01KREcvQmw5VTQ1QTBwaEdyVDUzdUs1OFROOE9OcUlGeVl0NUlCTjVcbkR1bEd6dEMwTE1vRGVJMW9xTTh0NWJPU0hQcGlGWFZSRldCZXdsbndJdTdTR1Qvdi9iT2VOclVYUkZvSXBPWHdcbkhqcUhPbmdNZnpKaGRZS1ZmSGpDVzlzV0Y0dC82T2EzeHluaEplVU9jUUtCZ1FEd1c4TWxCM0Nva3ZwZEJQdzlcbk1iVmhPcWNPaUVXVjVKN1VINjdWQ09RTTJUVzNZOCtFekFQWDJUcFhvcCtpZzhYNm00MFVjbDVNMEVLYkVjQWxcblAxSG5UM1JzMVJ0QTUwcjhEcUJGbEhKSFNGMXdVRExWd1lZQXI0WHlXck40VWNOYmEwTFlpaXBqdzlHYUlQMVZcbnNIU1BHbnBBSnBnRkZCVU54VVR2TVREZ2RRS0JnUURGakcxMHVuNnBXdnA2clJkaE9wVW5yU3JSMnh5WEFoWHRcbnExbkloc2cyT2JNSnpidG1WbWkycTNuemovbW55NnhFd2Ird2J6SkMyRGt2dXFRTnIzVVlMYm9TQWI0MjFpU3lcbjZOWEh0NUpsSEFRd3VRZEFOUlJPL0cyQ3VoOXVDMHcrTjJaZDRKU3JCZUkzZ1AreTZhd1hmWmZaZmdTS05IOWVcbkswdVU2eUhHcXdLQmdRQ2JwbERSQWVocXdnTnZpWEx2RGVtdmRSUUp6U1dDMC9JbTIvMlQ1NVlHM0FKMUtDV1NcbmthdExkRmpidDJ3NUNheURoWWZ1M2NGRGJQbzFBV0cwdlRTRTNtYytzeUphL1cwSm5VOGN2K3poVEhOMTcvbDdcbmd6OEw0cDZUT3psTmlXVkJKa3k3ZlgzRjdXRW10b1pYbjFWYjlvR0VXWG5Ja0NDeU1qVlowRGtlb1FLQmdRQ3FcbkJOWWZaSEttcHhwMGdveGdyZDY1S3h4elNMVXVjaWtWU0NnWm9ZYW14TG9HY2Y0YmNicmxuR2QwN0REZDdUanlcblpCM3FaNGxHWm5teFRsenJPbHI0MkVJUVJWZkVNa0diaVRDVWxyVjBOOHlUY210L0l5KzdXeDJWS1VMcm51V2JcbmxtcVAyVDJhZzVIU1d6KzJaODRvMlhyYlFNMy9kSGM2UU9EbjVnWkh5UUtCZ1FDTjQvWHgwNTcvVDlHWE5XdkxcblpRRzFBN204RmZKejh0TEF6MVNCakdYeldUYlI4M0hNekhUUmFuUytMcUdESjZYM0V4ZEJlQnpMbkwyc0NqRkJcbkVvYWNqTVNKVFlhNlhBM1hObXdFd2ZGTm85eTRHNm9NeGFjNXNOaW5GekphaXo4QkYxNzhBeCs1NFllNTYwQVhcbkNUWG9rQzhsaTd4ajVaZXhXc3NUVEdlTEh3PT1cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgImNsaWVudF9lbWFpbCI6ICJvcy1odWItZHJpdmUtYWNjZXNzQG9zLWh1Yi1pbnRlcm5hbC00ODA5MDkuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICJjbGllbnRfaWQiOiAiMTE0NzI1NDc3MTkwOTI1MDI1NDkzIiwKICAiYXV0aF91cmkiOiAiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tL28vb2F1dGgyL2F1dGgiLAogICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLAogICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwKICAiY2xpZW50X3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vcm9ib3QvdjEvbWV0YWRhdGEveDUwOS9vcy1odWItZHJpdmUtYWNjZXNzJTQwb3MtaHViLWludGVybmFsLTQ4MDkwOS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSIKfQo=")
+
+        if base64_gdrive_creds is None:
+            raise ValueError("Google Service Account credentials not found!")
+
+        decoded_creds = base64.b64decode(base64_gdrive_creds).decode("utf-8")
+
+        credentials = service_account.Credentials.from_service_account_info(
+            info=json.loads(decoded_creds),
+            scopes=SCOPES,
+        )
+        logger.info("Initialized Google service account credentials")
+
+        service = build("drive", "v3", credentials=credentials)
+        logger.info("Built Google Drive service")
+        return service
+
+    def _download_csv_from_google_drive(self, file_id):
+        """Download CSV file from Google Drive and return file path."""
+        service = self._get_google_drive_service()
+
+        logger.info(f"Downloading CSV file from Google Drive with ID: {file_id}")
+
+        try:
+            # Get file metadata
+            file_metadata = service.files().get(
+                fileId=file_id,
+                fields="name, mimeType"
+            ).execute()
+
+            file_name = file_metadata.get("name", "downloaded_file.csv")
+            mime_type = file_metadata.get("mimeType", "")
+
+            logger.info(
+                f"File name: '{file_name}', MIME type: '{mime_type}'"
+            )
+
+            # Download file content
+            request = service.files().get_media(fileId=file_id)
+            file_content = io.BytesIO()
+            downloader = MediaIoBaseDownload(file_content, request)
+
+            done = False
+            while not done:
+                status, done = downloader.next_chunk()
+                if status:
+                    logger.info(
+                        f"Download progress: {int(status.progress() * 100)}%"
+                    )
+
+            file_content.seek(0)
+
+            # Create temporary file
+            temp_file = tempfile.NamedTemporaryFile(
+                mode='w+b',
+                suffix='.csv',
+                delete=False
+            )
+            temp_file.write(file_content.read())
+            temp_file.close()
+
+            logger.info(
+                f"Downloaded CSV file to temporary location: {temp_file.name}"
+            )
+
+            return Path(temp_file.name)
+
+        except Exception as error:
+            logger.error(f"Error downloading file from Google Drive: {str(error)}")
+            raise
 
     def handle(self, *args, **options):
         user_id = options["user_id"]
@@ -73,22 +153,14 @@ class Command(BaseCommand):
 
         contributor = cont_user.contributor
 
-        # Determine CSV file path
-        if options["csv_path"]:
-            csv_path = Path(options["csv_path"])
-        else:
-            # Default to project root/test_osid_geoid_df.csv
-            # Navigate from command file to project root
-            # Command file location: .../api/management/commands/load_data_from_csv.py
-            # Go up 4 levels to reach project root
-            command_file = Path(__file__)
-            project_root = command_file.parent.parent.parent.parent
-            csv_path = project_root / "test_osid_geoid_df.csv"
+        # Download CSV file from Google Drive
+        csv_path = self._download_csv_from_google_drive(options["file_id"])
+        temp_file_created = True
 
         if not csv_path.exists():
             raise ValueError(
                 f"CSV file not found at: {csv_path}. "
-                "Please provide a valid path using --csv_path."
+                "Failed to download from Google Drive."
             )
 
         logger.info(f"Reading data from CSV file: {csv_path}")
@@ -220,4 +292,14 @@ class Command(BaseCommand):
                     raise
 
         logger.info(f"Completed processing CSV file: {csv_path}")
+
+        # Clean up temporary file if downloaded from Google Drive
+        if temp_file_created and csv_path.exists():
+            try:
+                csv_path.unlink()
+                logger.info(f"Cleaned up temporary file: {csv_path}")
+            except Exception as error:
+                logger.warning(
+                    f"Failed to delete temporary file {csv_path}: {str(error)}"
+                )
 
