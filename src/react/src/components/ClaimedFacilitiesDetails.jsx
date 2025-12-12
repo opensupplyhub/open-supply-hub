@@ -96,18 +96,11 @@ import {
     getNumberOfWorkersValidationError,
 } from '../util/util';
 
-import {
-    claimAFacilityFormFields,
-    USER_DEFAULT_STATE,
-} from '../util/constants';
+import { USER_DEFAULT_STATE } from '../util/constants';
 import freeEmissionsEstimateValidationSchema from './FreeEmissionsEstimate/utils';
 import { freeEmissionsEstimateFormConfig } from './FreeEmissionsEstimate/constants.jsx';
 import YearPicker from './FreeEmissionsEstimate/YearPicker.jsx';
 import MonthYearPicker from './FreeEmissionsEstimate/MonthYearPicker.jsx';
-
-const {
-    parentCompany: { aside: parentCompanyAside },
-} = claimAFacilityFormFields;
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
@@ -124,6 +117,9 @@ const {
 const mergedStyles = {
     ...claimedFacilitiesDetailsStyles(),
     ...textFieldErrorStyles(),
+    paddedTitle: {
+        padding: '10px 0',
+    },
 };
 function ClaimedFacilitiesDetails({
     user,
@@ -443,7 +439,7 @@ function ClaimedFacilitiesDetails({
                         />
                         <InputSection
                             label="Parent Company / Supplier Group"
-                            aside={parentCompanyAside}
+                            // aside={parentCompanyAside}
                             value={
                                 get(data, 'facility_parent_company.name', '') ||
                                 data.parent_company_name ||
@@ -574,7 +570,7 @@ function ClaimedFacilitiesDetails({
                         />
                         <Typography
                             variant="title"
-                            className={classes.headingStyles}
+                            className={classes.paddedTitle}
                         >
                             Emissions Estimates
                         </Typography>
@@ -655,8 +651,8 @@ function ClaimedFacilitiesDetails({
                             )}
                         </div>
                         <Typography
-                            variant="headline"
-                            className={classes.headingStyles}
+                            variant="title"
+                            className={classes.paddedTitle}
                         >
                             {energyConsumptionLabel.label}
                         </Typography>
