@@ -62,7 +62,6 @@ topic_dedup_basic_name = "basic-name"
 dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
-app_cc_ecs_desired_count = 1
 
 opensearch_instance_type = "t3.small.search"
 
