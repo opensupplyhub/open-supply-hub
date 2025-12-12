@@ -6,6 +6,7 @@ from django.core.validators import URLValidator
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from api.exceptions import BadRequestException
+from dateutil import parser as date_parser
 
 from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
@@ -85,6 +86,53 @@ def validate_date_range(opening_date, closing_date):
                 'Closing date must be after or equal to opening date.'
             )
         })
+
+
+def parse_date_or_none(value, field_name):
+    """
+    Parse an ISO-like date string to a date, ensuring it is not in the future.
+    Returns None for empty values.
+    """
+    if value in (None, ''):
+        return None
+
+    try:
+        parsed_date = date_parser.parse(value).date()
+    except (ValueError, OverflowError, TypeError):
+        raise DRFValidationError({
+            field_name: 'Please enter a valid date (not in the future).'
+        })
+
+    validate_non_future_date(parsed_date)
+    return parsed_date
+
+
+def parse_positive_big_int_or_none(value, field_name):
+    """
+    Parse a positive integer (<= JS_MAX_SAFE_INTEGER) or return None for empty.
+    """
+    if value in (None, ''):
+        return None
+
+    try:
+        parsed_value = int(str(value).strip())
+    except (ValueError, TypeError):
+        raise DRFValidationError({
+            field_name: (
+                f'Please enter a positive integer that is less than or equal '
+                f'to {JS_MAX_SAFE_INTEGER}.'
+            )
+        })
+
+    if parsed_value <= 0 or parsed_value > JS_MAX_SAFE_INTEGER:
+        raise DRFValidationError({
+            field_name: (
+                f'Please enter a positive integer that is less than or equal '
+                f'to {JS_MAX_SAFE_INTEGER}.'
+            )
+        })
+
+    return parsed_value
 
 
 class FacilityCreateClaimSerializer(serializers.Serializer):

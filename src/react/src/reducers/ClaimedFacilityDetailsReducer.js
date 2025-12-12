@@ -52,6 +52,38 @@ import {
     updateClaimedEnergyOther,
 } from '../actions/claimedFacilityDetails';
 
+const setDataField = key => (state, payload) =>
+    update(state, {
+        updateData: {
+            error: { $set: initialState.updateData.error },
+        },
+        data: {
+            [key]: { $set: payload },
+        },
+    });
+
+const CLAIMED_EMISSIONS_FIELDS = [
+    [updateClaimedFacilityOpeningDate, 'opening_date'],
+    [updateClaimedFacilityClosingDate, 'closing_date'],
+    [updateClaimedEstimatedAnnualThroughput, 'estimated_annual_throughput'],
+    [updateClaimedEnergyCoal, 'energy_coal'],
+    [updateClaimedEnergyNaturalGas, 'energy_natural_gas'],
+    [updateClaimedEnergyDiesel, 'energy_diesel'],
+    [updateClaimedEnergyKerosene, 'energy_kerosene'],
+    [updateClaimedEnergyBiomass, 'energy_biomass'],
+    [updateClaimedEnergyCharcoal, 'energy_charcoal'],
+    [updateClaimedEnergyAnimalWaste, 'energy_animal_waste'],
+    [updateClaimedEnergyElectricity, 'energy_electricity'],
+    [updateClaimedEnergyOther, 'energy_other'],
+];
+
+const claimedEmissionsReducers = Object.fromEntries(
+    CLAIMED_EMISSIONS_FIELDS.map(([action, key]) => [
+        action,
+        setDataField(key),
+    ]),
+);
+
 const initialState = Object.freeze({
     data: null,
     retrieveData: Object.freeze({
@@ -374,114 +406,7 @@ export default createReducer(
                     office_phone_number: { $set: phone },
                 },
             }),
-        [updateClaimedFacilityOpeningDate]: (state, openingDate) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    opening_date: { $set: openingDate },
-                },
-            }),
-        [updateClaimedFacilityClosingDate]: (state, closingDate) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    closing_date: { $set: closingDate },
-                },
-            }),
-        [updateClaimedEstimatedAnnualThroughput]: (state, throughput) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    estimated_annual_throughput: { $set: throughput },
-                },
-            }),
-        [updateClaimedEnergyCoal]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_coal: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyNaturalGas]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_natural_gas: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyDiesel]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_diesel: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyKerosene]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_kerosene: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyBiomass]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_biomass: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyCharcoal]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_charcoal: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyAnimalWaste]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_animal_waste: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyElectricity]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_electricity: { $set: value },
-                },
-            }),
-        [updateClaimedEnergyOther]: (state, value) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    energy_other: { $set: value },
-                },
-            }),
+        ...claimedEmissionsReducers,
         [clearClaimedFacilityDetails]: () => initialState,
     },
     initialState,
