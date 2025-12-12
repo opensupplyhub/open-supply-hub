@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
+import Grid from '@material-ui/core/Grid';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
 import memoize from 'lodash/memoize';
@@ -18,7 +19,6 @@ import { toast } from 'react-toastify';
 import AppOverflow from './AppOverflow';
 import AppGrid from './AppGrid';
 import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
-import ShowOnly from './ShowOnly';
 import {
     LoadingIndicator,
     AuthNotice,
@@ -55,17 +55,25 @@ import {
     updateClaimedFacilityOfficeAddress,
     updateClaimedFacilityOfficeCountry,
     updateClaimedFacilityOfficePhone,
+    updateClaimedFacilityOpeningDate,
+    updateClaimedFacilityClosingDate,
+    updateClaimedEstimatedAnnualThroughput,
+    updateClaimedEnergyCoal,
+    updateClaimedEnergyNaturalGas,
+    updateClaimedEnergyDiesel,
+    updateClaimedEnergyKerosene,
+    updateClaimedEnergyBiomass,
+    updateClaimedEnergyCharcoal,
+    updateClaimedEnergyAnimalWaste,
+    updateClaimedEnergyElectricity,
+    updateClaimedEnergyOther,
     submitClaimedFacilityDetailsUpdate,
 } from '../actions/claimedFacilityDetails';
 
-import {
-    fetchParentCompanyOptions,
-    fetchSectorOptions,
-} from '../actions/filterOptions';
+import { fetchSectorOptions } from '../actions/filterOptions';
 
 import {
     approvedFacilityClaimPropType,
-    parentCompanyOptionsPropType,
     sectorOptionsPropType,
     userPropType,
 } from '../util/propTypes';
@@ -92,6 +100,10 @@ import {
     claimAFacilityFormFields,
     USER_DEFAULT_STATE,
 } from '../util/constants';
+import freeEmissionsEstimateValidationSchema from './FreeEmissionsEstimate/utils';
+import { freeEmissionsEstimateFormConfig } from './FreeEmissionsEstimate/constants.jsx';
+import YearPicker from './FreeEmissionsEstimate/YearPicker.jsx';
+import MonthYearPicker from './FreeEmissionsEstimate/MonthYearPicker.jsx';
 
 const {
     parentCompany: { aside: parentCompanyAside },
@@ -100,6 +112,14 @@ const {
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
 );
+
+const {
+    openingDateField,
+    closingDateField,
+    estimatedAnnualThroughputField,
+    energyConsumptionLabel,
+    energySourcesData,
+} = freeEmissionsEstimateFormConfig;
 
 const mergedStyles = {
     ...claimedFacilitiesDetailsStyles(),
@@ -144,9 +164,19 @@ function ClaimedFacilitiesDetails({
     errorUpdating,
     updateParentCompany,
     sectorOptions,
-    parentCompanyOptions,
     fetchSectors,
-    fetchParentCompanies,
+    updateOpeningDate,
+    updateClosingDate,
+    updateEstimatedAnnualThroughput,
+    updateEnergyCoal,
+    updateEnergyNaturalGas,
+    updateEnergyDiesel,
+    updateEnergyKerosene,
+    updateEnergyBiomass,
+    updateEnergyCharcoal,
+    updateEnergyAnimalWaste,
+    updateEnergyElectricity,
+    updateEnergyOther,
     userHasSignedIn,
     classes,
 }) {
@@ -160,11 +190,6 @@ function ClaimedFacilitiesDetails({
         return clearDetails;
     }, []);
     /* eslint-enable react-hooks/exhaustive-deps */
-    useEffect(() => {
-        if (!parentCompanyOptions) {
-            fetchParentCompanies();
-        }
-    }, [parentCompanyOptions, fetchParentCompanies]);
     useEffect(() => {
         if (!sectorOptions) {
             fetchSectors();
@@ -240,6 +265,82 @@ function ClaimedFacilitiesDetails({
             });
     };
 
+    const normalizeValue = value => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+
+        return typeof value === 'string' ? value.trim() : `${value}`.trim();
+    };
+
+    const facilityData = data || {};
+
+    const emissionsValidationValues = useMemo(
+        () => ({
+            openingDate: normalizeValue(facilityData.opening_date),
+            closingDate: normalizeValue(facilityData.closing_date),
+            estimatedAnnualThroughput: normalizeValue(
+                facilityData.estimated_annual_throughput,
+            ),
+            energyCoal: normalizeValue(facilityData.energy_coal),
+            energyNaturalGas: normalizeValue(facilityData.energy_natural_gas),
+            energyDiesel: normalizeValue(facilityData.energy_diesel),
+            energyKerosene: normalizeValue(facilityData.energy_kerosene),
+            energyBiomass: normalizeValue(facilityData.energy_biomass),
+            energyCharcoal: normalizeValue(facilityData.energy_charcoal),
+            energyAnimalWaste: normalizeValue(facilityData.energy_animal_waste),
+            energyElectricity: normalizeValue(facilityData.energy_electricity),
+            energyOther: normalizeValue(facilityData.energy_other),
+            energyCoalEnabled: normalizeValue(facilityData.energy_coal) !== '',
+            energyNaturalGasEnabled:
+                normalizeValue(facilityData.energy_natural_gas) !== '',
+            energyDieselEnabled:
+                normalizeValue(facilityData.energy_diesel) !== '',
+            energyKeroseneEnabled:
+                normalizeValue(facilityData.energy_kerosene) !== '',
+            energyBiomassEnabled:
+                normalizeValue(facilityData.energy_biomass) !== '',
+            energyCharcoalEnabled:
+                normalizeValue(facilityData.energy_charcoal) !== '',
+            energyAnimalWasteEnabled:
+                normalizeValue(facilityData.energy_animal_waste) !== '',
+            energyElectricityEnabled:
+                normalizeValue(facilityData.energy_electricity) !== '',
+            energyOtherEnabled:
+                normalizeValue(facilityData.energy_other) !== '',
+        }),
+        [facilityData],
+    );
+
+    const emissionsValidationErrors = useMemo(() => {
+        try {
+            freeEmissionsEstimateValidationSchema.validateSync(
+                emissionsValidationValues,
+                { abortEarly: false },
+            );
+            return {};
+        } catch (validationError) {
+            if (validationError?.inner?.length) {
+                return validationError.inner.reduce((acc, err) => {
+                    if (err.path) {
+                        acc[err.path] = err.message;
+                    }
+                    return acc;
+                }, {});
+            }
+            return {};
+        }
+    }, [emissionsValidationValues]);
+
+    const hasEmissionsErrors = !isEmpty(emissionsValidationErrors);
+
+    const getEmissionError = key => emissionsValidationErrors[key];
+
+    const countryOptions = useMemo(
+        () => createCountrySelectOptions(facilityData.countries || []),
+        [facilityData.countries],
+    );
+
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
     }
@@ -256,7 +357,29 @@ function ClaimedFacilitiesDetails({
         return null;
     }
 
-    const countryOptions = createCountrySelectOptions(data.countries);
+    const energyFieldNameMap = {
+        energyCoal: 'energy_coal',
+        energyNaturalGas: 'energy_natural_gas',
+        energyDiesel: 'energy_diesel',
+        energyKerosene: 'energy_kerosene',
+        energyBiomass: 'energy_biomass',
+        energyCharcoal: 'energy_charcoal',
+        energyAnimalWaste: 'energy_animal_waste',
+        energyElectricity: 'energy_electricity',
+        energyOther: 'energy_other',
+    };
+
+    const energyUpdaterMap = {
+        energyCoal: updateEnergyCoal,
+        energyNaturalGas: updateEnergyNaturalGas,
+        energyDiesel: updateEnergyDiesel,
+        energyKerosene: updateEnergyKerosene,
+        energyBiomass: updateEnergyBiomass,
+        energyCharcoal: updateEnergyCharcoal,
+        energyAnimalWaste: updateEnergyAnimalWaste,
+        energyElectricity: updateEnergyElectricity,
+        energyOther: updateEnergyOther,
+    };
 
     return (
         <AppOverflow>
@@ -318,34 +441,17 @@ function ClaimedFacilitiesDetails({
                             onChange={updateFacilityDescription}
                             disabled={updating}
                         />
-                        <ShowOnly when={!isEmpty(parentCompanyOptions)}>
-                            <InputSection
-                                isCreatable
-                                label="Parent Company / Supplier Group"
-                                aside={parentCompanyAside}
-                                value={get(
-                                    data,
-                                    'facility_parent_company.id',
-                                    null,
-                                )}
-                                onChange={updateParentCompany}
-                                disabled={updating}
-                                isSelect
-                                selectOptions={parentCompanyOptions}
-                            />
-                        </ShowOnly>
-                        <ShowOnly when={!parentCompanyOptions}>
-                            <Typography>
-                                Parent Company / Supplier Group
-                            </Typography>
-                            <Typography>
-                                {get(
-                                    data,
-                                    'facility_parent_company.name',
-                                    null,
-                                )}
-                            </Typography>
-                        </ShowOnly>
+                        <InputSection
+                            label="Parent Company / Supplier Group"
+                            aside={parentCompanyAside}
+                            value={
+                                get(data, 'facility_parent_company.name', '') ||
+                                data.parent_company_name ||
+                                ''
+                            }
+                            onChange={updateParentCompany}
+                            disabled={updating}
+                        />
                         <InputSection
                             label="Minimum order quantity"
                             value={data.facility_minimum_order_quantity}
@@ -470,6 +576,119 @@ function ClaimedFacilitiesDetails({
                             variant="title"
                             className={classes.headingStyles}
                         >
+                            Emissions Estimates
+                        </Typography>
+                        <Grid container spacing={24}>
+                            <Grid item xs={12} md={6}>
+                                <YearPicker
+                                    value={data.opening_date || ''}
+                                    label={openingDateField.label}
+                                    tooltipText={openingDateField.tooltipText}
+                                    placeholder={openingDateField.placeholder}
+                                    helperText={
+                                        getEmissionError('openingDate') && (
+                                            <InputErrorText
+                                                text={getEmissionError(
+                                                    'openingDate',
+                                                )}
+                                            />
+                                        )
+                                    }
+                                    disabled={updating}
+                                    error={Boolean(
+                                        getEmissionError('openingDate'),
+                                    )}
+                                    onChange={updateOpeningDate}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <MonthYearPicker
+                                    value={data.closing_date || ''}
+                                    label={closingDateField.label}
+                                    tooltipText={closingDateField.tooltipText}
+                                    placeholderMonth={
+                                        closingDateField.placeholderMonth
+                                    }
+                                    placeholderYear={
+                                        closingDateField.placeholderYear
+                                    }
+                                    helperText={
+                                        getEmissionError('closingDate') && (
+                                            <InputErrorText
+                                                text={getEmissionError(
+                                                    'closingDate',
+                                                )}
+                                            />
+                                        )
+                                    }
+                                    disabled={updating}
+                                    error={Boolean(
+                                        getEmissionError('closingDate'),
+                                    )}
+                                    onChange={updateClosingDate}
+                                />
+                            </Grid>
+                        </Grid>
+                        <div>
+                            <InputSection
+                                label={estimatedAnnualThroughputField.label}
+                                value={data.estimated_annual_throughput || ''}
+                                onChange={updateEstimatedAnnualThroughput}
+                                disabled={updating}
+                                hasValidationErrorFn={() =>
+                                    Boolean(
+                                        getEmissionError(
+                                            'estimatedAnnualThroughput',
+                                        ),
+                                    )
+                                }
+                                FormHelperTextProps={{
+                                    className: classes.helperText,
+                                }}
+                            />
+                            {getEmissionError('estimatedAnnualThroughput') && (
+                                <InputErrorText
+                                    text={getEmissionError(
+                                        'estimatedAnnualThroughput',
+                                    )}
+                                />
+                            )}
+                        </div>
+                        <Typography
+                            variant="headline"
+                            className={classes.headingStyles}
+                        >
+                            {energyConsumptionLabel.label}
+                        </Typography>
+                        {energySourcesData.map(sourceData => {
+                            const { valueFieldName, source } = sourceData;
+                            const dataKey = energyFieldNameMap[valueFieldName];
+                            const updater = energyUpdaterMap[valueFieldName];
+                            const errorText = getEmissionError(valueFieldName);
+                            return (
+                                <div key={valueFieldName}>
+                                    <InputSection
+                                        label={`${source.label} (${source.unit})`}
+                                        value={data[dataKey] || ''}
+                                        onChange={updater}
+                                        disabled={updating}
+                                        hasValidationErrorFn={() =>
+                                            Boolean(errorText)
+                                        }
+                                        FormHelperTextProps={{
+                                            className: classes.helperText,
+                                        }}
+                                    />
+                                    {errorText && (
+                                        <InputErrorText text={errorText} />
+                                    )}
+                                </div>
+                            );
+                        })}
+                        <Typography
+                            variant="title"
+                            className={classes.headingStyles}
+                        >
                             Point of contact{' '}
                             <span className={classes.switchSectionStyles}>
                                 <Switch
@@ -584,7 +803,8 @@ function ClaimedFacilitiesDetails({
                                         )) ||
                                     !isValidNumberOfWorkers(
                                         data.facility_workers_count,
-                                    )
+                                    ) ||
+                                    hasEmissionsErrors
                                 }
                             >
                                 Save
@@ -607,7 +827,6 @@ ClaimedFacilitiesDetails.defaultProps = {
     data: null,
     errorUpdating: null,
     sectorOptions: null,
-    parentCompanyOptions: null,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
@@ -638,8 +857,19 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityPhoneVisibility: func.isRequired,
     updateContactVisibility: func.isRequired,
     updateOfficeVisibility: func.isRequired,
+    updateOpeningDate: func.isRequired,
+    updateClosingDate: func.isRequired,
+    updateEstimatedAnnualThroughput: func.isRequired,
+    updateEnergyCoal: func.isRequired,
+    updateEnergyNaturalGas: func.isRequired,
+    updateEnergyDiesel: func.isRequired,
+    updateEnergyKerosene: func.isRequired,
+    updateEnergyBiomass: func.isRequired,
+    updateEnergyCharcoal: func.isRequired,
+    updateEnergyAnimalWaste: func.isRequired,
+    updateEnergyElectricity: func.isRequired,
+    updateEnergyOther: func.isRequired,
     sectorOptions: sectorOptionsPropType,
-    parentCompanyOptions: parentCompanyOptionsPropType,
     fetchSectors: func.isRequired,
     userHasSignedIn: bool.isRequired,
     classes: object.isRequired,
@@ -656,21 +886,16 @@ function mapStateToProps({
     },
     filterOptions: {
         sectors: { data: sectorOptions, fetching: fetchingSectors },
-        parentCompanies: {
-            data: parentCompanyOptions,
-            fetching: fetchingParentCompanies,
-        },
     },
 }) {
     return {
         user,
-        fetching: fetchingData || fetchingSectors || fetchingParentCompanies,
+        fetching: fetchingData || fetchingSectors,
         data,
         errors: error || errorUpdating,
         updating,
         errorUpdating,
         sectorOptions,
-        parentCompanyOptions,
         userHasSignedIn: !user.isAnon,
     };
 }
@@ -705,13 +930,9 @@ function mapDispatchToProps(
         updateFacilityPhoneVisibility: makeDispatchCheckedFn(
             updateClaimedFacilityPhoneVisibility,
         ),
-        updateParentCompany: ({ label, value }) =>
-            dispatch(
-                updateClaimedFacilityParentCompany({
-                    id: value,
-                    name: label,
-                }),
-            ),
+        updateParentCompany: makeDispatchValueFn(
+            updateClaimedFacilityParentCompany,
+        ),
         updateContactVisibility: makeDispatchCheckedFn(
             updateClaimedFacilityPointOfContactVisibility,
         ),
@@ -766,10 +987,31 @@ function mapDispatchToProps(
         updateOfficePhone: makeDispatchValueFn(
             updateClaimedFacilityOfficePhone,
         ),
+        updateOpeningDate: value =>
+            dispatch(updateClaimedFacilityOpeningDate(value)),
+        updateClosingDate: value =>
+            dispatch(updateClaimedFacilityClosingDate(value)),
+        updateEstimatedAnnualThroughput: makeDispatchValueFn(
+            updateClaimedEstimatedAnnualThroughput,
+        ),
+        updateEnergyCoal: makeDispatchValueFn(updateClaimedEnergyCoal),
+        updateEnergyNaturalGas: makeDispatchValueFn(
+            updateClaimedEnergyNaturalGas,
+        ),
+        updateEnergyDiesel: makeDispatchValueFn(updateClaimedEnergyDiesel),
+        updateEnergyKerosene: makeDispatchValueFn(updateClaimedEnergyKerosene),
+        updateEnergyBiomass: makeDispatchValueFn(updateClaimedEnergyBiomass),
+        updateEnergyCharcoal: makeDispatchValueFn(updateClaimedEnergyCharcoal),
+        updateEnergyAnimalWaste: makeDispatchValueFn(
+            updateClaimedEnergyAnimalWaste,
+        ),
+        updateEnergyElectricity: makeDispatchValueFn(
+            updateClaimedEnergyElectricity,
+        ),
+        updateEnergyOther: makeDispatchValueFn(updateClaimedEnergyOther),
         submitUpdate: () =>
             dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
         fetchSectors: () => dispatch(fetchSectorOptions()),
-        fetchParentCompanies: () => dispatch(fetchParentCompanyOptions()),
     };
 }
 

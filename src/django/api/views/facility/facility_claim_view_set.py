@@ -2,6 +2,8 @@ import json
 from api.models.transactions.index_facilities_new import index_facilities_new
 
 from api.helpers.helpers import validate_workers_count
+from datetime import date
+from dateutil import parser as date_parser
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -45,6 +47,62 @@ from ...serializers import (
     FacilityClaimListQueryParamsSerializer
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
+
+
+def _parse_date_or_none(value, field_name):
+    if value in (None, ''):
+        return None
+
+    try:
+        parsed_date = date_parser.parse(value).date()
+    except (ValueError, OverflowError, TypeError):
+        raise ValidationError({
+            field_name: 'Please enter a valid date (not in the future).'
+        })
+
+    if parsed_date > date.today():
+        raise ValidationError({
+            field_name: 'Please enter a valid date (not in the future).'
+        })
+
+    return parsed_date
+
+
+def _ensure_valid_date_range(opening_date, closing_date):
+    if opening_date and closing_date and opening_date > closing_date:
+        raise ValidationError({
+            'opening_date': (
+                'Opening date must be before or equal to closing date.'
+            ),
+            'closing_date': (
+                'Closing date must be after or equal to opening date.'
+            )
+        })
+
+
+def _parse_positive_big_int_or_none(value, field_name):
+    if value in (None, ''):
+        return None
+
+    try:
+        parsed_value = int(str(value).strip())
+    except (ValueError, TypeError):
+        raise ValidationError({
+            field_name: (
+                'Please enter a positive integer that is less than or equal '
+                'to 9007199254740991.'
+            )
+        })
+
+    if parsed_value <= 0:
+        raise ValidationError({
+            field_name: (
+                'Please enter a positive integer that is less than or equal '
+                'to 9007199254740991.'
+            )
+        })
+
+    return parsed_value
 
 
 class FacilityClaimViewSet(ModelViewSet):
@@ -345,24 +403,35 @@ class FacilityClaimViewSet(ModelViewSet):
                 claim.facility_location = None
 
             parent_company_data = request.data.get('facility_parent_company')
+            parent_company_name = request.data.get('parent_company_name')
 
-            if not parent_company_data:
-                parent_company = None
-                parent_company_name = None
-            elif 'id' not in parent_company_data:
-                parent_company = None
-                parent_company_name = None
-            else:
+            if isinstance(parent_company_data, str):
+                parent_company_data = {
+                    'id': None,
+                    'name': parent_company_data
+                }
+
+            if parent_company_data:
+                parent_company_name = (
+                    parent_company_data.get('name') or parent_company_name
+                )
+
+                parent_company_id = parent_company_data.get('id')
+
                 try:
                     parent_company = (
                         Contributor
                         .objects
-                        .get(pk=parent_company_data['id'])
+                        .get(pk=parent_company_id)
+                    ) if parent_company_id else None
+                    parent_company_name = (
+                        parent_company.name if parent_company else parent_company_name
                     )
-                    parent_company_name = parent_company.name
-                except ValueError:
+                except (ValueError, TypeError, Contributor.DoesNotExist):
                     parent_company = None
-                    parent_company_name = parent_company_data['name']
+            else:
+                parent_company = None
+                parent_company_name = parent_company_name or None
 
             claim.parent_company = parent_company
             claim.parent_company_name = parent_company_name
@@ -416,6 +485,46 @@ class FacilityClaimViewSet(ModelViewSet):
                     setattr(claim, field_name, data)
                 else:
                     setattr(claim, field_name, None)
+
+            opening_date = _parse_date_or_none(
+                request.data.get('opening_date'),
+                'opening_date'
+            )
+            closing_date = _parse_date_or_none(
+                request.data.get('closing_date'),
+                'closing_date'
+            )
+
+            _ensure_valid_date_range(opening_date, closing_date)
+
+            claim.opening_date = opening_date
+            claim.closing_date = closing_date
+            claim.estimated_annual_throughput = _parse_positive_big_int_or_none(
+                request.data.get('estimated_annual_throughput'),
+                'estimated_annual_throughput'
+            )
+
+            energy_field_names = (
+                'energy_coal',
+                'energy_natural_gas',
+                'energy_diesel',
+                'energy_kerosene',
+                'energy_biomass',
+                'energy_charcoal',
+                'energy_animal_waste',
+                'energy_electricity',
+                'energy_other',
+            )
+
+            for field_name in energy_field_names:
+                setattr(
+                    claim,
+                    field_name,
+                    _parse_positive_big_int_or_none(
+                        request.data.get(field_name),
+                        field_name
+                    ),
+                )
 
             field_names = (
                 'facility_description',

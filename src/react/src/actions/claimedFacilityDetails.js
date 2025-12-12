@@ -4,6 +4,7 @@ import isNull from 'lodash/isNull';
 import omit from 'lodash/omit';
 import isInteger from 'lodash/isInteger';
 import { isInt } from 'validator';
+import get from 'lodash/get';
 
 import apiRequest from '../util/apiRequest';
 
@@ -79,6 +80,40 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
 
         dispatch(startUpdateClaimedFacilityDetails());
 
+        const toPositiveIntOrNull = value => {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            const trimmedValue =
+                typeof value === 'string' ? value.trim() : `${value}`;
+
+            if (trimmedValue === '') {
+                return null;
+            }
+
+            if (
+                !isInt(trimmedValue, {
+                    min: 1,
+                    max: Number.MAX_SAFE_INTEGER,
+                })
+            ) {
+                return null;
+            }
+
+            return parseInt(trimmedValue, 10);
+        };
+
+        const parentCompanyName = (() => {
+            const name =
+                data.parent_company_name ||
+                get(data, 'facility_parent_company.name', '');
+            const trimmedName =
+                typeof name === 'string' ? name.trim() : `${name}`.trim();
+
+            return trimmedName === '' ? null : trimmedName;
+        })();
+
         const updateData = Object.assign(
             {},
             omit(data, [
@@ -97,6 +132,27 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                     isInt(data.facility_female_workers_percentage)
                         ? data.facility_female_workers_percentage
                         : null,
+                parent_company_name: parentCompanyName,
+                opening_date: data.opening_date || null,
+                closing_date: data.closing_date || null,
+                estimated_annual_throughput: toPositiveIntOrNull(
+                    data.estimated_annual_throughput,
+                ),
+                energy_coal: toPositiveIntOrNull(data.energy_coal),
+                energy_natural_gas: toPositiveIntOrNull(
+                    data.energy_natural_gas,
+                ),
+                energy_diesel: toPositiveIntOrNull(data.energy_diesel),
+                energy_kerosene: toPositiveIntOrNull(data.energy_kerosene),
+                energy_biomass: toPositiveIntOrNull(data.energy_biomass),
+                energy_charcoal: toPositiveIntOrNull(data.energy_charcoal),
+                energy_animal_waste: toPositiveIntOrNull(
+                    data.energy_animal_waste,
+                ),
+                energy_electricity: toPositiveIntOrNull(
+                    data.energy_electricity,
+                ),
+                energy_other: toPositiveIntOrNull(data.energy_other),
             },
         );
         return apiRequest
@@ -201,4 +257,41 @@ export const updateClaimedFacilityProductionTypes = createAction(
 
 export const updateClaimedFacilityLocation = createAction(
     'UPDATE_CLAIMED_FACILITY_LOCATION',
+);
+
+export const updateClaimedFacilityOpeningDate = createAction(
+    'UPDATE_CLAIMED_FACILITY_OPENING_DATE',
+);
+export const updateClaimedFacilityClosingDate = createAction(
+    'UPDATE_CLAIMED_FACILITY_CLOSING_DATE',
+);
+export const updateClaimedEstimatedAnnualThroughput = createAction(
+    'UPDATE_CLAIMED_ESTIMATED_ANNUAL_THROUGHPUT',
+);
+export const updateClaimedEnergyCoal = createAction(
+    'UPDATE_CLAIMED_ENERGY_COAL',
+);
+export const updateClaimedEnergyNaturalGas = createAction(
+    'UPDATE_CLAIMED_ENERGY_NATURAL_GAS',
+);
+export const updateClaimedEnergyDiesel = createAction(
+    'UPDATE_CLAIMED_ENERGY_DIESEL',
+);
+export const updateClaimedEnergyKerosene = createAction(
+    'UPDATE_CLAIMED_ENERGY_KEROSENE',
+);
+export const updateClaimedEnergyBiomass = createAction(
+    'UPDATE_CLAIMED_ENERGY_BIOMASS',
+);
+export const updateClaimedEnergyCharcoal = createAction(
+    'UPDATE_CLAIMED_ENERGY_CHARCOAL',
+);
+export const updateClaimedEnergyAnimalWaste = createAction(
+    'UPDATE_CLAIMED_ENERGY_ANIMAL_WASTE',
+);
+export const updateClaimedEnergyElectricity = createAction(
+    'UPDATE_CLAIMED_ENERGY_ELECTRICITY',
+);
+export const updateClaimedEnergyOther = createAction(
+    'UPDATE_CLAIMED_ENERGY_OTHER',
 );

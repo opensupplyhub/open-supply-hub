@@ -8,6 +8,9 @@ import { facilityDetailsPropType } from '../util/propTypes';
 import { makeFacilityDetailLink, makeProfileRouteLink } from '../util/util';
 
 const claimedFacilitiesDetailsSidebarStyles = Object.freeze({
+    wrapperStyles: Object.freeze({
+        marginLeft: '20px',
+    }),
     containerStyles: Object.freeze({}),
     sectionStyles: Object.freeze({
         margin: '0 0 5px 0',
@@ -19,7 +22,7 @@ const claimedFacilitiesDetailsSidebarStyles = Object.freeze({
 
 export default function ClaimedFacilitiesDetailsSidebar({ facilityDetails }) {
     return (
-        <div>
+        <div style={claimedFacilitiesDetailsSidebarStyles.wrapperStyles} s>
             <div style={claimedFacilitiesDetailsSidebarStyles.sectionStyles}>
                 <Typography variant="title">
                     Contributed Facility Name
