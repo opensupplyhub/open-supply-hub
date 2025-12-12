@@ -52,6 +52,18 @@ import {
     updateClaimedEnergyOther,
 } from '../actions/claimedFacilityDetails';
 
+const initialState = Object.freeze({
+    data: null,
+    retrieveData: Object.freeze({
+        fetching: false,
+        error: null,
+    }),
+    updateData: Object.freeze({
+        fetching: false,
+        error: null,
+    }),
+});
+
 const setDataField = key => (state, payload) =>
     update(state, {
         updateData: {
@@ -83,18 +95,6 @@ const claimedEmissionsReducers = Object.fromEntries(
         setDataField(key),
     ]),
 );
-
-const initialState = Object.freeze({
-    data: null,
-    retrieveData: Object.freeze({
-        fetching: false,
-        error: null,
-    }),
-    updateData: Object.freeze({
-        fetching: false,
-        error: null,
-    }),
-});
 
 export default createReducer(
     {
