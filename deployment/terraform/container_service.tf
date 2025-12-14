@@ -1,6 +1,5 @@
 locals {
   app_image            = "${module.ecr_repository_app.repository_url}:${var.image_tag}"
-  app_cc_image         = "${module.ecr_repository_app_cc.repository_url}:${var.image_tag}"
   app_dd_image         = "${module.ecr_repository_app_dd.repository_url}:${var.image_tag}"
   app_kafka_image      = "${module.ecr_repository_kafka.repository_url}:${var.image_tag}"
   app_logstash_image   = "${module.ecr_repository_logstash.repository_url}:${var.image_tag}"
@@ -22,16 +21,6 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group" "app" {
-  vpc_id = module.vpc.id
-
-  tags = {
-    Name        = "sgAppEcsService"
-    Project     = var.project
-    Environment = var.environment
-  }
-}
-
-resource "aws_security_group" "app_cc" {
   vpc_id = module.vpc.id
 
   tags = {
@@ -113,32 +102,6 @@ resource "aws_lb_target_group" "app" {
   }
 }
 
-resource "aws_lb_target_group" "app_cc" {
-  name = "tg${local.short}AppCC"
-
-  health_check {
-    healthy_threshold   = "3"
-    interval            = "30"
-    matcher             = "200"
-    protocol            = "HTTP"
-    timeout             = "3"
-    path                = "/healthcheck"
-    unhealthy_threshold = "2"
-  }
-
-  port     = "80"
-  protocol = "HTTP"
-  vpc_id   = module.vpc.id
-
-  target_type = "ip"
-
-  tags = {
-    Name        = "tg${local.short}AppCC"
-    Project     = var.project
-    Environment = var.environment
-  }
-}
-
 resource "aws_lb_listener" "app" {
   load_balancer_arn = aws_lb.app.id
   port              = "443"
@@ -169,29 +132,6 @@ resource "aws_lb_listener_rule" "cdn_auth" {
   action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.id
-  }
-}
-
-resource "aws_lb_listener_rule" "cdn_auth_contricleaner" {
-  listener_arn = aws_lb_listener.app.id
-  priority     = 10
-
-  condition {
-    http_header {
-      http_header_name = "X-CloudFront-Auth"
-      values           = [var.cloudfront_auth_token]
-    }
-  }
-
-  condition {
-    path_pattern {
-      values = ["/cc/*"]
-    }
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app_cc.id
   }
 }
 
@@ -325,18 +265,6 @@ resource "aws_ecs_task_definition" "app_cli" {
   container_definitions = data.template_file.app_cli.rendered
 }
 
-data "template_file" "app_cc" {
-  template = file("task-definitions/app_cc.json")
-
-  vars = {
-    image          = local.app_cc_image
-    api_url        = "api.${var.r53_service_discovery_zone}:8080"
-    app_cc_port    = var.app_cc_port
-    log_group_name = "log${local.short}AppCC"
-    aws_region     = var.aws_region
-  }
-}
-
 data "template_file" "app_dd" {
   template = file("task-definitions/app_dd.json")
 
@@ -362,19 +290,6 @@ data "template_file" "app_dd" {
     dedupe_hub_version               = var.dedupe_hub_version
     instance_source                  = var.instance_source
   }
-}
-
-resource "aws_ecs_task_definition" "app_cc" {
-  family                   = "${local.short}AppCC"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.app_cc_fargate_cpu
-  memory                   = var.app_cc_fargate_memory
-
-  task_role_arn      = aws_iam_role.app_task_role.arn
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-
-  container_definitions = data.template_file.app_cc.rendered
 }
 
 resource "aws_ecs_task_definition" "app_dd" {
@@ -485,33 +400,6 @@ module "app_autoscaling" {
   cooldown_scale_down       = var.app_ecs_cooldown_scale_down
 }
 
-
-resource "aws_ecs_service" "app_cc" {
-  name            = "${local.short}AppCC"
-  cluster         = aws_ecs_cluster.app.id
-  task_definition = aws_ecs_task_definition.app_cc.arn
-
-  desired_count                      = var.app_cc_ecs_desired_count
-  deployment_minimum_healthy_percent = var.app_cc_ecs_deployment_min_percent
-  deployment_maximum_percent         = var.app_cc_ecs_deployment_max_percent
-  health_check_grace_period_seconds  = var.app_cc_ecs_grace_period_seconds
-
-  launch_type = "FARGATE"
-
-  network_configuration {
-    security_groups = [aws_security_group.app_cc.id]
-    subnets         = module.vpc.private_subnet_ids
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app_cc.arn
-    container_name   = "contricleaner"
-    container_port   = var.app_cc_port
-  }
-
-  depends_on = [aws_lb_listener.app]
-}
-
 resource "aws_ecs_service" "app_dd" {
   name            = "${local.short}AppDD"
   cluster         = aws_ecs_cluster.app.id
@@ -585,11 +473,6 @@ resource "aws_cloudwatch_log_group" "app" {
 
 resource "aws_cloudwatch_log_group" "cli" {
   name              = "log${local.short}AppCLI"
-  retention_in_days = 30
-}
-
-resource "aws_cloudwatch_log_group" "cc" {
-  name              = "log${local.short}AppCC"
   retention_in_days = 30
 }
 
