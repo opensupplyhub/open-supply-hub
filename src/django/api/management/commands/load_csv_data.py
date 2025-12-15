@@ -202,8 +202,13 @@ class Command(BaseCommand):
             try:
                 facility = Facility.objects.get(id=os_id)
             except Facility.DoesNotExist:
-                # Facility doesn't exist, will create new one
-                pass
+                # If os_id is provided, it must exist
+                logger.error(
+                    f"Row {row_idx}: Facility with os_id='{os_id}' "
+                    "does not exist. Cannot update non-existent facility. "
+                    "To create a new facility, omit the os_id column."
+                )
+                return False, None
 
         # Build raw_data from CSV row dynamically based on columns
         raw_data = self._build_raw_data(row, columns)
@@ -244,8 +249,9 @@ class Command(BaseCommand):
                 ec_result.moderation_event, user, facility.id
             )
         else:
+            # Create new facility (system will generate os_id)
             processor = AddProductionLocationWithOsID(
-                ec_result.moderation_event, user, os_id
+                ec_result.moderation_event, user, None
             )
 
         try:
