@@ -22,12 +22,10 @@ from api.moderation_event_actions.approval.add_production_location import (
 from api.moderation_event_actions.approval.update_production_location import (
     UpdateProductionLocation,
 )
-from api.moderation_event_actions.creation.dtos.create_moderation_event_dto import (
-    CreateModerationEventDTO,
-)
-from api.moderation_event_actions.creation.location_contribution.location_contribution import (
-    LocationContribution,
-)
+from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
+    import CreateModerationEventDTO
+from api.moderation_event_actions.creation.location_contribution \
+    .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.moderation_event_creator import (
     ModerationEventCreator,
 )
@@ -175,7 +173,7 @@ class Command(BaseCommand):
         return columns
 
     def _build_raw_data(self, row, columns):
-        """Build raw_data dictionary from CSV row based on specified columns."""
+        """Build raw_data dictionary from CSV row based on columns."""
         raw_data = {"source": ModerationEvent.Source.API.value}
 
         for column in columns:
@@ -395,4 +393,3 @@ class Command(BaseCommand):
                         f"Failed to delete temporary file {csv_path}: "
                         f"{str(error)}"
                     )
-
