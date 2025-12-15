@@ -206,33 +206,18 @@ class Command(BaseCommand):
             try:
                 facility = Facility.objects.get(id=os_id)
             except Facility.DoesNotExist:
-                logger.debug(
-                    f"Row {row_idx}: Facility does not exist with "
-                    f"os_id='{os_id}'. Will create new facility."
-                )
+                # Facility doesn't exist, will create new one
+                pass
 
         # Build raw_data from CSV row dynamically based on columns
         raw_data = self._build_raw_data(row, columns)
 
-        # Determine request type and log message
+        # Determine request type
         req_types = ModerationEvent.RequestType
         if facility:
             request_type = req_types.UPDATE.value
-            log_message = f"Row {row_idx}: Updating facility os_id='{os_id}'"
         else:
             request_type = req_types.CREATE.value
-            if os_id:
-                log_message = (
-                    f"Row {row_idx}: Creating new facility with "
-                    f"os_id='{os_id}'"
-                )
-            else:
-                log_message = f"Row {row_idx}: Creating new facility"
-
-        logger.debug(
-            f"{log_message} with columns: "
-            f"{', '.join([col for col in columns if col != 'os_id'])}"
-        )
 
         # Create moderation event (temporary, will be deleted after processing)
         me_creator = ModerationEventCreator(LocationContribution())
@@ -273,12 +258,7 @@ class Command(BaseCommand):
 
             # Delete the ModerationEvent after successful processing
             # (only needed for processing logic, not stored in DB)
-            moderation_event_uuid = ec_result.moderation_event.uuid
             ec_result.moderation_event.delete()
-            logger.debug(
-                f"Row {row_idx}: Deleted ModerationEvent "
-                f"{moderation_event_uuid} after successful processing"
-            )
 
             logger.info(
                 f"Row {row_idx}: Successfully processed facility ID: "
