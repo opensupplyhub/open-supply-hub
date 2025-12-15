@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
 from api.models.partner_field import PartnerField
+from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
@@ -296,6 +297,13 @@ class EmailAddressAdmin(admin.ModelAdmin):
     list_filter = ('verified', 'primary')
 
 
+class WageIndicatorCountryDataAdmin(admin.ModelAdmin):
+    list_display = ('country_code', 'living_wage_link_national',
+                    'minimum_wage_link_english', 'minimum_wage_link_national')
+    search_fields = ('country_code',)
+    readonly_fields = ('country_code', 'created_at', 'updated_at')
+
+
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -320,3 +328,4 @@ admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
 admin_site.register(PartnerField, PartnerFieldAdmin)
 admin_site.register(EmailAddress, EmailAddressAdmin)
+admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)

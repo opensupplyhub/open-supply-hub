@@ -14,6 +14,8 @@ from rest_framework.serializers import (
 
 from countries.lib.countries import COUNTRY_NAMES
 from api.constants import PARTNER_FIELD_LIST_KEY
+from api.partner_fields import setup  # noqa: F401 - Auto-registers providers.
+from api.partner_fields.registry import system_partner_field_registry
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
@@ -86,136 +88,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if exclude_fields:
             for field_name in exclude_fields:
                 self.fields.pop(field_name, None)
-
-    def __get_request(self):
-        if self.context is None:
-            return None
-        return self.context.get('request')
-
-    def __serialize_and_sort_partner_fields(
-        self,
-        grouped_fields: Dict[str, List[Dict[str, Any]]],
-        partner_fields: List[PartnerField],
-        user_can_see_detail: bool,
-        embed_mode_active: bool,
-        use_main_created_at: bool,
-        date_field_to_sort: str
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        grouped_data = {}
-        for field in partner_fields:
-            field_name = field.name
-            source_by = field.source_by
-            unit = field.unit
-            label = field.label
-            base_url = field.base_url
-            display_text = field.display_text
-            json_schema = field.json_schema
-            fields = grouped_fields.get(field_name, [])
-            if not fields:
-                continue
-
-            try:
-                serializer = FacilityIndexExtendedFieldListSerializer(
-                    fields,
-                    context={
-                        'user_can_see_detail': user_can_see_detail,
-                        'embed_mode_active': embed_mode_active,
-                        'source_by': source_by,
-                        'unit': unit,
-                        'label': label,
-                        'base_url': base_url,
-                        'display_text': display_text,
-                        'json_schema': json_schema
-                    },
-                    exclude_fields=(
-                        ['created_at'] if not use_main_created_at else []
-                    )
-                )
-                grouped_data[field_name] = sorted(
-                    serializer.data,
-                    key=lambda k: self.__sort_order(k, date_field_to_sort),
-                    reverse=True
-                )
-            except Exception as exc:
-                logger.error(
-                    f"Failed to serialize partner field '{field_name}': "
-                    f"{exc}"
-                )
-                grouped_data[field_name] = []
-
-        return grouped_data
-
-    @staticmethod
-    def __date_field_to_sort(use_main_created_at):
-        return (
-            'created_at' if use_main_created_at else 'updated_at'
-        )
-
-    @staticmethod
-    def __sort_order(item, date_field_to_sort):
-        return (
-            item.get('verified_count', 0),
-            item.get('is_from_claim', False),
-            item.get('value_count', 1),
-            item.get(date_field_to_sort, None)
-        )
-
-    @staticmethod
-    def __sort_order_excluding_date(item):
-        return (
-            item.get('verified_count', 0),
-            item.get('is_from_claim', False),
-            item.get('value_count', 1)
-        )
-
-    @staticmethod
-    def __filter_contributor_extended_fields(facility, request):
-        if request is None:
-            return facility.extended_fields
-
-        embed = request.query_params.get('embed')
-        if embed != '1':
-            return facility.extended_fields
-
-        contributor_id = request.query_params.get('contributor')
-        if contributor_id is None:
-            contributor_ids = request.query_params.getlist('contributors', [])
-            if contributor_ids:
-                contributor_id = contributor_ids[0]
-
-        if contributor_id:
-            return get_efs_associated_with_contributor(
-                int(contributor_id),
-                facility.extended_fields,
-            )
-
-        return facility.extended_fields
-
-    @staticmethod
-    def __group_fields_by_name(
-        fields: List[Dict[str, Any]]
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        grouped = defaultdict(list)
-        for field in fields:
-            name = field.get('field_name')
-            if name:
-                grouped[name].append(field)
-        return grouped
-
-    @staticmethod
-    def __get_cached_partner_fields():
-        cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
-
-        if cached_names is not None:
-            return cached_names
-
-        partner_fields = list(
-            PartnerField.objects.all()
-        )
-
-        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
-
-        return partner_fields
 
     def get_location(self, facility):
         return facility.location
@@ -355,7 +227,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         )
 
         fields = self.__filter_contributor_extended_fields(
-            facility,
+            facility.extended_fields,
             request
         )
 
@@ -432,8 +304,15 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             use_main_created_at
         )
 
+        # Fetch system-generated partner fields.
+        system_fields = self.__fetch_system_partner_fields(facility)
+
+        # Merge with facility.extended_fields.
+        all_extended_fields = facility.extended_fields + system_fields
+
+        # Filter the combined list.
         fields = self.__filter_contributor_extended_fields(
-            facility,
+            all_extended_fields,
             request
         )
         grouped_fields = self.__group_fields_by_name(
@@ -574,3 +453,152 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 distinct_names.append(formatted_source['name'])
                 distinct_sources.append(formatted_source)
         return formatted_sources
+
+    def __get_request(self):
+        if self.context is None:
+            return None
+        return self.context.get('request')
+
+    def __serialize_and_sort_partner_fields(
+        self,
+        grouped_fields: Dict[str, List[Dict[str, Any]]],
+        partner_fields: List[PartnerField],
+        user_can_see_detail: bool,
+        embed_mode_active: bool,
+        use_main_created_at: bool,
+        date_field_to_sort: str
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        grouped_data = {}
+        for field in partner_fields:
+            field_name = field.name
+            source_by = field.source_by
+            unit = field.unit
+            label = field.label
+            base_url = field.base_url
+            display_text = field.display_text
+            json_schema = field.json_schema
+            fields = grouped_fields.get(field_name, [])
+            if not fields:
+                continue
+
+            try:
+                serializer = FacilityIndexExtendedFieldListSerializer(
+                    fields,
+                    context={
+                        'user_can_see_detail': user_can_see_detail,
+                        'embed_mode_active': embed_mode_active,
+                        'source_by': source_by,
+                        'unit': unit,
+                        'label': label,
+                        'base_url': base_url,
+                        'display_text': display_text,
+                        'json_schema': json_schema
+                    },
+                    exclude_fields=(
+                        ['created_at'] if not use_main_created_at else []
+                    )
+                )
+                grouped_data[field_name] = sorted(
+                    serializer.data,
+                    key=lambda k: self.__sort_order(k, date_field_to_sort),
+                    reverse=True
+                )
+            except Exception as exc:
+                logger.error(
+                    f"Failed to serialize partner field '{field_name}': "
+                    f"{exc}"
+                )
+                grouped_data[field_name] = []
+
+        return grouped_data
+
+    @staticmethod
+    def __date_field_to_sort(use_main_created_at):
+        return (
+            'created_at' if use_main_created_at else 'updated_at'
+        )
+
+    @staticmethod
+    def __sort_order(item, date_field_to_sort):
+        return (
+            item.get('verified_count', 0),
+            item.get('is_from_claim', False),
+            item.get('value_count', 1),
+            item.get(date_field_to_sort, None)
+        )
+
+    @staticmethod
+    def __sort_order_excluding_date(item):
+        return (
+            item.get('verified_count', 0),
+            item.get('is_from_claim', False),
+            item.get('value_count', 1)
+        )
+
+    @staticmethod
+    def __fetch_system_partner_fields(facility) -> list:
+        '''
+        Fetch all system-generated partner fields for the facility.
+        Returns list of formatted field data matching extended_fields
+        structure.
+        '''
+        system_fields = []
+
+        # Get all registered providers.
+        providers = system_partner_field_registry.get_all_providers()
+
+        for provider in providers:
+            field_data = provider.fetch_data(facility)
+            if field_data is not None:
+                system_fields.append(field_data)
+
+        return system_fields
+
+    @staticmethod
+    def __filter_contributor_extended_fields(extended_fields, request):
+        if request is None:
+            return extended_fields
+
+        embed = request.query_params.get('embed')
+        if embed != '1':
+            return extended_fields
+
+        contributor_id = request.query_params.get('contributor')
+        if contributor_id is None:
+            contributor_ids = request.query_params.getlist('contributors', [])
+            if contributor_ids:
+                contributor_id = contributor_ids[0]
+
+        if contributor_id:
+            return get_efs_associated_with_contributor(
+                int(contributor_id),
+                extended_fields,
+            )
+
+        return extended_fields
+
+    @staticmethod
+    def __group_fields_by_name(
+        fields: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        grouped = defaultdict(list)
+        for field in fields:
+            name = field.get('field_name')
+            if name:
+                grouped[name].append(field)
+        return grouped
+
+    @staticmethod
+    def __get_cached_partner_fields():
+        cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
+
+        if cached_names is not None:
+            return cached_names
+
+        partner_fields = list(
+            PartnerField.objects.all()
+        )
+
+        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
+
+        return partner_fields

@@ -29,15 +29,11 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     other_names = SerializerMethodField()
     other_addresses = SerializerMethodField()
     other_locations = SerializerMethodField()
-    country_name = SerializerMethodField()
     claim_info = SerializerMethodField()
     activity_reports = SerializerMethodField()
     contributor_fields = SerializerMethodField()
-    extended_fields = SerializerMethodField()
     created_from = SerializerMethodField()
-    sector = SerializerMethodField()
     is_claimed = SerializerMethodField()
-    partner_fields = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -161,9 +157,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 ]
 
         return claim_locations + facility_locations + facility_items_location
-
-    def get_country_name(self, facility):
-        return COUNTRY_NAMES.get(facility.country_code, '')
 
     def get_claim_info(self, facility):
         if not switch_is_active('claim_a_facility'):
