@@ -8,7 +8,6 @@ import tempfile
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
-from django.db.models.signals import post_save
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -29,7 +28,6 @@ from api.moderation_event_actions.creation.location_contribution \
 from api.moderation_event_actions.creation.moderation_event_creator import (
     ModerationEventCreator,
 )
-from api.signals import moderation_event_update_handler_for_opensearch
 
 logger = logging.getLogger(__name__)
 
@@ -254,10 +252,6 @@ class Command(BaseCommand):
             item = processor.process_moderation_event()
             facility_id = item.facility_id
 
-            # Delete the ModerationEvent after successful processing
-            # (only needed for processing logic, not stored in DB)
-            ec_result.moderation_event.delete()
-
             logger.info(
                 f"Row {row_idx}: Successfully processed facility ID: "
                 f"'{facility_id}'"
@@ -265,7 +259,13 @@ class Command(BaseCommand):
             return True, facility_id
 
         except Exception as error:
-            ec_result.moderation_event.delete()
+            ModerationEvent.objects.filter(
+                uuid=ec_result.moderation_event.uuid
+            ).update(
+                status=ModerationEvent.Status.REJECTED.value,
+                action_reason_text_cleaned="CSV upload error",
+                action_reason_text_raw="<p>CSV upload error</p>\n"
+            )
             logger.error(f"Row {row_idx}: Error processing: {str(error)}")
             return False, None
 
@@ -294,15 +294,6 @@ class Command(BaseCommand):
             )
 
         contributor = cont_user.contributor
-
-        # Disconnect OpenSearch signal to avoid race condition during batch
-        # processing. ModerationEvents will be deleted after processing, so no
-        # OpenSearch updates needed
-        post_save.disconnect(
-            moderation_event_update_handler_for_opensearch,
-            sender=ModerationEvent
-        )
-        logger.info("Disconnected OpenSearch signal for batch processing")
 
         csv_path = None
         temp_file_created = False
@@ -376,13 +367,6 @@ class Command(BaseCommand):
                 )
 
         finally:
-            # Always reconnect the signal, even if there was an error
-            post_save.connect(
-                moderation_event_update_handler_for_opensearch,
-                sender=ModerationEvent
-            )
-            logger.info("Reconnected OpenSearch signal")
-
             # Clean up temporary file if downloaded from Google Drive
             if temp_file_created and csv_path and csv_path.exists():
                 try:
