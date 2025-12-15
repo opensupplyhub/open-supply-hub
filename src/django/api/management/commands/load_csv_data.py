@@ -269,17 +269,17 @@ class Command(BaseCommand):
             logger.error(f"Row {row_idx}: Error processing: {str(error)}")
             return False, None
 
-    def handle(self, *args, **options):
-        """Main command handler."""
-        # Validate and get user
-        user_id = options["user_id"]
+    def _validate_user_and_contributor(
+        self,
+        user_id,
+        contributor_email
+    ):
+        """Validate and retrieve user and contributor objects."""
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             raise ValueError(f"User with ID '{user_id}' does not exist.")
 
-        # Validate and get contributor
-        contributor_email = options["contributor_email"]
         try:
             cont_user = User.objects.get(email=contributor_email)
         except User.DoesNotExist:
@@ -293,7 +293,13 @@ class Command(BaseCommand):
                 f"User '{contributor_email}' has no contributor profile."
             )
 
-        contributor = cont_user.contributor
+        return user, cont_user.contributor
+
+    def handle(self, *args, **options):
+        """Main command handler."""
+        user, contributor = self._validate_user_and_contributor(
+            options["user_id"], options["contributor_email"]
+        )
 
         csv_path = None
         temp_file_created = False
@@ -351,7 +357,7 @@ class Command(BaseCommand):
                             f"Errors: {stats['errors']})"
                         )
 
-                    success, facility_id = self._process_row(
+                    success, _ = self._process_row(
                         row, row_idx, columns, contributor, user
                     )
 
