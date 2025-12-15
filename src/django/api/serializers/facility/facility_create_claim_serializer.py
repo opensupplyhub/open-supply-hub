@@ -98,10 +98,10 @@ def parse_date_or_none(value, field_name):
 
     try:
         parsed_date = date_parser.parse(value).date()
-    except (ValueError, OverflowError, TypeError):
+    except (ValueError, OverflowError, TypeError) as exc:
         raise DRFValidationError({
-            field_name: 'Please enter a valid date (not in the future).'
-        })
+            field_name: 'Please enter a valid date.'
+        }) from exc
 
     validate_non_future_date(parsed_date)
     return parsed_date
@@ -116,13 +116,13 @@ def parse_positive_big_int_or_none(value, field_name):
 
     try:
         parsed_value = int(str(value).strip())
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as exc:
         raise DRFValidationError({
             field_name: (
                 f'Please enter a positive integer that is less than or equal '
                 f'to {JS_MAX_SAFE_INTEGER}.'
             )
-        })
+        }) from exc
 
     if parsed_value <= 0 or parsed_value > JS_MAX_SAFE_INTEGER:
         raise DRFValidationError({
