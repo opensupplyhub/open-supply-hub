@@ -18,6 +18,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
 
+### What's new
+* [OSDEV-2221](https://opensupplyhub.atlassian.net/browse/OSDEV-2221) - Updated editable claims fields on post-approval page (`/claimed/{claim-id}`) to include emissions data.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`

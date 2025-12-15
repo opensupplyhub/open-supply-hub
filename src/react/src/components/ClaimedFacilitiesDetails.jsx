@@ -569,10 +569,10 @@ function ClaimedFacilitiesDetails({
                             selectPlaceholder="e.g. Jackets - Use <Enter> or <Tab> to add multiple values"
                         />
                         <Typography
-                            variant="title"
-                            className={classes.paddedTitle}
+                            variant="headline"
+                            className={classes.headingStyles}
                         >
-                            Emissions Estimates
+                            Free Emissions Estimates
                         </Typography>
                         <Grid container spacing={24}>
                             <Grid item xs={12} md={6}>

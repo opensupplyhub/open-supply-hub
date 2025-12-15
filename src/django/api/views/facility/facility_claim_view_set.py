@@ -45,7 +45,6 @@ from ...serializers import (
     FacilityClaimListQueryParamsSerializer
 )
 from api.serializers.facility.facility_create_claim_serializer import (
-    validate_non_future_date,
     validate_date_range,
     parse_date_or_none,
     parse_positive_big_int_or_none,
@@ -368,12 +367,14 @@ class FacilityClaimViewSet(ModelViewSet):
 
                 try:
                     parent_company = (
-                        Contributor
-                        .objects
-                        .get(pk=parent_company_id)
-                    ) if parent_company_id else None
+                        Contributor.objects.get(pk=parent_company_id)
+                        if parent_company_id
+                        else None
+                    )
                     parent_company_name = (
-                        parent_company.name if parent_company else parent_company_name
+                        parent_company.name
+                        if parent_company
+                        else parent_company_name
                     )
                 except (ValueError, TypeError, Contributor.DoesNotExist):
                     parent_company = None

@@ -22,7 +22,7 @@ const claimedFacilitiesDetailsSidebarStyles = Object.freeze({
 
 export default function ClaimedFacilitiesDetailsSidebar({ facilityDetails }) {
     return (
-        <div style={claimedFacilitiesDetailsSidebarStyles.wrapperStyles} s>
+        <div style={claimedFacilitiesDetailsSidebarStyles.wrapperStyles}>
             <div style={claimedFacilitiesDetailsSidebarStyles.sectionStyles}>
                 <Typography variant="title">
                     Contributed Facility Name
