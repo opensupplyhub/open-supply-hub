@@ -187,7 +187,7 @@ describe('ClaimedFacilitiesDetails', () => {
         renderComponent();
 
         expect(screen.getByText('Facility Details')).toBeInTheDocument();
-        expect(screen.getByText('Emissions Estimates')).toBeInTheDocument();
+        expect(screen.getByText('Free Emissions Estimates')).toBeInTheDocument();
         expect(
             screen.getByText('Actual Annual Energy Consumption'),
         ).toBeInTheDocument();
