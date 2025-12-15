@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.17.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 15, 2025
+
+### Bugfix
+* [OSDEV-2293](https://opensupplyhub.atlassian.net/browse/OSDEV-2293) - Hotfix: Refactor extended field values check.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+    * `reindex_locations_with_environmental_data`
+
+
 ## Release 2.17.0
 
 ## Introduction
@@ -25,6 +41,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-2277](https://opensupplyhub.atlassian.net/browse/OSDEV-2277) - Introduced a reusable `FormFieldHint` component to display helper text below form field titles. Applied to `Affiliations` and `Certifications` fields to improve user guidance.
 * [OSDEV-2293](https://opensupplyhub.atlassian.net/browse/OSDEV-2293) - Fixed the `ISIC-4` section displaying on production location profiles when submitted objects contained no valid `ISIC-4` fields (section, division, group, class). Enhanced filtering logic to only render the `ISIC-4` section when at least one valid field contains data.
+* [OSDEV-2293](https://opensupplyhub.atlassian.net/browse/OSDEV-2293) - Hotfix: Refactor extended field values check.
 
 ### What's new
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
