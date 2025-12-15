@@ -59,7 +59,6 @@ topic_dedup_basic_name = "basic-name"
 dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
-app_cc_ecs_desired_count = 0
 app_dd_fargate_cpu = 8192
 app_dd_fargate_memory = 40960
 app_dd_ecs_desired_count = 1

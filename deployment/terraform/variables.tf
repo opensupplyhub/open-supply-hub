@@ -233,36 +233,12 @@ variable "app_ecs_grace_period_seconds" {
   default = "180"
 }
 
-variable "app_cc_ecs_desired_count" {
-  default = "0"
-}
-
-variable "app_cc_ecs_deployment_min_percent" {
-  default = "100"
-}
-
-variable "app_cc_ecs_deployment_max_percent" {
-  default = "200"
-}
-
-variable "app_cc_ecs_grace_period_seconds" {
-  default = "180"
-}
-
 variable "app_fargate_cpu" {
   default = "256"
 }
 
 variable "app_fargate_memory" {
   default = "512"
-}
-
-variable "app_cc_fargate_cpu" {
-  default = "512"
-}
-
-variable "app_cc_fargate_memory" {
-  default = "1024"
 }
 
 variable "app_dd_fargate_cpu" {
@@ -296,10 +272,6 @@ variable "image_tag" {
 
 variable "app_port" {
   default = "8080"
-}
-
-variable "app_cc_port" {
-  default = "80"
 }
 
 variable "opensearch_port" {

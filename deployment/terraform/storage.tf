@@ -102,14 +102,6 @@ module "ecr_repository_app" {
   attach_lifecycle_policy = true
 }
 
-module "ecr_repository_app_cc" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
-
-  repository_name = "${lower(replace(var.project, " ", ""))}-contricleaner-${lower(var.environment)}"
-
-  attach_lifecycle_policy = true
-}
-
 module "ecr_repository_app_dd" {
   source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
 
