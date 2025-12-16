@@ -8,7 +8,6 @@ class MITLivingWageCountyData(Model):
 
     us_geoid_county = CharField(
         max_length=50,
-        primary_key=True,
         help_text='The Geo Id of county (US)'
     )
     country_code = CharField(

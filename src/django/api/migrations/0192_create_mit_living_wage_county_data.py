@@ -14,7 +14,6 @@ class Migration(migrations.Migration):
             name='MITLivingWageCountyData',
             fields=[
                 ('us_geoid_county', models.CharField(
-                    primary_key=True,
                     help_text=(
                         'The Geo Id of county (US)'
                     ),
