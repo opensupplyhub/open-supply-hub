@@ -2,7 +2,7 @@ import React from 'react';
 import { Switch, Route } from 'react-router-dom';
 
 import ClaimedFacilitiesList from './ClaimedFacilitiesList';
-import ClaimedFacilitiesDetails from './ClaimedFacilitiesDetails';
+import ClaimedFacilitiesDetails from './ClaimedFacilitiesDetails/ClaimedFacilitiesDetails';
 import RouteNotFound from './RouteNotFound';
 
 import {

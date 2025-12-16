@@ -14,18 +14,18 @@ import memoize from 'lodash/memoize';
 import isEmpty from 'lodash/isEmpty';
 import get from 'lodash/get';
 import map from 'lodash/map';
-import { isEmail, isInt } from 'validator';
+import { isInt } from 'validator';
 import { toast } from 'react-toastify';
-import AppOverflow from './AppOverflow';
-import AppGrid from './AppGrid';
-import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
+import AppOverflow from '../AppOverflow';
+import AppGrid from '../AppGrid';
+import ClaimedFacilitiesDetailsSidebar from '../ClaimedFacilitiesDetailsSidebar';
 import {
     LoadingIndicator,
     AuthNotice,
     ErrorsList,
-} from './CheckComponentStatus';
-import InputSection from '../components/InputSection';
-import InputErrorText from '../components/Contribute/InputErrorText';
+} from '../CheckComponentStatus';
+import InputSection from '../InputSection';
+import InputErrorText from '../Contribute/InputErrorText';
 
 import {
     fetchClaimedFacilityDetails,
@@ -68,39 +68,37 @@ import {
     updateClaimedEnergyElectricity,
     updateClaimedEnergyOther,
     submitClaimedFacilityDetailsUpdate,
-} from '../actions/claimedFacilityDetails';
+} from '../../actions/claimedFacilityDetails';
 
-import { fetchSectorOptions } from '../actions/filterOptions';
+import { fetchSectorOptions } from '../../actions/filterOptions';
 
 import {
     approvedFacilityClaimPropType,
     sectorOptionsPropType,
     userPropType,
-} from '../util/propTypes';
+} from '../../util/propTypes';
 
 import {
     claimedFacilitiesDetailsStyles,
     textFieldErrorStyles,
-} from '../util/styles';
+} from '../../util/styles';
 
-import apiRequest from '../util/apiRequest';
+import apiRequest from '../../util/apiRequest';
 
 import {
     getValueFromEvent,
     getCheckedFromEvent,
     mapDjangoChoiceTuplesToSelectOptions,
-    isValidFacilityURL,
     makeClaimGeocoderURL,
     logErrorToRollbar,
-    isValidNumberOfWorkers,
-    getNumberOfWorkersValidationError,
-} from '../util/util';
+} from '../../util/util';
 
-import { USER_DEFAULT_STATE } from '../util/constants';
-import freeEmissionsEstimateValidationSchema from './FreeEmissionsEstimate/utils';
-import { freeEmissionsEstimateFormConfig } from './FreeEmissionsEstimate/constants.jsx';
-import YearPicker from './FreeEmissionsEstimate/YearPicker.jsx';
-import MonthYearPicker from './FreeEmissionsEstimate/MonthYearPicker.jsx';
+import { USER_DEFAULT_STATE } from '../../util/constants';
+import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
+import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
+import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
+import MonthYearPicker from '../FreeEmissionsEstimate/MonthYearPicker.jsx';
+import claimedFacilityDetailsSchema from './validationSchema';
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
@@ -121,6 +119,7 @@ const mergedStyles = {
         padding: '10px 0',
     },
 };
+
 function ClaimedFacilitiesDetails({
     user,
     match: {
@@ -263,6 +262,37 @@ function ClaimedFacilitiesDetails({
 
     const facilityData = data || {};
 
+    const claimedValidationValues = useMemo(
+        () => ({
+            facility_website: facilityData.facility_website,
+            point_of_contact_email: facilityData.point_of_contact_email,
+            facility_workers_count: facilityData.facility_workers_count,
+        }),
+        [facilityData],
+    );
+
+    const claimedValidationErrors = useMemo(() => {
+        try {
+            claimedFacilityDetailsSchema.validateSync(claimedValidationValues, {
+                abortEarly: false,
+            });
+            return {};
+        } catch (validationError) {
+            if (validationError?.inner?.length) {
+                return validationError.inner.reduce((acc, err) => {
+                    if (err.path) {
+                        acc[err.path] = err.message;
+                    }
+                    return acc;
+                }, {});
+            }
+            return {};
+        }
+    }, [claimedValidationValues]);
+
+    const getClaimedValidationError = key => claimedValidationErrors[key];
+    const hasClaimedValidationErrors = !isEmpty(claimedValidationErrors);
+
     const emissionsValidationValues = useMemo(
         () => ({
             openingDate: facilityData.opening_date,
@@ -277,15 +307,17 @@ function ClaimedFacilitiesDetails({
             energyAnimalWaste: facilityData.energy_animal_waste,
             energyElectricity: facilityData.energy_electricity,
             energyOther: facilityData.energy_other,
-            energyCoalEnabled: facilityData.energy_coal,
-            energyNaturalGasEnabled: facilityData.energy_natural_gas,
-            energyDieselEnabled: facilityData.energy_diesel,
-            energyKeroseneEnabled: facilityData.energy_kerosene,
-            energyBiomassEnabled: facilityData.energy_biomass,
-            energyCharcoalEnabled: facilityData.energy_charcoal,
-            energyAnimalWasteEnabled: facilityData.energy_animal_waste,
-            energyElectricityEnabled: facilityData.energy_electricity,
-            energyOtherEnabled: facilityData.energy_other,
+            energyCoalEnabled: !isEmpty(facilityData.energy_coal),
+            energyNaturalGasEnabled: !isEmpty(facilityData.energy_natural_gas),
+            energyDieselEnabled: !isEmpty(facilityData.energy_diesel),
+            energyKeroseneEnabled: !isEmpty(facilityData.energy_kerosene),
+            energyBiomassEnabled: !isEmpty(facilityData.energy_biomass),
+            energyCharcoalEnabled: !isEmpty(facilityData.energy_charcoal),
+            energyAnimalWasteEnabled: !isEmpty(
+                facilityData.energy_animal_waste,
+            ),
+            energyElectricityEnabled: !isEmpty(facilityData.energy_electricity),
+            energyOtherEnabled: !isEmpty(facilityData.energy_other),
         }),
         [facilityData],
     );
@@ -399,15 +431,13 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_website}
                             onChange={updateFacilityWebsite}
                             disabled={updating}
-                            hasValidationErrorFn={() => {
-                                if (isEmpty(data.facility_website)) {
-                                    return false;
-                                }
-
-                                return !isValidFacilityURL(
-                                    data.facility_website,
-                                );
-                            }}
+                            hasValidationErrorFn={() =>
+                                Boolean(
+                                    getClaimedValidationError(
+                                        'facility_website',
+                                    ),
+                                )
+                            }
                             hasSwitch
                             switchValue={data.facility_website_publicly_visible}
                             onSwitchChange={updateFacilityWebsiteVisibility}
@@ -454,18 +484,18 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_workers_count}
                             onChange={updateFacilityWorkersCount}
                             disabled={updating}
-                            error={
-                                !isValidNumberOfWorkers(
-                                    data.facility_workers_count,
-                                )
-                            }
+                            error={Boolean(
+                                getClaimedValidationError(
+                                    'facility_workers_count',
+                                ),
+                            )}
                             helperText={
-                                !isValidNumberOfWorkers(
-                                    data.facility_workers_count,
+                                getClaimedValidationError(
+                                    'facility_workers_count',
                                 ) && (
                                     <InputErrorText
-                                        text={getNumberOfWorkersValidationError(
-                                            data.facility_workers_count,
+                                        text={getClaimedValidationError(
+                                            'facility_workers_count',
                                         )}
                                     />
                                 )
@@ -477,8 +507,8 @@ function ClaimedFacilitiesDetails({
                                 classes: {
                                     input: `
                                 ${
-                                    !isValidNumberOfWorkers(
-                                        data.facility_workers_count,
+                                    getClaimedValidationError(
+                                        'facility_workers_count',
                                     ) && classes.errorStyle
                                 }`,
                                 },
@@ -690,13 +720,13 @@ function ClaimedFacilitiesDetails({
                             value={data.point_of_contact_email}
                             onChange={updateContactEmail}
                             disabled={updating}
-                            hasValidationErrorFn={() => {
-                                if (isEmpty(data.point_of_contact_email)) {
-                                    return false;
-                                }
-
-                                return !isEmail(data.point_of_contact_email);
-                            }}
+                            hasValidationErrorFn={() =>
+                                Boolean(
+                                    getClaimedValidationError(
+                                        'point_of_contact_email',
+                                    ),
+                                )
+                            }
                         />
                         <Typography
                             variant="headline"
@@ -771,17 +801,7 @@ function ClaimedFacilitiesDetails({
                                 color="primary"
                                 disabled={
                                     updating ||
-                                    (!isEmpty(data.point_of_contact_email) &&
-                                        !isEmail(
-                                            data.point_of_contact_email,
-                                        )) ||
-                                    (!isEmpty(data.facility_website) &&
-                                        !isValidFacilityURL(
-                                            data.facility_website,
-                                        )) ||
-                                    !isValidNumberOfWorkers(
-                                        data.facility_workers_count,
-                                    ) ||
+                                    hasClaimedValidationErrors ||
                                     hasEmissionsErrors
                                 }
                             >

@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import ClaimedFacilitiesDetails from '../../components/ClaimedFacilitiesDetails';
+import ClaimedFacilitiesDetails from '../../components/ClaimedFacilitiesDetails/ClaimedFacilitiesDetails';
 
 jest.mock('react-redux', () => {
     const actual = jest.requireActual('react-redux');
