@@ -44,11 +44,6 @@ from ...serializers import (
     FacilityClaimDetailsSerializer,
     FacilityClaimListQueryParamsSerializer
 )
-from api.serializers.facility.facility_create_claim_serializer import (
-    validate_date_range,
-    parse_date_or_none,
-    parse_positive_big_int_or_none,
-)
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
 
@@ -435,21 +430,12 @@ class FacilityClaimViewSet(ModelViewSet):
                 else:
                     setattr(claim, field_name, None)
 
-            opening_date = parse_date_or_none(
-                request.data.get('opening_date'),
-                'opening_date'
-            )
-            closing_date = parse_date_or_none(
-                request.data.get('closing_date'),
-                'closing_date'
-            )
-
-            validate_date_range(opening_date, closing_date)
+            opening_date = request.data.get('opening_date')
+            closing_date = request.data.get('closing_date')
 
             claim.opening_date = opening_date
             claim.closing_date = closing_date
-            claim.estimated_annual_throughput = parse_positive_big_int_or_none(
-                request.data.get('estimated_annual_throughput'),
+            claim.estimated_annual_throughput = request.data.get(
                 'estimated_annual_throughput'
             )
 
@@ -469,10 +455,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 setattr(
                     claim,
                     field_name,
-                    parse_positive_big_int_or_none(
-                        request.data.get(field_name),
-                        field_name
-                    ),
+                    request.data.get(field_name),
                 )
 
             field_names = (

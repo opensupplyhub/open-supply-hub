@@ -261,49 +261,31 @@ function ClaimedFacilitiesDetails({
             });
     };
 
-    const normalizeValue = value => {
-        if (value === null || value === undefined) {
-            return '';
-        }
-
-        return typeof value === 'string' ? value.trim() : `${value}`.trim();
-    };
-
     const facilityData = data || {};
 
     const emissionsValidationValues = useMemo(
         () => ({
-            openingDate: normalizeValue(facilityData.opening_date),
-            closingDate: normalizeValue(facilityData.closing_date),
-            estimatedAnnualThroughput: normalizeValue(
-                facilityData.estimated_annual_throughput,
-            ),
-            energyCoal: normalizeValue(facilityData.energy_coal),
-            energyNaturalGas: normalizeValue(facilityData.energy_natural_gas),
-            energyDiesel: normalizeValue(facilityData.energy_diesel),
-            energyKerosene: normalizeValue(facilityData.energy_kerosene),
-            energyBiomass: normalizeValue(facilityData.energy_biomass),
-            energyCharcoal: normalizeValue(facilityData.energy_charcoal),
-            energyAnimalWaste: normalizeValue(facilityData.energy_animal_waste),
-            energyElectricity: normalizeValue(facilityData.energy_electricity),
-            energyOther: normalizeValue(facilityData.energy_other),
-            energyCoalEnabled: normalizeValue(facilityData.energy_coal) !== '',
-            energyNaturalGasEnabled:
-                normalizeValue(facilityData.energy_natural_gas) !== '',
-            energyDieselEnabled:
-                normalizeValue(facilityData.energy_diesel) !== '',
-            energyKeroseneEnabled:
-                normalizeValue(facilityData.energy_kerosene) !== '',
-            energyBiomassEnabled:
-                normalizeValue(facilityData.energy_biomass) !== '',
-            energyCharcoalEnabled:
-                normalizeValue(facilityData.energy_charcoal) !== '',
-            energyAnimalWasteEnabled:
-                normalizeValue(facilityData.energy_animal_waste) !== '',
-            energyElectricityEnabled:
-                normalizeValue(facilityData.energy_electricity) !== '',
-            energyOtherEnabled:
-                normalizeValue(facilityData.energy_other) !== '',
+            openingDate: facilityData.opening_date,
+            closingDate: facilityData.closing_date,
+            estimatedAnnualThroughput: facilityData.estimated_annual_throughput,
+            energyCoal: facilityData.energy_coal,
+            energyNaturalGas: facilityData.energy_natural_gas,
+            energyDiesel: facilityData.energy_diesel,
+            energyKerosene: facilityData.energy_kerosene,
+            energyBiomass: facilityData.energy_biomass,
+            energyCharcoal: facilityData.energy_charcoal,
+            energyAnimalWaste: facilityData.energy_animal_waste,
+            energyElectricity: facilityData.energy_electricity,
+            energyOther: facilityData.energy_other,
+            energyCoalEnabled: facilityData.energy_coal,
+            energyNaturalGasEnabled: facilityData.energy_natural_gas,
+            energyDieselEnabled: facilityData.energy_diesel,
+            energyKeroseneEnabled: facilityData.energy_kerosene,
+            energyBiomassEnabled: facilityData.energy_biomass,
+            energyCharcoalEnabled: facilityData.energy_charcoal,
+            energyAnimalWasteEnabled: facilityData.energy_animal_waste,
+            energyElectricityEnabled: facilityData.energy_electricity,
+            energyOtherEnabled: facilityData.energy_other,
         }),
         [facilityData],
     );

@@ -80,30 +80,6 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
 
         dispatch(startUpdateClaimedFacilityDetails());
 
-        const toPositiveIntOrNull = value => {
-            if (value === null || value === undefined) {
-                return null;
-            }
-
-            const trimmedValue =
-                typeof value === 'string' ? value.trim() : `${value}`;
-
-            if (trimmedValue === '') {
-                return null;
-            }
-
-            if (
-                !isInt(trimmedValue, {
-                    min: 1,
-                    max: Number.MAX_SAFE_INTEGER,
-                })
-            ) {
-                return null;
-            }
-
-            return parseInt(trimmedValue, 10);
-        };
-
         const parentCompanyName = (() => {
             const name =
                 data.parent_company_name ||
@@ -135,24 +111,16 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 parent_company_name: parentCompanyName,
                 opening_date: data.opening_date || null,
                 closing_date: data.closing_date || null,
-                estimated_annual_throughput: toPositiveIntOrNull(
-                    data.estimated_annual_throughput,
-                ),
-                energy_coal: toPositiveIntOrNull(data.energy_coal),
-                energy_natural_gas: toPositiveIntOrNull(
-                    data.energy_natural_gas,
-                ),
-                energy_diesel: toPositiveIntOrNull(data.energy_diesel),
-                energy_kerosene: toPositiveIntOrNull(data.energy_kerosene),
-                energy_biomass: toPositiveIntOrNull(data.energy_biomass),
-                energy_charcoal: toPositiveIntOrNull(data.energy_charcoal),
-                energy_animal_waste: toPositiveIntOrNull(
-                    data.energy_animal_waste,
-                ),
-                energy_electricity: toPositiveIntOrNull(
-                    data.energy_electricity,
-                ),
-                energy_other: toPositiveIntOrNull(data.energy_other),
+                estimated_annual_throughput: data.estimated_annual_throughput,
+                energy_coal: data.energy_coal,
+                energy_natural_gas: data.energy_natural_gas,
+                energy_diesel: data.energy_diesel,
+                energy_kerosene: data.energy_kerosene,
+                energy_biomass: data.energy_biomass,
+                energy_charcoal: data.energy_charcoal,
+                energy_animal_waste: data.energy_animal_waste,
+                energy_electricity: data.energy_electricity,
+                energy_other: data.energy_other,
             },
         );
         return apiRequest
