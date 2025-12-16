@@ -24,6 +24,22 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
 
 
+## Release 2.17.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: December 15, 2025
+
+### Bugfix
+* [OSDEV-2315](https://opensupplyhub.atlassian.net/browse/OSDEV-2315) - Hotfix: Refactor extended field values check.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+    * `reindex_locations_with_environmental_data`
+
+
 ## Release 2.17.0
 
 ## Introduction

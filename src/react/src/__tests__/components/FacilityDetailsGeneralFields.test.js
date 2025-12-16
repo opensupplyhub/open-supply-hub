@@ -476,4 +476,52 @@ describe('FacilityDetailsGeneralFields component', () => {
 
         expect(queryByText('ISIC 4')).not.toBeInTheDocument();
     });
+
+    test('does not render facility type when matched value is null (skipped matching)', () => {
+        const dataWithNullMatchedFacilityType = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    facility_type: [
+                        {
+                            id: 3992815,
+                            is_verified: false,
+                            value: {
+                                raw_values: 'Manufacturer',
+                                matched_values: [
+                                    [
+                                        'PROCESSING_TYPE',
+                                        'SKIPPED_MATCHING',
+                                        null,
+                                        'Manufacturer',
+                                    ],
+                                ],
+                            },
+                            updated_at: '2025-07-28T03:50:18.988790Z',
+                            contributor_name: 'Tchibo',
+                            contributor_id: 3314,
+                            value_count: 5,
+                            is_from_claim: false,
+                            field_name: 'facility_type',
+                            verified_count: 0,
+                            source_by: null,
+                            unit: null,
+                            label: null,
+                            base_url: null,
+                            display_text: null,
+                            json_schema: null,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const { queryByText } = renderComponent({
+            data: dataWithNullMatchedFacilityType,
+        });
+
+        expect(queryByText('Facility Type')).not.toBeInTheDocument();
+    });
 });
