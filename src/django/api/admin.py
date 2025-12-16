@@ -308,7 +308,7 @@ class WageIndicatorCountryDataAdmin(admin.ModelAdmin):
 class USCountyTigerlineAdmin(admin.ModelAdmin):
     list_display = ('geoid', 'name')
     search_fields = ('geoid', 'name')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('geoid', 'name', 'geometry','created_at', 'updated_at')
 
 
 admin_site.register(models.Version)
