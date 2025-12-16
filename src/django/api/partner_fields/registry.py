@@ -1,29 +1,29 @@
-from typing import Dict, List
+from typing import List
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
+from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
 
 
 class SystemPartnerFieldRegistry:
-    '''
-    Registry for system-generated partner field providers.
-    Uses Singleton pattern to ensure single registry instance.
-    '''
+    '''Registry for system-generated partner field providers.'''
 
-    _instance = None
-    _providers: Dict[str, SystemPartnerFieldProvider] = {}
+    def __init__(self):
+        '''Initialize and register all system partner field providers.'''
+        self.__providers: List[SystemPartnerFieldProvider] = []
+        self.__register_providers()
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def register(self, provider: SystemPartnerFieldProvider) -> None:
-        '''Register a new system partner field provider.'''
-        field_name = provider.get_field_name()
-        self._providers[field_name] = provider
-
-    def get_all_providers(self) -> List[SystemPartnerFieldProvider]:
+    @property
+    def providers(self) -> List[SystemPartnerFieldProvider]:
         '''Get all registered providers.'''
-        return list(self._providers.values())
+        return self.__providers
+
+    def __register_providers(self) -> None:
+        '''Register all system partner field providers.'''
+        # Add new providers here as needed.
+        providers = [
+            WageIndicatorProvider(),
+        ]
+        for provider in providers:
+            self.__providers.append(provider)
 
 
 # Global registry instance.

@@ -7,13 +7,26 @@ class SystemPartnerFieldProvider(ABC):
     Abstract base class for system-generated partner field data providers.
 
     Each provider knows how to fetch and format data for a specific
-    system partner field type (e.g., wage_indicator, certifications, etc.).
+    system partner field type (e.g., wage_indicator, etc.).
     '''
 
-    @abstractmethod
-    def get_field_name(self) -> str:
-        '''Return the field name this provider handles.'''
-        pass
+    def fetch_data(self, facility) -> Optional[Dict[str, Any]]:
+        '''
+        Fetch and format data for the given facility.
+        Returns None if no data or contributor not found.
+        '''
+        raw_data = self._fetch_raw_data(facility)
+        if raw_data is None:
+            return None
+
+        contributor_id = self._get_default_contributor_id()
+        contributor_info = self.__get_contributor_info(contributor_id)
+
+        # Guardrail: If contributor not found, return None silently.
+        if contributor_info is None:
+            return None
+
+        return self._format_data(raw_data, contributor_info)
 
     @abstractmethod
     def _get_default_contributor_id(self) -> int:
@@ -28,24 +41,6 @@ class SystemPartnerFieldProvider(ABC):
         '''Fetch raw data from the data source.'''
         pass
 
-    def fetch_data(self, facility) -> Optional[Dict[str, Any]]:
-        '''
-        Fetch and format data for the given facility.
-        Returns None if no data or contributor not found.
-        '''
-        raw_data = self._fetch_raw_data(facility)
-        if raw_data is None:
-            return None
-
-        contributor_id = self._get_default_contributor_id()
-        contributor_info = self._get_contributor_info(contributor_id)
-
-        # Guardrail: If contributor not found, return None silently.
-        if contributor_info is None:
-            return None
-
-        return self._format_data(raw_data, contributor_info)
-
     @abstractmethod
     def _format_data(
         self,
@@ -55,7 +50,7 @@ class SystemPartnerFieldProvider(ABC):
         '''Format raw data into the standard partner field structure.'''
         pass
 
-    def _get_contributor_info(
+    def __get_contributor_info(
         self,
         contributor_id: int
     ) -> Optional[Dict[str, Any]]:

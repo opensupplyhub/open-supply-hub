@@ -9,9 +9,6 @@ class WageIndicatorCountryData(Model):
     This is a reference data table optimized for fast lookups by country code.
     '''
 
-    # System partner field constant.
-    PARTNER_FIELD_NAME = 'wage_indicator'
-
     country_code = CharField(
         max_length=2,
         primary_key=True,

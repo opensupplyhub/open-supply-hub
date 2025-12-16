@@ -14,7 +14,6 @@ from rest_framework.serializers import (
 
 from countries.lib.countries import COUNTRY_NAMES
 from api.constants import PARTNER_FIELD_LIST_KEY
-from api.partner_fields import setup  # noqa: F401 - Auto-registers providers.
 from api.partner_fields.registry import system_partner_field_registry
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
@@ -545,7 +544,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         system_fields = []
 
         # Get all registered providers.
-        providers = system_partner_field_registry.get_all_providers()
+        providers = system_partner_field_registry.providers
 
         for provider in providers:
             field_data = provider.fetch_data(facility)

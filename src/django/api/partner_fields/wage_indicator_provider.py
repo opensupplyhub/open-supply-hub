@@ -1,5 +1,4 @@
 from typing import Dict, Any, Optional
-from django.core.exceptions import ObjectDoesNotExist
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
@@ -13,10 +12,6 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
     FIELD_NAME = 'wage_indicator'
     SYSTEM_CONTRIBUTOR_ID = 7783  # TODO: Set to actual system contributor ID.
 
-    def get_field_name(self) -> str:
-        '''Return the field name this provider handles.'''
-        return self.FIELD_NAME
-
     def _get_default_contributor_id(self) -> int:
         '''Return the default contributor ID for wage indicator data.'''
         return self.SYSTEM_CONTRIBUTOR_ID
@@ -27,7 +22,7 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
             return WageIndicatorCountryData.objects.get(
                 country_code=facility.country_code
             )
-        except ObjectDoesNotExist:
+        except WageIndicatorCountryData.DoesNotExist:
             return None
 
     def _format_data(
