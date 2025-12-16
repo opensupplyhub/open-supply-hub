@@ -13,6 +13,9 @@ from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
 from api.models.partner_field import PartnerField
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
+from api.models.wage_indicator_link_text_config import (
+    WageIndicatorLinkTextConfig
+)
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
@@ -304,6 +307,11 @@ class WageIndicatorCountryDataAdmin(admin.ModelAdmin):
     readonly_fields = ('country_code', 'created_at', 'updated_at')
 
 
+class WageIndicatorLinkTextConfigAdmin(admin.ModelAdmin):
+    list_display = ('link_type', 'display_text')
+    search_fields = ('link_type', 'display_text')
+
+
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -329,3 +337,6 @@ admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
 admin_site.register(PartnerField, PartnerFieldAdmin)
 admin_site.register(EmailAddress, EmailAddressAdmin)
 admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)
+admin_site.register(
+    WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
+)

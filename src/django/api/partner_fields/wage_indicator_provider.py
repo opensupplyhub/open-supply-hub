@@ -30,28 +30,30 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
         raw_data: WageIndicatorCountryData,
         contributor_info: Dict[str, Any]
     ) -> Dict[str, Any]:
-        '''Format wage indicator data into standard partner field structure.'''
+        '''
+        Format wage indicator data into standard partner field structure.
+        '''
+        # Get links with their configured display text.
+        links_with_text = raw_data.get_links_with_text()
+
+        # Build raw_values dict with link URLs and their display text.
+        raw_values = {}
+        for link in links_with_text:
+            link_type = link['type']
+            raw_values[link_type] = link['url']
+            raw_values[f'{link_type}_text'] = link['text']
+
         return {
             'id': None,
             'value': {
-                'raw_values': {
-                    'living_wage_link_national': (
-                        raw_data.living_wage_link_national
-                    ),
-                    'minimum_wage_link_english': (
-                        raw_data.minimum_wage_link_english
-                    ),
-                    'minimum_wage_link_national': (
-                        raw_data.minimum_wage_link_national
-                    ),
-                }
+                'raw_values': raw_values,
             },
             'created_at': raw_data.created_at.isoformat(),
             'updated_at': raw_data.updated_at.isoformat(),
             'field_name': self.FIELD_NAME,
             'contributor': contributor_info,
             'is_verified': False,
-            'value_count': 0,
+            'value_count': 1,
             'facility_list_item_id': 1111,  # Random ID for being not from a claim.
             'should_display_association': True,
         }
