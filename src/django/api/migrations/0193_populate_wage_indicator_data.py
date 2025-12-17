@@ -2230,7 +2230,7 @@ class Migration(migrations.Migration):
     '''
 
     dependencies = [
-        ('api', '0190_create_wage_indicator_models'),
+        ('api', '0192_create_wage_indicator_models'),
     ]
 
     operations = [
