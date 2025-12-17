@@ -35,7 +35,7 @@ def populate_tigerline_data(apps, schema_editor):
     with open(csv_path, 'r', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
 
-        for row_idx, row in enumerate(reader, start=1):
+        for _, row in enumerate(reader, start=1):
             geoid = row['geoid'].strip()
             name = row['name'].strip()
             geometry_wkt = row['geometry'].strip()
@@ -71,17 +71,10 @@ def populate_tigerline_data(apps, schema_editor):
                         tigerline_objects,
                         batch_size=batch_size
                     )
-                    print(
-                        f"Processed {processed_count} rows, "
-                        f"inserted batch of {len(tigerline_objects)}"
-                    )
                     tigerline_objects = []
 
             except Exception as e:
                 error_count += 1
-                print(
-                    f"Error processing row {row_idx} (geoid={geoid}): {str(e)}"
-                )
                 continue
 
         # Create remaining objects
@@ -90,16 +83,6 @@ def populate_tigerline_data(apps, schema_editor):
                 tigerline_objects,
                 batch_size=batch_size
             )
-            print(
-                f"Processed {processed_count} rows, "
-                f"inserted final batch of {len(tigerline_objects)}"
-            )
-
-    total_count = USCountyTigerline.objects.count()
-    print(
-        f"Successfully loaded {total_count} counties. "
-        f"Processed: {processed_count}, Errors: {error_count}"
-    )
 
 
 def clean_tigerline_data(apps, schema_editor):

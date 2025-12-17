@@ -11,7 +11,6 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
     
     # Check if partner field already exists
     if PartnerField.objects.filter(name='mit_living_wage').exists():
-        print('Partner field mit_living_wage already exists. Skipping creation.')
         return
     
     json_schema = {
@@ -35,9 +34,7 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
         display_text='View Living Wage Data for this County',
         active=True,
         system_field=True
-
     )
-    print('Successfully created mit_living_wage partner field.')
 
 
 def remove_mit_living_wage_partner_field(apps, schema_editor):
