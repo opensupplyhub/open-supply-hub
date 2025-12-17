@@ -113,7 +113,7 @@ def clean_tigerline_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0191_populate_wage_indicator_data'),
+        ('api', '0193_populate_wage_indicator_data'),
     ]
 
     operations = [

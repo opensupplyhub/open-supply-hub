@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 
+from api.models import Contributor
+
 
 class SystemPartnerFieldProvider(ABC):
     '''
@@ -58,8 +60,6 @@ class SystemPartnerFieldProvider(ABC):
         Fetch contributor information from database.
         Returns None if contributor not found.
         '''
-        from api.models import Contributor
-
         try:
             contributor = Contributor.objects.get(id=contributor_id)
             return {

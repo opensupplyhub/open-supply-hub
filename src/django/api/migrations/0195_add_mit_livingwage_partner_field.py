@@ -32,7 +32,10 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
         type='object',
         json_schema=json_schema,
         base_url='https://livingwage.mit.edu/counties/',
-        display_text='View Living Wage Data for this County'
+        display_text='View Living Wage Data for this County',
+        active=True,
+        system_field=True
+
     )
     print('Successfully created mit_living_wage partner field.')
 
@@ -49,7 +52,7 @@ def remove_mit_living_wage_partner_field(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0192_create_and_populate_us_county_tigerline'),
+        ('api', '0194_create_and_populate_us_county_tigerline'),
     ]
 
     operations = [

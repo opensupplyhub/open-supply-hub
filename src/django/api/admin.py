@@ -275,7 +275,9 @@ class PartnerFieldAdminForm(forms.ModelForm):
             'source_by',
             'base_url',
             'display_text',
-            'json_schema'
+            'json_schema',
+            'active',
+            'system_field'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -284,25 +286,21 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
 class PartnerFieldAdmin(admin.ModelAdmin):
     form = PartnerFieldAdminForm
-    list_display = ('name', 'type', 'label', 'unit', 'source_by', 'created_at')
+    list_display = ('name', 'type', 'label', 'unit', 'active', 'system_field',
+                    'created_at')
     search_fields = ('name', 'type', 'label', 'unit', 'source_by')
+    list_filter = ('active', 'system_field', 'type')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
 
-    def has_delete_permission(self, request, obj=None):
+    def get_queryset(self, request):
         '''
-        Prevent deletion of system-defined partner fields.
+        Override to show all partner fields including inactive ones in admin.
         '''
-        if obj and obj.name == 'mit_living_wage':
-            messages.warning(
-                request,
-                _(
-                    "Partner field '%s' cannot be deleted because it is "
-                    "a system-defined field."
-                )
-                % obj.name,
-            )
-            return False
-        return super().has_delete_permission(request, obj)
+        qs = self.model.objects.get_all_including_inactive()
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
 
     class Media:
         js = (
@@ -321,7 +319,18 @@ class WageIndicatorCountryDataAdmin(admin.ModelAdmin):
     list_display = ('country_code', 'living_wage_link_national',
                     'minimum_wage_link_english', 'minimum_wage_link_national')
     search_fields = ('country_code',)
-    readonly_fields = ('country_code', 'created_at', 'updated_at')
+    fields = ('country_code', 'living_wage_link_national',
+              'minimum_wage_link_english', 'minimum_wage_link_national',
+              'created_at', 'updated_at')
+
+    def get_readonly_fields(self, request, obj=None):
+        '''
+        Make country_code readonly when editing, but editable when creating.
+        '''
+        if obj:  # Editing existing object.
+            return ('country_code', 'created_at', 'updated_at')
+        # Creating new object.
+        return ('created_at', 'updated_at')
 
 
 class WageIndicatorLinkTextConfigAdmin(admin.ModelAdmin):

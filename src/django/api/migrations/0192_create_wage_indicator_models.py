@@ -7,7 +7,7 @@ from django.db.models import URLField, DateTimeField, CharField
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0189_add_base_url_and_text_field_to_partner_field'),
+        ('api', '0191_create_wage_indicator_partner_field'),
     ]
 
     operations = [
