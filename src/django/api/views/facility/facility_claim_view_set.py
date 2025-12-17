@@ -459,7 +459,6 @@ class FacilityClaimViewSet(ModelViewSet):
 
             for field_name in energy_field_names:
                 claim_value = emissions_data.get(field_name)
-                # Preserve prior behavior: missing field -> None
                 setattr(claim, field_name, claim_value)
 
             field_names = (
