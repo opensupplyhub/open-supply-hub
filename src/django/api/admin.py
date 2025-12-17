@@ -13,6 +13,9 @@ from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
 from api.models.partner_field import PartnerField
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
+from api.models.wage_indicator_link_text_config import (
+    WageIndicatorLinkTextConfig
+)
 from api.models.us_county_tigerline import USCountyTigerline
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
@@ -305,6 +308,11 @@ class WageIndicatorCountryDataAdmin(admin.ModelAdmin):
     readonly_fields = ('country_code', 'created_at', 'updated_at')
 
 
+class WageIndicatorLinkTextConfigAdmin(admin.ModelAdmin):
+    list_display = ('link_type', 'display_text')
+    search_fields = ('link_type', 'display_text')
+
+
 class USCountyTigerlineAdmin(admin.ModelAdmin):
     list_display = ('geoid', 'name')
     search_fields = ('geoid', 'name')
@@ -336,4 +344,7 @@ admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
 admin_site.register(PartnerField, PartnerFieldAdmin)
 admin_site.register(EmailAddress, EmailAddressAdmin)
 admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)
+admin_site.register(
+    WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
+)
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)

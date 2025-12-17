@@ -2150,16 +2150,45 @@ WAGE_INDICATOR_DATA = [
     },
 ]
 
+# Link text configuration data.
+WAGE_INDICATOR_LINK_TEXT_DATA = [
+    {
+        'link_type': 'living_wage_link_national',
+        'display_text': (
+            'View country living wage(in national language) '
+            'for this production location'
+        ),
+    },
+    {
+        'link_type': 'minimum_wage_link_english',
+        'display_text': (
+            'View country minimum wage(in english) '
+            'for this production location'
+        ),
+    },
+    {
+        'link_type': 'minimum_wage_link_national',
+        'display_text': (
+            'View country minimum wage(in national language) '
+            'for this production location'
+        ),
+    },
+]
+
 
 def populate_wage_indicator_data(apps, schema_editor):
     '''
-    Populate the WageIndicatorCountryData table with initial data.
+    Populate both WageIndicatorCountryData and WageIndicatorLinkTextConfig
+    tables with initial data.
     '''
     WageIndicatorCountryData = apps.get_model(
         'api', 'WageIndicatorCountryData'
     )
+    WageIndicatorLinkTextConfig = apps.get_model(
+        'api', 'WageIndicatorLinkTextConfig'
+    )
 
-    # Bulk create all records.
+    # Bulk create all country data records.
     wage_data_objects = [
         WageIndicatorCountryData(**data)
         for data in WAGE_INDICATOR_DATA
@@ -2170,25 +2199,38 @@ def populate_wage_indicator_data(apps, schema_editor):
         batch_size=100
     )
 
+    # Bulk create link text configuration records.
+    link_text_configs = [
+        WageIndicatorLinkTextConfig(**data)
+        for data in WAGE_INDICATOR_LINK_TEXT_DATA
+    ]
+
+    WageIndicatorLinkTextConfig.objects.bulk_create(link_text_configs)
+
 
 def clean_wage_indicator_data(apps, schema_editor):
     '''
-    Clean the WageIndicatorCountryData table.
+    Clean both WageIndicatorCountryData and WageIndicatorLinkTextConfig tables.
     '''
     WageIndicatorCountryData = apps.get_model(
         'api', 'WageIndicatorCountryData'
     )
+    WageIndicatorLinkTextConfig = apps.get_model(
+        'api', 'WageIndicatorLinkTextConfig'
+    )
+
+    WageIndicatorLinkTextConfig.objects.all().delete()
     WageIndicatorCountryData.objects.all().delete()
 
 
 class Migration(migrations.Migration):
     '''
-    This migration populates the WageIndicatorCountryData table with
-    living wage and minimum wage information for 171 countries.
+    This migration populates the WageIndicatorCountryData and
+    WageIndicatorLinkTextConfig tables with initial data.
     '''
 
     dependencies = [
-        ('api', '0190_create_wage_indicator_country_data'),
+        ('api', '0190_create_wage_indicator_models'),
     ]
 
     operations = [
