@@ -87,7 +87,93 @@ def validate_date_range(opening_date, closing_date):
         })
 
 
-class FacilityCreateClaimSerializer(serializers.Serializer):
+class EmissionsFieldsMixin(serializers.Serializer):
+    MIN_VALUE = 1
+    MAX_VALUE = JS_MAX_SAFE_INTEGER
+
+    opening_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+        validators=[validate_non_future_date]
+    )
+    closing_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+        validators=[validate_non_future_date]
+    )
+    estimated_annual_throughput = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_coal = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_natural_gas = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_diesel = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_kerosene = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_biomass = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_charcoal = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_animal_waste = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_electricity = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+    energy_other = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=MIN_VALUE,
+        max_value=MAX_VALUE
+    )
+
+    def validate(self, attrs):
+        validate_date_range(
+            attrs.get('opening_date'),
+            attrs.get('closing_date'),
+        )
+        return attrs
+
+
+class FacilityCreateClaimSerializer(
+    EmissionsFieldsMixin,
+    serializers.Serializer
+):
     your_name = serializers.CharField(
         max_length=200,
         required=True,
@@ -149,64 +235,10 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         validators=[validate_files]
     )
-    opening_date = serializers.DateField(
-        required=False,
-        validators=[validate_non_future_date]
-    )
-    closing_date = serializers.DateField(
-        required=False,
-        validators=[validate_non_future_date]
-    )
-    estimated_annual_throughput = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_coal = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_natural_gas = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_diesel = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_kerosene = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_biomass = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_charcoal = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_animal_waste = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_electricity = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
-    energy_other = serializers.IntegerField(
-        required=False,
-        min_value=1,
-        max_value=JS_MAX_SAFE_INTEGER
-    )
+
+
+class FacilityUpdateClaimEmissionsSerializer(EmissionsFieldsMixin):
+    MIN_VALUE = 0
     claimant_location_relationship = serializers.CharField(
         allow_blank=True,
         required=False,
