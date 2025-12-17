@@ -6,11 +6,11 @@ from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
 class MITLivingWageProvider(SystemPartnerFieldProvider):
     '''
-    Provides wage indicator data based on facility location (geoid).
+    Provides mit living wage data based on facility location (geoid).
     Fetches geoid from USCountyTigerline table using facility lat/lng.
     '''
 
-    FIELD_NAME = 'mit_livingwage'
+    FIELD_NAME = 'mit_living_wage'
     SYSTEM_CONTRIBUTOR_ID = 6  # TODO: Set to actual system contributor ID.
 
     def _get_default_contributor_id(self) -> int:

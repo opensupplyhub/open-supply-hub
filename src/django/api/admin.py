@@ -288,6 +288,22 @@ class PartnerFieldAdmin(admin.ModelAdmin):
     search_fields = ('name', 'type', 'label', 'unit', 'source_by')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
 
+    def has_delete_permission(self, request, obj=None):
+        '''
+        Prevent deletion of system-defined partner fields.
+        '''
+        if obj and obj.name == 'mit_living_wage':
+            messages.warning(
+                request,
+                _(
+                    "Partner field '%s' cannot be deleted because it is "
+                    "a system-defined field."
+                )
+                % obj.name,
+            )
+            return False
+        return super().has_delete_permission(request, obj)
+
     class Media:
         js = (
             'admin/js/jquery.init.js',
