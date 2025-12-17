@@ -2,6 +2,7 @@ import json
 from api.models.transactions.index_facilities_new import index_facilities_new
 
 from api.helpers.helpers import validate_workers_count
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -13,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from waffle import switch_is_active
 
 from api.constants import FacilityClaimStatuses
@@ -430,14 +432,44 @@ class FacilityClaimViewSet(ModelViewSet):
                 else:
                     setattr(claim, field_name, None)
 
-            opening_date = request.data.get('opening_date')
-            closing_date = request.data.get('closing_date')
+            validation_errors = []
+
+            # Dates
+            raw_opening_date = request.data.get('opening_date')
+            raw_closing_date = request.data.get('closing_date')
+
+            opening_date = None
+            if raw_opening_date not in (None, ''):
+                parsed = parse_date(raw_opening_date)
+                if parsed:
+                    opening_date = parsed
+                else:
+                    validation_errors.append('Invalid opening_date')
+
+            closing_date = None
+            if raw_closing_date not in (None, ''):
+                parsed = parse_date(raw_closing_date)
+                if parsed:
+                    closing_date = parsed
+                else:
+                    validation_errors.append('Invalid closing_date')
 
             claim.opening_date = opening_date
             claim.closing_date = closing_date
-            claim.estimated_annual_throughput = request.data.get(
-                'estimated_annual_throughput'
-            )
+
+            # Estimated annual throughput
+            raw_throughput = request.data.get('estimated_annual_throughput')
+            estimated_annual_throughput = None
+            if raw_throughput not in (None, ''):
+                try:
+                    throughput_val = int(raw_throughput)
+                    if throughput_val < 0:
+                        raise ValueError()
+                    estimated_annual_throughput = throughput_val
+                except (ValueError, TypeError):
+                    validation_errors.append('Invalid estimated_annual_throughput')
+
+            claim.estimated_annual_throughput = estimated_annual_throughput
 
             energy_field_names = (
                 'energy_coal',
@@ -452,11 +484,20 @@ class FacilityClaimViewSet(ModelViewSet):
             )
 
             for field_name in energy_field_names:
-                setattr(
-                    claim,
-                    field_name,
-                    request.data.get(field_name),
-                )
+                raw_value = request.data.get(field_name)
+                if raw_value in (None, ''):
+                    setattr(claim, field_name, None)
+                    continue
+                try:
+                    energy_value = int(raw_value)
+                    if energy_value < 0:
+                        raise ValueError()
+                    setattr(claim, field_name, energy_value)
+                except (ValueError, TypeError):
+                    validation_errors.append(f'Invalid {field_name}')
+
+            if validation_errors:
+                return Response(validation_errors, status=status.HTTP_400_BAD_REQUEST)
 
             field_names = (
                 'facility_description',

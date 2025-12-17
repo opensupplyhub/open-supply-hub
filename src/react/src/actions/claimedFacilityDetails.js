@@ -1,5 +1,6 @@
 import { createAction } from 'redux-act';
 import mapValues from 'lodash/mapValues';
+import trim from 'lodash/trim';
 import isNull from 'lodash/isNull';
 import omit from 'lodash/omit';
 import isInteger from 'lodash/isInteger';
@@ -84,8 +85,7 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
             const name =
                 data.parent_company_name ||
                 get(data, 'facility_parent_company.name', '');
-            const trimmedName =
-                typeof name === 'string' ? name.trim() : `${name}`.trim();
+            const trimmedName = trim(toString(name));
 
             return trimmedName === '' ? null : trimmedName;
         })();
