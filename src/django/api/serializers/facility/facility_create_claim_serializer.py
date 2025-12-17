@@ -90,77 +90,44 @@ def validate_date_range(opening_date, closing_date):
 class EmissionsFieldsMixin(serializers.Serializer):
     MIN_VALUE = 1
     MAX_VALUE = JS_MAX_SAFE_INTEGER
+    EMISSION_INT_FIELDS = (
+        'estimated_annual_throughput',
+        'energy_coal',
+        'energy_natural_gas',
+        'energy_diesel',
+        'energy_kerosene',
+        'energy_biomass',
+        'energy_charcoal',
+        'energy_animal_waste',
+        'energy_electricity',
+        'energy_other',
+    )
 
-    opening_date = serializers.DateField(
-        required=False,
-        allow_null=True,
-        validators=[validate_non_future_date]
-    )
-    closing_date = serializers.DateField(
-        required=False,
-        allow_null=True,
-        validators=[validate_non_future_date]
-    )
-    estimated_annual_throughput = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_coal = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_natural_gas = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_diesel = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_kerosene = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_biomass = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_charcoal = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_animal_waste = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_electricity = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
-    energy_other = serializers.IntegerField(
-        required=False,
-        allow_null=True,
-        min_value=MIN_VALUE,
-        max_value=MAX_VALUE
-    )
+    def get_fields(self):
+        fields = super().get_fields()
+        min_value = getattr(self, 'MIN_VALUE', EmissionsFieldsMixin.MIN_VALUE)
+        max_value = getattr(self, 'MAX_VALUE', JS_MAX_SAFE_INTEGER)
+
+        fields['opening_date'] = serializers.DateField(
+            required=False,
+            allow_null=True,
+            validators=[validate_non_future_date],
+        )
+        fields['closing_date'] = serializers.DateField(
+            required=False,
+            allow_null=True,
+            validators=[validate_non_future_date],
+        )
+
+        for field_name in self.EMISSION_INT_FIELDS:
+            fields[field_name] = serializers.IntegerField(
+                required=False,
+                allow_null=True,
+                min_value=min_value,
+                max_value=max_value,
+            )
+
+        return fields
 
     def validate(self, attrs):
         validate_date_range(
@@ -172,7 +139,7 @@ class EmissionsFieldsMixin(serializers.Serializer):
 
 class FacilityCreateClaimSerializer(
     EmissionsFieldsMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     your_name = serializers.CharField(
         max_length=200,
@@ -239,6 +206,41 @@ class FacilityCreateClaimSerializer(
 
 class FacilityUpdateClaimEmissionsSerializer(EmissionsFieldsMixin):
     MIN_VALUE = 0
+    facility_name_english = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=300,
+    )
+    facility_address = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=1000,
+    )
+    facility_website = serializers.URLField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+    )
+    facility_minimum_order_quantity = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+    )
+    facility_average_lead_time = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+    )
+    point_of_contact_person_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+    )
+    point_of_contact_email = serializers.EmailField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
     claimant_location_relationship = serializers.CharField(
         allow_blank=True,
         required=False,
@@ -341,6 +343,36 @@ class FacilityUpdateClaimEmissionsSerializer(EmissionsFieldsMixin):
         required=False,
         allow_blank=True,
         max_length=300
+    )
+    claimant_location_relationship = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250,
+    )
+    claimant_employment_verification_method = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250,
+    )
+    location_address_verification_method = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=250,
+    )
+    claimant_linkedin_profile_url = serializers.URLField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+    )
+    facility_phone_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+    )
+    office_phone_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
     )
 
     def validate_your_business_website(self, value):

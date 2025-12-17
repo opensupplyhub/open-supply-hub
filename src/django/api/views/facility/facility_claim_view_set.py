@@ -434,6 +434,7 @@ class FacilityClaimViewSet(ModelViewSet):
             emissions_serializer = FacilityUpdateClaimEmissionsSerializer(
                 data=request.data,
                 partial=True,
+                context={"facility": claim.facility},
             )
             emissions_serializer.is_valid(raise_exception=True)
             emissions_data = emissions_serializer.validated_data

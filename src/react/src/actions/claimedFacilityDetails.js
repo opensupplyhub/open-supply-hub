@@ -4,6 +4,7 @@ import trim from 'lodash/trim';
 import isNull from 'lodash/isNull';
 import omit from 'lodash/omit';
 import isInteger from 'lodash/isInteger';
+import toString from 'lodash/toString';
 import { isInt } from 'validator';
 import get from 'lodash/get';
 
