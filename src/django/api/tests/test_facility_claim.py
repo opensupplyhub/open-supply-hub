@@ -275,7 +275,10 @@ class FacilityClaimTest(APITestCase):
             contributor=self.contributor,
             status=FacilityClaimStatuses.APPROVED,
         )
-        claim_url = reverse("facility-claim-get-claimed-details", args=[claim.id])
+        claim_url = reverse(
+            "facility-claim-get-claimed-details",
+            args=[claim.id],
+        )
 
         update_payload = {
             "opening_date": "2021-01-01",

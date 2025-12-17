@@ -5,8 +5,8 @@ import isNull from 'lodash/isNull';
 import omit from 'lodash/omit';
 import isInteger from 'lodash/isInteger';
 import toString from 'lodash/toString';
-import { isInt } from 'validator';
 import get from 'lodash/get';
+import { isInt } from 'validator';
 
 import apiRequest from '../util/apiRequest';
 
@@ -112,16 +112,17 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 parent_company_name: parentCompanyName,
                 opening_date: data.opening_date || null,
                 closing_date: data.closing_date || null,
-                estimated_annual_throughput: data.estimated_annual_throughput,
-                energy_coal: data.energy_coal,
-                energy_natural_gas: data.energy_natural_gas,
-                energy_diesel: data.energy_diesel,
-                energy_kerosene: data.energy_kerosene,
-                energy_biomass: data.energy_biomass,
-                energy_charcoal: data.energy_charcoal,
-                energy_animal_waste: data.energy_animal_waste,
-                energy_electricity: data.energy_electricity,
-                energy_other: data.energy_other,
+                estimated_annual_throughput:
+                    data.estimated_annual_throughput || null,
+                energy_coal: data.energy_coal || null,
+                energy_natural_gas: data.energy_natural_gas || null,
+                energy_diesel: data.energy_diesel || null,
+                energy_kerosene: data.energy_kerosene || null,
+                energy_biomass: data.energy_biomass || null,
+                energy_charcoal: data.energy_charcoal || null,
+                energy_animal_waste: data.energy_animal_waste || null,
+                energy_electricity: data.energy_electricity || null,
+                energy_other: data.energy_other || null,
             },
         );
         return apiRequest
