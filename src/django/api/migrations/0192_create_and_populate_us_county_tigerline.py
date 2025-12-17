@@ -18,8 +18,8 @@ def populate_tigerline_data(apps, schema_editor):
     '''
     USCountyTigerline = apps.get_model('api', 'USCountyTigerline')
 
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    csv_path = os.path.join(base_dir, 'us_county_tigerline_2025.csv')
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    csv_path = os.path.join(base_dir, 'data', 'us_county_tigerline_2025.csv')
 
     if not os.path.exists(csv_path):
         raise FileNotFoundError(
