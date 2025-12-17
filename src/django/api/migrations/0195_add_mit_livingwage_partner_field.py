@@ -43,7 +43,6 @@ def remove_mit_living_wage_partner_field(apps, schema_editor):
     '''
     PartnerField = apps.get_model('api', 'PartnerField')
     PartnerField.objects.filter(name='mit_living_wage').delete()
-    print('Removed mit_living_wage partner field.')
 
 
 class Migration(migrations.Migration):
