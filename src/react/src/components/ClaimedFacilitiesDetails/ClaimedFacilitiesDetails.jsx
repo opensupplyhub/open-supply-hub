@@ -70,11 +70,8 @@ import {
     submitClaimedFacilityDetailsUpdate,
 } from '../../actions/claimedFacilityDetails';
 
-import { fetchSectorOptions } from '../../actions/filterOptions';
-
 import {
     approvedFacilityClaimPropType,
-    sectorOptionsPropType,
     userPropType,
 } from '../../util/propTypes';
 
@@ -93,7 +90,7 @@ import {
     logErrorToRollbar,
 } from '../../util/util';
 
-import { USER_DEFAULT_STATE } from '../../util/constants';
+import { USER_DEFAULT_STATE, mockedSectors } from '../../util/constants';
 import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
 import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
 import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
@@ -158,8 +155,6 @@ function ClaimedFacilitiesDetails({
     updateOfficeVisibility,
     errorUpdating,
     updateParentCompany,
-    sectorOptions,
-    fetchSectors,
     updateOpeningDate,
     updateClosingDate,
     updateEstimatedAnnualThroughput,
@@ -185,12 +180,6 @@ function ClaimedFacilitiesDetails({
         return clearDetails;
     }, []);
     /* eslint-enable react-hooks/exhaustive-deps */
-    useEffect(() => {
-        if (!sectorOptions) {
-            fetchSectors();
-        }
-    }, [sectorOptions, fetchSectors]);
-
     const [isSavingForm, setIsSavingForm] = useState(false);
     const TITLE = 'Claimed Facility Details';
 
@@ -351,6 +340,11 @@ function ClaimedFacilitiesDetails({
         [facilityData.countries],
     );
 
+    const sectorSelectOptions = useMemo(
+        () => mapDjangoChoiceTuplesToSelectOptions(mockedSectors),
+        [],
+    );
+
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
     }
@@ -412,7 +406,7 @@ function ClaimedFacilitiesDetails({
                             disabled={updating}
                             isSelect
                             isMultiSelect
-                            selectOptions={sectorOptions || []}
+                            selectOptions={sectorSelectOptions}
                             selectPlaceholder="Select..."
                         />
                         <InputSection
@@ -824,7 +818,6 @@ ClaimedFacilitiesDetails.defaultProps = {
     errors: null,
     data: null,
     errorUpdating: null,
-    sectorOptions: null,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
@@ -867,8 +860,6 @@ ClaimedFacilitiesDetails.propTypes = {
     updateEnergyAnimalWaste: func.isRequired,
     updateEnergyElectricity: func.isRequired,
     updateEnergyOther: func.isRequired,
-    sectorOptions: sectorOptionsPropType,
-    fetchSectors: func.isRequired,
     userHasSignedIn: bool.isRequired,
     classes: object.isRequired,
 };
@@ -882,18 +873,14 @@ function mapStateToProps({
         updateData: { fetching: updating, error: errorUpdating },
         data,
     },
-    filterOptions: {
-        sectors: { data: sectorOptions, fetching: fetchingSectors },
-    },
 }) {
     return {
         user,
-        fetching: fetchingData || fetchingSectors,
+        fetching: fetchingData,
         data,
         errors: error || errorUpdating,
         updating,
         errorUpdating,
-        sectorOptions,
         userHasSignedIn: !user.isAnon,
     };
 }
@@ -1009,7 +996,6 @@ function mapDispatchToProps(
         updateEnergyOther: makeDispatchValueFn(updateClaimedEnergyOther),
         submitUpdate: () =>
             dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
-        fetchSectors: () => dispatch(fetchSectorOptions()),
     };
 }
 
