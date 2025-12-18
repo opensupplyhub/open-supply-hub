@@ -262,14 +262,12 @@ class FacilityClaimTest(APITestCase):
         Update approved claim via PUT and validate
         emissions and other fields.
         """
-        # Login
         self.client.post(
             "/user-login/",
             {"email": self.email, "password": self.password},
             format="json",
         )
 
-        # Create and approve claim
         claim = FacilityClaim.objects.create(
             facility=self.facility,
             contributor=self.contributor,
@@ -297,15 +295,19 @@ class FacilityClaimTest(APITestCase):
             "facility_name_english": "Updated name",
             "facility_address": "Updated address",
             "facility_phone_number": "+1-111-2222",
+            "facility_phone_number_publicly_visible": False,
             "facility_website": "https://updated.com",
+            "facility_website_publicly_visible": False,
             "facility_minimum_order_quantity": "2000 pcs",
             "facility_average_lead_time": "30 days",
             "point_of_contact_person_name": "POC Name",
             "point_of_contact_email": "poc@example.com",
+            "point_of_contact_publicly_visible": False,
             "office_official_name": "Updated Office",
             "office_address": "Updated Office Address",
             "office_country_code": "US",
             "office_phone_number": "+1-333-4444",
+            "office_info_publicly_visible": False,
         }
 
         response = self.client.put(claim_url, update_payload, format="json")
