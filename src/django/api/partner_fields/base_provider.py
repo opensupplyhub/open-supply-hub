@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
+import logging
 
 from api.models import Contributor
+from api.models.partner_field import PartnerField
+
+logger = logging.getLogger(__name__)
 
 
 class SystemPartnerFieldProvider(ABC):
@@ -21,7 +25,7 @@ class SystemPartnerFieldProvider(ABC):
         if raw_data is None:
             return None
 
-        contributor_id = self._get_default_contributor_id()
+        contributor_id = self.__get_default_contributor_id()
         contributor_info = self.__get_contributor_info(contributor_id)
 
         # Guardrail: If contributor not found, return None silently.
@@ -31,10 +35,10 @@ class SystemPartnerFieldProvider(ABC):
         return self._format_data(raw_data, contributor_info)
 
     @abstractmethod
-    def _get_default_contributor_id(self) -> int:
+    def _get_field_name(self) -> str:
         '''
-        Return the default contributor ID for this system field.
-        Each provider defines its own default contributor.
+        Return the partner field name for this provider.
+        Each provider must define its own field name.
         '''
         pass
 
@@ -52,14 +56,49 @@ class SystemPartnerFieldProvider(ABC):
         '''Format raw data into the standard partner field structure.'''
         pass
 
+    def __get_default_contributor_id(self) -> Optional[int]:
+        '''
+        Return the default contributor ID for this system field.
+        Gets the first contributor assigned to the partner field.
+        '''
+        field_name = self._get_field_name()
+
+        try:
+            partner_field = PartnerField.objects \
+                .get_all_including_inactive() \
+                .get(name=field_name)
+        except PartnerField.DoesNotExist:
+            logger.error(
+                f'Partner field \'{field_name}\' not found. '
+                'System field must exist in database.'
+            )
+            return None
+
+        # By default, it is assumed that there is only one contributor
+        # assigned to the system partner field.
+        contributor = partner_field.contributor_set.first()
+        if contributor:
+            return contributor.id
+
+        logger.error(
+            f'No contributor found for \'{field_name}\' partner field. '
+            'However, the contributor must be assigned to this partner field '
+            'since it is a system field.'
+        )
+        # Silently return None if no contributor is found.
+        return None
+
     def __get_contributor_info(
         self,
-        contributor_id: int
+        contributor_id: Optional[int]
     ) -> Optional[Dict[str, Any]]:
         '''
         Fetch contributor information from database.
-        Returns None if contributor not found.
+        Returns None if contributor not found or contributor_id is None.
         '''
+        if contributor_id is None:
+            return None
+
         try:
             contributor = Contributor.objects.get(id=contributor_id)
             return {

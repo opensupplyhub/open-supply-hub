@@ -282,6 +282,49 @@ class PartnerFieldAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def clean(self):
+        '''
+        Validate that protected fields of system fields are not modified.
+        '''
+        cleaned_data = super().clean()
+
+        # Only validate for existing system fields.
+        if self.instance and self.instance.pk and self.instance.system_field:
+            from api.models.partner_field import PartnerField
+
+            try:
+                # Get the original instance from database.
+                original = PartnerField.objects \
+                    .get_all_including_inactive() \
+                    .get(pk=self.instance.pk)
+
+                protected_fields = {
+                    'name': 'Name',
+                    'type': 'Type',
+                    'json_schema': 'JSON Schema',
+                    'system_field': 'System Field'
+                }
+
+                for field_name, field_label in protected_fields.items():
+                    original_value = getattr(original, field_name)
+                    current_value = cleaned_data.get(field_name)
+
+                    if original_value != current_value:
+                        # Add field-specific error.
+                        self.add_error(
+                            field_name,
+                            f'{field_label} cannot be modified for '
+                            'system-defined fields. Editing this field may '
+                            'break the application or data display for users. '
+                            'Only label, unit, source by, base url, display '
+                            'text, and active can be edited.'
+                        )
+
+            except PartnerField.DoesNotExist:
+                pass
+
+        return cleaned_data
+
 
 class PartnerFieldAdmin(admin.ModelAdmin):
     form = PartnerFieldAdminForm
@@ -290,6 +333,9 @@ class PartnerFieldAdmin(admin.ModelAdmin):
     search_fields = ('name', 'type', 'label', 'unit', 'source_by')
     list_filter = ('active', 'system_field', 'type')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+    fields = ('name', 'type', 'unit', 'label', 'source_by', 'base_url',
+              'display_text', 'json_schema', 'active', 'system_field',
+              'created_at', 'updated_at')
 
     def get_queryset(self, request):
         '''
@@ -300,6 +346,19 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         if ordering:
             qs = qs.order_by(*ordering)
         return qs
+
+    def has_delete_permission(self, request, obj=None):
+        '''
+        Prevent deletion of system fields.
+        '''
+        if obj and obj.system_field:
+            messages.warning(
+                request,
+                f'Partner field \'{obj.name}\' cannot be deleted because it '
+                'is a system-defined field.'
+            )
+            return False
+        return super().has_delete_permission(request, obj)
 
     class Media:
         js = (

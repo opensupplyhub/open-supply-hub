@@ -2,8 +2,6 @@ import logging
 
 from itertools import groupby
 from collections import defaultdict
-from typing import Dict, List, Any
-from django.core.cache import cache
 from rest_framework_gis.serializers import (
     GeoFeatureModelSerializer,
     GeometrySerializerMethodField,
@@ -13,14 +11,11 @@ from rest_framework.serializers import (
 )
 
 from countries.lib.countries import COUNTRY_NAMES
-from api.constants import PARTNER_FIELD_LIST_KEY
-from api.partner_fields.registry import system_partner_field_registry
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_config import EmbedConfig
 from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
-from ...models.partner_field import PartnerField
 from ...models.nonstandard_field import NonstandardField
 from ...helpers.helpers import parse_raw_data, get_csv_values
 from ..utils import is_embed_mode_active
