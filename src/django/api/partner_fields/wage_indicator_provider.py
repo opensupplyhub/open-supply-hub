@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
+from api.models.facility.facility import Facility
 
 
 class WageIndicatorProvider(SystemPartnerFieldProvider):
@@ -18,7 +19,7 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
 
     def _fetch_raw_data(
         self,
-        production_location
+        production_location: Facility
     ) -> Optional[WageIndicatorCountryData]:
         '''Fetch wage indicator data from database by country code.'''
         try:

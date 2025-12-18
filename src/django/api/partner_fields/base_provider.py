@@ -4,6 +4,7 @@ import logging
 
 from api.models import Contributor
 from api.models.partner_field import PartnerField
+from api.models.facility.facility import Facility
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,9 @@ class SystemPartnerFieldProvider(ABC):
     system partner field type (e.g., wage_indicator, etc.).
     '''
 
-    def fetch_data(self, production_location) -> Optional[Dict[str, Any]]:
+    def fetch_data(
+        self, production_location: Facility
+    ) -> Optional[Dict[str, Any]]:
         '''
         Fetch and format data for the given production location.
         Returns None if no data or contributor not found.
@@ -43,7 +46,7 @@ class SystemPartnerFieldProvider(ABC):
         pass
 
     @abstractmethod
-    def _fetch_raw_data(self, production_location) -> Optional[Any]:
+    def _fetch_raw_data(self, production_location: Facility) -> Optional[Any]:
         '''Fetch raw data from the data source.'''
         pass
 
