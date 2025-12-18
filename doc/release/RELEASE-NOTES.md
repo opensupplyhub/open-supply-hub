@@ -19,7 +19,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
 
 ### What's new
-* [OSDEV-2221](https://opensupplyhub.atlassian.net/browse/OSDEV-2221) - Updated editable claims fields on post-approval page (`/claimed/{claim-id}`) to include emissions data.
+* [OSDEV-2221](https://opensupplyhub.atlassian.net/browse/OSDEV-2221) - Updated post claim page `claimed/{claim-id}/`. This update includes:
+    * Added emission data input fields with checkboxes. UI is consitent with other input fields in the `ClaimedFacilitiesDetails` component.
+    * Applied Yup validation schema for `facility_website`, `point_of_contact_email`, `facility_workers_count`.
+    * Used FE mocked sectors for the Sector input field.
+    * Removed the FE request to `GET /api/parent-companies/`.
+    * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
