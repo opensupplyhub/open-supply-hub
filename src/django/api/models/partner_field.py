@@ -69,7 +69,6 @@ class PartnerField(models.Model):
             'the source of this partner field.'
         )
     )
-
     json_schema = models.JSONField(
         blank=True,
         null=True,
@@ -78,7 +77,6 @@ class PartnerField(models.Model):
             'Used when type is "object".'
         )
     )
-
     active = models.BooleanField(
         default=True,
         help_text=(
@@ -87,7 +85,6 @@ class PartnerField(models.Model):
             'will not appear in listings.'
         )
     )
-
     system_field = models.BooleanField(
         default=False,
         help_text=(
