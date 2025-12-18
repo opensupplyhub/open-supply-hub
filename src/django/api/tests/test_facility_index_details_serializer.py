@@ -886,6 +886,9 @@ class FacilityIndexDetailsSerializerTest(TestCase):
                 active=True
             )
 
+        # Clear all existing contributors and set only contrib_one
+        # to ensure test isolation from previous tests.
+        wage_indicator_field.contributor_set.clear()
         self.contrib_one.partner_fields.add(wage_indicator_field)
 
         # Get or create wage indicator data for US.
@@ -911,7 +914,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
 
         wage_indicator_item = wage_indicator_data[0]
         print("contributor one: ", Contributor.objects.get(id=self.contrib_one.id))
-        print("wage indicator contributor: ", Contributor.objects.get(id=wage_indicator_item['contributor_id']))
+        print("wage indicator contributor, only id: ", wage_indicator_item['contributor_id'])
 
         self.assertIn('contributor_id', wage_indicator_item)
         self.assertEqual(
@@ -939,17 +942,20 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         # Get or create wage_indicator partner field without assigning
         # contributor.
         try:
-            PartnerField.objects \
+            wage_indicator_field = PartnerField.objects \
                 .get_all_including_inactive() \
                 .get(name='wage_indicator')
         except PartnerField.DoesNotExist:
-            PartnerField.objects.create(
+            wage_indicator_field = PartnerField.objects.create(
                 name='wage_indicator',
                 type=PartnerField.OBJECT,
                 label='Wage Indicator',
                 system_field=True,
                 active=True
             )
+
+        # Clear all contributors to ensure test isolation.
+        wage_indicator_field.contributor_set.clear()
 
         # Get or create wage indicator data.
         WageIndicatorCountryData.objects.get_or_create(
@@ -982,6 +988,9 @@ class FacilityIndexDetailsSerializerTest(TestCase):
                 active=True
             )
 
+        # Clear all existing contributors and set only contrib_one
+        # to ensure test isolation from previous tests.
+        wage_indicator_field.contributor_set.clear()
         self.contrib_one.partner_fields.add(wage_indicator_field)
 
         # Delete any wage indicator data for US to test empty state.

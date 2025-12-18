@@ -29,6 +29,7 @@ class WageIndicatorProviderTest(TestCase):
             name='Test Contributor',
             contrib_type=Contributor.CONTRIB_TYPE_CHOICES[0][0],
         )
+        print("contributor id from the WageIndicatorProviderTest: ", self.contributor.id)
 
         # Get or create wage_indicator partner field.
         # Use get_all_including_inactive to access existing system field.
@@ -45,7 +46,9 @@ class WageIndicatorProviderTest(TestCase):
                 active=True
             )
 
-        # Assign contributor to partner field.
+        # Clear all existing contributors and set only this contributor
+        # to ensure test isolation from previous tests.
+        self.partner_field.contributor_set.clear()
         self.contributor.partner_fields.add(self.partner_field)
 
         # Create test production location with valid country code.
@@ -109,13 +112,13 @@ class WageIndicatorProviderTest(TestCase):
         self.provider = WageIndicatorProvider()
 
     def tearDown(self):
+        '''Clean up test data but preserve system partner field.'''
         # Remove contributor assignments.
         self.partner_field.contributor_set.clear()
         # Clean up test wage data.
         WageIndicatorCountryData.objects.filter(
             country_code=self.test_country_code
         ).delete()
-        self.partner_field.delete()
 
     def test_get_field_name(self):
         '''Test _get_field_name returns correct field name.'''
