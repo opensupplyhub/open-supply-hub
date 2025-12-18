@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [Follow-up][OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Removed the `reindex_locations_with_environmental_data` Django management command from the parent `post_deployment` command so it no longer runs, as it was only needed for the `2.17.0` release.
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support system-generated partner fields. The `partner_fields` object in the response now includes the `wage_indicator` field when a contributor is assigned to it, automatically providing country-specific wage indicator reference links (living wage and minimum wage URLs in both national language and English) based on the production location's country code. System partner fields are populated dynamically through a provider registry pattern and follow the same structure as user-contributed partner fields, appearing alongside them in the API response.
 
 ### Architecture/Environment changes
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
