@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, object } from 'prop-types';
+import { arrayOf, bool, func, string, object, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -239,10 +239,8 @@ function ClaimedFacilitiesDetails({
             })
             .then(({ data: geocodedData }) => {
                 if (geocodedData?.result_count === 0) {
-                    return Promise.reject(
-                        new Error(
-                            'There was a problem finding a location for the specified address',
-                        ),
+                    throw new Error(
+                        'There was a problem finding a location for the specified address',
                     );
                 }
                 return geocodeDataToGeoJSON(geocodedData);
@@ -930,12 +928,19 @@ ClaimedFacilitiesDetails.defaultProps = {
 
 ClaimedFacilitiesDetails.propTypes = {
     user: userPropType,
+    match: shape({
+        params: shape({
+            claimID: string.isRequired,
+        }).isRequired,
+    }).isRequired,
     fetching: bool.isRequired,
     errors: arrayOf(string),
     data: approvedFacilityClaimPropType,
     getDetails: func.isRequired,
     clearDetails: func.isRequired,
     updateFacilityNameNativeLanguage: func.isRequired,
+    updateFacilityLocation: func.isRequired,
+    updateSector: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
     updateFacilityFemaleWorkersPercentage: func.isRequired,
     updateFacilityPhone: func.isRequired,
@@ -944,6 +949,10 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityDescription: func.isRequired,
     updateFacilityMinimumOrder: func.isRequired,
     updateFacilityAverageLeadTime: func.isRequired,
+    updateFacilityAffiliations: func.isRequired,
+    updateFacilityCertifications: func.isRequired,
+    updateFacilityProductTypes: func.isRequired,
+    updateFacilityProductionTypes: func.isRequired,
     updateContactPerson: func.isRequired,
     updateContactEmail: func.isRequired,
     updateOfficeName: func.isRequired,
@@ -956,6 +965,7 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityPhoneVisibility: func.isRequired,
     updateContactVisibility: func.isRequired,
     updateOfficeVisibility: func.isRequired,
+    updateParentCompany: func.isRequired,
     updateOpeningDate: func.isRequired,
     updateClosingDate: func.isRequired,
     updateEstimatedAnnualThroughput: func.isRequired,
