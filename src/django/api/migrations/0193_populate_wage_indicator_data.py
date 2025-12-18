@@ -1388,7 +1388,7 @@ WAGE_INDICATOR_DATA = [
             'https://wageindicator.org/salary/minimum-wage/nepal'
         ),
         'minimum_wage_link_national': (
-            'http://mywage.org/nepal/salary/minimum-wage'
+            'https://mywage.org/nepal/salary/minimum-wage'
         ),
     },
     {
