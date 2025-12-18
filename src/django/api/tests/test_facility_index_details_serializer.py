@@ -886,7 +886,8 @@ class FacilityIndexDetailsSerializerTest(TestCase):
                 active=True
             )
 
-        # Assign contributor to wage_indicator field.
+        # Clear any existing contributors and assign contrib_one.
+        wage_indicator_field.contributor_set.clear()
         self.contrib_one.partner_fields.add(wage_indicator_field)
 
         # Get or create wage indicator data for US.
@@ -940,8 +941,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             wage_indicator_field = PartnerField.objects \
                 .get_all_including_inactive() \
                 .get(name='wage_indicator')
-            # Remove any existing contributors.
-            wage_indicator_field.contributor_set.clear()
         except PartnerField.DoesNotExist:
             wage_indicator_field = PartnerField.objects.create(
                 name='wage_indicator',
@@ -950,6 +949,9 @@ class FacilityIndexDetailsSerializerTest(TestCase):
                 system_field=True,
                 active=True
             )
+
+        # Remove any existing contributors.
+        wage_indicator_field.contributor_set.clear()
 
         # Get or create wage indicator data.
         WageIndicatorCountryData.objects.get_or_create(
@@ -982,7 +984,8 @@ class FacilityIndexDetailsSerializerTest(TestCase):
                 active=True
             )
 
-        # Assign contributor to wage_indicator field.
+        # Clear any existing contributors and assign contrib_one.
+        wage_indicator_field.contributor_set.clear()
         self.contrib_one.partner_fields.add(wage_indicator_field)
 
         # Delete any wage indicator data for US to test empty state.
