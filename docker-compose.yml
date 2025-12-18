@@ -51,6 +51,10 @@ services:
       - AWS_S3_ACCESS_KEY_ID
       - AWS_S3_SECRET_ACCESS_KEY
       - AWS_STORAGE_BUCKET_NAME
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_SSL=False
@@ -74,7 +78,8 @@ services:
         condition: service_started
       logstash:
         condition: service_started
-      
+      init-minio:
+        condition: service_completed_successfully
     command:
       - "-b :8081"
       - "--reload"
@@ -87,6 +92,48 @@ services:
     ports:
       - "8081:8081"
     cpus: 2
+    networks:
+      - proxynet
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - proxynet
+
+  init-minio:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./src/django/us_county_tigerline_2025.csv:/tmp/us_county_tigerline_2025.csv:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Configuring MinIO client...'
+      mc alias set local http://minio:9000 minioadmin minioadmin
+
+      echo 'Creating bucket opensupplyhub-local-files-us-west-1...'
+      mc mb --ignore-existing local/opensupplyhub-local-files-us-west-1
+
+      echo 'Uploading us_county_tigerline_2025.csv to data folder...'
+      mc cp /tmp/us_county_tigerline_2025.csv local/opensupplyhub-local-files-us-west-1/data/us_county_tigerline_2025.csv
+
+      echo 'MinIO initialization complete!'
+      mc ls local/opensupplyhub-local-files-us-west-1/data/
+      "
     networks:
       - proxynet
 
