@@ -6,7 +6,7 @@ from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
 class WageIndicatorProvider(SystemPartnerFieldProvider):
     '''
-    Provides wage indicator data based on facility country code.
+    Provides wage indicator data based on production location country code.
     Fetches data from WageIndicatorCountryData table.
     '''
 
@@ -16,11 +16,14 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
         '''Return the partner field name for this provider.'''
         return self.FIELD_NAME
 
-    def _fetch_raw_data(self, facility) -> Optional[WageIndicatorCountryData]:
+    def _fetch_raw_data(
+        self,
+        production_location
+    ) -> Optional[WageIndicatorCountryData]:
         '''Fetch wage indicator data from database by country code.'''
         try:
             return WageIndicatorCountryData.objects.get(
-                country_code=facility.country_code
+                country_code=production_location.country_code
             )
         except WageIndicatorCountryData.DoesNotExist:
             return None

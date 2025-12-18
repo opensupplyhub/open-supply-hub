@@ -48,7 +48,7 @@ class WageIndicatorProviderTest(TestCase):
         # Assign contributor to partner field.
         self.contributor.partner_fields.add(self.partner_field)
 
-        # Create test facility with valid country code.
+        # Create test production location with valid country code.
         self.test_country_code = 'GB'  # Use GB for testing.
         facility_list = FacilityList.objects.create(
             header='header',

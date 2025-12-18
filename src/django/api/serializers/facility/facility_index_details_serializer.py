@@ -447,9 +447,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return grouped_data
 
     @staticmethod
-    def __fetch_system_partner_fields(facility) -> list:
+    def __fetch_system_partner_fields(production_location) -> list:
         '''
-        Fetch all system-generated partner fields for the facility.
+        Fetch all system-generated partner fields for the production location.
         Returns list of formatted field data matching extended_fields
         structure.
         '''
@@ -459,7 +459,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         providers = system_partner_field_registry.providers
 
         for provider in providers:
-            field_data = provider.fetch_data(facility)
+            field_data = provider.fetch_data(production_location)
             if field_data is not None:
                 system_fields.append(field_data)
 
