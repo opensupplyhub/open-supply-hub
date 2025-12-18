@@ -700,9 +700,6 @@ function ClaimedFacilitiesDetails({
                                         ),
                                     )
                                 }
-                                FormHelperTextProps={{
-                                    className: classes.helperText,
-                                }}
                             />
                             {getEmissionError('estimatedAnnualThroughput') && (
                                 <InputErrorText
@@ -780,10 +777,6 @@ function ClaimedFacilitiesDetails({
                                                     enabled &&
                                                     Boolean(errorText)
                                                 }
-                                                FormHelperTextProps={{
-                                                    className:
-                                                        classes.helperText,
-                                                }}
                                             />
                                         </div>
                                     </div>
