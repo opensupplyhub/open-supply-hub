@@ -45,8 +45,6 @@ class WageIndicatorProviderTest(TestCase):
                 active=True
             )
 
-        # Clear any existing contributors for test isolation.
-        self.partner_field.contributor_set.clear()
         # Assign contributor to partner field.
         self.contributor.partner_fields.add(self.partner_field)
 
@@ -110,14 +108,13 @@ class WageIndicatorProviderTest(TestCase):
 
         self.provider = WageIndicatorProvider()
 
-    def tearDown(self):
-        '''Clean up test data, but preserve system partner field.'''
-        # Remove contributor assignments.
+    def tearDown(self):        # Remove contributor assignments.
         self.partner_field.contributor_set.clear()
         # Clean up test wage data.
         WageIndicatorCountryData.objects.filter(
             country_code=self.test_country_code
         ).delete()
+        self.partner_field.delete()
 
     def test_get_field_name(self):
         '''Test _get_field_name returns correct field name.'''
