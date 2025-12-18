@@ -504,7 +504,6 @@ function ClaimedFacilitiesDetails({
                         />
                         <InputSection
                             label="Parent Company / Supplier Group"
-                            // aside={parentCompanyAside}
                             value={
                                 get(data, 'facility_parent_company.name', '') ||
                                 data.parent_company_name ||
