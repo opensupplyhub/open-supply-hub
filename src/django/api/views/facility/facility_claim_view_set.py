@@ -42,8 +42,7 @@ from ...serializers import (
     ApprovedFacilityClaimSerializer,
     FacilityClaimSerializer,
     FacilityClaimDetailsSerializer,
-    FacilityClaimListQueryParamsSerializer,
-    FacilityUpdateClaimEmissionsSerializer,
+    FacilityClaimListQueryParamsSerializer
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
@@ -346,37 +345,24 @@ class FacilityClaimViewSet(ModelViewSet):
                 claim.facility_location = None
 
             parent_company_data = request.data.get('facility_parent_company')
-            parent_company_name = request.data.get('parent_company_name')
 
-            if isinstance(parent_company_data, str):
-                parent_company_data = {
-                    'id': None,
-                    'name': parent_company_data
-                }
-
-            if parent_company_data:
-                parent_company_name = (
-                    parent_company_data.get('name') or parent_company_name
-                )
-
-                parent_company_id = parent_company_data.get('id')
-
+            if not parent_company_data:
+                parent_company = None
+                parent_company_name = None
+            elif 'id' not in parent_company_data:
+                parent_company = None
+                parent_company_name = None
+            else:
                 try:
                     parent_company = (
-                        Contributor.objects.get(pk=parent_company_id)
-                        if parent_company_id
-                        else None
+                        Contributor
+                        .objects
+                        .get(pk=parent_company_data['id'])
                     )
-                    parent_company_name = (
-                        parent_company.name
-                        if parent_company
-                        else parent_company_name
-                    )
-                except (ValueError, TypeError, Contributor.DoesNotExist):
+                    parent_company_name = parent_company.name
+                except ValueError:
                     parent_company = None
-            else:
-                parent_company = None
-                parent_company_name = parent_company_name or None
+                    parent_company_name = parent_company_data['name']
 
             claim.parent_company = parent_company
             claim.parent_company_name = parent_company_name
@@ -430,36 +416,6 @@ class FacilityClaimViewSet(ModelViewSet):
                     setattr(claim, field_name, data)
                 else:
                     setattr(claim, field_name, None)
-
-            emissions_serializer = FacilityUpdateClaimEmissionsSerializer(
-                data=request.data,
-                partial=True,
-                context={"facility": claim.facility},
-            )
-            emissions_serializer.is_valid(raise_exception=True)
-            emissions_data = emissions_serializer.validated_data
-
-            claim.opening_date = emissions_data.get('opening_date')
-            claim.closing_date = emissions_data.get('closing_date')
-            claim.estimated_annual_throughput = emissions_data.get(
-                'estimated_annual_throughput'
-            )
-
-            energy_field_names = (
-                'energy_coal',
-                'energy_natural_gas',
-                'energy_diesel',
-                'energy_kerosene',
-                'energy_biomass',
-                'energy_charcoal',
-                'energy_animal_waste',
-                'energy_electricity',
-                'energy_other',
-            )
-
-            for field_name in energy_field_names:
-                claim_value = emissions_data.get(field_name)
-                setattr(claim, field_name, claim_value)
 
             field_names = (
                 'facility_description',

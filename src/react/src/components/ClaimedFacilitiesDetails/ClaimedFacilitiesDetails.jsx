@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
+import Checkbox from '@material-ui/core/Checkbox';
 import Grid from '@material-ui/core/Grid';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
@@ -67,6 +68,15 @@ import {
     updateClaimedEnergyAnimalWaste,
     updateClaimedEnergyElectricity,
     updateClaimedEnergyOther,
+    updateClaimedEnergyCoalEnabled,
+    updateClaimedEnergyNaturalGasEnabled,
+    updateClaimedEnergyDieselEnabled,
+    updateClaimedEnergyKeroseneEnabled,
+    updateClaimedEnergyBiomassEnabled,
+    updateClaimedEnergyCharcoalEnabled,
+    updateClaimedEnergyAnimalWasteEnabled,
+    updateClaimedEnergyElectricityEnabled,
+    updateClaimedEnergyOtherEnabled,
     submitClaimedFacilityDetailsUpdate,
 } from '../../actions/claimedFacilityDetails';
 
@@ -167,6 +177,15 @@ function ClaimedFacilitiesDetails({
     updateEnergyAnimalWaste,
     updateEnergyElectricity,
     updateEnergyOther,
+    updateEnergyCoalEnabled,
+    updateEnergyNaturalGasEnabled,
+    updateEnergyDieselEnabled,
+    updateEnergyKeroseneEnabled,
+    updateEnergyBiomassEnabled,
+    updateEnergyCharcoalEnabled,
+    updateEnergyAnimalWasteEnabled,
+    updateEnergyElectricityEnabled,
+    updateEnergyOtherEnabled,
     userHasSignedIn,
     classes,
 }) {
@@ -296,17 +315,33 @@ function ClaimedFacilitiesDetails({
             energyAnimalWaste: facilityData.energy_animal_waste,
             energyElectricity: facilityData.energy_electricity,
             energyOther: facilityData.energy_other,
-            energyCoalEnabled: !isEmpty(facilityData.energy_coal),
-            energyNaturalGasEnabled: !isEmpty(facilityData.energy_natural_gas),
-            energyDieselEnabled: !isEmpty(facilityData.energy_diesel),
-            energyKeroseneEnabled: !isEmpty(facilityData.energy_kerosene),
-            energyBiomassEnabled: !isEmpty(facilityData.energy_biomass),
-            energyCharcoalEnabled: !isEmpty(facilityData.energy_charcoal),
-            energyAnimalWasteEnabled: !isEmpty(
-                facilityData.energy_animal_waste,
-            ),
-            energyElectricityEnabled: !isEmpty(facilityData.energy_electricity),
-            energyOtherEnabled: !isEmpty(facilityData.energy_other),
+            energyCoalEnabled:
+                facilityData.energy_coal_enabled ??
+                !isEmpty(facilityData.energy_coal),
+            energyNaturalGasEnabled:
+                facilityData.energy_natural_gas_enabled ??
+                !isEmpty(facilityData.energy_natural_gas),
+            energyDieselEnabled:
+                facilityData.energy_diesel_enabled ??
+                !isEmpty(facilityData.energy_diesel),
+            energyKeroseneEnabled:
+                facilityData.energy_kerosene_enabled ??
+                !isEmpty(facilityData.energy_kerosene),
+            energyBiomassEnabled:
+                facilityData.energy_biomass_enabled ??
+                !isEmpty(facilityData.energy_biomass),
+            energyCharcoalEnabled:
+                facilityData.energy_charcoal_enabled ??
+                !isEmpty(facilityData.energy_charcoal),
+            energyAnimalWasteEnabled:
+                facilityData.energy_animal_waste_enabled ??
+                !isEmpty(facilityData.energy_animal_waste),
+            energyElectricityEnabled:
+                facilityData.energy_electricity_enabled ??
+                !isEmpty(facilityData.energy_electricity),
+            energyOtherEnabled:
+                facilityData.energy_other_enabled ??
+                !isEmpty(facilityData.energy_other),
         }),
         [facilityData],
     );
@@ -383,6 +418,30 @@ function ClaimedFacilitiesDetails({
         energyAnimalWaste: updateEnergyAnimalWaste,
         energyElectricity: updateEnergyElectricity,
         energyOther: updateEnergyOther,
+    };
+
+    const energyEnabledKeyMap = {
+        energyCoal: 'energy_coal_enabled',
+        energyNaturalGas: 'energy_natural_gas_enabled',
+        energyDiesel: 'energy_diesel_enabled',
+        energyKerosene: 'energy_kerosene_enabled',
+        energyBiomass: 'energy_biomass_enabled',
+        energyCharcoal: 'energy_charcoal_enabled',
+        energyAnimalWaste: 'energy_animal_waste_enabled',
+        energyElectricity: 'energy_electricity_enabled',
+        energyOther: 'energy_other_enabled',
+    };
+
+    const energyEnabledUpdaterMap = {
+        energyCoal: updateEnergyCoalEnabled,
+        energyNaturalGas: updateEnergyNaturalGasEnabled,
+        energyDiesel: updateEnergyDieselEnabled,
+        energyKerosene: updateEnergyKeroseneEnabled,
+        energyBiomass: updateEnergyBiomassEnabled,
+        energyCharcoal: updateEnergyCharcoalEnabled,
+        energyAnimalWaste: updateEnergyAnimalWasteEnabled,
+        energyElectricity: updateEnergyElectricityEnabled,
+        energyOther: updateEnergyOtherEnabled,
     };
 
     return (
@@ -665,23 +724,73 @@ function ClaimedFacilitiesDetails({
                         {energySourcesData.map(sourceData => {
                             const { valueFieldName, source } = sourceData;
                             const dataKey = energyFieldNameMap[valueFieldName];
+                            const enabledKey =
+                                energyEnabledKeyMap[valueFieldName];
                             const updater = energyUpdaterMap[valueFieldName];
+                            const enabledUpdater =
+                                energyEnabledUpdaterMap[valueFieldName];
+                            const enabled =
+                                data[enabledKey] ?? !isEmpty(data[dataKey]);
                             const errorText = getEmissionError(valueFieldName);
                             return (
                                 <div key={valueFieldName}>
-                                    <InputSection
-                                        label={`${source.label} (${source.unit})`}
-                                        value={data[dataKey] || ''}
-                                        onChange={updater}
-                                        disabled={updating}
-                                        hasValidationErrorFn={() =>
-                                            Boolean(errorText)
-                                        }
-                                        FormHelperTextProps={{
-                                            className: classes.helperText,
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            flexWrap: 'wrap',
                                         }}
-                                    />
-                                    {errorText && (
+                                    >
+                                        <div
+                                            className={
+                                                classes.switchSectionStyles
+                                            }
+                                            style={{
+                                                alignItems: 'center',
+                                                minWidth: 220,
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            <Checkbox
+                                                color="primary"
+                                                onChange={event => {
+                                                    const {
+                                                        checked,
+                                                    } = event.target;
+                                                    enabledUpdater(event);
+                                                    if (!checked) {
+                                                        updater({
+                                                            target: {
+                                                                value: '',
+                                                            },
+                                                        });
+                                                    }
+                                                }}
+                                                checked={enabled}
+                                            />
+                                            <Typography variant="body1">
+                                                {`${source.label} (${source.unit})`}
+                                            </Typography>
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 260 }}>
+                                            <InputSection
+                                                label={null}
+                                                value={data[dataKey] || ''}
+                                                onChange={updater}
+                                                disabled={updating || !enabled}
+                                                hasValidationErrorFn={() =>
+                                                    enabled &&
+                                                    Boolean(errorText)
+                                                }
+                                                FormHelperTextProps={{
+                                                    className:
+                                                        classes.helperText,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    {enabled && errorText && (
                                         <InputErrorText text={errorText} />
                                     )}
                                 </div>
@@ -860,6 +969,15 @@ ClaimedFacilitiesDetails.propTypes = {
     updateEnergyAnimalWaste: func.isRequired,
     updateEnergyElectricity: func.isRequired,
     updateEnergyOther: func.isRequired,
+    updateEnergyCoalEnabled: func.isRequired,
+    updateEnergyNaturalGasEnabled: func.isRequired,
+    updateEnergyDieselEnabled: func.isRequired,
+    updateEnergyKeroseneEnabled: func.isRequired,
+    updateEnergyBiomassEnabled: func.isRequired,
+    updateEnergyCharcoalEnabled: func.isRequired,
+    updateEnergyAnimalWasteEnabled: func.isRequired,
+    updateEnergyElectricityEnabled: func.isRequired,
+    updateEnergyOtherEnabled: func.isRequired,
     userHasSignedIn: bool.isRequired,
     classes: object.isRequired,
 };
@@ -994,6 +1112,33 @@ function mapDispatchToProps(
             updateClaimedEnergyElectricity,
         ),
         updateEnergyOther: makeDispatchValueFn(updateClaimedEnergyOther),
+        updateEnergyCoalEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyCoalEnabled,
+        ),
+        updateEnergyNaturalGasEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyNaturalGasEnabled,
+        ),
+        updateEnergyDieselEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyDieselEnabled,
+        ),
+        updateEnergyKeroseneEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyKeroseneEnabled,
+        ),
+        updateEnergyBiomassEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyBiomassEnabled,
+        ),
+        updateEnergyCharcoalEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyCharcoalEnabled,
+        ),
+        updateEnergyAnimalWasteEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyAnimalWasteEnabled,
+        ),
+        updateEnergyElectricityEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyElectricityEnabled,
+        ),
+        updateEnergyOtherEnabled: makeDispatchCheckedFn(
+            updateClaimedEnergyOtherEnabled,
+        ),
         submitUpdate: () =>
             dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
     };

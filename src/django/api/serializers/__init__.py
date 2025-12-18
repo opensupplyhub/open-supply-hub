@@ -10,10 +10,7 @@ from .facility.facility_claim_details_serializer import FacilityClaimDetailsSeri
 from .facility.facility_claim_list_query_params_serializer import FacilityClaimListQueryParamsSerializer
 from .facility.facility_claim_review_note_serializer import FacilityClaimReviewNoteSerializer
 from .facility.facility_claim_serializer import FacilityClaimSerializer
-from .facility.facility_create_claim_serializer import (
-    FacilityCreateClaimSerializer,
-    FacilityUpdateClaimEmissionsSerializer,
-)
+from .facility.facility_create_claim_serializer import FacilityCreateClaimSerializer
 from .facility.facility_create_query_params_serializer import FacilityCreateQueryParamsSerializer
 from .facility.facility_list_item_serializer import FacilityListItemSerializer
 from .facility.facility_list_items_query_params_serializer import FacilityListItemsQueryParamsSerializer

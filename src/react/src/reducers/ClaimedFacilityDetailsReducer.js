@@ -50,6 +50,15 @@ import {
     updateClaimedEnergyAnimalWaste,
     updateClaimedEnergyElectricity,
     updateClaimedEnergyOther,
+    updateClaimedEnergyCoalEnabled,
+    updateClaimedEnergyNaturalGasEnabled,
+    updateClaimedEnergyDieselEnabled,
+    updateClaimedEnergyKeroseneEnabled,
+    updateClaimedEnergyBiomassEnabled,
+    updateClaimedEnergyCharcoalEnabled,
+    updateClaimedEnergyAnimalWasteEnabled,
+    updateClaimedEnergyElectricityEnabled,
+    updateClaimedEnergyOtherEnabled,
 } from '../actions/claimedFacilityDetails';
 
 const initialState = Object.freeze({
@@ -89,12 +98,43 @@ const CLAIMED_EMISSIONS_FIELDS = [
     [updateClaimedEnergyOther, 'energy_other'],
 ];
 
+const CLAIMED_EMISSIONS_ENABLED_FIELDS = [
+    [updateClaimedEnergyCoalEnabled, 'energy_coal_enabled'],
+    [updateClaimedEnergyNaturalGasEnabled, 'energy_natural_gas_enabled'],
+    [updateClaimedEnergyDieselEnabled, 'energy_diesel_enabled'],
+    [updateClaimedEnergyKeroseneEnabled, 'energy_kerosene_enabled'],
+    [updateClaimedEnergyBiomassEnabled, 'energy_biomass_enabled'],
+    [updateClaimedEnergyCharcoalEnabled, 'energy_charcoal_enabled'],
+    [updateClaimedEnergyAnimalWasteEnabled, 'energy_animal_waste_enabled'],
+    [updateClaimedEnergyElectricityEnabled, 'energy_electricity_enabled'],
+    [updateClaimedEnergyOtherEnabled, 'energy_other_enabled'],
+];
+
 const claimedEmissionsReducers = Object.fromEntries(
     CLAIMED_EMISSIONS_FIELDS.map(([action, key]) => [
         action,
         setDataField(key),
     ]),
 );
+
+const claimedEmissionsEnabledReducers = Object.fromEntries(
+    CLAIMED_EMISSIONS_ENABLED_FIELDS.map(([action, key]) => [
+        action,
+        setDataField(key),
+    ]),
+);
+
+const deriveEnergyEnabledFlags = data => ({
+    energy_coal_enabled: Boolean(data.energy_coal),
+    energy_natural_gas_enabled: Boolean(data.energy_natural_gas),
+    energy_diesel_enabled: Boolean(data.energy_diesel),
+    energy_kerosene_enabled: Boolean(data.energy_kerosene),
+    energy_biomass_enabled: Boolean(data.energy_biomass),
+    energy_charcoal_enabled: Boolean(data.energy_charcoal),
+    energy_animal_waste_enabled: Boolean(data.energy_animal_waste),
+    energy_electricity_enabled: Boolean(data.energy_electricity),
+    energy_other_enabled: Boolean(data.energy_other),
+});
 
 export default createReducer(
     {
@@ -121,6 +161,7 @@ export default createReducer(
                 data: {
                     $set: {
                         ...data,
+                        ...deriveEnergyEnabledFlags(data),
                         initial_facility_address: data.facility_address,
                     },
                 },
@@ -147,6 +188,7 @@ export default createReducer(
                 data: {
                     $set: {
                         ...data,
+                        ...deriveEnergyEnabledFlags(data),
                         initial_facility_address: data.facility_address,
                     },
                 },
@@ -407,6 +449,7 @@ export default createReducer(
                 },
             }),
         ...claimedEmissionsReducers,
+        ...claimedEmissionsEnabledReducers,
         [clearClaimedFacilityDetails]: () => initialState,
     },
     initialState,
