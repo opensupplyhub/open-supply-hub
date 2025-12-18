@@ -11,11 +11,10 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
     '''
 
     FIELD_NAME = 'mit_living_wage'
-    SYSTEM_CONTRIBUTOR_ID = 6  # TODO: Set to actual system contributor ID.
 
-    def _get_default_contributor_id(self) -> int:
-        '''Return the default contributor ID for mit living wage data.'''
-        return self.SYSTEM_CONTRIBUTOR_ID
+    def _get_field_name(self) -> str:
+        '''Return the partner field name for this provider.'''
+        return self.FIELD_NAME
 
     def _fetch_raw_data(self, facility) -> Optional[USCountyTigerline]:
         '''
