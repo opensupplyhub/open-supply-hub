@@ -45,6 +45,8 @@ class WageIndicatorProviderTest(TestCase):
                 active=True
             )
 
+        # Clear any existing contributors for test isolation.
+        self.partner_field.contributor_set.clear()
         # Assign contributor to partner field.
         self.contributor.partner_fields.add(self.partner_field)
 

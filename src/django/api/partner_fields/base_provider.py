@@ -76,7 +76,11 @@ class SystemPartnerFieldProvider(ABC):
 
         # By default, it is assumed that there is only one contributor
         # assigned to the system partner field.
-        contributor = partner_field.contributor_set.first()
+        # Query contributors directly from the database with explicit ordering
+        # to ensure consistent results.
+        contributor = Contributor.objects.filter(
+            partner_fields=partner_field
+        ).order_by('id').first()
         if contributor:
             return contributor.id
 
