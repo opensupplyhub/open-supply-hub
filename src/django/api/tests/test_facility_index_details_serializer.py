@@ -910,6 +910,9 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertEqual(len(wage_indicator_data), 1)
 
         wage_indicator_item = wage_indicator_data[0]
+        print("contributor one: ", Contributor.objects.get(id=self.contrib_one.id))
+        print("wage indicator contributor: ", Contributor.objects.get(id=wage_indicator_item['contributor_id']))
+
         self.assertIn('contributor_id', wage_indicator_item)
         self.assertEqual(
             wage_indicator_item['contributor_id'],
@@ -936,11 +939,11 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         # Get or create wage_indicator partner field without assigning
         # contributor.
         try:
-            wage_indicator_field = PartnerField.objects \
+            PartnerField.objects \
                 .get_all_including_inactive() \
                 .get(name='wage_indicator')
         except PartnerField.DoesNotExist:
-            wage_indicator_field = PartnerField.objects.create(
+            PartnerField.objects.create(
                 name='wage_indicator',
                 type=PartnerField.OBJECT,
                 label='Wage Indicator',

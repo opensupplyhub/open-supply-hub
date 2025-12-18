@@ -108,7 +108,8 @@ class WageIndicatorProviderTest(TestCase):
 
         self.provider = WageIndicatorProvider()
 
-    def tearDown(self):        # Remove contributor assignments.
+    def tearDown(self):
+        # Remove contributor assignments.
         self.partner_field.contributor_set.clear()
         # Clean up test wage data.
         WageIndicatorCountryData.objects.filter(
