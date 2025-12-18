@@ -890,6 +890,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         # to ensure test isolation from previous tests.
         wage_indicator_field.contributor_set.clear()
         self.contrib_one.partner_fields.add(wage_indicator_field)
+        wage_indicator_field.refresh_from_db()
 
         # Get or create wage indicator data for US.
         WageIndicatorCountryData.objects.get_or_create(
@@ -913,9 +914,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertEqual(len(wage_indicator_data), 1)
 
         wage_indicator_item = wage_indicator_data[0]
-        print("contributor one: ", Contributor.objects.get(id=self.contrib_one.id))
-        print("wage indicator contributor, only id: ", wage_indicator_item['contributor_id'])
-
         self.assertIn('contributor_id', wage_indicator_item)
         self.assertEqual(
             wage_indicator_item['contributor_id'],
@@ -956,6 +954,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
 
         # Clear all contributors to ensure test isolation.
         wage_indicator_field.contributor_set.clear()
+        wage_indicator_field.refresh_from_db()
 
         # Get or create wage indicator data.
         WageIndicatorCountryData.objects.get_or_create(
@@ -992,6 +991,7 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         # to ensure test isolation from previous tests.
         wage_indicator_field.contributor_set.clear()
         self.contrib_one.partner_fields.add(wage_indicator_field)
+        wage_indicator_field.refresh_from_db()
 
         # Delete any wage indicator data for US to test empty state.
         WageIndicatorCountryData.objects.filter(country_code='US').delete()

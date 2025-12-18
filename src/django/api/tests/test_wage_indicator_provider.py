@@ -29,7 +29,6 @@ class WageIndicatorProviderTest(TestCase):
             name='Test Contributor',
             contrib_type=Contributor.CONTRIB_TYPE_CHOICES[0][0],
         )
-        print("contributor id from the WageIndicatorProviderTest: ", self.contributor.id)
 
         # Get or create wage_indicator partner field.
         # Use get_all_including_inactive to access existing system field.
@@ -50,6 +49,7 @@ class WageIndicatorProviderTest(TestCase):
         # to ensure test isolation from previous tests.
         self.partner_field.contributor_set.clear()
         self.contributor.partner_fields.add(self.partner_field)
+        self.partner_field.refresh_from_db()
 
         # Create test production location with valid country code.
         self.test_country_code = 'GB'  # Use GB for testing.
