@@ -20,7 +20,12 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
         '''
         Fetch geoid from database by facility location (lat/lng).
         Returns geoid string if found, None otherwise.
+        Only processes facilities in US, Puerto Rico, or US Virgin Islands.
         '''
+        # MIT Living Wage data is only available for US territories
+        if facility.country_code not in ['US', 'PR', 'VI']:
+            return None
+
         if not facility.location:
             return None
 

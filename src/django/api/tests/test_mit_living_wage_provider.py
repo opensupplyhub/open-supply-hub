@@ -48,11 +48,15 @@ class MITLivingWageProviderTest(TestCase):
         self.contributor.partner_fields.add(self.partner_field)
         self.partner_field.refresh_from_db()
 
+        # Delete all existing county data to ensure test isolation
+        USCountyTigerline.objects.all().delete()
+
         # Create test county with geometry.
-        # Use a test point and create a buffer around it to ensure it's contained.
-        # Test point: approximately Los Angeles, CA (lat: 34.0522, lon: -118.2437)
-        test_lat = 34.0522
-        test_lon = -118.2437
+        # Use a test point in a remote location (middle of Pacific Ocean)
+        # to avoid conflicts with real county data
+        # Test point: lat: 0.0, lon: -150.0 (middle of Pacific)
+        test_lat = 0.0
+        test_lon = -150.0
         test_location = Point(test_lon, test_lat, srid=4326)
 
         # Transform point to EPSG:5070 and create a buffer around it
@@ -61,9 +65,6 @@ class MITLivingWageProviderTest(TestCase):
         # Buffer returns a Polygon, convert to MultiPolygon
         buffered_polygon = point_5070.buffer(50000)
         multipolygon = MultiPolygon(buffered_polygon, srid=5070)
-
-        # Clean up any existing test county data.
-        USCountyTigerline.objects.filter(geoid='99999').delete()
 
         # Create test county data.
         self.county_data = USCountyTigerline.objects.create(
@@ -126,6 +127,8 @@ class MITLivingWageProviderTest(TestCase):
         self.partner_field.contributor_set.clear()
         # Clean up test county data.
         USCountyTigerline.objects.filter(geoid='99999').delete()
+        # Note: We don't restore real county data as it would require
+        # re-running the migration, which is expensive for tests
 
     def test_get_field_name(self):
         '''Test _get_field_name returns correct field name.'''
@@ -141,19 +144,85 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_raw_data_with_no_location(self):
         '''Test _fetch_raw_data returns None for facility without location.'''
-        self.facility.location = None
-        self.facility.save()
-        raw_data = self.provider._fetch_raw_data(self.facility)
+        # Create a facility with all required fields
+        facility_list = FacilityList.objects.create(
+            header='header',
+            file_name='test_no_location',
+            name='Test List No Location'
+        )
+        source = Source.objects.create(
+            facility_list=facility_list,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+        list_item = FacilityListItem.objects.create(
+            name='Test Facility No Location',
+            address='123 Test St',
+            country_code='US',
+            sector=['Apparel'],
+            row_index=0,
+            geocoded_point=Point(0, 0, srid=4326),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source,
+        )
+        facility_no_location = Facility.objects.create(
+            name='Test Facility No Location',
+            address='123 Test St',
+            country_code='US',
+            location=Point(0, 0, srid=4326),  # Required for creation
+            created_from=list_item,
+        )
+        # Manually set location to None in memory to test the method
+        # (without saving to database, which would violate constraints)
+        facility_no_location.location = None
+        raw_data = self.provider._fetch_raw_data(facility_no_location)
         self.assertIsNone(raw_data)
 
     def test_fetch_raw_data_with_location_outside_county(self):
         '''Test _fetch_raw_data returns None for location outside any county.'''
-        # Use a location far from any county (e.g., middle of ocean)
-        ocean_location = Point(-150.0, 20.0, srid=4326)
+        # Use a location far from our test county (e.g., different part of ocean)
+        # Since we deleted all counties, this should return None
+        ocean_location = Point(-100.0, 30.0, srid=4326)
         self.facility.location = ocean_location
         self.facility.save()
         raw_data = self.provider._fetch_raw_data(self.facility)
         self.assertIsNone(raw_data)
+
+    def test_fetch_raw_data_with_invalid_country_code(self):
+        '''Test _fetch_raw_data returns None for non-US territories.'''
+        # Test with a non-US country code
+        self.facility.country_code = 'GB'
+        self.facility.save()
+        raw_data = self.provider._fetch_raw_data(self.facility)
+        self.assertIsNone(raw_data)
+
+    def test_fetch_raw_data_with_valid_us_territories(self):
+        '''Test _fetch_raw_data works for US, PR, and VI.'''
+        # Test with US
+        self.facility.country_code = 'US'
+        self.facility.save()
+        raw_data = self.provider._fetch_raw_data(self.facility)
+        self.assertIsNotNone(raw_data)
+        self.assertEqual(raw_data.geoid, '99999')
+
+        # Test with Puerto Rico
+        self.facility.country_code = 'PR'
+        self.facility.save()
+        raw_data = self.provider._fetch_raw_data(self.facility)
+        # Should attempt lookup (may return None if no county found, but shouldn't
+        # fail due to country code check)
+        self.assertIsNotNone(raw_data)
+        self.assertEqual(raw_data.geoid, '99999')
+
+        # Test with US Virgin Islands
+        self.facility.country_code = 'VI'
+        self.facility.save()
+        raw_data = self.provider._fetch_raw_data(self.facility)
+        # Should attempt lookup
+        self.assertIsNotNone(raw_data)
+        self.assertEqual(raw_data.geoid, '99999')
 
     def test_format_data(self):
         '''Test _format_data formats MIT living wage data correctly.'''
@@ -197,8 +266,10 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_data_no_county_data(self):
         '''Test fetch_data returns None when no county data exists.'''
-        # Delete the test county
+        # Delete the test county (all counties were deleted in setUp)
         self.county_data.delete()
+        # Verify no counties exist
+        self.assertEqual(USCountyTigerline.objects.count(), 0)
         data = self.provider.fetch_data(self.facility)
         self.assertIsNone(data)
 
