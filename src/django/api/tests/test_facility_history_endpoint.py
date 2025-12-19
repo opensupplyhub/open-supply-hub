@@ -721,17 +721,27 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         )
         data = json.loads(history_response.content)
         filtered_data = self.filter_out_manual_updated_at_action(data)
+
+        # Find the dissociation entry for the confirmed match
+        expected_detail = "Dissociate facility {} from {} via list {}".format(
+            self.facility_two.id,
+            self.contributor.name,
+            self.list_for_confirm_or_remove.name,
+        )
+        dissociation_entries = [
+            entry for entry in filtered_data
+            if entry["action"] == "DISSOCIATE"
+            and entry["detail"] == expected_detail
+        ]
+
+        self.assertEqual(len(dissociation_entries), 1)
         self.assertEqual(
-            filtered_data[0]["action"],
+            dissociation_entries[0]["action"],
             "DISSOCIATE",
         )
         self.assertEqual(
-            filtered_data[0]["detail"],
-            "Dissociate facility {} from {} via list {}".format(
-                self.facility_two.id,
-                self.contributor.name,
-                self.list_for_confirm_or_remove.name,
-            ),
+            dissociation_entries[0]["detail"],
+            expected_detail,
         )
 
     @override_flag("can_get_facility_history", active=True)

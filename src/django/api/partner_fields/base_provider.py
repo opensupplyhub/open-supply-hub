@@ -4,6 +4,7 @@ import logging
 
 from api.models import Contributor
 from api.models.partner_field import PartnerField
+from api.models.facility.facility import Facility
 
 logger = logging.getLogger(__name__)
 
@@ -16,12 +17,14 @@ class SystemPartnerFieldProvider(ABC):
     system partner field type (e.g., wage_indicator, etc.).
     '''
 
-    def fetch_data(self, facility) -> Optional[Dict[str, Any]]:
+    def fetch_data(
+        self, production_location: Facility
+    ) -> Optional[Dict[str, Any]]:
         '''
-        Fetch and format data for the given facility.
+        Fetch and format data for the given production location.
         Returns None if no data or contributor not found.
         '''
-        raw_data = self._fetch_raw_data(facility)
+        raw_data = self._fetch_raw_data(production_location)
         if raw_data is None:
             return None
 
@@ -43,7 +46,7 @@ class SystemPartnerFieldProvider(ABC):
         pass
 
     @abstractmethod
-    def _fetch_raw_data(self, facility) -> Optional[Any]:
+    def _fetch_raw_data(self, production_location: Facility) -> Optional[Any]:
         '''Fetch raw data from the data source.'''
         pass
 
@@ -76,7 +79,11 @@ class SystemPartnerFieldProvider(ABC):
 
         # By default, it is assumed that there is only one contributor
         # assigned to the system partner field.
-        contributor = partner_field.contributor_set.first()
+        # Query contributors directly from the database with explicit ordering
+        # to ensure consistent results.
+        contributor = Contributor.objects.filter(
+            partner_fields=partner_field
+        ).order_by('id').first()
         if contributor:
             return contributor.id
 

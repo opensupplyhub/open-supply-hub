@@ -9,14 +9,29 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: January 10, 2026
 
+### Database changes
+
+#### Migrations
+* 0190_add_active_system_field_to_partnerfield.py - This migration adds two boolean fields to the `PartnerField` model: `active` (default True) to control whether a partner field is available for contributions and appears in listings, and `system_field` (default False) to mark system-managed fields that cannot be deleted and have restricted editing permissions. Along with the migration, a custom `PartnerFieldManager` class is introduced, which automatically filters queries to return only active partner fields by default, with an `all_including_inactive()` method to access all fields when needed.
+* 0191_create_wage_indicator_partner_field.py - This data migration creates the `wage_indicator` system partner field with type `object` and a comprehensive JSON schema defining six properties for wage indicator reference links. The field is marked as `system_field=True` and `active=True`, and includes source attribution.
+* 0192_create_wage_indicator_models.py - This migration creates two new models: `WageIndicatorCountryData` to store wage indicator URLs (living wage and minimum wage links in national and English languages) for each country indexed by ISO 3166-1 alpha-2 country code, and `WageIndicatorLinkTextConfig` to store customizable display text for each link type. The models support system-generated partner field data that will be automatically displayed on production location profiles based on the location's country.
+* 0193_populate_wage_indicator_data.py - This data migration populates the `WageIndicatorCountryData` table with wage indicator reference links for 171 countries. Each country entry includes URLs for living wage benchmarks and minimum wage information in both national languages and English where available. The migration also populates the `WageIndicatorLinkTextConfig` table with default display text for all three link types.
+
+#### Schema changes
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Added wage indicator system partner field infrastructure: The `PartnerField` model has been updated with two new boolean fields (`active` and `system_field`) to support system-managed partner fields. Two new models were introduced: `WageIndicatorCountryData` (stores wage indicator URLs for 171 countries) and `WageIndicatorLinkTextConfig` (stores customizable display text for wage indicator links). A new `wage_indicator` system partner field was created to display country-specific living wage and minimum wage reference links on production location profiles. The implementation includes a custom manager for filtering active partner fields, a provider registry pattern for system-generated fields, and admin panel protections to prevent deletion or unauthorized modification of system fields. 
+
 ### Code/API changes
 * [Follow-up][OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Removed the `reindex_locations_with_environmental_data` Django management command from the parent `post_deployment` command so it no longer runs, as it was only needed for the `2.17.0` release.
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support system-generated partner fields. The `partner_fields` object in the response now includes the `wage_indicator` field when a contributor is assigned to it, automatically providing country-specific wage indicator reference links (living wage and minimum wage URLs in both national language and English) based on the production location's country code. System partner fields are populated dynamically through a provider registry pattern and follow the same structure as user-contributed partner fields, appearing alongside them in the API response.
 
 ### Architecture/Environment changes
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
 
 ### Bugfix
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
+
+### What's new
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Introduced automatic wage indicator reference links on production location profiles for 171 countries. Each production location now displays country-specific links to authoritative living wage and minimum wage information and its regional partner sites. The wage indicator data is presented in both the national language and English, providing users with easy access to benchmarking information for fair wage assessments. The links appear automatically based on the production location's country and are managed as a system-generated partner field that cannot be manually edited or deleted, ensuring data consistency and reliability across the platform. 
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

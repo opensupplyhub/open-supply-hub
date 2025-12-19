@@ -13,6 +13,7 @@ from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
 from ...models.facility.facility_claim import FacilityClaim
 from ...models.partner_field import PartnerField
+from api.models.facility.facility import Facility
 from ...helpers.helpers import parse_raw_data, get_csv_values, prefix_a_an
 from ..utils import (
     is_embed_mode_active,
@@ -447,9 +448,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return grouped_data
 
     @staticmethod
-    def __fetch_system_partner_fields(facility) -> list:
+    def __fetch_system_partner_fields(production_location: Facility) -> list:
         '''
-        Fetch all system-generated partner fields for the facility.
+        Fetch all system-generated partner fields for the production location.
         Returns list of formatted field data matching extended_fields
         structure.
         '''
@@ -459,7 +460,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         providers = system_partner_field_registry.providers
 
         for provider in providers:
-            field_data = provider.fetch_data(facility)
+            field_data = provider.fetch_data(production_location)
             if field_data is not None:
                 system_fields.append(field_data)
 
