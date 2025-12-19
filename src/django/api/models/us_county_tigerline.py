@@ -29,4 +29,3 @@ class USCountyTigerline(Model):
 
     def __str__(self):
         return f'US County Tigerline: {self.name} ({self.geoid})'
-

@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.contrib.gis.geos import Point, MultiPolygon
-from django.core.cache import cache
 
 from api.models import (
     Contributor,
@@ -136,7 +135,7 @@ class MITLivingWageProviderTest(TestCase):
         self.assertEqual(field_name, 'mit_living_wage')
 
     def test_fetch_raw_data_with_valid_location(self):
-        '''Test _fetch_raw_data returns data for facility with valid location.'''
+        '''Test _fetch_raw_data returns data for valid location.'''
         raw_data = self.provider._fetch_raw_data(self.facility)
         self.assertIsNotNone(raw_data)
         self.assertEqual(raw_data.geoid, '99999')
@@ -181,8 +180,9 @@ class MITLivingWageProviderTest(TestCase):
         self.assertIsNone(raw_data)
 
     def test_fetch_raw_data_with_location_outside_county(self):
-        '''Test _fetch_raw_data returns None for location outside any county.'''
-        # Use a location far from our test county (e.g., different part of ocean)
+        '''Test _fetch_raw_data returns None for location outside county.'''
+        # Use a location far from our test county
+        # (e.g., different part of ocean)
         # Since we deleted all counties, this should return None
         ocean_location = Point(-100.0, 30.0, srid=4326)
         self.facility.location = ocean_location
@@ -211,8 +211,8 @@ class MITLivingWageProviderTest(TestCase):
         self.facility.country_code = 'PR'
         self.facility.save()
         raw_data = self.provider._fetch_raw_data(self.facility)
-        # Should attempt lookup (may return None if no county found, but shouldn't
-        # fail due to country code check)
+        # Should attempt lookup (may return None if no county found,
+        # but shouldn't fail due to country code check)
         self.assertIsNotNone(raw_data)
         self.assertEqual(raw_data.geoid, '99999')
 
@@ -290,4 +290,3 @@ class MITLivingWageProviderTest(TestCase):
         # Should still work because provider uses get_all_including_inactive.
         data = self.provider.fetch_data(self.facility)
         self.assertIsNotNone(data)
-

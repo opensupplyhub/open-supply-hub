@@ -40,7 +40,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
             county = USCountyTigerline.objects.filter(
                 geometry__contains=point_5070
             ).first()
-            
+
             if county:
                 return county
             return None
@@ -55,7 +55,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
         '''
         Format mit living wage data into standard partner field structure.
         '''
-        raw_values = { "value": raw_data.geoid }
+        raw_values = {"value": raw_data.geoid}
 
         return {
             'id': None,
@@ -68,6 +68,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
             'contributor': contributor_info,
             'is_verified': False,
             'value_count': 1,
-            'facility_list_item_id': 1111,  # Random ID for being not from a claim.
+            # Random ID for being not from a claim.
+            'facility_list_item_id': 1111,
             'should_display_association': True,
         }
