@@ -167,15 +167,28 @@ const renderComponent = () =>
             updateOpeningDate={jest.fn()}
             updateClosingDate={jest.fn()}
             updateEstimatedAnnualThroughput={jest.fn()}
-            updateEnergyCoal={jest.fn()}
-            updateEnergyNaturalGas={jest.fn()}
-            updateEnergyDiesel={jest.fn()}
-            updateEnergyKerosene={jest.fn()}
-            updateEnergyBiomass={jest.fn()}
-            updateEnergyCharcoal={jest.fn()}
-            updateEnergyAnimalWaste={jest.fn()}
-            updateEnergyElectricity={jest.fn()}
-            updateEnergyOther={jest.fn()}
+            energyValueUpdaters={{
+                energyCoal: jest.fn(),
+                energyNaturalGas: jest.fn(),
+                energyDiesel: jest.fn(),
+                energyKerosene: jest.fn(),
+                energyBiomass: jest.fn(),
+                energyCharcoal: jest.fn(),
+                energyAnimalWaste: jest.fn(),
+                energyElectricity: jest.fn(),
+                energyOther: jest.fn(),
+            }}
+            energyEnabledUpdaters={{
+                energyCoal: jest.fn(),
+                energyNaturalGas: jest.fn(),
+                energyDiesel: jest.fn(),
+                energyKerosene: jest.fn(),
+                energyBiomass: jest.fn(),
+                energyCharcoal: jest.fn(),
+                energyAnimalWaste: jest.fn(),
+                energyElectricity: jest.fn(),
+                energyOther: jest.fn(),
+            }}
             userHasSignedIn
             classes={{}}
         />,

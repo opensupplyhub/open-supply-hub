@@ -40,28 +40,8 @@ const {
 const EmissionsEstimateForm = ({
     // Redux state values.
     formData,
-    // Redux dispatch functions.
-    updateOpeningDate,
-    updateClosingDate,
-    updateEstimatedAnnualThroughput,
-    updateEnergyCoal,
-    updateEnergyNaturalGas,
-    updateEnergyDiesel,
-    updateEnergyKerosene,
-    updateEnergyBiomass,
-    updateEnergyCharcoal,
-    updateEnergyAnimalWaste,
-    updateEnergyElectricity,
-    updateEnergyOther,
-    updateEnergyCoalEnabled,
-    updateEnergyNaturalGasEnabled,
-    updateEnergyDieselEnabled,
-    updateEnergyKeroseneEnabled,
-    updateEnergyBiomassEnabled,
-    updateEnergyCharcoalEnabled,
-    updateEnergyAnimalWasteEnabled,
-    updateEnergyElectricityEnabled,
-    updateEnergyOtherEnabled,
+    onEmissionsValueChange,
+    onEmissionsEnabledChange,
     // Other props.
     onValidationChange,
     disabled,
@@ -97,118 +77,124 @@ const EmissionsEstimateForm = ({
     useFormFieldSync(
         freeEmissionsEstimateForm.values.openingDate,
         formData.openingDate,
-        updateOpeningDate,
+        value => onEmissionsValueChange(openingDateField.valueFieldName, value),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.closingDate,
         formData.closingDate,
-        updateClosingDate,
+        value => onEmissionsValueChange(closingDateField.valueFieldName, value),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.estimatedAnnualThroughput,
         formData.estimatedAnnualThroughput,
-        updateEstimatedAnnualThroughput,
+        value =>
+            onEmissionsValueChange(
+                estimatedAnnualThroughputField.valueFieldName,
+                value,
+            ),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyCoal,
         formData.energyCoal,
-        updateEnergyCoal,
+        value => onEmissionsValueChange('energyCoal', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyCoalEnabled,
         formData.energyCoalEnabled,
-        updateEnergyCoalEnabled,
+        enabled => onEmissionsEnabledChange('energyCoalEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyNaturalGas,
         formData.energyNaturalGas,
-        updateEnergyNaturalGas,
+        value => onEmissionsValueChange('energyNaturalGas', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyNaturalGasEnabled,
         formData.energyNaturalGasEnabled,
-        updateEnergyNaturalGasEnabled,
+        enabled => onEmissionsEnabledChange('energyNaturalGasEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyDiesel,
         formData.energyDiesel,
-        updateEnergyDiesel,
+        value => onEmissionsValueChange('energyDiesel', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyDieselEnabled,
         formData.energyDieselEnabled,
-        updateEnergyDieselEnabled,
+        enabled => onEmissionsEnabledChange('energyDieselEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyKerosene,
         formData.energyKerosene,
-        updateEnergyKerosene,
+        value => onEmissionsValueChange('energyKerosene', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyKeroseneEnabled,
         formData.energyKeroseneEnabled,
-        updateEnergyKeroseneEnabled,
+        enabled => onEmissionsEnabledChange('energyKeroseneEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyBiomass,
         formData.energyBiomass,
-        updateEnergyBiomass,
+        value => onEmissionsValueChange('energyBiomass', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyBiomassEnabled,
         formData.energyBiomassEnabled,
-        updateEnergyBiomassEnabled,
+        enabled => onEmissionsEnabledChange('energyBiomassEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyCharcoal,
         formData.energyCharcoal,
-        updateEnergyCharcoal,
+        value => onEmissionsValueChange('energyCharcoal', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyCharcoalEnabled,
         formData.energyCharcoalEnabled,
-        updateEnergyCharcoalEnabled,
+        enabled => onEmissionsEnabledChange('energyCharcoalEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyAnimalWaste,
         formData.energyAnimalWaste,
-        updateEnergyAnimalWaste,
+        value => onEmissionsValueChange('energyAnimalWaste', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyAnimalWasteEnabled,
         formData.energyAnimalWasteEnabled,
-        updateEnergyAnimalWasteEnabled,
+        enabled =>
+            onEmissionsEnabledChange('energyAnimalWasteEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyElectricity,
         formData.energyElectricity,
-        updateEnergyElectricity,
+        value => onEmissionsValueChange('energyElectricity', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyElectricityEnabled,
         formData.energyElectricityEnabled,
-        updateEnergyElectricityEnabled,
+        enabled =>
+            onEmissionsEnabledChange('energyElectricityEnabled', enabled),
     );
 
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyOther,
         formData.energyOther,
-        updateEnergyOther,
+        value => onEmissionsValueChange('energyOther', value),
     );
     useFormFieldSync(
         freeEmissionsEstimateForm.values.energyOtherEnabled,
         formData.energyOtherEnabled,
-        updateEnergyOtherEnabled,
+        enabled => onEmissionsEnabledChange('energyOtherEnabled', enabled),
     );
 
     const estimatedAnnualThroughputHasError =
@@ -385,28 +371,9 @@ EmissionsEstimateForm.defaultProps = {
 EmissionsEstimateForm.propTypes = {
     // Redux state.
     formData: object.isRequired,
-    // Redux dispatch functions.
-    updateOpeningDate: func.isRequired,
-    updateClosingDate: func.isRequired,
-    updateEstimatedAnnualThroughput: func.isRequired,
-    updateEnergyCoal: func.isRequired,
-    updateEnergyNaturalGas: func.isRequired,
-    updateEnergyDiesel: func.isRequired,
-    updateEnergyKerosene: func.isRequired,
-    updateEnergyBiomass: func.isRequired,
-    updateEnergyCharcoal: func.isRequired,
-    updateEnergyAnimalWaste: func.isRequired,
-    updateEnergyElectricity: func.isRequired,
-    updateEnergyOther: func.isRequired,
-    updateEnergyCoalEnabled: func.isRequired,
-    updateEnergyNaturalGasEnabled: func.isRequired,
-    updateEnergyDieselEnabled: func.isRequired,
-    updateEnergyKeroseneEnabled: func.isRequired,
-    updateEnergyBiomassEnabled: func.isRequired,
-    updateEnergyCharcoalEnabled: func.isRequired,
-    updateEnergyAnimalWasteEnabled: func.isRequired,
-    updateEnergyElectricityEnabled: func.isRequired,
-    updateEnergyOtherEnabled: func.isRequired,
+    // Emissions dispatch functions.
+    onEmissionsValueChange: func.isRequired,
+    onEmissionsEnabledChange: func.isRequired,
     // Other props.
     classes: object.isRequired,
     onValidationChange: func.isRequired,

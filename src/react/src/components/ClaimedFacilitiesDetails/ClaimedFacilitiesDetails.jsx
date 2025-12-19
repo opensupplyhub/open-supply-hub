@@ -168,24 +168,8 @@ function ClaimedFacilitiesDetails({
     updateOpeningDate,
     updateClosingDate,
     updateEstimatedAnnualThroughput,
-    updateEnergyCoal,
-    updateEnergyNaturalGas,
-    updateEnergyDiesel,
-    updateEnergyKerosene,
-    updateEnergyBiomass,
-    updateEnergyCharcoal,
-    updateEnergyAnimalWaste,
-    updateEnergyElectricity,
-    updateEnergyOther,
-    updateEnergyCoalEnabled,
-    updateEnergyNaturalGasEnabled,
-    updateEnergyDieselEnabled,
-    updateEnergyKeroseneEnabled,
-    updateEnergyBiomassEnabled,
-    updateEnergyCharcoalEnabled,
-    updateEnergyAnimalWasteEnabled,
-    updateEnergyElectricityEnabled,
-    updateEnergyOtherEnabled,
+    energyValueUpdaters,
+    energyEnabledUpdaters,
     userHasSignedIn,
     classes,
 }) {
@@ -406,17 +390,7 @@ function ClaimedFacilitiesDetails({
         energyOther: 'energy_other',
     };
 
-    const energyUpdaterMap = {
-        energyCoal: updateEnergyCoal,
-        energyNaturalGas: updateEnergyNaturalGas,
-        energyDiesel: updateEnergyDiesel,
-        energyKerosene: updateEnergyKerosene,
-        energyBiomass: updateEnergyBiomass,
-        energyCharcoal: updateEnergyCharcoal,
-        energyAnimalWaste: updateEnergyAnimalWaste,
-        energyElectricity: updateEnergyElectricity,
-        energyOther: updateEnergyOther,
-    };
+    const energyUpdaterMap = energyValueUpdaters;
 
     const energyEnabledKeyMap = {
         energyCoal: 'energy_coal_enabled',
@@ -430,17 +404,7 @@ function ClaimedFacilitiesDetails({
         energyOther: 'energy_other_enabled',
     };
 
-    const energyEnabledUpdaterMap = {
-        energyCoal: updateEnergyCoalEnabled,
-        energyNaturalGas: updateEnergyNaturalGasEnabled,
-        energyDiesel: updateEnergyDieselEnabled,
-        energyKerosene: updateEnergyKeroseneEnabled,
-        energyBiomass: updateEnergyBiomassEnabled,
-        energyCharcoal: updateEnergyCharcoalEnabled,
-        energyAnimalWaste: updateEnergyAnimalWasteEnabled,
-        energyElectricity: updateEnergyElectricityEnabled,
-        energyOther: updateEnergyOtherEnabled,
-    };
+    const energyEnabledUpdaterMap = energyEnabledUpdaters;
 
     return (
         <AppOverflow>
@@ -962,24 +926,8 @@ ClaimedFacilitiesDetails.propTypes = {
     updateOpeningDate: func.isRequired,
     updateClosingDate: func.isRequired,
     updateEstimatedAnnualThroughput: func.isRequired,
-    updateEnergyCoal: func.isRequired,
-    updateEnergyNaturalGas: func.isRequired,
-    updateEnergyDiesel: func.isRequired,
-    updateEnergyKerosene: func.isRequired,
-    updateEnergyBiomass: func.isRequired,
-    updateEnergyCharcoal: func.isRequired,
-    updateEnergyAnimalWaste: func.isRequired,
-    updateEnergyElectricity: func.isRequired,
-    updateEnergyOther: func.isRequired,
-    updateEnergyCoalEnabled: func.isRequired,
-    updateEnergyNaturalGasEnabled: func.isRequired,
-    updateEnergyDieselEnabled: func.isRequired,
-    updateEnergyKeroseneEnabled: func.isRequired,
-    updateEnergyBiomassEnabled: func.isRequired,
-    updateEnergyCharcoalEnabled: func.isRequired,
-    updateEnergyAnimalWasteEnabled: func.isRequired,
-    updateEnergyElectricityEnabled: func.isRequired,
-    updateEnergyOtherEnabled: func.isRequired,
+    energyValueUpdaters: object.isRequired,
+    energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
     classes: object.isRequired,
 };
@@ -1099,48 +1047,48 @@ function mapDispatchToProps(
         updateEstimatedAnnualThroughput: makeDispatchValueFn(
             updateClaimedEstimatedAnnualThroughput,
         ),
-        updateEnergyCoal: makeDispatchValueFn(updateClaimedEnergyCoal),
-        updateEnergyNaturalGas: makeDispatchValueFn(
-            updateClaimedEnergyNaturalGas,
-        ),
-        updateEnergyDiesel: makeDispatchValueFn(updateClaimedEnergyDiesel),
-        updateEnergyKerosene: makeDispatchValueFn(updateClaimedEnergyKerosene),
-        updateEnergyBiomass: makeDispatchValueFn(updateClaimedEnergyBiomass),
-        updateEnergyCharcoal: makeDispatchValueFn(updateClaimedEnergyCharcoal),
-        updateEnergyAnimalWaste: makeDispatchValueFn(
-            updateClaimedEnergyAnimalWaste,
-        ),
-        updateEnergyElectricity: makeDispatchValueFn(
-            updateClaimedEnergyElectricity,
-        ),
-        updateEnergyOther: makeDispatchValueFn(updateClaimedEnergyOther),
-        updateEnergyCoalEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyCoalEnabled,
-        ),
-        updateEnergyNaturalGasEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyNaturalGasEnabled,
-        ),
-        updateEnergyDieselEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyDieselEnabled,
-        ),
-        updateEnergyKeroseneEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyKeroseneEnabled,
-        ),
-        updateEnergyBiomassEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyBiomassEnabled,
-        ),
-        updateEnergyCharcoalEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyCharcoalEnabled,
-        ),
-        updateEnergyAnimalWasteEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyAnimalWasteEnabled,
-        ),
-        updateEnergyElectricityEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyElectricityEnabled,
-        ),
-        updateEnergyOtherEnabled: makeDispatchCheckedFn(
-            updateClaimedEnergyOtherEnabled,
-        ),
+        energyValueUpdaters: {
+            energyCoal: makeDispatchValueFn(updateClaimedEnergyCoal),
+            energyNaturalGas: makeDispatchValueFn(
+                updateClaimedEnergyNaturalGas,
+            ),
+            energyDiesel: makeDispatchValueFn(updateClaimedEnergyDiesel),
+            energyKerosene: makeDispatchValueFn(updateClaimedEnergyKerosene),
+            energyBiomass: makeDispatchValueFn(updateClaimedEnergyBiomass),
+            energyCharcoal: makeDispatchValueFn(updateClaimedEnergyCharcoal),
+            energyAnimalWaste: makeDispatchValueFn(
+                updateClaimedEnergyAnimalWaste,
+            ),
+            energyElectricity: makeDispatchValueFn(
+                updateClaimedEnergyElectricity,
+            ),
+            energyOther: makeDispatchValueFn(updateClaimedEnergyOther),
+        },
+        energyEnabledUpdaters: {
+            energyCoal: makeDispatchCheckedFn(updateClaimedEnergyCoalEnabled),
+            energyNaturalGas: makeDispatchCheckedFn(
+                updateClaimedEnergyNaturalGasEnabled,
+            ),
+            energyDiesel: makeDispatchCheckedFn(
+                updateClaimedEnergyDieselEnabled,
+            ),
+            energyKerosene: makeDispatchCheckedFn(
+                updateClaimedEnergyKeroseneEnabled,
+            ),
+            energyBiomass: makeDispatchCheckedFn(
+                updateClaimedEnergyBiomassEnabled,
+            ),
+            energyCharcoal: makeDispatchCheckedFn(
+                updateClaimedEnergyCharcoalEnabled,
+            ),
+            energyAnimalWaste: makeDispatchCheckedFn(
+                updateClaimedEnergyAnimalWasteEnabled,
+            ),
+            energyElectricity: makeDispatchCheckedFn(
+                updateClaimedEnergyElectricityEnabled,
+            ),
+            energyOther: makeDispatchCheckedFn(updateClaimedEnergyOtherEnabled),
+        },
         submitUpdate: () =>
             dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
     };
