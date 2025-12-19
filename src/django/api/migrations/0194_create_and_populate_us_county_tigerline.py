@@ -77,6 +77,7 @@ def populate_tigerline_data(apps, schema_editor):
         reader = get_csv_reader()
     except Exception as e:
         current_env = os.getenv('DJANGO_ENV', 'Local')
+        print('DJANGO_ENV: ', current_env)
         live_env = (
             'Production',
             'Preprod',
