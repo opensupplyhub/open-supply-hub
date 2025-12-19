@@ -7,10 +7,10 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
     '''
     Create the mit_living_wage partner field.
     '''
-    PartnerField = apps.get_model('api', 'PartnerField')
+    partner_field = apps.get_model('api', 'PartnerField')
     
     # Check if partner field already exists
-    if PartnerField.objects.filter(name='mit_living_wage').exists():
+    if partner_field.objects.filter(name='mit_living_wage').exists():
         return
     
     json_schema = {
@@ -26,7 +26,7 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
         }
     }
     
-    PartnerField.objects.create(
+    partner_field.objects.create(
         name='mit_living_wage',
         type='object',
         json_schema=json_schema,
@@ -41,8 +41,8 @@ def remove_mit_living_wage_partner_field(apps, schema_editor):
     '''
     Remove the mit_living_wage partner field.
     '''
-    PartnerField = apps.get_model('api', 'PartnerField')
-    PartnerField.objects.filter(name='mit_living_wage').delete()
+    partner_field = apps.get_model('api', 'PartnerField')
+    partner_field.objects.filter(name='mit_living_wage').delete()
 
 
 class Migration(migrations.Migration):

@@ -71,7 +71,7 @@ def populate_tigerline_data(apps, schema_editor):
     In live environments, raises error if CSV file not found.
     Geometry data is already in EPSG:5070 (Albers Equal Area).
     '''
-    USCountyTigerline = apps.get_model('api', 'USCountyTigerline')
+    us_county_tigerline = apps.get_model('api', 'USCountyTigerline')
 
     try:
         reader = get_csv_reader()
@@ -109,7 +109,7 @@ def populate_tigerline_data(apps, schema_editor):
                 )
 
             tigerline_objects.append(
-                USCountyTigerline(
+                us_county_tigerline(
                     geoid=geoid,
                     name=name,
                     geometry=geom
@@ -118,7 +118,7 @@ def populate_tigerline_data(apps, schema_editor):
 
             # Bulk create in batches
             if len(tigerline_objects) >= batch_size:
-                USCountyTigerline.objects.bulk_create(
+                us_county_tigerline.objects.bulk_create(
                     tigerline_objects,
                     batch_size=batch_size
                 )
@@ -129,7 +129,7 @@ def populate_tigerline_data(apps, schema_editor):
 
     # Create remaining objects
     if tigerline_objects:
-        USCountyTigerline.objects.bulk_create(
+        us_county_tigerline.objects.bulk_create(
             tigerline_objects,
             batch_size=batch_size
         )
@@ -139,8 +139,8 @@ def clean_tigerline_data(apps, schema_editor):
     '''
     Clean the USCountyTigerline table.
     '''
-    USCountyTigerline = apps.get_model('api', 'USCountyTigerline')
-    USCountyTigerline.objects.all().delete()
+    us_county_tigerline = apps.get_model('api', 'USCountyTigerline')
+    us_county_tigerline.objects.all().delete()
 
 
 class Migration(migrations.Migration):
