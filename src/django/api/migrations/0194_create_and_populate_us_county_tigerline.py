@@ -76,19 +76,12 @@ def populate_tigerline_data(apps, schema_editor):
     try:
         reader = get_csv_reader()
     except Exception as e:
-        current_env = os.getenv('DJANGO_ENV', 'Local')
-        print('DJANGO_ENV: ', current_env)
-        live_env = (
-            'Production',
-            'Preprod',
-            'Staging',
-            'Test',
-            'Development'
-        )
-        if current_env in live_env:
+        env = os.getenv('DJANGO_ENV', 'Local')
+
+        if env != 'Local':
             raise Exception(
                 f'Failed to download CSV file from S3: {e}. '
-                f'CSV file is required in {environment} environment.'
+                f'CSV file is required in {env} environment.'
             ) from e
         return
 
