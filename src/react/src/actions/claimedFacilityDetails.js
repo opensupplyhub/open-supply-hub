@@ -117,7 +117,7 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 get(data, 'facility_parent_company.name', '');
             const trimmedName = trim(toString(name));
 
-            return trimmedName === '' ? null : trimmedName;
+            return trimmedName || null;
         })();
 
         const energyFields = [
@@ -161,15 +161,15 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 estimated_annual_throughput:
                     data.estimated_annual_throughput || null,
             },
+            // Only include energy fields if the corresponding checkbox is enabled.
+            energyFields.reduce((acc, fieldName) => {
+                const checkboxEnabled = `${fieldName}_enabled`;
+                if (data[checkboxEnabled]) {
+                    acc[fieldName] = data[fieldName] || null;
+                }
+                return acc;
+            }, {}),
         );
-
-        // Only include energy fields if the corresponding checkbox is enabled.
-        energyFields.forEach(fieldName => {
-            const enabledKey = `${fieldName}_enabled`;
-            if (data[enabledKey]) {
-                updateData[fieldName] = data[fieldName] || null;
-            }
-        });
 
         return apiRequest
             .put(makeGetOrUpdateApprovedFacilityClaimURL(claimID), updateData)

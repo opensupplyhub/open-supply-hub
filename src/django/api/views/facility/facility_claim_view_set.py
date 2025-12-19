@@ -420,17 +420,19 @@ class FacilityClaimViewSet(ModelViewSet):
 
             for date_field in ('opening_date', 'closing_date'):
                 value = request.data.get(date_field)
-                if value in (None, ''):
+
+                if not value:
                     setattr(claim, date_field, None)
-                else:
-                    try:
-                        setattr(
-                            claim,
-                            date_field,
-                            datetime.fromisoformat(value).date(),
-                        )
-                    except (ValueError, TypeError):
-                        setattr(claim, date_field, None)
+                    continue
+
+                try:
+                    setattr(
+                        claim,
+                        date_field,
+                        datetime.fromisoformat(value).date(),
+                    )
+                except (ValueError, TypeError):
+                    setattr(claim, date_field, None)
 
             emission_fields = (
                 'estimated_annual_throughput',
@@ -445,14 +447,16 @@ class FacilityClaimViewSet(ModelViewSet):
                 'energy_other',
             )
             for field_name in emission_fields:
-                value = request.data.get(field_name)
-                if value in (None, ''):
+                value = request.data.get(field_name, None)
+
+                if not value:
                     setattr(claim, field_name, None)
-                else:
-                    try:
-                        setattr(claim, field_name, int(value))
-                    except (ValueError, TypeError):
-                        setattr(claim, field_name, None)
+                    continue
+
+                try:
+                    setattr(claim, field_name, int(value))
+                except (ValueError, TypeError):
+                    setattr(claim, field_name, None)
 
             field_names = (
                 'facility_description',
