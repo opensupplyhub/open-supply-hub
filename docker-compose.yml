@@ -118,7 +118,7 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./src/django/us_county_tigerline_2025.csv:/tmp/us_county_tigerline_2025.csv:ro
+      - ./src/django:/data:ro
     entrypoint: ["/bin/sh", "-c"]
     command: |
       "
@@ -128,11 +128,16 @@ services:
       echo 'Creating bucket opensupplyhub-local-files-us-west-1...'
       mc mb --ignore-existing local/opensupplyhub-local-files-us-west-1
 
-      echo 'Uploading us_county_tigerline_2025.csv to data folder...'
-      mc cp /tmp/us_county_tigerline_2025.csv local/opensupplyhub-local-files-us-west-1/data/us_county_tigerline_2025.csv
+      if [ -f /data/us_county_tigerline_2025.csv ]; then
+        echo 'Uploading us_county_tigerline_2025.csv to data folder...'
+        mc cp /data/us_county_tigerline_2025.csv local/opensupplyhub-local-files-us-west-1/data/us_county_tigerline_2025.csv
+        echo 'File uploaded successfully!'
+      else
+        echo 'File us_county_tigerline_2025.csv not found. Skipping upload.'
+      fi
 
       echo 'MinIO initialization complete!'
-      mc ls local/opensupplyhub-local-files-us-west-1/data/
+      mc ls local/opensupplyhub-local-files-us-west-1/data/ || echo 'Bucket is empty.'
       "
     networks:
       - proxynet

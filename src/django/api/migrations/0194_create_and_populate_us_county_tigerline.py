@@ -68,11 +68,15 @@ def populate_tigerline_data(apps, schema_editor):
     '''
     Populate the USCountyTigerline table with data from CSV file.
     Downloads from S3 (or MinIO for local development).
+    If the file is not found, skips data population and leaves table empty.
     Geometry data is already in EPSG:5070 (Albers Equal Area).
     '''
     USCountyTigerline = apps.get_model('api', 'USCountyTigerline')
 
-    reader = get_csv_reader()
+    try:
+        reader = get_csv_reader()
+    except Exception as e:
+        return
 
     tigerline_objects = []
     batch_size = 2000
