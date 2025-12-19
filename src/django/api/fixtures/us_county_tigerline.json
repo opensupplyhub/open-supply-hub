@@ -1,0 +1,52 @@
+[
+    {
+        "model": "api.uscountytigerline",
+        "pk": "40075",
+        "fields": {
+            "name": "Oklahoma County",
+            "geometry": "SRID=5070;MULTIPOLYGON (((-1000000 1000000, -950000 1000000, -950000 1050000, -1000000 1050000, -1000000 1000000)))",
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "updated_at": "2025-01-01T00:00:00+00:00"
+        }
+    },
+    {
+        "model": "api.uscountytigerline",
+        "pk": "06037",
+        "fields": {
+            "name": "Los Angeles County",
+            "geometry": "SRID=5070;MULTIPOLYGON (((-2000000 500000, -1950000 500000, -1950000 550000, -2000000 550000, -2000000 500000)))",
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "updated_at": "2025-01-01T00:00:00+00:00"
+        }
+    },
+    {
+        "model": "api.uscountytigerline",
+        "pk": "36061",
+        "fields": {
+            "name": "New York County",
+            "geometry": "SRID=5070;MULTIPOLYGON (((-1800000 600000, -1750000 600000, -1750000 650000, -1800000 650000, -1800000 600000)))",
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "updated_at": "2025-01-01T00:00:00+00:00"
+        }
+    },
+    {
+        "model": "api.uscountytigerline",
+        "pk": "48201",
+        "fields": {
+            "name": "Harris County",
+            "geometry": "SRID=5070;MULTIPOLYGON (((-1200000 800000, -1150000 800000, -1150000 850000, -1200000 850000, -1200000 800000)))",
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "updated_at": "2025-01-01T00:00:00+00:00"
+        }
+    },
+    {
+        "model": "api.uscountytigerline",
+        "pk": "04013",
+        "fields": {
+            "name": "Maricopa County",
+            "geometry": "SRID=5070;MULTIPOLYGON (((-1500000 700000, -1450000 700000, -1450000 750000, -1500000 750000, -1500000 700000)))",
+            "created_at": "2025-01-01T00:00:00+00:00",
+            "updated_at": "2025-01-01T00:00:00+00:00"
+        }
+    }
+]

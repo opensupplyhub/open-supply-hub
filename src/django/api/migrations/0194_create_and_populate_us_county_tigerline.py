@@ -68,7 +68,9 @@ def populate_tigerline_data(apps, schema_editor):
     '''
     Populate the USCountyTigerline table with data from CSV file.
     Downloads from S3 (or MinIO for local development).
-    If the file is not found, skips data population and leaves table empty.
+    In production (DEBUG=False), raises error if CSV file not found.
+    In development (DEBUG=True), skips data population gracefully
+    (fixtures will be loaded via load_fixtures command).
     Geometry data is already in EPSG:5070 (Albers Equal Area).
     '''
     USCountyTigerline = apps.get_model('api', 'USCountyTigerline')
@@ -76,6 +78,13 @@ def populate_tigerline_data(apps, schema_editor):
     try:
         reader = get_csv_reader()
     except Exception as e:
+        # In production, raise error if CSV file not found
+        if not settings.DEBUG:
+            raise Exception(
+                f'Failed to download CSV file from S3: {e}. '
+                'CSV file is required in production environment.'
+            ) from e
+        # In development, skip gracefully (fixtures will be used)
         return
 
     tigerline_objects = []
