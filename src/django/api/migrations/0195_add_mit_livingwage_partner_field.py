@@ -11,7 +11,7 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
 
     if partner_field.objects.filter(name='mit_living_wage').exists():
         raise ValueError(
-            f'The mit_living_wage partner field already exists.'
+            'The mit_living_wage partner field already exists.'
         )
     
     json_schema = {
