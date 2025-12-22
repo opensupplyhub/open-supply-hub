@@ -10,14 +10,16 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
     partner_field = apps.get_model('api', 'PartnerField')
 
     if partner_field.objects.filter(name='mit_living_wage').exists():
-        return
+        raise ValueError(
+            f'The mit_living_wage partner field already exists.'
+        )
     
     json_schema = {
         "type": "object",
         "title": "Some Data",
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "properties": {
-            "value": {
+            "county_id": {
                 "type": "string",
                 "title": "County Id",
                 "format": "uri-reference"

@@ -78,12 +78,13 @@ def populate_tigerline_data(apps, schema_editor):
     except Exception as e:
         env = os.getenv('DJANGO_ENV', 'Local')
 
-        if env != 'Local':
-            raise Exception(
-                f'Failed to download CSV file from S3: {e}. '
-                f'CSV file is required in {env} environment.'
-            ) from e
-        return
+        if env == 'Local':
+            return
+
+        raise Exception(
+            f'Failed to download CSV file from S3: {e}. '
+            f'CSV file is required in {env} environment.'
+        ) from e
 
     tigerline_objects = []
     batch_size = 2000
@@ -96,33 +97,30 @@ def populate_tigerline_data(apps, schema_editor):
         if not geoid or not name or not geometry_wkt:
             continue
 
-        try:
-            geom = GEOSGeometry(geometry_wkt, srid=5070)
+        geom = GEOSGeometry(geometry_wkt, srid=5070)
 
-            if geom.geom_type == 'Polygon':
-                geom = MultiPolygon(geom, srid=5070)
-            elif geom.geom_type != 'MultiPolygon':
-                raise ValueError(
-                    f"Unexpected geometry type: {geom.geom_type}"
-                )
-
-            tigerline_objects.append(
-                us_county_tigerline(
-                    geoid=geoid,
-                    name=name,
-                    geometry=geom
-                )
+        if geom.geom_type not in ("Polygon", "MultiPolygon"):
+            raise ValueError(
+                f'Unexpected geometry type: {geom.geom_type}'
             )
 
-            if len(tigerline_objects) >= batch_size:
-                us_county_tigerline.objects.bulk_create(
-                    tigerline_objects,
-                    batch_size=batch_size
-                )
-                tigerline_objects = []
+        if geom.geom_type == "Polygon":
+            geom = MultiPolygon(geom, srid=5070)
 
-        except Exception:
-            continue
+        tigerline_objects.append(
+            us_county_tigerline(
+                geoid=geoid,
+                name=name,
+                geometry=geom
+            )
+        )
+
+        if len(tigerline_objects) >= batch_size:
+            us_county_tigerline.objects.bulk_create(
+                tigerline_objects,
+                batch_size=batch_size
+            )
+            tigerline_objects = []
 
     if tigerline_objects:
         us_county_tigerline.objects.bulk_create(

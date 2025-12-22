@@ -27,6 +27,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
             return None
 
         if not facility.location:
+            print(f'No location found for facility {facility.id}')
             return None
 
         point = Point(
@@ -38,14 +39,11 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
         point_5070 = point.transform(5070, clone=True)
 
         try:
-            county = USCountyTigerline.objects.filter(
+            return USCountyTigerline.objects.filter(
                 geometry__contains=point_5070
             ).first()
-
-            if county:
-                return county
-            return None
-        except Exception:
+        except Exception as e:
+            print(f'Error fetching geoid from database: {e}')
             return None
 
     def _format_data(
@@ -56,7 +54,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
         '''
         Format mit living wage data into standard partner field structure.
         '''
-        raw_values = {"value": raw_data.geoid}
+        raw_values = {"county_id": raw_data.geoid}
 
         return {
             'id': None,
