@@ -236,7 +236,7 @@ class MITLivingWageProviderTest(TestCase):
         self.assertIn('raw_values', formatted_data['value'])
 
         raw_values = formatted_data['value']['raw_values']
-        self.assertEqual(raw_values['value'], '99999')
+        self.assertEqual(raw_values['county_id'], '99999')
         self.assertEqual(formatted_data['is_verified'], False)
         self.assertEqual(formatted_data['value_count'], 1)
         self.assertEqual(formatted_data['facility_list_item_id'], 1111)
@@ -252,7 +252,7 @@ class MITLivingWageProviderTest(TestCase):
         self.assertEqual(data['contributor']['id'], self.contributor.id)
         self.assertIn('value', data)
         self.assertIn('raw_values', data['value'])
-        self.assertEqual(data['value']['raw_values']['value'], '99999')
+        self.assertEqual(data['value']['raw_values']['county_id'], '99999')
 
     def test_fetch_data_no_county_data(self):
         '''Test fetch_data returns None when no county data exists.'''
