@@ -29,10 +29,11 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
         if not facility.location:
             return None
 
-        lon = facility.location.x
-        lat = facility.location.y
-
-        point = Point(lon, lat, srid=4326)
+        point = Point(
+            facility.location.x,
+            facility.location.y,
+            srid=4326
+        )
 
         point_5070 = point.transform(5070, clone=True)
 

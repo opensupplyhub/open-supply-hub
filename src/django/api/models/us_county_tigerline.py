@@ -25,7 +25,7 @@ class USCountyTigerline(Model):
 
     class Meta:
         verbose_name = 'US County Tigerline'
-        verbose_name_plural = 'US County Tigerline'
+        verbose_name_plural = 'US Counties Tigerline'
 
     def __str__(self):
         return f'US County Tigerline: {self.name} ({self.geoid})'

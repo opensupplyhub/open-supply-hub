@@ -28,17 +28,16 @@ class MITLivingWageProviderTest(TestCase):
 
         # Get or create mit_living_wage partner field.
         # Use get_all_including_inactive to access existing system field.
-        try:
-            self.partner_field = PartnerField.objects \
-                .get_all_including_inactive() \
-                .get(name='mit_living_wage')
-        except PartnerField.DoesNotExist:
-            self.partner_field = PartnerField.objects.create(
+        self.partner_field, _ = PartnerField.objects \
+            .get_all_including_inactive() \
+            .get_or_create(
                 name='mit_living_wage',
-                type=PartnerField.OBJECT,
-                label='MIT Living Wage',
-                system_field=True,
-                active=True
+                defaults={
+                    'type': PartnerField.OBJECT,
+                    'label': 'MIT Living Wage',
+                    'system_field': True,
+                    'active': True
+                }
             )
 
         self.partner_field.contributor_set.clear()
