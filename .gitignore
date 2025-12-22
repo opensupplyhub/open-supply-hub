@@ -106,4 +106,3 @@ dumps
 
 # Large data files (stored in S3)
 src/django/us_county_tigerline_2025.csv
-src/django/api/data/us_county_tigerline_2025.csv
