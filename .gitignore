@@ -103,6 +103,3 @@ dumps
 # Cursor
 .cursor-rules
 .cursor-test-conventions.md
-
-# Large data files (stored in S3)
-src/django/us_county_tigerline_2025.csv

@@ -97,10 +97,8 @@ def populate_tigerline_data(apps, schema_editor):
             continue
 
         try:
-            # Parse geometry from WKT
             geom = GEOSGeometry(geometry_wkt, srid=5070)
 
-            # Convert Polygon to MultiPolygon if needed
             if geom.geom_type == 'Polygon':
                 geom = MultiPolygon(geom, srid=5070)
             elif geom.geom_type != 'MultiPolygon':
@@ -116,7 +114,6 @@ def populate_tigerline_data(apps, schema_editor):
                 )
             )
 
-            # Bulk create in batches
             if len(tigerline_objects) >= batch_size:
                 us_county_tigerline.objects.bulk_create(
                     tigerline_objects,
@@ -127,7 +124,6 @@ def populate_tigerline_data(apps, schema_editor):
         except Exception:
             continue
 
-    # Create remaining objects
     if tigerline_objects:
         us_county_tigerline.objects.bulk_create(
             tigerline_objects,

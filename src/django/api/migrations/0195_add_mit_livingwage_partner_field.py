@@ -8,8 +8,7 @@ def create_mit_living_wage_partner_field(apps, schema_editor):
     Create the mit_living_wage partner field.
     '''
     partner_field = apps.get_model('api', 'PartnerField')
-    
-    # Check if partner field already exists
+
     if partner_field.objects.filter(name='mit_living_wage').exists():
         return
     

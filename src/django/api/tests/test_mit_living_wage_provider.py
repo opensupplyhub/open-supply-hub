@@ -41,8 +41,6 @@ class MITLivingWageProviderTest(TestCase):
                 active=True
             )
 
-        # Clear all existing contributors and set only this contributor
-        # to ensure test isolation from previous tests.
         self.partner_field.contributor_set.clear()
         self.contributor.partner_fields.add(self.partner_field)
         self.partner_field.refresh_from_db()
@@ -65,7 +63,6 @@ class MITLivingWageProviderTest(TestCase):
         buffered_polygon = point_5070.buffer(50000)
         multipolygon = MultiPolygon(buffered_polygon, srid=5070)
 
-        # Create test county data.
         self.county_data = USCountyTigerline.objects.create(
             geoid='99999',
             name='Test County',
@@ -122,9 +119,8 @@ class MITLivingWageProviderTest(TestCase):
 
     def tearDown(self):
         '''Clean up test data but preserve system partner field.'''
-        # Remove contributor assignments.
         self.partner_field.contributor_set.clear()
-        # Clean up test county data.
+
         USCountyTigerline.objects.filter(geoid='99999').delete()
         # Note: We don't restore real county data as it would require
         # re-running the migration, which is expensive for tests
@@ -143,7 +139,6 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_raw_data_with_no_location(self):
         '''Test _fetch_raw_data returns None for facility without location.'''
-        # Create a facility with all required fields
         facility_list = FacilityList.objects.create(
             header='header',
             file_name='test_no_location',
@@ -192,7 +187,6 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_raw_data_with_invalid_country_code(self):
         '''Test _fetch_raw_data returns None for non-US territories.'''
-        # Test with a non-US country code
         self.facility.country_code = 'GB'
         self.facility.save()
         raw_data = self.provider._fetch_raw_data(self.facility)
@@ -200,14 +194,12 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_raw_data_with_valid_us_territories(self):
         '''Test _fetch_raw_data works for US, PR, and VI.'''
-        # Test with US
         self.facility.country_code = 'US'
         self.facility.save()
         raw_data = self.provider._fetch_raw_data(self.facility)
         self.assertIsNotNone(raw_data)
         self.assertEqual(raw_data.geoid, '99999')
 
-        # Test with Puerto Rico
         self.facility.country_code = 'PR'
         self.facility.save()
         raw_data = self.provider._fetch_raw_data(self.facility)
@@ -216,11 +208,10 @@ class MITLivingWageProviderTest(TestCase):
         self.assertIsNotNone(raw_data)
         self.assertEqual(raw_data.geoid, '99999')
 
-        # Test with US Virgin Islands
         self.facility.country_code = 'VI'
         self.facility.save()
         raw_data = self.provider._fetch_raw_data(self.facility)
-        # Should attempt lookup
+
         self.assertIsNotNone(raw_data)
         self.assertEqual(raw_data.geoid, '99999')
 
@@ -266,16 +257,13 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_data_no_county_data(self):
         '''Test fetch_data returns None when no county data exists.'''
-        # Delete the test county (all counties were deleted in setUp)
         self.county_data.delete()
-        # Verify no counties exist
         self.assertEqual(USCountyTigerline.objects.count(), 0)
         data = self.provider.fetch_data(self.facility)
         self.assertIsNone(data)
 
     def test_fetch_data_no_contributor_assigned(self):
         '''Test fetch_data returns None when no contributor assigned.'''
-        # Remove contributor from partner field.
         self.contributor.partner_fields.remove(self.partner_field)
 
         data = self.provider.fetch_data(self.facility)
@@ -283,10 +271,8 @@ class MITLivingWageProviderTest(TestCase):
 
     def test_fetch_data_partner_field_inactive(self):
         '''Test fetch_data works when partner field is inactive.'''
-        # Set the partner field to inactive.
         self.partner_field.active = False
         self.partner_field.save()
 
-        # Should still work because provider uses get_all_including_inactive.
         data = self.provider.fetch_data(self.facility)
         self.assertIsNotNone(data)
