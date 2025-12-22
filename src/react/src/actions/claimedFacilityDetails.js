@@ -1,9 +1,13 @@
 import { createAction } from 'redux-act';
 import mapValues from 'lodash/mapValues';
+import trim from 'lodash/trim';
 import isNull from 'lodash/isNull';
 import omit from 'lodash/omit';
 import isInteger from 'lodash/isInteger';
+import toString from 'lodash/toString';
+import get from 'lodash/get';
 import { isInt } from 'validator';
+import map from 'lodash/map';
 
 import apiRequest from '../util/apiRequest';
 
@@ -67,6 +71,34 @@ export const completeUpdateClaimedFacilityDetails = createAction(
     'COMPLETE_UPDATE_CLAIMED_FACILITY_DETAILS',
 );
 
+export const updateClaimedEnergyCoalEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_COAL_ENABLED',
+);
+export const updateClaimedEnergyNaturalGasEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_NATURAL_GAS_ENABLED',
+);
+export const updateClaimedEnergyDieselEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_DIESEL_ENABLED',
+);
+export const updateClaimedEnergyKeroseneEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_KEROSENE_ENABLED',
+);
+export const updateClaimedEnergyBiomassEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_BIOMASS_ENABLED',
+);
+export const updateClaimedEnergyCharcoalEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_CHARCOAL_ENABLED',
+);
+export const updateClaimedEnergyAnimalWasteEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_ANIMAL_WASTE_ENABLED',
+);
+export const updateClaimedEnergyElectricityEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_ELECTRICITY_ENABLED',
+);
+export const updateClaimedEnergyOtherEnabled = createAction(
+    'UPDATE_CLAIMED_ENERGY_OTHER_ENABLED',
+);
+
 export function submitClaimedFacilityDetailsUpdate(claimID) {
     return (dispatch, getState) => {
         const {
@@ -79,6 +111,31 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
 
         dispatch(startUpdateClaimedFacilityDetails());
 
+        const parentCompanyName = (() => {
+            const name =
+                data.parent_company_name ||
+                get(data, 'facility_parent_company.name', '');
+            const trimmedName = trim(toString(name));
+
+            return trimmedName || null;
+        })();
+
+        const energyFields = [
+            'energy_coal',
+            'energy_natural_gas',
+            'energy_diesel',
+            'energy_kerosene',
+            'energy_biomass',
+            'energy_charcoal',
+            'energy_animal_waste',
+            'energy_electricity',
+            'energy_other',
+        ];
+        const energyEnabledKeys = map(
+            energyFields,
+            fieldName => `${fieldName}_enabled`,
+        );
+
         const updateData = Object.assign(
             {},
             omit(data, [
@@ -89,6 +146,7 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 'certification_choices',
                 'production_type_choices',
                 'initial_facility_address',
+                ...energyEnabledKeys,
             ]),
             {
                 facility_workers_count: data.facility_workers_count,
@@ -97,8 +155,22 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                     isInt(data.facility_female_workers_percentage)
                         ? data.facility_female_workers_percentage
                         : null,
+                parent_company_name: parentCompanyName,
+                opening_date: data.opening_date || null,
+                closing_date: data.closing_date || null,
+                estimated_annual_throughput:
+                    data.estimated_annual_throughput || null,
             },
+            // Only include energy fields if the corresponding checkbox is enabled.
+            energyFields.reduce((acc, fieldName) => {
+                const checkboxEnabled = `${fieldName}_enabled`;
+                if (data[checkboxEnabled]) {
+                    acc[fieldName] = data[fieldName] || null;
+                }
+                return acc;
+            }, {}),
         );
+
         return apiRequest
             .put(makeGetOrUpdateApprovedFacilityClaimURL(claimID), updateData)
             .then(({ data: responseData }) =>
@@ -201,4 +273,41 @@ export const updateClaimedFacilityProductionTypes = createAction(
 
 export const updateClaimedFacilityLocation = createAction(
     'UPDATE_CLAIMED_FACILITY_LOCATION',
+);
+
+export const updateClaimedFacilityOpeningDate = createAction(
+    'UPDATE_CLAIMED_FACILITY_OPENING_DATE',
+);
+export const updateClaimedFacilityClosingDate = createAction(
+    'UPDATE_CLAIMED_FACILITY_CLOSING_DATE',
+);
+export const updateClaimedEstimatedAnnualThroughput = createAction(
+    'UPDATE_CLAIMED_ESTIMATED_ANNUAL_THROUGHPUT',
+);
+export const updateClaimedEnergyCoal = createAction(
+    'UPDATE_CLAIMED_ENERGY_COAL',
+);
+export const updateClaimedEnergyNaturalGas = createAction(
+    'UPDATE_CLAIMED_ENERGY_NATURAL_GAS',
+);
+export const updateClaimedEnergyDiesel = createAction(
+    'UPDATE_CLAIMED_ENERGY_DIESEL',
+);
+export const updateClaimedEnergyKerosene = createAction(
+    'UPDATE_CLAIMED_ENERGY_KEROSENE',
+);
+export const updateClaimedEnergyBiomass = createAction(
+    'UPDATE_CLAIMED_ENERGY_BIOMASS',
+);
+export const updateClaimedEnergyCharcoal = createAction(
+    'UPDATE_CLAIMED_ENERGY_CHARCOAL',
+);
+export const updateClaimedEnergyAnimalWaste = createAction(
+    'UPDATE_CLAIMED_ENERGY_ANIMAL_WASTE',
+);
+export const updateClaimedEnergyElectricity = createAction(
+    'UPDATE_CLAIMED_ENERGY_ELECTRICITY',
+);
+export const updateClaimedEnergyOther = createAction(
+    'UPDATE_CLAIMED_ENERGY_OTHER',
 );

@@ -1,31 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, object } from 'prop-types';
+import { arrayOf, bool, func, string, object, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Switch from '@material-ui/core/Switch';
+import Checkbox from '@material-ui/core/Checkbox';
+import Grid from '@material-ui/core/Grid';
 import flow from 'lodash/flow';
 import noop from 'lodash/noop';
 import memoize from 'lodash/memoize';
 import isEmpty from 'lodash/isEmpty';
 import get from 'lodash/get';
 import map from 'lodash/map';
-import { isEmail, isInt } from 'validator';
+import { isInt } from 'validator';
 import { toast } from 'react-toastify';
-import AppOverflow from './AppOverflow';
-import AppGrid from './AppGrid';
-import ClaimedFacilitiesDetailsSidebar from './ClaimedFacilitiesDetailsSidebar';
-import ShowOnly from './ShowOnly';
+import AppOverflow from '../AppOverflow';
+import AppGrid from '../AppGrid';
+import ClaimedFacilitiesDetailsSidebar from '../ClaimedFacilitiesDetailsSidebar';
 import {
     LoadingIndicator,
     AuthNotice,
     ErrorsList,
-} from './CheckComponentStatus';
-import InputSection from '../components/InputSection';
-import InputErrorText from '../components/Contribute/InputErrorText';
+} from '../CheckComponentStatus';
+import InputSection from '../InputSection';
+import InputErrorText from '../Contribute/InputErrorText';
 
 import {
     fetchClaimedFacilityDetails,
@@ -55,56 +56,77 @@ import {
     updateClaimedFacilityOfficeAddress,
     updateClaimedFacilityOfficeCountry,
     updateClaimedFacilityOfficePhone,
+    updateClaimedFacilityOpeningDate,
+    updateClaimedFacilityClosingDate,
+    updateClaimedEstimatedAnnualThroughput,
+    updateClaimedEnergyCoal,
+    updateClaimedEnergyNaturalGas,
+    updateClaimedEnergyDiesel,
+    updateClaimedEnergyKerosene,
+    updateClaimedEnergyBiomass,
+    updateClaimedEnergyCharcoal,
+    updateClaimedEnergyAnimalWaste,
+    updateClaimedEnergyElectricity,
+    updateClaimedEnergyOther,
+    updateClaimedEnergyCoalEnabled,
+    updateClaimedEnergyNaturalGasEnabled,
+    updateClaimedEnergyDieselEnabled,
+    updateClaimedEnergyKeroseneEnabled,
+    updateClaimedEnergyBiomassEnabled,
+    updateClaimedEnergyCharcoalEnabled,
+    updateClaimedEnergyAnimalWasteEnabled,
+    updateClaimedEnergyElectricityEnabled,
+    updateClaimedEnergyOtherEnabled,
     submitClaimedFacilityDetailsUpdate,
-} from '../actions/claimedFacilityDetails';
-
-import {
-    fetchParentCompanyOptions,
-    fetchSectorOptions,
-} from '../actions/filterOptions';
+} from '../../actions/claimedFacilityDetails';
 
 import {
     approvedFacilityClaimPropType,
-    parentCompanyOptionsPropType,
-    sectorOptionsPropType,
     userPropType,
-} from '../util/propTypes';
+} from '../../util/propTypes';
 
 import {
     claimedFacilitiesDetailsStyles,
     textFieldErrorStyles,
-} from '../util/styles';
+} from '../../util/styles';
 
-import apiRequest from '../util/apiRequest';
+import apiRequest from '../../util/apiRequest';
 
 import {
     getValueFromEvent,
     getCheckedFromEvent,
     mapDjangoChoiceTuplesToSelectOptions,
-    isValidFacilityURL,
     makeClaimGeocoderURL,
     logErrorToRollbar,
-    isValidNumberOfWorkers,
-    getNumberOfWorkersValidationError,
-} from '../util/util';
+} from '../../util/util';
 
-import {
-    claimAFacilityFormFields,
-    USER_DEFAULT_STATE,
-} from '../util/constants';
-
-const {
-    parentCompany: { aside: parentCompanyAside },
-} = claimAFacilityFormFields;
+import { USER_DEFAULT_STATE, mockedSectors } from '../../util/constants';
+import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
+import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
+import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
+import MonthYearPicker from '../FreeEmissionsEstimate/MonthYearPicker.jsx';
+import claimedFacilityDetailsSchema from './validationSchema';
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
 );
 
+const {
+    openingDateField,
+    closingDateField,
+    estimatedAnnualThroughputField,
+    energyConsumptionLabel,
+    energySourcesData,
+} = freeEmissionsEstimateFormConfig;
+
 const mergedStyles = {
     ...claimedFacilitiesDetailsStyles(),
     ...textFieldErrorStyles(),
+    paddedTitle: {
+        padding: '10px 0',
+    },
 };
+
 function ClaimedFacilitiesDetails({
     user,
     match: {
@@ -143,10 +165,11 @@ function ClaimedFacilitiesDetails({
     updateOfficeVisibility,
     errorUpdating,
     updateParentCompany,
-    sectorOptions,
-    parentCompanyOptions,
-    fetchSectors,
-    fetchParentCompanies,
+    updateOpeningDate,
+    updateClosingDate,
+    updateEstimatedAnnualThroughput,
+    energyValueUpdaters,
+    energyEnabledUpdaters,
     userHasSignedIn,
     classes,
 }) {
@@ -160,17 +183,6 @@ function ClaimedFacilitiesDetails({
         return clearDetails;
     }, []);
     /* eslint-enable react-hooks/exhaustive-deps */
-    useEffect(() => {
-        if (!parentCompanyOptions) {
-            fetchParentCompanies();
-        }
-    }, [parentCompanyOptions, fetchParentCompanies]);
-    useEffect(() => {
-        if (!sectorOptions) {
-            fetchSectors();
-        }
-    }, [sectorOptions, fetchSectors]);
-
     const [isSavingForm, setIsSavingForm] = useState(false);
     const TITLE = 'Claimed Facility Details';
 
@@ -211,10 +223,8 @@ function ClaimedFacilitiesDetails({
             })
             .then(({ data: geocodedData }) => {
                 if (geocodedData?.result_count === 0) {
-                    return Promise.reject(
-                        new Error(
-                            'There was a problem finding a location for the specified address',
-                        ),
+                    throw new Error(
+                        'There was a problem finding a location for the specified address',
                     );
                 }
                 return geocodeDataToGeoJSON(geocodedData);
@@ -240,6 +250,118 @@ function ClaimedFacilitiesDetails({
             });
     };
 
+    const facilityData = data || {};
+
+    const claimedValidationValues = useMemo(
+        () => ({
+            facility_website: facilityData.facility_website,
+            point_of_contact_email: facilityData.point_of_contact_email,
+            facility_workers_count: facilityData.facility_workers_count,
+        }),
+        [facilityData],
+    );
+
+    const claimedValidationErrors = useMemo(() => {
+        try {
+            claimedFacilityDetailsSchema.validateSync(claimedValidationValues, {
+                abortEarly: false,
+            });
+            return {};
+        } catch (validationError) {
+            if (validationError?.inner?.length) {
+                return validationError.inner.reduce((acc, err) => {
+                    if (err.path) {
+                        acc[err.path] = err.message;
+                    }
+                    return acc;
+                }, {});
+            }
+            return {};
+        }
+    }, [claimedValidationValues]);
+
+    const getClaimedValidationError = key => claimedValidationErrors[key];
+    const hasClaimedValidationErrors = !isEmpty(claimedValidationErrors);
+
+    const emissionsValidationValues = useMemo(
+        () => ({
+            openingDate: facilityData.opening_date,
+            closingDate: facilityData.closing_date,
+            estimatedAnnualThroughput: facilityData.estimated_annual_throughput,
+            energyCoal: facilityData.energy_coal,
+            energyNaturalGas: facilityData.energy_natural_gas,
+            energyDiesel: facilityData.energy_diesel,
+            energyKerosene: facilityData.energy_kerosene,
+            energyBiomass: facilityData.energy_biomass,
+            energyCharcoal: facilityData.energy_charcoal,
+            energyAnimalWaste: facilityData.energy_animal_waste,
+            energyElectricity: facilityData.energy_electricity,
+            energyOther: facilityData.energy_other,
+            energyCoalEnabled:
+                facilityData.energy_coal_enabled ??
+                !isEmpty(facilityData.energy_coal),
+            energyNaturalGasEnabled:
+                facilityData.energy_natural_gas_enabled ??
+                !isEmpty(facilityData.energy_natural_gas),
+            energyDieselEnabled:
+                facilityData.energy_diesel_enabled ??
+                !isEmpty(facilityData.energy_diesel),
+            energyKeroseneEnabled:
+                facilityData.energy_kerosene_enabled ??
+                !isEmpty(facilityData.energy_kerosene),
+            energyBiomassEnabled:
+                facilityData.energy_biomass_enabled ??
+                !isEmpty(facilityData.energy_biomass),
+            energyCharcoalEnabled:
+                facilityData.energy_charcoal_enabled ??
+                !isEmpty(facilityData.energy_charcoal),
+            energyAnimalWasteEnabled:
+                facilityData.energy_animal_waste_enabled ??
+                !isEmpty(facilityData.energy_animal_waste),
+            energyElectricityEnabled:
+                facilityData.energy_electricity_enabled ??
+                !isEmpty(facilityData.energy_electricity),
+            energyOtherEnabled:
+                facilityData.energy_other_enabled ??
+                !isEmpty(facilityData.energy_other),
+        }),
+        [facilityData],
+    );
+
+    const emissionsValidationErrors = useMemo(() => {
+        try {
+            freeEmissionsEstimateValidationSchema.validateSync(
+                emissionsValidationValues,
+                { abortEarly: false },
+            );
+            return {};
+        } catch (validationError) {
+            if (validationError?.inner?.length) {
+                return validationError.inner.reduce((acc, err) => {
+                    if (err.path) {
+                        acc[err.path] = err.message;
+                    }
+                    return acc;
+                }, {});
+            }
+            return {};
+        }
+    }, [emissionsValidationValues]);
+
+    const hasEmissionsErrors = !isEmpty(emissionsValidationErrors);
+
+    const getEmissionError = key => emissionsValidationErrors[key];
+
+    const countryOptions = useMemo(
+        () => createCountrySelectOptions(facilityData.countries || []),
+        [facilityData.countries],
+    );
+
+    const sectorSelectOptions = useMemo(
+        () => mapDjangoChoiceTuplesToSelectOptions(mockedSectors),
+        [],
+    );
+
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
     }
@@ -256,7 +378,33 @@ function ClaimedFacilitiesDetails({
         return null;
     }
 
-    const countryOptions = createCountrySelectOptions(data.countries);
+    const energyFieldNameMap = {
+        energyCoal: 'energy_coal',
+        energyNaturalGas: 'energy_natural_gas',
+        energyDiesel: 'energy_diesel',
+        energyKerosene: 'energy_kerosene',
+        energyBiomass: 'energy_biomass',
+        energyCharcoal: 'energy_charcoal',
+        energyAnimalWaste: 'energy_animal_waste',
+        energyElectricity: 'energy_electricity',
+        energyOther: 'energy_other',
+    };
+
+    const energyUpdaterMap = energyValueUpdaters;
+
+    const energyEnabledKeyMap = {
+        energyCoal: 'energy_coal_enabled',
+        energyNaturalGas: 'energy_natural_gas_enabled',
+        energyDiesel: 'energy_diesel_enabled',
+        energyKerosene: 'energy_kerosene_enabled',
+        energyBiomass: 'energy_biomass_enabled',
+        energyCharcoal: 'energy_charcoal_enabled',
+        energyAnimalWaste: 'energy_animal_waste_enabled',
+        energyElectricity: 'energy_electricity_enabled',
+        energyOther: 'energy_other_enabled',
+    };
+
+    const energyEnabledUpdaterMap = energyEnabledUpdaters;
 
     return (
         <AppOverflow>
@@ -279,7 +427,7 @@ function ClaimedFacilitiesDetails({
                             disabled={updating}
                             isSelect
                             isMultiSelect
-                            selectOptions={sectorOptions || []}
+                            selectOptions={sectorSelectOptions}
                             selectPlaceholder="Select..."
                         />
                         <InputSection
@@ -298,15 +446,13 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_website}
                             onChange={updateFacilityWebsite}
                             disabled={updating}
-                            hasValidationErrorFn={() => {
-                                if (isEmpty(data.facility_website)) {
-                                    return false;
-                                }
-
-                                return !isValidFacilityURL(
-                                    data.facility_website,
-                                );
-                            }}
+                            hasValidationErrorFn={() =>
+                                Boolean(
+                                    getClaimedValidationError(
+                                        'facility_website',
+                                    ),
+                                )
+                            }
                             hasSwitch
                             switchValue={data.facility_website_publicly_visible}
                             onSwitchChange={updateFacilityWebsiteVisibility}
@@ -318,34 +464,16 @@ function ClaimedFacilitiesDetails({
                             onChange={updateFacilityDescription}
                             disabled={updating}
                         />
-                        <ShowOnly when={!isEmpty(parentCompanyOptions)}>
-                            <InputSection
-                                isCreatable
-                                label="Parent Company / Supplier Group"
-                                aside={parentCompanyAside}
-                                value={get(
-                                    data,
-                                    'facility_parent_company.id',
-                                    null,
-                                )}
-                                onChange={updateParentCompany}
-                                disabled={updating}
-                                isSelect
-                                selectOptions={parentCompanyOptions}
-                            />
-                        </ShowOnly>
-                        <ShowOnly when={!parentCompanyOptions}>
-                            <Typography>
-                                Parent Company / Supplier Group
-                            </Typography>
-                            <Typography>
-                                {get(
-                                    data,
-                                    'facility_parent_company.name',
-                                    null,
-                                )}
-                            </Typography>
-                        </ShowOnly>
+                        <InputSection
+                            label="Parent Company / Supplier Group"
+                            value={
+                                get(data, 'facility_parent_company.name', '') ||
+                                data.parent_company_name ||
+                                ''
+                            }
+                            onChange={updateParentCompany}
+                            disabled={updating}
+                        />
                         <InputSection
                             label="Minimum order quantity"
                             value={data.facility_minimum_order_quantity}
@@ -370,18 +498,18 @@ function ClaimedFacilitiesDetails({
                             value={data.facility_workers_count}
                             onChange={updateFacilityWorkersCount}
                             disabled={updating}
-                            error={
-                                !isValidNumberOfWorkers(
-                                    data.facility_workers_count,
-                                )
-                            }
+                            error={Boolean(
+                                getClaimedValidationError(
+                                    'facility_workers_count',
+                                ),
+                            )}
                             helperText={
-                                !isValidNumberOfWorkers(
-                                    data.facility_workers_count,
+                                getClaimedValidationError(
+                                    'facility_workers_count',
                                 ) && (
                                     <InputErrorText
-                                        text={getNumberOfWorkersValidationError(
-                                            data.facility_workers_count,
+                                        text={getClaimedValidationError(
+                                            'facility_workers_count',
                                         )}
                                     />
                                 )
@@ -393,8 +521,8 @@ function ClaimedFacilitiesDetails({
                                 classes: {
                                     input: `
                                 ${
-                                    !isValidNumberOfWorkers(
-                                        data.facility_workers_count,
+                                    getClaimedValidationError(
+                                        'facility_workers_count',
                                     ) && classes.errorStyle
                                 }`,
                                 },
@@ -467,6 +595,162 @@ function ClaimedFacilitiesDetails({
                             selectPlaceholder="e.g. Jackets - Use <Enter> or <Tab> to add multiple values"
                         />
                         <Typography
+                            variant="headline"
+                            className={classes.headingStyles}
+                        >
+                            Free Emissions Estimates
+                        </Typography>
+                        <Grid container spacing={24}>
+                            <Grid item xs={12} md={6}>
+                                <YearPicker
+                                    value={data.opening_date || ''}
+                                    label={openingDateField.label}
+                                    tooltipText={openingDateField.tooltipText}
+                                    placeholder={openingDateField.placeholder}
+                                    helperText={
+                                        getEmissionError('openingDate') && (
+                                            <InputErrorText
+                                                text={getEmissionError(
+                                                    'openingDate',
+                                                )}
+                                            />
+                                        )
+                                    }
+                                    disabled={updating}
+                                    error={Boolean(
+                                        getEmissionError('openingDate'),
+                                    )}
+                                    onChange={updateOpeningDate}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <MonthYearPicker
+                                    value={data.closing_date || ''}
+                                    label={closingDateField.label}
+                                    tooltipText={closingDateField.tooltipText}
+                                    placeholderMonth={
+                                        closingDateField.placeholderMonth
+                                    }
+                                    placeholderYear={
+                                        closingDateField.placeholderYear
+                                    }
+                                    helperText={
+                                        getEmissionError('closingDate') && (
+                                            <InputErrorText
+                                                text={getEmissionError(
+                                                    'closingDate',
+                                                )}
+                                            />
+                                        )
+                                    }
+                                    disabled={updating}
+                                    error={Boolean(
+                                        getEmissionError('closingDate'),
+                                    )}
+                                    onChange={updateClosingDate}
+                                />
+                            </Grid>
+                        </Grid>
+                        <div>
+                            <InputSection
+                                label={estimatedAnnualThroughputField.label}
+                                value={data.estimated_annual_throughput || ''}
+                                onChange={updateEstimatedAnnualThroughput}
+                                disabled={updating}
+                                hasValidationErrorFn={() =>
+                                    Boolean(
+                                        getEmissionError(
+                                            'estimatedAnnualThroughput',
+                                        ),
+                                    )
+                                }
+                            />
+                            {getEmissionError('estimatedAnnualThroughput') && (
+                                <InputErrorText
+                                    text={getEmissionError(
+                                        'estimatedAnnualThroughput',
+                                    )}
+                                />
+                            )}
+                        </div>
+                        <Typography
+                            variant="title"
+                            className={classes.paddedTitle}
+                        >
+                            {energyConsumptionLabel.label}
+                        </Typography>
+                        {energySourcesData.map(sourceData => {
+                            const { valueFieldName, source } = sourceData;
+                            const dataKey = energyFieldNameMap[valueFieldName];
+                            const enabledKey =
+                                energyEnabledKeyMap[valueFieldName];
+                            const updater = energyUpdaterMap[valueFieldName];
+                            const enabledUpdater =
+                                energyEnabledUpdaterMap[valueFieldName];
+                            const enabled =
+                                data[enabledKey] ?? !isEmpty(data[dataKey]);
+                            const errorText = getEmissionError(valueFieldName);
+                            return (
+                                <div key={valueFieldName}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            flexWrap: 'wrap',
+                                        }}
+                                    >
+                                        <div
+                                            className={
+                                                classes.switchSectionStyles
+                                            }
+                                            style={{
+                                                alignItems: 'center',
+                                                minWidth: 220,
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            <Checkbox
+                                                color="primary"
+                                                onChange={event => {
+                                                    const {
+                                                        checked,
+                                                    } = event.target;
+                                                    enabledUpdater(event);
+                                                    if (!checked) {
+                                                        updater({
+                                                            target: {
+                                                                value: '',
+                                                            },
+                                                        });
+                                                    }
+                                                }}
+                                                checked={enabled}
+                                            />
+                                            <Typography variant="body1">
+                                                {`${source.label} (${source.unit})`}
+                                            </Typography>
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 260 }}>
+                                            <InputSection
+                                                label={null}
+                                                value={data[dataKey] || ''}
+                                                onChange={updater}
+                                                disabled={updating || !enabled}
+                                                hasValidationErrorFn={() =>
+                                                    enabled &&
+                                                    Boolean(errorText)
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                    {enabled && errorText && (
+                                        <InputErrorText text={errorText} />
+                                    )}
+                                </div>
+                            );
+                        })}
+                        <Typography
                             variant="title"
                             className={classes.headingStyles}
                         >
@@ -493,13 +777,13 @@ function ClaimedFacilitiesDetails({
                             value={data.point_of_contact_email}
                             onChange={updateContactEmail}
                             disabled={updating}
-                            hasValidationErrorFn={() => {
-                                if (isEmpty(data.point_of_contact_email)) {
-                                    return false;
-                                }
-
-                                return !isEmail(data.point_of_contact_email);
-                            }}
+                            hasValidationErrorFn={() =>
+                                Boolean(
+                                    getClaimedValidationError(
+                                        'point_of_contact_email',
+                                    ),
+                                )
+                            }
                         />
                         <Typography
                             variant="headline"
@@ -574,17 +858,8 @@ function ClaimedFacilitiesDetails({
                                 color="primary"
                                 disabled={
                                     updating ||
-                                    (!isEmpty(data.point_of_contact_email) &&
-                                        !isEmail(
-                                            data.point_of_contact_email,
-                                        )) ||
-                                    (!isEmpty(data.facility_website) &&
-                                        !isValidFacilityURL(
-                                            data.facility_website,
-                                        )) ||
-                                    !isValidNumberOfWorkers(
-                                        data.facility_workers_count,
-                                    )
+                                    hasClaimedValidationErrors ||
+                                    hasEmissionsErrors
                                 }
                             >
                                 Save
@@ -606,18 +881,23 @@ ClaimedFacilitiesDetails.defaultProps = {
     errors: null,
     data: null,
     errorUpdating: null,
-    sectorOptions: null,
-    parentCompanyOptions: null,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
     user: userPropType,
+    match: shape({
+        params: shape({
+            claimID: string.isRequired,
+        }).isRequired,
+    }).isRequired,
     fetching: bool.isRequired,
     errors: arrayOf(string),
     data: approvedFacilityClaimPropType,
     getDetails: func.isRequired,
     clearDetails: func.isRequired,
     updateFacilityNameNativeLanguage: func.isRequired,
+    updateFacilityLocation: func.isRequired,
+    updateSector: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
     updateFacilityFemaleWorkersPercentage: func.isRequired,
     updateFacilityPhone: func.isRequired,
@@ -626,6 +906,10 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityDescription: func.isRequired,
     updateFacilityMinimumOrder: func.isRequired,
     updateFacilityAverageLeadTime: func.isRequired,
+    updateFacilityAffiliations: func.isRequired,
+    updateFacilityCertifications: func.isRequired,
+    updateFacilityProductTypes: func.isRequired,
+    updateFacilityProductionTypes: func.isRequired,
     updateContactPerson: func.isRequired,
     updateContactEmail: func.isRequired,
     updateOfficeName: func.isRequired,
@@ -638,9 +922,12 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityPhoneVisibility: func.isRequired,
     updateContactVisibility: func.isRequired,
     updateOfficeVisibility: func.isRequired,
-    sectorOptions: sectorOptionsPropType,
-    parentCompanyOptions: parentCompanyOptionsPropType,
-    fetchSectors: func.isRequired,
+    updateParentCompany: func.isRequired,
+    updateOpeningDate: func.isRequired,
+    updateClosingDate: func.isRequired,
+    updateEstimatedAnnualThroughput: func.isRequired,
+    energyValueUpdaters: object.isRequired,
+    energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
     classes: object.isRequired,
 };
@@ -654,23 +941,14 @@ function mapStateToProps({
         updateData: { fetching: updating, error: errorUpdating },
         data,
     },
-    filterOptions: {
-        sectors: { data: sectorOptions, fetching: fetchingSectors },
-        parentCompanies: {
-            data: parentCompanyOptions,
-            fetching: fetchingParentCompanies,
-        },
-    },
 }) {
     return {
         user,
-        fetching: fetchingData || fetchingSectors || fetchingParentCompanies,
+        fetching: fetchingData,
         data,
         errors: error || errorUpdating,
         updating,
         errorUpdating,
-        sectorOptions,
-        parentCompanyOptions,
         userHasSignedIn: !user.isAnon,
     };
 }
@@ -705,13 +983,9 @@ function mapDispatchToProps(
         updateFacilityPhoneVisibility: makeDispatchCheckedFn(
             updateClaimedFacilityPhoneVisibility,
         ),
-        updateParentCompany: ({ label, value }) =>
-            dispatch(
-                updateClaimedFacilityParentCompany({
-                    id: value,
-                    name: label,
-                }),
-            ),
+        updateParentCompany: makeDispatchValueFn(
+            updateClaimedFacilityParentCompany,
+        ),
         updateContactVisibility: makeDispatchCheckedFn(
             updateClaimedFacilityPointOfContactVisibility,
         ),
@@ -766,10 +1040,57 @@ function mapDispatchToProps(
         updateOfficePhone: makeDispatchValueFn(
             updateClaimedFacilityOfficePhone,
         ),
+        updateOpeningDate: value =>
+            dispatch(updateClaimedFacilityOpeningDate(value)),
+        updateClosingDate: value =>
+            dispatch(updateClaimedFacilityClosingDate(value)),
+        updateEstimatedAnnualThroughput: makeDispatchValueFn(
+            updateClaimedEstimatedAnnualThroughput,
+        ),
+        energyValueUpdaters: {
+            energyCoal: makeDispatchValueFn(updateClaimedEnergyCoal),
+            energyNaturalGas: makeDispatchValueFn(
+                updateClaimedEnergyNaturalGas,
+            ),
+            energyDiesel: makeDispatchValueFn(updateClaimedEnergyDiesel),
+            energyKerosene: makeDispatchValueFn(updateClaimedEnergyKerosene),
+            energyBiomass: makeDispatchValueFn(updateClaimedEnergyBiomass),
+            energyCharcoal: makeDispatchValueFn(updateClaimedEnergyCharcoal),
+            energyAnimalWaste: makeDispatchValueFn(
+                updateClaimedEnergyAnimalWaste,
+            ),
+            energyElectricity: makeDispatchValueFn(
+                updateClaimedEnergyElectricity,
+            ),
+            energyOther: makeDispatchValueFn(updateClaimedEnergyOther),
+        },
+        energyEnabledUpdaters: {
+            energyCoal: makeDispatchCheckedFn(updateClaimedEnergyCoalEnabled),
+            energyNaturalGas: makeDispatchCheckedFn(
+                updateClaimedEnergyNaturalGasEnabled,
+            ),
+            energyDiesel: makeDispatchCheckedFn(
+                updateClaimedEnergyDieselEnabled,
+            ),
+            energyKerosene: makeDispatchCheckedFn(
+                updateClaimedEnergyKeroseneEnabled,
+            ),
+            energyBiomass: makeDispatchCheckedFn(
+                updateClaimedEnergyBiomassEnabled,
+            ),
+            energyCharcoal: makeDispatchCheckedFn(
+                updateClaimedEnergyCharcoalEnabled,
+            ),
+            energyAnimalWaste: makeDispatchCheckedFn(
+                updateClaimedEnergyAnimalWasteEnabled,
+            ),
+            energyElectricity: makeDispatchCheckedFn(
+                updateClaimedEnergyElectricityEnabled,
+            ),
+            energyOther: makeDispatchCheckedFn(updateClaimedEnergyOtherEnabled),
+        },
         submitUpdate: () =>
             dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
-        fetchSectors: () => dispatch(fetchSectorOptions()),
-        fetchParentCompanies: () => dispatch(fetchParentCompanyOptions()),
     };
 }
 

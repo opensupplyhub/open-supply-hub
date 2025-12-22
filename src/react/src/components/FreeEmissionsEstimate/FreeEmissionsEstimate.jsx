@@ -33,52 +33,14 @@ import {
 const FreeEmissionsEstimate = ({
     formData,
     fetching,
-    updateOpeningDate,
-    updateClosingDate,
-    updateEstimatedAnnualThroughput,
-    updateEnergyCoal,
-    updateEnergyNaturalGas,
-    updateEnergyDiesel,
-    updateEnergyKerosene,
-    updateEnergyBiomass,
-    updateEnergyCharcoal,
-    updateEnergyAnimalWaste,
-    updateEnergyElectricity,
-    updateEnergyOther,
-    updateEnergyCoalEnabled,
-    updateEnergyNaturalGasEnabled,
-    updateEnergyDieselEnabled,
-    updateEnergyKeroseneEnabled,
-    updateEnergyBiomassEnabled,
-    updateEnergyCharcoalEnabled,
-    updateEnergyAnimalWasteEnabled,
-    updateEnergyElectricityEnabled,
-    updateEnergyOtherEnabled,
+    onEmissionsValueChange,
+    onEmissionsEnabledChange,
     onValidationChange,
 }) => (
     <EmissionsEstimateForm
         formData={formData}
-        updateOpeningDate={updateOpeningDate}
-        updateClosingDate={updateClosingDate}
-        updateEstimatedAnnualThroughput={updateEstimatedAnnualThroughput}
-        updateEnergyCoal={updateEnergyCoal}
-        updateEnergyNaturalGas={updateEnergyNaturalGas}
-        updateEnergyDiesel={updateEnergyDiesel}
-        updateEnergyKerosene={updateEnergyKerosene}
-        updateEnergyBiomass={updateEnergyBiomass}
-        updateEnergyCharcoal={updateEnergyCharcoal}
-        updateEnergyAnimalWaste={updateEnergyAnimalWaste}
-        updateEnergyElectricity={updateEnergyElectricity}
-        updateEnergyOther={updateEnergyOther}
-        updateEnergyCoalEnabled={updateEnergyCoalEnabled}
-        updateEnergyNaturalGasEnabled={updateEnergyNaturalGasEnabled}
-        updateEnergyDieselEnabled={updateEnergyDieselEnabled}
-        updateEnergyKeroseneEnabled={updateEnergyKeroseneEnabled}
-        updateEnergyBiomassEnabled={updateEnergyBiomassEnabled}
-        updateEnergyCharcoalEnabled={updateEnergyCharcoalEnabled}
-        updateEnergyAnimalWasteEnabled={updateEnergyAnimalWasteEnabled}
-        updateEnergyElectricityEnabled={updateEnergyElectricityEnabled}
-        updateEnergyOtherEnabled={updateEnergyOtherEnabled}
+        onEmissionsValueChange={onEmissionsValueChange}
+        onEmissionsEnabledChange={onEmissionsEnabledChange}
         onValidationChange={onValidationChange}
         disabled={fetching}
     />
@@ -87,27 +49,8 @@ const FreeEmissionsEstimate = ({
 FreeEmissionsEstimate.propTypes = {
     formData: object.isRequired,
     fetching: bool.isRequired,
-    updateOpeningDate: func.isRequired,
-    updateClosingDate: func.isRequired,
-    updateEstimatedAnnualThroughput: func.isRequired,
-    updateEnergyCoal: func.isRequired,
-    updateEnergyNaturalGas: func.isRequired,
-    updateEnergyDiesel: func.isRequired,
-    updateEnergyKerosene: func.isRequired,
-    updateEnergyBiomass: func.isRequired,
-    updateEnergyCharcoal: func.isRequired,
-    updateEnergyAnimalWaste: func.isRequired,
-    updateEnergyElectricity: func.isRequired,
-    updateEnergyOther: func.isRequired,
-    updateEnergyCoalEnabled: func.isRequired,
-    updateEnergyNaturalGasEnabled: func.isRequired,
-    updateEnergyDieselEnabled: func.isRequired,
-    updateEnergyKeroseneEnabled: func.isRequired,
-    updateEnergyBiomassEnabled: func.isRequired,
-    updateEnergyCharcoalEnabled: func.isRequired,
-    updateEnergyAnimalWasteEnabled: func.isRequired,
-    updateEnergyElectricityEnabled: func.isRequired,
-    updateEnergyOtherEnabled: func.isRequired,
+    onEmissionsValueChange: func.isRequired,
+    onEmissionsEnabledChange: func.isRequired,
     onValidationChange: func.isRequired,
 };
 
@@ -142,42 +85,53 @@ const mapStateToProps = ({
     fetching,
 });
 
-const mapDispatchToProps = dispatch => ({
-    updateOpeningDate: date => dispatch(updateClaimOpeningDate(date)),
-    updateClosingDate: date => dispatch(updateClaimClosingDate(date)),
-    updateEstimatedAnnualThroughput: value =>
-        dispatch(updateClaimEstimatedAnnualThroughput(value)),
-    updateEnergyCoal: value => dispatch(updateClaimEnergyCoal(value)),
-    updateEnergyNaturalGas: value =>
-        dispatch(updateClaimEnergyNaturalGas(value)),
-    updateEnergyDiesel: value => dispatch(updateClaimEnergyDiesel(value)),
-    updateEnergyKerosene: value => dispatch(updateClaimEnergyKerosene(value)),
-    updateEnergyBiomass: value => dispatch(updateClaimEnergyBiomass(value)),
-    updateEnergyCharcoal: value => dispatch(updateClaimEnergyCharcoal(value)),
-    updateEnergyAnimalWaste: value =>
-        dispatch(updateClaimEnergyAnimalWaste(value)),
-    updateEnergyElectricity: value =>
-        dispatch(updateClaimEnergyElectricity(value)),
-    updateEnergyOther: value => dispatch(updateClaimEnergyOther(value)),
-    updateEnergyCoalEnabled: enabled =>
-        dispatch(updateClaimEnergyCoalEnabled(enabled)),
-    updateEnergyNaturalGasEnabled: enabled =>
-        dispatch(updateClaimEnergyNaturalGasEnabled(enabled)),
-    updateEnergyDieselEnabled: enabled =>
-        dispatch(updateClaimEnergyDieselEnabled(enabled)),
-    updateEnergyKeroseneEnabled: enabled =>
-        dispatch(updateClaimEnergyKeroseneEnabled(enabled)),
-    updateEnergyBiomassEnabled: enabled =>
-        dispatch(updateClaimEnergyBiomassEnabled(enabled)),
-    updateEnergyCharcoalEnabled: enabled =>
-        dispatch(updateClaimEnergyCharcoalEnabled(enabled)),
-    updateEnergyAnimalWasteEnabled: enabled =>
-        dispatch(updateClaimEnergyAnimalWasteEnabled(enabled)),
-    updateEnergyElectricityEnabled: enabled =>
-        dispatch(updateClaimEnergyElectricityEnabled(enabled)),
-    updateEnergyOtherEnabled: enabled =>
-        dispatch(updateClaimEnergyOtherEnabled(enabled)),
-});
+const mapDispatchToProps = dispatch => {
+    const valueDispatchers = {
+        openingDate: date => dispatch(updateClaimOpeningDate(date)),
+        closingDate: date => dispatch(updateClaimClosingDate(date)),
+        estimatedAnnualThroughput: value =>
+            dispatch(updateClaimEstimatedAnnualThroughput(value)),
+        energyCoal: value => dispatch(updateClaimEnergyCoal(value)),
+        energyNaturalGas: value => dispatch(updateClaimEnergyNaturalGas(value)),
+        energyDiesel: value => dispatch(updateClaimEnergyDiesel(value)),
+        energyKerosene: value => dispatch(updateClaimEnergyKerosene(value)),
+        energyBiomass: value => dispatch(updateClaimEnergyBiomass(value)),
+        energyCharcoal: value => dispatch(updateClaimEnergyCharcoal(value)),
+        energyAnimalWaste: value =>
+            dispatch(updateClaimEnergyAnimalWaste(value)),
+        energyElectricity: value =>
+            dispatch(updateClaimEnergyElectricity(value)),
+        energyOther: value => dispatch(updateClaimEnergyOther(value)),
+    };
+
+    const enabledDispatchers = {
+        energyCoalEnabled: enabled =>
+            dispatch(updateClaimEnergyCoalEnabled(enabled)),
+        energyNaturalGasEnabled: enabled =>
+            dispatch(updateClaimEnergyNaturalGasEnabled(enabled)),
+        energyDieselEnabled: enabled =>
+            dispatch(updateClaimEnergyDieselEnabled(enabled)),
+        energyKeroseneEnabled: enabled =>
+            dispatch(updateClaimEnergyKeroseneEnabled(enabled)),
+        energyBiomassEnabled: enabled =>
+            dispatch(updateClaimEnergyBiomassEnabled(enabled)),
+        energyCharcoalEnabled: enabled =>
+            dispatch(updateClaimEnergyCharcoalEnabled(enabled)),
+        energyAnimalWasteEnabled: enabled =>
+            dispatch(updateClaimEnergyAnimalWasteEnabled(enabled)),
+        energyElectricityEnabled: enabled =>
+            dispatch(updateClaimEnergyElectricityEnabled(enabled)),
+        energyOtherEnabled: enabled =>
+            dispatch(updateClaimEnergyOtherEnabled(enabled)),
+    };
+
+    return {
+        onEmissionsValueChange: (field, value) =>
+            valueDispatchers[field]?.(value),
+        onEmissionsEnabledChange: (field, enabled) =>
+            enabledDispatchers[field]?.(enabled),
+    };
+};
 
 export default connect(
     mapStateToProps,
