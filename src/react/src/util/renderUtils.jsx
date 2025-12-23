@@ -1,6 +1,11 @@
 import React from 'react';
 import Divider from '@material-ui/core/Divider';
 
+/**
+ * Sentinel token inserted into ISIC value arrays to trigger divider rendering.
+ * Assumes ISIC data never contains this exact value; double-underscores reduce
+ * collision risk.
+ */
 export const ISIC_DIVIDER = '__ISIC_DIVIDER__';
 
 const blockStyle = Object.freeze({
@@ -32,7 +37,8 @@ const renderUniqueListItems = (
     let keySeq = 0;
 
     return values.map(value => {
-        const key = `${fieldName}-${++keySeq}`;
+        keySeq += 1;
+        const key = `${fieldName}-${keySeq}`;
 
         if (fieldName === 'isic_4' && value === ISIC_DIVIDER) {
             return <Divider key={key} style={dividerStyle} />;
