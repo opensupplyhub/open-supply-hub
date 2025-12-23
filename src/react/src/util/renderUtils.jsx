@@ -29,12 +29,10 @@ const renderUniqueListItems = (
 
     const values = shouldPreserveOrder ? fieldValue : [...new Set(fieldValue)];
 
-    const valueCounts = new Map();
+    let keySeq = 0;
 
     return values.map(value => {
-        const count = (valueCounts.get(value) || 0) + 1;
-        valueCounts.set(value, count);
-        const key = `${fieldName}-${value}-${count}`;
+        const key = `${fieldName}-${++keySeq}`;
 
         if (fieldName === 'isic_4' && value === ISIC_DIVIDER) {
             return <Divider key={key} style={dividerStyle} />;
