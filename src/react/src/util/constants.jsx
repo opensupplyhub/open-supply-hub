@@ -2,6 +2,7 @@ import React from 'react';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
 import COLOURS from './COLOURS';
+import { ISIC_DIVIDER } from './renderUtils';
 
 export const DEFAULT_SORT_OPTION_INDEX = 2;
 export const OTHER = 'Other';
@@ -1134,7 +1135,7 @@ export const EXTENDED_FIELD_TYPES = [
             const rawValue = value?.raw_value ?? value ?? {};
             const entries = Array.isArray(rawValue) ? rawValue : [rawValue];
 
-            return entries.reduce((acc, entry, index) => {
+            return entries.reduce((acc, entry) => {
                 const { section, division, group, class: isicClass } =
                     entry || {};
                 const lines = [
@@ -1148,8 +1149,8 @@ export const EXTENDED_FIELD_TYPES = [
                     return acc;
                 }
 
-                if (acc.length && index > 0) {
-                    return acc.concat(['', ...lines]);
+                if (acc.length) {
+                    return acc.concat([ISIC_DIVIDER, ...lines]);
                 }
 
                 return acc.concat(lines);
