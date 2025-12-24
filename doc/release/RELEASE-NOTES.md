@@ -48,6 +48,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Removed the FE request to `GET /api/parent-companies/`.
     * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
 * [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
+* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
+    * Upgraded Python from `3.8` to `3.11`.
+    * Upgraded Django from `3.2.17` to `5.1.3`.
+    * Upgraded Python and Django packages to conform compatibility.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
