@@ -10,12 +10,19 @@ from api.limitation.date.date_limitation import (
 class MonthlyDateLimitation(DateLimitation):
 
     def execute(self, period_start_date: datetime):
-        utc = timezone.get_default_timezone()
-        self.start_date = period_start_date
+        default_tz = timezone.get_default_timezone()
+        start_date = period_start_date
+        if timezone.is_naive(start_date):
+            start_date = start_date.replace(tzinfo=default_tz)
+        start_date_utc = start_date.astimezone(timezone.utc)
 
-        one_month_in_past = datetime.now(tz=utc) - relativedelta(months=1)
-        while (self.start_date < one_month_in_past):
-            self.start_date = self.start_date + relativedelta(months=1)
+        one_month_ago_utc = (
+            datetime.now(tz=timezone.utc) - relativedelta(months=1)
+        )
+        while start_date_utc < one_month_ago_utc:
+            start_date_utc = start_date_utc + relativedelta(months=1)
+
+        self.start_date = start_date_utc
 
         return self
 

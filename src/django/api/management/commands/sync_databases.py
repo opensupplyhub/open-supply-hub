@@ -965,7 +965,7 @@ class DatabaseSynchronizer:
                     f'for {model_name}: {e}.')
 
         # Return a very old date if no last run file exists.
-        return datetime(1970, 1, 1, tzinfo=timezone.get_default_timezone())
+        return datetime(1970, 1, 1, tzinfo=timezone.utc)
 
     def __save_last_run_timestamp(self, model_name, timestamp, suffix=''):
         '''Save the last run timestamp for a specific model.'''
