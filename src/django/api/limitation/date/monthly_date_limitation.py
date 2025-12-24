@@ -13,7 +13,7 @@ class MonthlyDateLimitation(DateLimitation):
         default_tz = timezone.get_default_timezone()
         start_date = period_start_date
         if timezone.is_naive(start_date):
-            start_date = start_date.replace(tzinfo=default_tz)
+            start_date = timezone.make_aware(start_date, default_tz)
         start_date_utc = start_date.astimezone(timezone.utc)
 
         one_month_ago_utc = (
