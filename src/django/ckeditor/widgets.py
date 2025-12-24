@@ -8,4 +8,3 @@ class CKEditorWidget(Textarea):
         # Ignore legacy config_name argument if provided.
         kwargs.pop("config_name", None)
         super().__init__(*args, **kwargs)
-
