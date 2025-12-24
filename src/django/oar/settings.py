@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import requests
+from django.db.models import options
 
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
@@ -20,6 +21,10 @@ from api.constants import NON_FIELD_ERRORS_KEY
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Compatibility: allow legacy `index_together` meta option for older migrations.
+if 'index_together' not in options.DEFAULT_NAMES:
+    options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('index_together',)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
