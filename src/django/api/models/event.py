@@ -7,7 +7,12 @@ from api.constants import FacilityHistoryActions
 
 class Event(models.Model):
     class Meta:
-        index_together = (('content_type', 'object_id'),)
+        indexes = [
+            models.Index(
+                fields=['content_type', 'object_id'],
+                name='api_event_content_object_idx',
+            ),
+        ]
 
     EVENT_TYPE_CHOICES = (
         (FacilityHistoryActions.CREATE, FacilityHistoryActions.CREATE),

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import requests
+from django.db.models import options
 
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
@@ -21,11 +22,26 @@ from api.constants import NON_FIELD_ERRORS_KEY
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Compatibility: allow legacy `index_together` meta option so immutable older
+# migrations (e.g., Django<5 era) continue to load without edits.
+if 'index_together' not in options.DEFAULT_NAMES:
+    options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('index_together',)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
+
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'link', 'bulletedList', 'numberedList',
+            'blockQuote',
+        ],
+    },
+}
 
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
@@ -123,11 +139,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_gis',
     'drf_yasg',
-    'rest_auth',
+    'dj_rest_auth',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'rest_auth.registration',
+    'dj_rest_auth.registration',
     'watchman',
     'simple_history',
     'waffle',
@@ -135,7 +151,7 @@ INSTALLED_APPS = [
     'web',
     'ecsmanage',
     'django_bleach',
-    'ckeditor',
+    'django_ckeditor_5',
     'jsoneditor',
 ]
 
@@ -209,6 +225,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Clickjacking protection is turned off to allow iframes:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -581,7 +598,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 # CORS_ALLOWED_ORIGIN_REGEXES = json.loads(os.getenv('CORS_ALLOWED_ORIGIN_REGEXES'))
 
-CORS_REPLACE_HTTPS_REFERER = True
 
 # django-storages
 # Reference # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
