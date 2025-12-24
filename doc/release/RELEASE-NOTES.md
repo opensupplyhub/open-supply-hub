@@ -34,6 +34,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
 * [OSDEV-2318](https://opensupplyhub.atlassian.net/browse/OSDEV-2318) - Updated Terraform version from `1.5` to `1.13.3`. Upgraded Kafka from the `3.4.0` to `3.9.0` to align with the current AWS MSK supported version.
 * [OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Added CloudFront caching for the facilities and production-location OS ID endpoints, refactored the Terraform config to use endpoint-specific TTL variables, and set per-environment durations (30 minutes for Prod/RBA/Preprod/Staging, 1 minute for Dev/Test). CloudFront still caches only GET/HEAD/OPTIONS while allowing all HTTP methods to reach the origin.
+* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
+    * Upgraded Python from `3.8` to `3.11`.
+    * Upgraded Django from `3.2.17` to `5.1.3`.
+    * Upgraded Python and Django packages to conform compatibility.
 
 ### Bugfix
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
@@ -48,10 +52,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Removed the FE request to `GET /api/parent-companies/`.
     * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
 * [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
-* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
-    * Upgraded Python from `3.8` to `3.11`.
-    * Upgraded Django from `3.2.17` to `5.1.3`.
-    * Upgraded Python and Django packages to conform compatibility.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
