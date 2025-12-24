@@ -10,7 +10,7 @@ from api.limitation.date.date_limitation import (
 class MonthlyDateLimitation(DateLimitation):
 
     def execute(self, period_start_date: datetime):
-        utc = timezone.utc
+        utc = timezone.get_default_timezone()
         self.start_date = period_start_date
 
         one_month_in_past = datetime.now(tz=utc) - relativedelta(months=1)
