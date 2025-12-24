@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.core.cache import cache
-from ckeditor.fields import RichTextField
+from django_ckeditor_5.fields import CKEditor5Field
 from api.constants import PARTNER_FIELD_LIST_KEY
 
 
@@ -57,10 +57,9 @@ class PartnerField(models.Model):
         max_length=500,
         blank=True,
     )
-    source_by = RichTextField(
+    source_by = CKEditor5Field(
         blank=True,
         null=True,
-        config_name='default',
         help_text=(
             'Rich text field describing '
             'the source of this partner field.'

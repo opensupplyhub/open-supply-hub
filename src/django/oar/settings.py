@@ -32,6 +32,16 @@ if 'index_together' not in options.DEFAULT_NAMES:
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'link', 'bulletedList', 'numberedList',
+            'blockQuote',
+        ],
+    },
+}
+
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 
@@ -140,7 +150,7 @@ INSTALLED_APPS = [
     'web',
     'ecsmanage',
     'django_bleach',
-    'ckeditor',
+    'django_ckeditor_5',
     'jsoneditor',
 ]
 
