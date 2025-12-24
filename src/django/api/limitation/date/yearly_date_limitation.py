@@ -10,10 +10,10 @@ from api.limitation.date.date_limitation import (
 class YearlyDateLimitation(DateLimitation):
 
     def execute(self, period_start_date: datetime):
-        utc = timezone.get_default_timezone()
+        default_tz = timezone.get_default_timezone()
         self.start_date = period_start_date
 
-        one_year_in_past = datetime.now(tz=utc) - relativedelta(years=1)
+        one_year_in_past = datetime.now(tz=default_tz) - relativedelta(years=1)
         while (self.start_date < one_year_in_past):
             self.start_date = self.start_date + relativedelta(years=1)
 
