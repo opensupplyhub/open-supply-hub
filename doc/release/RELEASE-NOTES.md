@@ -14,6 +14,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
+* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
+    * Upgraded Python from `3.8` to `3.11`.
+    * Upgraded Django from `3.2.17` to `5.1.3`.
+    * Upgraded Python and Django packages to conform compatibility.
 
 ### Bugfix
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
@@ -25,10 +29,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Used FE mocked sectors for the Sector input field.
     * Removed the FE request to `GET /api/parent-companies/`.
     * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
-* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
-    * Upgraded Python from `3.8` to `3.11`.
-    * Upgraded Django from `3.2.17` to `5.1.3`.
-    * Upgraded Python and Django packages to conform compatibility.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
