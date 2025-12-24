@@ -1,4 +1,4 @@
-from rest_auth.serializers import PasswordResetConfirmSerializer
+from dj_rest_auth.serializers import PasswordResetConfirmSerializer
 from django.db import transaction
 
 

@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_auth.views import LogoutView
+from dj_rest_auth.views import LogoutView
 from django.contrib.auth import logout
 
 from ...serializers.user.user_serializer import UserSerializer
