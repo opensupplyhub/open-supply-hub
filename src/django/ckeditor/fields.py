@@ -8,4 +8,3 @@ class RichTextField(models.TextField):
         # Legacy migrations pass config_name; ignore it for compatibility.
         kwargs.pop("config_name", None)
         super().__init__(*args, **kwargs)
-
