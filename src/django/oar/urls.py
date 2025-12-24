@@ -168,7 +168,7 @@ internal_apis = [
     path(
         'api-blocks/',
         views.ApiBlockViewSet.as_view({'get': 'list'}),
-        name='api-block',
+        name='api-block-internal',
     ),
     path('api/admin-facility-lists/', views.AdminFacilityListView.as_view(),
          name='admin-facility-lists'),
