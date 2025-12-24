@@ -23,7 +23,8 @@ from api.constants import NON_FIELD_ERRORS_KEY
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Compatibility: allow legacy `index_together` meta option for older migrations.
+# Compatibility: allow legacy `index_together` meta option so immutable older
+# migrations (e.g., Django<5 era) continue to load without edits.
 if 'index_together' not in options.DEFAULT_NAMES:
     options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('index_together',)
 
