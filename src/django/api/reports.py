@@ -50,7 +50,10 @@ def monthly_promoted_name_and_address():
 def geocoding_time_without_queue(date_format):
     temp_data = dict()
 
-    start_date = datetime.now(tz=timezone.utc) - relativedelta(months=4)
+    start_date = (
+        datetime.now(tz=timezone.get_default_timezone())
+        - relativedelta(months=4)
+    )
     processing_results = FacilityListItem.objects.filter(
         created_at__gte=start_date,
         processing_results__contains=[{"action": "geocode"}]
@@ -89,7 +92,10 @@ def weekly_geocoding_time_without_queue():
 
 def geocoding_time_with_queue(date_format):
     temp_data = dict()
-    start_date = datetime.now(tz=timezone.utc) - relativedelta(months=4)
+    start_date = (
+        datetime.now(tz=timezone.get_default_timezone())
+        - relativedelta(months=4)
+    )
     listitems = FacilityListItem.objects.filter(
         created_at__gte=start_date,
         processing_results__contains=[{"action": "geocode"}]
