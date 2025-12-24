@@ -123,11 +123,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_gis',
     'drf_yasg',
-    'rest_auth',
+    'dj_rest_auth',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'rest_auth.registration',
+    'dj_rest_auth.registration',
     'watchman',
     'simple_history',
     'waffle',
@@ -209,6 +209,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Clickjacking protection is turned off to allow iframes:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -581,7 +582,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 # CORS_ALLOWED_ORIGIN_REGEXES = json.loads(os.getenv('CORS_ALLOWED_ORIGIN_REGEXES'))
 
-CORS_REPLACE_HTTPS_REFERER = True
 
 # django-storages
 # Reference # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
