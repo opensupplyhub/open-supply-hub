@@ -3,7 +3,10 @@ module "msk_cluster" {
   version = "2.1.0"
 
   name                   = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_version          = "3.9.0"
+  kafka_version          = "3.9.x"
+  create_configuration   = false
+  configuration_arn      = aws_msk_configuration.msk_config.arn
+  configuration_revision = aws_msk_configuration.msk_config.latest_revision
   number_of_broker_nodes = 2
   encryption_in_transit_client_broker = "PLAINTEXT"
   encryption_in_transit_in_cluster = "false"
