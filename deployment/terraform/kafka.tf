@@ -3,7 +3,7 @@ module "msk_cluster" {
   version = "2.1.0"
 
   name                   = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_version          = "3.4.0"
+  kafka_version          = "3.9.0"
   number_of_broker_nodes = 2
   encryption_in_transit_client_broker = "PLAINTEXT"
   encryption_in_transit_in_cluster = "false"
