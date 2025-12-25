@@ -22,6 +22,10 @@ resource "aws_msk_configuration" "msk_config" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [
+      kafka_versions,
+      server_properties,
+    ]
   }
 }
 
