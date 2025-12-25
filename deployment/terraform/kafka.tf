@@ -17,7 +17,7 @@ module "msk_cluster" {
 # safe to remove once the cluster is on 3.9.x and a matching config is managed.
 resource "aws_msk_configuration" "msk_config" {
   name            = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_versions  = ["3.4.0", "3.9.0"]
+  kafka_versions  = ["3.4.0", "3.9.x"]
   server_properties = ""
 
   lifecycle {
