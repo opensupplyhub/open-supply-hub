@@ -721,8 +721,6 @@ class FacilityHistoryEndpointTest(FacilityAPITestCaseBase):
         )
         data = json.loads(history_response.content)
         filtered_data = self.filter_out_manual_updated_at_action(data)
-
-        # Find the dissociation entry for the confirmed match
         expected_detail = "Dissociate facility {} from {} via list {}".format(
             self.facility_two.id,
             self.contributor.name,

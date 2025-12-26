@@ -10,6 +10,7 @@ from api.models.partner_field_manager import PartnerFieldManager
 
 logger = logging.getLogger(__name__)
 
+
 class PartnerField(models.Model):
     """
     Partner Field that will be protected for contribution.

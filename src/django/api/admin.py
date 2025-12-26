@@ -30,6 +30,7 @@ from api.reports import get_report_names, run_report
 
 logger = logging.getLogger(__name__)
 
+
 class ApiAdminSite(AdminSite):
     site_header = 'Open Supply Hub Admin'
 
@@ -319,7 +320,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
             except PartnerField.DoesNotExist:
                 logger.warning(
-                    f'Partner field `{self.instance.pk}` not found.'
+                    f'Partner field `{self.instance.pk}` not found. '
                     'System field must exist in database.'
                 )
 

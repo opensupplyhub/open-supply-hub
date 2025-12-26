@@ -482,7 +482,6 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         )
 
     def test_partner_fields_returns_dict(self):
-
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         data = FacilityIndexDetailsSerializer(facility_index).data
         partner_fields = data["properties"]["partner_fields"]
