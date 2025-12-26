@@ -124,7 +124,7 @@ resource "aws_service_discovery_service" "app" {
     }
   }
   health_check_custom_config {
-    failure_threshold = 5
+    failure_threshold = 1
   }
 
   # Remove after https://github.com/terraform-providers/terraform-provider-aws/issues/4853 is resolved
