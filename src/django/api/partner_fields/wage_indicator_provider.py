@@ -24,20 +24,24 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
         production_location: Facility,
     ) -> Optional[WageIndicatorCountryData]:
         """Fetch wage indicator data from database by country code."""
+        country_code = production_location.country_code
+
         try:
             return WageIndicatorCountryData.objects.get(
-                country_code=production_location.country_code,
+                country_code=country_code,
             )
         except WageIndicatorCountryData.DoesNotExist:
             logger.warning(
-                f"WageIndicator not found for `{production_location.country_code}` country code."
+                f"WageIndicator not found for `{country_code}` country code."
                 f"Production location `{production_location.id}` ID."
             )
 
         return None
 
     def _format_data(
-        self, raw_data: WageIndicatorCountryData, contributor_info: Dict[str, Any]
+        self,
+        raw_data: WageIndicatorCountryData,
+        contributor_info: Dict[str, Any],
     ) -> Dict[str, Any]:
         """
         Format wage indicator data into standard partner field structure.

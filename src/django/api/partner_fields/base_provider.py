@@ -77,9 +77,9 @@ class SystemPartnerFieldProvider(ABC):
         field_name = self._get_field_name()
 
         try:
-            partner_field = PartnerField.objects.get_all_including_inactive().get(
-                name=field_name
-            )
+            partner_field = PartnerField.objects \
+                .get_all_including_inactive() \
+                .get(name=field_name)
         except PartnerField.DoesNotExist:
             logger.error(
                 f"Partner field '{field_name}' not found. "

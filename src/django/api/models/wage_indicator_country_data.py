@@ -1,5 +1,11 @@
 import logging
-from django.db.models import Model, URLField, DateTimeField, CharField, TextChoices
+from django.db.models import (
+    Model,
+    URLField,
+    DateTimeField,
+    CharField,
+    TextChoices,
+)
 from django.core.cache import cache
 
 

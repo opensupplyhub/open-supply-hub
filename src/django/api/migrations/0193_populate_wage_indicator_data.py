@@ -2150,27 +2150,23 @@ WAGE_INDICATOR_DATA = [
     },
 ]
 
-# Link text configuration data.
 WAGE_INDICATOR_LINK_TEXT_DATA = [
     {
         'link_type': 'living_wage_link_national',
         'display_text': (
-            'View country living wage(in national language) '
-            'for this production location'
+            'Living Wage in national language'
         ),
     },
     {
         'link_type': 'minimum_wage_link_english',
         'display_text': (
-            'View country minimum wage(in english) '
-            'for this production location'
+            'Minimum Wage in English'
         ),
     },
     {
         'link_type': 'minimum_wage_link_national',
         'display_text': (
-            'View country minimum wage(in national language) '
-            'for this production location'
+            'Minimum Wage in national language'
         ),
     },
 ]
@@ -2199,7 +2195,6 @@ def populate_wage_indicator_data(apps, schema_editor):
         batch_size=100
     )
 
-    # Bulk create link text configuration records.
     link_text_configs = [
         WageIndicatorLinkTextConfig(**data)
         for data in WAGE_INDICATOR_LINK_TEXT_DATA
