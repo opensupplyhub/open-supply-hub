@@ -434,7 +434,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                     reverse=True
                 )
             except Exception as exc:
-                logger.error(
+                logger.warning(
                     f"Failed to serialize partner field '{field_name}': "
                     f"{exc}"
                 )

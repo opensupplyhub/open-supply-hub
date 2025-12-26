@@ -29,7 +29,7 @@ class SystemPartnerFieldProvider(ABC):
         field_name = self._get_field_name()
 
         if raw_data is None:
-            logger.error(
+            logger.warning(
                 f"No raw data found for '{field_name}' partner field. "
                 f"Production location '{production_location.id}' ID"
             )
@@ -38,7 +38,7 @@ class SystemPartnerFieldProvider(ABC):
         contributor_info = self.__get_contributor_info()
 
         if contributor_info is None:
-            logger.error(
+            logger.warning(
                 f"No contributor found for '{field_name}' partner field. "
                 f"Production location '{production_location.id}' ID"
             )
@@ -77,11 +77,10 @@ class SystemPartnerFieldProvider(ABC):
         field_name = self._get_field_name()
 
         try:
-            partner_field = PartnerField.objects.get_all_including_inactive().get(
-                name=field_name
-            )
+            objects = PartnerField.objects.get_all_including_inactive()
+            partner_field = objects.get(name=field_name)
         except PartnerField.DoesNotExist:
-            logger.error(
+            logger.warning(
                 f"Partner field '{field_name}' not found. "
                 "System field must exist in database."
             )
@@ -94,7 +93,7 @@ class SystemPartnerFieldProvider(ABC):
         )
 
         if not contributor:
-            logger.error(
+            logger.warning(
                 f"No contributor found for '{field_name}' partner field.",
             )
             return None
