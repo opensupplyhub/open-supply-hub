@@ -11,10 +11,8 @@ from django.db import migrations, models
 from django.contrib.gis.db import models as gis_models
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
 
-# Increase CSV field size limit to handle large geometry WKT strings
 csv.field_size_limit(sys.maxsize)
 
-# S3 key for the CSV file
 S3_CSV_KEY = 'data/us_county_tigerline_2025.csv'
 
 
@@ -173,4 +171,3 @@ class Migration(migrations.Migration):
             reverse_code=clean_tigerline_data
         ),
     ]
-
