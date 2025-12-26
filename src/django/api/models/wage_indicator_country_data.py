@@ -58,11 +58,11 @@ class WageIndicatorCountryData(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Wage Indicator - Country Data'
-        verbose_name_plural = 'Wage Indicator - Country Data'
+        verbose_name = 'WageIndicator country'
+        verbose_name_plural = 'WageIndicator countries'
 
     def __str__(self):
-        return f'Wage indicator country data for {self.country_code}'
+        return f'WageIndicator country data for {self.country_code}'
 
     def get_links_with_text(self):
         '''

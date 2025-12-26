@@ -25,7 +25,7 @@ class PartnerField(models.Model):
     )
 
     class Meta:
-        verbose_name_plural = 'partner field'
+        verbose_name_plural = 'Partner fields'
 
     uuid = models.UUIDField(
         default=uuid.uuid4,
