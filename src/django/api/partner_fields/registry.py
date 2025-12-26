@@ -22,6 +22,7 @@ class SystemPartnerFieldRegistry:
         self.__providers.extend(
             [
                 WageIndicatorProvider(),
+                MITLivingWageProvider(),
             ]
         )
 
