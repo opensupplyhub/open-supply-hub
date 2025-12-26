@@ -16,22 +16,6 @@ module "msk_cluster" {
   broker_node_security_groups = [aws_security_group.msk.id]
 }
 
-# Keep the current MSK configuration referenced intentionally; remove when no longer needed.
-resource "aws_msk_configuration" "msk_config" {
-  name              = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_versions    = ["3.4.0", "3.9.x"]
-  server_properties = ""
-
-  # Prevent Terraform from deleting the in-use MSK configuration.
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [
-      kafka_versions,
-      server_properties,
-    ]
-  }
-}
-
 resource "aws_security_group" "msk" {
   vpc_id = module.vpc.id
 
