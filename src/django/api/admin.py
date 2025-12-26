@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django import forms
 from django.urls import path
@@ -27,6 +28,7 @@ from api import models
 
 from api.reports import get_report_names, run_report
 
+logger = logging.getLogger(__name__)
 
 class ApiAdminSite(AdminSite):
     site_header = 'Open Supply Hub Admin'
@@ -288,12 +290,8 @@ class PartnerFieldAdminForm(forms.ModelForm):
         '''
         cleaned_data = super().clean()
 
-        # Only validate for existing system fields.
         if self.instance and self.instance.pk and self.instance.system_field:
-            from api.models.partner_field import PartnerField
-
             try:
-                # Get the original instance from database.
                 original = PartnerField.objects \
                     .get_all_including_inactive() \
                     .get(pk=self.instance.pk)
@@ -310,7 +308,6 @@ class PartnerFieldAdminForm(forms.ModelForm):
                     current_value = cleaned_data.get(field_name)
 
                     if original_value != current_value:
-                        # Add field-specific error.
                         self.add_error(
                             field_name,
                             f'{field_label} cannot be modified for '
@@ -321,7 +318,10 @@ class PartnerFieldAdminForm(forms.ModelForm):
                         )
 
             except PartnerField.DoesNotExist:
-                pass
+                logger.warning(
+                    f'Partner field `{self.instance.pk}` not found.'
+                    'System field must exist in database.'
+                )
 
         return cleaned_data
 
@@ -358,6 +358,7 @@ class PartnerFieldAdmin(admin.ModelAdmin):
                 'is a system-defined field.'
             )
             return False
+
         return super().has_delete_permission(request, obj)
 
     class Media:
@@ -385,9 +386,9 @@ class WageIndicatorCountryDataAdmin(admin.ModelAdmin):
         '''
         Make country_code readonly when editing, but editable when creating.
         '''
-        if obj:  # Editing existing object.
+        if obj:
             return ('country_code', 'created_at', 'updated_at')
-        # Creating new object.
+
         return ('created_at', 'updated_at')
 
 
