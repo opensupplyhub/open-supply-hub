@@ -1,6 +1,7 @@
 from typing import List
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
+from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
 
 
 class SystemPartnerFieldRegistry:
@@ -21,6 +22,7 @@ class SystemPartnerFieldRegistry:
         self.__providers.extend(
             [
                 WageIndicatorProvider(),
+                MITLivingWageProvider(),
             ]
         )
 

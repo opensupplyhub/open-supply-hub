@@ -31,6 +31,18 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             django \
             manage.py collectstatic --noinput
 
+        # Setup MinIO backend for local development
+        docker compose exec minio bash \
+          -c "mc alias set dockerminio http://minio:9000 minioadmin minioadmin"
+        docker compose exec minio bash -c "mc mb dockerminio/os-hub-dev"
+        docker compose exec minio bash \
+          -c "mkdir -p /fixtures"
+        docker compose cp ./src/django/api/fixtures minio:/fixtures
+        docker compose exec minio bash \
+          -c "mc cp --recursive /fixtures/* dockerminio/os-hub-dev/api/"
+        docker compose exec minio bash \
+          -c "rm -rf /fixtures"
+
         # Populate database with seeded facility lists.
         echo "Populating database with seeded facility lists..."
         ./scripts/reset_database
@@ -56,7 +68,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         # Launch the rest of the services.
         echo "Launching the rest of the services..."
         docker compose up -d
-        
+
         echo "Process completed successfully!"
     fi
 fi

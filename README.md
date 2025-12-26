@@ -92,6 +92,33 @@ docker compose exec -T database pg_restore --verbose --clean --if-exists --no-ac
 docker compose up logstash
 ```
 
+### US County Tigerline Data Setup
+
+The platform uses US County Tigerline geometry data for MIT Living Wage integration. This data is loaded via Django migrations and can be sourced from either a CSV file in S3/MinIO or fixture data for local development.
+
+#### Local Development
+
+For local development, there are two options:
+
+1. **Using CSV file (recommended for full dataset)**:
+   - Place `us_county_tigerline_2025.csv` in the `src/django/` directory
+   - The `init-minio` service will automatically upload it to MinIO during container startup
+   - The migration will download it from MinIO and populate the database
+
+2. **Using fixture data (default for quick setup)**:
+   - If the CSV file is not found, the migration will skip data population gracefully
+   - Fixture data is automatically loaded via the `load_fixtures` management command
+   - The fixture file `src/django/api/fixtures/us_county_tigerline.json` contains sample county data for testing
+
+The fixture data is included in the `load_fixtures` command and will be loaded when running:
+```
+./scripts/manage load_fixtures
+```
+
+This is automatically executed as part of `./scripts/start_local_dev`.
+
+**Note**: The MinIO service is automatically configured in `docker-compose.yml` to create the required bucket and upload the CSV file if it exists in the `src/django/` directory.
+
 ### Creation of Superusers
 
 For local development we could create a superuser by Django Shell:
