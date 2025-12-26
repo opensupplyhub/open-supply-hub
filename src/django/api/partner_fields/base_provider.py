@@ -77,9 +77,9 @@ class SystemPartnerFieldProvider(ABC):
         field_name = self._get_field_name()
 
         try:
-            partner_field = PartnerField.objects \
-                .get_all_including_inactive() \
-                .get(name=field_name)
+            partner_field = PartnerField.objects.get_all_including_inactive().get(
+                name=field_name
+            )
         except PartnerField.DoesNotExist:
             logger.error(
                 f"Partner field '{field_name}' not found. "
@@ -87,13 +87,13 @@ class SystemPartnerFieldProvider(ABC):
             )
             return None
 
-        try:
-            contributor = (
-                Contributor.objects.filter(partner_fields=partner_field)
-                .order_by("id")
-                .first()
-            )
-        except Contributor.DoesNotExist:
+        contributor = (
+            Contributor.objects.filter(partner_fields=partner_field)
+            .order_by("id")
+            .first()
+        )
+
+        if not contributor:
             logger.error(
                 f"No contributor found for '{field_name}' partner field.",
             )
