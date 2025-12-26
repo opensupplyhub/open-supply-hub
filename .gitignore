@@ -12,6 +12,7 @@ __pycache__/
 *.tfstate
 *.tfstate.backup
 .terraform.lock*
+deployment/environments/ci-deployment/*.tfvars
 
 
 # Ansible

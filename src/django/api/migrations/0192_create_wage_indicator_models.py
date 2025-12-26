@@ -5,114 +5,100 @@ from django.db.models import URLField, DateTimeField, CharField
 
 
 class Migration(Migration):
-
     dependencies = [
-        ('api', '0191_create_wage_indicator_partner_field'),
+        ("api", "0191_create_wage_indicator_partner_field"),
     ]
 
     operations = [
         CreateModel(
-            name='WageIndicatorCountryData',
+            name="WageIndicatorCountryData",
             fields=[
                 (
-                    'country_code',
+                    "country_code",
                     CharField(
                         help_text=(
-                            'ISO 3166-1 alpha-2 country code '
-                            '(e.g., US, GB, CN).'
+                            "ISO 3166-1 alpha-2 country code (e.g., US, GB, CN)."
                         ),
                         max_length=2,
                         primary_key=True,
-                        serialize=False
-                    )
+                        serialize=False,
+                    ),
                 ),
                 (
-                    'living_wage_link_national',
+                    "living_wage_link_national",
                     URLField(
-                        help_text=(
-                            'Living wage benchmark link in national '
-                            'language.'
-                        ),
-                        max_length=500
-                    )
+                        help_text=("Living wage benchmark link in national language."),
+                        max_length=500,
+                    ),
                 ),
                 (
-                    'minimum_wage_link_english',
+                    "minimum_wage_link_english",
                     URLField(
-                        help_text=(
-                            'Minimum wage information link in English.'
-                        ),
-                        max_length=500
-                    )
+                        help_text=("Minimum wage information link in English."),
+                        max_length=500,
+                    ),
                 ),
                 (
-                    'minimum_wage_link_national',
+                    "minimum_wage_link_national",
                     URLField(
                         help_text=(
-                            'Minimum wage information link in national '
-                            'language.'
+                            "Minimum wage information link in national language."
                         ),
-                        max_length=500
-                    )
+                        max_length=500,
+                    ),
                 ),
-                ('created_at', DateTimeField(auto_now_add=True)),
-                ('updated_at', DateTimeField(auto_now=True)),
+                ("created_at", DateTimeField(auto_now_add=True)),
+                ("updated_at", DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'Wage Indicator - Country Data',
-                'verbose_name_plural': 'Wage Indicator - Country Data',
+                "verbose_name": "WageIndicator country",
+                "verbose_name_plural": "WageIndicator countries",
             },
         ),
         CreateModel(
-            name='WageIndicatorLinkTextConfig',
+            name="WageIndicatorLinkTextConfig",
             fields=[
                 (
-                    'link_type',
+                    "link_type",
                     CharField(
                         choices=[
+                            ("living_wage_link_national", "Living Wage Link National"),
+                            ("minimum_wage_link_english", "Minimum Wage Link English"),
                             (
-                                'living_wage_link_national',
-                                'Living Wage Link National'
-                            ),
-                            (
-                                'minimum_wage_link_english',
-                                'Minimum Wage Link English'
-                            ),
-                            (
-                                'minimum_wage_link_national',
-                                'Minimum Wage Link National'
+                                "minimum_wage_link_national",
+                                "Minimum Wage Link National",
                             ),
                         ],
                         help_text=(
-                            'Type of wage indicator link. The choices are '
-                            'field names in the WageIndicatorCountryData '
-                            'model. This field is a connector to relevant URL '
-                            'field in the WageIndicatorCountryData model.'
+                            "Type of wage indicator link. The choices are "
+                            "field names in the WageIndicatorCountryData "
+                            "model. This field is a connector to relevant URL "
+                            "field in the WageIndicatorCountryData model."
                         ),
                         max_length=50,
                         primary_key=True,
-                        serialize=False
-                    )
+                        serialize=False,
+                    ),
                 ),
                 (
-                    'display_text',
+                    "display_text",
                     CharField(
                         help_text=(
-                            'Display text to show for this link type. This is '
-                            'the text that will be shown to the user when '
-                            'they click on the wage indicator link of the '
-                            'relevant type like living wage link national, '
-                            'minimum wage link English, etc.'
+                            "Display text to show for this link type. This is "
+                            "the text that will be shown to the user when "
+                            "they click on the wage indicator link of the "
+                            "relevant type like living wage link national, "
+                            "minimum wage link English, etc."
                         ),
-                        max_length=200
-                    )
+                        max_length=200,
+                    ),
                 ),
-                ('created_at', DateTimeField(auto_now_add=True)),
-                ('updated_at', DateTimeField(auto_now=True)),
+                ("created_at", DateTimeField(auto_now_add=True)),
+                ("updated_at", DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'Wage Indicator - Link Text',
-                'verbose_name_plural': 'Wage Indicator - Link Texts',
+                "verbose_name": "WageIndicator link labels",
+                "verbose_name_plural": "WageIndicator link labels",
             },
         ),
     ]

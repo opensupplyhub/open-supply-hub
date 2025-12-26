@@ -257,6 +257,96 @@ class FacilityClaimTest(APITestCase):
         self.assertEqual(claim.energy_other, 30000)
 
     @override_switch("claim_a_facility", active=True)
+    def test_update_claim_emissions_and_other_fields(self):
+        """
+        Update approved claim via PUT and validate
+        emissions and other fields.
+        """
+        self.client.post(
+            "/user-login/",
+            {"email": self.email, "password": self.password},
+            format="json",
+        )
+
+        claim = FacilityClaim.objects.create(
+            facility=self.facility,
+            contributor=self.contributor,
+            status=FacilityClaimStatuses.APPROVED,
+        )
+        claim_url = reverse(
+            "facility-claim-get-claimed-details",
+            args=[claim.id],
+        )
+
+        update_payload = {
+            "opening_date": "2021-01-01",
+            "closing_date": "2022-01-01",
+            "estimated_annual_throughput": 123456,
+            "energy_coal": 10,
+            "energy_natural_gas": 20,
+            "energy_diesel": 30,
+            "energy_kerosene": 40,
+            "energy_biomass": 50,
+            "energy_charcoal": 60,
+            "energy_animal_waste": 70,
+            "energy_electricity": 80,
+            "energy_other": 90,
+            "facility_description": "Updated description",
+            "facility_name_english": "Updated name",
+            "facility_address": "Updated address",
+            "facility_phone_number": "+1-111-2222",
+            "facility_phone_number_publicly_visible": False,
+            "facility_website": "https://updated.com",
+            "facility_website_publicly_visible": False,
+            "facility_minimum_order_quantity": "2000 pcs",
+            "facility_average_lead_time": "30 days",
+            "point_of_contact_person_name": "POC Name",
+            "point_of_contact_email": "poc@example.com",
+            "point_of_contact_publicly_visible": False,
+            "office_official_name": "Updated Office",
+            "office_address": "Updated Office Address",
+            "office_country_code": "US",
+            "office_phone_number": "+1-333-4444",
+            "office_info_publicly_visible": False,
+        }
+
+        response = self.client.put(claim_url, update_payload, format="json")
+        self.assertEqual(200, response.status_code)
+
+        claim.refresh_from_db()
+        self.assertEqual(claim.opening_date, date(2021, 1, 1))
+        self.assertEqual(claim.closing_date, date(2022, 1, 1))
+        self.assertEqual(claim.estimated_annual_throughput, 123456)
+        self.assertEqual(claim.energy_coal, 10)
+        self.assertEqual(claim.energy_natural_gas, 20)
+        self.assertEqual(claim.energy_diesel, 30)
+        self.assertEqual(claim.energy_kerosene, 40)
+        self.assertEqual(claim.energy_biomass, 50)
+        self.assertEqual(claim.energy_charcoal, 60)
+        self.assertEqual(claim.energy_animal_waste, 70)
+        self.assertEqual(claim.energy_electricity, 80)
+        self.assertEqual(claim.energy_other, 90)
+        self.assertEqual(claim.facility_description, "Updated description")
+        self.assertEqual(claim.facility_name_english, "Updated name")
+        self.assertEqual(claim.facility_address, "Updated address")
+        self.assertEqual(claim.facility_phone_number, "+1-111-2222")
+        self.assertEqual(claim.facility_website, "https://updated.com")
+        self.assertEqual(claim.facility_minimum_order_quantity, "2000 pcs")
+        self.assertEqual(claim.facility_average_lead_time, "30 days")
+        self.assertEqual(
+            claim.point_of_contact_person_name,
+            "POC Name",
+        )
+        self.assertEqual(
+            claim.point_of_contact_email,
+            "poc@example.com",
+        )
+        self.assertEqual(claim.office_official_name, "Updated Office")
+        self.assertEqual(claim.office_address, "Updated Office Address")
+        self.assertEqual(claim.office_country_code, "US")
+        self.assertEqual(claim.office_phone_number, "+1-333-4444")
+
+    @override_switch("claim_a_facility", active=True)
     def test_create_claim_with_invalid_energy_value(self):
         """Test that creating a claim with invalid energy values fails."""
         self.client.post(

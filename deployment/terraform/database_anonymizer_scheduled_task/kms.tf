@@ -1,5 +1,3 @@
-provider "random" {}
-
 resource "random_id" "database_anonymizer" {
   byte_length = 4
 }

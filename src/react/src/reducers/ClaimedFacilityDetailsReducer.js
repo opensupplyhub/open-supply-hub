@@ -2,6 +2,7 @@ import { createReducer } from 'redux-act';
 import update from 'immutability-helper';
 import orderBy from 'lodash/orderBy';
 import identity from 'lodash/identity';
+import isString from 'lodash/isString';
 
 import {
     startFetchClaimedFacilityDetails,
@@ -37,6 +38,27 @@ import {
     updateClaimedFacilityCertifications,
     updateClaimedFacilityProductTypes,
     updateClaimedFacilityProductionTypes,
+    updateClaimedFacilityOpeningDate,
+    updateClaimedFacilityClosingDate,
+    updateClaimedEstimatedAnnualThroughput,
+    updateClaimedEnergyCoal,
+    updateClaimedEnergyNaturalGas,
+    updateClaimedEnergyDiesel,
+    updateClaimedEnergyKerosene,
+    updateClaimedEnergyBiomass,
+    updateClaimedEnergyCharcoal,
+    updateClaimedEnergyAnimalWaste,
+    updateClaimedEnergyElectricity,
+    updateClaimedEnergyOther,
+    updateClaimedEnergyCoalEnabled,
+    updateClaimedEnergyNaturalGasEnabled,
+    updateClaimedEnergyDieselEnabled,
+    updateClaimedEnergyKeroseneEnabled,
+    updateClaimedEnergyBiomassEnabled,
+    updateClaimedEnergyCharcoalEnabled,
+    updateClaimedEnergyAnimalWasteEnabled,
+    updateClaimedEnergyElectricityEnabled,
+    updateClaimedEnergyOtherEnabled,
 } from '../actions/claimedFacilityDetails';
 
 const initialState = Object.freeze({
@@ -49,6 +71,69 @@ const initialState = Object.freeze({
         fetching: false,
         error: null,
     }),
+});
+
+const setDataField = key => (state, payload) =>
+    update(state, {
+        updateData: {
+            error: { $set: initialState.updateData.error },
+        },
+        data: {
+            [key]: { $set: payload },
+        },
+    });
+
+const CLAIMED_EMISSIONS_FIELDS = [
+    [updateClaimedFacilityOpeningDate, 'opening_date'],
+    [updateClaimedFacilityClosingDate, 'closing_date'],
+    [updateClaimedEstimatedAnnualThroughput, 'estimated_annual_throughput'],
+    [updateClaimedEnergyCoal, 'energy_coal'],
+    [updateClaimedEnergyNaturalGas, 'energy_natural_gas'],
+    [updateClaimedEnergyDiesel, 'energy_diesel'],
+    [updateClaimedEnergyKerosene, 'energy_kerosene'],
+    [updateClaimedEnergyBiomass, 'energy_biomass'],
+    [updateClaimedEnergyCharcoal, 'energy_charcoal'],
+    [updateClaimedEnergyAnimalWaste, 'energy_animal_waste'],
+    [updateClaimedEnergyElectricity, 'energy_electricity'],
+    [updateClaimedEnergyOther, 'energy_other'],
+];
+
+const CLAIMED_EMISSIONS_ENABLED_FIELDS = [
+    [updateClaimedEnergyCoalEnabled, 'energy_coal_enabled'],
+    [updateClaimedEnergyNaturalGasEnabled, 'energy_natural_gas_enabled'],
+    [updateClaimedEnergyDieselEnabled, 'energy_diesel_enabled'],
+    [updateClaimedEnergyKeroseneEnabled, 'energy_kerosene_enabled'],
+    [updateClaimedEnergyBiomassEnabled, 'energy_biomass_enabled'],
+    [updateClaimedEnergyCharcoalEnabled, 'energy_charcoal_enabled'],
+    [updateClaimedEnergyAnimalWasteEnabled, 'energy_animal_waste_enabled'],
+    [updateClaimedEnergyElectricityEnabled, 'energy_electricity_enabled'],
+    [updateClaimedEnergyOtherEnabled, 'energy_other_enabled'],
+];
+
+const claimedEmissionsReducers = Object.fromEntries(
+    CLAIMED_EMISSIONS_FIELDS.map(([action, key]) => [
+        action,
+        setDataField(key),
+    ]),
+);
+
+const claimedEmissionsEnabledReducers = Object.fromEntries(
+    CLAIMED_EMISSIONS_ENABLED_FIELDS.map(([action, key]) => [
+        action,
+        setDataField(key),
+    ]),
+);
+
+const deriveEnergyEnabledFlags = data => ({
+    energy_coal_enabled: Boolean(data.energy_coal),
+    energy_natural_gas_enabled: Boolean(data.energy_natural_gas),
+    energy_diesel_enabled: Boolean(data.energy_diesel),
+    energy_kerosene_enabled: Boolean(data.energy_kerosene),
+    energy_biomass_enabled: Boolean(data.energy_biomass),
+    energy_charcoal_enabled: Boolean(data.energy_charcoal),
+    energy_animal_waste_enabled: Boolean(data.energy_animal_waste),
+    energy_electricity_enabled: Boolean(data.energy_electricity),
+    energy_other_enabled: Boolean(data.energy_other),
 });
 
 export default createReducer(
@@ -76,6 +161,7 @@ export default createReducer(
                 data: {
                     $set: {
                         ...data,
+                        ...deriveEnergyEnabledFlags(data),
                         initial_facility_address: data.facility_address,
                     },
                 },
@@ -102,6 +188,7 @@ export default createReducer(
                 data: {
                     $set: {
                         ...data,
+                        ...deriveEnergyEnabledFlags(data),
                         initial_facility_address: data.facility_address,
                     },
                 },
@@ -223,7 +310,16 @@ export default createReducer(
                     error: { $set: initialState.updateData.error },
                 },
                 data: {
-                    facility_parent_company: { $set: parentCompany },
+                    facility_parent_company: {
+                        $set: isString(parentCompany)
+                            ? { id: null, name: parentCompany }
+                            : parentCompany,
+                    },
+                    parent_company_name: {
+                        $set: isString(parentCompany)
+                            ? parentCompany
+                            : parentCompany?.name || '',
+                    },
                 },
             }),
         [updateClaimedFacilityPointOfContactVisibility]: (state, visible) =>
@@ -352,6 +448,8 @@ export default createReducer(
                     office_phone_number: { $set: phone },
                 },
             }),
+        ...claimedEmissionsReducers,
+        ...claimedEmissionsEnabledReducers,
         [clearClaimedFacilityDetails]: () => initialState,
     },
     initialState,

@@ -5,28 +5,25 @@ from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
 
 
 class SystemPartnerFieldRegistry:
-    '''Registry for system-generated partner field providers.'''
+    """Registry for system-generated partner field providers."""
 
     def __init__(self):
-        '''Initialize and register all system partner field providers.'''
+        """Initialize and register all system partner field providers."""
         self.__providers: List[SystemPartnerFieldProvider] = []
         self.__register_providers()
 
     @property
     def providers(self) -> List[SystemPartnerFieldProvider]:
-        '''Get all registered providers.'''
+        """Get all registered providers."""
         return self.__providers
 
     def __register_providers(self) -> None:
-        '''Register all system partner field providers.'''
-        # Add new providers here as needed.
-        providers = [
-            WageIndicatorProvider(),
-            MITLivingWageProvider(),
-        ]
-        for provider in providers:
-            self.__providers.append(provider)
+        """Register all system partner field providers."""
+        self.__providers.extend(
+            [
+                WageIndicatorProvider(),
+            ]
+        )
 
 
-# Global registry instance.
 system_partner_field_registry = SystemPartnerFieldRegistry()

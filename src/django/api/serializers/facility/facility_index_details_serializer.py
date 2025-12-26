@@ -363,13 +363,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             use_main_created_at
         )
 
-        # Fetch system-generated partner fields.
         system_fields = self.__fetch_system_partner_fields(facility)
-
-        # Merge with facility.extended_fields.
         all_extended_fields = facility.extended_fields + system_fields
-
-        # Filter the combined list.
         fields = self._filter_contributor_extended_fields(
             all_extended_fields,
             request
@@ -439,7 +434,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                     reverse=True
                 )
             except Exception as exc:
-                logger.error(
+                logger.warning(
                     f"Failed to serialize partner field '{field_name}': "
                     f"{exc}"
                 )
@@ -456,11 +451,11 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         '''
         system_fields = []
 
-        # Get all registered providers.
         providers = system_partner_field_registry.providers
 
         for provider in providers:
             field_data = provider.fetch_data(production_location)
+
             if field_data is not None:
                 system_fields.append(field_data)
 

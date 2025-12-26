@@ -444,10 +444,12 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             return extended_fields
 
         embed = request.query_params.get('embed')
+
         if embed != '1':
             return extended_fields
 
         contributor_id = request.query_params.get('contributor')
+
         if contributor_id is None:
             contributor_ids = request.query_params.getlist('contributors', [])
             if contributor_ids:

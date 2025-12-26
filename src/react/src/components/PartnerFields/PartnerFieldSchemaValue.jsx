@@ -79,10 +79,10 @@ const PartnerFieldSchemaValue = ({
             partnerConfigFields,
         );
         if (rendered) {
-            // Add line break before the item if there are already items.
             if (acc.length > 0) {
                 acc.push(<br />);
             }
+
             acc.push(rendered);
         }
         return acc;

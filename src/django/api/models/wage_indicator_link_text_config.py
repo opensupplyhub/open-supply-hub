@@ -34,8 +34,8 @@ class WageIndicatorLinkTextConfig(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'Wage Indicator - Link Text'
-        verbose_name_plural = 'Wage Indicator - Link Texts'
+        verbose_name = 'WageIndicator link label'
+        verbose_name_plural = 'WageIndicator link labels'
 
     def __str__(self):
         return ("The wage indicator link "

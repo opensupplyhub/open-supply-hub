@@ -30,8 +30,6 @@ class WageIndicatorProviderTest(TestCase):
             contrib_type=Contributor.CONTRIB_TYPE_CHOICES[0][0],
         )
 
-        # Get or create wage_indicator partner field.
-        # Use get_all_including_inactive to access existing system field.
         try:
             self.partner_field = PartnerField.objects \
                 .get_all_including_inactive() \
@@ -45,14 +43,11 @@ class WageIndicatorProviderTest(TestCase):
                 active=True
             )
 
-        # Clear all existing contributors and set only this contributor
-        # to ensure test isolation from previous tests.
         self.partner_field.contributor_set.clear()
         self.contributor.partner_fields.add(self.partner_field)
         self.partner_field.refresh_from_db()
 
-        # Create test production location with valid country code.
-        self.test_country_code = 'GB'  # Use GB for testing.
+        self.test_country_code = 'GB'
         facility_list = FacilityList.objects.create(
             header='header',
             file_name='test',
@@ -96,12 +91,10 @@ class WageIndicatorProviderTest(TestCase):
         list_item.facility = self.facility
         list_item.save()
 
-        # Clean up any existing wage data for test country.
         WageIndicatorCountryData.objects.filter(
             country_code=self.test_country_code
         ).delete()
 
-        # Create wage indicator data for test country.
         self.wage_data = WageIndicatorCountryData.objects.create(
             country_code=self.test_country_code,
             living_wage_link_national='https://test.example.com/living',
@@ -113,9 +106,7 @@ class WageIndicatorProviderTest(TestCase):
 
     def tearDown(self):
         '''Clean up test data but preserve system partner field.'''
-        # Remove contributor assignments.
         self.partner_field.contributor_set.clear()
-        # Clean up test wage data.
         WageIndicatorCountryData.objects.filter(
             country_code=self.test_country_code
         ).delete()
@@ -187,7 +178,6 @@ class WageIndicatorProviderTest(TestCase):
 
     def test_fetch_data_no_contributor_assigned(self):
         '''Test fetch_data returns None when no contributor assigned.'''
-        # Remove contributor from partner field.
         self.contributor.partner_fields.remove(self.partner_field)
 
         data = self.provider.fetch_data(self.facility)
@@ -195,11 +185,9 @@ class WageIndicatorProviderTest(TestCase):
 
     def test_fetch_data_partner_field_inactive(self):
         '''Test fetch_data works when partner field is inactive.'''
-        # Set the partner field to inactive.
         self.partner_field.active = False
         self.partner_field.save()
 
-        # Should still work because provider uses get_all_including_inactive.
         data = self.provider.fetch_data(self.facility)
         self.assertIsNotNone(data)
 
@@ -207,7 +195,6 @@ class WageIndicatorProviderTest(TestCase):
         '''
         Test WageIndicatorLinkTextConfig customizes display text for links.
         '''
-        # Update existing or create link text config with custom text.
         custom_text = 'Custom Test Living Wage Text'
         WageIndicatorLinkTextConfig.objects \
             .update_or_create(
@@ -215,23 +202,17 @@ class WageIndicatorProviderTest(TestCase):
                 defaults={'display_text': custom_text}
             )
 
-        # Clear cache to ensure new config is used.
         cache.delete('wage_indicator_link_texts')
-
-        # Fetch data through provider.
         data = self.provider.fetch_data(self.facility)
 
         self.assertIsNotNone(data)
         raw_values = data['value']['raw_values']
 
-        # Check that custom text is used.
         self.assertIn('living_wage_link_national_text', raw_values)
         self.assertEqual(
             raw_values['living_wage_link_national_text'],
             custom_text
         )
-
-        # Verify link URL is still correct.
         self.assertEqual(
             raw_values['living_wage_link_national'],
             'https://test.example.com/living'
