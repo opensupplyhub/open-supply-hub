@@ -10,42 +10,6 @@ function usage() {
     "data in the database."
 }
 
-function setup_minio() {
-  MINIO_ALIAS="dockerminio"
-  MINIO_USER="minioadmin"
-  MINIO_PASSWORD="minioadmin"
-  echo "Setting up MinIO alias $MINIO_ALIAS..."
-  docker compose exec minio bash \
-          -c "mc alias set $MINIO_ALIAS http://minio:9000 $MINIO_USER $MINIO_PASSWORD"
-
-  MINIO_BUCKET="os-hub-dev"
-  echo "Creating MinIO bucket $MINIO_BUCKET..."
-  docker compose exec minio bash -c "mc mb --ignore-existing $MINIO_ALIAS/$MINIO_BUCKET"
-
-
-  echo "Copying fixtures to MinIO bucket $MINIO_BUCKET..."
-  docker compose exec minio bash \
-          -c "mkdir -p /fixtures"
-  docker compose cp ./src/django/api/fixtures minio:/fixtures
-  docker compose exec minio bash \
-          -c "mc cp --recursive /fixtures/* $MINIO_ALIAS/$MINIO_BUCKET/api/"
-  docker compose exec minio bash \
-          -c "rm -rf /fixtures"
-
-  TIGERLINE_CSV="us_county_tigerline_2025.csv"
-
-  if [ -f "./src/django/$TIGERLINE_CSV" ]; then
-    echo "Copying $TIGERLINE_CSV to MinIO bucket $MINIO_BUCKET..."
-    docker compose exec minio bash \
-          -c "mkdir -p /temp"
-    docker compose cp ./src/django/$TIGERLINE_CSV minio:/temp/$TIGERLINE_CSV
-    docker compose exec minio bash \
-        -c "mc cp --recursive /temp/* $MINIO_ALIAS/$MINIO_BUCKET/data/"
-    docker compose exec minio bash \
-        -c "rm -rf /temp"
-  fi
-}
-
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
@@ -66,9 +30,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm --entrypoint python \
             django \
             manage.py collectstatic --noinput
-
-        # Setup MinIO backend for local development
-        setup_minio
 
         # Populate database with seeded facility lists.
         echo "Populating database with seeded facility lists..."
