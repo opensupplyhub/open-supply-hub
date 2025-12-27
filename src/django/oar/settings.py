@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import requests
+import sys
 
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
@@ -596,7 +597,9 @@ if DEBUG and AWS_S3_ENDPOINT_URL:
 
 AWS_S3_FILE_OVERWRITE = False
 
-if not DEBUG or AWS_S3_ENDPOINT_URL:
+TESTING = 'test' in sys.argv
+
+if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')

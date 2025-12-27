@@ -105,7 +105,7 @@ For local development, there are two options:
    - Place `us_county_tigerline_2025.csv` in the `src/django/` directory
    - The migration will download it from MinIO and populate the database
 
-1. **Using fixture data (default for quick setup)**:
+2. **Using fixture data (default for quick setup)**:
    - If the CSV file is not found, the migration will skip data population gracefully
    - Fixture data is automatically loaded via the `load_fixtures` management command
    - The fixture file `src/django/api/fixtures/us_county_tigerline.json` contains sample county data for testing

@@ -1,7 +1,11 @@
+import logging
 from typing import Dict, Any, Optional
 from django.contrib.gis.geos import Point
 from api.models.us_county_tigerline import USCountyTigerline
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
+
+
+logger = logging.getLogger(__name__)
 
 
 class MITLivingWageProvider(SystemPartnerFieldProvider):
@@ -27,7 +31,8 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
             return None
 
         if not facility.location:
-            print(f'No location found for facility {facility.id}')
+            logger.info(
+                f'No location (lat, lng) found for facility {facility.id}')
             return None
 
         point = Point(
@@ -43,7 +48,9 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
                 geometry__contains=point_5070
             ).first()
         except Exception as e:
-            print(f'Error fetching geoid from database: {e}')
+            logger.warning(
+                f'Error fetching geoid for facility {facility.id}: {e}',
+            )
             return None
 
     def _format_data(

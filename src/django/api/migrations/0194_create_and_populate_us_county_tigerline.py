@@ -162,8 +162,8 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],
             options={
-                'verbose_name': 'US County Tigerline',
-                'verbose_name_plural': 'US County Tigerline',
+                'verbose_name': 'US County Boundary',
+                'verbose_name_plural': 'US Counties Boundaries',
             },
         ),
         migrations.RunPython(

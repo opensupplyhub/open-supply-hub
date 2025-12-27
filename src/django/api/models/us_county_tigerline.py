@@ -24,8 +24,8 @@ class USCountyTigerline(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'US County Tigerline'
-        verbose_name_plural = 'US Counties Tigerline'
+        verbose_name = 'US County Boundary'
+        verbose_name_plural = 'US Counties Boundaries'
 
     def __str__(self):
-        return f'US County Tigerline: {self.name} ({self.geoid})'
+        return f'US County Boundary: {self.name} ({self.geoid})'
