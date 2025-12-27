@@ -101,11 +101,11 @@ The platform uses US County Tigerline geometry data for MIT Living Wage integrat
 For local development, there are two options:
 
 1. **Using CSV file (recommended for full dataset)**:
+   - Download the CSV file from `s3://opensupplyhub-development-files-eu-west-1/data/us_county_tigerline_2025.csv`
    - Place `us_county_tigerline_2025.csv` in the `src/django/` directory
-   - The `init-minio` service will automatically upload it to MinIO during container startup
    - The migration will download it from MinIO and populate the database
 
-2. **Using fixture data (default for quick setup)**:
+1. **Using fixture data (default for quick setup)**:
    - If the CSV file is not found, the migration will skip data population gracefully
    - Fixture data is automatically loaded via the `load_fixtures` management command
    - The fixture file `src/django/api/fixtures/us_county_tigerline.json` contains sample county data for testing
@@ -116,8 +116,6 @@ The fixture data is included in the `load_fixtures` command and will be loaded w
 ```
 
 This is automatically executed as part of `./scripts/start_local_dev`.
-
-**Note**: The MinIO service is automatically configured in `docker-compose.yml` to create the required bucket and upload the CSV file if it exists in the `src/django/` directory.
 
 ### Creation of Superusers
 
@@ -251,4 +249,3 @@ To run the Playwright tests, use the following command:
 ```
 docker compose -f docker-compose.tests.yml run --rm --build --entrypoint "npx playwright test -c playwright.config.ts" playwright-test
 ```
-
