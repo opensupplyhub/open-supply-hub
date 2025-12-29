@@ -17,6 +17,7 @@ from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.models.wage_indicator_link_text_config import (
     WageIndicatorLinkTextConfig
 )
+from api.models.us_county_tigerline import USCountyTigerline
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
@@ -398,6 +399,12 @@ class WageIndicatorLinkTextConfigAdmin(admin.ModelAdmin):
     search_fields = ('link_type', 'display_text')
 
 
+class USCountyTigerlineAdmin(admin.ModelAdmin):
+    list_display = ('geoid', 'name')
+    search_fields = ('geoid', 'name')
+    readonly_fields = ('created_at', 'updated_at')
+
+
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -426,3 +433,4 @@ admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)
 admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
+admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
