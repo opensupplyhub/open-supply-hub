@@ -9,6 +9,10 @@ from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
 from contricleaner.lib.exceptions.parsing_error import ParsingError
 
+import logging
+import traceback
+logger = logging.getLogger(__name__)
+
 
 class SourceParserXLSX(SourceParser, FileParser):
     def get_parsed_rows(self) -> List[dict]:
@@ -47,6 +51,7 @@ class SourceParserXLSX(SourceParser, FileParser):
 
             return rows
         except Exception:
+            logger.error(f"Error parsing XLSX file: {traceback.format_exc()}")
             raise ParsingError(
                 'There was an error within your file and our team needs to '
                 'take a look. Please send your file to '
