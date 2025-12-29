@@ -72,8 +72,7 @@ class PartnerField(models.Model):
         blank=True,
         null=True,
         help_text=(
-            "Rich text field describing the "
-            "source of this partner field."
+            "Rich text field describing the source of this partner field."
         ),
     )
     json_schema = models.JSONField(

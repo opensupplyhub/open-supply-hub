@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0189_add_base_url_and_text_field_to_partner_field"),
+        ("api", "0194_switch_partner_field_source_by_editor"),
     ]
 
     operations = [

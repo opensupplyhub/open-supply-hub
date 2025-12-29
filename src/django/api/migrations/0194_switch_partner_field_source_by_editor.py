@@ -5,7 +5,7 @@ import django_ckeditor_5.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0190_add_event_index'),
+        ('api', '0193_populate_wage_indicator_data'),
     ]
 
     operations = [
