@@ -27,7 +27,7 @@ def populate_tigerline_data_wrapper(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0193_populate_wage_indicator_data'),
+        ('api', '0195_add_event_index'),
     ]
 
     operations = [
