@@ -62,6 +62,8 @@ jobs:
     needs: check-base
     if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: 6ea4840
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
@@ -179,6 +181,8 @@ jobs:
   apply:
     needs: [init-and-plan, detach-waf-if-needed]
     runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: 6ea4840
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
     steps:
