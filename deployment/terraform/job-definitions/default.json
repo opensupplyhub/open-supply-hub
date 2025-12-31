@@ -10,6 +10,7 @@
       { "name": "POSTGRES_USER", "value": "${postgres_user}" },
       { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
       { "name": "POSTGRES_DB", "value": "${postgres_db}" },
+      { "name": "DJANGO_SETTINGS_MODULE", "value": "oar.settings" },
       { "name": "DJANGO_ENV", "value": "${environment}" },
       { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
       { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
