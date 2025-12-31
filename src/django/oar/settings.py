@@ -309,7 +309,7 @@ MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
 # Use PyLibMCCache everywhere; django_elasticache is incompatible with Django 4
 # because it still imports smart_text. This keeps throttling cache working in
 # jobs/containers that upgrade Django.
-CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
+    CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
 CACHES = {
     'default': {
