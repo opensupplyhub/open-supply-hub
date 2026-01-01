@@ -15,6 +15,7 @@
       { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
       { "name": "BATCH_MODE", "value": "True" },
       { "name": "DJANGO_ENV", "value": "${environment}" },
+      { "name": "DJANGO_SETTINGS_MODULE", "value": "oar.settings" },
       { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
       { "name": "GOOGLE_SERVER_SIDE_API_KEY", "value": "${google_server_side_api_key}" },
       { "name": "OAR_CLIENT_KEY", "value": "${oar_client_key}" },

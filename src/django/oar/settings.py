@@ -614,17 +614,10 @@ AWS_S3_FILE_OVERWRITE = False
 
 TESTING = 'test' in sys.argv
 
-# Always force S3 when a bucket is configured (except during tests). This avoids
-# accidentally falling back to local filesystem when DEBUG is False but an env
-# is mis-set. Still allow Local+tests to use the default.
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-
-# Force S3-backed storage whenever a bucket is provided (including non-test
-# local runs), so default_storage/Model FileField storage cannot fall back to
-# the filesystem.
-if AWS_STORAGE_BUCKET_NAME:
+if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    FILE_UPLOAD_STORAGE = DEFAULT_FILE_STORAGE
+
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 
 if AWS_STORAGE_BUCKET_NAME is None and not DEBUG:
     raise ImproperlyConfigured(
