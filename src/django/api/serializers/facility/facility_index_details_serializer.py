@@ -1,14 +1,19 @@
+from collections import defaultdict
+from typing import Dict, List, Any
 from rest_framework.serializers import (
   SerializerMethodField,
 )
 from waffle import switch_is_active
+from django.core.cache import cache
 
-from api.constants import FacilityClaimStatuses
-from countries.lib.countries import COUNTRY_NAMES
+from api.constants import FacilityClaimStatuses, PARTNER_FIELD_LIST_KEY
+from api.partner_fields.registry import system_partner_field_registry
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
 from ...models.facility.facility_claim import FacilityClaim
+from ...models.partner_field import PartnerField
+from api.models.facility.facility import Facility
 from ...helpers.helpers import parse_raw_data, get_csv_values, prefix_a_an
 from ..utils import (
     is_embed_mode_active,
@@ -16,12 +21,16 @@ from ..utils import (
     get_contributor_name_new,
 )
 from .facility_index_serializer import FacilityIndexSerializer
+from .facility_index_extended_field_list_serializer import (
+    FacilityIndexExtendedFieldListSerializer
+)
 from .utils import (
     format_numeric,
     can_user_see_detail,
     should_show_pending_claim_info,
     get_contributor_name_from_facilityindex,
-    format_date
+    format_date,
+    is_created_at_main_date
 )
 
 
@@ -29,13 +38,10 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     other_names = SerializerMethodField()
     other_addresses = SerializerMethodField()
     other_locations = SerializerMethodField()
-    country_name = SerializerMethodField()
     claim_info = SerializerMethodField()
     activity_reports = SerializerMethodField()
     contributor_fields = SerializerMethodField()
-    extended_fields = SerializerMethodField()
     created_from = SerializerMethodField()
-    sector = SerializerMethodField()
     is_claimed = SerializerMethodField()
     partner_fields = SerializerMethodField()
 
@@ -161,9 +167,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 ]
 
         return claim_locations + facility_locations + facility_items_location
-
-    def get_country_name(self, facility):
-        return COUNTRY_NAMES.get(facility.country_code, '')
 
     def get_claim_info(self, facility):
         if not switch_is_active('claim_a_facility'):
@@ -351,3 +354,135 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_is_claimed(self, facility):
         return facility.approved_claim is not None
+
+    def get_partner_fields(self, facility):
+        request = self._get_request()
+
+        use_main_created_at = is_created_at_main_date(self)
+        date_field_to_sort = self._date_field_to_sort(
+            use_main_created_at
+        )
+
+        system_fields = self.__fetch_system_partner_fields(facility)
+        all_extended_fields = facility.extended_fields + system_fields
+        fields = self._filter_contributor_extended_fields(
+            all_extended_fields,
+            request
+        )
+        grouped_fields = self.__group_fields_by_name(
+            fields
+        )
+
+        user_can_see_detail = can_user_see_detail(self)
+        embed_mode_active = is_embed_mode_active(self)
+        partner_fields = self.__get_cached_partner_fields()
+
+        return self.__serialize_and_sort_partner_fields(
+            grouped_fields,
+            partner_fields,
+            user_can_see_detail,
+            embed_mode_active,
+            use_main_created_at,
+            date_field_to_sort
+        )
+
+    def __serialize_and_sort_partner_fields(
+        self,
+        grouped_fields: Dict[str, List[Dict[str, Any]]],
+        partner_fields: List[PartnerField],
+        user_can_see_detail: bool,
+        embed_mode_active: bool,
+        use_main_created_at: bool,
+        date_field_to_sort: str
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        import logging
+        logger = logging.getLogger(__name__)
+
+        grouped_data = {}
+        for field in partner_fields:
+            field_name = field.name
+            source_by = field.source_by
+            unit = field.unit
+            label = field.label
+            base_url = field.base_url
+            display_text = field.display_text
+            json_schema = field.json_schema
+            fields = grouped_fields.get(field_name, [])
+            if not fields:
+                continue
+
+            try:
+                serializer = FacilityIndexExtendedFieldListSerializer(
+                    fields,
+                    context={
+                        'user_can_see_detail': user_can_see_detail,
+                        'embed_mode_active': embed_mode_active,
+                        'source_by': source_by,
+                        'unit': unit,
+                        'label': label,
+                        'base_url': base_url,
+                        'display_text': display_text,
+                        'json_schema': json_schema
+                    },
+                    exclude_fields=(
+                        ['created_at'] if not use_main_created_at else []
+                    )
+                )
+                grouped_data[field_name] = sorted(
+                    serializer.data,
+                    key=lambda k: self._sort_order(k, date_field_to_sort),
+                    reverse=True
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"Failed to serialize partner field '{field_name}': "
+                    f"{exc}"
+                )
+                grouped_data[field_name] = []
+
+        return grouped_data
+
+    @staticmethod
+    def __fetch_system_partner_fields(production_location: Facility) -> list:
+        '''
+        Fetch all system-generated partner fields for the production location.
+        Returns list of formatted field data matching extended_fields
+        structure.
+        '''
+        system_fields = []
+
+        providers = system_partner_field_registry.providers
+
+        for provider in providers:
+            field_data = provider.fetch_data(production_location)
+
+            if field_data is not None:
+                system_fields.append(field_data)
+
+        return system_fields
+
+    @staticmethod
+    def __group_fields_by_name(
+        fields: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        grouped = defaultdict(list)
+        for field in fields:
+            name = field.get('field_name')
+            if name:
+                grouped[name].append(field)
+        return grouped
+
+    @staticmethod
+    def __get_cached_partner_fields():
+        cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
+
+        if cached_names is not None:
+            return cached_names
+
+        partner_fields = list(
+            PartnerField.objects.all()
+        )
+
+        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
+
+        return partner_fields

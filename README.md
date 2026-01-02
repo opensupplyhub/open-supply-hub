@@ -92,6 +92,31 @@ docker compose exec -T database pg_restore --verbose --clean --if-exists --no-ac
 docker compose up logstash
 ```
 
+### US County Tigerline Data Setup
+
+The platform uses US County Tigerline geometry data for MIT Living Wage integration. This data is loaded via Django migrations and can be sourced from either a CSV file in S3/MinIO or fixture data for local development.
+
+#### Local Development
+
+For local development, there are two options:
+
+1. **Using CSV file (recommended for full dataset)**:
+   - Download the CSV file from `s3://opensupplyhub-development-files-eu-west-1/data/us_county_tigerline_2025.csv`
+   - Place `us_county_tigerline_2025.csv` in the `src/django/` directory
+   - The migration will download it from MinIO and populate the database
+
+2. **Using fixture data (default for quick setup)**:
+   - If the CSV file is not found, the migration will skip data population gracefully
+   - Fixture data is automatically loaded via the `load_fixtures` management command
+   - The fixture file `src/django/api/fixtures/us_county_tigerline.json` contains sample county data for testing
+
+The fixture data is included in the `load_fixtures` command and will be loaded when running:
+```
+./scripts/manage load_fixtures
+```
+
+This is automatically executed as part of `./scripts/start_local_dev`.
+
 ### Creation of Superusers
 
 For local development we could create a superuser by Django Shell:
@@ -224,4 +249,3 @@ To run the Playwright tests, use the following command:
 ```
 docker compose -f docker-compose.tests.yml run --rm --build --entrypoint "npx playwright test -c playwright.config.ts" playwright-test
 ```
-

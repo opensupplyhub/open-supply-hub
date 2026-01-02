@@ -79,6 +79,10 @@ const PartnerFieldSchemaValue = ({
             partnerConfigFields,
         );
         if (rendered) {
+            if (acc.length > 0) {
+                acc.push(<br />);
+            }
+
             acc.push(rendered);
         }
         return acc;
