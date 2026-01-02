@@ -6,7 +6,7 @@ import Divider from '@material-ui/core/Divider';
  * Assumes ISIC data never contains this exact value; double-underscores reduce
  * collision risk.
  */
-export const ISIC_DIVIDER = '__ISIC_DIVIDER__';
+export const CONTRIBUTION_DATA_DIVIDER = '__CONTRIBUTION_DATA_DIVIDER__';
 
 const blockStyle = Object.freeze({
     margin: 0,
@@ -40,7 +40,7 @@ const renderUniqueListItems = (
         keySeq += 1;
         const key = `${fieldName}-${keySeq}`;
 
-        if (fieldName === 'isic_4' && value === ISIC_DIVIDER) {
+        if (fieldName === 'isic_4' && value === CONTRIBUTION_DATA_DIVIDER) {
             return <Divider key={key} style={dividerStyle} />;
         }
 
