@@ -161,12 +161,6 @@ class FacilityListViewSet(ModelViewSet):
             replaces=replaces,
             match_responsibility=contributor.match_responsibility)
         log.info(f'[List Upload] FacilityList created. ID {new_list.id}.')
-        log.info(
-            '[List Upload] File saved: name=%s bucket=%s storage=%s',
-            uploaded_file.name,
-            # getattr(settings, "AWS_STORAGE_BUCKET_NAME", None),
-            # getattr(settings, "DEFAULT_FILE_STORAGE", None),
-        )
 
         source = Source.objects.create(
             contributor=contributor,

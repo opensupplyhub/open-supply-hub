@@ -12,16 +12,15 @@ Execute Terraform subcommands with remote state management.
 "
 }
 
-# Prefer an explicit IMAGE_TAG (e.g., from CI), otherwise fall back to a provided
-# GIT_COMMIT or the current repo commit. Always shorten to 7 characters to match
-# our ECR tagging convention.
-if [[ -n "${IMAGE_TAG}" ]]; then
-    GIT_COMMIT="${IMAGE_TAG:0:7}"
-elif [[ -n "${GIT_COMMIT}" ]]; then
+# # Temporary solution
+# GIT_COMMIT="latest"
+
+if [[ -n "${GIT_COMMIT}" ]]; then
     GIT_COMMIT="${GIT_COMMIT:0:7}"
 else
     SHORT_SHA="$(git rev-parse --short HEAD)"
     GIT_COMMIT="${SHORT_SHA:0:7}"
+
 fi
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

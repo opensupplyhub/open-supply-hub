@@ -4,17 +4,10 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 from django.core.files.base import File
-from django.conf import settings
-from django.core.files.storage import default_storage
-import os
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
 from contricleaner.lib.parsers.abstractions.file_parser import FileParser
 from contricleaner.lib.exceptions.parsing_error import ParsingError
-
-import logging
-import traceback
-logger = logging.getLogger(__name__)
 
 
 class SourceParserXLSX(SourceParser, FileParser):
@@ -24,21 +17,6 @@ class SourceParserXLSX(SourceParser, FileParser):
     @staticmethod
     def _parse(file: File) -> List[dict]:
         try:
-            logger.info(
-                "XLSX parse: file.name=%s storage=%s storage_class=%s "
-                "default_storage=%s default_storage_class=%s "
-                "DEFAULT_FILE_STORAGE=%s AWS_STORAGE_BUCKET_NAME=%s "
-                "DJANGO_SETTINGS_MODULE=%s DEBUG=%s",
-                getattr(file, "name", "<no-name>"),
-                getattr(file, "storage", None),
-                getattr(getattr(file, "storage", None), "__class__", None),
-                default_storage,
-                default_storage.__class__,
-                getattr(settings, "DEFAULT_FILE_STORAGE", None),
-                getattr(settings, "AWS_STORAGE_BUCKET_NAME", None),
-                os.getenv("DJANGO_SETTINGS_MODULE"),
-                settings.DEBUG,
-            )
             worksheet = SourceParserXLSX.__get_xlsx_sheet(file)
 
             # openpyxl package is 1-indexed
@@ -69,7 +47,6 @@ class SourceParserXLSX(SourceParser, FileParser):
 
             return rows
         except Exception:
-            logger.error(f"Error parsing XLSX file: {traceback.format_exc()}")
             raise ParsingError(
                 'There was an error within your file and our team needs to '
                 'take a look. Please send your file to '

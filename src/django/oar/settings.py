@@ -614,23 +614,18 @@ AWS_S3_FILE_OVERWRITE = False
 
 TESTING = 'test' in sys.argv
 
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-# For local/MinIO dev: if endpoint задан и бакет не передан, подставляем локальный.
-if DEBUG and AWS_S3_ENDPOINT_URL and not AWS_STORAGE_BUCKET_NAME:
-    AWS_STORAGE_BUCKET_NAME = 'local-dev-bucket'
-
-# Force S3-backed storage whenever a bucket is provided (unless running tests).
-if AWS_STORAGE_BUCKET_NAME and not TESTING:
+if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": DEFAULT_FILE_STORAGE,
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
 
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 if AWS_STORAGE_BUCKET_NAME is None and not DEBUG:
     raise ImproperlyConfigured(
         'Invalid AWS_STORAGE_BUCKET_NAME provided, must be set in the environment'
