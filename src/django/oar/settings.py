@@ -26,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Compatibility: allow legacy `index_together` meta option so immutable older
 # migrations (e.g., Django<5 era) continue to load without edits.
 if 'index_together' not in options.DEFAULT_NAMES:
-    options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('index_together',)
+    options.DEFAULT_NAMES = (*options.DEFAULT_NAMES, 'index_together')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
@@ -173,7 +173,7 @@ AUTH_USER_MODEL = 'api.User'
 
 SESSION_COOKIE_SECURE = True
 
-REST_AUTH_SERIALIZERS = {
+REST_AUTH = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
     'PASSWORD_RESET_SERIALIZER': 'api.serializers.UserPasswordResetSerializer',
     'PASSWORD_RESET_CONFIRM_SERIALIZER': 'api.serializers.UserPasswordResetConfirmSerializer',
@@ -306,7 +306,7 @@ AUTH_USER_MODEL = 'api.User'
 # https://docs.djangoproject.com/en/3.2/topics/cache/
 
 MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
-# Use PyLibMCCache everywhere; django_elasticache is incompatible with Django 4
+# Use PyLibMCCache everywhere; django_elasticache is incompatible with Django 5
 # because it still imports smart_text. This keeps throttling cache working in
 # jobs/containers that upgrade Django.
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
