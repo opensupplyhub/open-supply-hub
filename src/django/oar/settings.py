@@ -521,24 +521,6 @@ ECSMANAGE_ENVIRONMENTS = {
     },
 }
 
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': [
-            ['Bold', 'Italic', 'Underline', 'Strike'],
-            ['NumberedList', 'BulletedList'],
-            ['Link', 'Unlink'],
-            ['RemoveFormat', 'Source'],
-        ],
-        'height': 250,
-        'width': '100%',
-        'removePlugins': 'uploadimage,uploadfile,image,flash,smiley',
-        'enterMode': 2,
-        'shiftEnterMode': 2,
-        'autoParagraph': False,
-        'fillEmptyBlocks': False,
-    }
-}
-
 # Application settings
 MAX_UPLOADED_FILE_SIZE_IN_BYTES = 5242880
 MAX_ATTACHMENT_SIZE_IN_BYTES = 5 * 1024 * 1024 # 5 MB
