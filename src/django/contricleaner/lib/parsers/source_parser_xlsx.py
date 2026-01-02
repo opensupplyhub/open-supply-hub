@@ -5,6 +5,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 from django.core.files.base import File
 from django.conf import settings
+from django.core.files.storage import default_storage
 import os
 
 from contricleaner.lib.parsers.abstractions.source_parser import SourceParser
@@ -25,11 +26,14 @@ class SourceParserXLSX(SourceParser, FileParser):
         try:
             logger.info(
                 "XLSX parse: file.name=%s storage=%s storage_class=%s "
+                "default_storage=%s default_storage_class=%s "
                 "DEFAULT_FILE_STORAGE=%s AWS_STORAGE_BUCKET_NAME=%s "
                 "DJANGO_SETTINGS_MODULE=%s DEBUG=%s",
                 getattr(file, "name", "<no-name>"),
                 getattr(file, "storage", None),
                 getattr(getattr(file, "storage", None), "__class__", None),
+                default_storage,
+                default_storage.__class__,
                 getattr(settings, "DEFAULT_FILE_STORAGE", None),
                 getattr(settings, "AWS_STORAGE_BUCKET_NAME", None),
                 os.getenv("DJANGO_SETTINGS_MODULE"),

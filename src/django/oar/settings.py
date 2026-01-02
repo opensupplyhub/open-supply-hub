@@ -619,7 +619,13 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 # Force S3-backed storage whenever a bucket is provided (unless running tests).
 if AWS_STORAGE_BUCKET_NAME and not TESTING:
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    FILE_UPLOAD_STORAGE = DEFAULT_FILE_STORAGE
+    # Explicitly set STORAGES.default to avoid Django falling back to the
+    # filesystem default_storage (per Django 6 storage API docs).
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+    }
 
 if AWS_STORAGE_BUCKET_NAME is None and not DEBUG:
     raise ImproperlyConfigured(
