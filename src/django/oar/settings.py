@@ -615,15 +615,19 @@ AWS_S3_FILE_OVERWRITE = False
 TESTING = 'test' in sys.argv
 
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+# For local/MinIO dev: if endpoint задан и бакет не передан, подставляем локальный.
+if DEBUG and AWS_S3_ENDPOINT_URL and not AWS_STORAGE_BUCKET_NAME:
+    AWS_STORAGE_BUCKET_NAME = 'local-dev-bucket'
 
 # Force S3-backed storage whenever a bucket is provided (unless running tests).
 if AWS_STORAGE_BUCKET_NAME and not TESTING:
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    # Explicitly set STORAGES.default to avoid Django falling back to the
-    # filesystem default_storage (per Django 6 storage API docs).
     STORAGES = {
         "default": {
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
 
