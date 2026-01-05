@@ -40,7 +40,7 @@ const renderUniqueListItems = (
         keySeq += 1;
         const key = `${fieldName}-${keySeq}`;
 
-        if (fieldName === 'isic_4' && value === CONTRIBUTION_DATA_DIVIDER) {
+        if (value === CONTRIBUTION_DATA_DIVIDER) {
             return <Divider key={key} style={dividerStyle} />;
         }
 
