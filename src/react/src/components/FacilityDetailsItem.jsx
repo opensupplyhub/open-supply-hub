@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import Divider from '@material-ui/core/Divider';
 
 import FacilityDetailsDetail from './FacilityDetailsDetail';
 import TitledDrawer from './TitledDrawer';
@@ -49,6 +50,7 @@ const FacilityDetailsItem = ({
     additionalContentText = 'entry',
     additionalContentTextPlural = 'entries',
     partnerConfigFields,
+    showDivider,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
@@ -111,13 +113,20 @@ const FacilityDetailsItem = ({
                         />
                     </div>
                     {isOpen &&
-                        additionalContent.map(item => (
-                            <div className={classes.itemWrapper} key={item.key}>
-                                <FacilityDetailsDetail
-                                    {...item}
-                                    partnerConfigFields={partnerConfigFields}
-                                />
-                            </div>
+                        additionalContent.map((item, index) => (
+                            <React.Fragment
+                                key={item.key || `${label}-${index}`}
+                            >
+                                {index > 0 && showDivider ? <Divider /> : null}
+                                <div className={classes.itemWrapper}>
+                                    <FacilityDetailsDetail
+                                        {...item}
+                                        partnerConfigFields={
+                                            partnerConfigFields
+                                        }
+                                    />
+                                </div>
+                            </React.Fragment>
                         ))}
                 </div>
             </TitledDrawer>
@@ -154,6 +163,7 @@ FacilityDetailsItem.propTypes = {
         baseUrl: PropTypes.string,
         displayText: PropTypes.string,
     }),
+    showDivider: PropTypes.bool,
 };
 
 FacilityDetailsItem.defaultProps = {
@@ -173,6 +183,7 @@ FacilityDetailsItem.defaultProps = {
     additionalContentText: 'entry',
     additionalContentTextPlural: 'entries',
     partnerConfigFields: null,
+    showDivider: false,
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsItem);
