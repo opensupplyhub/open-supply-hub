@@ -310,6 +310,80 @@ describe('FacilityDetailsGeneralFields component', () => {
         expect(dividers.length).toBeGreaterThanOrEqual(1);
     });
 
+    test('deduplicates repeated ISIC 4 entries from the same contribution', () => {
+        const duplicateIsicData = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    isic_4: [
+                        {
+                            id: 90002,
+                            is_verified: false,
+                            value: {
+                                raw_value: [
+                                    {
+                                        section:
+                                            'J - Information and communication',
+                                        division:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        group:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        class:
+                                            '620 - Computer programming, consultancy and related activities',
+                                    },
+                                    {
+                                        section:
+                                            'J - Information and communication',
+                                        division:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        group:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        class:
+                                            '620 - Computer programming, consultancy and related activities',
+                                    },
+                                    {
+                                        section:
+                                            'G - Wholesale and retail trade; repair of motor vehicles and motorcycles',
+                                        division:
+                                            '47 - Retail trade, except motor vehicles and motorcycles',
+                                        group:
+                                            '47 - Retail trade, except motor vehicles and motorcycles',
+                                        class:
+                                            '471 - Retail sale in non-specialized stores with food, beverages or tobacco predominating',
+                                    },
+                                ],
+                            },
+                            created_at: '2025-05-01T10:49:15.174025Z',
+                            updated_at: '2025-05-01T10:58:25.043413Z',
+                            contributor_name: 'Test Org',
+                            contributor_id: 1139,
+                            value_count: 1,
+                            is_from_claim: false,
+                            field_name: 'isic_4',
+                            verified_count: 0,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const { getAllByRole, getAllByText } = renderComponent({
+            data: duplicateIsicData,
+        });
+
+        expect(
+            getAllByText('Section: J - Information and communication').length,
+        ).toBe(1);
+        expect(
+            getAllByText(
+                'Section: G - Wholesale and retail trade; repair of motor vehicles and motorcycles',
+            ).length,
+        ).toBe(1);
+        expect(getAllByRole('separator').length).toBe(1);
+    });
+
     test('renders only non-additional identifier extended fields when the show_additional_identifiers feature flag is false', () => {
         const preloadedState = {
             featureFlags: {
