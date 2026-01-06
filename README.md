@@ -94,15 +94,15 @@ docker compose up logstash
 
 ### US County Tigerline Data Setup
 
-The platform uses US County Tigerline geometry data for MIT Living Wage integration. This data is loaded via Django migrations and can be sourced from either a CSV file in S3/MinIO or fixture data for local development.
+The platform uses US County Tigerline geometry data (2021 version) for MIT Living Wage integration. This data is loaded via Django migrations and can be sourced from either a CSV file in S3/MinIO or fixture data for local development.
 
 #### Local Development
 
 For local development, there are two options:
 
 1. **Using CSV file (recommended for full dataset)**:
-   - Download the CSV file from `s3://opensupplyhub-development-files-eu-west-1/data/us_county_tigerline_2025.csv`
-   - Place `us_county_tigerline_2025.csv` in the `src/django/` directory
+   - Download the CSV file from `s3://opensupplyhub-development-files-eu-west-1/data/us_county_tigerline_2021.csv`
+   - Place `us_county_tigerline_2021.csv` in the `src/django/` directory
    - The migration will download it from MinIO and populate the database
 
 2. **Using fixture data (default for quick setup)**:
