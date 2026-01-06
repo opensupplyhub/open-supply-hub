@@ -357,31 +357,9 @@ function ClaimedFacilitiesDetails({
         [facilityData.countries],
     );
 
-    const sectorValue = useMemo(() => {
-        const sector = get(facilityData, 'sector', []) || [];
-
-        if (Array.isArray(sector)) {
-            return sector
-                .flatMap(item => {
-                    const raw =
-                        typeof item === 'string'
-                            ? item
-                            : item?.value ?? String(item ?? '');
-                    return raw.split(',');
-                })
-                .map(s => s.trim())
-                .filter(Boolean);
-        }
-
-        if (typeof sector === 'string') {
-            return sector
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean);
-        }
-
-        return [];
-    }, [facilityData]);
+    const sectorValue = useMemo(() => get(facilityData, 'sector', []), [
+        facilityData,
+    ]);
 
     const sectorSelectOptions = useMemo(() => {
         const mockedOptions = mapDjangoChoiceTuplesToSelectOptions(

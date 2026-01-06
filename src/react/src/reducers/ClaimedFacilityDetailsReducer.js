@@ -141,11 +141,19 @@ const normalizeSector = sector => {
     if (Array.isArray(sector)) {
         return sector
             .flatMap(item => {
-                const raw =
-                    typeof item === 'string'
-                        ? item
-                        : item?.value ?? String(item ?? '');
-                return raw.split(',');
+                if (typeof item === 'string') {
+                    return item.split(',');
+                }
+
+                if (
+                    item &&
+                    typeof item === 'object' &&
+                    (item.value || item.label)
+                ) {
+                    return (item.value || item.label).split(',');
+                }
+
+                return [];
             })
             .map(s => s.trim())
             .filter(Boolean);
