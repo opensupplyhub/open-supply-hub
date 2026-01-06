@@ -1,6 +1,8 @@
 import React from 'react';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
+import uniqWith from 'lodash/uniqWith';
+import isEqual from 'lodash/isEqual';
 import COLOURS from './COLOURS';
 import { CONTRIBUTION_DATA_DIVIDER } from './renderUtils';
 
@@ -1135,7 +1137,9 @@ export const EXTENDED_FIELD_TYPES = [
             const rawValue = value?.raw_value ?? value ?? {};
             const entries = Array.isArray(rawValue) ? rawValue : [rawValue];
 
-            return entries.reduce((acc, entry) => {
+            const dedupedEntries = uniqWith(entries, isEqual);
+
+            return dedupedEntries.reduce((acc, entry) => {
                 const { section, division, group, class: isicClass } =
                     entry || {};
                 const lines = [
