@@ -136,6 +136,31 @@ const deriveEnergyEnabledFlags = data => ({
     energy_other_enabled: Boolean(data.energy_other),
 });
 
+// OSDEV-2218: Refactor sector normalization
+const normalizeSector = sector => {
+    if (Array.isArray(sector)) {
+        return sector
+            .flatMap(item => {
+                const raw =
+                    typeof item === 'string'
+                        ? item
+                        : item?.value ?? String(item ?? '');
+                return raw.split(',');
+            })
+            .map(s => s.trim())
+            .filter(Boolean);
+    }
+
+    if (typeof sector === 'string') {
+        return sector
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
 export default createReducer(
     {
         [startFetchClaimedFacilityDetails]: state =>
@@ -161,6 +186,7 @@ export default createReducer(
                 data: {
                     $set: {
                         ...data,
+                        sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
                         initial_facility_address: data.facility_address,
                     },
@@ -188,6 +214,7 @@ export default createReducer(
                 data: {
                     $set: {
                         ...data,
+                        sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
                         initial_facility_address: data.facility_address,
                     },
