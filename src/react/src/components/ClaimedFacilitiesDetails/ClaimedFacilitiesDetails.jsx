@@ -357,10 +357,36 @@ function ClaimedFacilitiesDetails({
         [facilityData.countries],
     );
 
-    const sectorSelectOptions = useMemo(
-        () => mapDjangoChoiceTuplesToSelectOptions(mockedSectors),
-        [],
-    );
+    const sectorValue = useMemo(() => get(facilityData, 'sector', []), [
+        facilityData,
+    ]);
+
+    const sectorSelectOptions = useMemo(() => {
+        const mockedOptions = mapDjangoChoiceTuplesToSelectOptions(
+            mockedSectors,
+        );
+        const existingSectors = sectorValue;
+
+        // Ensure previously saved sectors are selectable/displayable even if
+        // they are not part of the mocked list. New selections still come from
+        // the mocked options.
+        const existingSectorOptions = existingSectors
+            .filter(Boolean)
+            .map(sector => ({
+                value: sector,
+                label: sector,
+            }));
+
+        const hasValue = new Set(mockedOptions.map(opt => opt.value));
+        const mergedOptions = mockedOptions.slice();
+        existingSectorOptions.forEach(option => {
+            if (!hasValue.has(option.value)) {
+                mergedOptions.push(option);
+            }
+        });
+
+        return mergedOptions;
+    }, [facilityData, sectorValue]);
 
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
@@ -422,7 +448,7 @@ function ClaimedFacilitiesDetails({
                         />
                         <InputSection
                             label="Sector"
-                            value={get(data, 'sector', [])}
+                            value={sectorValue}
                             onChange={updateSector}
                             disabled={updating}
                             isSelect
