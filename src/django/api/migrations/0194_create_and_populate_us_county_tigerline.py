@@ -17,7 +17,6 @@ def populate_tigerline_data_wrapper(apps, schema_editor):
     '''
     populate_tigerline_data(
         apps,
-        schema_editor,
         s3_key=S3_CSV_KEY,
         source_srid=5070,
         clear_existing=False,

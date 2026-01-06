@@ -98,7 +98,6 @@ def parse_geometry(geometry_wkt, source_srid, target_srid=5070):
 
 def populate_tigerline_data(
     apps,
-    schema_editor,
     s3_key,
     source_srid=5070,
     clear_existing=False,
@@ -109,7 +108,6 @@ def populate_tigerline_data(
     
     Args:
         apps: Django apps registry
-        schema_editor: Schema editor instance
         s3_key: S3 key/path to the CSV file
         source_srid: SRID of the geometry data in CSV (default: 5070)
         clear_existing: Whether to clear existing data before populating
@@ -178,7 +176,7 @@ def populate_tigerline_data(
         )
 
 
-def clear_tigerline_data(apps, schema_editor):
+def clear_tigerline_data(apps):
     '''
     Clear all existing USCountyTigerline data.
     '''

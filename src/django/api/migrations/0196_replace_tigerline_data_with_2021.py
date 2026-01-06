@@ -16,7 +16,6 @@ def populate_tigerline_2021_data(apps, schema_editor):
     '''
     populate_tigerline_data(
         apps,
-        schema_editor,
         s3_key=S3_CSV_KEY_2021,
         source_srid=4326,
         clear_existing=True,
@@ -31,7 +30,6 @@ def reverse_populate_tigerline_2021_data(apps, schema_editor):
     '''
     populate_tigerline_data(
         apps,
-        schema_editor,
         s3_key=S3_CSV_KEY_2025,
         source_srid=5070,
         clear_existing=True,
