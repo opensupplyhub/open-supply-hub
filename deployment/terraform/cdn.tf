@@ -216,7 +216,8 @@ resource "aws_cloudfront_distribution" "cdn" {
         headers      = ["Authorization"]
 
         cookies {
-          forward = "none"
+          forward           = "whitelist"
+          whitelisted_names = ["sessionid", "csrftoken"]
         }
       }
 
