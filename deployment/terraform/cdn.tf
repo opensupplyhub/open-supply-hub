@@ -213,10 +213,10 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       forwarded_values {
         query_string = true
-        headers      = ["*"]
+        headers      = []
 
         cookies {
-          forward = "all"
+          forward = "none"
         }
       }
 
