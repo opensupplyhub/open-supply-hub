@@ -17,8 +17,8 @@ from api.models.facility.facility import Facility
 from ...helpers.helpers import parse_raw_data, get_csv_values, prefix_a_an
 from ..utils import (
     is_embed_mode_active,
-    get_contributor_id_new,
-    get_contributor_name_new,
+    get_contributor_id,
+    get_contributor_name,
 )
 from .facility_index_serializer import FacilityIndexSerializer
 from .facility_index_extended_field_list_serializer import (
@@ -111,10 +111,10 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 if loc['location_lat'] is not None else None,
                 'lng': loc['location_lng']
                 if loc['location_lng'] is not None else None,
-                'contributor_id': get_contributor_id_new(
+                'contributor_id': get_contributor_id(
                     loc['contributor'],
                     user_can_see_detail),
-                'contributor_name': get_contributor_name_new(
+                'contributor_name': get_contributor_name(
                     loc['contributor'],
                     user_can_see_detail),
                 'notes': loc['location_notes'],
@@ -129,10 +129,10 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 if item['location_lat'] is not None else None,
                 'lng': item['location_lng']
                 if item['location_lng'] is not None else None,
-                'contributor_id': get_contributor_id_new(
+                'contributor_id': get_contributor_id(
                     item['contributor'],
                     user_can_see_detail),
-                'contributor_name': get_contributor_name_new(
+                'contributor_name': get_contributor_name(
                     item['contributor'],
                     user_can_see_detail),
                 'notes': None,
@@ -152,10 +152,10 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                         if claim['facility_location'] is not None else None,
                         'lng': (claim['facility_location_info'])['lng']
                         if claim['facility_location'] is not None else None,
-                        'contributor_id': get_contributor_id_new(
+                        'contributor_id': get_contributor_id(
                             claim['contributor'],
                             user_can_see_detail),
-                        'contributor_name': get_contributor_name_new(
+                        'contributor_name': get_contributor_name(
                             claim['contributor'],
                             user_can_see_detail),
                         'notes': None,

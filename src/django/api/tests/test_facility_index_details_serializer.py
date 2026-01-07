@@ -18,13 +18,11 @@ from api.models import (
 from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
-from api.serializers import (
-    FacilityIndexDetailsSerializer,
-    get_contributor_name,
-)
+from api.serializers import FacilityIndexDetailsSerializer
 from api.serializers.facility.facility_activity_report_serializer import (
     FacilityActivityReportSerializer
 )
+from api.serializers.utils import get_contributor_name
 
 
 class FacilityIndexDetailsSerializerTest(TestCase):
@@ -325,7 +323,11 @@ class FacilityIndexDetailsSerializerTest(TestCase):
 
         self.assertEqual(2, len(data["properties"]["sector"]))
         self.assertEqual(
-            get_contributor_name(self.contrib_two, False),
+            get_contributor_name({
+                "name": self.contrib_two.name,
+                "contrib_type": self.contrib_two.contrib_type,
+                "admin_id": self.contrib_two.admin_id
+            }, False),
             data["properties"]["sector"][0]["contributor_name"],
         )
         self.assertEqual(
@@ -345,12 +347,20 @@ class FacilityIndexDetailsSerializerTest(TestCase):
 
         self.assertEqual(2, len(data["properties"]["sector"]))
         self.assertEqual(
-            get_contributor_name(self.contrib_two, False),
+            get_contributor_name({
+                "name": self.contrib_two.name,
+                "contrib_type": self.contrib_two.contrib_type,
+                "admin_id": self.contrib_two.admin_id
+            }, False),
             data["properties"]["sector"][0]["contributor_name"],
         )
         self.assertIsNone(data["properties"]["sector"][0]["contributor_id"])
         self.assertEqual(
-            get_contributor_name(self.contrib_one, False),
+            get_contributor_name({
+                "name": self.contrib_one.name,
+                "contrib_type": self.contrib_one.contrib_type,
+                "admin_id": self.contrib_one.admin_id
+            }, False),
             data["properties"]["sector"][1]["contributor_name"],
         )
         self.assertIsNone(data["properties"]["sector"][1]["contributor_id"])
@@ -369,7 +379,11 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         )
         self.assertIsNotNone(data["properties"]["sector"][0]["contributor_id"])
         self.assertEqual(
-            get_contributor_name(self.contrib_one, False),
+            get_contributor_name({
+                "name": self.contrib_one.name,
+                "contrib_type": self.contrib_one.contrib_type,
+                "admin_id": self.contrib_one.admin_id
+            }, False),
             data["properties"]["sector"][1]["contributor_name"],
         )
         self.assertIsNone(data["properties"]["sector"][1]["contributor_id"])
