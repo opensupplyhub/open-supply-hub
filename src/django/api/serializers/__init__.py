@@ -41,12 +41,9 @@ from .moderation_events.merge_query_params_serializer import MergeQueryParamsSer
 from .api_block import ApiBlockSerializer
 from .embed_config import EmbedConfigSerializer
 from .embed_fields import EmbedFieldsSerializer
-from .extended_field_list import ExtendedFieldListSerializer
 from .log_download_query_params import LogDownloadQueryParamsSerializer
 from .utils import (
     is_embed_mode_active,
-    get_contributor_name,
-    get_contributor_id,
     get_embed_contributor_id,
     prefer_contributor_name,
 )
