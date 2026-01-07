@@ -54,15 +54,6 @@ def prefer_contributor_name(serializer):
 
 
 def get_contributor_name(contributor, user_can_see_detail):
-    if contributor is None:
-        return None
-    if user_can_see_detail:
-        return contributor.name
-    name = prefix_a_an(contributor.contrib_type)
-    return name[0].lower() + name[1:]
-
-
-def get_contributor_name_new(contributor, user_can_see_detail):
     if (
         (contributor is None)
         or (contributor["name"] is None)
@@ -76,12 +67,6 @@ def get_contributor_name_new(contributor, user_can_see_detail):
 
 
 def get_contributor_id(contributor, user_can_see_detail):
-    if contributor is not None and user_can_see_detail:
-        return contributor.admin.id
-    return None
-
-
-def get_contributor_id_new(contributor, user_can_see_detail):
     if (
         contributor is not None
         and contributor["admin_id"] is not None
