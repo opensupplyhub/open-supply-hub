@@ -176,7 +176,7 @@ def populate_tigerline_data(
         )
 
 
-def clear_tigerline_data(apps):
+def clear_tigerline_data(apps, schema_editor):
     '''
     Clear all existing USCountyTigerline data.
     '''
