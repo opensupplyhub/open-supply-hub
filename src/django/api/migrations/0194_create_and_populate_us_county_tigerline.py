@@ -7,18 +7,18 @@ from api.migrations._tigerline_helper import (
     clear_tigerline_data
 )
 
-S3_CSV_KEY = 'data/us_county_tigerline_2025.csv'
+S3_CSV_KEY = 'data/us_county_tigerline_2021.csv'
 
 
 def populate_tigerline_data_wrapper(apps, schema_editor):
     '''
-    Populate the USCountyTigerline table with 2025 data from CSV file.
-    Geometry data is already in EPSG:5070 (Albers Equal Area).
+    Populate the USCountyTigerline table with 2021 data from CSV file.
+    Geometry data is in EPSG:4326 (WGS84).
     '''
     populate_tigerline_data(
         apps,
         s3_key=S3_CSV_KEY,
-        source_srid=5070,
+        source_srid=4326,
         clear_existing=False,
         production_envs=['Production', 'Preprod', 'Staging']
     )

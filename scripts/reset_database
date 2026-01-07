@@ -35,26 +35,13 @@ function setup_minio() {
   docker compose exec minio bash \
           -c "rm -rf /fixtures"
 
-  TIGERLINE_CSV="us_county_tigerline_2025.csv"
+  TIGERLINE_CSV="us_county_tigerline_2021.csv"
 
   if [ -f "./src/django/$TIGERLINE_CSV" ]; then
     echo "Copying $TIGERLINE_CSV to MinIO bucket $MINIO_BUCKET..."
     docker compose exec minio bash \
           -c "mkdir -p /temp"
     docker compose cp ./src/django/$TIGERLINE_CSV minio:/temp/$TIGERLINE_CSV
-    docker compose exec minio bash \
-        -c "mc cp --recursive /temp/* $MINIO_ALIAS/$MINIO_BUCKET/data/"
-    docker compose exec minio bash \
-        -c "rm -rf /temp"
-  fi
-
-  TIGERLINE_2021_CSV="us_county_tigerline_2021.csv"
-
-  if [ -f "./src/django/$TIGERLINE_2021_CSV" ]; then
-    echo "Copying $TIGERLINE_2021_CSV to MinIO bucket $MINIO_BUCKET..."
-    docker compose exec minio bash \
-          -c "mkdir -p /temp"
-    docker compose cp ./src/django/$TIGERLINE_2021_CSV minio:/temp/$TIGERLINE_2021_CSV
     docker compose exec minio bash \
         -c "mc cp --recursive /temp/* $MINIO_ALIAS/$MINIO_BUCKET/data/"
     docker compose exec minio bash \
