@@ -6,10 +6,13 @@ import csv
 import io
 import os
 import sys
+import logging
 
 import boto3
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
+from django.contrib.gis.geos import GEOSException, GEOSGeometry, MultiPolygon
+
+logger = logging.getLogger(__name__)
 
 csv.field_size_limit(sys.maxsize)
 
@@ -149,9 +152,9 @@ def populate_tigerline_data(
         
         try:
             geom = parse_geometry(geometry_wkt, source_srid)
-        except Exception as e:
+        except (ValueError, GEOSException) as e:
             # Log error but continue with other rows.
-            print(f'Error parsing geometry for {geoid} ({name}): {e}')
+            logger.error(f'Error parsing geometry for {geoid} ({name}): {e}')
             continue
         
         tigerline_objects.append(
