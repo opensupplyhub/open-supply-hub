@@ -35,7 +35,7 @@ function setup_minio() {
   docker compose exec minio bash \
           -c "rm -rf /fixtures"
 
-  TIGERLINE_CSV="us_county_tigerline_2025.csv"
+  TIGERLINE_CSV="us_county_tigerline_2021.csv"
 
   if [ -f "./src/django/$TIGERLINE_CSV" ]; then
     echo "Copying $TIGERLINE_CSV to MinIO bucket $MINIO_BUCKET..."
