@@ -21,7 +21,7 @@ def get_s3_client():
     endpoint_url = os.getenv('AWS_S3_ENDPOINT_URL')
 
     if endpoint_url:
-        # Local development with MinIO
+        # Local development with MinIO.
         return boto3.client(
             's3',
             endpoint_url=endpoint_url,
@@ -30,7 +30,7 @@ def get_s3_client():
             region_name=os.getenv('AWS_REGION', 'us-east-1'),
         )
     else:
-        # Production AWS S3
+        # Production AWS S3.
         return boto3.client('s3')
 
 
@@ -80,11 +80,11 @@ def parse_geometry(geometry_wkt, source_srid, target_srid=5070):
     '''
     geom = GEOSGeometry(geometry_wkt, srid=source_srid)
     
-    # Transform if source and target SRIDs differ
+    # Transform if source and target SRIDs differ.
     if source_srid != target_srid:
         geom.transform(target_srid)
     
-    # Ensure MultiPolygon format
+    # Ensure MultiPolygon format.
     if geom.geom_type not in ("Polygon", "MultiPolygon"):
         raise ValueError(
             f'Unexpected geometry type: {geom.geom_type}'
@@ -123,12 +123,12 @@ def populate_tigerline_data(
     except Exception as e:
         env = os.getenv('DJANGO_ENV', 'Local')
         
-        # Default production environments if not specified
+        # Default production environments if not specified.
         if production_envs is None:
             production_envs = ['Production', 'Preprod', 'Staging']
         
         if env not in production_envs:
-            # In non-production environments, gracefully skip if CSV not found
+            # In non-production environments, gracefully skip if CSV not found.
             return
         
         raise Exception(
@@ -150,7 +150,7 @@ def populate_tigerline_data(
         try:
             geom = parse_geometry(geometry_wkt, source_srid)
         except Exception as e:
-            # Log error but continue with other rows
+            # Log error but continue with other rows.
             print(f'Error parsing geometry for {geoid} ({name}): {e}')
             continue
         
