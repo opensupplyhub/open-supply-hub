@@ -78,7 +78,7 @@ def has_active_block(request):
 
         contributor = token.user.contributor
         apiBlock = get_api_block(contributor)
-        at_datetime = datetime.datetime.now(tz=timezone.utc)
+        at_datetime = datetime.datetime.now(tz=timezone.get_default_timezone())
         return (apiBlock is not None and
                 apiBlock.until > at_datetime and apiBlock.active)
     except ObjectDoesNotExist:

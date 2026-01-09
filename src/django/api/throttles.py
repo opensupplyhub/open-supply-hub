@@ -11,7 +11,7 @@ from oar.settings import DUPLICATE_THROTTLE_TIMEOUT
 
 
 class UserCustomRateThrottle(UserRateThrottle):
-    """Allow custom per-user throttle rates defined on custom Django user model.
+    """Allow per-user throttle rates defined on the custom user model.
 
     `model_rate_field`: Specify the throttle rate field. Required.
     """
