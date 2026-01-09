@@ -40,7 +40,8 @@ from api.throttles import (
 from api.constants import (
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY,
-    APIV1LocationContributionErrorMessages
+    APIV1LocationContributionErrorMessages,
+    PARTNER_FIELD_NAMES_KEY,
 )
 from api.exceptions import ServiceUnavailableException
 from api.mail import (
@@ -49,6 +50,7 @@ from api.mail import (
 )
 from api.views.v1.response_mappings.production_locations_response import \
     ProductionLocationsResponseMapping
+from api.partner_fields.registry import system_partner_field_registry
 
 
 class ProductionLocations(ViewSet):
@@ -290,7 +292,7 @@ class ProductionLocations(ViewSet):
                 ...
             }
         """
-        cache_key = 'partner_field_names'
+        cache_key = PARTNER_FIELD_NAMES_KEY
         partner_field_names = cache.get(cache_key)
 
         if partner_field_names is None:
@@ -299,27 +301,48 @@ class ProductionLocations(ViewSet):
             )
             cache.set(cache_key, partner_field_names, 60 * 60)
 
-        if not partner_field_names:
-            return {}
-
-        partner_field_values = ExtendedField.objects.filter(
-            facility__id=pk,
-            field_name__in=partner_field_names
-        ).values('field_name', 'value')
-
         partner_extended_fields = {}
 
-        for field in partner_field_values:
-            field_name = field['field_name']
-            value = field['value']
+        def add_field_value(field_name, value):
+            """
+            Extract and add partner field value to the response dictionary.
+            """
+            if not field_name or not isinstance(value, dict):
+                return
 
-            if not isinstance(value, dict):
-                continue
+            raw_values = value.get('raw_values')
+            raw_value = value.get('raw_value')
 
-            if 'raw_values' in value and isinstance(
-                value['raw_values'], (list, dict)
-            ):
-                partner_extended_fields[field_name] = value['raw_values']
-            elif 'raw_value' in value:
-                partner_extended_fields[field_name] = value['raw_value']
+            if isinstance(raw_values, (list, dict)):
+                partner_extended_fields[field_name] = raw_values
+            elif raw_value is not None:
+                partner_extended_fields[field_name] = raw_value
+
+        if partner_field_names:
+            partner_field_values = ExtendedField.objects.filter(
+                facility__id=pk,
+                field_name__in=partner_field_names
+            ).values('field_name', 'value')
+
+            for field in partner_field_values:
+                add_field_value(field.get('field_name'), field.get('value'))
+
+        facility = Facility.objects.filter(id=pk).only(
+            'id',
+            'country_code',
+            'location',
+        ).first()
+
+        if facility:
+            for provider in system_partner_field_registry.providers:
+                provider_data = provider.fetch_data(facility)
+
+                if provider_data is None:
+                    continue
+
+                add_field_value(
+                    provider_data.get('field_name'),
+                    provider_data.get('value'),
+                )
+
         return partner_extended_fields

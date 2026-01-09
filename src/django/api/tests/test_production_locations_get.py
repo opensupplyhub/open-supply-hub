@@ -1,8 +1,19 @@
 import unittest.mock
+from django.contrib.gis.geos import Point, MultiPolygon
+from django.core.cache import cache
 from rest_framework.test import APITestCase
 from rest_framework import status
 from api.views.v1.response_mappings.production_locations_response \
     import ProductionLocationsResponseMapping
+from api.models import PartnerField
+from api.models.contributor.contributor import Contributor
+from api.models.facility.facility import Facility
+from api.models.facility.facility_list import FacilityList
+from api.models.facility.facility_list_item import FacilityListItem
+from api.models.source import Source
+from api.models.user import User
+from api.models.us_county_tigerline import USCountyTigerline
+from api.models.wage_indicator_country_data import WageIndicatorCountryData
 
 
 OPEN_SEARCH_SERVICE = "api.views.v1.production_locations.OpenSearchService"
@@ -131,4 +142,114 @@ class TestProductionLocationsViewSet(APITestCase):
         self.assertListEqual(
             query_body["_source"],
             ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
+        )
+
+    def _create_facility_with_partner_data(self):
+        cache.clear()
+        user = User.objects.create(email="partner@example.com")
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="Test Contributor",
+            description="",
+            website="",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        wage_indicator_field = PartnerField.objects.create(
+            name="wage_indicator",
+            type=PartnerField.OBJECT,
+            system_field=True,
+        )
+        mit_living_wage_field = PartnerField.objects.create(
+            name="mit_living_wage",
+            type=PartnerField.OBJECT,
+            system_field=True,
+        )
+
+        contributor.partner_fields.add(
+            wage_indicator_field,
+            mit_living_wage_field,
+        )
+
+        facility_list = FacilityList.objects.create(
+            name="Test List",
+            file_name="test.csv",
+            header="name,address,country",
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=facility_list,
+            contributor=contributor,
+        )
+        facility_list_item = FacilityListItem.objects.create(
+            name="Test Facility",
+            address="123 Example St",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=0,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source,
+            raw_data="Test Facility,123 Example St,US",
+            raw_header="name,address,country",
+            raw_json={},
+            processing_results=[],
+        )
+
+        location = Point(-73.935242, 40.73061, srid=4326)
+        facility = Facility.objects.create(
+            id=self.os_id,
+            name="Test Facility",
+            address="123 Example St",
+            country_code="US",
+            location=location,
+            created_from=facility_list_item,
+        )
+
+        WageIndicatorCountryData.objects.create(
+            country_code=facility.country_code,
+            living_wage_link_national="https://example.com/living",
+            minimum_wage_link_english="https://example.com/min-eng",
+            minimum_wage_link_national="https://example.com/min-national",
+        )
+
+        point_5070 = location.transform(5070, clone=True)
+        county_geometry = point_5070.buffer(1)
+        if county_geometry.geom_type != "MultiPolygon":
+            county_geometry = MultiPolygon(county_geometry)
+
+        USCountyTigerline.objects.create(
+            geoid="12345",
+            name="Test County",
+            geometry=county_geometry,
+        )
+
+        return facility
+
+    def test_get_single_production_location_includes_partner_fields(self):
+        facility = self._create_facility_with_partner_data()
+
+        self.search_index_mock.return_value = {
+            "count": 1,
+            "data": [
+                {
+                    "os_id": facility.id,
+                    "name": "location1",
+                }
+            ],
+        }
+
+        url = f"/api/v1/production-locations/{facility.id}/"
+        api_res = self.client.get(url)
+
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+        self.assertIn("wage_indicator", api_res.data)
+        self.assertIn("mit_living_wage", api_res.data)
+
+        self.assertEqual(
+            api_res.data["wage_indicator"].get("living_wage_link_national"),
+            "https://example.com/living",
+        )
+        self.assertEqual(
+            api_res.data["mit_living_wage"].get("county_id"),
+            "12345",
         )
