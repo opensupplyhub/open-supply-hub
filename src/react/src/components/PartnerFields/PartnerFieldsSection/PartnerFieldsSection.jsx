@@ -9,6 +9,7 @@ import {
     renderPartnerField,
     hasVisiblePartnerFields,
 } from './utils.jsx';
+import { pilotIntegrationsDocsRoute } from '../../../util/constants';
 
 const PartnerFieldsSection = ({ classes, data }) => {
     const partnerFields = preparePartnerFields(data);
@@ -30,7 +31,7 @@ const PartnerFieldsSection = ({ classes, data }) => {
                     </Grid>
                     <Grid item xs={12} className={classes.partnerFieldsLink}>
                         <a
-                            href="/docs/pilot-integrations"
+                            href={pilotIntegrationsDocsRoute}
                             target="_blank"
                             rel="noopener noreferrer"
                         >
