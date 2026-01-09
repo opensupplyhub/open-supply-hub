@@ -15,6 +15,7 @@ import FacilityDetailsCoreFields from './FacilityDetailsCoreFields';
 import FacilityDetailsInteractiveMap from './FacilityDetailsInteractiveMap';
 import FacilityDetailsLocationFields from './FacilityDetailsLocationFields';
 import FacilityDetailsGeneralFields from './FacilityDetailsGeneralFields';
+import PartnerFieldsSection from './PartnerFields/PartnerFieldsSection/PartnerFieldsSection';
 import FacilityDetailsContributors from './FacilityDetailsContributors';
 import ShowOnly from './ShowOnly';
 
@@ -233,6 +234,7 @@ const FacilityDetailsContent = ({
                     isClaimed={isClaimed}
                 />
                 <ShowOnly when={!embed}>
+                    <PartnerFieldsSection data={data} />
                     <FacilityDetailsContributors
                         contributors={data.properties.contributors}
                         push={push}

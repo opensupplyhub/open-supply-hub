@@ -80,7 +80,7 @@ const PartnerFieldSchemaValue = ({
         );
         if (rendered) {
             if (acc.length > 0) {
-                acc.push(<br />);
+                acc.push(<br key={`${propertyKey}-br`} />);
             }
 
             acc.push(rendered);
