@@ -5,7 +5,7 @@ import django_ckeditor_5.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0193_populate_wage_indicator_data'),
+        ('api', '0195_add_mit_livingwage_partner_field'),
     ]
 
     operations = [

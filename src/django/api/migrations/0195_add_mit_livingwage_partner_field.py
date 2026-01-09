@@ -49,7 +49,7 @@ def remove_mit_living_wage_partner_field(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0196_create_and_populate_us_county_tigerline'),
+        ('api', '0194_create_and_populate_us_county_tigerline'),
     ]
 
     operations = [

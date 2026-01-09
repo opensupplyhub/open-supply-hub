@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0194_switch_partner_field_source_by_editor"),
+        ("api", "0196_switch_partner_field_source_by_editor"),
     ]
 
     operations = [
