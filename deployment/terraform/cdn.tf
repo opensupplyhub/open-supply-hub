@@ -2,12 +2,12 @@ locals {
   frontend_bucket_name = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-frontend-${var.aws_region}"
   api_cache_behaviors = [
     {
-      path_pattern = "api/facilities/*"
+      path_pattern = "api/facilities*"
       default_ttl  = var.api_facilities_cache_default_ttl
       max_ttl      = var.api_facilities_cache_max_ttl
     },
     {
-      path_pattern = "api/v1/production-locations/*"
+      path_pattern = "api/v1/production-locations*"
       default_ttl  = var.api_production_locations_cache_default_ttl
       max_ttl      = var.api_production_locations_cache_max_ttl
     }
@@ -213,11 +213,10 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       forwarded_values {
         query_string = true
-        headers      = ["Authorization"]
+        headers      = ["*"]
 
         cookies {
-          forward           = "whitelist"
-          whitelisted_names = ["sessionid", "csrftoken"]
+          forward = "none"
         }
       }
 
