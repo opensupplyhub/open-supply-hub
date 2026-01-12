@@ -213,10 +213,11 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       forwarded_values {
         query_string = true
-        headers      = ["*"]
+        headers      = ["Authorization", "X-OAR-CLIENT-KEY", "Referer"]
 
         cookies {
-          forward = "none"
+          forward           = "whitelist"
+          whitelisted_names = ["sessionid", "csrftoken"]
         }
       }
 
