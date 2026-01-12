@@ -56,8 +56,6 @@ def download_csv_from_s3(s3_key):
 
     try:
         s3_client.head_object(Bucket=bucket_name, Key=s3_key)
-    except s3_client.exceptions.NoSuchKey:
-        raise ValueError(f'CSV file not found: {s3_key}')
     except Exception as e:
         raise Exception(f'Failed to check CSV file existence: {e}') from e
 

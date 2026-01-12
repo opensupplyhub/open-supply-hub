@@ -28,7 +28,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '--clear-existing',
-            default=False,
+            action='store_true',
             help='Clear existing data before populating',
         )
 
@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
             if clear_existing:
                 self.stdout.write(
-                    self.style.SUCCESS(f'Cleared existing records')
+                    self.style.SUCCESS('Cleared existing records')
                 )
         except Exception as e:
             raise CommandError(
