@@ -130,10 +130,7 @@ def populate_tigerline_data(
     else:
         is_migration = False
         us_county_tigerline = apps_or_model
-    
-    if clear_existing:
-        us_county_tigerline.objects.all().delete()
-    
+
     try:
         reader = get_csv_reader(s3_key)
     except Exception as e:
@@ -159,7 +156,10 @@ def populate_tigerline_data(
             raise Exception(
                 f'Failed to download CSV file from S3: {e}'
             ) from e
-    
+
+    if clear_existing:
+        us_county_tigerline.objects.all().delete()
+
     tigerline_objects = []
     batch_size = 2000
     

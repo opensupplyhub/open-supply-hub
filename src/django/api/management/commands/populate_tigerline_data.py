@@ -18,13 +18,13 @@ class Command(BaseCommand):
             '--s3-key',
             type=str,
             required=True,
-            help='S3 key/path to the CSV file (e.g., data/us_county_tigerline_2021.csv)',
+            help='S3 key/path to the CSV file',
         )
         parser.add_argument(
             '--source-srid',
             type=int,
             default=4326,
-            help='SRID of the geometry data in CSV (default: 4326 for WGS84)',
+            help='SRID of the geometry data in CSV',
         )
         parser.add_argument(
             '--clear-existing',
