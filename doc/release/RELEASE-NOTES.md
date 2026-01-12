@@ -48,6 +48,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Removed the FE request to `GET /api/parent-companies/`.
     * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
 * [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
+* [OSDEV-2332](https://opensupplyhub.atlassian.net/browse/OSDEV-2332) - Partner fields are now displayed in a dedicated "New Pilot Data Integrations" section on the production location page, visually separated with borders and including a "Learn More" link. This section only appears on the main location details page and is excluded from embedded map views.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
