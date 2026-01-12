@@ -67,6 +67,22 @@ class ProductionLocations(ViewSet):
 
         return (opensearch_service, opensearch_query_director)
 
+    @staticmethod
+    def __add_partner_field_value(partner_extended_fields, field_name, value):
+        """
+        Extract and add partner field value to the response dictionary.
+        """
+        if not field_name or not isinstance(value, dict):
+            return
+
+        raw_values = value.get('raw_values')
+        raw_value = value.get('raw_value')
+
+        if isinstance(raw_values, (list, dict)):
+            partner_extended_fields[field_name] = raw_values
+        elif raw_value is not None:
+            partner_extended_fields[field_name] = raw_value
+
     def get_permissions(self):
         '''
         Redefines the parent method and returns the list of permissions for
@@ -160,7 +176,7 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        partner_extended_fields = self.__get_partner_fields(pk)
+        partner_extended_fields = self.__get_partner_fields(pk, locations[0])
         locations[0].update(partner_extended_fields)
 
         return Response(locations[0])
@@ -279,10 +295,10 @@ class ProductionLocations(ViewSet):
             status=result.status_code
         )
 
-    def __get_partner_fields(self, pk):
+    def __get_partner_fields(self, pk, facility: Facility = None):
         """
         Checks and returns partner extended fields for a
-        facility object by its ID.
+        facility object by its ID or by the provided Facility instance.
 
         Caches the list of partner field names for one hour.
         Returns a dictionary of the form:
@@ -303,21 +319,6 @@ class ProductionLocations(ViewSet):
 
         partner_extended_fields = {}
 
-        def add_field_value(field_name, value):
-            """
-            Extract and add partner field value to the response dictionary.
-            """
-            if not field_name or not isinstance(value, dict):
-                return
-
-            raw_values = value.get('raw_values')
-            raw_value = value.get('raw_value')
-
-            if isinstance(raw_values, (list, dict)):
-                partner_extended_fields[field_name] = raw_values
-            elif raw_value is not None:
-                partner_extended_fields[field_name] = raw_value
-
         if partner_field_names:
             partner_field_values = ExtendedField.objects.filter(
                 facility__id=pk,
@@ -325,13 +326,18 @@ class ProductionLocations(ViewSet):
             ).values('field_name', 'value')
 
             for field in partner_field_values:
-                add_field_value(field.get('field_name'), field.get('value'))
-
-        facility = Facility.objects.filter(id=pk).only(
-            'id',
-            'country_code',
-            'location',
-        ).first()
+                self.__add_partner_field_value(
+                    partner_extended_fields,
+                    field.get('field_name'),
+                    field.get('value'),
+                )
+        print(f"facility: {facility}")
+        if facility is None:
+            facility = Facility.objects.filter(id=pk).only(
+                'id',
+                'country_code',
+                'location',
+            ).first()
 
         if facility:
             for provider in system_partner_field_registry.providers:
@@ -340,7 +346,8 @@ class ProductionLocations(ViewSet):
                 if provider_data is None:
                     continue
 
-                add_field_value(
+                self.__add_partner_field_value(
+                    partner_extended_fields,
                     provider_data.get('field_name'),
                     provider_data.get('value'),
                 )
