@@ -176,7 +176,7 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        partner_extended_fields = self.__get_partner_fields(pk, locations[0])
+        partner_extended_fields = self.__get_partner_fields(pk)
         locations[0].update(partner_extended_fields)
 
         return Response(locations[0])
@@ -331,25 +331,24 @@ class ProductionLocations(ViewSet):
                     field.get('field_name'),
                     field.get('value'),
                 )
-        print(f"facility: {facility}")
-        if facility is None:
+
             facility = Facility.objects.filter(id=pk).only(
                 'id',
                 'country_code',
                 'location',
             ).first()
 
-        if facility:
-            for provider in system_partner_field_registry.providers:
-                provider_data = provider.fetch_data(facility)
+            if facility:
+                for provider in system_partner_field_registry.providers:
+                    provider_data = provider.fetch_data(facility)
 
-                if provider_data is None:
-                    continue
+                    if provider_data is None:
+                        continue
 
-                self.__add_partner_field_value(
-                    partner_extended_fields,
-                    provider_data.get('field_name'),
-                    provider_data.get('value'),
-                )
+                    self.__add_partner_field_value(
+                        partner_extended_fields,
+                        provider_data.get('field_name'),
+                        provider_data.get('value'),
+                    )
 
         return partner_extended_fields
