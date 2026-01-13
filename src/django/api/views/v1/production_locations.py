@@ -295,7 +295,7 @@ class ProductionLocations(ViewSet):
             status=result.status_code
         )
 
-    def __get_partner_fields(self, pk, facility: Facility = None):
+    def __get_partner_fields(self, pk):
         """
         Checks and returns partner extended fields for a
         facility object by its ID or by the provided Facility instance.
