@@ -260,11 +260,34 @@ class TestProductionLocationsViewSet(APITestCase):
         self.assertIn("wage_indicator", api_res.data)
         self.assertIn("mit_living_wage", api_res.data)
 
+        wage_indicator = api_res.data["wage_indicator"]
+        mit_living_wage = api_res.data["mit_living_wage"]
+
+        self.assertIsInstance(wage_indicator, list)
+        self.assertIsInstance(mit_living_wage, list)
+        self.assertGreaterEqual(len(wage_indicator), 1)
+        self.assertGreaterEqual(len(mit_living_wage), 1)
+
+        wi_entry = wage_indicator[0]
+        mit_entry = mit_living_wage[0]
+
         self.assertEqual(
-            api_res.data["wage_indicator"].get("living_wage_link_national"),
+            wi_entry["value"]["raw_values"]["living_wage_link_national"],
             "https://paywizard.org/salary/living-wages",
         )
         self.assertEqual(
-            api_res.data["mit_living_wage"].get("county_id"),
+            wi_entry["value"]["raw_values"]["minimum_wage_link_english"],
+            "https://wageindicator.org/salary/minimum-wage/"
+            "united-states-of-america",
+        )
+        self.assertEqual(
+            wi_entry["value"]["raw_values"]["minimum_wage_link_national"],
+            "https://paywizard.org/salary/minimum-wage",
+        )
+        self.assertEqual(wi_entry["field_name"], "wage_indicator")
+
+        self.assertEqual(
+            mit_entry["value"]["raw_values"]["county_id"],
             "12345",
         )
+        self.assertEqual(mit_entry["field_name"], "mit_living_wage")

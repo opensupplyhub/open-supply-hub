@@ -332,23 +332,24 @@ class ProductionLocations(ViewSet):
                     field.get('value'),
                 )
 
-            facility = Facility.objects.filter(id=pk).only(
-                'id',
-                'country_code',
-                'location',
-            ).first()
+        facility = Facility.objects.filter(id=pk).only(
+            'id',
+            'country_code',
+            'location',
+        ).first()
 
-            if facility:
-                for provider in system_partner_field_registry.providers:
-                    provider_data = provider.fetch_data(facility)
+        if facility:
+            for provider in system_partner_field_registry.providers:
+                provider_data = provider.fetch_data(facility)
 
-                    if provider_data is None:
-                        continue
+                if provider_data is None:
+                    continue
 
-                    self.__add_partner_field_value(
-                        partner_extended_fields,
-                        provider_data.get('field_name'),
-                        provider_data.get('value'),
-                    )
+                field_name = provider_data.get('field_name')
+                if not field_name:
+                    continue
+
+                # Use the rich provider payload (list entry) for system fields.
+                partner_extended_fields[field_name] = [provider_data]
 
         return partner_extended_fields
