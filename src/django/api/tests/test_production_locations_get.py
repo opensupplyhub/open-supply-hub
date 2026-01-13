@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from api.views.v1.response_mappings.production_locations_response \
     import ProductionLocationsResponseMapping
-from api.models import PartnerField
+from api.models.partner_field import PartnerField
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list import FacilityList
@@ -155,15 +155,21 @@ class TestProductionLocationsViewSet(APITestCase):
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
-        wage_indicator_field = PartnerField.objects.create(
+        wage_indicator_field, _ = PartnerField.objects.get_or_create(
             name="wage_indicator",
-            type=PartnerField.OBJECT,
-            system_field=True,
+            defaults={
+                "type": PartnerField.OBJECT,
+                "system_field": True,
+                "base_url": "https://wageindicator.example/",
+            }
         )
-        mit_living_wage_field = PartnerField.objects.create(
+        mit_living_wage_field, _ = PartnerField.objects.get_or_create(
             name="mit_living_wage",
-            type=PartnerField.OBJECT,
-            system_field=True,
+            defaults={
+                "type": PartnerField.OBJECT,
+                "system_field": True,
+                "base_url": "https://livingwage.mit.edu/counties/",
+            }
         )
 
         contributor.partner_fields.add(
@@ -205,11 +211,20 @@ class TestProductionLocationsViewSet(APITestCase):
             created_from=facility_list_item,
         )
 
-        WageIndicatorCountryData.objects.create(
+        WageIndicatorCountryData.objects.update_or_create(
             country_code=facility.country_code,
-            living_wage_link_national="https://example.com/living",
-            minimum_wage_link_english="https://example.com/min-eng",
-            minimum_wage_link_national="https://example.com/min-national",
+            defaults={
+                "living_wage_link_national": (
+                    "https://paywizard.org/salary/living-wages"
+                ),
+                "minimum_wage_link_english": (
+                    "https://wageindicator.org/salary/minimum-wage/"
+                    "united-states-of-america"
+                ),
+                "minimum_wage_link_national": (
+                    "https://paywizard.org/salary/minimum-wage"
+                ),
+            },
         )
 
         point_5070 = location.transform(5070, clone=True)
@@ -247,7 +262,7 @@ class TestProductionLocationsViewSet(APITestCase):
 
         self.assertEqual(
             api_res.data["wage_indicator"].get("living_wage_link_national"),
-            "https://example.com/living",
+            "https://paywizard.org/salary/living-wages",
         )
         self.assertEqual(
             api_res.data["mit_living_wage"].get("county_id"),
