@@ -202,32 +202,32 @@ resource "aws_cloudfront_distribution" "cdn" {
     max_ttl                = 31536000 # 1 year. Same as TILE_CACHE_MAX_AGE_IN_SECONDS in src/django/oar/settings.py
   }
 
-  dynamic "ordered_cache_behavior" {
-    for_each = local.api_cache_behaviors
+  # dynamic "ordered_cache_behavior" {
+  #   for_each = local.api_cache_behaviors
 
-    content {
-      path_pattern     = ordered_cache_behavior.value.path_pattern
-      allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-      cached_methods   = ["GET", "HEAD", "OPTIONS"]
-      target_origin_id = "originAlb"
+  #   content {
+  #     path_pattern     = ordered_cache_behavior.value.path_pattern
+  #     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+  #     cached_methods   = ["GET", "HEAD", "OPTIONS"]
+  #     target_origin_id = "originAlb"
 
-      forwarded_values {
-        query_string = true
-        headers      = ["Authorization", "X-OAR-CLIENT-KEY", "Referer"]
+  #     forwarded_values {
+  #       query_string = true
+  #       headers      = ["Authorization", "X-OAR-CLIENT-KEY", "Referer"]
 
-        cookies {
-          forward           = "whitelist"
-          whitelisted_names = ["sessionid", "csrftoken"]
-        }
-      }
+  #       cookies {
+  #         forward           = "whitelist"
+  #         whitelisted_names = ["sessionid", "csrftoken"]
+  #       }
+  #     }
 
-      compress               = true
-      viewer_protocol_policy = "redirect-to-https"
-      min_ttl                = 0
-      default_ttl            = ordered_cache_behavior.value.default_ttl
-      max_ttl                = ordered_cache_behavior.value.max_ttl
-    }
-  }
+  #     compress               = true
+  #     viewer_protocol_policy = "redirect-to-https"
+  #     min_ttl                = 0
+  #     default_ttl            = ordered_cache_behavior.value.default_ttl
+  #     max_ttl                = ordered_cache_behavior.value.max_ttl
+  #   }
+  # }
 
   ordered_cache_behavior {
     path_pattern     = "api/*"
