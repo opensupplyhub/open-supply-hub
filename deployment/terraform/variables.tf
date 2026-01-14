@@ -46,25 +46,25 @@ variable "cloudfront_auth_token" {
 variable "api_facilities_cache_default_ttl" {
   description = "Default TTL (seconds) for facilities OS ID detail endpoint"
   type        = number
-  default     = 1800
+  default     = 120
 }
 
 variable "api_facilities_cache_max_ttl" {
   description = "Max TTL (seconds) for facilities OS ID detail endpoint"
   type        = number
-  default     = 1800
+  default     = 120
 }
 
 variable "api_production_locations_cache_default_ttl" {
   description = "Default TTL (seconds) for production-locations OS ID detail endpoint"
   type        = number
-  default     = 1800
+  default     = 120
 }
 
 variable "api_production_locations_cache_max_ttl" {
   description = "Max TTL (seconds) for production-locations OS ID detail endpoint"
   type        = number
-  default     = 1800
+  default     = 120
 }
 
 variable "vpc_cidr_block" {
