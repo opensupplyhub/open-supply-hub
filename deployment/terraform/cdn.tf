@@ -220,6 +220,7 @@ resource "aws_cloudfront_distribution" "cdn" {
               "Origin",
               "Access-Control-Request-Method",
               "Access-Control-Request-Headers",
+              "X-CloudFront-Auth"
         ]
 
         cookies {
