@@ -124,18 +124,9 @@ The `ecsmanage` command allows you to run Django management commands on remote E
 
 #### Prerequisites
 
-Before running `ecsmanage` commands, you need to:
+- **AWS credentials**: Make sure you have AWS credentials configured in `~/.aws/credentials` with appropriate permissions for the target environment.
 
-1. **Remove MinIO credentials from `.env` file**:
-   - Comment out or remove the following lines from your `.env` file:
-     ```
-     # AWS_ACCESS_KEY_ID=minioadmin
-     # AWS_SECRET_ACCESS_KEY=minioadmin
-     ```
-   - This is necessary because `ecsmanage` needs to use AWS credentials from `~/.aws/credentials` instead of MinIO credentials.
-
-2. **Ensure AWS credentials are configured**:
-   - Make sure you have AWS credentials configured in `~/.aws/credentials` with appropriate permissions for the target environment.
+**Note**: The `./scripts/manage` script automatically unsets MinIO credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) when running `ecsmanage` commands. This ensures that `ecsmanage` uses AWS credentials from `~/.aws/credentials` instead of MinIO credentials.
 
 #### Usage
 

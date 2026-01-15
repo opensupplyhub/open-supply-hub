@@ -44,6 +44,11 @@ services:
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
+      - AWS_STORAGE_BUCKET_NAME=os-hub-dev
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_SSL=False
