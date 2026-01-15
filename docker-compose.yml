@@ -44,6 +44,11 @@ services:
       - NOTIFICATION_EMAIL_TO=notification@example.com
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TOPIC_DEDUPE_BASIC_NAME=dedupe.hub.topic
+      - AWS_STORAGE_BUCKET_NAME=
+      - AWS_S3_ENDPOINT_URL=
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - AWS_REGION=
       - OPENSEARCH_HOST=opensearch-single-node
       - OPENSEARCH_PORT=9200
       - OPENSEARCH_SSL=False
