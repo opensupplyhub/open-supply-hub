@@ -34,8 +34,10 @@ def get_s3_client():
             region_name=os.getenv('AWS_REGION', 'us-east-1'),
         )
     else:
-        # Production AWS S3.
-        return boto3.client('s3')
+        # Use Session to explicitly load from ~/.aws/credentials
+        # This bypasses environment variables
+        session = boto3.Session()
+        return session.client('s3')
 
 
 def download_csv_from_s3(s3_key):
