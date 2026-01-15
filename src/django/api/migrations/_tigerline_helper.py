@@ -22,8 +22,9 @@ def get_s3_client():
     Create S3 client with MinIO support for local development.
     '''
     endpoint_url = os.getenv('AWS_S3_ENDPOINT_URL')
+    is_ecs_command = 'ecsmanage' in ' '.join(sys.argv)
 
-    if endpoint_url:
+    if endpoint_url and not is_ecs_command:
         # Local development with MinIO.
         return boto3.client(
             's3',
