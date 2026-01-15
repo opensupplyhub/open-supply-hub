@@ -22,22 +22,44 @@ def get_s3_client():
     Create S3 client with MinIO support for local development.
     '''
     endpoint_url = os.getenv('AWS_S3_ENDPOINT_URL')
+    aws_access_key = os.getenv('AWS_ACCESS_KEY_ID')
+    aws_secret_key = os.getenv('AWS_SECRET_ACCESS_KEY')
     is_ecs_command = 'ecsmanage' in ' '.join(sys.argv)
-
-    if endpoint_url and not is_ecs_command:
+    
+    # Check if credentials are MinIO credentials.
+    is_minio_creds = aws_access_key == 'minioadmin' and aws_secret_key == 'minioadmin'
+    
+    if endpoint_url and is_minio_creds and not is_ecs_command:
         # Local development with MinIO.
         return boto3.client(
             's3',
             endpoint_url=endpoint_url,
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
             region_name=os.getenv('AWS_REGION', 'us-east-1'),
         )
     else:
-        # Use Session to explicitly load from ~/.aws/credentials
-        # This bypasses environment variables
-        session = boto3.Session()
-        return session.client('s3')
+        # Local ecsmanage command running.
+        if is_ecs_command:
+            # Temporarily unset MinIO credentials from environment to force
+            # boto3 to use ~/.aws/credentials.
+            original_access_key = os.environ.pop('AWS_ACCESS_KEY_ID', None)
+            original_secret_key = os.environ.pop('AWS_SECRET_ACCESS_KEY', None)
+            
+            try:
+                session = boto3.Session()
+                client = session.client('s3')
+            finally:
+                # Restore environment variables if they were set.
+                if original_access_key is not None:
+                    os.environ['AWS_ACCESS_KEY_ID'] = original_access_key
+                if original_secret_key is not None:
+                    os.environ['AWS_SECRET_ACCESS_KEY'] = original_secret_key
+            
+            return client
+        else:
+            # Standard boto3 client for production.
+            return boto3.client('s3')
 
 
 def download_csv_from_s3(s3_key):
