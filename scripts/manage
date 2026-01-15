@@ -21,7 +21,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         if [ "${1:-}" = "ecsmanage" ]; then
             # For ecsmanage commands, unset MinIO credentials from environment
             # to allow AWS credentials from ~/.aws/credentials to be used.
-            # This prevents conflicts between MinIO credentials in .env and
+            # This prevents conflicts between MinIO credentials and
             # AWS credentials needed for ECS operations.
             docker compose \
                 run --rm --entrypoint python \
