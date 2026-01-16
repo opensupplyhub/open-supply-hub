@@ -22,7 +22,7 @@ from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
-from ckeditor.widgets import CKEditorWidget
+from django_ckeditor_5.widgets import CKEditor5Widget
 from jsoneditor.forms import JSONEditor
 
 from api import models
@@ -256,7 +256,7 @@ class SectorGroupAdmin(admin.ModelAdmin):
 class PartnerFieldAdminForm(forms.ModelForm):
     source_by = forms.CharField(
         required=False,
-        widget=CKEditorWidget()
+        widget=CKEditor5Widget(config_name='default')
     )
     json_schema = forms.JSONField(
         required=False,

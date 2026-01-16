@@ -10,7 +10,7 @@ from api.models import (Facility, FacilityActivityReport, Contributor, User)
 def close_list(list_id, user_id):
     user = User.objects.get(id=user_id)
     contributor = Contributor.objects.get(admin=user)
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=timezone.get_default_timezone())
     reason = "Closed via bulk list closure"
     facilities = Facility.objects.filter(
         facilitylistitem__source__facility_list_id=list_id)

@@ -78,7 +78,7 @@ def parse_production_location_list(location_list: FacilityList):
 
 def geocode_facility_list_item(item):
     started = str(timezone.now())
-    if type(item) != FacilityListItem:
+    if not isinstance(item, FacilityListItem):
         raise ValueError('Argument must be a FacilityListItem')
     if item.status == FacilityListItem.ITEM_REMOVED:
         raise ItemRemovedException()

@@ -1,4 +1,4 @@
-from rest_auth.serializers import PasswordResetSerializer
+from dj_rest_auth.serializers import PasswordResetSerializer
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import EmailField
 from django.conf import settings
