@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.19.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Code/API changes
+* [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.18.0
 
 ## Introduction
