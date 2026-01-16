@@ -9,6 +9,7 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
   - [Kick-off & start local development](#kick-off--start-local-development)
   - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
   - [US County Tigerline Data Setup](#us-county-tigerline-data-setup)
+  - [Running ECS Management Commands](#running-ecs-management-commands)
   - [Creation of Superusers](#creation-of-superusers)
   - [Upload a list and process it](#upload-a-list-and-process-it)
   - [Hot Reloading 🔥](#hot-reloading-🔥)
@@ -118,7 +119,7 @@ The fixture data is included in the `load_fixtures` command and will be loaded w
 
 This is automatically executed as part of `./scripts/start_local_dev`.
 
-### Running ECS Management Commands (ecsmanage)
+### Running ECS Management Commands
 
 The `ecsmanage` command allows you to run Django management commands on remote ECS environments (staging, production, etc.) from your local machine.
 
