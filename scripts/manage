@@ -17,9 +17,24 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        docker compose \
-            run --rm --entrypoint python \
-            django \
-            manage.py "$@"
+        # Check if running ecsmanage command
+        if [ "${1:-}" = "ecsmanage" ]; then
+            # For ecsmanage commands, unset MinIO credentials from environment
+            # to allow AWS credentials from ~/.aws/credentials to be used.
+            # This prevents conflicts between MinIO credentials and
+            # AWS credentials needed for ECS operations.
+            docker compose \
+                run --rm --entrypoint python \
+                -e AWS_ACCESS_KEY_ID= \
+                -e AWS_SECRET_ACCESS_KEY= \
+                django \
+                manage.py "$@"
+        else
+            # For regular commands, use all environment variables as configured.
+            docker compose \
+                run --rm --entrypoint python \
+                django \
+                manage.py "$@"
+        fi
     fi
 fi

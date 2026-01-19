@@ -22,9 +22,8 @@ resource "aws_msk_configuration" "msk_config" {
   kafka_versions    = ["3.4.0", "3.9.x"]
   server_properties = ""
 
-  # Prevent Terraform from deleting the in-use MSK configuration.
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
     ignore_changes = [
       kafka_versions,
       server_properties,

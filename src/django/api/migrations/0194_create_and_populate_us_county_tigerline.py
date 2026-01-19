@@ -20,7 +20,7 @@ def populate_tigerline_data_wrapper(apps, schema_editor):
         s3_key=S3_CSV_KEY,
         source_srid=4326,
         clear_existing=False,
-        production_envs=['Production', 'Preprod', 'Staging']
+        production_envs=['Production', 'Staging']
     )
 
 

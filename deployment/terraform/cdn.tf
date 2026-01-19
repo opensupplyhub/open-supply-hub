@@ -7,7 +7,7 @@ locals {
       max_ttl      = var.api_facilities_cache_max_ttl
     },
     {
-      path_pattern = "api/v1/production-locations/*"
+      path_pattern = "api/v1/production-locations*"
       default_ttl  = var.api_production_locations_cache_default_ttl
       max_ttl      = var.api_production_locations_cache_max_ttl
     }
@@ -213,7 +213,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       forwarded_values {
         query_string = true
-        headers      = ["Authorization"]
+        headers      = ["Authorization", "X-OAR-CLIENT-KEY", "Referer"]
 
         cookies {
           forward           = "whitelist"

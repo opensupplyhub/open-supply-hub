@@ -53,6 +53,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support MIT Living Wage system-generated partner fields. For US production locations, the `mit_living_wage` field is included when a contributor is assigned, automatically providing links to MIT Living Wage data based on the facility's geographic location (county). The field is populated dynamically through a provider registry pattern and follows the same structure as user-contributed partner fields.
 * Removed unused `ExtendedFieldListSerializer` and related code to clean up the codebase and eliminate obsolete serializer components.
 * [OSDEV-2330](https://opensupplyhub.atlassian.net/browse/OSDEV-2330) - Replaced US County Tigerline data from 2025 to 2021 version to align with MIT Living Wage Calculator data requirements. The migration now uses 2021 Tigerline CSV data which contains geometries in WGS84 (EPSG:4326) format that are automatically transformed to EPSG:5070 (Albers Equal Area) during import.
+* Created a new Django management command `populate_tigerline_data` to populate Tigerline data from S3 CSV files after migration if the data was not available during migration. The command supports configurable source SRID and can optionally clear existing data before populating.
 
 ### Architecture/Environment changes
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
@@ -72,6 +73,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Removed the FE request to `GET /api/parent-companies/`.
     * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
 * [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
+* [OSDEV-2332](https://opensupplyhub.atlassian.net/browse/OSDEV-2332) - Partner fields are now displayed in a dedicated "New Pilot Data Integrations" section on the production location page, visually separated with borders and including a "Learn More" link. This section only appears on the main location details page and is excluded from embedded map views.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

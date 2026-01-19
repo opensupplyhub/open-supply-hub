@@ -8,6 +8,8 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 - [Development](#development)
   - [Kick-off & start local development](#kick-off--start-local-development)
   - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
+  - [US County Tigerline Data Setup](#us-county-tigerline-data-setup)
+  - [Running ECS Management Commands](#running-ecs-management-commands)
   - [Creation of Superusers](#creation-of-superusers)
   - [Upload a list and process it](#upload-a-list-and-process-it)
   - [Hot Reloading 🔥](#hot-reloading-🔥)
@@ -116,6 +118,31 @@ The fixture data is included in the `load_fixtures` command and will be loaded w
 ```
 
 This is automatically executed as part of `./scripts/start_local_dev`.
+
+### Running ECS Management Commands
+
+The `ecsmanage` command allows you to run Django management commands on remote ECS environments (staging, production, etc.) from your local machine.
+
+#### Prerequisites
+
+- **AWS credentials**: Make sure you have AWS credentials configured in `~/.aws/credentials` with appropriate permissions for the target environment.
+
+**Note**: The `./scripts/manage` script automatically unsets MinIO credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) when running `ecsmanage` commands. This ensures that `ecsmanage` uses AWS credentials from `~/.aws/credentials` instead of MinIO credentials.
+
+#### Usage
+
+Run Django management commands on remote ECS environments:
+
+```bash
+./scripts/manage ecsmanage -e <environment> <command>
+```
+
+Example:
+
+```bash
+# Show migrations on staging
+./scripts/manage ecsmanage -e staging showmigrations
+```
 
 ### Creation of Superusers
 
