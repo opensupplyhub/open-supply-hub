@@ -244,6 +244,14 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | React development server | [`6543`](http://localhost:6543) |
 | Gunicorn for Django app  | [`8081`](http://localhost:8081) |
 
+### Linting & git hooks
+
+- Install pre-commit: `pip install pre-commit`, then enable it: `pre-commit install`.
+- Build the Django image once (tools live in the container): `docker compose build django`.
+- Format/fix all backend files: `pre-commit run --all-files` (runs ruff --fix, isort, black, then flake8 inside the django container).
+- Format on save in your editor using black/ruff to keep files clean before the hook runs.
+- Config lives in `.pre-commit-config.yaml` with settings in `pyproject.toml` and `src/django/.flake8` (excludes migrations, settings.py, manage.py).
+
 
 ## Scripts 🧰
 

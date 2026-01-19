@@ -1,0 +1,20 @@
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+extend-exclude = "api/migrations/|settings\\.py|manage\\.py"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+src_paths = ["src/django"]
+skip = ["api/migrations"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+src = ["src/django"]
+extend-exclude = ["settings.py", "manage.py", "api/migrations/*"]
+
+[tool.ruff.lint]
+extend-ignore = ["E203", "W503"]
+
