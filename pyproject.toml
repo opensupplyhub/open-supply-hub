@@ -16,5 +16,5 @@ src = ["src/django"]
 extend-exclude = ["settings.py", "manage.py", "api/migrations/*"]
 
 [tool.ruff.lint]
-extend-ignore = ["E203", "W503"]
+extend-ignore = ["E203"]
 
