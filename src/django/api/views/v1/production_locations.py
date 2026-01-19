@@ -78,10 +78,19 @@ class ProductionLocations(ViewSet):
         raw_values = value.get('raw_values')
         raw_value = value.get('raw_value')
 
+        payload = None
         if isinstance(raw_values, (list, dict)):
-            partner_extended_fields[field_name] = raw_values
+            payload = raw_values
         elif raw_value is not None:
-            partner_extended_fields[field_name] = raw_value
+            payload = raw_value
+
+        if payload is None:
+            return
+
+        if field_name not in partner_extended_fields:
+            partner_extended_fields[field_name] = []
+
+        partner_extended_fields[field_name].append(payload)
 
     def get_permissions(self):
         '''
@@ -346,10 +355,15 @@ class ProductionLocations(ViewSet):
                     continue
 
                 field_name = provider_data.get('field_name')
-                if not field_name:
+                provider_value = provider_data.get('value')
+
+                if not field_name or not isinstance(provider_value, dict):
                     continue
 
-                # Use the rich provider payload (list entry) for system fields.
-                partner_extended_fields[field_name] = [provider_data]
+                self.__add_partner_field_value(
+                    partner_extended_fields,
+                    field_name,
+                    provider_value,
+                )
 
         return partner_extended_fields
