@@ -252,26 +252,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
   - Select interpreter: Command Palette → `Python: Select Interpreter` → `.venv/bin/python`.
   - Install extensions: “Python” + “Ruff” + “Black Formatter (ms-python)”.
   - Enable format on save and Ruff fixes (see `.vscode/settings.json` for reference): Black as default formatter, `source.fixAll` + `source.fixAll.ruff` on save, paths to venv binaries.
-  Example for `settings.json`:
-  ```
-      "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "ruff.enable": true,
-    "ruff.importStrategy": "fromEnvironment",
-    "ruff.path": [
-        "${workspaceFolder}/.venv/bin/ruff"
-    ],
-    "black-formatter.path": [
-        "${workspaceFolder}/.venv/bin/black"
-    ],
-    "[python]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.codeActionsOnSave": {
-            "source.fixAll": "always",
-            "source.fixAll.ruff": "always"
-        }
-    },
-  ```
+-  Example settings file: `.vscode/example-settings.json`. Copy to `.vscode/settings.json` to apply.
 
 - Repo second wall: pre-commit hooks run in Docker (`pre-commit run --all-files` runs ruff --fix, isort, black, then flake8 inside the django container) to match CI.
 - Config lives in `.pre-commit-config.yaml` with settings in `pyproject.toml` and `src/django/.flake8` (excludes migrations, settings.py, manage.py).

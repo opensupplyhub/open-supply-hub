@@ -1,0 +1,27 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "ruff.enable": true,
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.path": [
+    "${workspaceFolder}/.venv/bin/ruff"
+  ],
+  "black-formatter.path": [
+    "${workspaceFolder}/.venv/bin/black"
+  ],
+  "python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
+      "source.fixAll.ruff": "always"
+    }
+  },
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": [
+    "--line-length=88",
+    "--config",
+    "pyproject.toml"
+  ],
+  "python.linting.ruffEnabled": true
+}
