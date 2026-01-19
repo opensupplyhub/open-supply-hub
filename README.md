@@ -248,9 +248,33 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 
 - Install pre-commit: `pip install pre-commit`, then enable it: `pre-commit install`.
 - Local first wall: enable on-save formatting/fixes in your editor (Black + Ruff) using the repo `.venv`, so files stay clean before staging.
+- Recommended VS Code/Cursor setup for on-save:
+  - Select interpreter: Command Palette → `Python: Select Interpreter` → `.venv/bin/python`.
+  - Install extensions: “Python” + “Ruff” + “Black Formatter (ms-python)”.
+  - Enable format on save and Ruff fixes (see `.vscode/settings.json` for reference): Black as default formatter, `source.fixAll` + `source.fixAll.ruff` on save, paths to venv binaries.
+  Example for `settings.json`:
+  ```
+      "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "ruff.enable": true,
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.path": [
+        "${workspaceFolder}/.venv/bin/ruff"
+    ],
+    "black-formatter.path": [
+        "${workspaceFolder}/.venv/bin/black"
+    ],
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "always",
+            "source.fixAll.ruff": "always"
+        }
+    },
+  ```
+
 - Repo second wall: pre-commit hooks run in Docker (`pre-commit run --all-files` runs ruff --fix, isort, black, then flake8 inside the django container) to match CI.
 - Config lives in `.pre-commit-config.yaml` with settings in `pyproject.toml` and `src/django/.flake8` (excludes migrations, settings.py, manage.py).
-
 
 ## Scripts 🧰
 
