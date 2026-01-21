@@ -7,6 +7,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RemoveIndex(
+            model_name="event",
+            name="api_event_content_type_id_object_id_idx",
+        ),
         migrations.AlterModelOptions(
             name="event",
             options={
@@ -19,4 +23,3 @@ class Migration(migrations.Migration):
             },
         ),
     ]
-
