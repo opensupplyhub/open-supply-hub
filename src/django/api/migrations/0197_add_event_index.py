@@ -7,9 +7,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name="event",
-            name="api_event_content_type_id_object_id_idx",
+        migrations.RunSQL(
+            sql=[
+                "DROP INDEX IF EXISTS api_event_content_type_id_object_id_idx",
+                "DROP INDEX IF EXISTS api_event_content_type_id_object_id_b046420a_idx",
+            ],
+            reverse_sql=migrations.RunSQL.noop,
         ),
         migrations.AddIndex(
             model_name="event",
