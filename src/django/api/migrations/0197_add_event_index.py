@@ -11,15 +11,11 @@ class Migration(migrations.Migration):
             model_name="event",
             name="api_event_content_type_id_object_id_idx",
         ),
-        migrations.AlterModelOptions(
-            name="event",
-            options={
-                "indexes": [
-                    models.Index(
-                        fields=["content_type", "object_id"],
-                        name="api_event_content_object_idx",
-                    )
-                ]
-            },
+        migrations.AddIndex(
+            model_name="event",
+            index=models.Index(
+                fields=["content_type", "object_id"],
+                name="api_event_content_object_idx",
+            ),
         ),
     ]
