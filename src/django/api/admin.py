@@ -7,6 +7,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -153,6 +154,42 @@ class SourceAdmin(admin.ModelAdmin):
     autocomplete_fields = ('contributor', )
     readonly_fields = ('source_type', 'facility_list', 'create')
     list_filter = ('source_type', 'contributor')
+
+    def save_model(self, request, obj, form, change):
+        """
+        Override save_model to update ExtendedField records when
+        the Source contributor is changed (OSDEV-2159).
+        """
+        old_contributor = None
+        if change and 'contributor' in form.changed_data:
+            # Get the old contributor before saving
+            try:
+                old_contributor = models.Source.objects.get(
+                    pk=obj.pk).contributor
+            except models.Source.DoesNotExist:
+                pass
+
+        with transaction.atomic():
+            # Call parent save_model to save the Source
+            super().save_model(request, obj, form, change)
+
+            # If contributor was changed, update all related ExtendedFields
+            if (change and 'contributor' in form.changed_data and
+                    old_contributor and old_contributor != obj.contributor):
+                # Update ExtendedField records linked to this source
+                # through FacilityListItem
+                updated_count = models.ExtendedField.objects.filter(
+                    facility_list_item__source=obj
+                ).update(contributor=obj.contributor)
+
+                # Log the update for admin awareness
+                if updated_count > 0:
+                    self.message_user(
+                        request,
+                        (f"Updated {updated_count} extended field(s) to "
+                         f"new contributor: {obj.contributor}"),
+                        level=messages.INFO
+                    )
 
 
 class RequestLogAdmin(admin.ModelAdmin):
