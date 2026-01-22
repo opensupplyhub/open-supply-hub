@@ -67,31 +67,6 @@ class ProductionLocations(ViewSet):
 
         return (opensearch_service, opensearch_query_director)
 
-    @staticmethod
-    def __add_partner_field_value(partner_extended_fields, field_name, value):
-        """
-        Extract and add partner field value to the response dictionary.
-        """
-        if not field_name or not isinstance(value, dict):
-            return
-
-        raw_values = value.get('raw_values')
-        raw_value = value.get('raw_value')
-
-        payload = None
-        if isinstance(raw_values, (list, dict)):
-            payload = raw_values
-        elif raw_value is not None:
-            payload = raw_value
-
-        if payload is None:
-            return
-
-        if field_name not in partner_extended_fields:
-            partner_extended_fields[field_name] = []
-
-        partner_extended_fields[field_name].append(payload)
-
     def get_permissions(self):
         '''
         Redefines the parent method and returns the list of permissions for
@@ -307,7 +282,8 @@ class ProductionLocations(ViewSet):
     def __get_partner_fields(self, pk):
         """
         Checks and returns partner extended fields for a
-        facility object by its ID or by the provided Facility instance.
+        production location object by its ID or
+        by the provided Facility instance.
 
         Caches the list of partner field names for one hour.
         Returns a dictionary of the form:
@@ -367,3 +343,28 @@ class ProductionLocations(ViewSet):
                 )
 
         return partner_extended_fields
+
+    @staticmethod
+    def __add_partner_field_value(partner_extended_fields, field_name, value):
+        """
+        Extract and add partner field value to the response dictionary.
+        """
+        if not field_name or not isinstance(value, dict):
+            return
+
+        raw_values = value.get('raw_values')
+        raw_value = value.get('raw_value')
+
+        payload = None
+        if isinstance(raw_values, (list, dict)):
+            payload = raw_values
+        elif raw_value is not None:
+            payload = raw_value
+
+        if payload is None:
+            return
+
+        if field_name not in partner_extended_fields:
+            partner_extended_fields[field_name] = []
+
+        partner_extended_fields[field_name].append(payload)
