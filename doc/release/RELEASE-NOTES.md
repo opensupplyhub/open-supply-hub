@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
+* Release date: January 22, 2026
 
 ### Bugfix
 [Hotfix][OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Hotfix: Add `Host` header to fix infinite production locations scroll on the main search page.
