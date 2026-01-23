@@ -18,7 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
     * Upgraded Python from `3.8` to `3.11`.
-    * Upgraded Django from `3.2.17` to `5.1.3`.
+    * Upgraded Django from `3.2.17` to `5.2.10`.
     * Upgraded Python and Django packages to maintain compatibility.
 
 
