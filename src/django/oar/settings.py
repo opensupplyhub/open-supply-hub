@@ -35,13 +35,23 @@ if 'index_together' not in options.DEFAULT_NAMES:
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 
 CKEDITOR_5_CONFIGS = {
-    'default': {
-        'toolbar': [
-            'heading', '|',
-            'bold', 'italic', 'link', 'bulletedList', 'numberedList',
-            'blockQuote',
+    "default": {
+        "toolbar": [
+            "heading", "|",
+            "bold", "italic", "underline", "strikethrough",
+            "link", "|",
+            "bulletedList", "numberedList", "|",
+            "removeFormat", "|",
+            "undo", "redo",
         ],
-    },
+        # Remove upload/media/table plugins to mirror the prior CKEditor 4 config
+        # that blocked image/file uploads and kept the toolbar minimal.
+        "removePlugins": [
+            "CKBox", "CKFinderUploadAdapter", "EasyImage",
+            "Image", "ImageCaption", "ImageStyle", "ImageToolbar",
+            "ImageUpload", "MediaEmbed", "Table", "TableToolbar",
+        ],
+    }
 }
 
 # Set environment
@@ -597,10 +607,9 @@ AWS_S3_FILE_OVERWRITE = False
 TESTING = 'test' in sys.argv
 
 if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     STORAGES = {
         "default": {
-            "BACKEND": DEFAULT_FILE_STORAGE,
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",

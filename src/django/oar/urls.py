@@ -143,6 +143,7 @@ internal_apis = [
     path('api/docs/', schema_view.with_ui('swagger'),
          name='schema-swagger-ui'),
     path('admin/', admin_site.urls),
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
     path('health-check/', include('watchman.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('dj_rest_auth.urls')),
