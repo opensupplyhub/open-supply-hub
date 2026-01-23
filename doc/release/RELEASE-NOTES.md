@@ -17,6 +17,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 
+## Release 2.18.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 22, 2026
+
+### Bugfix
+[Hotfix][OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Hotfix: Add `Host` header to fix infinite production locations scroll on the main search page.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 
 ## Release 2.18.0
 
