@@ -247,6 +247,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 ### Linting & git hooks for Django app
 
 - Install pre-commit: `pip install pre-commit`, then enable it: `pre-commit install`.
+- **Prerequisite**: Build the Docker image before running pre-commit hooks (e.g., `docker compose build` or `./scripts/update`). This ensures that hooks defined in `.pre-commit-config.yaml` that execute inside the django container (such as when running `pre-commit run --all-files`) will not fail.
 - Local first wall: enable on-save formatting/fixes in your editor (Black + Ruff) using the repo `.venv`, so files stay clean before staging.
 - Recommended VS Code/Cursor setup for on-save:
   - Select interpreter: Command Palette → `Python: Select Interpreter` → `.venv/bin/python`.
