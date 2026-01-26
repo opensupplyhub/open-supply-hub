@@ -1,0 +1,7 @@
+[flake8]
+# Keep local linting aligned with the CI invocation from scripts/run_be_code_quality
+# and .github/workflows/code_quality.yml.
+exclude = settings.py, manage.py, *.pyc, api/migrations/*
+max-line-length = 88
+extend-ignore = E203, W503
+
