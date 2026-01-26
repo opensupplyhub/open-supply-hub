@@ -118,7 +118,7 @@ const ClaimAttachmentsUploader = ({
         <div data-testid="claim-attachments-uploader">
             <ul style={claimAttachmentsUploaderStyles.fileListUploaded}>
                 {isEmpty(files) ? (
-                    <div style={claimAttachmentsUploaderStyles.hiddenSpace} />
+                    <li style={claimAttachmentsUploaderStyles.hiddenSpace} />
                 ) : null}
                 {files.map((file, index) => (
                     <li key={uuidv4()}>
