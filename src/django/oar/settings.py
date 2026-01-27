@@ -606,10 +606,11 @@ AWS_S3_FILE_OVERWRITE = False
 
 TESTING = 'test' in sys.argv
 
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": DEFAULT_FILE_STORAGE,
         },
         "staticfiles": {
             "BACKEND": "spa.storage.SPAStaticFilesStorage",
