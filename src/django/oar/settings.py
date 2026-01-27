@@ -604,8 +604,16 @@ AWS_S3_FILE_OVERWRITE = False
 
 TESTING = 'test' in sys.argv
 
-if DEBUG:
+# Use filesystem storage when DEBUG or when running tests, so tests never use
+# S3/MinIO (matches legacy DEFAULT_FILE_STORAGE behavior for CI/integration tests).
+if DEBUG or TESTING:
     STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": os.path.join(BASE_DIR, "media"),
+            },
+        },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
