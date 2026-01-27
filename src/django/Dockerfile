@@ -26,7 +26,12 @@ RUN set -ex \
 
 COPY . /usr/local/src
 
-RUN GOOGLE_SERVER_SIDE_API_KEY="" \
+RUN DJANGO_ENV=Production \
+    BATCH_MODE=build \
+    BATCH_JOB_QUEUE_NAME=build \
+    BATCH_JOB_DEF_NAME=build \
+    AWS_STORAGE_BUCKET_NAME=build \
+    GOOGLE_SERVER_SIDE_API_KEY="" \
     OAR_CLIENT_KEY="" \
     HUBSPOT_API_KEY="" \
     HUBSPOT_SUBSCRIPTION_ID="" \

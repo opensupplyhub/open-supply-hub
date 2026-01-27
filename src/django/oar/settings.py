@@ -406,8 +406,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ((os.path.join(STATIC_ROOT, "static")),)
 
-STATICFILES_STORAGE = 'spa.storage.SPAStaticFilesStorage'
-
 # Watchman
 # https://github.com/mwarkentin/django-watchman
 
