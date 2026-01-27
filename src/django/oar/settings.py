@@ -46,10 +46,10 @@ CKEDITOR_5_CONFIGS = {
         ],
         # Remove upload/media/table plugins to mirror the prior CKEditor 4 config
         # that blocked image/file uploads and kept the toolbar minimal.
+        # Only supported identifiers for django-ckeditor-5 0.2.19 are listed.
         "removePlugins": [
-            "CKBox", "CKFinderUploadAdapter", "EasyImage",
-            "Image", "ImageCaption", "ImageStyle", "ImageToolbar",
-            "ImageUpload", "MediaEmbed", "Table", "TableToolbar",
+            "CKFinderUploadAdapter", "Image", "ImageCaption", "ImageStyle",
+            "ImageToolbar", "MediaEmbed", "Table", "TableToolbar",
         ],
     }
 }
