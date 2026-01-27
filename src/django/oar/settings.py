@@ -607,13 +607,12 @@ AWS_S3_FILE_OVERWRITE = False
 TESTING = 'test' in sys.argv
 
 if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     STORAGES = {
         "default": {
-            "BACKEND": DEFAULT_FILE_STORAGE,
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         },
         "staticfiles": {
-            "BACKEND": "spa.storage.SPAStaticFilesStorage",
+            "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
         },
     }
 
