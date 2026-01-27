@@ -1,12 +1,9 @@
-FROM --platform=linux/amd64 python:3.8-slim-bookworm
+FROM --platform=linux/amd64 python:3.11-slim-bookworm
 
 RUN mkdir -p /usr/local/src/static/static
 WORKDIR /usr/local/src
 
 COPY requirements.txt /usr/local/src/
-
-# [OSDEV-1785][https://github.com/aio-libs/aiokafka/issues/1093] - Remove aiokafka in requirements.txt to avoid conflicts.
-RUN sed -i '/aiokafka/d' requirements.txt
 
 RUN set -ex \
     && buildDeps=" \
@@ -24,14 +21,17 @@ RUN set -ex \
     " \
     && apt-get update && apt-get install -y $buildDeps $deps --no-install-recommends \
     && pip install --no-cache-dir -r requirements.txt \
-    # [OSDEV-1785][https://github.com/aio-libs/aiokafka/issues/1093] - Install aiokafka from the forked repo.
-    && pip install --no-cache-dir git+https://github.com/opensupplyhub/aiokafka.git@kafka-python-2.0.3 \
     && apt-get purge -y --auto-remove $buildDeps \
     && rm -rf /usr/local/src/requirements.txt /var/lib/apt/lists/*
 
 COPY . /usr/local/src
 
-RUN GOOGLE_SERVER_SIDE_API_KEY="" \
+RUN DJANGO_ENV=Production \
+    BATCH_MODE=build \
+    BATCH_JOB_QUEUE_NAME=build \
+    BATCH_JOB_DEF_NAME=build \
+    AWS_STORAGE_BUCKET_NAME=build \
+    GOOGLE_SERVER_SIDE_API_KEY="" \
     OAR_CLIENT_KEY="" \
     HUBSPOT_API_KEY="" \
     HUBSPOT_SUBSCRIPTION_ID="" \
