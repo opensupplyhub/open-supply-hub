@@ -606,8 +606,8 @@ AWS_S3_FILE_OVERWRITE = False
 
 TESTING = 'test' in sys.argv
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     STORAGES = {
         "default": {
             "BACKEND": DEFAULT_FILE_STORAGE,
@@ -618,6 +618,7 @@ if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
     }
 
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+
 if AWS_STORAGE_BUCKET_NAME is None and not DEBUG:
     raise ImproperlyConfigured(
         'Invalid AWS_STORAGE_BUCKET_NAME provided, must be set in the environment'
