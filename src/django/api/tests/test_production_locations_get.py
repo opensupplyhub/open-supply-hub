@@ -263,16 +263,11 @@ class TestProductionLocationsViewSet(APITestCase):
         wage_indicator = api_res.data["wage_indicator"]
         mit_living_wage = api_res.data["mit_living_wage"]
 
-        self.assertIsInstance(wage_indicator, list)
-        self.assertIsInstance(mit_living_wage, list)
-        self.assertGreaterEqual(len(wage_indicator), 1)
-        self.assertGreaterEqual(len(mit_living_wage), 1)
-
-        wi_entry = wage_indicator[0]
-        mit_entry = mit_living_wage[0]
+        self.assertIsInstance(wage_indicator, dict)
+        self.assertIsInstance(mit_living_wage, dict)
 
         self.assertEqual(
-            wi_entry,
+            wage_indicator,
             {
                 "living_wage_link_national":
                     "https://paywizard.org/salary/living-wages",
@@ -292,6 +287,6 @@ class TestProductionLocationsViewSet(APITestCase):
         )
 
         self.assertEqual(
-            mit_entry,
+            mit_living_wage,
             {"county_id": "12345"},
         )

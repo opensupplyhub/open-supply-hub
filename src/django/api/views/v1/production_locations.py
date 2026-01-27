@@ -288,8 +288,8 @@ class ProductionLocations(ViewSet):
         Caches the list of partner field names for one hour.
         Returns a dictionary of the form:
             {
-                "field_name_1": [...],
-                "field_name_2": "some_value",
+                "field_name_1": value_1,
+                "field_name_2": value_2,
                 ...
             }
         """
@@ -364,7 +364,4 @@ class ProductionLocations(ViewSet):
         if payload is None:
             return
 
-        if field_name not in partner_extended_fields:
-            partner_extended_fields[field_name] = []
-
-        partner_extended_fields[field_name].append(payload)
+        partner_extended_fields[field_name] = payload
