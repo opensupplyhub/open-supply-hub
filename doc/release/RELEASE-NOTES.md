@@ -21,6 +21,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Upgraded Django from `3.2.17` to `5.2.10`.
     * Upgraded Python and Django packages to maintain compatibility.
 
+### Code/API changes
+* [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 
 ## Release 2.18.1
 
