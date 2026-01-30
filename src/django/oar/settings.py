@@ -164,6 +164,7 @@ INSTALLED_APPS = [
     'django_bleach',
     'django_ckeditor_5',
     'jsoneditor',
+    'spa',
 ]
 
 # For allauth
@@ -405,6 +406,7 @@ NOTIFICATION_EMAIL_TO = os.getenv(
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ((os.path.join(STATIC_ROOT, "static")),)
+STATICFILES_STORAGE = "spa.storage.SPAStaticFilesStorage"
 
 # Watchman
 # https://github.com/mwarkentin/django-watchman
@@ -616,7 +618,7 @@ if (DEBUG and not AWS_S3_ENDPOINT_URL) or TESTING:
             },
         },
         "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            "BACKEND": "spa.storage.SPAStaticFilesStorage",
         },
     }
 else:
@@ -625,7 +627,7 @@ else:
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         },
         "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+            "BACKEND": "spa.storage.SPAStaticFilesStorage",
         },
     }
 
