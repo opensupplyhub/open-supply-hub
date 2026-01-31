@@ -9,6 +9,7 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
   - [Kick-off & start local development](#kick-off--start-local-development)
   - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
   - [US County Tigerline Data Setup](#us-county-tigerline-data-setup)
+    - [Local Development](#local-development)
   - [Running ECS Management Commands](#running-ecs-management-commands)
   - [Creation of Superusers](#creation-of-superusers)
   - [Upload a list and process it](#upload-a-list-and-process-it)
@@ -16,8 +17,11 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
   - [Debugging Django](#debugging-django)
   - [Embedded Maps](#embedded-maps)
   - [Ports](#ports)
+  - [Linting & git hooks for Django app](#linting--git-hooks-for-django-app)
 - [Scripts 🧰](#scripts-🧰)
 - [Tools ⚒️](#tools-⚒️)
+- [Running e2e (Playwright) and integration tests](#running-e2e-playwright-and-integration-tests)
+  - [Playwright Tests](#playwright-tests)
 
 
 ## Requirements
@@ -244,6 +248,24 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | React development server | [`6543`](http://localhost:6543) |
 | Gunicorn for Django app  | [`8081`](http://localhost:8081) |
 
+### Linting & git hooks for Django app
+
+- **Local virtual environment (`.venv`) setup**: The `.venv` virtual environment is **not created automatically** and must be set up manually for local editor tooling (Black, Ruff) and pre-commit. Note that `./scripts/start_local_dev` uses Docker and does not create `.venv`—create it separately for editor integration. To set up:
+  1. Create the virtual environment: `python3 -m venv .venv` (or `python -m venv .venv` on some systems)
+  2. Activate it:
+     - macOS/Linux: `source .venv/bin/activate`
+     - Windows: `.venv\Scripts\activate`
+  3. Install tools: `pip install pre-commit black ruff` (Note: `black` and `ruff` are already in `src/django/requirements.txt`; for minimal editor tooling, install them separately as shown, or install from `src/django/requirements.txt` if you need other Django dependencies in your `.venv`)
+  4. Enable pre-commit git hooks: `pre-commit install`
+- **Pre-commit setup**: Pre-commit orchestrates the hooks locally, but the hooks themselves execute inside the django Docker container to match CI. **Prerequisite**: Build the Docker image first (e.g., `docker compose build` or `./scripts/update`) so hooks can run successfully. To run hooks manually: `pre-commit run --all-files` (runs ruff --fix, isort, black, then flake8 inside the django container).
+- **Local first wall**: Enable on-save formatting/fixes in your editor (Black + Ruff) using the repo `.venv`. Configure your editor to use `.venv`'s Python interpreter and formatter binaries (not Docker).
+- Recommended VS Code/Cursor setup for on-save:
+  - Select interpreter: Command Palette → `Python: Select Interpreter` → `.venv/bin/python`.
+  - Install extensions: “Python” + “Ruff” + “Black Formatter (ms-python)”.
+  - Enable format on save and Ruff fixes (see `.vscode/settings.json` for reference): Black as default formatter, `source.fixAll` + `source.fixAll.ruff` on save, paths to `.venv/bin/black` and `.venv/bin/ruff` (not Docker binaries).
+-  Example settings file: `.vscode/example-settings.json`. Copy to `.vscode/settings.json` to apply.
+
+- Config lives in `.pre-commit-config.yaml` with settings in `pyproject.toml` and `src/django/.flake8` (excludes migrations, settings.py, manage.py).
 
 ## Scripts 🧰
 
