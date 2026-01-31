@@ -9,6 +9,7 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
   - [Kick-off & start local development](#kick-off--start-local-development)
   - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
   - [US County Tigerline Data Setup](#us-county-tigerline-data-setup)
+    - [Local Development](#local-development)
   - [Running ECS Management Commands](#running-ecs-management-commands)
   - [Creation of Superusers](#creation-of-superusers)
   - [Upload a list and process it](#upload-a-list-and-process-it)
@@ -16,8 +17,11 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
   - [Debugging Django](#debugging-django)
   - [Embedded Maps](#embedded-maps)
   - [Ports](#ports)
+  - [Linting & git hooks for Django app](#linting--git-hooks-for-django-app)
 - [Scripts 🧰](#scripts-🧰)
 - [Tools ⚒️](#tools-⚒️)
+- [Running e2e (Playwright) and integration tests](#running-e2e-playwright-and-integration-tests)
+  - [Playwright Tests](#playwright-tests)
 
 
 ## Requirements
