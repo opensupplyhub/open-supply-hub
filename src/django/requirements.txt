@@ -22,9 +22,9 @@ django-ckeditor==6.5.1
 djangorestframework-gis==1.0.0
 djangorestframework==3.13.1
 flake8==4.0.1
-black==24.8.0
-isort==5.13.2
-ruff==0.6.9
+black==26.1.0
+isort==7.0.0
+ruff==0.14.14
 mccabe==0.6.1
 mercantile==1.1.2
 openpyxl==3.0.9
