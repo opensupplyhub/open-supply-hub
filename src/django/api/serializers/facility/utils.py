@@ -1,13 +1,12 @@
 from typing import (Union)
 from itertools import groupby
+from datetime import timezone as dt_timezone
 
 from api.constants import (
     FacilityClaimStatuses,
     FacilitiesQueryParams
 )
 from dateutil import parser
-from django.utils import timezone
-
 from ...helpers.helpers import (
     cleanup_data,
     replace_invalid_data,
@@ -265,7 +264,7 @@ def format_date(date: str) -> str:
     original_datetime = parser.isoparse(date)
 
     # Convert the datetime object to UTC.
-    utc_datetime = original_datetime.astimezone(timezone.utc)
+    utc_datetime = original_datetime.astimezone(dt_timezone.utc)
 
     # Format the UTC datetime with the "Z" notation.
     formatted_datetime_str = utc_datetime.strftime('%Y-%m-%dT%H:%M:%S.%fZ')

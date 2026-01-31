@@ -14,6 +14,7 @@ import os
 import requests
 import sys
 
+from django.db.models import options
 from django.core.exceptions import ImproperlyConfigured
 from corsheaders.defaults import default_headers
 
@@ -22,11 +23,36 @@ from api.constants import NON_FIELD_ERRORS_KEY
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Compatibility: allow legacy `index_together` meta option so immutable older
+# migrations (e.g., Django<5 era) continue to load without edits.
+if 'index_together' not in options.DEFAULT_NAMES:
+    options.DEFAULT_NAMES = (*options.DEFAULT_NAMES, 'index_together')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
+
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "heading", "|",
+            "bold", "italic", "underline", "strikethrough",
+            "link", "|",
+            "bulletedList", "numberedList", "|",
+            "removeFormat", "|",
+            "undo", "redo",
+        ],
+        # Remove upload/media/table plugins to mirror the prior CKEditor 4 config
+        # that blocked image/file uploads and kept the toolbar minimal.
+        # Only supported identifiers for django-ckeditor-5 0.2.19 are listed.
+        "removePlugins": [
+            "CKFinderUploadAdapter", "Image", "ImageCaption", "ImageStyle",
+            "ImageToolbar", "MediaEmbed", "Table", "TableToolbar",
+        ],
+    }
+}
 
 # Set environment
 ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
@@ -124,11 +150,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_gis',
     'drf_yasg',
-    'rest_auth',
+    'dj_rest_auth',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'rest_auth.registration',
+    'dj_rest_auth.registration',
     'watchman',
     'simple_history',
     'waffle',
@@ -136,8 +162,9 @@ INSTALLED_APPS = [
     'web',
     'ecsmanage',
     'django_bleach',
-    'ckeditor',
+    'django_ckeditor_5',
     'jsoneditor',
+    'spa',
 ]
 
 # For allauth
@@ -157,7 +184,7 @@ AUTH_USER_MODEL = 'api.User'
 
 SESSION_COOKIE_SECURE = True
 
-REST_AUTH_SERIALIZERS = {
+REST_AUTH = {
     'USER_DETAILS_SERIALIZER': 'api.serializers.UserSerializer',
     'PASSWORD_RESET_SERIALIZER': 'api.serializers.UserPasswordResetSerializer',
     'PASSWORD_RESET_CONFIRM_SERIALIZER': 'api.serializers.UserPasswordResetConfirmSerializer',
@@ -210,6 +237,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Clickjacking protection is turned off to allow iframes:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -289,10 +317,7 @@ AUTH_USER_MODEL = 'api.User'
 # https://docs.djangoproject.com/en/3.2/topics/cache/
 
 MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
-if DEBUG:
-    CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
-else:
-    CACHE_BACKEND = 'django_elasticache.memcached.ElastiCache'
+CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
 CACHES = {
     'default': {
@@ -378,8 +403,7 @@ NOTIFICATION_EMAIL_TO = os.getenv(
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ((os.path.join(STATIC_ROOT, "static")),)
-
-STATICFILES_STORAGE = 'spa.storage.SPAStaticFilesStorage'
+STATICFILES_STORAGE = "spa.storage.SPAStaticFilesStorage"
 
 # Watchman
 # https://github.com/mwarkentin/django-watchman
@@ -504,24 +528,6 @@ ECSMANAGE_ENVIRONMENTS = {
     },
 }
 
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': [
-            ['Bold', 'Italic', 'Underline', 'Strike'],
-            ['NumberedList', 'BulletedList'],
-            ['Link', 'Unlink'],
-            ['RemoveFormat', 'Source'],
-        ],
-        'height': 250,
-        'width': '100%',
-        'removePlugins': 'uploadimage,uploadfile,image,flash,smiley',
-        'enterMode': 2,
-        'shiftEnterMode': 2,
-        'autoParagraph': False,
-        'fillEmptyBlocks': False,
-    }
-}
-
 # Application settings
 MAX_UPLOADED_FILE_SIZE_IN_BYTES = 5242880
 MAX_ATTACHMENT_SIZE_IN_BYTES = 5 * 1024 * 1024 # 5 MB
@@ -582,7 +588,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 # CORS_ALLOWED_ORIGIN_REGEXES = json.loads(os.getenv('CORS_ALLOWED_ORIGIN_REGEXES'))
 
-CORS_REPLACE_HTTPS_REFERER = True
 
 # django-storages
 # Reference # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
@@ -598,8 +603,30 @@ AWS_S3_FILE_OVERWRITE = False
 
 TESTING = 'test' in sys.argv
 
-if not DEBUG or (AWS_S3_ENDPOINT_URL and not TESTING):
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# Use filesystem for "default" when running tests (so tests never use S3/MinIO) or
+# when DEBUG and no S3 endpoint (local without MinIO). Use S3 when not DEBUG or
+# when DEBUG but AWS_S3_ENDPOINT_URL is set (e.g. reset_database with MinIO).
+if (DEBUG and not AWS_S3_ENDPOINT_URL) or TESTING:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {
+                "location": os.path.join(BASE_DIR, "media"),
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "spa.storage.SPAStaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "spa.storage.SPAStaticFilesStorage",
+        },
+    }
 
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
 
