@@ -18,7 +18,7 @@ class PartnerFieldsViewSetTest(APITestCase):
 
     def setUp(self):
         self.user_email = "user@example.com"
-        self.user_password = "password123"
+        self.user_password = secrets.token_urlsafe(16)
         self.user = User.objects.create(email=self.user_email)
         self.user.set_password(self.user_password)
         self.user.save()
