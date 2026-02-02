@@ -2,6 +2,8 @@
 Tests for the PartnerFieldsViewSet.
 """
 
+import secrets
+
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -22,7 +24,7 @@ class PartnerFieldsViewSetTest(APITestCase):
         self.user.save()
 
         self.superuser_email = "superuser@example.com"
-        self.superuser_password = "superuser123"
+        self.superuser_password = secrets.token_urlsafe(16)
         self.superuser = User.objects.create_superuser(
             self.superuser_email, self.superuser_password
         )
