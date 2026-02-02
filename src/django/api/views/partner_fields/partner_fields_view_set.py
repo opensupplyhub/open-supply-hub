@@ -39,7 +39,7 @@ class PartnerFieldsViewSet(ReadOnlyModelViewSet):
     pagination_class = PartnerFieldCursorPagination
 
     @swagger_auto_schema(
-        operation_description="List partner fields with cursor-based pagination.",
+        operation_description="List partner fields with pagination.",
         manual_parameters=[
             openapi.Parameter(
                 "limit",
@@ -57,6 +57,7 @@ class PartnerFieldsViewSet(ReadOnlyModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
-        List partner fields. Supports cursor-based pagination and limit parameter.
+        List partner fields.
+        Supports cursor-based pagination and limit parameter.
         """
         return super().list(request, *args, **kwargs)
