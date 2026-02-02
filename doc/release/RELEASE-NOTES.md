@@ -9,6 +9,18 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: February 13, 2026
 
+### Database changes
+
+#### Migrations
+* 0196_switch_partner_field_source_by_editor.py - Migrates `PartnerField.source_by` to CKEditor5 so the rich-text content works after replacing `django-ckeditor` with `django-ckeditor-5` (required for Django 5); keeps existing source descriptions editable with formatting and links.
+* 0197_add_event_index.py - Adds an explicit index on `Event(content_type, object_id)` to replace the legacy `index_together` removed in Django 5, keeping the existing schema intact without editing old migrations.
+
+### What's new
+* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
+    * Upgraded Python from `3.8` to `3.11`.
+    * Upgraded Django from `3.2.17` to `5.2.10`.
+    * Upgraded Python and Django packages to maintain compatibility.
+
 ### Code/API changes
 * [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
 
@@ -16,6 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+
 
 ## Release 2.18.1
 
