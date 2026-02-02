@@ -1,3 +1,8 @@
+"""
+Viewset for partner fields with cursor-based pagination.
+Allows client to control page size via ?limit=.
+"""
+
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.viewsets import ReadOnlyModelViewSet
