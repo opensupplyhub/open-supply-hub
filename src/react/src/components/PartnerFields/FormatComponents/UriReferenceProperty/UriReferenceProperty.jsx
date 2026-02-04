@@ -6,14 +6,11 @@ import {
     getPropertyValue,
     getDescription,
     getLinkText,
-    getAbsoluteURI,
+    getAbsoluteUri,
     getDisplayLinkText,
 } from './utils';
-import uriReferencePropertyStyles from './styles';
+import { commonPropertyStyles } from '../../styles';
 
-/**
- * Component for rendering URI-reference format properties.
- */
 const UriReferenceProperty = ({
     propertyKey,
     value,
@@ -32,12 +29,12 @@ const UriReferenceProperty = ({
     const linkText = getLinkText(propertyKey, value, schemaProperties);
 
     const { baseUrl, displayText } = partnerConfigFields;
-    const absoluteURI = getAbsoluteURI(baseUrl, propertyValue);
+    const absoluteUri = getAbsoluteUri(baseUrl, propertyValue);
     const displayLinkText = getDisplayLinkText(
         baseUrl,
         displayText,
         linkText,
-        absoluteURI,
+        absoluteUri,
         schemaProperties,
         propertyValue,
         propertyKey,
@@ -46,17 +43,13 @@ const UriReferenceProperty = ({
     return (
         <div className={classes.container}>
             {description ? (
-                <Typography
-                    className={classes.primaryText}
-                    variant="body2"
-                    component="div"
-                >
+                <Typography variant="body2" component="div">
                     {description}
                 </Typography>
             ) : null}
             <a
                 key={`${propertyKey}-uri-${propertyValue}`}
-                href={absoluteURI}
+                href={absoluteUri}
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -82,4 +75,4 @@ UriReferenceProperty.defaultProps = {
     partnerConfigFields: null,
 };
 
-export default withStyles(uriReferencePropertyStyles)(UriReferenceProperty);
+export default withStyles(commonPropertyStyles)(UriReferenceProperty);

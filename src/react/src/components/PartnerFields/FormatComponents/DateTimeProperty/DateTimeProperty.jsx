@@ -1,12 +1,10 @@
 import React from 'react';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import { getFormattedDateTimeValue, getTitleFromSchema } from './utils';
-import dateTimePropertyStyles from './styles';
+import { getTitleFromSchema } from '../../utils';
+import getFormattedDateTimeValue from './utils';
+import { commonPropertyStyles } from '../../styles';
 
-/**
- * Component for rendering date-time format properties.
- */
 const DateTimeProperty = ({
     propertyKey,
     value,
@@ -16,13 +14,10 @@ const DateTimeProperty = ({
     const title = getTitleFromSchema(propertyKey, schemaProperties);
     const formattedDateTime = getFormattedDateTimeValue(propertyKey, value);
 
-    if (!title) {
-        return <div className={classes.container}>{formattedDateTime}</div>;
-    }
-
     return (
         <div className={classes.container}>
-            <strong>{title}:</strong> {formattedDateTime}
+            {title && `${title}: `}
+            {formattedDateTime}
         </div>
     );
 };
@@ -34,4 +29,4 @@ DateTimeProperty.propTypes = {
     classes: object.isRequired,
 };
 
-export default withStyles(dateTimePropertyStyles)(DateTimeProperty);
+export default withStyles(commonPropertyStyles)(DateTimeProperty);

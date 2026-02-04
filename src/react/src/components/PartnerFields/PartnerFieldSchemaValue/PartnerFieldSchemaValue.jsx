@@ -1,72 +1,27 @@
 import React from 'react';
 import { oneOfType, object, string, number, bool, shape } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 import {
-    getComponentForProperty,
     isValidValue,
     getSchemaProperties,
-    getRootTitle,
-    isFlatSchema,
     renderProperties,
-} from './utils';
-import partnerFieldSchemaValueStyles from './styles';
+} from './utils.jsx';
 
-/**
- * Renders a single property based on format/type strategy.
- */
-const renderProperty = (
-    propertyKey,
-    value,
-    schemaProperties,
-    partnerConfigFields,
-) => {
-    const propertySchema = schemaProperties[propertyKey] || {};
-    const propertyValue = value[propertyKey];
-    const Component = getComponentForProperty(propertySchema, propertyValue);
-
-    return (
-        <Component
-            key={propertyKey}
-            propertyKey={propertyKey}
-            value={value}
-            schemaProperties={schemaProperties}
-            partnerConfigFields={partnerConfigFields}
-        />
-    );
-};
-
-/**
- * Component to render partner field values based on JSON schema.
- */
 const PartnerFieldSchemaValue = ({
     value,
     jsonSchema,
     partnerConfigFields,
-    classes,
 }) => {
     if (!isValidValue(value, jsonSchema)) {
-        return value ?? null;
+        return null;
     }
 
     const schemaProperties = getSchemaProperties(jsonSchema);
-    const rootTitle = getRootTitle(jsonSchema);
 
     const renderedItems = renderProperties(
         value,
         schemaProperties,
         partnerConfigFields,
-        renderProperty,
     );
-
-    // If flat schema and has root title, display it
-    if (isFlatSchema(schemaProperties) && rootTitle) {
-        return (
-            <>
-                <div className={classes.rootTitle}>{rootTitle}</div>
-                {renderedItems}
-            </>
-        );
-    }
 
     return <>{renderedItems}</>;
 };
@@ -80,7 +35,6 @@ PartnerFieldSchemaValue.propTypes = {
         baseUrl: string,
         displayText: string,
     }),
-    classes: object.isRequired,
 };
 
 PartnerFieldSchemaValue.defaultProps = {
@@ -88,6 +42,4 @@ PartnerFieldSchemaValue.defaultProps = {
     partnerConfigFields: null,
 };
 
-export default withStyles(partnerFieldSchemaValueStyles)(
-    PartnerFieldSchemaValue,
-);
+export default PartnerFieldSchemaValue;

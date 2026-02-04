@@ -1,18 +1,11 @@
 import React from 'react';
 import { string, object, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import { getTitleFromSchema } from '../../utils';
 import PartnerFieldSchemaValue from '../../PartnerFieldSchemaValue/PartnerFieldSchemaValue';
-import {
-    getNestedValue,
-    getTitleFromSchema,
-    createNestedSchema,
-} from './utils';
+import { getNestedValue, createNestedSchema } from './utils';
 import nestedObjectPropertyStyles from './styles';
 
-/**
- * Component for rendering nested object properties.
- * Recursively renders nested properties using PartnerFieldSchemaValue.
- */
 const NestedObjectProperty = ({
     propertyKey,
     value,
@@ -24,22 +17,9 @@ const NestedObjectProperty = ({
     const nestedValue = getNestedValue(propertyKey, value);
     const nestedSchema = createNestedSchema(propertyKey, schemaProperties);
 
-    // If no title, render nested content without header
-    if (!title) {
-        return (
-            <div className={classes.container}>
-                <PartnerFieldSchemaValue
-                    value={nestedValue}
-                    jsonSchema={nestedSchema}
-                    partnerConfigFields={partnerConfigFields}
-                />
-            </div>
-        );
-    }
-
     return (
         <div className={classes.container}>
-            <div className={classes.title}>{title}</div>
+            {title && <div className={classes.title}>{title}</div>}
             <div className={classes.content}>
                 <PartnerFieldSchemaValue
                     value={nestedValue}

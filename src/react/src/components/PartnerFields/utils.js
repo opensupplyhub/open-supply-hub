@@ -1,7 +1,8 @@
-/**
- * Gets the link text from schema, checking for a companion _text property.
- * Used by UriProperty and UriReferenceProperty components.
- */
+export const getTitleFromSchema = (propertyKey, schemaProperties) => {
+    const propertySchema = schemaProperties[propertyKey] || {};
+    return propertySchema.title || null;
+};
+
 export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
     const textKey = `${propertyKey}_text`;
     const textPropertyDefined =
@@ -11,5 +12,3 @@ export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
     }
     return value[propertyKey];
 };
-
-export default getLinkTextFromSchema;

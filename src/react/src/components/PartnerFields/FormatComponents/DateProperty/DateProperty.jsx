@@ -1,23 +1,18 @@
 import React from 'react';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import { getFormattedDateValue, getTitleFromSchema } from './utils';
-import datePropertyStyles from './styles';
+import { getTitleFromSchema } from '../../utils';
+import getFormattedDateValue from './utils';
+import { commonPropertyStyles } from '../../styles';
 
-/**
- * Component for rendering date format properties.
- */
 const DateProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
     const formattedDate = getFormattedDateValue(propertyKey, value);
 
-    if (!title) {
-        return <div className={classes.container}>{formattedDate}</div>;
-    }
-
     return (
         <div className={classes.container}>
-            <strong>{title}:</strong> {formattedDate}
+            {title && `${title}: `}
+            {formattedDate}
         </div>
     );
 };
@@ -29,4 +24,4 @@ DateProperty.propTypes = {
     classes: object.isRequired,
 };
 
-export default withStyles(datePropertyStyles)(DateProperty);
+export default withStyles(commonPropertyStyles)(DateProperty);

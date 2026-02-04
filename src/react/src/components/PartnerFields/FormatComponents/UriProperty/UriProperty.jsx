@@ -1,12 +1,10 @@
 import React from 'react';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import { getLinkText, getTitleFromSchema, getPropertyValue } from './utils';
-import uriPropertyStyles from './styles';
+import { getTitleFromSchema } from '../../utils';
+import { getLinkText, getPropertyValue } from './utils';
+import { commonPropertyStyles } from '../../styles';
 
-/**
- * Component for rendering URI format properties.
- */
 const UriProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
     const propertyValue = getPropertyValue(propertyKey, value);
@@ -17,38 +15,17 @@ const UriProperty = ({ propertyKey, value, schemaProperties, classes }) => {
 
     const linkText = getLinkText(propertyKey, value, schemaProperties);
 
-    if (!title) {
-        return (
-            <div className={classes.container}>
-                <a
-                    key={`${propertyKey}-uri-${propertyValue}`}
-                    href={propertyValue}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={classes.link}
-                >
-                    {linkText}
-                </a>
-            </div>
-        );
-    }
-
     return (
         <div className={classes.container}>
-            <div>
-                <strong>{title}:</strong>
-            </div>
-            <div>
-                <a
-                    key={`${propertyKey}-uri-${propertyValue}`}
-                    href={propertyValue}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={classes.link}
-                >
-                    {linkText}
-                </a>
-            </div>
+            {title && `${title}: `}
+            <a
+                key={`${propertyKey}-uri-${propertyValue}`}
+                href={propertyValue}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                {linkText}
+            </a>
         </div>
     );
 };
@@ -60,4 +37,4 @@ UriProperty.propTypes = {
     classes: object.isRequired,
 };
 
-export default withStyles(uriPropertyStyles)(UriProperty);
+export default withStyles(commonPropertyStyles)(UriProperty);
