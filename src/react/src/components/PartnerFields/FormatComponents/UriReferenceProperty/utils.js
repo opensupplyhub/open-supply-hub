@@ -1,8 +1,27 @@
-import {
-    constructUrlFromPartnerField,
-    showFieldDefaultDisplayText,
-    getLinkTextFromSchema,
-} from '../../utils';
+import endsWith from 'lodash/endsWith';
+import getLinkTextFromSchema from '../../utils';
+
+/**
+ * Construct URL from partner field base URL and value
+ */
+const constructUrlFromPartnerField = (baseUrl, value = '') => {
+    if (endsWith(baseUrl, '/')) return baseUrl + value.trim();
+    return `${baseUrl}/${value.trim()}`;
+};
+
+/**
+ * Show field default display text with title and value
+ */
+const showFieldDefaultDisplayText = (
+    schemaProperties,
+    propertyValue,
+    propertyKey,
+) => {
+    const propertySchema = schemaProperties[propertyKey] || {};
+    const { title } = propertySchema;
+    const stringValue = propertyValue == null ? '' : String(propertyValue);
+    return title ? `${title}: ${stringValue}` : stringValue;
+};
 
 /**
  * Get the property value

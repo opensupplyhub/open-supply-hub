@@ -1,37 +1,50 @@
 import {
     FORMAT_TYPES,
-    getFormatFromSchema,
-    shouldSkipProperty,
-    isNestedObject,
-    getTypeFromSchema,
-} from '../utils';
-import UriProperty from '../FormatComponents/UriProperty/UriProperty';
-import UriReferenceProperty from '../FormatComponents/UriReferenceProperty/UriReferenceProperty';
-import DateProperty from '../FormatComponents/DateProperty/DateProperty';
-import DateTimeProperty from '../FormatComponents/DateTimeProperty/DateTimeProperty';
-import IntegerProperty from '../TypeComponents/IntegerProperty/IntegerProperty';
-import NestedObjectProperty from '../TypeComponents/NestedObjectProperty/NestedObjectProperty';
-import DefaultProperty from '../TypeComponents/DefaultProperty/DefaultProperty';
+    FORMAT_COMPONENTS,
+    TYPE_COMPONENTS,
+    DEFAULT_COMPONENT,
+} from './constants';
 
 /**
- * Format component registry.
- * Maps format types to their component functions.
+ * Gets the format type from a property schema.
  */
-const FORMAT_COMPONENTS = {
-    [FORMAT_TYPES.URI]: UriProperty,
-    [FORMAT_TYPES.URI_REFERENCE]: UriReferenceProperty,
-    [FORMAT_TYPES.DATE]: DateProperty,
-    [FORMAT_TYPES.DATE_TIME]: DateTimeProperty,
+const getFormatFromSchema = propertySchema => propertySchema?.format || null;
+
+/**
+ * Checks if a property key should be skipped.
+ */
+const shouldSkipProperty = (propertyKey, schemaProperties) => {
+    if (!(propertyKey in schemaProperties)) {
+        return true;
+    }
+
+    if (propertyKey.endsWith('_text')) {
+        const baseKey = propertyKey.slice(0, -5);
+        const baseSchema = schemaProperties[baseKey];
+        const baseFormat = getFormatFromSchema(baseSchema);
+
+        if (baseFormat === FORMAT_TYPES.URI) {
+            return true;
+        }
+    }
+
+    return false;
 };
 
 /**
- * Type component registry.
- * Maps schema types to their component functions.
+ * Check if a property schema represents a nested object
  */
-const TYPE_COMPONENTS = {
-    integer: IntegerProperty,
-    object: NestedObjectProperty,
-};
+const isNestedObject = (propertySchema, propertyValue) =>
+    propertySchema?.type === 'object' &&
+    propertySchema?.properties &&
+    typeof propertyValue === 'object' &&
+    propertyValue !== null &&
+    !Array.isArray(propertyValue);
+
+/**
+ * Get the type from a property schema
+ */
+const getTypeFromSchema = propertySchema => propertySchema?.type || null;
 
 /**
  * Gets the component based on format, then type, then default.
@@ -43,7 +56,7 @@ export const getComponentForProperty = (propertySchema, propertyValue) => {
     }
 
     if (isNestedObject(propertySchema, propertyValue)) {
-        return NestedObjectProperty;
+        return TYPE_COMPONENTS.object;
     }
 
     const type = getTypeFromSchema(propertySchema);
@@ -51,7 +64,7 @@ export const getComponentForProperty = (propertySchema, propertyValue) => {
         return TYPE_COMPONENTS[type];
     }
 
-    return DefaultProperty;
+    return DEFAULT_COMPONENT;
 };
 
 /**

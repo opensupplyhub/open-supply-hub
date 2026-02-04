@@ -51,10 +51,6 @@ const PartnerFieldSchemaValue = ({
     const schemaProperties = getSchemaProperties(jsonSchema);
     const rootTitle = getRootTitle(jsonSchema);
 
-    console.log('jsonSchema', jsonSchema);
-    console.log('value', value);
-    console.log('partnerConfigFields', partnerConfigFields);
-
     const renderedItems = renderProperties(
         value,
         schemaProperties,

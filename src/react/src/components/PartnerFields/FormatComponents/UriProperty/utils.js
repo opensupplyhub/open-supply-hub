@@ -1,4 +1,4 @@
-import { getLinkTextFromSchema } from '../../utils';
+import getLinkTextFromSchema from '../../utils';
 
 /**
  * Get the link text for URI property
