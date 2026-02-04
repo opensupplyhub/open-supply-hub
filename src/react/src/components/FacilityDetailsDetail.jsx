@@ -7,7 +7,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import ShowOnly from './ShowOnly';
 import BadgeVerified from './BadgeVerified';
 import FeatureFlag from './FeatureFlag';
-import PartnerFieldSchemaValue from './PartnerFields/PartnerFieldSchemaValue';
+import PartnerFieldSchemaValue from './PartnerFields/PartnerFieldSchemaValue/PartnerFieldSchemaValue';
 
 import { CLAIM_A_FACILITY } from '../util/constants';
 

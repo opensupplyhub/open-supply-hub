@@ -5,6 +5,8 @@ import endsWith from 'lodash/endsWith';
 export const FORMAT_TYPES = {
     URI: 'uri',
     URI_REFERENCE: 'uri-reference',
+    DATE: 'date',
+    DATE_TIME: 'date-time',
 };
 
 /**
@@ -59,3 +61,56 @@ export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
     }
     return value[propertyKey];
 };
+
+/**
+ * Format date string to readable format (e.g., "October 28, 2023")
+ */
+export const formatDate = dateString => {
+    if (!dateString) return '';
+
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    } catch (error) {
+        return dateString;
+    }
+};
+
+/**
+ * Format date-time string to readable format
+ */
+export const formatDateTime = dateTimeString => {
+    if (!dateTimeString) return '';
+
+    try {
+        const date = new Date(dateTimeString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    } catch (error) {
+        return dateTimeString;
+    }
+};
+
+/**
+ * Check if a property schema represents a nested object
+ */
+export const isNestedObject = (propertySchema, propertyValue) =>
+    propertySchema?.type === 'object' &&
+    propertySchema?.properties &&
+    typeof propertyValue === 'object' &&
+    propertyValue !== null &&
+    !Array.isArray(propertyValue);
+
+/**
+ * Get the type from a property schema
+ */
+export const getTypeFromSchema = propertySchema => propertySchema?.type || null;

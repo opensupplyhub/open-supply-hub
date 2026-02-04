@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import PartnerFieldSchemaValue from '../../components/PartnerFields/PartnerFieldSchemaValue';
+import PartnerFieldSchemaValue from '../../components/PartnerFields/PartnerFieldSchemaValue/PartnerFieldSchemaValue';
 
 describe('PartnerFieldSchemaValue', () => {
     it('renders URI field with _text property as clickable link and skips _text', () => {
