@@ -35,6 +35,8 @@ import {
     getLocationWithoutEmbedParam,
     formatAttribution,
     formatExtendedField,
+    makeFacilityDetailLinkOnRedirect,
+    shouldUseProductionLocationPage,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -106,6 +108,7 @@ const FacilityDetailsContent = ({
     fetchFacility,
     clearFacility,
     history: { push },
+    location,
     match: {
         params: { osID },
     },
@@ -113,6 +116,7 @@ const FacilityDetailsContent = ({
     facilityIsClaimedByCurrentUser,
     embedConfig,
     hideSectorData,
+    useProductionLocationPage,
 }) => {
     useEffect(() => {
         fetchFacility(Number(embed), contributors);
@@ -185,7 +189,18 @@ const FacilityDetailsContent = ({
         // When redirecting to a facility alias from a deleted facility,
         // the OS ID in the url will not match the facility data id;
         // redirect to the appropriate facility URL.
-        return <Redirect to={`/facilities/${data.id}`} />;
+
+        return (
+            <Redirect
+                to={{
+                    pathname: makeFacilityDetailLinkOnRedirect(
+                        data.id,
+                        location.search,
+                        useProductionLocationPage,
+                    ),
+                }}
+            />
+        );
     }
 
     const isPendingClaim =
@@ -307,6 +322,9 @@ function mapStateToProps(
         facilityIsClaimedByCurrentUser,
         vectorTileFlagIsActive,
         hideSectorData: embed ? config.hide_sector_data : false,
+        useProductionLocationPage: shouldUseProductionLocationPage(
+            featureFlags,
+        ),
     };
 }
 

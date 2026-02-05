@@ -13,6 +13,9 @@ from countries.lib.countries import COUNTRY_NAMES
 from api.constants import FacilityClaimStatuses
 
 
+PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
+
+
 def make_oshub_url(request: Request):
     if settings.DEBUG:
         protocol = 'http'
@@ -28,8 +31,15 @@ def make_oshub_url(request: Request):
 
 
 def make_facility_url(request, facility):
-    return '{}/facilities/{}'.format(
+    route_prefix = (
+        'production-locations'
+        if switch_is_active(PRODUCTION_LOCATION_PAGE_SWITCH)
+        else 'facilities'
+    )
+
+    return '{}/{}/{}'.format(
         make_oshub_url(request),
+        route_prefix,
         facility.id,
     )
 

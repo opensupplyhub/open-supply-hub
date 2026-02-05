@@ -64,6 +64,7 @@ import {
     registrationFormFields,
     profileFormFields,
     facilitiesRoute,
+    productionLocationsRoute,
     dashboardRoute,
     claimFacilityRoute,
     claimIntroRoute,
@@ -85,6 +86,7 @@ import {
     DATA_SOURCES_ENUM,
     API_V1_ERROR_REQUEST_SOURCE_ENUM,
     SLC_FORM_CONSTRAINTS,
+    ENABLE_PRODUCTION_LOCATION_PAGE,
 } from './constants';
 import { freeEmissionsEstimateFormConfig } from '../components/FreeEmissionsEstimate/constants';
 
@@ -248,6 +250,20 @@ export const makeMergeTwoFacilitiesAPIURL = (targetOSID, toMergeOSID) =>
 export const makeGetFacilitiesCountURL = () => '/api/facilities/count/';
 
 export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
+
+export const shouldUseProductionLocationPage = featureFlags =>
+    get(featureFlags, `flags.${ENABLE_PRODUCTION_LOCATION_PAGE}`, false);
+
+export const makeFacilityDetailLinkOnRedirect = (
+    osID,
+    search,
+    useProductionLocationPage,
+) => {
+    const locationDetailRoute = useProductionLocationPage
+        ? productionLocationsRoute
+        : facilitiesRoute;
+    return `${locationDetailRoute}/${osID}${search || ''}`;
+};
 
 export const makeGetFacilityClaimsURLWithQueryString = qs =>
     `/api/facility-claims/?${qs}`;
