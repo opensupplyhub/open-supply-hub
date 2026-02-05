@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: February 13, 2026
 
 ### Database changes
 
@@ -23,6 +23,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+
+### Bugfix
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
