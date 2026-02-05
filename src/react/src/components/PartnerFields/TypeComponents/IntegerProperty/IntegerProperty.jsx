@@ -2,12 +2,11 @@ import React from 'react';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema } from '../../utils';
-import getPropertyValue from './utils';
 import { commonPropertyStyles } from '../../styles';
 
 const IntegerProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const propertyValue = getPropertyValue(propertyKey, value);
+    const propertyValue = value[propertyKey];
 
     return (
         <div className={classes.container}>

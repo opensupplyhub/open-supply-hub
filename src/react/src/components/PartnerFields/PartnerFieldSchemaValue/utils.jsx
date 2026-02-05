@@ -35,7 +35,7 @@ const isNestedObject = (propertySchema, propertyValue) =>
     propertyValue !== null &&
     !Array.isArray(propertyValue);
 
-export const getComponentForProperty = (propertySchema, propertyValue) => {
+const getComponentForProperty = (propertySchema, propertyValue) => {
     const format = getFormatFromSchema(propertySchema);
     if (format && FORMAT_COMPONENTS[format]) {
         return FORMAT_COMPONENTS[format];
@@ -53,19 +53,7 @@ export const getComponentForProperty = (propertySchema, propertyValue) => {
     return DEFAULT_COMPONENT;
 };
 
-export const isValidValue = (value, jsonSchema) => {
-    if (!jsonSchema || !value) {
-        return false;
-    }
-    if (typeof value !== 'object' || Array.isArray(value)) {
-        return false;
-    }
-    return true;
-};
-
-export const getSchemaProperties = jsonSchema => jsonSchema?.properties || {};
-
-export const renderProperty = (
+const renderProperty = (
     propertyKey,
     value,
     schemaProperties,
@@ -85,6 +73,18 @@ export const renderProperty = (
         />
     );
 };
+
+export const isValidValue = (value, jsonSchema) => {
+    if (!jsonSchema || !value) {
+        return false;
+    }
+    if (typeof value !== 'object' || Array.isArray(value)) {
+        return false;
+    }
+    return true;
+};
+
+export const getSchemaProperties = jsonSchema => jsonSchema?.properties || {};
 
 export const renderProperties = (
     value,

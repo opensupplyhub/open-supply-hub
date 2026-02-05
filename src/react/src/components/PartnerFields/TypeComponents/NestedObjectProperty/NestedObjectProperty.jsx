@@ -3,7 +3,7 @@ import { string, object, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema } from '../../utils';
 import PartnerFieldSchemaValue from '../../PartnerFieldSchemaValue/PartnerFieldSchemaValue';
-import { getNestedValue, createNestedSchema } from './utils';
+import createNestedSchema from './utils';
 import nestedObjectPropertyStyles from './styles';
 
 const NestedObjectProperty = ({
@@ -14,19 +14,17 @@ const NestedObjectProperty = ({
     classes,
 }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const nestedValue = getNestedValue(propertyKey, value);
+    const nestedValue = value[propertyKey];
     const nestedSchema = createNestedSchema(propertyKey, schemaProperties);
 
     return (
         <div className={classes.container}>
             {title && <div className={classes.title}>{title}</div>}
-            <div className={classes.content}>
-                <PartnerFieldSchemaValue
-                    value={nestedValue}
-                    jsonSchema={nestedSchema}
-                    partnerConfigFields={partnerConfigFields}
-                />
-            </div>
+            <PartnerFieldSchemaValue
+                value={nestedValue}
+                jsonSchema={nestedSchema}
+                partnerConfigFields={partnerConfigFields}
+            />
         </div>
     );
 };

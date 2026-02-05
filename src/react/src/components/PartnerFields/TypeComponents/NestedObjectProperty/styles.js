@@ -4,12 +4,9 @@ const nestedObjectPropertyStyles = () =>
             marginBottom: '16px',
         },
         title: {
-            fontWeight: 'bold',
+            fontWeight: '700',
             marginBottom: '8px',
             fontSize: '14px',
-        },
-        content: {
-            paddingLeft: '0px',
         },
     });
 
