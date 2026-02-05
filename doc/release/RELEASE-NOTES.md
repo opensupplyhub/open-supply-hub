@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
+* 0198_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
 
 ### What's new
 * [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
