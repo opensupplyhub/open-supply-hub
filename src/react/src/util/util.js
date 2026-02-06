@@ -254,8 +254,23 @@ export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
 export const shouldUseProductionLocationPage = featureFlags =>
     get(featureFlags, `flags.${ENABLE_PRODUCTION_LOCATION_PAGE}`, false);
 
-export const makeProductionLocationDetailLink = (osID, search) =>
-    `${productionLocationsRoute}/${osID}${search || ''}`;
+export const getFilteredSearchForEmbed = search => {
+    if (!search) return '';
+
+    const params = new URLSearchParams(search);
+    if (!params.has('embed')) return '';
+
+    const filtered = new URLSearchParams();
+    ['embed', 'contributor'].forEach(key => {
+        const value = params.get(key);
+        if (value !== null) {
+            filtered.set(key, value);
+        }
+    });
+
+    const filteredString = filtered.toString();
+    return filteredString ? `?${filteredString}` : '';
+};
 
 export const makeFacilityDetailLinkOnRedirect = (
     osID,
@@ -265,7 +280,7 @@ export const makeFacilityDetailLinkOnRedirect = (
     const locationDetailRoute = useProductionLocationPage
         ? productionLocationsRoute
         : facilitiesRoute;
-    return `${locationDetailRoute}/${osID}${search || ''}`;
+    return `${locationDetailRoute}/${osID}${getFilteredSearchForEmbed(search)}`;
 };
 
 export const makeGetFacilityClaimsURLWithQueryString = qs =>

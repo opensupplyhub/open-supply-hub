@@ -37,6 +37,7 @@ import {
     formatExtendedField,
     makeFacilityDetailLinkOnRedirect,
     shouldUseProductionLocationPage,
+    getLastPathParameter,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -118,7 +119,10 @@ const FacilityDetailsContent = ({
     hideSectorData,
     useProductionLocationPage,
 }) => {
-    const normalizedOsID = osID?.split('?')[0] || osID;
+    const normalizedOsID =
+        getLastPathParameter(location?.pathname || '') ||
+        getLastPathParameter(osID) ||
+        osID;
 
     useEffect(() => {
         fetchFacility(Number(embed), contributors);
@@ -191,10 +195,6 @@ const FacilityDetailsContent = ({
         // When redirecting to a facility alias from a deleted facility,
         // the OS ID in the url will not match the facility data id;
         // redirect to the appropriate facility URL.
-
-        console.log(
-            `@@@ Init force redirect with data.id ${data.id} and osID ${normalizedOsID}`,
-        );
         return (
             <Redirect
                 to={{

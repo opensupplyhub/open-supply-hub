@@ -15,7 +15,7 @@ import {
     ENABLE_PRODUCTION_LOCATION_PAGE,
 } from '../util/constants';
 
-import { makeProductionLocationDetailLink } from '../util/util';
+import { getFilteredSearchForEmbed, getLastPathParameter } from '../util/util';
 import UserProfile from './UserProfile';
 
 const Facilities = ({ fetchingFeatureFlags }) => {
@@ -28,12 +28,14 @@ const Facilities = ({ fetchingFeatureFlags }) => {
             <Route
                 path={facilityDetailsRoute}
                 render={props => {
-                    const {
-                        match: {
-                            params: { osID },
-                        },
-                        location,
-                    } = props;
+                    const { location } = props;
+
+                    const filteredSearch = getFilteredSearchForEmbed(
+                        location.search,
+                    );
+                    const cleanOsID = getLastPathParameter(
+                        location?.pathname || '',
+                    );
 
                     return (
                         <FeatureFlag
@@ -42,10 +44,8 @@ const Facilities = ({ fetchingFeatureFlags }) => {
                         >
                             <Redirect
                                 to={{
-                                    pathname: makeProductionLocationDetailLink(
-                                        osID,
-                                        location.search,
-                                    ),
+                                    pathname: `/production-locations/${cleanOsID}`,
+                                    search: filteredSearch,
                                 }}
                             />
                         </FeatureFlag>
