@@ -71,6 +71,7 @@ import {
     searchByNameAndAddressResultRoute,
     productionLocationInfoRouteCreate,
     productionLocationInfoRouteUpdate,
+    ENABLE_PRODUCTION_LOCATION_PAGE,
 } from './util/constants';
 
 // Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
@@ -155,7 +156,20 @@ class Routes extends Component {
                                 />
                                 <Route
                                     path={productionLocationDetailsRoute}
-                                    component={ProductionLocationDetails}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={
+                                                ENABLE_PRODUCTION_LOCATION_PAGE
+                                            }
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={
+                                                    ProductionLocationDetails
+                                                }
+                                            />
+                                        </FeatureFlag>
+                                    )}
                                 />
                                 <Route
                                     exact

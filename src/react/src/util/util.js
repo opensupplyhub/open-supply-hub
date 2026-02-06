@@ -254,6 +254,9 @@ export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
 export const shouldUseProductionLocationPage = featureFlags =>
     get(featureFlags, `flags.${ENABLE_PRODUCTION_LOCATION_PAGE}`, false);
 
+export const makeProductionLocationDetailLink = (osID, search) =>
+    `${productionLocationsRoute}/${osID}${search || ''}`;
+
 export const makeFacilityDetailLinkOnRedirect = (
     osID,
     search,

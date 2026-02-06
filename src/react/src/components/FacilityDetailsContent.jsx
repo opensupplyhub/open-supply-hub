@@ -118,10 +118,12 @@ const FacilityDetailsContent = ({
     hideSectorData,
     useProductionLocationPage,
 }) => {
+    const normalizedOsID = osID?.split('?')[0] || osID;
+
     useEffect(() => {
         fetchFacility(Number(embed), contributors);
         /* eslint-disable react-hooks/exhaustive-deps */
-    }, [osID]);
+    }, [normalizedOsID]);
 
     // Clears the selected facility when unmounted
     useEffect(() => () => clearFacility(), []);
@@ -179,17 +181,20 @@ const FacilityDetailsContent = ({
         return (
             <div className={classes.root}>
                 <p className={classes.primaryText}>
-                    {`No facility found for OS ID ${osID}`}
+                    {`No facility found for OS ID ${normalizedOsID}`}
                 </p>
             </div>
         );
     }
 
-    if (data?.id && data?.id !== osID) {
+    if (data?.id && data?.id !== normalizedOsID) {
         // When redirecting to a facility alias from a deleted facility,
         // the OS ID in the url will not match the facility data id;
         // redirect to the appropriate facility URL.
 
+        console.log(
+            `@@@ Init force redirect with data.id ${data.id} and osID ${normalizedOsID}`,
+        );
         return (
             <Redirect
                 to={{
