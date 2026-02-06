@@ -14,7 +14,7 @@ const NestedObjectProperty = ({
     classes,
 }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const displayPropertyKey = propertyKey.replace('_', ' ').toUpperCase();
+    const displayPropertyKey = propertyKey.replace(/_/g, ' ').toUpperCase();
     const nestedValue = value[propertyKey];
     const nestedSchema = createNestedSchema(propertyKey, schemaProperties);
 

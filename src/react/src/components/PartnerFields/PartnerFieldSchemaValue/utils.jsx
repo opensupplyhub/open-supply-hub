@@ -46,7 +46,7 @@ const getComponentForProperty = (propertySchema, propertyValue) => {
     }
 
     const type = getTypeFromSchema(propertySchema);
-    if (type && TYPE_COMPONENTS[type]) {
+    if (type && type !== 'object' && TYPE_COMPONENTS[type]) {
         return TYPE_COMPONENTS[type];
     }
 
