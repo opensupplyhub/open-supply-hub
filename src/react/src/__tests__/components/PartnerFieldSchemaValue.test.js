@@ -74,7 +74,7 @@ describe('PartnerFieldSchemaValue', () => {
 
         const text = screen.getByText('Internal ID: abc-123-xyz');
         expect(text).toBeInTheDocument();
-        expect(text.tagName).toBe('SPAN');
+        expect(text.tagName).toBe('DIV');
     });
 
     it('renders mixed URI and non-URI fields correctly, skipping _text property', () => {
@@ -191,14 +191,14 @@ describe('PartnerFieldSchemaValue', () => {
 
         const text = screen.getByText('Partner field: report-42');
         expect(text).toBeInTheDocument();
-        expect(text.tagName).toBe('SPAN');
+        expect(text.tagName).toBe('DIV');
     });
 
-    it('returns primitive values when schema or object data is missing', () => {
+    it('returns nothing when schema or object data is missing', () => {
         const { container } = render(
             <PartnerFieldSchemaValue value="Raw text value" />,
         );
 
-        expect(container).toHaveTextContent('Raw text value');
+        expect(container).toBeEmptyDOMElement();
     });
 });
