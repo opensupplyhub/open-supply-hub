@@ -14,12 +14,13 @@ const NestedObjectProperty = ({
     classes,
 }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
+    const displayPropertyKey = propertyKey.replace('_', ' ').toUpperCase();
     const nestedValue = value[propertyKey];
     const nestedSchema = createNestedSchema(propertyKey, schemaProperties);
 
     return (
         <div className={classes.container}>
-            {title && <div className={classes.title}>{title}</div>}
+            <div className={classes.title}>{title || displayPropertyKey}</div>
             <PartnerFieldSchemaValue
                 value={nestedValue}
                 jsonSchema={nestedSchema}
