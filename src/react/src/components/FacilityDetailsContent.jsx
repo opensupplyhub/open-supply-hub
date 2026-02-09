@@ -197,13 +197,11 @@ const FacilityDetailsContent = ({
         // redirect to the appropriate facility URL.
         return (
             <Redirect
-                to={{
-                    pathname: makeFacilityDetailLinkOnRedirect(
-                        data.id,
-                        location.search,
-                        useProductionLocationPage,
-                    ),
-                }}
+                to={makeFacilityDetailLinkOnRedirect(
+                    data.id,
+                    location.search,
+                    useProductionLocationPage,
+                )}
             />
         );
     }

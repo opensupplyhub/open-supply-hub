@@ -38,8 +38,6 @@ const ProductionLocationDetailsContent = ({
         // When redirecting to a facility alias from a deleted facility,
         // the OS ID in the url will not match the facility data id;
         // redirect to the appropriate facility URL.
-
-        // TODO: Refactor this logic
         return (
             <Redirect
                 to={{
