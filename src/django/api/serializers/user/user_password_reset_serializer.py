@@ -37,11 +37,11 @@ class UserPasswordResetSerializer(PasswordResetSerializer):
             'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL'),
             'request': request,
             'subject_template_name':
-                'mail/reset_user_password_subject.txt',
+                'account/email/password_reset_key_subject.txt',
             'email_template_name':
-                'mail/reset_user_password_body.txt',
+                'account/email/password_reset_key_message.txt',
             'html_email_template_name':
-                'mail/reset_user_password_body.html',
+                'account/email/password_reset_key_message.html',
         }
 
         self.reset_form.save(**opts)
