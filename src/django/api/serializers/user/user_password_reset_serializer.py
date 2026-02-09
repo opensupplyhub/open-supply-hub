@@ -2,14 +2,14 @@ from dj_rest_auth.serializers import PasswordResetSerializer
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import EmailField
 from django.conf import settings
-from django.contrib.auth.forms import PasswordResetForm
+from allauth.account.forms import ResetPasswordForm
 
 from ...models import User
 
 
 class UserPasswordResetSerializer(PasswordResetSerializer):
     email = EmailField()
-    password_reset_form_class = PasswordResetForm
+    password_reset_form_class = ResetPasswordForm
 
     def validate_email(self, user_email):
         data = self.initial_data

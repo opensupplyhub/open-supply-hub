@@ -333,7 +333,8 @@ export const mainRoute = '/';
 export const settingsRoute = '/settings';
 export const authLoginFormRoute = '/auth/login';
 export const authRegisterFormRoute = '/auth/register';
-export const authResetPasswordFormRoute = '/auth/resetpassword/:uid';
+export const authResetPasswordFormRoute =
+    '/accounts/password/reset/key/:uid-:token/';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
 export const contributeRoute = '/contribute';
 export const multipleLocationRoute = '/contribute/multiple-locations';
