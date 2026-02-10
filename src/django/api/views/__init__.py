@@ -70,3 +70,4 @@ from .parent_companies import parent_companies
 from .product_types import product_types
 from .sectors import sectors
 from .claim_statuses import claim_statuses
+from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
