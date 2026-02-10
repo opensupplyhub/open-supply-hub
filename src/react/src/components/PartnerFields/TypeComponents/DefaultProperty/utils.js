@@ -1,6 +1,6 @@
 export const getPropertyValueAsString = (propertyKey, value) => {
     const propertyValue = value[propertyKey];
-    return propertyValue == null ? '' : String(propertyValue);
+    return propertyValue ? String(propertyValue) : '';
 };
 
 export default getPropertyValueAsString;

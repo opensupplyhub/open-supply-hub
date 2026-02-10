@@ -15,24 +15,22 @@ const shouldSkipProperty = (propertyKey, schemaProperties) => {
         return true;
     }
 
-    if (propertyKey.endsWith('_text')) {
-        const baseKey = propertyKey.slice(0, -5);
-        const baseSchema = schemaProperties[baseKey];
-        const baseFormat = getFormatFromSchema(baseSchema);
-
-        if (baseFormat === FORMAT_TYPES.URI) {
-            return true;
-        }
+    if (!propertyKey.endsWith('_text')) {
+        return false;
     }
 
-    return false;
+    const baseKey = propertyKey.slice(0, -5);
+    const baseSchema = schemaProperties[baseKey];
+    const baseFormat = getFormatFromSchema(baseSchema);
+
+    return baseFormat === FORMAT_TYPES.URI;
 };
 
 const isNestedObject = (propertySchema, propertyValue) =>
     propertySchema?.type === 'object' &&
     propertySchema?.properties &&
+    propertyValue &&
     typeof propertyValue === 'object' &&
-    propertyValue !== null &&
     !Array.isArray(propertyValue);
 
 const getComponentForProperty = (propertySchema, propertyValue) => {

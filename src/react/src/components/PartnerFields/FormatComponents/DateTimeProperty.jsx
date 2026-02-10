@@ -1,27 +1,31 @@
 import React from 'react';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import { getTitleFromSchema } from '../../utils';
-import getFormattedDateValue from './utils';
+import { getTitleFromSchema, getFormattedDateValue } from '../../utils';
 import { commonPropertyStyles } from '../../styles';
 
-const DateProperty = ({ propertyKey, value, schemaProperties, classes }) => {
+const DateTimeProperty = ({
+    propertyKey,
+    value,
+    schemaProperties,
+    classes,
+}) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const formattedDate = getFormattedDateValue(propertyKey, value);
+    const formattedDateTime = getFormattedDateValue(propertyKey, value, 'LLL');
 
     return (
         <div className={classes.container}>
             {title && `${title}: `}
-            {formattedDate}
+            {formattedDateTime}
         </div>
     );
 };
 
-DateProperty.propTypes = {
+DateTimeProperty.propTypes = {
     propertyKey: string.isRequired,
     value: object.isRequired,
     schemaProperties: object.isRequired,
     classes: object.isRequired,
 };
 
-export default withStyles(commonPropertyStyles)(DateProperty);
+export default withStyles(commonPropertyStyles)(DateTimeProperty);
