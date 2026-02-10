@@ -41,6 +41,10 @@ const detailsStyles = theme =>
             fontSize: '16px',
             lineHeight: '19px',
             paddingTop: theme.spacing.unit,
+            '& *': {
+                margin: 0,
+                padding: 0,
+            },
         },
         unitText: {
             display: 'inline-block',

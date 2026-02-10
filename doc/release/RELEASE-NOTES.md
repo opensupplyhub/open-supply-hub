@@ -22,7 +22,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Upgraded Django from `3.2.17` to `5.2.10`.
     * Upgraded Python and Django packages to maintain compatibility.
 * [OSDEV-2349](https://opensupplyhub.atlassian.net/browse/OSDEV-2349) - Added additional `Rainforest Alliance` certification to `Certifications/Standards/Regulations` on `Claim Profile`.
-* [OSDEV-2331](https://opensupplyhub.atlassian.net/browse/OSDEV-2331) - Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
+* [OSDEV-2331](https://opensupplyhub.atlassian.net/browse/OSDEV-2331) - The following changes have been made:
+    * Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
+    * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
+    * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margin application across all nested tags.
 
 ### Code/API changes
 * [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.

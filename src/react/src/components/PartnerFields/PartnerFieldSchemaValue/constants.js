@@ -1,8 +1,8 @@
 import UriProperty from '../FormatComponents/UriProperty';
 import UriReferenceProperty from '../FormatComponents/UriReferenceProperty/UriReferenceProperty';
 import DateProperty from '../FormatComponents/DateProperty';
-import DateTimeProperty from '../FormatComponents/DateTimeProperty/DateTimeProperty';
-import IntegerProperty from '../TypeComponents/IntegerProperty/IntegerProperty';
+import DateTimeProperty from '../FormatComponents/DateTimeProperty';
+import IntegerProperty from '../TypeComponents/IntegerProperty';
 import NestedObjectProperty from '../TypeComponents/NestedObjectProperty/NestedObjectProperty';
 import DefaultProperty from '../TypeComponents/DefaultProperty/DefaultProperty';
 

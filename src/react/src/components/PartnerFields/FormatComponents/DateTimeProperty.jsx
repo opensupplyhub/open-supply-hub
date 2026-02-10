@@ -1,8 +1,8 @@
 import React from 'react';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import { getTitleFromSchema, getFormattedDateValue } from '../../utils';
-import { commonPropertyStyles } from '../../styles';
+import { getTitleFromSchema, getFormattedDateValue } from '../utils';
+import { commonPropertyStyles } from '../styles';
 
 const DateTimeProperty = ({
     propertyKey,
