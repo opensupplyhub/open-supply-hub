@@ -125,7 +125,7 @@ const FacilityDetailsContent = ({
         osID;
 
     useEffect(() => {
-        fetchFacility(Number(embed), contributors);
+        fetchFacility(normalizedOsID, Number(embed), contributors);
         /* eslint-disable react-hooks/exhaustive-deps */
     }, [normalizedOsID]);
 
@@ -331,17 +331,10 @@ function mapStateToProps(
     };
 }
 
-function mapDispatchToProps(
-    dispatch,
-    {
-        match: {
-            params: { osID },
-        },
-    },
-) {
+function mapDispatchToProps(dispatch) {
     return {
-        fetchFacility: (embed, contributorId) =>
-            dispatch(fetchSingleFacility(osID, embed, contributorId, true)),
+        fetchFacility: (id, embed, contributorId) =>
+            dispatch(fetchSingleFacility(id, embed, contributorId, true)),
         clearFacility: () => dispatch(resetSingleFacility()),
         searchForFacilities: vectorTilesAreActive =>
             dispatch(
