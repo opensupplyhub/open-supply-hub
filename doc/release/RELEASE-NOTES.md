@@ -21,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Upgraded Python from `3.8` to `3.11`.
     * Upgraded Django from `3.2.17` to `5.2.10`.
     * Upgraded Python and Django packages to maintain compatibility.
+* [OSDEV-2359](https://opensupplyhub.atlassian.net/browse/OSDEV-2359) - Refactored password reset functionality to use `dj_rest_auth` with `allauth.account.forms.ResetPasswordForm`, aligning with Django's base36-encoded reset tokens and keeping compatibility with the updated authentication flow.
 * [OSDEV-2349](https://opensupplyhub.atlassian.net/browse/OSDEV-2349) - Added additional `Rainforest Alliance` certification to `Certifications/Standards/Regulations` on `Claim Profile`.
 
 ### Code/API changes
