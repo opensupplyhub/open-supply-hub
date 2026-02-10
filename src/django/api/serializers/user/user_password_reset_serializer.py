@@ -1,7 +1,6 @@
 from dj_rest_auth.serializers import PasswordResetSerializer
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import EmailField
-from django.conf import settings
 from allauth.account.forms import ResetPasswordForm
 
 from ...models import User
@@ -24,24 +23,4 @@ class UserPasswordResetSerializer(PasswordResetSerializer):
 
     def save(self):
         request = self.context.get('request')
-        # Set some values to trigger the send_email method.
-
-        if settings.DEBUG:
-            domain_override = 'localhost:6543'
-        else:
-            domain_override = request.get_host()
-
-        opts = {
-            'use_https': not settings.DEBUG,
-            'domain_override': domain_override,
-            'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL'),
-            'request': request,
-            'subject_template_name':
-                'account/email/password_reset_key_subject.txt',
-            'email_template_name':
-                'account/email/password_reset_key_message.txt',
-            'html_email_template_name':
-                'account/email/password_reset_key_message.html',
-        }
-
-        self.reset_form.save(**opts)
+        self.reset_form.save(request=request)
