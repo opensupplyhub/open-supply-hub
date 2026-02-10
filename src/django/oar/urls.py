@@ -110,6 +110,11 @@ public_apis = [
          name='parent_companies'),
     path('api/product-types/', views.product_types, name='product_types'),
     path('api/sectors/', views.sectors, name='sectors'),
+    path(
+        'api/partner-fields/',
+        views.PartnerFieldsViewSet.as_view({'get': 'list'}),
+        name='partner_fields'
+    ),
 ]
 
 api_v1 = [path('api/v1/', include(v1_router.urls + v1_custom_routes))]
