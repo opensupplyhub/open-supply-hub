@@ -77,6 +77,7 @@ export const CERTIFICATIONS_OPTIONS = [
         value: 'responsible_wool_standard',
         label: 'Responsible Wool Standard (RWS)',
     },
+    { value: 'rainforest_alliance', label: 'Rainforest Alliance' },
     { value: 'sa8000', label: 'SA8000' },
     { value: 'abvtex', label: 'ABVTEX' },
     { value: 'empresa_b', label: 'Empresa B' },
