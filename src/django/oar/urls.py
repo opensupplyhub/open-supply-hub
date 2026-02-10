@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.conf.urls.static import static
 from django.urls import path, include
+from django.http import HttpResponseNotFound
 
 from api import views
 from api.views.v1.production_locations \
@@ -148,6 +149,15 @@ internal_apis = [
     path('api/docs/', schema_view.with_ui('swagger'),
          name='schema-swagger-ui'),
     path('admin/', admin_site.urls),
+    # Let SPA handle reset confirmation links by
+    # returning 404 here;
+    # SPAStaticFiles middleware will
+    # fall back to index.html.
+    path(
+        'accounts/password/reset/key/<uidb36>-<token>/',
+        lambda request, uidb36=None, token=None: HttpResponseNotFound(),
+        name='allauth-password-reset-spa-fallback',
+    ),
     path('accounts/', include('allauth.urls')),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
     path('health-check/', include('watchman.urls')),
