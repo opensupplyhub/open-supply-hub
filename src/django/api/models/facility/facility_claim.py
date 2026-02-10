@@ -119,6 +119,7 @@ class FacilityClaim(models.Model):
             Certifications.REACH,
             Certifications.RESPONSIBLE_DOWN_STANDARD,
             Certifications.RESPONSIBLE_WOOL_STANDARD,
+            Certifications.RAINFOREST_ALLIANCE,
             Certifications.SAB8000,
             Certifications.ABVTEX,
             Certifications.EMPRESA_B,
