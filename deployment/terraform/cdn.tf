@@ -410,7 +410,6 @@ resource "aws_cloudfront_distribution" "cdn" {
     max_ttl                = 300
   }
 
-  # Serve SPA reset page directly from frontend (S3) so React handles the route.
   ordered_cache_behavior {
     path_pattern     = "/accounts/password/reset/key/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -805,6 +804,13 @@ resource "aws_cloudfront_distribution" "cdn" {
     min_ttl                = 0
     default_ttl            = 0
     max_ttl                = 300
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
   }
 
   logging_config {
