@@ -264,7 +264,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 - Recommended VS Code/Cursor setup for on-save:
   - Select interpreter: Command Palette → `Python: Select Interpreter` → `.venv/bin/python`.
   - Install extensions: “Python” + “Ruff” + “Black Formatter (ms-python)”.
-  - Enable format on save and Ruff fixes (see `.vscode/settings.json` for reference): Black as default formatter, `source.fixAll` + `source.fixAll.ruff` on save, paths to `.venv/bin/black` and `.venv/bin/ruff` (not Docker binaries).
+  - Enable format on save and Ruff fixes (see `.vscode/example-settings.json`): Black as default formatter, `source.fixAll` + `source.fixAll.ruff` on save, paths to `.venv/bin/black` and `.venv/bin/ruff` (not Docker binaries).
 -  Example settings file: `.vscode/example-settings.json`. Copy to `.vscode/settings.json` to apply.
 
 - Config lives in `.pre-commit-config.yaml` with settings in `pyproject.toml` and `src/django/.flake8` (excludes migrations, settings.py, manage.py).
