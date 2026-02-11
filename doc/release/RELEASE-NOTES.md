@@ -14,15 +14,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 * 0196_switch_partner_field_source_by_editor.py - Migrates `PartnerField.source_by` to CKEditor5 so the rich-text content works after replacing `django-ckeditor` with `django-ckeditor-5` (required for Django 5); keeps existing source descriptions editable with formatting and links.
 * 0197_add_event_index.py - Adds an explicit index on `Event(content_type, object_id)` to replace the legacy `index_together` removed in Django 5, keeping the existing schema intact without editing old migrations.
+* 0198_add_rainforest_alliance_certification.py - This migration introduces new certification named `Rainforest Alliance` for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
 
 ### What's new
 * [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
     * Upgraded Python from `3.8` to `3.11`.
     * Upgraded Django from `3.2.17` to `5.2.10`.
     * Upgraded Python and Django packages to maintain compatibility.
+* [OSDEV-2359](https://opensupplyhub.atlassian.net/browse/OSDEV-2359) - Refactored password reset functionality to use `dj_rest_auth` with `allauth.account.forms.ResetPasswordForm`, aligning with Django's base36-encoded reset tokens and keeping compatibility with the updated authentication flow.
+* [OSDEV-2349](https://opensupplyhub.atlassian.net/browse/OSDEV-2349) - Added additional `Rainforest Alliance` certification to `Certifications/Standards/Regulations` on `Claim Profile`.
+* [OSDEV-2331](https://opensupplyhub.atlassian.net/browse/OSDEV-2331) - The following changes have been made:
+    * Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
+    * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
+    * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
 
 ### Code/API changes
 * [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+* [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
 
 ### Bugfix
 * [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.

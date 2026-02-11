@@ -107,13 +107,9 @@ class PartnerField(models.Model):
     def __str__(self):
         return self.name
 
-    def __invalidate_cache(self):
-        """Invalidate cache for partner field list and names."""
-        cache.delete(PARTNER_FIELD_LIST_KEY)
-        cache.delete(PARTNER_FIELD_NAMES_KEY)
-
     def save(self, *args, **kwargs):
         """Save partner field and invalidate cache if needed."""
+        self.clean()
         if self._state.adding:
             self.__invalidate_cache()
             return super().save(*args, **kwargs)
@@ -139,3 +135,14 @@ class PartnerField(models.Model):
         result = super().delete(*args, **kwargs)
         self.__invalidate_cache()
         return result
+
+    def clean(self):
+        if self.source_by:
+            cleaned = self.source_by.strip()
+            # Set to empty string if content is just CKEditor placeholder.
+            self.source_by = '' if cleaned == '<p>&nbsp;</p>' else cleaned
+
+    def __invalidate_cache(self):
+        """Invalidate cache for partner field list and names."""
+        cache.delete(PARTNER_FIELD_LIST_KEY)
+        cache.delete(PARTNER_FIELD_NAMES_KEY)
