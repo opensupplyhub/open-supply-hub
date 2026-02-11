@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-import UriReferenceProperty from '../../components/PartnerFields/UriReferenceProperty';
+import UriReferenceProperty from '../../components/PartnerFields/FormatComponents/UriReferenceProperty/UriReferenceProperty';
 
 const theme = createMuiTheme();
 

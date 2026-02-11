@@ -294,9 +294,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
         if self.instance and self.instance.pk and self.instance.system_field:
             try:
-                original = PartnerField.objects \
-                    .get_all_including_inactive() \
-                    .get(pk=self.instance.pk)
+                original = PartnerField.objects.get(pk=self.instance.pk)
 
                 protected_fields = {
                     'name': 'Name',

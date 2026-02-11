@@ -37,11 +37,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'secret')
 CKEDITOR_5_CONFIGS = {
     "default": {
         "toolbar": [
-            "heading", "|",
             "bold", "italic", "underline", "strikethrough",
             "link", "|",
             "bulletedList", "numberedList", "|",
             "removeFormat", "|",
+            "sourceEditing", "|",
             "undo", "redo",
         ],
         # Remove upload/media/table plugins to mirror the prior CKEditor 4 config

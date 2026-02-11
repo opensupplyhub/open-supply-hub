@@ -7,7 +7,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import ShowOnly from './ShowOnly';
 import BadgeVerified from './BadgeVerified';
 import FeatureFlag from './FeatureFlag';
-import PartnerFieldSchemaValue from './PartnerFields/PartnerFieldSchemaValue';
+import PartnerFieldSchemaValue from './PartnerFields/PartnerFieldSchemaValue/PartnerFieldSchemaValue';
 
 import { CLAIM_A_FACILITY } from '../util/constants';
 
@@ -41,6 +41,10 @@ const detailsStyles = theme =>
             fontSize: '16px',
             lineHeight: '19px',
             paddingTop: theme.spacing.unit,
+            '& *': {
+                margin: 0,
+                padding: 0,
+            },
         },
         unitText: {
             display: 'inline-block',
