@@ -13,13 +13,13 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
   - [Running ECS Management Commands](#running-ecs-management-commands)
   - [Creation of Superusers](#creation-of-superusers)
   - [Upload a list and process it](#upload-a-list-and-process-it)
-  - [Hot Reloading 🔥](#hot-reloading-🔥)
+  - [Hot Reloading 🔥](#hot-reloading)
   - [Debugging Django](#debugging-django)
   - [Embedded Maps](#embedded-maps)
   - [Ports](#ports)
   - [Linting & git hooks for Django app](#linting--git-hooks-for-django-app)
-- [Scripts 🧰](#scripts-🧰)
-- [Tools ⚒️](#tools-⚒️)
+- [Scripts 🧰](#scripts)
+- [Tools ⚒️](#tools)
 - [Running e2e (Playwright) and integration tests](#running-e2e-playwright-and-integration-tests)
   - [Playwright Tests](#playwright-tests)
 
@@ -188,6 +188,8 @@ Continue by accepting the list in the web browser dashboard. Then, in the django
 ./scripts/manage batch_process -a match -l 16
 ```
 
+<a id="hot-reloading"></a>
+
 ### Hot Reloading 🔥
 
 The frontend uses [Create React App](https://github.com/facebook/create-react-app/). When running `server`, the page will automatically [reload](https://github.com/facebook/create-react-app/#whats-included) if you make changes to the code.
@@ -267,6 +269,8 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 
 - Config lives in `.pre-commit-config.yaml` with settings in `pyproject.toml` and `src/django/.flake8` (excludes migrations, settings.py, manage.py).
 
+<a id="scripts"></a>
+
 ## Scripts 🧰
 
 | Name | Description |
@@ -281,6 +285,8 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | `run_bash_script_linter`| This script runs the shellcheck linter for files in the ./scripts folder. It requires the installation of the [shellcheck](https://www.shellcheck.net/) package. |
 
 
+<a id="tools"></a>
+
 ## Tools ⚒️
 
 | Name                   | Description                                                                                            |
@@ -289,6 +295,8 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | `devhealthcheck.sh`    | Simulate application load balancer health checks in development                                        |
 | `postfacilitiescsv.py` | POST the rows of a CSV containing facility information to the facilities API                           |
 
+
+<a id="running-e2e-playwright-and-integration-tests"></a>
 
 ## Running e2e (Playwright) and integration tests
 
