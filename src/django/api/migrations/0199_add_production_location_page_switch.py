@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0197_add_event_index'),
+        ('api', '0198_add_rainforest_alliance_certification'),
     ]
 
     operations = [

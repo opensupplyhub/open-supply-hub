@@ -3,6 +3,31 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.20
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Database changes
+
+#### Migrations
+* 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
+
+### What's new
+* [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
+    * Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
+    * URL parameters (only if `embed=1` is present) are preserved during redirection, e.g., `/production-locations/:osID?sort_by=contributors_desc&embed=1`.
+    * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
+    * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `delete_emailaddress_for_deleted_users`
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.19.0
 
 ## Introduction
@@ -34,11 +59,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
     * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
     * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
-* [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
-    * Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
-    * URL parameters (only if `embed=1` is present) are preserved during redirection, e.g., `/production-locations/:osID?sort_by=contributors_desc&embed=1`.
-    * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
-    * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
 
 ### Code/API changes
 * [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
