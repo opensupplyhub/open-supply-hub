@@ -16,6 +16,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0197_add_event_index.py - Adds an explicit index on `Event(content_type, object_id)` to replace the legacy `index_together` removed in Django 5, keeping the existing schema intact without editing old migrations.
 * 0198_add_rainforest_alliance_certification.py - This migration introduces new certification named `Rainforest Alliance` for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
 
+### Code/API changes
+* [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+* [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
+
+### Bugfix
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
+
 ### What's new
 * [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
     * Upgraded Python from `3.8` to `3.11`.
@@ -28,15 +35,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
     * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
 
-### Code/API changes
-* [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
-* [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
-
-### Bugfix
-* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
-
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
+    * `delete_emailaddress_for_deleted_users`
     * `migrate`
     * `reindex_database`
 
