@@ -2895,10 +2895,10 @@ describe('makeFacilityDetailLinkOnRedirect', () => {
 
     it('builds production location link with embed params only', () => {
         const url = makeFacilityDetailLinkOnRedirect(
-            'OS123',
+            'CN2026030PXM73F',
             '?embed=1&contributor=abc&sort_by=contributors_desc',
             true,
         );
-        expect(url).toBe('/production-locations/OS123?embed=1&contributor=abc');
+        expect(url).toBe('/production-locations/CN2026030PXM73F?embed=1&contributor=abc');
     });
 });
