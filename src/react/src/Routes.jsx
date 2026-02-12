@@ -31,6 +31,7 @@ import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
+import ProductionLocationDetails from './components/ProductionLocation/ProductionLocationDetails';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
@@ -55,6 +56,7 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilitiesRoute,
+    productionLocationDetailsRoute,
     dashboardRoute,
     claimFacilityRoute,
     claimIntroRoute,
@@ -69,6 +71,7 @@ import {
     searchByNameAndAddressResultRoute,
     productionLocationInfoRouteCreate,
     productionLocationInfoRouteUpdate,
+    ENABLE_PRODUCTION_LOCATION_PAGE,
 } from './util/constants';
 
 // Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
@@ -150,6 +153,23 @@ class Routes extends Component {
                                 <Route
                                     path={facilitiesRoute}
                                     component={Facilities}
+                                />
+                                <Route
+                                    path={productionLocationDetailsRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={
+                                                ENABLE_PRODUCTION_LOCATION_PAGE
+                                            }
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={
+                                                    ProductionLocationDetails
+                                                }
+                                            />
+                                        </FeatureFlag>
+                                    )}
                                 />
                                 <Route
                                     exact

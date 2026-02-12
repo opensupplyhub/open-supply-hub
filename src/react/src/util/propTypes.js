@@ -33,6 +33,7 @@ import {
     PRIVATE_INSTANCE,
     ENABLE_DROMO_UPLOADING,
     ENABLE_V1_CLAIMS_FLOW,
+    ENABLE_PRODUCTION_LOCATION_PAGE,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -363,6 +364,7 @@ export const featureFlagPropType = oneOf([
     PRIVATE_INSTANCE,
     ENABLE_DROMO_UPLOADING,
     ENABLE_V1_CLAIMS_FLOW,
+    ENABLE_PRODUCTION_LOCATION_PAGE,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(

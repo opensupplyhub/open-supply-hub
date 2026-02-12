@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
+import { bool } from 'prop-types';
 import { connect } from 'react-redux';
-import { Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 import { userPropType } from '../util/propTypes';
 
@@ -11,10 +12,14 @@ import VectorTileFacilitiesMap from './VectorTileFacilitiesMap';
 
 import '../styles/css/Map.css';
 
-import { logErrorToRollbar } from './../util/util';
+import {
+    logErrorToRollbar,
+    shouldUseProductionLocationPage,
+} from './../util/util';
 import {
     facilitiesRoute,
     facilityDetailsRoute,
+    productionLocationDetailsRoute,
     VECTOR_TILE,
     USER_DEFAULT_STATE,
 } from '../util/constants';
@@ -33,6 +38,40 @@ class Map extends Component {
 
     render() {
         const { hasError } = this.state;
+        const { useProductionLocationPage } = this.props;
+
+        const renderDetailRoute = () => (
+            <FeatureFlag
+                flag={VECTOR_TILE}
+                alternative={
+                    <Route
+                        render={props => (
+                            <FacilitiesMap {...props} disableZoom />
+                        )}
+                    />
+                }
+            >
+                <Route
+                    render={props => (
+                        <VectorTileFacilitiesMap
+                            {...props}
+                            disableZoom
+                            disableZoomToSearch
+                        />
+                    )}
+                />
+            </FeatureFlag>
+        );
+
+        const renderFacilitiesRoute = () => (
+            <FeatureFlag
+                flag={VECTOR_TILE}
+                alternative={<Route component={FacilitiesMap} />}
+            >
+                <Route component={VectorTileFacilitiesMap} />
+            </FeatureFlag>
+        );
+
         return (
             <Grid
                 item
@@ -46,47 +85,26 @@ class Map extends Component {
                         <Route
                             exact
                             path={facilityDetailsRoute}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={VECTOR_TILE}
-                                    alternative={
-                                        <Route
-                                            render={props => (
-                                                <FacilitiesMap
-                                                    {...props}
-                                                    disableZoom
-                                                />
-                                            )}
-                                        />
-                                    }
-                                >
-                                    <Route
-                                        render={props => (
-                                            <VectorTileFacilitiesMap
-                                                {...props}
-                                                disableZoom
-                                                disableZoomToSearch
-                                            />
-                                        )}
+                            render={props =>
+                                useProductionLocationPage ? (
+                                    <Redirect
+                                        to={{
+                                            pathname: productionLocationDetailsRoute.replace(
+                                                ':osID',
+                                                props.match.params.osID,
+                                            ),
+                                            search: props.location.search,
+                                        }}
                                     />
-                                </FeatureFlag>
-                            )}
+                                ) : (
+                                    renderDetailRoute()
+                                )
+                            }
                         />
                         <Route
                             exact
                             path={facilitiesRoute}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={VECTOR_TILE}
-                                    alternative={
-                                        <Route component={FacilitiesMap} />
-                                    }
-                                >
-                                    <Route
-                                        component={VectorTileFacilitiesMap}
-                                    />
-                                </FeatureFlag>
-                            )}
+                            render={() => renderFacilitiesRoute()}
                         />
                     </Switch>
                 )}
@@ -98,18 +116,26 @@ class Map extends Component {
 
 Map.propTypes = {
     user: userPropType,
+    useProductionLocationPage: bool,
 };
 
 Map.defaultProps = {
     user: USER_DEFAULT_STATE,
+    useProductionLocationPage: false,
 };
 
 function mapStateToProps({
     auth: {
         user: { user },
     },
+    featureFlags,
 }) {
-    return { user };
+    return {
+        user,
+        useProductionLocationPage: shouldUseProductionLocationPage(
+            featureFlags,
+        ),
+    };
 }
 
 export default connect(mapStateToProps)(Map);
