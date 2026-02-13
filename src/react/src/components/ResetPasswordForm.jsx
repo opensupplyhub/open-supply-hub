@@ -149,7 +149,7 @@ function mapDispatchToProps(
     dispatch,
     {
         match: {
-            params: { uid },
+            params: { uid, token },
         },
         history: {
             location: { search },
@@ -160,7 +160,9 @@ function mapDispatchToProps(
         setUID: () => dispatch(updateResetPasswordFormUID(uid)),
         setToken: () =>
             dispatch(
-                updateResetPasswordFormToken(getTokenFromQueryString(search)),
+                updateResetPasswordFormToken(
+                    token || getTokenFromQueryString(search),
+                ),
             ),
         updatePassword: e =>
             dispatch(updateResetPasswordFormPassword(getValueFromEvent(e))),

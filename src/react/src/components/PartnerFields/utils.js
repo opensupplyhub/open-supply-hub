@@ -1,53 +1,8 @@
-import endsWith from 'lodash/endsWith';
-/**
- * Format constants for JSON Schema.
- */
-export const FORMAT_TYPES = {
-    URI: 'uri',
-    URI_REFERENCE: 'uri-reference',
-};
+import moment from 'moment';
 
-/**
- * Gets the format type from a property schema.
- */
-export const getFormatFromSchema = propertySchema =>
-    propertySchema?.format || null;
-
-/**
- * Checks if a property key should be skipped.
- */
-export const shouldSkipProperty = (propertyKey, schemaProperties) => {
-    if (!(propertyKey in schemaProperties)) {
-        return true;
-    }
-
-    if (propertyKey.endsWith('_text')) {
-        const baseKey = propertyKey.slice(0, -5);
-        const baseSchema = schemaProperties[baseKey];
-        const baseFormat = getFormatFromSchema(baseSchema);
-
-        if (baseFormat === FORMAT_TYPES.URI) {
-            return true;
-        }
-    }
-
-    return false;
-};
-
-export const showFieldDefaultDisplayText = (
-    schemaProperties,
-    propertyValue,
-    propertyKey,
-) => {
+export const getTitleFromSchema = (propertyKey, schemaProperties) => {
     const propertySchema = schemaProperties[propertyKey] || {};
-    const { title } = propertySchema;
-    const stringValue = propertyValue == null ? '' : String(propertyValue);
-    return title ? `${title}: ${stringValue}` : stringValue;
-};
-
-export const constructUrlFromPartnerField = (baseUrl, value = '') => {
-    if (endsWith(baseUrl, '/')) return baseUrl + value.trim();
-    return `${baseUrl}/${value.trim()}`;
+    return propertySchema.title || null;
 };
 
 export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
@@ -58,4 +13,10 @@ export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
         return value[textKey];
     }
     return value[propertyKey];
+};
+
+export const getFormattedDateValue = (propertyKey, value, format = 'LL') => {
+    const propertyValue = value[propertyKey];
+    if (!propertyValue) return '';
+    return moment(propertyValue).format(format);
 };

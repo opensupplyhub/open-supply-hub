@@ -162,10 +162,13 @@ describe('FacilityDetailsGeneralFields component', () => {
                         id: 83090,
                         is_verified: false,
                         value: {
-                            section: 'C',
-                            division: '14',
-                            group: '141',
-                            class: '1410',
+                            section: 'J - Information and communication',
+                            division:
+                                '62 - Computer programming, consultancy and related activities',
+                            group:
+                                '62 - Computer programming, consultancy and related activities',
+                            class:
+                                '620 - Computer programming, consultancy and related activities',
                         },
                         created_at: '2025-05-01T10:49:15.174025Z',
                         updated_at: '2025-05-01T10:58:25.043413Z',
@@ -214,6 +217,172 @@ describe('FacilityDetailsGeneralFields component', () => {
             </MemoryRouter>,
             { preloadedState },
         );
+
+    test('renders ISIC 4 without divider when single block in contribution', () => {
+        const { queryByText, queryAllByRole } = renderComponent();
+
+        expect(
+            queryByText('Section: J - Information and communication'),
+        ).toBeInTheDocument();
+        expect(
+            queryByText(
+                'Division: 62 - Computer programming, consultancy and related activities',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            queryByText(
+                'Group: 62 - Computer programming, consultancy and related activities',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            queryByText(
+                'Class: 620 - Computer programming, consultancy and related activities',
+            ),
+        ).toBeInTheDocument();
+
+        const dividers = queryAllByRole('separator');
+        expect(dividers.length).toBe(0);
+    });
+
+    test('renders ISIC 4 with divider between multiple blocks in same contribution', () => {
+        const multiIsicData = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    isic_4: [
+                        {
+                            id: 90001,
+                            is_verified: false,
+                            value: {
+                                raw_value: [
+                                    {
+                                        section:
+                                            'J - Information and communication',
+                                        division:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        group:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        class:
+                                            '620 - Computer programming, consultancy and related activities',
+                                    },
+                                    {
+                                        section:
+                                            'G - Wholesale and retail trade; repair of motor vehicles and motorcycles',
+                                        division:
+                                            '47 - Retail trade, except motor vehicles and motorcycles',
+                                        group:
+                                            '47 - Retail trade, except motor vehicles and motorcycles',
+                                        class:
+                                            '471 - Retail sale in non-specialized stores with food, beverages or tobacco predominating',
+                                    },
+                                ],
+                            },
+                            created_at: '2025-05-01T10:49:15.174025Z',
+                            updated_at: '2025-05-01T10:58:25.043413Z',
+                            contributor_name: 'Test Org',
+                            contributor_id: 1139,
+                            value_count: 1,
+                            is_from_claim: false,
+                            field_name: 'isic_4',
+                            verified_count: 0,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const { getAllByRole, getByText } = renderComponent({
+            data: multiIsicData,
+        });
+
+        expect(
+            getByText('Section: J - Information and communication'),
+        ).toBeInTheDocument();
+        expect(
+            getByText(
+                'Section: G - Wholesale and retail trade; repair of motor vehicles and motorcycles',
+            ),
+        ).toBeInTheDocument();
+
+        const dividers = getAllByRole('separator');
+        expect(dividers.length).toBeGreaterThanOrEqual(1);
+    });
+
+    test('deduplicates repeated ISIC 4 entries from the same contribution', () => {
+        const duplicateIsicData = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    isic_4: [
+                        {
+                            id: 90002,
+                            is_verified: false,
+                            value: {
+                                raw_value: [
+                                    {
+                                        section:
+                                            'J - Information and communication',
+                                        division:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        group:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        class:
+                                            '620 - Computer programming, consultancy and related activities',
+                                    },
+                                    {
+                                        section:
+                                            'J - Information and communication',
+                                        division:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        group:
+                                            '62 - Computer programming, consultancy and related activities',
+                                        class:
+                                            '620 - Computer programming, consultancy and related activities',
+                                    },
+                                    {
+                                        section:
+                                            'G - Wholesale and retail trade; repair of motor vehicles and motorcycles',
+                                        division:
+                                            '47 - Retail trade, except motor vehicles and motorcycles',
+                                        group:
+                                            '47 - Retail trade, except motor vehicles and motorcycles',
+                                        class:
+                                            '471 - Retail sale in non-specialized stores with food, beverages or tobacco predominating',
+                                    },
+                                ],
+                            },
+                            created_at: '2025-05-01T10:49:15.174025Z',
+                            updated_at: '2025-05-01T10:58:25.043413Z',
+                            contributor_name: 'Test Org',
+                            contributor_id: 1139,
+                            value_count: 1,
+                            is_from_claim: false,
+                            field_name: 'isic_4',
+                            verified_count: 0,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const { getAllByRole, getAllByText } = renderComponent({
+            data: duplicateIsicData,
+        });
+
+        expect(
+            getAllByText('Section: J - Information and communication').length,
+        ).toBe(1);
+        expect(
+            getAllByText(
+                'Section: G - Wholesale and retail trade; repair of motor vehicles and motorcycles',
+            ).length,
+        ).toBe(1);
+        expect(getAllByRole('separator').length).toBe(1);
+    });
 
     test('renders only non-additional identifier extended fields when the show_additional_identifiers feature flag is false', () => {
         const preloadedState = {
@@ -332,79 +501,28 @@ describe('FacilityDetailsGeneralFields component', () => {
         expect(getByText('Nice production location LTD')).toBeInTheDocument();
     });
 
-    test('uses partner field label from top value when provided', () => {
-        const partnerFieldLabel = 'Climate TRACE Data 2024';
-        const dataWithPartnerField = {
-            ...mockData,
-            properties: {
-                ...mockData.properties,
-                partner_fields: {
-                    ...mockData.properties.partner_fields,
-                    climate_trace: [
-                        {
-                            value: { raw_value: 'Scope 1 emissions: 123' },
-                            created_at: '2025-01-01T00:00:00Z',
-                            updated_at: '2025-01-02T00:00:00Z',
-                            contributor_name: 'Climate TRACE',
-                            contributor_id: 1139,
-                            is_from_claim: false,
-                            is_verified: false,
-                            field_name: 'climate_trace',
-                            value_count: 1,
-                            label: partnerFieldLabel,
-                            source_by: '<p>Reported via Climate TRACE platform</p>',
-                        },
-                    ],
-                },
-            },
-        };
-
-        const { getByText } = renderComponent({ data: dataWithPartnerField });
-
-        expect(getByText(partnerFieldLabel)).toBeInTheDocument();
-        expect(getByText('Scope 1 emissions: 123')).toBeInTheDocument();
-    });
-
-    test('falls back to generated partner field label when top value label missing', () => {
-        const dataWithPartnerField = {
-            ...mockData,
-            properties: {
-                ...mockData.properties,
-                partner_fields: {
-                    ...mockData.properties.partner_fields,
-                    climate_trace: [
-                        {
-                            value: { raw_value: 'Scope 2 emissions: 456' },
-                            created_at: '2025-01-01T00:00:00Z',
-                            updated_at: '2025-01-02T00:00:00Z',
-                            contributor_name: 'Climate TRACE',
-                            contributor_id: 1139,
-                            is_from_claim: false,
-                            is_verified: false,
-                            field_name: 'climate_trace',
-                            value_count: 1,
-                            label: null,
-                            source_by: null,
-                        },
-                    ],
-                },
-            },
-        };
-
-        const { getByText } = renderComponent({ data: dataWithPartnerField });
-
-        expect(getByText('Climate Trace')).toBeInTheDocument();
-        expect(getByText('Scope 2 emissions: 456')).toBeInTheDocument();
-    });
-
     test('renders ISIC 4 field with formatted section, division, group, and class', () => {
         const { getByText } = renderComponent();
 
         expect(getByText('ISIC 4')).toBeInTheDocument();
-        expect(getByText('Section: C')).toBeInTheDocument();
-        expect(getByText('Division: 14')).toBeInTheDocument();
-        expect(getByText('Group: 141')).toBeInTheDocument();
-        expect(getByText('Class: 1410')).toBeInTheDocument();
+        expect(
+            getByText('Section: J - Information and communication'),
+        ).toBeInTheDocument();
+        expect(
+            getByText(
+                'Division: 62 - Computer programming, consultancy and related activities',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            getByText(
+                'Group: 62 - Computer programming, consultancy and related activities',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            getByText(
+                'Class: 620 - Computer programming, consultancy and related activities',
+            ),
+        ).toBeInTheDocument();
     });
 
     test('does not render ISIC 4 section when object contains no valid ISIC-4 fields', () => {

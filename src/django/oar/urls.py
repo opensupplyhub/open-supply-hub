@@ -110,6 +110,11 @@ public_apis = [
          name='parent_companies'),
     path('api/product-types/', views.product_types, name='product_types'),
     path('api/sectors/', views.sectors, name='sectors'),
+    path(
+        'api/partner-fields/',
+        views.PartnerFieldsViewSet.as_view({'get': 'list'}),
+        name='partner_fields'
+    ),
 ]
 
 api_v1 = [path('api/v1/', include(v1_router.urls + v1_custom_routes))]
@@ -143,10 +148,12 @@ internal_apis = [
     path('api/docs/', schema_view.with_ui('swagger'),
          name='schema-swagger-ui'),
     path('admin/', admin_site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
     path('health-check/', include('watchman.urls')),
     path('api-auth/', include('rest_framework.urls')),
-    path('rest-auth/', include('rest_auth.urls')),
-    path('rest-auth/registration/', include('rest_auth.registration.urls')),
+    path('rest-auth/', include('dj_rest_auth.urls')),
+    path('rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     path('user-login/', views.LoginToOARClient.as_view(),
          name='login_to_oar_client'),
     path('user-logout/', views.LogoutOfOARClient.as_view(),
@@ -165,7 +172,11 @@ internal_apis = [
     path('tile/<layer>/<cachekey>/<int:z>/<int:x>/<int:y>.<ext>',
          views.get_tile, name='tile'),
     path('api/current_tile_cache_key/', views.current_tile_cache_key),
-    path('api-blocks/', views.ApiBlockViewSet, 'api-block'),
+    path(
+        'api-blocks/',
+        views.ApiBlockViewSet.as_view({'get': 'list'}),
+        name='api-block-internal',
+    ),
     path('api/admin-facility-lists/', views.AdminFacilityListView.as_view(),
          name='admin-facility-lists'),
     path('api/geocoder/', views.get_geocoding, name='get_geocoding'),

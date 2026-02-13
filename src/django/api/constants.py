@@ -139,6 +139,7 @@ class Certifications:
     REACH = 'REACH'
     RESPONSIBLE_DOWN_STANDARD = 'Responsible Down Standard (RDS)'
     RESPONSIBLE_WOOL_STANDARD = 'Responsible Wool Standard (RWS)'
+    RAINFOREST_ALLIANCE = 'Rainforest Alliance'
     SAB8000 = 'SA8000'
     GREEN_BUTTON = 'Green Button'
     FAIRTRADE_USA = 'Fairtrade USA'
@@ -300,3 +301,4 @@ SINGLE_PAID_DOWNLOAD_RECORDS = 10000
 JS_MAX_SAFE_INTEGER = 9007199254740991
 
 PARTNER_FIELD_LIST_KEY = 'partner_field_list'
+PARTNER_FIELD_NAMES_KEY = 'partner_field_names'

@@ -22,7 +22,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         # Bring up PostgreSQL and Django in a way that respects
         # configured service health checks.
-        docker compose up -d database django
+        docker compose up -d database django minio
 
         # Apply any outstanding Django migrations
         docker compose \

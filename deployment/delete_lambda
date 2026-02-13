@@ -46,18 +46,11 @@ echo "ETag: $ETAG"
 cat full-config.json | jq '.DistributionConfig' > dist-config.json
 
 cat dist-config.json | jq --arg NAME "$LAMBDA_NAME" '
-  .DefaultCacheBehavior.LambdaFunctionAssociations |=
-    {
-      "Quantity": (
-        .Items
-        | map(select(.LambdaFunctionARN | contains($NAME) | not))
-        | length
-      ),
-      "Items": (
-        .Items
-        | map(select(.LambdaFunctionARN | contains($NAME) | not))
-      )
-    }
+  .DefaultCacheBehavior.LambdaFunctionAssociations |= (
+    .Items // []
+    | map(select(.LambdaFunctionARN | contains($NAME) | not))
+    | { Quantity: length, Items: . }
+  )
 ' > new-config.json
 
 echo "Updating CloudFront distribution to detach Lambda@Edge..."

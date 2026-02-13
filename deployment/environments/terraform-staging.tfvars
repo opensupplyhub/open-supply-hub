@@ -8,6 +8,11 @@ r53_public_hosted_zone = "staging.opensupplyhub.org"
 
 cloudfront_price_class = "PriceClass_All"
 
+api_facilities_cache_default_ttl           = 120
+api_facilities_cache_max_ttl               = 120
+api_production_locations_cache_default_ttl = 120
+api_production_locations_cache_max_ttl     = 120
+
 bastion_ami = "ami-0bb3fad3c0286ebd5"
 bastion_instance_type = "t3.nano"
 

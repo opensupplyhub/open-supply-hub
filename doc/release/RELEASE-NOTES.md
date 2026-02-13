@@ -3,29 +3,107 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.19.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: February 13, 2026
+
+### Database changes
+
+#### Migrations
+* 0196_switch_partner_field_source_by_editor.py - Migrates `PartnerField.source_by` to CKEditor5 so the rich-text content works after replacing `django-ckeditor` with `django-ckeditor-5` (required for Django 5); keeps existing source descriptions editable with formatting and links.
+* 0197_add_event_index.py - Adds an explicit index on `Event(content_type, object_id)` to replace the legacy `index_together` removed in Django 5, keeping the existing schema intact without editing old migrations.
+* 0198_add_rainforest_alliance_certification.py - This migration introduces new certification named `Rainforest Alliance` for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
+
+### Code/API changes
+* [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+* [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
+
+### Bugfix
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
+
+### What's new
+* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
+    * Upgraded Python from `3.8` to `3.11`.
+    * Upgraded Django from `3.2.17` to `5.2.10`.
+    * Upgraded Python and Django packages to maintain compatibility.
+* [OSDEV-2359](https://opensupplyhub.atlassian.net/browse/OSDEV-2359) - Refactored password reset functionality to use `dj_rest_auth` with `allauth.account.forms.ResetPasswordForm`, aligning with Django's base36-encoded reset tokens and keeping compatibility with the updated authentication flow.
+* [OSDEV-2349](https://opensupplyhub.atlassian.net/browse/OSDEV-2349) - Added additional `Rainforest Alliance` certification to `Certifications/Standards/Regulations` on `Claim Profile`.
+* [OSDEV-2331](https://opensupplyhub.atlassian.net/browse/OSDEV-2331) - The following changes have been made:
+    * Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
+    * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
+    * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `delete_emailaddress_for_deleted_users`
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 2.18.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: January 22, 2026
+
+### Bugfix
+[Hotfix][OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Hotfix: Add `Host` header to fix infinite production locations scroll on the main search page.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.18.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: January 10, 2026
+* Release date: January 17, 2026
+
+### Database changes
+
+#### Migrations
+* 0190_add_active_system_field_to_partnerfield.py - This migration adds two boolean fields to the `PartnerField` model: `active` (default True) to control whether a partner field is available for contributions and appears in listings, and `system_field` (default False) to mark system-managed fields that cannot be deleted and have restricted editing permissions. Along with the migration, a custom `PartnerFieldManager` class is introduced, which automatically filters queries to return only active partner fields by default, with an `all_including_inactive()` method to access all fields when needed.
+* 0191_create_wage_indicator_partner_field.py - This data migration creates the `wage_indicator` system partner field with type `object` and a comprehensive JSON schema defining six properties for wage indicator reference links. The field is marked as `system_field=True` and `active=True`, and includes source attribution.
+* 0192_create_wage_indicator_models.py - This migration creates two new models: `WageIndicatorCountryData` to store wage indicator URLs (living wage and minimum wage links in national and English languages) for each country indexed by ISO 3166-1 alpha-2 country code, and `WageIndicatorLinkTextConfig` to store customizable display text for each link type. The models support system-generated partner field data that will be automatically displayed on production location profiles based on the location's country.
+* 0193_populate_wage_indicator_data.py - This data migration populates the `WageIndicatorCountryData` table with wage indicator reference links for 171 countries. Each country entry includes URLs for living wage benchmarks and minimum wage information in both national languages and English where available. The migration also populates the `WageIndicatorLinkTextConfig` table with default display text for all three link types.
+* 0194_create_and_populate_us_county_tigerline.py - This migration creates the `USCountyTigerline` model to store US county boundary data with geometry in EPSG:5070 (Albers Equal Area projection). The model includes fields for geoid (primary key), county name, and MultiPolygon geometry. The migration attempts to populate the table with data from a CSV file stored in S3 (or MinIO for local development). If the CSV file is not available, the migration completes successfully with an empty table, allowing data to be populated later. The migration supports downloading the CSV file from S3 buckets with MinIO endpoint configuration for local development environments.
+* 0195_add_mit_livingwage_partner_field.py - This data migration creates the `mit_living_wage` system partner field with type `object` and a JSON schema defining a single property for county ID with uri-reference format. The field is marked as `system_field=True` and `active=True`, and includes a base URL pointing to the MIT Living Wage website and display text for the link. This partner field enables automatic display of MIT Living Wage data links on US production location profiles based on the facility's geographic location.
+
+#### Schema changes
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Added wage indicator system partner field infrastructure: The `PartnerField` model has been updated with two new boolean fields (`active` and `system_field`) to support system-managed partner fields. Two new models were introduced: `WageIndicatorCountryData` (stores wage indicator URLs for 171 countries) and `WageIndicatorLinkTextConfig` (stores customizable display text for wage indicator links). A new `wage_indicator` system partner field was created to display country-specific living wage and minimum wage reference links on production location profiles. The implementation includes a custom manager for filtering active partner fields, a provider registry pattern for system-generated fields, and admin panel protections to prevent deletion or unauthorized modification of system fields.
+* [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Added infrastructure for MIT Living Wage data: The `USCountyTigerline` model was added to store US county boundary geometries for geographic lookups, and a `mit_living_wage` system partner field was created to display MIT Living Wage data links for US production locations based on their county location. The migration supports downloading CSV files from S3 buckets (with MinIO support for local development) and gracefully handles missing files by skipping data population without failing the migration.
 
 ### Code/API changes
 * [Follow-up][OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Removed the `reindex_locations_with_environmental_data` Django management command from the parent `post_deployment` command so it no longer runs, as it was only needed for the `2.17.0` release.
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support system-generated partner fields. The `partner_fields` object in the response now includes the `wage_indicator` field when a contributor is assigned to it, automatically providing country-specific wage indicator reference links (living wage and minimum wage URLs in both national language and English) based on the production location's country code. System partner fields are populated dynamically through a provider registry pattern and follow the same structure as user-contributed partner fields, appearing alongside them in the API response.
+* [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support MIT Living Wage system-generated partner fields. For US production locations, the `mit_living_wage` field is included when a contributor is assigned, automatically providing links to MIT Living Wage data based on the facility's geographic location (county). The field is populated dynamically through a provider registry pattern and follows the same structure as user-contributed partner fields.
+* Removed unused `ExtendedFieldListSerializer` and related code to clean up the codebase and eliminate obsolete serializer components.
+* [OSDEV-2330](https://opensupplyhub.atlassian.net/browse/OSDEV-2330) - Replaced US County Tigerline data from 2025 to 2021 version to align with MIT Living Wage Calculator data requirements. The migration now uses 2021 Tigerline CSV data which contains geometries in WGS84 (EPSG:4326) format that are automatically transformed to EPSG:5070 (Albers Equal Area) during import.
+* Created a new Django management command `populate_tigerline_data` to populate Tigerline data from S3 CSV files after migration if the data was not available during migration. The command supports configurable source SRID and can optionally clear existing data before populating.
 
 ### Architecture/Environment changes
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
 * [OSDEV-2318](https://opensupplyhub.atlassian.net/browse/OSDEV-2318) - Updated Terraform version from `1.5` to `1.13.3`. Upgraded Kafka from the `3.4.0` to `3.9.0` to align with the current AWS MSK supported version.
+* [OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Added CloudFront caching for the facilities and production-location OS ID endpoints, refactored the Terraform config to use endpoint-specific TTL variables, and set per-environment durations (30 minutes for Prod/RBA/Preprod/Staging, 1 minute for Dev/Test). CloudFront still caches only GET/HEAD/OPTIONS while allowing all HTTP methods to reach the origin.
 
 ### Bugfix
 * [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
 
 ### What's new
+* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Introduced automatic wage indicator reference links on production location profiles for 171 countries. Each production location now displays country-specific links to authoritative living wage and minimum wage information and its regional partner sites. The wage indicator data is presented in both the national language and English, providing users with easy access to benchmarking information for fair wage assessments. The links appear automatically based on the production location's country and are managed as a system-generated partner field that cannot be manually edited or deleted, ensuring data consistency and reliability across the platform.
+* [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Introduced automatic MIT Living Wage data links on US production location profiles. Each US production location now displays county-specific links to MIT Living Wage Calculator data based on the facility's geographic location. The links provide access to county-specific living wage calculations and data, helping users assess fair wage benchmarks for US locations. The links appear automatically based on the facility's county location and are managed as a system-generated partner field that cannot be manually edited or deleted.
 * [OSDEV-2221](https://opensupplyhub.atlassian.net/browse/OSDEV-2221) - Updated post claim page `claimed/{claim-id}/`. This update includes:
     * Added emission data input fields with checkboxes. UI is consitent with other input fields in the `ClaimedFacilitiesDetails` component.
     * Applied Yup validation schema for `facility_website`, `point_of_contact_email`, `facility_workers_count`.
     * Used FE mocked sectors for the Sector input field.
     * Removed the FE request to `GET /api/parent-companies/`.
     * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
+* [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
+* [OSDEV-2332](https://opensupplyhub.atlassian.net/browse/OSDEV-2332) - Partner fields are now displayed in a dedicated "New Pilot Data Integrations" section on the production location page, visually separated with borders and including a "Learn More" link. This section only appears on the main location details page and is excluded from embedded map views.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -59,7 +137,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0187_remove_null_from_contributor_partner_fields.py - This migration removes the unnecessary `null=True` parameter from the `partner_fields` ManyToManyField on the Contributor model.
-* 0188_introduce_indexing_for_new_operational_and_environmental_data.py - Updated the `index_claim_info` function to collect new environmental data (opening_date, closing_date, estimated_annual_throughput, actual_annual_energy_consumption) for the `api_facilityindex.claim_info` column. 
+* 0188_introduce_indexing_for_new_operational_and_environmental_data.py - Updated the `index_claim_info` function to collect new environmental data (opening_date, closing_date, estimated_annual_throughput, actual_annual_energy_consumption) for the `api_facilityindex.claim_info` column.
 
 ### Code/API changes
 * [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Introduced a new reusable `ImportantNote` component in the new claim flow to replace custom implementations of important notes across multiple components (`BusinessStep`, `ContactInfoStep`, and `ClaimInfoSection`), improving code maintainability and consistency.

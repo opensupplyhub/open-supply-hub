@@ -1,7 +1,10 @@
 import React from 'react';
 import ArrowUpwardIcon from '@material-ui/icons/ArrowUpward';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
+import uniqWith from 'lodash/uniqWith';
+import isEqual from 'lodash/isEqual';
 import COLOURS from './COLOURS';
+import { CONTRIBUTION_DATA_DIVIDER } from './renderUtils';
 
 export const DEFAULT_SORT_OPTION_INDEX = 2;
 export const OTHER = 'Other';
@@ -330,7 +333,8 @@ export const mainRoute = '/';
 export const settingsRoute = '/settings';
 export const authLoginFormRoute = '/auth/login';
 export const authRegisterFormRoute = '/auth/register';
-export const authResetPasswordFormRoute = '/auth/resetpassword/:uid';
+export const authResetPasswordFormRoute =
+    '/accounts/password/reset/key/:uid-:token/';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
 export const contributeRoute = '/contribute';
 export const multipleLocationRoute = '/contribute/multiple-locations';
@@ -375,6 +379,7 @@ export const productionLocationInfoRouteCreate =
     '/contribute/single-location/info/:moderationID?';
 export const productionLocationInfoRouteUpdate =
     '/contribute/single-location/:osID/info/:moderationID?';
+export const pilotIntegrationsDocsRoute = `${InfoLink}/data-integrations`;
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
@@ -1134,7 +1139,9 @@ export const EXTENDED_FIELD_TYPES = [
             const rawValue = value?.raw_value ?? value ?? {};
             const entries = Array.isArray(rawValue) ? rawValue : [rawValue];
 
-            return entries.reduce((acc, entry, index) => {
+            const dedupedEntries = uniqWith(entries, isEqual);
+
+            return dedupedEntries.reduce((acc, entry) => {
                 const { section, division, group, class: isicClass } =
                     entry || {};
                 const lines = [
@@ -1148,8 +1155,8 @@ export const EXTENDED_FIELD_TYPES = [
                     return acc;
                 }
 
-                if (acc.length && index > 0) {
-                    return acc.concat(['', ...lines]);
+                if (acc.length) {
+                    return acc.concat([CONTRIBUTION_DATA_DIVIDER, ...lines]);
                 }
 
                 return acc.concat(lines);

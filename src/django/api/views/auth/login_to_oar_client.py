@@ -1,7 +1,7 @@
 from allauth.account.models import EmailAddress
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
-from rest_auth.views import LoginView
+from dj_rest_auth.views import LoginView
 from django.contrib.auth import authenticate, login
 
 from ...serializers.user.user_serializer import UserSerializer
