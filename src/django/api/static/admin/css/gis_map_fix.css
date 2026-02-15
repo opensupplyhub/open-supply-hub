@@ -1,0 +1,8 @@
+/* Ensure GeoDjango admin map container always has dimensions (fixes 0x0 on prod). */
+.dj_map_wrapper,
+.dj_map_wrapper .dj_map {
+  min-width: 600px;
+  min-height: 400px;
+  width: 600px;
+  height: 400px;
+}
