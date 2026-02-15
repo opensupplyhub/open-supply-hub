@@ -85,7 +85,6 @@ class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
 
     class Media:
         css = {'all': ('admin/css/gis_map_fix.css',)}
-        js = ('admin/js/gis_map_fix.js',)
 
 
 class FacilityListAdmin(admin.ModelAdmin):
