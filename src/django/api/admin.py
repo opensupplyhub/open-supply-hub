@@ -5,6 +5,7 @@ from django import forms
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
+from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.shortcuts import render
@@ -70,10 +71,17 @@ class OarUserAdmin(UserAdmin):
     list_display = ('email', 'is_active')
 
 
-class FacilityHistoryAdmin(SimpleHistoryAdmin):
+class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
     history_list_display = ('name', 'address', 'location')
 
     readonly_fields = ('created_from',)
+
+    gis_widget_kwargs = {
+        'attrs': {
+            'map_width': 600,
+            'map_height': 400,
+        }
+    }
 
 
 class FacilityListAdmin(admin.ModelAdmin):
