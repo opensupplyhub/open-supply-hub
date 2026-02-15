@@ -1,8 +1,13 @@
 /* Ensure GeoDjango admin map container always has dimensions (fixes 0x0 on prod). */
+/* Target by class and by ID so we apply even if DOM varies. */
 .dj_map_wrapper,
-.dj_map_wrapper .dj_map {
-  min-width: 600px;
-  min-height: 400px;
-  width: 600px;
-  height: 400px;
+.dj_map_wrapper .dj_map,
+#id_location_div_map,
+#id_location_map,
+.dj_map_wrapper .ol-viewport {
+  min-width: 600px !important;
+  min-height: 400px !important;
+  width: 600px !important;
+  height: 400px !important;
+  box-sizing: border-box !important;
 }

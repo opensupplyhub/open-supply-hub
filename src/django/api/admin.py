@@ -76,6 +76,17 @@ class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
 
     readonly_fields = ('created_from',)
 
+    gis_widget_kwargs = {
+        'attrs': {
+            'map_width': 600,
+            'map_height': 400,
+        }
+    }
+
+    class Media:
+        css = {'all': ('admin/css/gis_map_fix.css',)}
+        js = ('admin/js/gis_map_fix.js',)
+
 
 class FacilityListAdmin(admin.ModelAdmin):
     readonly_fields = ('replaced_by_link',)
