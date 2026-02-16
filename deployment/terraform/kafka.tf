@@ -3,7 +3,7 @@ module "msk_cluster" {
   version = "2.1.0"
 
   name                   = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_version          = aws_msk_configuration.msk_config.kafka_versions[0]
+  kafka_version          = tolist(aws_msk_configuration.msk_config.kafka_versions)[0]
   create_configuration   = false
   configuration_arn      = aws_msk_configuration.msk_config.arn
   configuration_revision = aws_msk_configuration.msk_config.latest_revision
