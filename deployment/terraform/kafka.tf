@@ -3,7 +3,10 @@ module "msk_cluster" {
   version = "2.1.0"
 
   name                   = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_version          = "3.9.x"
+  kafka_version          = aws_msk_configuration.msk_config.kafka_versions[0]
+  create_configuration   = false
+  configuration_arn      = aws_msk_configuration.msk_config.arn
+  configuration_revision = aws_msk_configuration.msk_config.latest_revision
   number_of_broker_nodes = 2
   encryption_in_transit_client_broker = "PLAINTEXT"
   encryption_in_transit_in_cluster = "false"
@@ -11,6 +14,20 @@ module "msk_cluster" {
   broker_node_client_subnets  = module.vpc.private_subnet_ids
   broker_node_instance_type   = "kafka.t3.small"
   broker_node_security_groups = [aws_security_group.msk.id]
+}
+
+resource "aws_msk_configuration" "msk_config" {
+  name              = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
+  kafka_versions    = ["3.9.x"]
+  server_properties = ""
+
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes = [
+      kafka_versions,
+      server_properties,
+    ]
+  }
 }
 
 resource "aws_security_group" "msk" {
