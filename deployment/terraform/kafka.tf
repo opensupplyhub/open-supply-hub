@@ -17,8 +17,13 @@ module "msk_cluster" {
 }
 
 resource "aws_msk_configuration" "msk_config" {
-  name = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
+  name              = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
   server_properties = ""
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [server_properties]
+  }
 }
 
 resource "aws_security_group" "msk" {
