@@ -2,7 +2,7 @@ module "msk_cluster" {
   source  = "terraform-aws-modules/msk-kafka-cluster/aws"
   version = "2.1.0"
 
-  name                   = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
+  name                   = aws_msk_configuration.msk_config.name
   kafka_version          = tolist(aws_msk_configuration.msk_config.kafka_versions)[0]
   create_configuration   = false
   configuration_arn      = aws_msk_configuration.msk_config.arn
