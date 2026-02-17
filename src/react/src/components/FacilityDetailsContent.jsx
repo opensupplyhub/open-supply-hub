@@ -333,8 +333,15 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch) {
     return {
-        fetchFacility: (id, embed, contributorId) =>
-            dispatch(fetchSingleFacility(id, embed, contributorId, true)),
+        fetchFacility: (id, embed, contributorId) => {
+            const contributorValue = get(contributorId, ['0', 'value']);
+            const isEmbedded = embed && contributorValue ? embed : 0;
+            const contributors = contributorValue ? contributorId : null;
+
+            return dispatch(
+                fetchSingleFacility(id, isEmbedded, contributors, true),
+            );
+        },
         clearFacility: () => dispatch(resetSingleFacility()),
         searchForFacilities: vectorTilesAreActive =>
             dispatch(

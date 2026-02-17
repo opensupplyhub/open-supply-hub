@@ -18,7 +18,7 @@ import {
 import { getFilteredSearchForEmbed, getLastPathParameter } from '../util/util';
 import UserProfile from './UserProfile';
 
-const Facilities = ({ fetchingFeatureFlags }) => {
+const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
     if (fetchingFeatureFlags) {
         return <CircularProgress />;
     }
@@ -36,6 +36,10 @@ const Facilities = ({ fetchingFeatureFlags }) => {
                     const cleanOsID = getLastPathParameter(
                         location?.pathname || '',
                     );
+
+                    if (isEmbedded) {
+                        return <FacilityDetails {...props} />;
+                    }
 
                     return (
                         <FeatureFlag
@@ -65,8 +69,11 @@ const Facilities = ({ fetchingFeatureFlags }) => {
     );
 };
 
-function mapStateToProps({ featureFlags: { fetching: fetchingFeatureFlags } }) {
-    return { fetchingFeatureFlags };
+function mapStateToProps({
+    featureFlags: { fetching: fetchingFeatureFlags },
+    embeddedMap: { embed },
+}) {
+    return { fetchingFeatureFlags, isEmbedded: !!embed };
 }
 
 export default connect(mapStateToProps)(withQueryStringSync(Facilities));

@@ -15,6 +15,8 @@ import '../styles/css/Map.css';
 import {
     logErrorToRollbar,
     shouldUseProductionLocationPage,
+    getFilteredSearchForEmbed,
+    getLastPathParameter,
 } from './../util/util';
 import {
     facilitiesRoute,
@@ -38,7 +40,7 @@ class Map extends Component {
 
     render() {
         const { hasError } = this.state;
-        const { useProductionLocationPage } = this.props;
+        const { useProductionLocationPage, isEmbedded } = this.props;
 
         const renderDetailRoute = () => (
             <FeatureFlag
@@ -85,21 +87,34 @@ class Map extends Component {
                         <Route
                             exact
                             path={facilityDetailsRoute}
-                            render={props =>
-                                useProductionLocationPage ? (
-                                    <Redirect
-                                        to={{
-                                            pathname: productionLocationDetailsRoute.replace(
-                                                ':osID',
-                                                props.match.params.osID,
-                                            ),
-                                            search: props.location.search,
-                                        }}
-                                    />
-                                ) : (
-                                    renderDetailRoute()
-                                )
-                            }
+                            render={props => {
+                                const filteredSearch = getFilteredSearchForEmbed(
+                                    props.location.search,
+                                );
+                                const cleanOsID = getLastPathParameter(
+                                    props.location?.pathname || '',
+                                );
+
+                                if (isEmbedded) {
+                                    return renderDetailRoute();
+                                }
+
+                                if (useProductionLocationPage) {
+                                    return (
+                                        <Redirect
+                                            to={{
+                                                pathname: productionLocationDetailsRoute.replace(
+                                                    ':osID',
+                                                    cleanOsID,
+                                                ),
+                                                search: filteredSearch,
+                                            }}
+                                        />
+                                    );
+                                }
+
+                                return renderDetailRoute();
+                            }}
                         />
                         <Route
                             exact
@@ -117,11 +132,13 @@ class Map extends Component {
 Map.propTypes = {
     user: userPropType,
     useProductionLocationPage: bool,
+    isEmbedded: bool,
 };
 
 Map.defaultProps = {
     user: USER_DEFAULT_STATE,
     useProductionLocationPage: false,
+    isEmbedded: false,
 };
 
 function mapStateToProps({
@@ -129,12 +146,14 @@ function mapStateToProps({
         user: { user },
     },
     featureFlags,
+    embeddedMap: { embed },
 }) {
     return {
         user,
         useProductionLocationPage: shouldUseProductionLocationPage(
             featureFlags,
         ),
+        isEmbedded: !!embed,
     };
 }
 
