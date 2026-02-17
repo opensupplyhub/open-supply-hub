@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
     * Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
-    * URL parameters (only if `embed=1` is present) are preserved during redirection, e.g., `/production-locations/:osID?sort_by=contributors_desc&embed=1`.
+    * If `embed=1` is present, redirect, to `/facilities/:osID?sort_by=contributors_desc&embed=1` (with preserving other URL parameters) regardless of active `enable_production_location_page` flag.
     * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
     * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
 
