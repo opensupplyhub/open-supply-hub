@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django.db.models import Q
 
 from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_claim import FacilityClaim
@@ -8,9 +7,7 @@ from api.models.transactions.index_facilities_new import index_facilities_new
 
 class Command(BaseCommand):
     help = (
-        'Reindexes only those locations that have approved claims '
-        'containing environmental data (energy consumption, throughput, '
-        'opening/closing dates).'
+        'Reindexes only those locations that have approved claims.'
     )
 
     def add_arguments(self, parser):
@@ -27,37 +24,12 @@ class Command(BaseCommand):
         dry_run = options.get('dry_run', False)
 
         self.stdout.write(
-            'Searching for approved claims with environmental data...'
+            'Searching for approved claims...'
         )
 
-        # Query for approved location claims that have at least one
-        # environmental field populated.
-        environmental_fields_filter = (
-            Q(opening_date__isnull=False) |
-            Q(closing_date__isnull=False) |
-            Q(estimated_annual_throughput__isnull=False) |
-            Q(energy_coal__isnull=False) |
-            Q(energy_natural_gas__isnull=False) |
-            Q(energy_diesel__isnull=False) |
-            Q(energy_kerosene__isnull=False) |
-            Q(energy_biomass__isnull=False) |
-            Q(energy_charcoal__isnull=False) |
-            Q(energy_animal_waste__isnull=False) |
-            Q(energy_electricity__isnull=False) |
-            Q(energy_other__isnull=False)
-        )
-
-        approved_claims_with_env_data = (
+        location_ids = list(
             FacilityClaim.objects
             .filter(status=FacilityClaimStatuses.APPROVED)
-            .filter(environmental_fields_filter)
-            .select_related('facility')
-        )
-
-        # Extract location IDs (facility_id field).
-        location_ids = list(
-            approved_claims_with_env_data
-            .order_by('facility_id')
             .values_list('facility_id', flat=True)
             .distinct()
         )
@@ -65,8 +37,7 @@ class Command(BaseCommand):
         if not location_ids:
             self.stdout.write(
                 self.style.WARNING(
-                    'No locations found with approved claims containing '
-                    'environmental data.'
+                    'No locations found with approved claims.'
                 )
             )
             return
@@ -74,7 +45,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f'Found {len(location_ids)} locations with '
-                'environmental data:'
+                'approved claims.'
             )
         )
 
@@ -98,6 +69,6 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(
                     f'Successfully reindexed {len(location_ids)} '
-                    'locations with environmental data.'
+                    'locations with approved claims.'
                 )
             )
