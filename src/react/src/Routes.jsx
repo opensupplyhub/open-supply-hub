@@ -31,7 +31,7 @@ import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
-import ProductionLocationDetails from './components/ProductionLocation/ProductionLocationDetails';
+import ProductionLocationDetailsContainer from './components/ProductionLocation/ProductionLocationDetailsContainer';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
@@ -165,7 +165,7 @@ class Routes extends Component {
                                         >
                                             <Route
                                                 component={
-                                                    ProductionLocationDetails
+                                                    ProductionLocationDetailsContainer
                                                 }
                                             />
                                         </FeatureFlag>

@@ -1,14 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Redirect, withRouter } from 'react-router';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import get from 'lodash/get';
+
+import ProductionLocationDetailsClaimFlag from './ProductionLocationDetailsClaimFlag';
+import ProductionLocationDetailsTitle from './ProductionLocationDetailsTitle';
+import ProductionLocationDetailsDataSourcesInfo from './ProductionLocationDetailsDataSourcesInfo';
+import ProductionLocationDetailsGeneralFields from './ProductionLocationDetailsGeneralFields';
+import ProductionLocationDetailsMap from './ProductionLocationDetailsMap';
+import { FACILITIES_REQUEST_PAGE_SIZE } from '../../util/constants';
 
 import {
     makeFacilityDetailLinkOnRedirect,
     shouldUseProductionLocationPage,
 } from '../../util/util';
 
-const detailsStyles = () => Object.freeze({});
+import {
+    fetchSingleFacility,
+    resetSingleFacility,
+    fetchFacilities,
+} from '../../actions/facilities';
+
+const detailsStyles = () =>
+    Object.freeze({
+        container: Object.freeze({}),
+    });
 
 const ProductionLocationDetailsContent = ({
     classes,
@@ -19,10 +37,14 @@ const ProductionLocationDetailsContent = ({
         params: { osID },
     },
     useProductionLocationPage,
+    clearFacility,
 }) => {
+    // Clears the selected facility when unmounted
+    useEffect(() => () => clearFacility(), []);
+
     if (error && error.length) {
         return (
-            <div className={classes.root}>
+            <div className={classes.container}>
                 <ul>
                     {error.map(err => (
                         <li key={err} className={classes.error}>
@@ -52,9 +74,50 @@ const ProductionLocationDetailsContent = ({
     }
 
     return (
-        <div className={classes.root}>Production Location Details Content</div>
+        <div className={classes.container}>
+            <Grid item>
+                <ProductionLocationDetailsTitle />
+            </Grid>
+            <Grid item>
+                <ProductionLocationDetailsClaimFlag />
+            </Grid>
+            <Grid item>
+                <ProductionLocationDetailsDataSourcesInfo />
+            </Grid>
+            <Grid container xs={12}>
+                <Grid item sm={12} md={7}>
+                    <ProductionLocationDetailsGeneralFields />
+                </Grid>
+                <Grid item sm={12} md={5}>
+                    <ProductionLocationDetailsMap />
+                </Grid>
+            </Grid>
+        </div>
     );
 };
+
+function mapDispatchToProps(dispatch) {
+    return {
+        fetchFacility: (id, embed, contributorId) => {
+            const contributorValue = get(contributorId, ['0', 'value']);
+            const isEmbedded = embed && contributorValue ? embed : 0;
+            const contributors = contributorValue ? contributorId : null;
+
+            return dispatch(
+                fetchSingleFacility(id, isEmbedded, contributors, true),
+            );
+        },
+        clearFacility: () => dispatch(resetSingleFacility()),
+        searchForFacilities: vectorTilesAreActive =>
+            dispatch(
+                fetchFacilities({
+                    pageSize: vectorTilesAreActive
+                        ? FACILITIES_REQUEST_PAGE_SIZE
+                        : 50,
+                }),
+            ),
+    };
+}
 
 function mapStateToProps({
     facilities: {
@@ -80,7 +143,8 @@ function mapStateToProps({
 }
 
 export default withRouter(
-    connect(mapStateToProps)(
-        withStyles(detailsStyles)(ProductionLocationDetailsContent),
-    ),
+    connect(
+        mapStateToProps,
+        mapDispatchToProps,
+    )(withStyles(detailsStyles)(ProductionLocationDetailsContent)),
 );
