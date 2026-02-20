@@ -8,6 +8,6 @@ class Command(BaseCommand):
             'post-deployment tasks.')
 
     def handle(self, *args, **options):
-        call_command('delete_emailaddress_for_deleted_users')
         call_command('migrate')
         call_command('reindex_database')
+        call_command('reindex_locations_with_approved_claim')
