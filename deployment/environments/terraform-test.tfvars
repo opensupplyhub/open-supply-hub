@@ -45,8 +45,8 @@ app_ecs_scale_target_min_capacity = 1
 app_ecs_cooldown_scale_down       = 300
 app_ecs_cooldown_scale_up         = 180
 
-app_dd_fargate_cpu = "4096"
-app_dd_fargate_memory = "8192"
+app_dd_fargate_cpu = "8192"
+app_dd_fargate_memory = "40960"
 app_dd_ecs_desired_count = "1"
 
 cli_fargate_cpu = "2048"

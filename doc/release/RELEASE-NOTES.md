@@ -3,7 +3,8 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
-## Release 2.20
+
+## Release 2.20.0
 
 ## Introduction
 * Product name: Open Supply Hub
@@ -21,9 +22,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
     * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
 
+### Architecture/Environment changes
+* Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
-    * `delete_emailaddress_for_deleted_users`
     * `migrate`
     * `reindex_database`
 
@@ -32,7 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: February 13, 2026
+* Release date: February 14, 2026
 
 ### Database changes
 
