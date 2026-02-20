@@ -7,7 +7,7 @@ import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 
 /* Apply conditional rendering for each link item */
-const productionLocationDetailsNavBarStyles = theme =>
+const navBarStyles = theme =>
     Object.freeze({
         container: Object.freeze({
             backgroundColor: 'white',
@@ -15,7 +15,7 @@ const productionLocationDetailsNavBarStyles = theme =>
         }),
     });
 
-const ProductionLocationDetailsNavBar = ({ classes }) => (
+const NavBar = ({ classes }) => (
     <div className={classes.container}>
         <Typography variant="title" className={classes.title} component="h3">
             Jump to
@@ -49,6 +49,4 @@ const ProductionLocationDetailsNavBar = ({ classes }) => (
     </div>
 );
 
-export default withStyles(productionLocationDetailsNavBarStyles)(
-    ProductionLocationDetailsNavBar,
-);
+export default withStyles(navBarStyles)(NavBar);

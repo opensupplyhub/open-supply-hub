@@ -20,13 +20,13 @@ const productionLocationDetailsStyles = theme =>
 function ProductionLocationDetailsContainer({ classes, history }) {
     return (
         <Grid container className={classes.root} spacing={8} xs={12}>
-            <Grid item sm={12} md={2}>
+            <Grid item xs={12} md={2}>
                 <BackToSearch history={history} />
                 <NavBar />
                 <ContributeFields />
                 <SupplyChain />
             </Grid>
-            <Grid item sm={12} md={10}>
+            <Grid item xs={12} md={10}>
                 <ProductionLocationDetailsContent />
             </Grid>
         </Grid>
