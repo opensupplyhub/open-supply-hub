@@ -3,13 +3,16 @@ import { Redirect, withRouter } from 'react-router';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
 import get from 'lodash/get';
 
-import ProductionLocationDetailsClaimFlag from './ProductionLocationDetailsClaimFlag';
-import ProductionLocationDetailsTitle from './ProductionLocationDetailsTitle';
-import ProductionLocationDetailsDataSourcesInfo from './ProductionLocationDetailsDataSourcesInfo';
-import ProductionLocationDetailsGeneralFields from './ProductionLocationDetailsGeneralFields';
-import ProductionLocationDetailsMap from './ProductionLocationDetailsMap';
+import ClaimFlag from './Heading/ClaimFlag';
+import LocationTitle from './Heading/LocationTitle';
+import DataSourcesInfo from './Heading/DataSourcesInfo';
+import GeneralFields from './ProductionLocationDetailsGeneralFields';
+import ClaimDataContainer from './ClaimSection/ClaimDataContainer';
+import PartnerDataContainer from './PartnerSection/PartnerDataContainer';
+import DetailsMap from './ProductionLocationDetailsMap';
 import { FACILITIES_REQUEST_PAGE_SIZE } from '../../util/constants';
 
 import {
@@ -23,9 +26,12 @@ import {
     fetchFacilities,
 } from '../../actions/facilities';
 
-const detailsStyles = () =>
+const detailsStyles = theme =>
     Object.freeze({
         container: Object.freeze({}),
+        containerItem: Object.freeze({
+            marginBottom: theme.spacing.unit,
+        }),
     });
 
 const ProductionLocationDetailsContent = ({
@@ -75,23 +81,20 @@ const ProductionLocationDetailsContent = ({
 
     return (
         <div className={classes.container}>
-            <Grid item>
-                <ProductionLocationDetailsTitle />
-            </Grid>
-            <Grid item>
-                <ProductionLocationDetailsClaimFlag />
-            </Grid>
-            <Grid item>
-                <ProductionLocationDetailsDataSourcesInfo />
-            </Grid>
-            <Grid container xs={12}>
+            <LocationTitle />
+            <ClaimFlag />
+            <DataSourcesInfo className={classes.containerItem} />
+            <Grid container xs={12} className={classes.containerItem}>
                 <Grid item sm={12} md={7}>
-                    <ProductionLocationDetailsGeneralFields />
+                    <GeneralFields />
                 </Grid>
                 <Grid item sm={12} md={5}>
-                    <ProductionLocationDetailsMap />
+                    <DetailsMap />
                 </Grid>
             </Grid>
+            <ClaimDataContainer className={classes.containerItem} />
+            <Divider variant="middle" className={classes.containerItem} />
+            <PartnerDataContainer />
         </div>
     );
 };

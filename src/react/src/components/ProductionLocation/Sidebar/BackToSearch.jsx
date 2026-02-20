@@ -4,8 +4,8 @@ import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import ArrowBack from '@material-ui/icons/ArrowBackIos';
 
-import { resetSingleFacility } from '../../actions/facilities';
-import { facilitiesRoute } from '../../util/constants';
+import { resetSingleFacility } from '../../../actions/facilities';
+import { facilitiesRoute } from '../../../util/constants';
 
 const productionLocationDetailsBackToSearchStyles = theme => ({
     buttonContainer: {

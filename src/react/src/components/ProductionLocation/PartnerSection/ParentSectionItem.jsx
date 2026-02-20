@@ -1,0 +1,45 @@
+import React from 'react';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import Switch from '@material-ui/core/Switch';
+import InfoIcon from '@material-ui/icons/Info';
+import DialogTooltip from '../../../components/Contribute/DialogTooltip';
+
+const parentSectionItemStyles = theme =>
+    Object.freeze({
+        container: Object.freeze({
+            backgroundColor: 'white',
+            marginBottom: theme.spacing.unit,
+        }),
+    });
+
+const ParentSectionItem = ({ classes, title, tooltipText, disclaimer }) => (
+    <div className={classes.container}>
+        <Grid container>
+            <Typography
+                variant="title"
+                className={classes.title}
+                component="h3"
+            >
+                {title}
+            </Typography>
+            <DialogTooltip text={tooltipText} childComponent={<InfoIcon />} />
+            <Switch
+                color="primary"
+                onChange={() => {}}
+                checked={false}
+                style={{ zIndex: 1 }}
+            />
+        </Grid>
+        <Typography
+            variant="subheading"
+            className={classes.title}
+            component="h3"
+        >
+            {disclaimer}
+        </Typography>
+    </div>
+);
+
+export default withStyles(parentSectionItemStyles)(ParentSectionItem);

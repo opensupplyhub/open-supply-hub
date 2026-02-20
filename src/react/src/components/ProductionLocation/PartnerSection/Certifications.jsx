@@ -2,7 +2,7 @@ import React from 'react';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
-const productionLocationDetailsDataSourcesInfoStyles = theme =>
+const certificationsStyles = theme =>
     Object.freeze({
         container: Object.freeze({
             backgroundColor: 'white',
@@ -10,14 +10,14 @@ const productionLocationDetailsDataSourcesInfoStyles = theme =>
         }),
     });
 
-const ProductionLocationDetailsDataSourcesInfo = ({ classes }) => (
+const Certifications = ({ classes }) => (
     <div className={classes.container}>
         <Typography variant="title" className={classes.title} component="h3">
-            Understanding Data Sources
+            Certifications
         </Typography>
     </div>
 );
 
-export default withStyles(productionLocationDetailsDataSourcesInfoStyles)(
-    ProductionLocationDetailsDataSourcesInfo,
+export default withStyles(assessmentsAndAuditsStyles)(
+    AssessmentsAndAudits,
 );

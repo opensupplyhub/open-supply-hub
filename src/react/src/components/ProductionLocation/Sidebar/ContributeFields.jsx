@@ -6,13 +6,13 @@ import MenuList from '@material-ui/core/MenuList';
 import MenuItem from '@material-ui/core/MenuItem';
 import Typography from '@material-ui/core/Typography';
 
-import { facilityDetailsActions } from '../../util/constants';
+import { facilityDetailsActions } from '../../../util/constants';
 
 import {
     makeContributeProductionLocationUpdateURL,
     makeReportADuplicateEmailLink,
     makeDisputeClaimEmailLink,
-} from '../../util/util';
+} from '../../../util/util';
 
 const contributeFieldsStyles = theme =>
     Object.freeze({

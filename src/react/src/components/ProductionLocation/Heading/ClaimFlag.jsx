@@ -5,14 +5,14 @@ import Typography from '@material-ui/core/Typography';
 import Icon from '@material-ui/core/Icon';
 import { withStyles } from '@material-ui/core/styles';
 
-import BadgeClaimed from './../BadgeClaimed';
-import COLOURS from '../../util/COLOURS';
+import BadgeClaimed from '../../BadgeClaimed';
+import COLOURS from '../../../util/COLOURS';
 
 import {
     makeClaimFacilityLinkWithFeatureFlag,
     convertFeatureFlagsObjectToListOfActiveFlags,
-} from '../../util/util';
-import { ENABLE_V1_CLAIMS_FLOW } from '../../util/constants';
+} from '../../../util/util';
+import { ENABLE_V1_CLAIMS_FLOW } from '../../../util/constants';
 
 const claimFlagBaseStyles = theme =>
     Object.freeze({

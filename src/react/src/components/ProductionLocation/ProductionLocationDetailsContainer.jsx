@@ -3,11 +3,11 @@ import { withStyles } from '@material-ui/core/styles';
 
 import Grid from '@material-ui/core/Grid';
 
-import ProductionLocationDetailsBackToSearch from './ProductionLocationDetailsBackToSearch';
-import ProductionLocationDetailsNavBar from './ProductionLocationDetailsNavBar';
+import BackToSearch from './Sidebar/BackToSearch';
+import NavBar from './Sidebar/NavBar';
+import SupplyChain from './Sidebar/SupplyChain';
+import ContributeFields from './Sidebar/ContributeFields';
 import ProductionLocationDetailsContent from './ProductionLocationDetailsContent';
-import ProductionLocationDetailsSupplyChain from './ProductionLocationDetailsSupplyChain';
-import ProductionLocationDetailsContributeFields from './ProductionLocationDetailsContributeFields';
 
 const productionLocationDetailsStyles = theme =>
     Object.freeze({
@@ -21,10 +21,10 @@ function ProductionLocationDetailsContainer({ classes, history }) {
     return (
         <Grid container className={classes.root} spacing={8} xs={12}>
             <Grid item sm={12} md={2}>
-                <ProductionLocationDetailsBackToSearch history={history} />
-                <ProductionLocationDetailsNavBar />
-                <ProductionLocationDetailsContributeFields />
-                <ProductionLocationDetailsSupplyChain />
+                <BackToSearch history={history} />
+                <NavBar />
+                <ContributeFields />
+                <SupplyChain />
             </Grid>
             <Grid item sm={12} md={10}>
                 <ProductionLocationDetailsContent />
