@@ -31,11 +31,7 @@ import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
-<<<<<<< OSDEV-2353-production-location-skeleton-page
 import ProductionLocationDetailsContainer from './components/ProductionLocation/ProductionLocationDetailsContainer';
-=======
-import ProductionLocationDetails from './components/ProductionLocation/ProductionLocationDetails';
->>>>>>> main
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
 import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAndAddressResult';
@@ -169,11 +165,7 @@ class Routes extends Component {
                                         >
                                             <Route
                                                 component={
-<<<<<<< OSDEV-2353-production-location-skeleton-page
                                                     ProductionLocationDetailsContainer
-=======
-                                                    ProductionLocationDetails
->>>>>>> main
                                                 }
                                             />
                                         </FeatureFlag>
