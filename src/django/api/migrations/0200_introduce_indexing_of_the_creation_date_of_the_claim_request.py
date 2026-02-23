@@ -16,7 +16,7 @@ def update_indexing_function(apps, schema_editor):
     '''
 
     helper.run_sql_files([
-        '0199_index_claim_info.sql'
+        '0200_index_claim_info.sql'
     ])
 
 
@@ -29,7 +29,7 @@ def revert_updating_indexing_function(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0198_add_rainforest_alliance_certification'),
+        ('api', '0199_add_production_location_page_switch'),
     ]
 
     operations = [

@@ -13,6 +13,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
+* 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
+
+### Code/API changes
+* [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
+    * Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
+    * Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
+
+### Architecture/Environment changes
+* Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
 
 ### What's new
 * [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
@@ -21,13 +30,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
     * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
 
-### Architecture/Environment changes
-* Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
-
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `reindex_locations_with_approved_claim`
 
 
 ## Release 2.19.0
@@ -46,9 +53,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
 * [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
-* [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
-    * Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
-    * Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
 
 ### Bugfix
 * [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
@@ -67,9 +71,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
+    * `delete_emailaddress_for_deleted_users`
     * `migrate`
     * `reindex_database`
-    * `reindex_locations_with_approved_claim`
 
 
 ## Release 2.18.1
