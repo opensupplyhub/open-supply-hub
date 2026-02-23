@@ -22,28 +22,28 @@ const NavBar = ({ classes }) => (
         </Typography>
         <MenuList>
             <MenuItem>
-                <Link href="#overview">Overview</Link>
+                <Link to="#overview">Overview</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#location">Location</Link>
+                <Link to="#location">Location</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#claimed_data">Claimed data</Link>
+                <Link to="#claimed_data">Claimed data</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#assessments">Assessments and Audits</Link>
+                <Link to="#assessments">Assessments and Audits</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#certifications">Certifications</Link>
+                <Link to="#certifications">Certifications</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#emissions">Emissions</Link>
+                <Link to="#emissions">Emissions</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#living_wage">Living Wage</Link>
+                <Link to="#living_wage">Living Wage</Link>
             </MenuItem>
             <MenuItem>
-                <Link href="#grievance">Grievance Mechanism</Link>
+                <Link to="#grievance">Grievance Mechanism</Link>
             </MenuItem>
         </MenuList>
     </div>
