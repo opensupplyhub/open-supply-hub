@@ -35,6 +35,9 @@ import {
     getLocationWithoutEmbedParam,
     formatAttribution,
     formatExtendedField,
+    makeFacilityDetailLinkOnRedirect,
+    shouldUseProductionLocationPage,
+    getLastPathParameter,
 } from '../util/util';
 
 const detailsStyles = theme =>
@@ -106,6 +109,7 @@ const FacilityDetailsContent = ({
     fetchFacility,
     clearFacility,
     history: { push },
+    location,
     match: {
         params: { osID },
     },
@@ -113,11 +117,17 @@ const FacilityDetailsContent = ({
     facilityIsClaimedByCurrentUser,
     embedConfig,
     hideSectorData,
+    useProductionLocationPage,
 }) => {
+    const normalizedOsID =
+        getLastPathParameter(location?.pathname || '') ||
+        getLastPathParameter(osID) ||
+        osID;
+
     useEffect(() => {
-        fetchFacility(Number(embed), contributors);
+        fetchFacility(normalizedOsID, Number(embed), contributors);
         /* eslint-disable react-hooks/exhaustive-deps */
-    }, [osID]);
+    }, [normalizedOsID]);
 
     // Clears the selected facility when unmounted
     useEffect(() => () => clearFacility(), []);
@@ -175,17 +185,25 @@ const FacilityDetailsContent = ({
         return (
             <div className={classes.root}>
                 <p className={classes.primaryText}>
-                    {`No facility found for OS ID ${osID}`}
+                    {`No facility found for OS ID ${normalizedOsID}`}
                 </p>
             </div>
         );
     }
 
-    if (data?.id && data?.id !== osID) {
+    if (data?.id && data?.id !== normalizedOsID) {
         // When redirecting to a facility alias from a deleted facility,
         // the OS ID in the url will not match the facility data id;
         // redirect to the appropriate facility URL.
-        return <Redirect to={`/facilities/${data.id}`} />;
+        return (
+            <Redirect
+                to={makeFacilityDetailLinkOnRedirect(
+                    data.id,
+                    location.search,
+                    useProductionLocationPage,
+                )}
+            />
+        );
     }
 
     const isPendingClaim =
@@ -307,20 +325,23 @@ function mapStateToProps(
         facilityIsClaimedByCurrentUser,
         vectorTileFlagIsActive,
         hideSectorData: embed ? config.hide_sector_data : false,
+        useProductionLocationPage: shouldUseProductionLocationPage(
+            featureFlags,
+        ),
     };
 }
 
-function mapDispatchToProps(
-    dispatch,
-    {
-        match: {
-            params: { osID },
-        },
-    },
-) {
+function mapDispatchToProps(dispatch) {
     return {
-        fetchFacility: (embed, contributorId) =>
-            dispatch(fetchSingleFacility(osID, embed, contributorId, true)),
+        fetchFacility: (id, embed, contributorId) => {
+            const contributorValue = get(contributorId, ['0', 'value']);
+            const isEmbedded = embed && contributorValue ? embed : 0;
+            const contributors = contributorValue ? contributorId : null;
+
+            return dispatch(
+                fetchSingleFacility(id, isEmbedded, contributors, true),
+            );
+        },
         clearFacility: () => dispatch(resetSingleFacility()),
         searchForFacilities: vectorTilesAreActive =>
             dispatch(
