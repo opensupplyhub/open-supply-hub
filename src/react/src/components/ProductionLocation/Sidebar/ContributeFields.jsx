@@ -32,31 +32,27 @@ const ProductionLocationDetailsContributeFields = ({ classes, osId }) => (
         </Typography>
         <MenuList>
             <MenuItem>
-                <Link
+                <a
                     href={makeReportADuplicateEmailLink(osId)}
                     target="_blank"
                     rel="noreferrer"
                 >
                     {facilityDetailsActions.REPORT_AS_DUPLICATE}
-                </Link>
+                </a>
             </MenuItem>
             <MenuItem>
-                <Link
-                    href={makeContributeProductionLocationUpdateURL(osId)}
-                    target="_blank"
-                    rel="noreferrer"
-                >
+                <Link to={makeContributeProductionLocationUpdateURL(osId)}>
                     {facilityDetailsActions.SUGGEST_AN_EDIT}
                 </Link>
             </MenuItem>
             <MenuItem>
-                <Link
+                <a
                     href={makeDisputeClaimEmailLink(osId)}
                     target="_blank"
                     rel="noreferrer"
                 >
                     {facilityDetailsActions.DISPUTE_CLAIM}
-                </Link>
+                </a>
             </MenuItem>
         </MenuList>
     </div>
