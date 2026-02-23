@@ -4,9 +4,12 @@ import Typography from '@material-ui/core/Typography';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 
-import FeatureFlag from './FeatureFlag';
-import { REPORT_A_FACILITY } from '../util/constants';
-import { makeFacilityDetailLink } from '../util/util';
+import FeatureFlag from '../../FeatureFlag';
+import { REPORT_A_FACILITY } from '../../../util/constants';
+import {
+    makeFacilityDetailLink,
+    makeFacilityDetailLinkOnRedirect,
+} from '../../../util/util';
 
 const styles = theme =>
     Object.freeze({
@@ -40,7 +43,13 @@ const styles = theme =>
         },
     });
 
-const ProductionLocationDetailClosureStatus = ({ data, clearFacility, classes }) => {
+const ProductionLocationDetailClosureStatus = ({
+    data,
+    clearFacility,
+    classes,
+    useProductionLocationPage = false,
+    search = '',
+}) => {
     const report = get(data, 'properties.activity_reports[0]');
     const newOsId = get(data, 'properties.new_os_id');
     const isClosed = get(data, 'properties.is_closed');
@@ -56,12 +65,19 @@ const ProductionLocationDetailClosureStatus = ({ data, clearFacility, classes })
             </Typography>
         );
     } else if (isClosed && !!newOsId) {
+        const movedToPathname = useProductionLocationPage
+            ? makeFacilityDetailLinkOnRedirect(
+                  newOsId,
+                  search,
+                  useProductionLocationPage,
+              )
+            : makeFacilityDetailLink(newOsId);
         primaryText = (
             <Typography className={classes.text} variant="subheading">
                 This facility has moved to{' '}
                 <Link
                     to={{
-                        pathname: makeFacilityDetailLink(newOsId),
+                        pathname: movedToPathname,
                         state: {
                             panMapToFacilityDetails: true,
                         },
