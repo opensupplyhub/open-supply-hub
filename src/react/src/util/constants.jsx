@@ -342,6 +342,8 @@ export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
 export const facilityDetailsRoute = '/facilities/:osID';
+export const productionLocationsRoute = '/production-locations';
+export const productionLocationDetailsRoute = '/production-locations/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';
 export const claimIntroRoute = '/claim/:osID';
 export const claimDetailsRoute = '/claim/:osID/details';
@@ -582,6 +584,8 @@ export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
+export const ENABLE_PRODUCTION_LOCATION_PAGE =
+    'enable_production_location_page';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 

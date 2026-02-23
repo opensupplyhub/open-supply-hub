@@ -41,7 +41,10 @@ import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
 import { REPORT_A_FACILITY } from '../util/constants';
 
-import { makeFacilityDetailLink } from '../util/util';
+import {
+    makeFacilityDetailLink,
+    getFilteredSearchForEmbed,
+} from '../util/util';
 import { useMergeButtonClickHandler } from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
@@ -458,6 +461,8 @@ function FilterSidebarFacilitiesTab({
                                                 to={{
                                                     pathname: makeFacilityDetailLink(
                                                         osID,
+                                                    ),
+                                                    search: getFilteredSearchForEmbed(
                                                         search,
                                                     ),
                                                     state: {
@@ -466,7 +471,6 @@ function FilterSidebarFacilitiesTab({
                                                 }}
                                                 href={makeFacilityDetailLink(
                                                     osID,
-                                                    search,
                                                 )}
                                                 className={classes.linkStyles}
                                             >
