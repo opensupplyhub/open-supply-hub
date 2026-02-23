@@ -5,6 +5,7 @@ from django import forms
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
+from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.shortcuts import render
@@ -22,7 +23,6 @@ from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
-from django_ckeditor_5.widgets import CKEditor5Widget
 from jsoneditor.forms import JSONEditor
 
 from api import models
@@ -71,10 +71,20 @@ class OarUserAdmin(UserAdmin):
     list_display = ('email', 'is_active')
 
 
-class FacilityHistoryAdmin(SimpleHistoryAdmin):
+class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
     history_list_display = ('name', 'address', 'location')
 
     readonly_fields = ('created_from',)
+
+    gis_widget_kwargs = {
+        'attrs': {
+            'map_width': 600,
+            'map_height': 400,
+        }
+    }
+
+    class Media:
+        css = {'all': ('admin/css/gis_map_fix.css',)}
 
 
 class FacilityListAdmin(admin.ModelAdmin):
@@ -254,10 +264,6 @@ class SectorGroupAdmin(admin.ModelAdmin):
 
 
 class PartnerFieldAdminForm(forms.ModelForm):
-    source_by = forms.CharField(
-        required=False,
-        widget=CKEditor5Widget(config_name='default')
-    )
     json_schema = forms.JSONField(
         required=False,
         widget=JSONEditor(
