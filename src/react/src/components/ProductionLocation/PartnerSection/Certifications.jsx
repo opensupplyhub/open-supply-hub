@@ -8,6 +8,9 @@ const certificationsStyles = theme =>
             backgroundColor: 'white',
             marginBottom: theme.spacing.unit,
         }),
+        title: Object.freeze({
+            marginBottom: theme.spacing.unit,
+        }),
     });
 
 const Certifications = ({ classes }) => (
@@ -18,6 +21,4 @@ const Certifications = ({ classes }) => (
     </div>
 );
 
-export default withStyles(assessmentsAndAuditsStyles)(
-    AssessmentsAndAudits,
-);
+export default withStyles(certificationsStyles)(Certifications);
