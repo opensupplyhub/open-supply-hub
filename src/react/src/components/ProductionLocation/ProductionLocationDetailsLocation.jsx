@@ -8,12 +8,10 @@ const locationStyles = () =>
         }),
     });
 
-const ProductionLocationDetailsLocation = ({ data, embed }) => {
-    return (
-        <>
-            {/** TODO: refer to FacilityDetailsItem */}
-        </>
-    );
-};
+const ProductionLocationDetailsLocation = () => (
+    <>
+        {/** TODO: refer to FacilityDetailsItem */}
+    </>
+);
 
 export default withStyles(locationStyles)(ProductionLocationDetailsLocation);
