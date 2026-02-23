@@ -2,8 +2,8 @@ module "msk_cluster" {
   source  = "terraform-aws-modules/msk-kafka-cluster/aws"
   version = "2.1.0"
 
-  name                   = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_version          = "3.9.x"
+  name                   = aws_msk_configuration.msk_config.name
+  kafka_version          = tolist(aws_msk_configuration.msk_config.kafka_versions)[0]
   create_configuration   = false
   configuration_arn      = aws_msk_configuration.msk_config.arn
   configuration_revision = aws_msk_configuration.msk_config.latest_revision
@@ -16,10 +16,9 @@ module "msk_cluster" {
   broker_node_security_groups = [aws_security_group.msk.id]
 }
 
-# Keep the current MSK configuration referenced intentionally; remove when no longer needed.
 resource "aws_msk_configuration" "msk_config" {
   name              = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_versions    = ["3.4.0", "3.9.x"]
+  kafka_versions    = ["3.9.x"]
   server_properties = ""
 
   lifecycle {
