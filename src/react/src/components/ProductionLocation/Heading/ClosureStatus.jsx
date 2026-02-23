@@ -43,30 +43,25 @@ const styles = theme =>
         },
     });
 
-const ProductionLocationDetailClosureStatus = ({
-    data,
-    clearFacility,
+function getPrimaryText({
+    report,
+    isPending,
+    isClosed,
+    newOsId,
     classes,
-    useProductionLocationPage = false,
-    search = '',
-}) => {
-    const report = get(data, 'properties.activity_reports[0]');
-    const newOsId = get(data, 'properties.new_os_id');
-    const isClosed = get(data, 'properties.is_closed');
-    const isPending = report?.status === 'PENDING';
-
-    if (!report) return null;
-
-    if (!isPending && !isClosed) return null;
-
-    let primaryText = null;
+    useProductionLocationPage,
+    search,
+    clearFacility,
+}) {
     if (isPending) {
-        primaryText = (
+        return (
             <Typography className={classes.text} variant="subheading">
                 This facility may be {report.closure_state.toLowerCase()}
             </Typography>
         );
-    } else if (isClosed && !!newOsId) {
+    }
+
+    if (isClosed && !!newOsId) {
         const movedToPathname = useProductionLocationPage
             ? makeFacilityDetailLinkOnRedirect(
                   newOsId,
@@ -74,7 +69,7 @@ const ProductionLocationDetailClosureStatus = ({
                   useProductionLocationPage,
               )
             : makeFacilityDetailLink(newOsId);
-        primaryText = (
+        return (
             <Typography className={classes.text} variant="subheading">
                 This facility has moved to{' '}
                 <Link
@@ -91,13 +86,45 @@ const ProductionLocationDetailClosureStatus = ({
                 </Link>
             </Typography>
         );
-    } else if (isClosed) {
-        primaryText = (
+    }
+
+    if (isClosed) {
+        return (
             <Typography className={classes.text} variant="subheading">
                 This facility is closed
             </Typography>
         );
     }
+
+    return null;
+}
+
+const ProductionLocationDetailClosureStatus = ({
+    data,
+    clearFacility,
+    classes,
+    useProductionLocationPage = false,
+    search = '',
+}) => {
+    const report = get(data, 'properties.activity_reports[0]');
+    const newOsId = get(data, 'properties.new_os_id');
+    const isClosed = get(data, 'properties.is_closed');
+    const isPending = report?.status === 'PENDING';
+
+    if (!report) return null;
+
+    if (!isPending && !isClosed) return null;
+
+    const primaryText = getPrimaryText({
+        report,
+        isPending,
+        isClosed,
+        newOsId,
+        classes,
+        useProductionLocationPage,
+        search,
+        clearFacility,
+    });
 
     return (
         <FeatureFlag flag={REPORT_A_FACILITY}>
