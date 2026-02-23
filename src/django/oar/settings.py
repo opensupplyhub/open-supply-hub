@@ -51,6 +51,9 @@ CKEDITOR_5_CONFIGS = {
             "CKFinderUploadAdapter", "Image", "ImageCaption", "ImageStyle",
             "ImageToolbar", "MediaEmbed", "Table", "TableToolbar",
         ],
+        "link": {
+            "addTargetToExternalLinks": True,
+        },
     }
 }
 
