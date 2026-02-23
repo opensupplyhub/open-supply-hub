@@ -334,81 +334,80 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if is_embed_mode_active(self):
             return []
 
-        request = self._get_request()
-        user = request.user if request is not None else None
-        if user is not None and not user.is_anonymous:
-            user_can_see_detail = user.can_view_full_contrib_details
-        else:
-            user_can_see_detail = True
+        user_can_see_detail = can_user_see_detail(self)
 
-        def format_source(contributor):
-            if type(contributor) is not str:
+        def format_source(source):
+            if source.get('admin_id') is None:
                 return {
-                    'id': contributor['admin_id']
-                    if contributor['admin_id'] else None,
-                    'name': contributor['name'],
-                    'is_verified': contributor['is_verified']
-                    if contributor['is_verified'] else False,
-                    'contributor_name': contributor['contributor_name']
-                    if contributor['contributor_name']
-                    else '[Unknown Contributor]',
-                    'list_name': contributor['list_name']
-                    if contributor['list_name'] else None,
+                    'name': source.get('name'),
+                    'contributor_type': source.get('contributor_type') or None,
+                    'count': source.get('count', 1),
                 }
             return {
-                'name': contributor,
+                'id': source.get('admin_id') or None,
+                'name': source.get('name'),
+                'is_verified': bool(source.get('is_verified')),
+                'contributor_name': source.get('contributor_name')
+                or '[Unknown Contributor]',
+                'contributor_type': source.get('contrib_type') or None,
+                'list_name': source.get('list_name') or None,
+                'count': 1,
             }
 
-        res = [contributor
-               for contributor in facility.contributors
-               if contributor['id'] is not None]
-        res.sort(key=lambda x: (x['id'], x['fl_id'] or 0))
-
-        public_contributors = []
-        anonymous_contributors = []
-        for contributor in res:
-            if ((contributor['should_display_associations'] is True)
-                    and user_can_see_detail):
-                public_contributors.append(contributor)
-            else:
-                anonymous_contributors.append(contributor)
-
-        p_contributors_names = [contributor['name']
-                                for contributor in public_contributors]
-        p_contributors_id = [contributor['id']
-                             for contributor in public_contributors]
-        anonymous_contributors_type = []
-        for anon_contributor in anonymous_contributors:
-            if (anon_contributor['name'] not in p_contributors_names
-                    and anon_contributor['id'] not in p_contributors_id):
-                p_contributors_names.append(anon_contributor['name'])
-                p_contributors_id.append(anon_contributor['id'])
-                anonymous_contributors_type.append(
-                    anon_contributor['contrib_type'])
-
-        from api.models.contributor.contributor import Contributor
-        anonymous_contributors_type = [
-            Contributor.prefix_with_count(name, len(list(x)))
-            for name, x in groupby(sorted(anonymous_contributors_type))
+        valid_contributors = [
+            contributor for contributor in facility.contributors
+            if contributor.get('id') is not None
         ]
+        valid_contributors.sort(
+            key=lambda contributor: (
+                contributor['id'],
+                contributor.get('fl_id') or 0,
+            )
+        )
 
-        distinct_p_contributors_name = []
-        distinct_p_contributors = []
-        for pc in public_contributors:
-            if pc['name'] not in distinct_p_contributors_name:
-                distinct_p_contributors_name.append(pc['name'])
-                distinct_p_contributors.append(pc)
+        seen_public_names = set()
+        distinct_public = []
+        public_names = set()
+        public_ids = set()
+        anonymous_types = []
 
-        sources = distinct_p_contributors + anonymous_contributors_type
-        distinct_names = []
-        distinct_sources = []
-        formatted_sources = [
-            format_source(source) for source in sources]
-        for formatted_source in formatted_sources:
-            if formatted_source['name'] not in distinct_names:
-                distinct_names.append(formatted_source['name'])
-                distinct_sources.append(formatted_source)
-        return formatted_sources
+        for contributor in valid_contributors:
+            is_public = (
+                contributor.get('should_display_associations') is True
+                and user_can_see_detail
+            )
+            if is_public:
+                if contributor['name'] not in seen_public_names:
+                    seen_public_names.add(contributor['name'])
+                    distinct_public.append(contributor)
+                public_names.add(contributor['name'])
+                public_ids.add(contributor['id'])
+            else:
+                if (contributor['name'] not in public_names
+                        and contributor['id'] not in public_ids):
+                    public_names.add(contributor['name'])
+                    public_ids.add(contributor['id'])
+                    anonymous_types.append(contributor.get('contrib_type'))
+
+        anonymous_entries = []
+        for contrib_type, group in groupby(sorted(anonymous_types)):
+            group_list = list(group)
+            count = len(group_list)
+            anonymous_entries.append({
+                'name': Contributor.prefix_with_count(contrib_type, count),
+                'contributor_type': contrib_type,
+                'count': count,
+            })
+
+        sources = distinct_public + anonymous_entries
+        seen_names = set()
+        result = []
+        for source in sources:
+            formatted = format_source(source)
+            if formatted['name'] not in seen_names:
+                seen_names.add(formatted['name'])
+                result.append(formatted)
+        return result
 
     def _get_request(self):
         if self.context is None:
