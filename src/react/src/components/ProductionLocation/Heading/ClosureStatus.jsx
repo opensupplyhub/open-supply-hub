@@ -55,7 +55,9 @@ const ProductionLocationDetailClosureStatus = ({
     const isClosed = get(data, 'properties.is_closed');
     const isPending = report?.status === 'PENDING';
 
-    if (!report || (!isPending && !isClosed)) return null;
+    if (!report) return null;
+
+    if (!isPending && !isClosed) return null;
 
     let primaryText = null;
     if (isPending) {
