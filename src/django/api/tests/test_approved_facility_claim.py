@@ -295,3 +295,14 @@ class ApprovedFacilityClaimTest(APITestCase):
             json.loads(updated_facility_location.geojson),
             json.loads(original_facility_location.geojson),
         )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_claim_request_creation_date_is_returned(self):
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
+        self.facility_claim.save()
+
+        response = self.client.get(
+            "/api/facilities/{}/".format(self.facility_claim.facility.id)
+        ).json()["properties"]["claim_info"]["created_at"]
+
+        self.assertIsNotNone(response)
