@@ -11,7 +11,11 @@ import ProductionLocationDetailsContent from '../ProductionLocationDetailsConten
 
 import styles from './styles';
 
-function ProductionLocationDetails({ classes, clearFacility, history: { push } }) {
+function ProductionLocationDetails({
+    classes,
+    clearFacility,
+    history: { push },
+}) {
     return (
         <div className={classes.container}>
             <div className={classes.buttonContainer}>
