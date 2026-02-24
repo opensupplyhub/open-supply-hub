@@ -39,7 +39,9 @@ const ProductionLocationDetailClosureStatus = ({
                             isClosed={isClosed}
                             newOsId={newOsId}
                             classes={classes}
-                            useProductionLocationPage={useProductionLocationPage}
+                            useProductionLocationPage={
+                                useProductionLocationPage
+                            }
                             search={search}
                             clearFacility={clearFacility}
                         />
