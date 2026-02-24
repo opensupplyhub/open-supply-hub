@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import get from 'lodash/get';
 
 import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
@@ -18,6 +19,7 @@ import { FACILITIES_REQUEST_PAGE_SIZE } from '../../../util/constants';
 import {
     makeFacilityDetailLinkOnRedirect,
     shouldUseProductionLocationPage,
+    getLastPathParameter,
 } from '../../../util/util';
 
 import {
@@ -31,15 +33,37 @@ import styles from './styles';
 const ProductionLocationDetailsContent = ({
     classes,
     data,
+    fetching,
     error,
+    contributors,
+    fetchFacility,
+    clearFacility,
     location,
     match: {
         params: { osID },
     },
     useProductionLocationPage,
-    clearFacility,
 }) => {
+    const normalizedOsID =
+        getLastPathParameter(location?.pathname || '') ||
+        getLastPathParameter(osID) ||
+        osID;
+
+    useEffect(() => {
+        fetchFacility(normalizedOsID, 0, contributors);
+        /* eslint-disable react-hooks/exhaustive-deps */
+    }, [normalizedOsID]);
+
+    // Clears the selected facility when unmounted
     useEffect(() => () => clearFacility(), []);
+
+    if (fetching) {
+        return (
+            <div className={classes.root}>
+                <CircularProgress />
+            </div>
+        );
+    }
 
     if (error && error.length) {
         return (
@@ -87,16 +111,31 @@ const ProductionLocationDetailsContent = ({
     );
 };
 
+function mapStateToProps({
+    facilities: {
+        singleFacility: { data, fetching, error },
+    },
+    filters: { contributors },
+    featureFlags,
+}) {
+    return {
+        data,
+        fetching,
+        error,
+        contributors,
+        useProductionLocationPage: shouldUseProductionLocationPage(
+            featureFlags,
+        ),
+    };
+}
+
 function mapDispatchToProps(dispatch) {
     return {
-        fetchFacility: (id, embed, contributorId) => {
+        fetchFacility: (id, contributorId) => {
             const contributorValue = get(contributorId, ['0', 'value']);
-            const isEmbedded = embed && contributorValue ? embed : 0;
             const contributors = contributorValue ? contributorId : null;
 
-            return dispatch(
-                fetchSingleFacility(id, isEmbedded, contributors, true),
-            );
+            return dispatch(fetchSingleFacility(id, 0, contributors, true));
         },
         clearFacility: () => dispatch(resetSingleFacility()),
         searchForFacilities: vectorTilesAreActive =>
@@ -107,29 +146,6 @@ function mapDispatchToProps(dispatch) {
                         : 50,
                 }),
             ),
-    };
-}
-
-function mapStateToProps({
-    facilities: {
-        singleFacility: { data, fetching, error },
-    },
-    embeddedMap: { embed, config },
-    filters: { contributors },
-    featureFlags,
-}) {
-    return {
-        data,
-        fetching,
-        error,
-        embed: !!embed,
-        embedContributor: config?.contributor_name,
-        embedConfig: config,
-        contributors,
-        hideSectorData: embed ? config.hide_sector_data : false,
-        useProductionLocationPage: shouldUseProductionLocationPage(
-            featureFlags,
-        ),
     };
 }
 
