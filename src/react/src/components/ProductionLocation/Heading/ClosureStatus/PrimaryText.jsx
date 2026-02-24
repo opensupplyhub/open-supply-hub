@@ -7,7 +7,7 @@ import {
     makeFacilityDetailLinkOnRedirect,
 } from '../../../../util/util';
 
-export default function getPrimaryText({
+const PrimaryText = ({
     report,
     isPending,
     isClosed,
@@ -16,7 +16,7 @@ export default function getPrimaryText({
     useProductionLocationPage,
     search,
     clearFacility,
-}) {
+}) => {
     if (isPending) {
         const closureState = (report.closure_state || 'unknown').toLowerCase();
         return (
@@ -62,4 +62,6 @@ export default function getPrimaryText({
     }
 
     return null;
-}
+};
+
+export default PrimaryText;

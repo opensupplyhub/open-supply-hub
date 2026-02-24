@@ -6,7 +6,7 @@ import { withStyles } from '@material-ui/core/styles';
 import FeatureFlag from '../../../FeatureFlag';
 import { REPORT_A_FACILITY } from '../../../../util/constants';
 
-import getPrimaryText from './utils';
+import PrimaryText from './PrimaryText';
 import styles from './styles';
 
 const ProductionLocationDetailClosureStatus = ({
@@ -25,17 +25,6 @@ const ProductionLocationDetailClosureStatus = ({
 
     if (!isPending && !isClosed) return null;
 
-    const primaryText = getPrimaryText({
-        report,
-        isPending,
-        isClosed,
-        newOsId,
-        classes,
-        useProductionLocationPage,
-        search,
-        clearFacility,
-    });
-
     return (
         <FeatureFlag flag={REPORT_A_FACILITY}>
             <div className={classes.status}>
@@ -44,7 +33,16 @@ const ProductionLocationDetailClosureStatus = ({
                         className={`${classes.text} ${classes.icon} far fa-fw fa-store-slash`}
                     />
                     <div className={classes.textBox}>
-                        {primaryText}
+                        <PrimaryText
+                            report={report}
+                            isPending={isPending}
+                            isClosed={isClosed}
+                            newOsId={newOsId}
+                            classes={classes}
+                            useProductionLocationPage={useProductionLocationPage}
+                            search={search}
+                            clearFacility={clearFacility}
+                        />
                         {isPending && (
                             <Typography
                                 className={classes.text}
