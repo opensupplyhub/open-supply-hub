@@ -18,9 +18,10 @@ export default function getPrimaryText({
     clearFacility,
 }) {
     if (isPending) {
+        const closureState = (report.closure_state || 'unknown').toLowerCase();
         return (
             <Typography className={classes.text} variant="subheading">
-                This facility may be {report.closure_state.toLowerCase()}
+                This facility may be {closureState}
             </Typography>
         );
     }
