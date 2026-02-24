@@ -8,12 +8,7 @@ import DialogTooltip from '../../../../components/Contribute/DialogTooltip';
 
 import styles from './styles';
 
-const ParentSectionItem = ({
-    classes,
-    title,
-    tooltipText,
-    disclaimer,
-}) => (
+const ParentSectionItem = ({ classes, title, tooltipText, disclaimer }) => (
     <div className={classes.container}>
         <Grid container>
             <Typography

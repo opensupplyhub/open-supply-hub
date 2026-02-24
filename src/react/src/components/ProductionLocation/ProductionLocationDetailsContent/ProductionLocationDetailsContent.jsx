@@ -6,13 +6,13 @@ import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 import get from 'lodash/get';
 
-import ClaimFlag from '../Heading/ClaimFlag';
-import LocationTitle from '../Heading/LocationTitle';
-import DataSourcesInfo from '../Heading/DataSourcesInfo';
-import GeneralFields from '../ProductionLocationDetailsGeneralFields';
-import ClaimDataContainer from '../ClaimSection/ClaimDataContainer';
-import PartnerDataContainer from '../PartnerSection/PartnerDataContainer';
-import DetailsMap from '../ProductionLocationDetailsMap';
+import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
+import LocationTitle from '../Heading/LocationTitle/LocationTitle';
+import DataSourcesInfo from '../Heading/DataSourcesInfo/DataSourcesInfo';
+import GeneralFields from '../ProductionLocationDetailsGeneralFields/ProductionLocationDetailsGeneralFields';
+import ClaimDataContainer from '../ClaimSection/ClaimDataContainer/ClaimDataContainer';
+import PartnerDataContainer from '../PartnerSection/PartnerDataContainer/PartnerDataContainer';
+import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetailsMap';
 import { FACILITIES_REQUEST_PAGE_SIZE } from '../../../util/constants';
 
 import {

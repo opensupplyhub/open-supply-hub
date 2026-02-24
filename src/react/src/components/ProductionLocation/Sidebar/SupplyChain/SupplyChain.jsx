@@ -19,6 +19,4 @@ const ProductionLocationDetailsSupplyChain = ({ classes }) => (
     </div>
 );
 
-export default withStyles(styles)(
-    ProductionLocationDetailsSupplyChain,
-);
+export default withStyles(styles)(ProductionLocationDetailsSupplyChain);

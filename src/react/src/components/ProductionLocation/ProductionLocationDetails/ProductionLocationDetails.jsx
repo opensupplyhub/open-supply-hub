@@ -7,7 +7,7 @@ import ArrowBack from '@material-ui/icons/ArrowBackIos';
 import { resetSingleFacility } from '../../../actions/facilities';
 import { facilitiesRoute } from '../../../util/constants';
 
-import ProductionLocationDetailsContent from '../ProductionLocationDetailsContent';
+import ProductionLocationDetailsContent from '../ProductionLocationDetailsContent/ProductionLocationDetailsContent';
 
 import styles from './styles';
 

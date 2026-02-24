@@ -12,6 +12,4 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => (
     </div>
 );
 
-export default withStyles(styles)(
-    ProductionLocationDetailsDataSourcesInfo,
-);
+export default withStyles(styles)(ProductionLocationDetailsDataSourcesInfo);
