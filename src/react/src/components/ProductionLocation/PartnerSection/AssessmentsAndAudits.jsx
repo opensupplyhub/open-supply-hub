@@ -21,6 +21,4 @@ const AssessmentsAndAudits = ({ classes }) => (
     </div>
 );
 
-export default withStyles(assessmentsAndAuditsStyles)(
-    AssessmentsAndAudits,
-);
+export default withStyles(assessmentsAndAuditsStyles)(AssessmentsAndAudits);

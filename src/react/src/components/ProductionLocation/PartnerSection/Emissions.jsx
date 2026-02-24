@@ -18,6 +18,4 @@ const Emissions = ({ classes }) => (
     </div>
 );
 
-export default withStyles(emissionsStyles)(
-    Emissions,
-);
+export default withStyles(emissionsStyles)(Emissions);

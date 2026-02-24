@@ -9,9 +9,7 @@ const locationStyles = () =>
     });
 
 const ProductionLocationDetailsLocation = () => (
-    <>
-        {/** TODO: refer to FacilityDetailsItem */}
-    </>
+    <>{/** TODO: refer to FacilityDetailsItem */}</>
 );
 
 export default withStyles(locationStyles)(ProductionLocationDetailsLocation);

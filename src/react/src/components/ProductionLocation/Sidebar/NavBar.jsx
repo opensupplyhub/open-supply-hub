@@ -13,6 +13,9 @@ const navBarStyles = theme =>
             backgroundColor: 'white',
             marginBottom: theme.spacing.unit,
         }),
+        title: Object.freeze({
+            marginBottom: theme.spacing.unit,
+        }),
     });
 
 const NavBar = ({ classes }) => (
