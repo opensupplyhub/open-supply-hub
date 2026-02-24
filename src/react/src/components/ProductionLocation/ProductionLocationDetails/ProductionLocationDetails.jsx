@@ -4,35 +4,12 @@ import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import ArrowBack from '@material-ui/icons/ArrowBackIos';
 
-import { resetSingleFacility } from '../../actions/facilities';
-import { facilitiesRoute } from '../../util/constants';
+import { resetSingleFacility } from '../../../actions/facilities';
+import { facilitiesRoute } from '../../../util/constants';
 
-import ProductionLocationDetailsContent from './ProductionLocationDetailsContent';
+import ProductionLocationDetailsContent from '../ProductionLocationDetailsContent/ProductionLocationDetailsContent';
 
-const productionLocationDetailsStyles = theme => ({
-    container: {
-        backgroundColor: '#F9F7F7',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: 0,
-        [theme.breakpoints.up('md')]: {
-            paddingLeft: '4.5rem',
-            paddingRight: '4.5rem',
-        },
-    },
-    buttonContainer: {
-        height: '4.5rem',
-        display: 'flex',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-    backButton: {
-        textTransform: 'none',
-        fontWeight: 700,
-    },
-});
+import styles from './styles';
 
 function ProductionLocationDetails({
     classes,
@@ -73,4 +50,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(productionLocationDetailsStyles)(ProductionLocationDetails));
+)(withStyles(styles)(ProductionLocationDetails));

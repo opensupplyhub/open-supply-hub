@@ -1,0 +1,52 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { withStyles } from '@material-ui/core/styles';
+
+import MenuList from '@material-ui/core/MenuList';
+import MenuItem from '@material-ui/core/MenuItem';
+import Typography from '@material-ui/core/Typography';
+
+import { facilityDetailsActions } from '../../../../util/constants';
+
+import {
+    makeContributeProductionLocationUpdateURL,
+    makeReportADuplicateEmailLink,
+    makeDisputeClaimEmailLink,
+} from '../../../../util/util';
+
+import styles from './styles';
+
+const ProductionLocationDetailsContributeFields = ({ classes, osId }) => (
+    <div className={classes.container}>
+        <Typography variant="title" className={classes.title} component="h3">
+            Contribute to this profile
+        </Typography>
+        <MenuList>
+            <MenuItem>
+                <a
+                    href={makeReportADuplicateEmailLink(osId)}
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    {facilityDetailsActions.REPORT_AS_DUPLICATE}
+                </a>
+            </MenuItem>
+            <MenuItem>
+                <Link to={makeContributeProductionLocationUpdateURL(osId)}>
+                    {facilityDetailsActions.SUGGEST_AN_EDIT}
+                </Link>
+            </MenuItem>
+            <MenuItem>
+                <a
+                    href={makeDisputeClaimEmailLink(osId)}
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    {facilityDetailsActions.DISPUTE_CLAIM}
+                </a>
+            </MenuItem>
+        </MenuList>
+    </div>
+);
+
+export default withStyles(styles)(ProductionLocationDetailsContributeFields);

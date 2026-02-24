@@ -53,8 +53,13 @@ def make_claim_url(request: Request, location: Facility):
         # New claim flow: /claim/{os_id}.
         return '{}/claim/{}'.format(make_oshub_url(request), location.id)
     else:
-        # Old claim flow: /facilities/{os_id}/claim.
-        return '{}/claim'.format(make_facility_url(request, location))
+        # Old claim flow: /facilities/{os_id}/claim
+        # (do not use make_facility_url
+        # so we never produce /production-locations/{id}/claim when
+        # PRODUCTION_LOCATION_PAGE_SWITCH is on).
+        return '{}/facilities/{}/claim'.format(
+            make_oshub_url(request), location.id
+        )
 
 
 def make_pl_search_url(request):
