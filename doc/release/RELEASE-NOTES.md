@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * If `embed=1` is present, redirect to the `/facilities/:osID?sort_by=contributors_desc&embed=1` (with preserving other URL parameters) regardless of active `enable_production_location_page` flag.
     * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
     * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
+* [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Production Location page redesign.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -68,7 +69,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
     * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
     * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
-* [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Productino Location page redesign.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
