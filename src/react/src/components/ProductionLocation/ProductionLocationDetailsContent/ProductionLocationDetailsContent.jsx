@@ -50,7 +50,7 @@ const ProductionLocationDetailsContent = ({
         osID;
 
     useEffect(() => {
-        fetchFacility(normalizedOsID, 0, contributors);
+        fetchFacility(normalizedOsID, contributors);
         /* eslint-disable react-hooks/exhaustive-deps */
     }, [normalizedOsID]);
 
