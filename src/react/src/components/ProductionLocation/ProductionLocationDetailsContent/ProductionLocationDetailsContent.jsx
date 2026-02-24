@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Redirect, withRouter } from 'react-router';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -14,7 +15,6 @@ import GeneralFields from '../ProductionLocationDetailsGeneralFields/ProductionL
 import ClaimDataContainer from '../ClaimSection/ClaimDataContainer/ClaimDataContainer';
 import PartnerDataContainer from '../PartnerSection/PartnerDataContainer/PartnerDataContainer';
 import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetailsMap';
-import { FACILITIES_REQUEST_PAGE_SIZE } from '../../../util/constants';
 
 import {
     makeFacilityDetailLinkOnRedirect,
@@ -25,9 +25,9 @@ import {
 import {
     fetchSingleFacility,
     resetSingleFacility,
-    fetchFacilities,
 } from '../../../actions/facilities';
 
+import { facilityPropType } from '../../../util/propTypes';
 import styles from './styles';
 
 const ProductionLocationDetailsContent = ({
@@ -111,6 +111,32 @@ const ProductionLocationDetailsContent = ({
     );
 };
 
+ProductionLocationDetailsContent.propTypes = {
+    classes: PropTypes.object.isRequired,
+    data: facilityPropType,
+    fetching: PropTypes.bool.isRequired,
+    error: PropTypes.arrayOf(PropTypes.string),
+    contributors: PropTypes.array,
+    fetchFacility: PropTypes.func.isRequired,
+    clearFacility: PropTypes.func.isRequired,
+    location: PropTypes.shape({
+        pathname: PropTypes.string,
+        search: PropTypes.string,
+    }).isRequired,
+    match: PropTypes.shape({
+        params: PropTypes.shape({
+            osID: PropTypes.string,
+        }).isRequired,
+    }).isRequired,
+    useProductionLocationPage: PropTypes.bool.isRequired,
+};
+
+ProductionLocationDetailsContent.defaultProps = {
+    data: null,
+    error: [],
+    contributors: [],
+};
+
 function mapStateToProps({
     facilities: {
         singleFacility: { data, fetching, error },
@@ -138,14 +164,6 @@ function mapDispatchToProps(dispatch) {
             return dispatch(fetchSingleFacility(id, 0, contributors, true));
         },
         clearFacility: () => dispatch(resetSingleFacility()),
-        searchForFacilities: vectorTilesAreActive =>
-            dispatch(
-                fetchFacilities({
-                    pageSize: vectorTilesAreActive
-                        ? FACILITIES_REQUEST_PAGE_SIZE
-                        : 50,
-                }),
-            ),
     };
 }
 
