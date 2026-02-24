@@ -16,4 +16,6 @@ const ProductionLocationDetailsGeneralFields = ({ classes }) => (
     </div>
 );
 
-export default withStyles(styles)(ProductionLocationDetailsGeneralFields);
+export default withStyles(styles)(
+    ProductionLocationDetailsGeneralFields,
+);
