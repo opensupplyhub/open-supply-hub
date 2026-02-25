@@ -10,13 +10,17 @@ import ProductionLocationDetailsContent from '../ProductionLocationDetailsConten
 
 import styles from './styles';
 
-function ProductionLocationDetailsContainer({ classes, history }) {
+function ProductionLocationDetailsContainer({
+    classes,
+    history,
+    match: { params: { osID } = {} } = {},
+}) {
     return (
         <Grid container className={classes.root} spacing={8} xs={12}>
             <Grid item xs={12} md={2}>
                 <BackToSearch history={history} />
                 <NavBar />
-                <ContributeFields />
+                <ContributeFields osId={osID} />
                 <SupplyChain />
             </Grid>
             <Grid item xs={12} md={10}>
