@@ -24,7 +24,7 @@ import {
     resetSingleFacility,
 } from '../../../actions/facilities';
 
-import styles from './styles';
+import productionLocationDetailsContainerStyles from './styles';
 
 function ProductionLocationDetailsContainer({
     classes,
@@ -129,5 +129,9 @@ export default withRouter(
     connect(
         mapStateToProps,
         mapDispatchToProps,
-    )(withStyles(styles)(ProductionLocationDetailsContainer)),
+    )(
+        withStyles(productionLocationDetailsContainerStyles)(
+            ProductionLocationDetailsContainer,
+        ),
+    ),
 );

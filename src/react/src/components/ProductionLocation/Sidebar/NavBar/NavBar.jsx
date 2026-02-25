@@ -6,7 +6,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 
-import styles from './styles';
+import navBarStyles from './styles';
 
 const NavBar = ({ classes }) => (
     <div className={classes.container}>
@@ -42,4 +42,4 @@ const NavBar = ({ classes }) => (
     </div>
 );
 
-export default withStyles(styles)(NavBar);
+export default withStyles(navBarStyles)(NavBar);

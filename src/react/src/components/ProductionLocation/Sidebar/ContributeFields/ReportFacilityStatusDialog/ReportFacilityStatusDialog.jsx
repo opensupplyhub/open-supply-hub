@@ -27,7 +27,7 @@ import { facilityDetailsPropType } from '../../../../../util/propTypes';
 import { authLoginFormRoute } from '../../../../../util/constants';
 
 import useReportReason from './hooks';
-import styles from './styles';
+import reportFacilityStatusDialogStyles from './styles';
 
 const ReportFacilityStatusDialog = ({
     data,
@@ -178,4 +178,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(styles)(ReportFacilityStatusDialog));
+)(withStyles(reportFacilityStatusDialogStyles)(ReportFacilityStatusDialog));

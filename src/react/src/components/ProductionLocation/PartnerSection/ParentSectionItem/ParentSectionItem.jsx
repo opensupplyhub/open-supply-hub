@@ -6,7 +6,7 @@ import Switch from '@material-ui/core/Switch';
 import InfoIcon from '@material-ui/icons/Info';
 import DialogTooltip from '../../../../components/Contribute/DialogTooltip';
 
-import styles from './styles';
+import parentSectionItemStyles from './styles';
 
 const ParentSectionItem = ({ classes, title, tooltipText, disclaimer }) => (
     <div className={classes.container}>
@@ -36,4 +36,4 @@ const ParentSectionItem = ({ classes, title, tooltipText, disclaimer }) => (
     </div>
 );
 
-export default withStyles(styles)(ParentSectionItem);
+export default withStyles(parentSectionItemStyles)(ParentSectionItem);

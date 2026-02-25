@@ -12,7 +12,7 @@ import ClaimDataContainer from '../ClaimSection/ClaimDataContainer/ClaimDataCont
 import PartnerDataContainer from '../PartnerSection/PartnerDataContainer/PartnerDataContainer';
 import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetailsMap';
 
-import styles from './styles';
+import productionLocationDetailsContentStyles from './styles';
 
 const ProductionLocationDetailsContent = ({ classes }) => (
     <div className={classes.container}>
@@ -37,4 +37,6 @@ ProductionLocationDetailsContent.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(ProductionLocationDetailsContent);
+export default withStyles(productionLocationDetailsContentStyles)(
+    ProductionLocationDetailsContent,
+);

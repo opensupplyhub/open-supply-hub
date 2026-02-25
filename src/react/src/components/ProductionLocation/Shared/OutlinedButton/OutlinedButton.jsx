@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import Button from '@material-ui/core/Button';
 
-import styles from './styles';
+import outlinedButtonStyles from './styles';
 
 const OutlinedButton = ({ classes, label, onClick, ...rest }) => (
     <Button classes={{ root: classes.button }} onClick={onClick} {...rest}>
@@ -17,4 +17,4 @@ OutlinedButton.propTypes = {
     onClick: func.isRequired,
 };
 
-export default withStyles(styles)(OutlinedButton);
+export default withStyles(outlinedButtonStyles)(OutlinedButton);
