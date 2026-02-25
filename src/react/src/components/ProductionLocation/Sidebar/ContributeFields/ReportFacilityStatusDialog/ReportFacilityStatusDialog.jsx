@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 
-import Button from '@material-ui/core/Button';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -13,6 +12,9 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
+
+import OutlinedButton from '../../../Shared/OutlinedButton/OutlinedButton';
+import FilledButton from '../../../Shared/FilledButton/FilledButton';
 
 import DashboardActivityReportToast from '../../../../DashboardActivityReportToast';
 
@@ -56,15 +58,12 @@ const ReportFacilityStatusDialog = ({
     };
 
     const loginButton = (
-        <Button
-            variant="contained"
-            color="primary"
+        <FilledButton
+            label="Log In"
             onClick={closeDialog}
             component={Link}
             to={authLoginFormRoute}
-        >
-            Log In
-        </Button>
+        />
     );
 
     const dialog = (
@@ -73,7 +72,8 @@ const ReportFacilityStatusDialog = ({
             onClose={closeDialog}
             aria-labelledby="status-dialogue"
             aria-describedby="status-dialog-description"
-            className={classes.dialogContainerStyles}
+            maxWidth={false}
+            PaperProps={{ className: classes.dialogPaper }}
         >
             <DialogTitle id="status-dialog-title">
                 {`Report facility ${
@@ -128,14 +128,8 @@ const ReportFacilityStatusDialog = ({
                 </DialogActions>
             ) : (
                 <DialogActions className={classes.dialogActionsStyles}>
-                    <Button onClick={closeDialog}>Cancel</Button>
-                    <Button
-                        onClick={handleSubmit}
-                        color="primary"
-                        variant="contained"
-                    >
-                        Report
-                    </Button>
+                    <OutlinedButton label="Cancel" onClick={closeDialog} />
+                    <FilledButton label="Report" onClick={handleSubmit} />
                 </DialogActions>
             )}
         </Dialog>

@@ -5,11 +5,12 @@ import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
-import Block from '@material-ui/icons/Block';
-import Edit from '@material-ui/icons/Edit';
-import FileCopy from '@material-ui/icons/FileCopy';
-import Flag from '@material-ui/icons/Flag';
-import ChevronRight from '@material-ui/icons/ChevronRight';
+import Add from '@material-ui/icons/Add';
+import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
+import HighlightOff from '@material-ui/icons/HighlightOff';
+
+import { ReactComponent as CopyIcon } from './icons/copy.svg';
+import { ReactComponent as ShieldXIcon } from './icons/shield-x.svg';
 
 import ShowOnly from '../../../ShowOnly';
 
@@ -39,7 +40,7 @@ const ProductionLocationDetailsContributeFields = ({
             <Typography
                 variant="title"
                 className={classes.title}
-                component="h2"
+                component="h3"
             >
                 Contribute to this profile
             </Typography>
@@ -54,50 +55,43 @@ const ProductionLocationDetailsContributeFields = ({
                         rel="noreferrer"
                         className={classes.actionItem}
                     >
-                        <Flag className={classes.actionIcon} />
+                        <Add className={classes.actionIcon} />
                         <Typography
                             variant="body1"
                             className={classes.actionLabel}
                         >
                             Suggest Correction
                         </Typography>
-                        <ChevronRight className={classes.actionChevron} />
                     </Link>
                 </Grid>
                 <Grid item className={classes.actionItemWrapper}>
-                    <Link
-                        to={makeReportADuplicateEmailLink(osId)}
-                        target="_blank"
-                        rel="noreferrer"
+                    <a
+                        href={makeReportADuplicateEmailLink(osId)}
                         className={classes.actionItem}
                     >
-                        <FileCopy className={classes.actionIcon} />
+                        <CopyIcon className={classes.actionIcon} />
                         <Typography
                             variant="body1"
                             className={classes.actionLabel}
                         >
                             Report Duplicate
                         </Typography>
-                        <ChevronRight className={classes.actionChevron} />
-                    </Link>
+                    </a>
                 </Grid>
                 <ShowOnly when={showDisputeClaim}>
                     <Grid item className={classes.actionItemWrapper}>
-                        <Link
-                            to={makeDisputeClaimEmailLink(osId)}
-                            target="_blank"
-                            rel="noreferrer"
+                        <a
+                            href={makeDisputeClaimEmailLink(osId)}
                             className={classes.actionItem}
                         >
-                            <Edit className={classes.actionIcon} />
+                            <ShieldXIcon className={classes.actionIcon} />
                             <Typography
                                 variant="body1"
                                 className={classes.actionLabel}
                             >
                                 Dispute Claim
                             </Typography>
-                            <ChevronRight className={classes.actionChevron} />
-                        </Link>
+                        </a>
                     </Grid>
                 </ShowOnly>
                 <Grid item className={classes.actionItemWrapper}>
@@ -108,14 +102,19 @@ const ProductionLocationDetailsContributeFields = ({
                         onKeyDown={e => e.key === 'Enter' && openDialog()}
                         className={classes.actionItem}
                     >
-                        <Block className={classes.actionIcon} />
+                        {isClosed ? (
+                            <CheckCircleOutline
+                                className={classes.actionIcon}
+                            />
+                        ) : (
+                            <HighlightOff className={classes.actionIcon} />
+                        )}
                         <Typography
                             variant="body1"
                             className={classes.actionLabel}
                         >
                             {isClosed ? 'Report Reopened' : 'Report Closed'}
                         </Typography>
-                        <ChevronRight className={classes.actionChevron} />
                     </div>
                 </Grid>
             </Grid>
