@@ -51,7 +51,7 @@ const ProductionLocationDetailsContent = ({
 
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
-    }, [normalizedOsID, contributors, fetchFacility]);
+    }, [normalizedOsID, contributors]);
 
     useEffect(() => () => clearFacility(), []);
 
