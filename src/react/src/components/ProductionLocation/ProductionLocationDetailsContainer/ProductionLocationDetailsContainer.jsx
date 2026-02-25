@@ -48,7 +48,7 @@ function ProductionLocationDetailsContainer({
         fetchFacility(normalizedOsID, contributors);
     }, [normalizedOsID, contributors, fetchFacility]);
 
-    // Run cleanup only on unmount
+    // Run cleanup only on unmount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => () => clearFacility(), []);
 
