@@ -53,6 +53,8 @@ const ProductionLocationDetailsContent = ({
         fetchFacility(normalizedOsID, contributors);
     }, [normalizedOsID, contributors]);
 
+    // Run cleanup only on unmount; clearFacility from connect is stable for this use.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => () => clearFacility(), []);
 
     if (fetching) {
