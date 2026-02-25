@@ -1,10 +1,14 @@
 import React, { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Redirect, withRouter } from 'react-router';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
-import get from 'lodash/get';
+import CircularProgress from '@material-ui/core/CircularProgress';
+
+import isEmpty from 'lodash/isEmpty';
+import isArray from 'lodash/isArray';
 
 import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
 import LocationTitle from '../Heading/LocationTitle/LocationTitle';
@@ -13,33 +17,55 @@ import GeneralFields from '../ProductionLocationDetailsGeneralFields/ProductionL
 import ClaimDataContainer from '../ClaimSection/ClaimDataContainer/ClaimDataContainer';
 import PartnerDataContainer from '../PartnerSection/PartnerDataContainer/PartnerDataContainer';
 import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetailsMap';
-import { FACILITIES_REQUEST_PAGE_SIZE } from '../../../util/constants';
 
 import {
     makeFacilityDetailLinkOnRedirect,
     shouldUseProductionLocationPage,
+    getLastPathParameter,
 } from '../../../util/util';
 
 import {
     fetchSingleFacility,
     resetSingleFacility,
-    fetchFacilities,
 } from '../../../actions/facilities';
 
+import { facilityPropType } from '../../../util/propTypes';
 import styles from './styles';
 
 const ProductionLocationDetailsContent = ({
     classes,
     data,
+    fetching,
     error,
+    contributors,
+    fetchFacility,
+    clearFacility,
     location,
     match: {
         params: { osID },
     },
     useProductionLocationPage,
-    clearFacility,
 }) => {
+    const normalizedOsID =
+        getLastPathParameter(location?.pathname || '') ||
+        getLastPathParameter(osID) ||
+        osID;
+
+    useEffect(() => {
+        fetchFacility(normalizedOsID, contributors);
+    }, [normalizedOsID, contributors]);
+
+    // Run cleanup only on unmount; clearFacility from connect is stable for this use.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => () => clearFacility(), []);
+
+    if (fetching) {
+        return (
+            <div className={classes.root}>
+                <CircularProgress />
+            </div>
+        );
+    }
 
     if (error && error.length) {
         return (
@@ -87,34 +113,36 @@ const ProductionLocationDetailsContent = ({
     );
 };
 
-function mapDispatchToProps(dispatch) {
-    return {
-        fetchFacility: (id, embed, contributorId) => {
-            const contributorValue = get(contributorId, ['0', 'value']);
-            const isEmbedded = embed && contributorValue ? embed : 0;
-            const contributors = contributorValue ? contributorId : null;
+ProductionLocationDetailsContent.propTypes = {
+    classes: PropTypes.object.isRequired,
+    data: facilityPropType,
+    fetching: PropTypes.bool.isRequired,
+    error: PropTypes.arrayOf(PropTypes.string),
+    contributors: PropTypes.array,
+    fetchFacility: PropTypes.func.isRequired,
+    clearFacility: PropTypes.func.isRequired,
+    location: PropTypes.shape({
+        pathname: PropTypes.string,
+        search: PropTypes.string,
+    }).isRequired,
+    match: PropTypes.shape({
+        params: PropTypes.shape({
+            osID: PropTypes.string,
+        }).isRequired,
+    }).isRequired,
+    useProductionLocationPage: PropTypes.bool.isRequired,
+};
 
-            return dispatch(
-                fetchSingleFacility(id, isEmbedded, contributors, true),
-            );
-        },
-        clearFacility: () => dispatch(resetSingleFacility()),
-        searchForFacilities: vectorTilesAreActive =>
-            dispatch(
-                fetchFacilities({
-                    pageSize: vectorTilesAreActive
-                        ? FACILITIES_REQUEST_PAGE_SIZE
-                        : 50,
-                }),
-            ),
-    };
-}
+ProductionLocationDetailsContent.defaultProps = {
+    data: null,
+    error: [],
+    contributors: [],
+};
 
 function mapStateToProps({
     facilities: {
         singleFacility: { data, fetching, error },
     },
-    embeddedMap: { embed, config },
     filters: { contributors },
     featureFlags,
 }) {
@@ -122,14 +150,23 @@ function mapStateToProps({
         data,
         fetching,
         error,
-        embed: !!embed,
-        embedContributor: config?.contributor_name,
-        embedConfig: config,
         contributors,
-        hideSectorData: embed ? config.hide_sector_data : false,
         useProductionLocationPage: shouldUseProductionLocationPage(
             featureFlags,
         ),
+    };
+}
+
+function mapDispatchToProps(dispatch) {
+    return {
+        fetchFacility: (id, contributorId) => {
+            const hasContributors =
+                isArray(contributorId) && !isEmpty(contributorId);
+            const contributors = hasContributors ? contributorId : null;
+
+            return dispatch(fetchSingleFacility(id, 0, contributors, true));
+        },
+        clearFacility: () => dispatch(resetSingleFacility()),
     };
 }
 
