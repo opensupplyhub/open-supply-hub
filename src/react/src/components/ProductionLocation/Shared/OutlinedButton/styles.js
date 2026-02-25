@@ -2,7 +2,6 @@ export default () =>
     Object.freeze({
         button: Object.freeze({
             backgroundColor: 'transparent',
-            color: 'rgba(0, 0, 0, 0.87)',
             border: '1px solid rgb(13, 17, 40)',
             borderRadius: 0,
             padding: '8px 16px',
