@@ -6,7 +6,9 @@ import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import get from 'lodash/get';
+
+import isEmpty from 'lodash/isEmpty';
+import isArray from 'lodash/isArray';
 
 import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
 import LocationTitle from '../Heading/LocationTitle/LocationTitle';
@@ -158,8 +160,9 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch) {
     return {
         fetchFacility: (id, contributorId) => {
-            const contributorValue = get(contributorId, ['0', 'value']);
-            const contributors = contributorValue ? contributorId : null;
+            const hasContributors =
+                isArray(contributorId) && !isEmpty(contributorId);
+            const contributors = hasContributors ? contributorId : null;
 
             return dispatch(fetchSingleFacility(id, 0, contributors, true));
         },
