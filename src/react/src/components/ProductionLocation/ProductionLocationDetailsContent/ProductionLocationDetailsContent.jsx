@@ -51,10 +51,8 @@ const ProductionLocationDetailsContent = ({
 
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
-        /* eslint-disable react-hooks/exhaustive-deps */
-    }, [normalizedOsID]);
+    }, [normalizedOsID, contributors, fetchFacility]);
 
-    // Clears the selected facility when unmounted
     useEffect(() => () => clearFacility(), []);
 
     if (fetching) {
