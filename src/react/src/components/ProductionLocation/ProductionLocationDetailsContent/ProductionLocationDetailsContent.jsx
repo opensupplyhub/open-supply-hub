@@ -47,6 +47,7 @@ const ProductionLocationDetailsContent = ({
         params: { osID },
     },
     useProductionLocationPage,
+    embed,
 }) => {
     const normalizedOsID =
         getLastPathParameter(location?.pathname || '') ||
@@ -116,6 +117,7 @@ const ProductionLocationDetailsContent = ({
                 isClaimed={isClaimed}
                 isPending={isPendingClaim}
                 claimInfo={data?.properties?.claim_info}
+                isEmbed={!!embed}
             />
             <DataSourcesInfo className={classes.containerItem} />
             <Grid container xs={12} className={classes.containerItem}>
@@ -151,12 +153,14 @@ ProductionLocationDetailsContent.propTypes = {
         }).isRequired,
     }).isRequired,
     useProductionLocationPage: PropTypes.bool.isRequired,
+    embed: PropTypes.bool,
 };
 
 ProductionLocationDetailsContent.defaultProps = {
     data: null,
     error: [],
     contributors: [],
+    embed: false,
 };
 
 function mapStateToProps({
@@ -165,6 +169,7 @@ function mapStateToProps({
     },
     filters: { contributors },
     featureFlags,
+    embeddedMap: { embed } = {},
 }) {
     return {
         data,
@@ -174,6 +179,7 @@ function mapStateToProps({
         useProductionLocationPage: shouldUseProductionLocationPage(
             featureFlags,
         ),
+        embed: !!embed,
     };
 }
 
