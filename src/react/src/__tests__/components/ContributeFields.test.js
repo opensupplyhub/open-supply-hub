@@ -25,7 +25,7 @@ const minimalFacilityFeature = {
     },
 };
 
-function getDefaultPreloadedState(overrides = {}) {
+const getDefaultPreloadedState = (overrides = {}) => {
     const defaultState = {
         facilities: {
             singleFacility: {
@@ -74,7 +74,7 @@ function getDefaultPreloadedState(overrides = {}) {
     };
 }
 
-function renderContributeFields(preloadedStateOverrides = {}, props = {}) {
+const renderContributeFields = (preloadedStateOverrides = {}, props = {}) => {
     const preloadedState = getDefaultPreloadedState(preloadedStateOverrides);
 
     return renderWithProviders(
