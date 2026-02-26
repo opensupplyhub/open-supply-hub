@@ -7,7 +7,6 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
 import InfoIcon from '@material-ui/icons/Info';
-import Security from '@material-ui/icons/Security';
 
 import BadgeClaimed from '../../../BadgeClaimed';
 import DialogTooltip from '../../../Contribute/DialogTooltip';
@@ -46,7 +45,10 @@ const FacilityDetailsClaimFlag = ({
     const showClaimedByLine = isClaimed && (contributorName || formattedDate);
 
     const claimedProfileTooltipText =
-        "This profile has been claimed and verified by the production location's owner or manager. Claimed data is considered the most authoritative source.\n\nLearn more →";
+        "This profile has been claimed and verified by the production location's owner or manager. Claimed data is considered the most authoritative source.";
+
+    const claimLearnMoreUrl =
+        'https://info.opensupplyhub.org/resources/claim-a-facility';
 
     return (
         <Grid
@@ -74,16 +76,7 @@ const FacilityDetailsClaimFlag = ({
                             .filter(Boolean)
                             .join(' ')}
                     >
-                        {isClaimed || isPending ? (
-                            <BadgeClaimed fontSize="24px" />
-                        ) : (
-                            <Security
-                                style={{
-                                    fontSize: 24,
-                                    display: 'block',
-                                }}
-                            />
-                        )}
+                        <BadgeClaimed fontSize="24px" />
                     </Grid>
                     <Grid item className={classes.statusContent}>
                         <div className={classes.statusRow}>
@@ -105,6 +98,8 @@ const FacilityDetailsClaimFlag = ({
                             {isClaimed && (
                                 <DialogTooltip
                                     text={claimedProfileTooltipText}
+                                    learnMoreHref={claimLearnMoreUrl}
+                                    interactive
                                     childComponent={
                                         <IconButton
                                             className={classes.infoButton}
