@@ -24,6 +24,8 @@ import {
     getLastPathParameter,
 } from '../../../util/util';
 
+import { facilityClaimStatusChoicesEnum } from '../../../util/constants';
+
 import {
     fetchSingleFacility,
     resetSingleFacility,
@@ -55,8 +57,6 @@ const ProductionLocationDetailsContent = ({
         fetchFacility(normalizedOsID, contributors);
     }, [normalizedOsID, contributors]);
 
-    // Run cleanup only on unmount; clearFacility from connect is stable for this use.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => () => clearFacility(), []);
 
     if (fetching) {
@@ -81,7 +81,17 @@ const ProductionLocationDetailsContent = ({
         );
     }
 
-    if (data?.id && data?.id !== osID) {
+    if (!data) {
+        return (
+            <div className={classes.root}>
+                <p className={classes.primaryText}>
+                    {`No facility found for OS ID ${normalizedOsID}`}
+                </p>
+            </div>
+        );
+    }
+
+    if (data?.id && data?.id !== normalizedOsID) {
         return (
             <Redirect
                 to={makeFacilityDetailLinkOnRedirect(
@@ -93,10 +103,20 @@ const ProductionLocationDetailsContent = ({
         );
     }
 
+    const isPendingClaim =
+        data?.properties?.claim_info?.status ===
+        facilityClaimStatusChoicesEnum.PENDING;
+    const isClaimed = !isPendingClaim && !!data?.properties?.claim_info;
+
     return (
         <div className={classes.container}>
             <LocationTitle />
-            <ClaimFlag />
+            <ClaimFlag
+                osId={data.properties.os_id}
+                isClaimed={isClaimed}
+                isPending={isPendingClaim}
+                claimInfo={data?.properties?.claim_info}
+            />
             <DataSourcesInfo className={classes.containerItem} />
             <Grid container xs={12} className={classes.containerItem}>
                 <Grid item sm={12} md={7}>
