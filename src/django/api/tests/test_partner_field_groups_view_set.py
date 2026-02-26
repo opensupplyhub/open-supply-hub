@@ -41,16 +41,8 @@ class PartnerFieldGroupsViewSetTest(APITestCase):
             system_field=system_field,
         )
 
-    def test_returns_200_for_unauthenticated_request(self):
-        """Verify endpoint returns 200 for unauthenticated requests."""
-        response = self.client.get(self.url)
-        self.assertEqual(
-            response.status_code,
-            status.HTTP_200_OK,
-        )
-
-    def test_returns_200_for_user(self):
-        """Verify endpoint returns 200 for authenticated user requests."""
+    def test_returns_200_for_all_users(self):
+        """Verify endpoint returns 200 for all users."""
         response = self.client.get(self.url)
         self.assertEqual(
             response.status_code,
@@ -111,7 +103,9 @@ class PartnerFieldGroupsViewSetTest(APITestCase):
         sorted_groups = sorted(groups, key=lambda group: group.order)
         sorted_uuids = [str(group.uuid) for group in sorted_groups]
 
-        for sorted_uuid, response_uuid in zip(sorted_uuids, response_uuids):
+        for sorted_uuid, response_uuid in zip(
+            sorted_uuids, response_uuids, strict=True
+        ):
             self.assertEqual(sorted_uuid, response_uuid)
 
     def test_returns_partner_fields_in_group(self):

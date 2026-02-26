@@ -68,25 +68,25 @@ variable "api_production_locations_cache_max_ttl" {
 }
 
 variable "api_partner_field_groups_cache_default_ttl" {
-  description = "Default TTL (seconds) for partner field groups OS ID detail endpoint"
+  description = "Default TTL (seconds) for partner field groups endpoint"
   type        = number
   default     = 120
 }
 
 variable "api_partner_field_groups_cache_max_ttl" {
-  description = "Max TTL (seconds) for partner field groups OS ID detail endpoint"
+  description = "Max TTL (seconds) for partner field groups endpoint"
   type        = number
   default     = 300
 }
 
 variable "api_partner_fields_cache_default_ttl" {
-  description = "Default TTL (seconds) for partner fields OS ID detail endpoint"
+  description = "Default TTL (seconds) for partner fields endpoint"
   type        = number
   default     = 120
 }
 
 variable "api_partner_fields_cache_max_ttl" {
-  description = "Max TTL (seconds) for partner fields OS ID detail endpoint"
+  description = "Max TTL (seconds) for partner fields endpoint"
   type        = number
   default     = 300
 }
