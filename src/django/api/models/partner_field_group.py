@@ -23,7 +23,7 @@ class PartnerFieldGroup(models.Model):
         default=0,
         help_text="Order for the partner field group in the UI.",
     )
-    icon_file = models.FileField(
+    icon_file = models.ImageField(
         upload_to="partner_field_groups/icons/",
         blank=True,
         null=True,
@@ -44,6 +44,8 @@ class PartnerFieldGroup(models.Model):
         null=True,
         help_text="Rich text helper text for the partner field group.",
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name_plural = "Partner field groups"

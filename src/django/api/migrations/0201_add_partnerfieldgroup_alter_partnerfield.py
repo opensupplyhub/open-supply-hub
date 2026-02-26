@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "icon_file",
-                    models.FileField(
+                    models.ImageField(
                         blank=True,
                         help_text="Upload an icon image.",
                         null=True,
@@ -72,6 +72,14 @@ class Migration(migrations.Migration):
                         help_text="Rich text helper text for the partner field group.",
                         null=True,
                     ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(auto_now=True),
                 ),
             ],
             options={
