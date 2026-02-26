@@ -11,6 +11,7 @@ import isEmpty from 'lodash/isEmpty';
 import isArray from 'lodash/isArray';
 
 import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
+import ClosureStatus from '../Heading/ClosureStatus/ClosureStatus';
 import LocationTitle from '../Heading/LocationTitle/LocationTitle';
 import DataSourcesInfo from '../Heading/DataSourcesInfo/DataSourcesInfo';
 import GeneralFields from '../ProductionLocationDetailsGeneralFields/ProductionLocationDetailsGeneralFields';
@@ -118,6 +119,12 @@ const ProductionLocationDetailsContent = ({
                 isPending={isPendingClaim}
                 claimInfo={data?.properties?.claim_info}
                 isEmbed={!!embed}
+            />
+            <ClosureStatus
+                data={data}
+                clearFacility={clearFacility}
+                useProductionLocationPage={useProductionLocationPage}
+                search={location?.search || ''}
             />
             <DataSourcesInfo className={classes.containerItem} />
             <Grid container xs={12} className={classes.containerItem}>

@@ -21,7 +21,7 @@ const PrimaryText = ({
         const closureState = (report.closure_state || 'unknown').toLowerCase();
         return (
             <Typography className={classes.text} variant="subheading">
-                This facility may be {closureState}
+                This facility may be {closureState}.
             </Typography>
         );
     }
@@ -56,7 +56,7 @@ const PrimaryText = ({
     if (isClosed) {
         return (
             <Typography className={classes.text} variant="subheading">
-                This facility is closed
+                This facility is closed.
             </Typography>
         );
     }

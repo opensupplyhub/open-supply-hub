@@ -29,9 +29,11 @@ const ProductionLocationDetailClosureStatus = ({
         <FeatureFlag flag={REPORT_A_FACILITY}>
             <div className={classes.status}>
                 <div className={classes.contentContainer}>
-                    <i
-                        className={`${classes.text} ${classes.icon} far fa-fw fa-store-slash`}
-                    />
+                    <div className={classes.iconColumn}>
+                        <i
+                            className={`${classes.text} ${classes.icon} far fa-fw fa-store-slash`}
+                        />
+                    </div>
                     <div className={classes.textBox}>
                         <PrimaryText
                             report={report}
@@ -47,7 +49,7 @@ const ProductionLocationDetailClosureStatus = ({
                         />
                         {isPending && (
                             <Typography
-                                className={classes.text}
+                                className={`${classes.text} ${classes.statusPending}`}
                                 variant="body1"
                             >
                                 Status pending
