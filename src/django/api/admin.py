@@ -335,14 +335,34 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
 class PartnerFieldAdmin(admin.ModelAdmin):
     form = PartnerFieldAdminForm
-    list_display = ('name', 'type', 'label', 'unit', 'group', 'active', 'system_field',
-                    'created_at')
-    search_fields = ('name', 'type', 'label', 'unit', 'source_by')
-    list_filter = ('active', 'system_field', 'type', 'group')
-    readonly_fields = ('uuid', 'created_at', 'updated_at')
-    fields = ('name', 'type', 'unit', 'label', 'group', 'source_by', 'base_url',
-              'display_text', 'json_schema', 'active', 'system_field',
-              'created_at', 'updated_at')
+    list_display = (
+        "name",
+        "type",
+        "label",
+        "unit",
+        "group",
+        "active",
+        "system_field",
+        "created_at",
+    )
+    search_fields = ("name", "type", "label", "unit", "source_by")
+    list_filter = ("active", "system_field", "type", "group")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    fields = (
+        "name",
+        "type",
+        "unit",
+        "label",
+        "group",
+        "source_by",
+        "base_url",
+        "display_text",
+        "json_schema",
+        "active",
+        "system_field",
+        "created_at",
+        "updated_at",
+    )
 
     def get_queryset(self, request):
         '''

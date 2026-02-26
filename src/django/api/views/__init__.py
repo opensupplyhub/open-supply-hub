@@ -71,3 +71,6 @@ from .product_types import product_types
 from .sectors import sectors
 from .claim_statuses import claim_statuses
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
+from .partner_field_groups.partner_field_groups_view_set import (
+    PartnerFieldGroupsViewSet,
+)
