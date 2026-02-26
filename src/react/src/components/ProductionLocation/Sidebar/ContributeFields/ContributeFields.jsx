@@ -36,6 +36,7 @@ const ProductionLocationDetailsContributeFields = ({
     return (
         <div
             className={`${classes.contributeSectionContainer} ${classes.container}`}
+            data-testid="contribute-fields"
         >
             <Typography
                 variant="title"
@@ -54,6 +55,7 @@ const ProductionLocationDetailsContributeFields = ({
                         target="_blank"
                         rel="noreferrer"
                         className={classes.actionItem}
+                        data-testid="contribute-suggest-correction"
                     >
                         <Add className={classes.actionIcon} />
                         <Typography
@@ -68,6 +70,7 @@ const ProductionLocationDetailsContributeFields = ({
                     <a
                         href={makeReportADuplicateEmailLink(osId)}
                         className={classes.actionItem}
+                        data-testid="contribute-report-duplicate"
                     >
                         <CopyIcon className={classes.actionIcon} />
                         <Typography
@@ -83,6 +86,7 @@ const ProductionLocationDetailsContributeFields = ({
                         <a
                             href={makeDisputeClaimEmailLink(osId)}
                             className={classes.actionItem}
+                            data-testid="contribute-dispute-claim"
                         >
                             <ShieldXIcon className={classes.actionIcon} />
                             <Typography
@@ -101,6 +105,7 @@ const ProductionLocationDetailsContributeFields = ({
                         onClick={openDialog}
                         onKeyDown={e => e.key === 'Enter' && openDialog()}
                         className={classes.actionItem}
+                        data-testid="contribute-report-status"
                     >
                         {isClosed ? (
                             <CheckCircleOutline

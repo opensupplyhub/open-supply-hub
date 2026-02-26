@@ -63,6 +63,7 @@ const ReportFacilityStatusDialog = ({
             onClick={closeDialog}
             component={Link}
             to={authLoginFormRoute}
+            data-testid="report-facility-status-dialog-login"
         />
     );
 
@@ -70,18 +71,23 @@ const ReportFacilityStatusDialog = ({
         <Dialog
             open={open}
             onClose={closeDialog}
-            aria-labelledby="status-dialogue"
+            aria-labelledby="status-dialog-title"
             aria-describedby="status-dialog-description"
             maxWidth={false}
-            PaperProps={{ className: classes.dialogPaper }}
+            PaperProps={{
+                className: classes.dialogPaper,
+                'data-testid': 'report-facility-status-dialog',
+            }}
         >
             <DialogTitle id="status-dialog-title">
                 {`Report facility ${
                     data.properties.is_closed ? 'reopened' : 'closed'
                 }`}
-                <Typography className={classes.facilityName}>
-                    {data.properties.name}
-                </Typography>
+                <span data-testid="report-facility-status-dialog-facility-name">
+                    <Typography className={classes.facilityName}>
+                        {data.properties.name}
+                    </Typography>
+                </span>
                 <Divider />
             </DialogTitle>
             {user.isAnon ? (
@@ -113,6 +119,9 @@ const ReportFacilityStatusDialog = ({
                         autoFocus
                         margin="dense"
                         id="report-reason"
+                        inputProps={{
+                            'data-testid': 'report-facility-status-reason',
+                        }}
                         variant="outlined"
                         multiline
                         rows={4}
@@ -128,8 +137,16 @@ const ReportFacilityStatusDialog = ({
                 </DialogActions>
             ) : (
                 <DialogActions className={classes.dialogActionsStyles}>
-                    <OutlinedButton label="Cancel" onClick={closeDialog} />
-                    <FilledButton label="Report" onClick={handleSubmit} />
+                    <OutlinedButton
+                        label="Cancel"
+                        onClick={closeDialog}
+                        data-testid="report-facility-status-dialog-cancel"
+                    />
+                    <FilledButton
+                        label="Report"
+                        onClick={handleSubmit}
+                        data-testid="report-facility-status-dialog-report"
+                    />
                 </DialogActions>
             )}
         </Dialog>
