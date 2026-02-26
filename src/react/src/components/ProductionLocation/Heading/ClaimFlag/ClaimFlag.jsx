@@ -7,7 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
 import InfoIcon from '@material-ui/icons/Info';
-import Business from '@material-ui/icons/Business';
+import Security from '@material-ui/icons/Security';
 
 import BadgeClaimed from '../../../BadgeClaimed';
 import DialogTooltip from '../../../Contribute/DialogTooltip';
@@ -58,6 +58,7 @@ const FacilityDetailsClaimFlag = ({
             <Grid item xs={12}>
                 <Grid
                     container
+                    spacing={0}
                     alignItems="center"
                     wrap="nowrap"
                     className={classes.row}
@@ -65,6 +66,7 @@ const FacilityDetailsClaimFlag = ({
                     <Grid
                         item
                         className={[
+                            classes.iconColumn,
                             isClaimed && classes.iconClaimed,
                             isPending && classes.iconPending,
                             !isClaimed && !isPending && classes.iconUnclaimed,
@@ -75,7 +77,7 @@ const FacilityDetailsClaimFlag = ({
                         {isClaimed || isPending ? (
                             <BadgeClaimed fontSize="24px" />
                         ) : (
-                            <Business
+                            <Security
                                 style={{
                                     fontSize: 24,
                                     display: 'block',
@@ -86,6 +88,7 @@ const FacilityDetailsClaimFlag = ({
                     <Grid item className={classes.statusContent}>
                         <div className={classes.statusRow}>
                             <Typography
+                                component="h4"
                                 className={[
                                     classes.statusText,
                                     isClaimed && classes.statusTextClaimed,
@@ -99,7 +102,7 @@ const FacilityDetailsClaimFlag = ({
                             >
                                 {getMainText(isClaimed, isPending)}
                             </Typography>
-                            {(isClaimed || isPending) && (
+                            {isClaimed && (
                                 <DialogTooltip
                                     text={claimedProfileTooltipText}
                                     childComponent={
@@ -120,80 +123,109 @@ const FacilityDetailsClaimFlag = ({
                                 />
                             )}
                         </div>
-                        {!isClaimed && !isPending && (
-                            <Typography component="p" variant="body1">
-                                <RouterLink
-                                    to={claimFacilityLink}
-                                    href={claimFacilityLink}
-                                    className={classes.link}
-                                >
-                                    I want to claim this production location
-                                </RouterLink>
-                            </Typography>
-                        )}
-                        {showClaimedByLine && (
-                            <Typography
-                                className={classes.subtitle}
-                                component="p"
-                                variant="body1"
-                            >
-                                {contributorName && formattedDate && (
-                                    <>
-                                        <span
-                                            className={classes.subtitleSameLine}
-                                        >
-                                            Claimed by{' '}
-                                            <Typography
-                                                component="span"
-                                                className={
-                                                    classes.subtitleHighlight
-                                                }
-                                            >
-                                                {contributorName}
-                                            </Typography>
-                                        </span>{' '}
-                                        on{' '}
-                                        <Typography
-                                            component="span"
-                                            className={
-                                                classes.subtitleHighlight
-                                            }
-                                        >
-                                            {formattedDate}
-                                        </Typography>
-                                    </>
-                                )}
-                                {contributorName && !formattedDate && (
-                                    <span className={classes.subtitleSameLine}>
-                                        Claimed by{' '}
-                                        <Typography
-                                            component="span"
-                                            className={
-                                                classes.subtitleHighlight
-                                            }
-                                        >
-                                            {contributorName}
-                                        </Typography>
-                                    </span>
-                                )}
-                                {!contributorName && formattedDate && (
-                                    <>
-                                        Claimed on{' '}
-                                        <Typography
-                                            component="span"
-                                            className={
-                                                classes.subtitleHighlight
-                                            }
-                                        >
-                                            {formattedDate}
-                                        </Typography>
-                                    </>
-                                )}
-                            </Typography>
-                        )}
                     </Grid>
                 </Grid>
             </Grid>
+            {((!isClaimed && !isPending) || showClaimedByLine) && (
+                <>
+                    {/* Row 2: spacer (same width as icon) | subtitle */}
+                    <Grid item xs={12} className={classes.subtitleRow}>
+                        <Grid
+                            container
+                            spacing={0}
+                            wrap="nowrap"
+                            className={classes.row}
+                            alignItems="center"
+                        >
+                            <Grid item className={classes.iconColumn} />
+                            <Grid item className={classes.statusContent}>
+                                {!isClaimed && !isPending && (
+                                    <Typography
+                                        component="p"
+                                        variant="body1"
+                                        className={classes.subtitle}
+                                    >
+                                        <RouterLink
+                                            to={claimFacilityLink}
+                                            href={claimFacilityLink}
+                                            className={classes.link}
+                                        >
+                                            I want to claim this production
+                                            location
+                                        </RouterLink>
+                                    </Typography>
+                                )}
+                                {showClaimedByLine && (
+                                    <Typography
+                                        component="p"
+                                        variant="body1"
+                                        className={classes.subtitle}
+                                    >
+                                        {contributorName && formattedDate && (
+                                            <>
+                                                <span
+                                                    className={
+                                                        classes.subtitleSameLine
+                                                    }
+                                                >
+                                                    Claimed by{' '}
+                                                    <Typography
+                                                        component="span"
+                                                        className={
+                                                            classes.inlineHighlight
+                                                        }
+                                                    >
+                                                        {contributorName}
+                                                    </Typography>
+                                                </span>{' '}
+                                                on{' '}
+                                                <Typography
+                                                    component="span"
+                                                    className={
+                                                        classes.inlineHighlight
+                                                    }
+                                                >
+                                                    {formattedDate}
+                                                </Typography>
+                                            </>
+                                        )}
+                                        {contributorName && !formattedDate && (
+                                            <span
+                                                className={
+                                                    classes.subtitleSameLine
+                                                }
+                                            >
+                                                Claimed by{' '}
+                                                <Typography
+                                                    component="span"
+                                                    className={
+                                                        classes.inlineHighlight
+                                                    }
+                                                >
+                                                    {contributorName}
+                                                </Typography>
+                                            </span>
+                                        )}
+                                        {!contributorName && formattedDate && (
+                                            <>
+                                                Claimed on{' '}
+                                                <Typography
+                                                    component="span"
+                                                    className={
+                                                        classes.inlineHighlight
+                                                    }
+                                                >
+                                                    {formattedDate}
+                                                </Typography>
+                                            </>
+                                        )}
+                                    </Typography>
+                                )}
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </>
+            )}
         </Grid>
     );
 };

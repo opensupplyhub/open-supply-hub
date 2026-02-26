@@ -5,7 +5,7 @@ export const getMainText = (isClaimed, isPending) => {
         return 'CLAIMED PROFILE';
     }
     if (isPending) {
-        return 'PENDING CLAIM';
+        return 'There is a pending claim for this production location';
     }
     return 'This production location has not been claimed';
 };
