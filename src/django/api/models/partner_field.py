@@ -98,6 +98,14 @@ class PartnerField(models.Model):
             "System fields cannot be deleted and have restricted editing."
         ),
     )
+    group = models.ForeignKey(
+        'PartnerFieldGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='partner_fields',
+        help_text="The group this partner field belongs to.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
