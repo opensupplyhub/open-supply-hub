@@ -29,7 +29,6 @@ class PartnerFieldGroupSerializer(ModelSerializer):
             "name",
             "order",
             "icon_file",
-            "icon_name",
             "description",
             "helper_text",
             "partner_fields",

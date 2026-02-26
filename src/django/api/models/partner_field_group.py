@@ -7,6 +7,7 @@ class PartnerFieldGroup(models.Model):
     """
     Group for partner fields.
     """
+
     uuid = models.UUIDField(
         default=uuid.uuid4,
         primary_key=True,
@@ -28,11 +29,6 @@ class PartnerFieldGroup(models.Model):
         blank=True,
         null=True,
         help_text="Upload an icon image.",
-    )
-    icon_name = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Material UI icon name (e.g. 'check_circle').",
     )
     description = CKEditor5Field(
         blank=True,

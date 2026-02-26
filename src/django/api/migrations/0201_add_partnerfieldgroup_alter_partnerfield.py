@@ -50,14 +50,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "icon_name",
-                    models.CharField(
-                        blank=True,
-                        help_text="Material UI icon name (e.g. 'check_circle').",
-                        max_length=100,
-                    ),
-                ),
-                (
                     "description",
                     django_ckeditor_5.fields.CKEditor5Field(
                         blank=True,
