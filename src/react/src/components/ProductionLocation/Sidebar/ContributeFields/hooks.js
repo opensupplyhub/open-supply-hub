@@ -1,15 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 const useReportStatusDialog = () => {
     const [showDialog, setShowDialog] = useState(false);
 
-    const openDialog = useCallback(() => {
-        setShowDialog(true);
-    }, []);
-
-    const closeDialog = useCallback(() => {
-        setShowDialog(false);
-    }, []);
+    const openDialog = () => setShowDialog(true);
+    const closeDialog = () => setShowDialog(false);
 
     return [showDialog, openDialog, closeDialog];
 };

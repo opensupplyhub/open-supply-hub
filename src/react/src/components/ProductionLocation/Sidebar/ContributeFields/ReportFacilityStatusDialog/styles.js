@@ -1,14 +1,5 @@
 export default theme =>
     Object.freeze({
-        linkStyle: Object.freeze({
-            display: 'inline-block',
-            fontSize: '16px',
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            fontFamily: theme.typography.fontFamily,
-        }),
         facilityName: Object.freeze({
             padding: '5px 0 15px',
         }),

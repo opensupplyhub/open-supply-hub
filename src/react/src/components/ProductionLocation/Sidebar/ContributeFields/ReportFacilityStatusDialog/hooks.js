@@ -3,9 +3,9 @@ import { useState, useCallback } from 'react';
 const useReportReason = () => {
     const [reason, setReason] = useState('');
 
-    const resetReason = useCallback(() => {
+    const resetReason = () => {
         setReason('');
-    }, []);
+    };
 
     return [reason, setReason, resetReason];
 };
