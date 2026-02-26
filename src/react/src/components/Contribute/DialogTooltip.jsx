@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { shape, string, node, bool } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -16,6 +16,9 @@ const DialogTooltip = ({
     const [arrowRef, setArrowRef] = useState(null);
     const [open, setOpen] = useState(false);
     const closeTimerRef = useRef(null);
+    const [tooltipId] = useState(
+        () => `dialog-tooltip-${Math.random().toString(36).slice(2)}`,
+    );
 
     const clearCloseTimer = useCallback(() => {
         if (closeTimerRef.current) {
@@ -31,11 +34,14 @@ const DialogTooltip = ({
 
     const handleTriggerLeave = useCallback(() => {
         if (!interactive) return;
+        clearCloseTimer();
         closeTimerRef.current = setTimeout(
             () => setOpen(false),
             LEAVE_TRIGGER_DELAY_MS,
         );
-    }, [interactive]);
+    }, [interactive, clearCloseTimer]);
+
+    useEffect(() => () => clearCloseTimer(), [clearCloseTimer]);
 
     const handlePopperEnter = useCallback(() => {
         if (!interactive) return;
@@ -49,7 +55,7 @@ const DialogTooltip = ({
     }, [interactive]);
 
     const titleContent = (
-        <>
+        <div id={tooltipId} role="tooltip">
             {text}
             {learnMoreHref && (
                 <p style={{ marginTop: 8, marginBottom: 0 }}>
@@ -64,13 +70,15 @@ const DialogTooltip = ({
                 </p>
             )}
             <span className={classes.arrow} ref={setArrowRef} />
-        </>
+        </div>
     );
 
     const popperProps = interactive
         ? {
               onMouseEnter: handlePopperEnter,
               onMouseLeave: handlePopperLeave,
+              onFocus: handlePopperEnter,
+              onBlur: handlePopperLeave,
               popperOptions: {
                   modifiers: {
                       arrow: {
@@ -97,7 +105,24 @@ const DialogTooltip = ({
             onMouseLeave={handleTriggerLeave}
             style={{ display: 'inline-flex' }}
         >
-            {childComponent}
+            {React.cloneElement(childComponent, {
+                onFocus: e => {
+                    handleTriggerEnter();
+                    childComponent.props.onFocus?.(e);
+                },
+                onBlur: e => {
+                    handleTriggerLeave();
+                    childComponent.props.onBlur?.(e);
+                },
+                onKeyDown: e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleTriggerEnter();
+                    }
+                    childComponent.props.onKeyDown?.(e);
+                },
+                'aria-describedby': tooltipId,
+            })}
         </span>
     ) : (
         childComponent
