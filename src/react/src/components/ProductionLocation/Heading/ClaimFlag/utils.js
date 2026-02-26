@@ -1,11 +1,5 @@
 import moment from 'moment';
 
-export const getBackgroundColorClass = (isClaimed, isPending) => {
-    if (isClaimed) return 'rootClaimed';
-    if (isPending) return 'rootPending';
-    return 'rootUnclaimed';
-};
-
 export const getMainText = (isClaimed, isPending) => {
     if (isClaimed) {
         return 'CLAIMED PROFILE';

@@ -8,15 +8,6 @@ export default theme => {
             marginBottom: spacing * 3,
             flexDirection: 'column',
         },
-        rootClaimed: {
-            // No full-width background; compact banner like mockup
-        },
-        rootPending: {
-            // No full-width background; compact banner like mockup
-        },
-        rootUnclaimed: {
-            // No full-width background; compact banner like mockup
-        },
         row: {
             display: 'flex',
             flexDirection: 'row',

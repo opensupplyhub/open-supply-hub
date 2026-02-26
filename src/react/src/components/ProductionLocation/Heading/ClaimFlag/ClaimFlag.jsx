@@ -18,7 +18,7 @@ import {
 } from '../../../../util/util';
 import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
 
-import { getBackgroundColorClass, getMainText, formatClaimDate } from './utils';
+import { getMainText, formatClaimDate } from './utils';
 import styles from './styles';
 
 const FacilityDetailsClaimFlag = ({
@@ -31,17 +31,6 @@ const FacilityDetailsClaimFlag = ({
     claimInfo,
 }) => {
     if (isEmbed) return null;
-
-    const variant = getBackgroundColorClass(isClaimed, isPending);
-    const suffix = variant.replace('root', '');
-    const rootClass = [classes.root, classes[variant]]
-        .filter(Boolean)
-        .join(' ');
-    const iconClass = classes[`icon${suffix}`];
-    const statusTextClass = [
-        classes.statusText,
-        classes[`statusText${suffix}`],
-    ].join(' ');
 
     const claimFacilityLink = makeClaimFacilityLinkWithFeatureFlag(
         osId,
@@ -63,7 +52,7 @@ const FacilityDetailsClaimFlag = ({
         <Grid
             container
             direction="column"
-            className={rootClass}
+            className={classes.root}
             data-testid="claim-banner"
         >
             <Grid item xs={12}>
@@ -73,7 +62,16 @@ const FacilityDetailsClaimFlag = ({
                     wrap="nowrap"
                     className={classes.row}
                 >
-                    <Grid item className={iconClass}>
+                    <Grid
+                        item
+                        className={[
+                            isClaimed && classes.iconClaimed,
+                            isPending && classes.iconPending,
+                            !isClaimed && !isPending && classes.iconUnclaimed,
+                        ]
+                            .filter(Boolean)
+                            .join(' ')}
+                    >
                         {isClaimed || isPending ? (
                             <BadgeClaimed fontSize="24px" />
                         ) : (
@@ -87,7 +85,18 @@ const FacilityDetailsClaimFlag = ({
                     </Grid>
                     <Grid item className={classes.statusContent}>
                         <div className={classes.statusRow}>
-                            <Typography className={statusTextClass}>
+                            <Typography
+                                className={[
+                                    classes.statusText,
+                                    isClaimed && classes.statusTextClaimed,
+                                    isPending && classes.statusTextPending,
+                                    !isClaimed &&
+                                        !isPending &&
+                                        classes.statusTextUnclaimed,
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ')}
+                            >
                                 {getMainText(isClaimed, isPending)}
                             </Typography>
                             {(isClaimed || isPending) && (
