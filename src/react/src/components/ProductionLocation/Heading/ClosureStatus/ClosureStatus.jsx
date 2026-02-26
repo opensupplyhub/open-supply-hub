@@ -60,4 +60,6 @@ const ProductionLocationDetailClosureStatus = ({
     );
 };
 
-export default withStyles(productionLocationDetailClosureStatusStyles)(ProductionLocationDetailClosureStatus);
+export default withStyles(productionLocationDetailClosureStatusStyles)(
+    ProductionLocationDetailClosureStatus,
+);

@@ -7,4 +7,6 @@ const ProductionLocationDetailsLocation = () => (
     <>{/** TODO: refer to FacilityDetailsItem */}</>
 );
 
-export default withStyles(productionLocationDetailsLocationStyles)(ProductionLocationDetailsLocation);
+export default withStyles(productionLocationDetailsLocationStyles)(
+    ProductionLocationDetailsLocation,
+);
