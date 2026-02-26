@@ -24,7 +24,8 @@ class PartnerFieldGroupCursorPagination(CursorPagination):
 
 class PartnerFieldGroupsViewSet(ReadOnlyModelViewSet):
     """
-    Allows listing of the partner field groups. Available for superusers only.
+    Allows listing of the partner field groups.
+    Available for all users.
     """
 
     queryset = PartnerFieldGroup.objects.prefetch_related(
