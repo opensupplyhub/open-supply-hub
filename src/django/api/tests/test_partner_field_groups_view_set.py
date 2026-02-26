@@ -2,12 +2,9 @@
 Tests for the PartnerFieldGroupsViewSet.
 """
 
-import secrets
-
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from api.models import User
 from api.models.partner_field import PartnerField
 from api.models.partner_field_group import PartnerFieldGroup
 
