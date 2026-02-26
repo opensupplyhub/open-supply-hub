@@ -6,9 +6,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.pagination import CursorPagination
 
 from api.models.partner_field_group import PartnerFieldGroup
-from api.serializers.partner_field_group.partner_field_group_serializer import (
-    PartnerFieldGroupSerializer,
-)
+from api.serializers.partner_field_group.\
+    partner_field_group_serializer import PartnerFieldGroupSerializer
 
 
 class PartnerFieldGroupCursorPagination(CursorPagination):
