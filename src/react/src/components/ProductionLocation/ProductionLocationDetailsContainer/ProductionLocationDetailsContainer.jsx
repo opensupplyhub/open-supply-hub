@@ -87,7 +87,7 @@ function ProductionLocationDetailsContainer({
     }
 
     return (
-        <Grid container className={classes.root} spacing={8} xs={12}>
+        <Grid container className={classes.root} spacing={8}>
             <Grid item xs={12} md={2}>
                 <BackToSearch history={history} />
                 <NavBar />

@@ -1,4 +1,4 @@
-export default theme =>
+export default () =>
     Object.freeze({
         facilityName: Object.freeze({
             padding: '5px 0 15px',

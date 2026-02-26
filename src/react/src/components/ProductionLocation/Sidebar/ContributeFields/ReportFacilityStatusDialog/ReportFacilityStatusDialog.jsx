@@ -147,12 +147,13 @@ const ReportFacilityStatusDialog = ({
 };
 
 ReportFacilityStatusDialog.propTypes = {
-    data: facilityDetailsPropType.isRequired,
+    data: facilityDetailsPropType,
     open: bool,
     onClose: func.isRequired,
 };
 
 ReportFacilityStatusDialog.defaultProps = {
+    data: null,
     open: false,
 };
 

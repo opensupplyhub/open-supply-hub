@@ -19,7 +19,7 @@ const ProductionLocationDetailsContent = ({ classes }) => (
         <LocationTitle />
         <ClaimFlag />
         <DataSourcesInfo className={classes.containerItem} />
-        <Grid container xs={12} className={classes.containerItem}>
+        <Grid container className={classes.containerItem}>
             <Grid item sm={12} md={7}>
                 <GeneralFields />
             </Grid>

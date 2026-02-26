@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 const useReportReason = () => {
     const [reason, setReason] = useState('');
