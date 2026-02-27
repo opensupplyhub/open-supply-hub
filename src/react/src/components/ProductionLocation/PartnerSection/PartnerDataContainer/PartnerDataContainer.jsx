@@ -5,7 +5,7 @@ import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import ParentSectionItem from '../ParentSectionItem/ParentSectionItem';
 
-import styles from './styles';
+import partnerDataContainerStyles from './styles';
 
 function PartnerDataContainer({ classes }) {
     return (
@@ -64,4 +64,4 @@ function PartnerDataContainer({ classes }) {
     );
 }
 
-export default withStyles(styles)(PartnerDataContainer);
+export default withStyles(partnerDataContainerStyles)(PartnerDataContainer);

@@ -17,8 +17,9 @@ import {
 } from '../../../../util/util';
 import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
 
-import { getMainText, formatClaimDate } from './utils';
-import styles from './styles';
+import { getBackgroundColorClass, getMainText, formatClaimDate } from './utils';
+import facilityDetailsClaimFlagStyles from './styles';
+
 
 const FacilityDetailsClaimFlag = ({
     classes,
@@ -260,5 +261,5 @@ const mapStateToProps = ({ featureFlags: { flags } }) => {
 };
 
 export default connect(mapStateToProps)(
-    withStyles(styles)(FacilityDetailsClaimFlag),
+    withStyles(facilityDetailsClaimFlagStyles)(FacilityDetailsClaimFlag),
 );

@@ -19,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
     * Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
     * Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
+* [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - Moved single-facility data loading and redirect logic into the Production Location details container so the sidebar (including the "Contribute to this profile" section) and main content render with consistent facility data.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
@@ -32,6 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Production Location page redesign.
 * [OSDEV-2374](https://opensupplyhub.atlassian.net/browse/OSDEV-2374) - Created UI for Claim status banner.
 * [OSDEV-2356](https://opensupplyhub.atlassian.net/browse/OSDEV-2356) - Added `GET api/partner-field-groups/` endpoint to retrieve partner field groups with pagination support and CDN caching for the endpoint (and additional endpoints for partner fields and contributors).
+* [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

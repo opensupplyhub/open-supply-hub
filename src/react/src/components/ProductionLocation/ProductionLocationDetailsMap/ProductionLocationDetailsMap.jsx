@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import Map from '../../Map';
 
-import styles from './styles';
+import productionLocationDetailsMapStyles from './styles';
 
 const ProductionLocationDetailsMap = ({ classes }) => (
     <div className={classes.container}>
@@ -15,4 +15,6 @@ const ProductionLocationDetailsMap = ({ classes }) => (
     </div>
 );
 
-export default withStyles(styles)(ProductionLocationDetailsMap);
+export default withStyles(productionLocationDetailsMapStyles)(
+    ProductionLocationDetailsMap,
+);

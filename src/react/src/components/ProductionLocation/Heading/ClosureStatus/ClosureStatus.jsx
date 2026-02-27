@@ -8,7 +8,7 @@ import FeatureFlag from '../../../FeatureFlag';
 import { REPORT_A_FACILITY } from '../../../../util/constants';
 
 import PrimaryText from './PrimaryText';
-import styles from './styles';
+import productionLocationDetailClosureStatusStyles from './styles';
 
 const ProductionLocationDetailClosureStatus = ({
     data,
@@ -84,4 +84,6 @@ ProductionLocationDetailClosureStatus.defaultProps = {
     search: '',
 };
 
-export default withStyles(styles)(ProductionLocationDetailClosureStatus);
+export default withStyles(productionLocationDetailClosureStatusStyles)(
+    ProductionLocationDetailClosureStatus,
+);

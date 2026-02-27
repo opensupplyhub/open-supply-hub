@@ -9,7 +9,7 @@ import { facilitiesRoute } from '../../../util/constants';
 
 import ProductionLocationDetailsContent from '../ProductionLocationDetailsContent/ProductionLocationDetailsContent';
 
-import styles from './styles';
+import productionLocationDetailsStyles from './styles';
 
 function ProductionLocationDetails({
     classes,
@@ -50,4 +50,4 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(styles)(ProductionLocationDetails));
+)(withStyles(productionLocationDetailsStyles)(ProductionLocationDetails));
