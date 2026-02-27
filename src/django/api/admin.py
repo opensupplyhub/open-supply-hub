@@ -14,6 +14,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.sector_group import SectorGroup
 from api.models.partner_field import PartnerField
+from api.models.partner_field_group import PartnerFieldGroup
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.models.wage_indicator_link_text_config import (
     WageIndicatorLinkTextConfig
@@ -334,14 +335,34 @@ class PartnerFieldAdminForm(forms.ModelForm):
 
 class PartnerFieldAdmin(admin.ModelAdmin):
     form = PartnerFieldAdminForm
-    list_display = ('name', 'type', 'label', 'unit', 'active', 'system_field',
-                    'created_at')
-    search_fields = ('name', 'type', 'label', 'unit', 'source_by')
-    list_filter = ('active', 'system_field', 'type')
-    readonly_fields = ('uuid', 'created_at', 'updated_at')
-    fields = ('name', 'type', 'unit', 'label', 'source_by', 'base_url',
-              'display_text', 'json_schema', 'active', 'system_field',
-              'created_at', 'updated_at')
+    list_display = (
+        "name",
+        "type",
+        "label",
+        "unit",
+        "group",
+        "active",
+        "system_field",
+        "created_at",
+    )
+    search_fields = ("name", "type", "label", "unit", "source_by")
+    list_filter = ("active", "system_field", "type", "group")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+    fields = (
+        "name",
+        "type",
+        "unit",
+        "label",
+        "group",
+        "source_by",
+        "base_url",
+        "display_text",
+        "json_schema",
+        "active",
+        "system_field",
+        "created_at",
+        "updated_at",
+    )
 
     def get_queryset(self, request):
         '''
@@ -432,6 +453,7 @@ admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
 admin_site.register(PartnerField, PartnerFieldAdmin)
+admin_site.register(PartnerFieldGroup)
 admin_site.register(EmailAddress, EmailAddressAdmin)
 admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)
 admin_site.register(
