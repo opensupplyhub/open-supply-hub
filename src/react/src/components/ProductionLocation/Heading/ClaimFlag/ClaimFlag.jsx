@@ -17,9 +17,8 @@ import {
 } from '../../../../util/util';
 import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
 
-import { getBackgroundColorClass, getMainText, formatClaimDate } from './utils';
+import { getMainText, formatClaimDate } from './utils';
 import facilityDetailsClaimFlagStyles from './styles';
-
 
 const FacilityDetailsClaimFlag = ({
     classes,
