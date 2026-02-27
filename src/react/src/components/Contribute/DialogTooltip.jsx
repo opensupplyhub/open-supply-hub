@@ -124,9 +124,8 @@ const DialogTooltip = ({
                     'aria-describedby': tooltipId,
                 })
             ) : (
-                <span
-                    tabIndex={0}
-                    role="button"
+                <button
+                    type="button"
                     onFocus={handleTriggerEnter}
                     onBlur={handleTriggerLeave}
                     onKeyDown={e => {
@@ -136,9 +135,17 @@ const DialogTooltip = ({
                         }
                     }}
                     aria-describedby={tooltipId}
+                    style={{
+                        display: 'inline',
+                        margin: 0,
+                        padding: 0,
+                        border: 'none',
+                        background: 'none',
+                        font: 'inherit',
+                    }}
                 >
                     {childComponent}
-                </span>
+                </button>
             )}
         </span>
     ) : (

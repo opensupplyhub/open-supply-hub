@@ -1,10 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { screen } from '@testing-library/react';
+import PropTypes from 'prop-types';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClosureStatus from '../../components/ProductionLocation/Heading/ClosureStatus/ClosureStatus';
 
-jest.mock('../../components/FeatureFlag', () => ({ children }) => <>{children}</>);
+jest.mock('../../components/FeatureFlag', () => {
+    const MockFeatureFlag = ({ children }) => <>{children}</>;
+    MockFeatureFlag.propTypes = { children: PropTypes.node };
+    MockFeatureFlag.defaultProps = { children: null };
+    return MockFeatureFlag;
+});
 
 describe('ProductionLocation ClosureStatus', () => {
     const clearFacility = jest.fn();

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -60,6 +61,27 @@ const ProductionLocationDetailClosureStatus = ({
             </div>
         </FeatureFlag>
     );
+};
+
+ProductionLocationDetailClosureStatus.propTypes = {
+    data: PropTypes.object.isRequired,
+    clearFacility: PropTypes.func.isRequired,
+    classes: PropTypes.shape({
+        status: PropTypes.string,
+        contentContainer: PropTypes.string,
+        iconColumn: PropTypes.string,
+        icon: PropTypes.string,
+        textBox: PropTypes.string,
+        text: PropTypes.string,
+        statusPending: PropTypes.string,
+    }).isRequired,
+    useProductionLocationPage: PropTypes.bool,
+    search: PropTypes.string,
+};
+
+ProductionLocationDetailClosureStatus.defaultProps = {
+    useProductionLocationPage: false,
+    search: '',
 };
 
 export default withStyles(styles)(ProductionLocationDetailClosureStatus);

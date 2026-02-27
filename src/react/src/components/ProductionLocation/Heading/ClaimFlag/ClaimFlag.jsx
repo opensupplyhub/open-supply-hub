@@ -238,6 +238,7 @@ FacilityDetailsClaimFlag.propTypes = {
             PropTypes.shape({ name: PropTypes.string }),
         ]),
         created_at: PropTypes.string,
+        approved_at: PropTypes.string,
     }),
 };
 
