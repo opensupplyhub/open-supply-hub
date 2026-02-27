@@ -14,7 +14,7 @@ import {
 import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
 
 import { getBackgroundColorClass, getMainText } from './utils';
-import styles from './styles';
+import facilityDetailsClaimFlagStyles from './styles';
 
 const FacilityDetailsClaimFlag = ({
     classes,
@@ -68,5 +68,5 @@ const mapStateToProps = ({ featureFlags: { flags } }) => {
 };
 
 export default connect(mapStateToProps)(
-    withStyles(styles)(FacilityDetailsClaimFlag),
+    withStyles(facilityDetailsClaimFlagStyles)(FacilityDetailsClaimFlag),
 );

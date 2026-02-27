@@ -2,7 +2,7 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
-import styles from './styles';
+import claimDataContainerStyles from './styles';
 
 const ClaimDataContainer = ({ classes, className }) => (
     <div className={`${classes.container} ${className || ''}`}>
@@ -12,4 +12,4 @@ const ClaimDataContainer = ({ classes, className }) => (
     </div>
 );
 
-export default withStyles(styles)(ClaimDataContainer);
+export default withStyles(claimDataContainerStyles)(ClaimDataContainer);

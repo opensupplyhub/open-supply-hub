@@ -2,7 +2,7 @@ import React from 'react';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
-import styles from './styles';
+import productionLocationDetailsGeneralFieldsStyles from './styles';
 
 /**
  * Render extended fields, activity reports.
@@ -16,4 +16,6 @@ const ProductionLocationDetailsGeneralFields = ({ classes }) => (
     </div>
 );
 
-export default withStyles(styles)(ProductionLocationDetailsGeneralFields);
+export default withStyles(productionLocationDetailsGeneralFieldsStyles)(
+    ProductionLocationDetailsGeneralFields,
+);

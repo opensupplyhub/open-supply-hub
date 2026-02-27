@@ -7,7 +7,7 @@ import ArrowBack from '@material-ui/icons/ArrowBackIos';
 import { resetSingleFacility } from '../../../../actions/facilities';
 import { facilitiesRoute } from '../../../../util/constants';
 
-import styles from './styles';
+import productionLocationDetailsBackToSearchStyles from './styles';
 
 function ProductionLocationDetailsBackToSearch({
     classes,
@@ -40,4 +40,8 @@ function mapDispatchToProps(dispatch) {
 export default connect(
     null,
     mapDispatchToProps,
-)(withStyles(styles)(ProductionLocationDetailsBackToSearch));
+)(
+    withStyles(productionLocationDetailsBackToSearchStyles)(
+        ProductionLocationDetailsBackToSearch,
+    ),
+);

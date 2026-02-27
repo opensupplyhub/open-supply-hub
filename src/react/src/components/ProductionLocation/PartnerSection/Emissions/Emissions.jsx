@@ -2,7 +2,7 @@ import React from 'react';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
-import styles from './styles';
+import emissionsStyles from './styles';
 
 const Emissions = ({ classes }) => (
     <div className={classes.container}>
@@ -12,4 +12,4 @@ const Emissions = ({ classes }) => (
     </div>
 );
 
-export default withStyles(styles)(Emissions);
+export default withStyles(emissionsStyles)(Emissions);
