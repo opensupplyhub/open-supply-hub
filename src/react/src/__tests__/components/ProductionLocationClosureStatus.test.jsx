@@ -1,11 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { screen } from '@testing-library/react';
-import PropTypes from 'prop-types';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClosureStatus from '../../components/ProductionLocation/Heading/ClosureStatus/ClosureStatus';
 
 jest.mock('../../components/FeatureFlag', () => {
+    // eslint-disable-next-line global-require -- needed inside jest.mock factory
+    const PropTypes = require('prop-types');
     const MockFeatureFlag = ({ children }) => <>{children}</>;
     MockFeatureFlag.propTypes = { children: PropTypes.node };
     MockFeatureFlag.defaultProps = { children: null };
