@@ -6,13 +6,14 @@ import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
 import Icon from '@material-ui/core/Icon';
 import InfoIcon from '@material-ui/icons/Info';
+import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/Person';
 
 import { formatDataPointDate, getSourcesCount } from './utils';
-import styles from './styles';
+import dataPointStyles from './styles';
 
 const STATUS_CLAIMED = 'Claimed';
 const STATUS_CROWDSOURCED = 'Crowdsourced';
@@ -52,77 +53,126 @@ const DataPoint = ({
     ) : null;
 
     return (
-        <div className={classes.root} role="group">
-            <Typography className={classes.label} variant="body2">
-                {label}
-            </Typography>
-            <div className={classes.valueColumn}>
-                <div className={classes.valueRow}>
-                    <div className={classes.valueWithTooltip}>
-                        {tooltipIcon}
-                        <Typography className={classes.value} variant="body1">
-                            {value}
-                        </Typography>
-                    </div>
-                    {statusLabel ? (
-                        <Chip
-                            label={statusLabel}
-                            size="small"
-                            className={`${classes.statusChip} ${
-                                getStatusChipClass() || ''
-                            }`}
-                        />
-                    ) : null}
-                </div>
-                {(contributorName || date || showSourcesButton) && (
-                    <div className={classes.metaRow}>
-                        {contributorName ? (
-                            <span className={classes.contributor}>
-                                <PersonIcon
-                                    fontSize="small"
-                                    className={classes.personIcon}
+        <Grid
+            container
+            className={classes.root}
+            spacing={3}
+            wrap="nowrap"
+            role="group"
+        >
+            <Grid item className={classes.labelColumn}>
+                <Typography className={classes.label} variant="body2">
+                    {label}
+                </Typography>
+            </Grid>
+            <Grid item className={classes.tooltipIconColumn}>
+                {tooltipIcon}
+            </Grid>
+            <Grid
+                item
+                container
+                className={classes.valueColumn}
+                zeroMinWidth
+                direction="column"
+                spacing={1}
+            >
+                <Grid item className={classes.valueWithTooltip}>
+                    <Typography className={classes.value} variant="body1">
+                        {value}
+                    </Typography>
+                </Grid>
+                {(contributorName || statusLabel) && (
+                    <Grid
+                        container
+                        item
+                        alignItems="center"
+                        wrap="wrap"
+                        spacing={1}
+                        className={classes.metaRow}
+                    >
+                        {statusLabel ? (
+                            <Grid item>
+                                <Chip
+                                    label={statusLabel}
+                                    size="small"
+                                    className={`${classes.statusChip} ${
+                                        getStatusChipClass() || ''
+                                    }`}
                                 />
-                                <Typography variant="body2" component="span">
-                                    {contributorName}
-                                </Typography>
-                            </span>
+                            </Grid>
                         ) : null}
+                        {contributorName ? (
+                            <Grid item>
+                                <span className={classes.contributor}>
+                                    <PersonIcon
+                                        fontSize="small"
+                                        className={classes.personIcon}
+                                    />
+                                    <Typography
+                                        variant="body2"
+                                        component="span"
+                                    >
+                                        {contributorName}
+                                    </Typography>
+                                </span>
+                            </Grid>
+                        ) : null}
+                    </Grid>
+                )}
+                {(date || showSourcesButton) && (
+                    <Grid
+                        item
+                        container
+                        alignItems="center"
+                        wrap="wrap"
+                        spacing={1}
+                        className={classes.metaRowSecondary}
+                    >
                         {date ? (
-                            <span className={classes.dateBlock}>
-                                <ScheduleIcon
-                                    fontSize="small"
-                                    className={classes.dateIcon}
-                                />
-                                <Typography variant="body2" component="span">
-                                    {formatDataPointDate(date)}
-                                </Typography>
-                            </span>
+                            <Grid item>
+                                <span className={classes.dateBlock}>
+                                    <ScheduleIcon
+                                        fontSize="small"
+                                        className={classes.dateIcon}
+                                    />
+                                    <Typography
+                                        variant="body2"
+                                        component="span"
+                                    >
+                                        {formatDataPointDate(date)}
+                                    </Typography>
+                                </span>
+                            </Grid>
                         ) : null}
                         {date && showSourcesButton ? (
-                            <span
-                                className={classes.metaSeparator}
-                                aria-hidden="true"
-                            >
-                                ·
-                            </span>
+                            <Grid item>
+                                <span
+                                    className={classes.metaSeparator}
+                                    aria-hidden="true"
+                                >
+                                    ·
+                                </span>
+                            </Grid>
                         ) : null}
                         {showSourcesButton && (
-                            <Button
-                                className={classes.sourcesButton}
-                                onClick={onOpenDrawer}
-                                aria-label={`View ${sourcesCount} sources`}
-                                data-testid="data-point-sources-button"
-                            >
-                                +{sourcesCount} sources
-                            </Button>
+                            <Grid item>
+                                <Button
+                                    className={classes.sourcesButton}
+                                    onClick={onOpenDrawer}
+                                    aria-label={`View ${sourcesCount} sources`}
+                                    data-testid="data-point-sources-button"
+                                >
+                                    +{sourcesCount} sources
+                                </Button>
+                            </Grid>
                         )}
-                    </div>
+                    </Grid>
                 )}
-            </div>
+            </Grid>
             {renderDrawer && typeof renderDrawer === 'function'
                 ? renderDrawer()
                 : null}
-        </div>
+        </Grid>
     );
 };
 
@@ -154,5 +204,5 @@ DataPoint.defaultProps = {
     renderDrawer: null,
 };
 
-export default withStyles(styles)(DataPoint);
+export default withStyles(dataPointStyles)(DataPoint);
 export { STATUS_CLAIMED, STATUS_CROWDSOURCED };
