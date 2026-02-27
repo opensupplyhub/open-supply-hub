@@ -17,7 +17,7 @@ describe('ProductionLocation ClaimFlag', () => {
             <Router>
                 <ProductionLocationClaimFlag
                     {...defaultProps}
-                    isClaimed={true}
+                    isClaimed
                 />
             </Router>,
         );
@@ -31,7 +31,7 @@ describe('ProductionLocation ClaimFlag', () => {
             <Router>
                 <ProductionLocationClaimFlag
                     {...defaultProps}
-                    isClaimed={true}
+                    isClaimed
                 />
             </Router>,
         );
@@ -71,7 +71,7 @@ describe('ProductionLocation ClaimFlag', () => {
             <Router>
                 <ProductionLocationClaimFlag
                     {...defaultProps}
-                    isPending={true}
+                    isPending
                 />
             </Router>,
         );
@@ -87,7 +87,7 @@ describe('ProductionLocation ClaimFlag', () => {
             <Router>
                 <ProductionLocationClaimFlag
                     {...defaultProps}
-                    isEmbed={true}
+                    isEmbed
                 />
             </Router>,
         );
@@ -106,7 +106,7 @@ describe('ProductionLocation ClaimFlag', () => {
             <Router>
                 <ProductionLocationClaimFlag
                     {...defaultProps}
-                    isClaimed={true}
+                    isClaimed
                     claimInfo={claimInfo}
                 />
             </Router>,
