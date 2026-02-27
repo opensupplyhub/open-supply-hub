@@ -1,19 +1,9 @@
 import COLOURS from '../../../util/COLOURS';
 
-/**
- * Data point styles matching design class:
- * "grid gap-6 py-3 group grid-cols-[140px_1fr]"
- * - grid, gap: 24px (gap-6), paddingY: 12px (py-3), columns: 140px 1fr
- * Plus matching font sizes, colors, and weights from the design.
- */
-// eslint-disable-next-line no-unused-vars
-export default theme =>
+export default () =>
     Object.freeze({
-        /* Root: grid container - same as design "grid gap-6 py-3 group grid-cols-[140px_1fr]" */
+        /* Root: Grid container - label column 140px, value column 1fr; spacing from Grid spacing={3} */
         root: Object.freeze({
-            display: 'grid',
-            gridTemplateColumns: '140px 1fr',
-            gap: 24,
             paddingTop: 12,
             paddingBottom: 12,
             marginBottom: 24,
@@ -21,25 +11,26 @@ export default theme =>
                 opacity: 1,
             }),
         }),
-        /* First column: label */
+        /* First column: label (140px) */
+        labelColumn: Object.freeze({
+            width: 140,
+            flexShrink: 0,
+        }),
+        tooltipIconColumn: Object.freeze({
+            width: 28,
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+        }),
         label: Object.freeze({
-            fontSize: 14,
+            fontSize: '16px',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
-            fontWeight: 400,
         }),
         /* Second column: value + meta block */
         valueColumn: Object.freeze({
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
             minWidth: 0,
-        }),
-        valueRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 8,
+            flex: 1,
         }),
         valueWithTooltip: Object.freeze({
             display: 'inline-flex',
@@ -78,9 +69,11 @@ export default theme =>
             color: COLOURS.WHITE,
         }),
         metaRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
+            fontSize: 14,
+            lineHeight: 1.43,
+            color: COLOURS.DARK_GREY,
+        }),
+        metaRowSecondary: Object.freeze({
             fontSize: 14,
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
