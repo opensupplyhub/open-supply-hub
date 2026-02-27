@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { shape, string, node, bool } from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
 import { makeDialogTooltipStyles } from '../../util/styles';
@@ -16,9 +17,7 @@ const DialogTooltip = ({
     const [arrowRef, setArrowRef] = useState(null);
     const [open, setOpen] = useState(false);
     const closeTimerRef = useRef(null);
-    const [tooltipId] = useState(
-        () => `dialog-tooltip-${Math.random().toString(36).slice(2)}`,
-    );
+    const [tooltipId] = useState(() => `dialog-tooltip-${uuidv4()}`);
 
     const clearCloseTimer = useCallback(() => {
         if (closeTimerRef.current) {
@@ -105,24 +104,42 @@ const DialogTooltip = ({
             onMouseLeave={handleTriggerLeave}
             style={{ display: 'inline-flex' }}
         >
-            {React.cloneElement(childComponent, {
-                onFocus: e => {
-                    handleTriggerEnter();
-                    childComponent.props.onFocus?.(e);
-                },
-                onBlur: e => {
-                    handleTriggerLeave();
-                    childComponent.props.onBlur?.(e);
-                },
-                onKeyDown: e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
+            {React.isValidElement(childComponent) ? (
+                React.cloneElement(childComponent, {
+                    onFocus: e => {
                         handleTriggerEnter();
-                    }
-                    childComponent.props.onKeyDown?.(e);
-                },
-                'aria-describedby': tooltipId,
-            })}
+                        childComponent.props.onFocus?.(e);
+                    },
+                    onBlur: e => {
+                        handleTriggerLeave();
+                        childComponent.props.onBlur?.(e);
+                    },
+                    onKeyDown: e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleTriggerEnter();
+                        }
+                        childComponent.props.onKeyDown?.(e);
+                    },
+                    'aria-describedby': tooltipId,
+                })
+            ) : (
+                <span
+                    tabIndex={0}
+                    role="button"
+                    onFocus={handleTriggerEnter}
+                    onBlur={handleTriggerLeave}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleTriggerEnter();
+                        }
+                    }}
+                    aria-describedby={tooltipId}
+                >
+                    {childComponent}
+                </span>
+            )}
         </span>
     ) : (
         childComponent
