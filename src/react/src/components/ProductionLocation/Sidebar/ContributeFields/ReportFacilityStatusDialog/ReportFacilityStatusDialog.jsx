@@ -13,9 +13,7 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 
-import OutlinedButton from '../../../Shared/OutlinedButton/OutlinedButton';
-import FilledButton from '../../../Shared/FilledButton/FilledButton';
-
+import Button from '../../../Shared/Button/Button';
 import DashboardActivityReportToast from '../../../../DashboardActivityReportToast';
 
 import {
@@ -25,6 +23,7 @@ import {
 
 import { facilityDetailsPropType } from '../../../../../util/propTypes';
 import { authLoginFormRoute } from '../../../../../util/constants';
+import { VARIANT } from '../../../Shared/Button/constants';
 
 import useReportReason from './hooks';
 import reportFacilityStatusDialogStyles from './styles';
@@ -58,7 +57,8 @@ const ReportFacilityStatusDialog = ({
     };
 
     const loginButton = (
-        <FilledButton
+        <Button
+            variant={VARIANT.filled}
             label="Log In"
             onClick={closeDialog}
             component={Link}
@@ -137,12 +137,14 @@ const ReportFacilityStatusDialog = ({
                 </DialogActions>
             ) : (
                 <DialogActions className={classes.dialogActionsStyles}>
-                    <OutlinedButton
+                    <Button
+                        variant={VARIANT.outlined}
                         label="Cancel"
                         onClick={closeDialog}
                         data-testid="report-facility-status-dialog-cancel"
                     />
-                    <FilledButton
+                    <Button
+                        variant={VARIANT.filled}
                         label="Report"
                         onClick={handleSubmit}
                         data-testid="report-facility-status-dialog-report"
