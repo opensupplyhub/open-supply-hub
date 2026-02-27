@@ -1,5 +1,7 @@
 """
 Serializer for partner field groups.
+Specifies the fields that are returned by
+the GET /api/partner-field-groups/ API endpoint.
 """
 
 from rest_framework import serializers
@@ -9,7 +11,8 @@ from api.models.partner_field_group import PartnerFieldGroup
 
 class PartnerFieldGroupSerializer(ModelSerializer):
     """
-    Serializer for partner field groups.
+    Serializer for the PartnerFieldGroup model.
+    Serializes the fields and related partner_fields for the API response.
     """
 
     partner_fields = serializers.SlugRelatedField(
@@ -21,6 +24,7 @@ class PartnerFieldGroupSerializer(ModelSerializer):
     class Meta:
         """
         Meta class for partner field group serializer.
+        Specifies the fields that are returned by the API response.
         """
 
         model = PartnerFieldGroup

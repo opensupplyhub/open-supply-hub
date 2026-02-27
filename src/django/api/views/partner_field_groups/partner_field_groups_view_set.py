@@ -1,5 +1,7 @@
 """
 Viewset for partner field groups.
+Allows listing of the partner field groups with pagination.
+Available for all users.
 """
 
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -12,7 +14,9 @@ from api.serializers.partner_field_group.\
 
 class PartnerFieldGroupCursorPagination(CursorPagination):
     """
-    Pagination class for partner field groups with cursor-based pagination.
+    Cursor based pagination for partner field groups.
+    Allows the client to control the page size via the ?limit= parameter.
+    And adds the default ordering by the `order` field.
     """
 
     page_size = 20
@@ -24,6 +28,7 @@ class PartnerFieldGroupCursorPagination(CursorPagination):
 class PartnerFieldGroupsViewSet(ReadOnlyModelViewSet):
     """
     Allows listing of the partner field groups.
+    Also, prefetches the related partner fields to avoid N+1 queries.
     Available for all users.
     """
 

@@ -1,5 +1,6 @@
 """
-Tests for the PartnerFieldGroupsViewSet.
+Integration tests for the GET /api/partner-field-groups/ API endpoint.
+Those are smoke tests to verify that the endpoint is working as expected.
 """
 
 from rest_framework import status
@@ -12,6 +13,13 @@ from api.models.partner_field_group import PartnerFieldGroup
 class PartnerFieldGroupsViewSetTest(APITestCase):
     """
     Test cases for the partner field groups API endpoint.
+    They are testing the following:
+    - Returns 200 for all users.
+    - Returns paginated partner field groups.
+    - Limit parameter controls page size.
+    - Ordering is respected.
+    - Returns partner fields in the group.
+    - Can't create partner field groups.
     """
 
     def setUp(self):
