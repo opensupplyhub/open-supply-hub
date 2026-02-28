@@ -61,58 +61,48 @@ const DialogTooltip = ({
         </div>
     );
 
-    const popperProps = interactive
-        ? {
-              onMouseEnter: handlePopperEnter,
-              onMouseLeave: handlePopperLeave,
-              onFocus: handlePopperEnter,
-              onBlur: handlePopperLeave,
-              popperOptions: {
-                  modifiers: {
-                      arrow: {
-                          enabled: Boolean(arrowRef),
-                          element: arrowRef,
-                      },
-                  },
-              },
-          }
-        : {
-              popperOptions: {
-                  modifiers: {
-                      arrow: {
-                          enabled: Boolean(arrowRef),
-                          element: arrowRef,
-                      },
-                  },
-              },
-          };
+    const arrowModifier = {
+        enabled: Boolean(arrowRef),
+        element: arrowRef,
+    };
+    const popperProps = {
+        popperOptions: {
+            modifiers: { arrow: arrowModifier },
+        },
+    };
+    if (interactive) {
+        popperProps.onMouseEnter = handlePopperEnter;
+        popperProps.onMouseLeave = handlePopperLeave;
+        popperProps.onFocus = handlePopperEnter;
+        popperProps.onBlur = handlePopperLeave;
+    }
 
-    const triggerWrapper = interactive ? (
-        <span
-            onMouseEnter={handleTriggerEnter}
-            onMouseLeave={handleTriggerLeave}
-            style={{ display: 'inline-flex' }}
-        >
-            {React.isValidElement(childComponent) ? (
-                React.cloneElement(childComponent, {
-                    onFocus: e => {
-                        handleTriggerEnter();
-                        childComponent.props.onFocus?.(e);
-                    },
-                    onBlur: e => {
-                        handleTriggerLeave();
-                        childComponent.props.onBlur?.(e);
-                    },
-                    onKeyDown: e => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleTriggerEnter();
-                        }
-                        childComponent.props.onKeyDown?.(e);
-                    },
-                    'aria-describedby': tooltipId,
-                })
-            ) : (
+    // Support user accessibility by adding keyboard navigation.
+    let triggerWrapper = childComponent;
+    if (interactive) {
+        const handleKeyDown = e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleTriggerEnter();
+            }
+            childComponent.props?.onKeyDown?.(e);
+        };
+        let triggerContent;
+        if (React.isValidElement(childComponent)) {
+            triggerContent = React.cloneElement(childComponent, {
+                onFocus: e => {
+                    handleTriggerEnter();
+                    childComponent.props.onFocus?.(e);
+                },
+                onBlur: e => {
+                    handleTriggerLeave();
+                    childComponent.props.onBlur?.(e);
+                },
+                onKeyDown: handleKeyDown,
+                'aria-describedby': tooltipId,
+            });
+        } else {
+            triggerContent = (
                 <button
                     type="button"
                     onFocus={handleTriggerEnter}
@@ -135,11 +125,18 @@ const DialogTooltip = ({
                 >
                     {childComponent}
                 </button>
-            )}
-        </span>
-    ) : (
-        childComponent
-    );
+            );
+        }
+        triggerWrapper = (
+            <span
+                onMouseEnter={handleTriggerEnter}
+                onMouseLeave={handleTriggerLeave}
+                style={{ display: 'inline-flex' }}
+            >
+                {triggerContent}
+            </span>
+        );
+    }
 
     return (
         <Tooltip
