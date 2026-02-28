@@ -36,6 +36,7 @@ function ProductionLocationDetailsContainer({
     error,
     contributors,
     useProductionLocationPage,
+    embed,
     fetchFacility,
     clearFacility,
 }) {
@@ -95,7 +96,13 @@ function ProductionLocationDetailsContainer({
                 <SupplyChain />
             </Grid>
             <Grid item xs={12} md={10}>
-                <ProductionLocationDetailsContent />
+                <ProductionLocationDetailsContent
+                    data={data}
+                    embed={embed}
+                    clearFacility={clearFacility}
+                    useProductionLocationPage={useProductionLocationPage}
+                    location={location}
+                />
             </Grid>
         </Grid>
     );
@@ -107,12 +114,14 @@ const mapStateToProps = ({
     },
     filters: { contributors },
     featureFlags,
+    embeddedMap: { embed },
 }) => ({
     data,
     fetching,
     error,
     contributors: contributors || [],
     useProductionLocationPage: shouldUseProductionLocationPage(featureFlags),
+    embed,
 });
 
 const mapDispatchToProps = dispatch => ({

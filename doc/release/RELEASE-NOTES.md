@@ -31,6 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
     * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
 * [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Production Location page redesign.
+* [OSDEV-2374](https://opensupplyhub.atlassian.net/browse/OSDEV-2374) - Created UI for Claim status banner.
 * [OSDEV-2356](https://opensupplyhub.atlassian.net/browse/OSDEV-2356) - Added `GET api/partner-field-groups/` endpoint to retrieve partner field groups with pagination support and CDN caching for the endpoint (and additional endpoints for partner fields and contributors).
 * [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
 
