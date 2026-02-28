@@ -98,7 +98,23 @@ const FacilityDetailsClaimFlag = ({
                             {isClaimed && (
                                 <DialogTooltip
                                     text={claimedProfileTooltipText}
-                                    learnMoreHref={claimLearnMoreUrl}
+                                    textHref={
+                                        <p
+                                            style={{
+                                                marginTop: 8,
+                                                marginBottom: 0,
+                                            }}
+                                        >
+                                            <a
+                                                href={claimLearnMoreUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: 'white' }}
+                                            >
+                                                Learn more →
+                                            </a>
+                                        </p>
+                                    }
                                     interactive
                                     childComponent={
                                         <IconButton

@@ -12,7 +12,7 @@ const DialogTooltip = ({
     childComponent,
     classes,
     interactive = false,
-    learnMoreHref,
+    textHref,
 }) => {
     const [arrowRef, setArrowRef] = useState(null);
     const [open, setOpen] = useState(false);
@@ -56,18 +56,7 @@ const DialogTooltip = ({
     const titleContent = (
         <div id={tooltipId} role="tooltip">
             {text}
-            {learnMoreHref && (
-                <p style={{ marginTop: 8, marginBottom: 0 }}>
-                    <a
-                        href={learnMoreHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: 'white' }}
-                    >
-                        Learn more →
-                    </a>
-                </p>
-            )}
+            {textHref}
             <span className={classes.arrow} ref={setArrowRef} />
         </div>
     );
@@ -179,7 +168,7 @@ DialogTooltip.propTypes = {
     text: string.isRequired,
     childComponent: node.isRequired,
     interactive: bool,
-    learnMoreHref: string,
+    textHref: node,
     classes: shape({
         arrow: string.isRequired,
         tooltipStyles: string.isRequired,
@@ -193,7 +182,7 @@ DialogTooltip.propTypes = {
 
 DialogTooltip.defaultProps = {
     interactive: false,
-    learnMoreHref: undefined,
+    textHref: null,
 };
 
 export default withStyles(makeDialogTooltipStyles)(DialogTooltip);
