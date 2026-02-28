@@ -32,7 +32,7 @@ const ProductionLocationDetailsContent = ({
 
     return (
         <div className={classes.container}>
-            <LocationTitle />
+            <LocationTitle data={data} />
             <ClaimFlag
                 osId={data?.properties?.os_id}
                 isClaimed={!!isClaimed}
