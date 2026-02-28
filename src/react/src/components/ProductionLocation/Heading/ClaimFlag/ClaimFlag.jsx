@@ -24,36 +24,12 @@ import {
 } from './utils';
 import facilityDetailsClaimFlagStyles from './styles';
 
-const FacilityDetailsClaimFlag = ({
-    classes,
-    osId,
-    isClaimed,
-    isPending,
-    isEmbed,
-    isV1ClaimsFlowEnabled,
-    claimInfo,
-}) => {
-    if (isEmbed) return null;
+const CLAIMED_PROFILE_TOOLTIP_TEXT =
+    "This profile has been claimed and verified by the production location's owner or manager. Claimed data is considered the most authoritative source.";
+const CLAIM_LEARN_MORE_URL =
+    'https://info.opensupplyhub.org/resources/claim-a-facility';
 
-    const claimFacilityLink = makeClaimFacilityLinkWithFeatureFlag(
-        osId,
-        isV1ClaimsFlowEnabled,
-    );
-
-    const contributorName =
-        typeof claimInfo?.contributor === 'string'
-            ? claimInfo.contributor
-            : claimInfo?.contributor?.name ?? null;
-    const claimedAt = claimInfo?.approved_at ?? claimInfo?.created_at;
-    const formattedDate = formatClaimDate(claimedAt);
-    const showClaimedByLine = isClaimed && (contributorName || formattedDate);
-
-    const claimedProfileTooltipText =
-        "This profile has been claimed and verified by the production location's owner or manager. Claimed data is considered the most authoritative source.";
-
-    const claimLearnMoreUrl =
-        'https://info.opensupplyhub.org/resources/claim-a-facility';
-
+const ClaimStatusRow = ({ classes, isClaimed, isPending }) => {
     const iconColumnClassName = getClaimFlagStateClassName(
         classes,
         isClaimed,
@@ -76,6 +52,203 @@ const FacilityDetailsClaimFlag = ({
             unclaimed: 'statusTextUnclaimed',
         },
     );
+    return (
+        <Grid item xs={12}>
+            <Grid
+                container
+                spacing={0}
+                alignItems="center"
+                wrap="nowrap"
+                className={classes.row}
+            >
+                <Grid item className={iconColumnClassName}>
+                    <BadgeClaimed fontSize="24px" />
+                </Grid>
+                <Grid item className={classes.statusContent}>
+                    <div className={classes.statusRow}>
+                        <Typography
+                            component="h4"
+                            className={statusTextClassName}
+                        >
+                            {getMainText(isClaimed, isPending)}
+                        </Typography>
+                        {isClaimed && (
+                            <DialogTooltip
+                                text={CLAIMED_PROFILE_TOOLTIP_TEXT}
+                                textHref={
+                                    <p
+                                        style={{
+                                            marginTop: 8,
+                                            marginBottom: 0,
+                                        }}
+                                    >
+                                        <a
+                                            href={CLAIM_LEARN_MORE_URL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'white' }}
+                                        >
+                                            Learn more →
+                                        </a>
+                                    </p>
+                                }
+                                interactive
+                                childComponent={
+                                    <IconButton
+                                        className={classes.infoButton}
+                                        size="small"
+                                        aria-label="More information"
+                                        disableRipple
+                                    >
+                                        <InfoIcon
+                                            style={{
+                                                width: 16,
+                                                height: 16,
+                                            }}
+                                        />
+                                    </IconButton>
+                                }
+                            />
+                        )}
+                    </div>
+                </Grid>
+            </Grid>
+        </Grid>
+    );
+};
+
+ClaimStatusRow.propTypes = {
+    classes: PropTypes.object.isRequired,
+    isClaimed: PropTypes.bool.isRequired,
+    isPending: PropTypes.bool.isRequired,
+};
+
+const ClaimSubtitleRow = ({
+    classes,
+    claimFacilityLink,
+    isClaimed,
+    isPending,
+    contributorName,
+    formattedDate,
+}) => {
+    const showClaimLink = !isClaimed && !isPending;
+    const showClaimedByLine = isClaimed && (contributorName || formattedDate);
+
+    if (!showClaimLink && !showClaimedByLine) return null;
+
+    const subtitleContent = showClaimLink ? (
+        <Typography component="p" variant="body1" className={classes.subtitle}>
+            <RouterLink
+                to={claimFacilityLink}
+                href={claimFacilityLink}
+                className={classes.link}
+            >
+                I want to claim this production location
+            </RouterLink>
+        </Typography>
+    ) : (
+        <Typography component="p" variant="body1" className={classes.subtitle}>
+            {contributorName && formattedDate && (
+                <>
+                    <span className={classes.subtitleSameLine}>
+                        Claimed by{' '}
+                        <Typography
+                            component="span"
+                            className={classes.inlineHighlight}
+                        >
+                            {contributorName}
+                        </Typography>
+                    </span>{' '}
+                    on{' '}
+                    <Typography
+                        component="span"
+                        className={classes.inlineHighlight}
+                    >
+                        {formattedDate}
+                    </Typography>
+                </>
+            )}
+            {contributorName && !formattedDate && (
+                <span className={classes.subtitleSameLine}>
+                    Claimed by{' '}
+                    <Typography
+                        component="span"
+                        className={classes.inlineHighlight}
+                    >
+                        {contributorName}
+                    </Typography>
+                </span>
+            )}
+            {!contributorName && formattedDate && (
+                <>
+                    Claimed on{' '}
+                    <Typography
+                        component="span"
+                        className={classes.inlineHighlight}
+                    >
+                        {formattedDate}
+                    </Typography>
+                </>
+            )}
+        </Typography>
+    );
+
+    return (
+        <Grid item xs={12} className={classes.subtitleRow}>
+            <Grid
+                container
+                spacing={0}
+                wrap="nowrap"
+                className={classes.row}
+                alignItems="center"
+            >
+                <Grid item className={classes.iconColumn} />
+                <Grid item className={classes.statusContent}>
+                    {subtitleContent}
+                </Grid>
+            </Grid>
+        </Grid>
+    );
+};
+
+ClaimSubtitleRow.propTypes = {
+    classes: PropTypes.object.isRequired,
+    claimFacilityLink: PropTypes.string.isRequired,
+    isClaimed: PropTypes.bool.isRequired,
+    isPending: PropTypes.bool.isRequired,
+    contributorName: PropTypes.string,
+    formattedDate: PropTypes.string,
+};
+
+ClaimSubtitleRow.defaultProps = {
+    contributorName: null,
+    formattedDate: null,
+};
+
+const FacilityDetailsClaimFlag = ({
+    classes,
+    osId,
+    isClaimed,
+    isPending,
+    isEmbed,
+    isV1ClaimsFlowEnabled,
+    claimInfo,
+}) => {
+    if (isEmbed) return null;
+
+    const claimFacilityLink = makeClaimFacilityLinkWithFeatureFlag(
+        osId,
+        isV1ClaimsFlowEnabled,
+    );
+    const contributorName =
+        typeof claimInfo?.contributor === 'string'
+            ? claimInfo.contributor
+            : claimInfo?.contributor?.name ?? null;
+    const claimedAt = claimInfo?.approved_at ?? claimInfo?.created_at;
+    const formattedDate = formatClaimDate(claimedAt);
+    const showSubtitleRow =
+        (!isClaimed && !isPending) ||
+        (isClaimed && (contributorName || formattedDate));
 
     return (
         <Grid
@@ -84,166 +257,20 @@ const FacilityDetailsClaimFlag = ({
             className={classes.root}
             data-testid="claim-banner"
         >
-            <Grid item xs={12}>
-                <Grid
-                    container
-                    spacing={0}
-                    alignItems="center"
-                    wrap="nowrap"
-                    className={classes.row}
-                >
-                    <Grid item className={iconColumnClassName}>
-                        <BadgeClaimed fontSize="24px" />
-                    </Grid>
-                    <Grid item className={classes.statusContent}>
-                        <div className={classes.statusRow}>
-                            <Typography
-                                component="h4"
-                                className={statusTextClassName}
-                            >
-                                {getMainText(isClaimed, isPending)}
-                            </Typography>
-                            {isClaimed && (
-                                <DialogTooltip
-                                    text={claimedProfileTooltipText}
-                                    textHref={
-                                        <p
-                                            style={{
-                                                marginTop: 8,
-                                                marginBottom: 0,
-                                            }}
-                                        >
-                                            <a
-                                                href={claimLearnMoreUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ color: 'white' }}
-                                            >
-                                                Learn more →
-                                            </a>
-                                        </p>
-                                    }
-                                    interactive
-                                    childComponent={
-                                        <IconButton
-                                            className={classes.infoButton}
-                                            size="small"
-                                            aria-label="More information"
-                                            disableRipple
-                                        >
-                                            <InfoIcon
-                                                style={{
-                                                    width: 16,
-                                                    height: 16,
-                                                }}
-                                            />
-                                        </IconButton>
-                                    }
-                                />
-                            )}
-                        </div>
-                    </Grid>
-                </Grid>
-            </Grid>
-            {((!isClaimed && !isPending) || showClaimedByLine) && (
-                <>
-                    {/* Row 2: spacer (same width as icon) | subtitle */}
-                    <Grid item xs={12} className={classes.subtitleRow}>
-                        <Grid
-                            container
-                            spacing={0}
-                            wrap="nowrap"
-                            className={classes.row}
-                            alignItems="center"
-                        >
-                            <Grid item className={classes.iconColumn} />
-                            <Grid item className={classes.statusContent}>
-                                {!isClaimed && !isPending && (
-                                    <Typography
-                                        component="p"
-                                        variant="body1"
-                                        className={classes.subtitle}
-                                    >
-                                        <RouterLink
-                                            to={claimFacilityLink}
-                                            href={claimFacilityLink}
-                                            className={classes.link}
-                                        >
-                                            I want to claim this production
-                                            location
-                                        </RouterLink>
-                                    </Typography>
-                                )}
-                                {showClaimedByLine && (
-                                    <Typography
-                                        component="p"
-                                        variant="body1"
-                                        className={classes.subtitle}
-                                    >
-                                        {contributorName && formattedDate && (
-                                            <>
-                                                <span
-                                                    className={
-                                                        classes.subtitleSameLine
-                                                    }
-                                                >
-                                                    Claimed by{' '}
-                                                    <Typography
-                                                        component="span"
-                                                        className={
-                                                            classes.inlineHighlight
-                                                        }
-                                                    >
-                                                        {contributorName}
-                                                    </Typography>
-                                                </span>{' '}
-                                                on{' '}
-                                                <Typography
-                                                    component="span"
-                                                    className={
-                                                        classes.inlineHighlight
-                                                    }
-                                                >
-                                                    {formattedDate}
-                                                </Typography>
-                                            </>
-                                        )}
-                                        {contributorName && !formattedDate && (
-                                            <span
-                                                className={
-                                                    classes.subtitleSameLine
-                                                }
-                                            >
-                                                Claimed by{' '}
-                                                <Typography
-                                                    component="span"
-                                                    className={
-                                                        classes.inlineHighlight
-                                                    }
-                                                >
-                                                    {contributorName}
-                                                </Typography>
-                                            </span>
-                                        )}
-                                        {!contributorName && formattedDate && (
-                                            <>
-                                                Claimed on{' '}
-                                                <Typography
-                                                    component="span"
-                                                    className={
-                                                        classes.inlineHighlight
-                                                    }
-                                                >
-                                                    {formattedDate}
-                                                </Typography>
-                                            </>
-                                        )}
-                                    </Typography>
-                                )}
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                </>
+            <ClaimStatusRow
+                classes={classes}
+                isClaimed={isClaimed}
+                isPending={isPending}
+            />
+            {showSubtitleRow && (
+                <ClaimSubtitleRow
+                    classes={classes}
+                    claimFacilityLink={claimFacilityLink}
+                    isClaimed={isClaimed}
+                    isPending={isPending}
+                    contributorName={contributorName}
+                    formattedDate={formattedDate}
+                />
             )}
         </Grid>
     );
