@@ -17,7 +17,11 @@ import {
 } from '../../../../util/util';
 import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
 
-import { getMainText, formatClaimDate } from './utils';
+import {
+    getMainText,
+    formatClaimDate,
+    getClaimFlagStateClassName,
+} from './utils';
 import facilityDetailsClaimFlagStyles from './styles';
 
 const FacilityDetailsClaimFlag = ({
@@ -50,6 +54,29 @@ const FacilityDetailsClaimFlag = ({
     const claimLearnMoreUrl =
         'https://info.opensupplyhub.org/resources/claim-a-facility';
 
+    const iconColumnClassName = getClaimFlagStateClassName(
+        classes,
+        isClaimed,
+        isPending,
+        {
+            base: 'iconColumn',
+            claimed: 'iconClaimed',
+            pending: 'iconPending',
+            unclaimed: 'iconUnclaimed',
+        },
+    );
+    const statusTextClassName = getClaimFlagStateClassName(
+        classes,
+        isClaimed,
+        isPending,
+        {
+            base: 'statusText',
+            claimed: 'statusTextClaimed',
+            pending: 'statusTextPending',
+            unclaimed: 'statusTextUnclaimed',
+        },
+    );
+
     return (
         <Grid
             container
@@ -65,33 +92,14 @@ const FacilityDetailsClaimFlag = ({
                     wrap="nowrap"
                     className={classes.row}
                 >
-                    <Grid
-                        item
-                        className={[
-                            classes.iconColumn,
-                            isClaimed && classes.iconClaimed,
-                            isPending && classes.iconPending,
-                            !isClaimed && !isPending && classes.iconUnclaimed,
-                        ]
-                            .filter(Boolean)
-                            .join(' ')}
-                    >
+                    <Grid item className={iconColumnClassName}>
                         <BadgeClaimed fontSize="24px" />
                     </Grid>
                     <Grid item className={classes.statusContent}>
                         <div className={classes.statusRow}>
                             <Typography
                                 component="h4"
-                                className={[
-                                    classes.statusText,
-                                    isClaimed && classes.statusTextClaimed,
-                                    isPending && classes.statusTextPending,
-                                    !isClaimed &&
-                                        !isPending &&
-                                        classes.statusTextUnclaimed,
-                                ]
-                                    .filter(Boolean)
-                                    .join(' ')}
+                                className={statusTextClassName}
                             >
                                 {getMainText(isClaimed, isPending)}
                             </Typography>

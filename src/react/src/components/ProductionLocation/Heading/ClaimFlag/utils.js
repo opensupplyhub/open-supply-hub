@@ -1,5 +1,18 @@
 import moment from 'moment';
 
+export const getClaimFlagStateClassName = (
+    classes,
+    isClaimed,
+    isPending,
+    { base, claimed, pending, unclaimed },
+) => {
+    const names = [classes[base]];
+    if (isClaimed) names.push(classes[claimed]);
+    else if (isPending) names.push(classes[pending]);
+    else names.push(classes[unclaimed]);
+    return names.filter(Boolean).join(' ');
+};
+
 export const getMainText = (isClaimed, isPending) => {
     if (isClaimed) {
         return 'CLAIMED PROFILE';
@@ -12,8 +25,6 @@ export const getMainText = (isClaimed, isPending) => {
 
 export const formatClaimDate = date => {
     if (date == null || date === '') return null;
-    const m = moment(date);
-    if (!m.isValid()) return null;
-    //  Format claim date for display (e.g. "November 15, 2022").
-    return m.format('LL');
+    if (!moment(date).isValid()) return null;
+    return moment(date).format('LL');
 };
