@@ -1,0 +1,85 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-docker
+        name: ruff (django via docker)
+        language: system
+        entry: docker
+        args:
+          - compose
+          - run
+          - --rm
+          - --no-deps
+          - -v
+          - .:/workspace
+          - -w
+          - /workspace
+          - --entrypoint
+          - ruff
+          - django
+          - check
+          - --fix
+          - --exit-non-zero-on-fix
+          - --config
+          - /workspace/pyproject.toml
+        files: ^src/django/.*\.py$
+
+      - id: isort-docker
+        name: isort (django via docker)
+        language: system
+        entry: docker
+        args:
+          - compose
+          - run
+          - --rm
+          - --no-deps
+          - -v
+          - .:/workspace
+          - -w
+          - /workspace
+          - --entrypoint
+          - isort
+          - django
+          - --settings-path
+          - /workspace/pyproject.toml
+        files: ^src/django/.*\.py$
+
+      - id: black-docker
+        name: black (django via docker)
+        language: system
+        entry: docker
+        args:
+          - compose
+          - run
+          - --rm
+          - --no-deps
+          - -v
+          - .:/workspace
+          - -w
+          - /workspace
+          - --entrypoint
+          - black
+          - django
+          - --config
+          - /workspace/pyproject.toml
+        files: ^src/django/.*\.py$
+
+      - id: flake8-docker
+        name: flake8 (django via docker)
+        language: system
+        entry: docker
+        args:
+          - compose
+          - run
+          - --rm
+          - --no-deps
+          - -v
+          - .:/workspace
+          - -w
+          - /workspace
+          - --entrypoint
+          - flake8
+          - django
+          - --config
+          - /workspace/src/django/.flake8
+        files: ^src/django/.*\.py$
