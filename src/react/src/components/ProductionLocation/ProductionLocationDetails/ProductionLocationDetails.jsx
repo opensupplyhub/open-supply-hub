@@ -49,12 +49,12 @@ function ProductionLocationDetails({
     );
 }
 
-function mapStateToProps({
+const mapStateToProps = ({
     filters,
     embeddedMap: { embed },
     facilities: { singleFacility: { data } = {} } = {},
     featureFlags,
-}) {
+}) => {
     return {
         filters,
         embedded: !!embed,
@@ -64,9 +64,9 @@ function mapStateToProps({
             featureFlags,
         ),
     };
-}
+};
 
-function mapDispatchToProps(dispatch) {
+const mapDispatchToProps = dispatch => {
     return {
         clearFacility: () => dispatch(resetSingleFacility()),
     };
