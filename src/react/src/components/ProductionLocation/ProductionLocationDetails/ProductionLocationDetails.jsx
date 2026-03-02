@@ -54,23 +54,19 @@ const mapStateToProps = ({
     embeddedMap: { embed },
     facilities: { singleFacility: { data } = {} } = {},
     featureFlags,
-}) => {
-    return {
-        filters,
-        embedded: !!embed,
-        data,
-        embed,
-        useProductionLocationPage: shouldUseProductionLocationPage(
-            featureFlags,
-        ),
-    };
-};
+}) => ({
+    filters,
+    embedded: !!embed,
+    data,
+    embed,
+    useProductionLocationPage: shouldUseProductionLocationPage(
+        featureFlags,
+    ),
+});
 
-const mapDispatchToProps = dispatch => {
-    return {
-        clearFacility: () => dispatch(resetSingleFacility()),
-    };
-}
+const mapDispatchToProps = dispatch => ({
+    clearFacility: () => dispatch(resetSingleFacility()),
+});
 
 export default withRouter(
     connect(
