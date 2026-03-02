@@ -24,6 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
 
 ### What's new
+* [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
 * [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
     * Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
     * If `embed=1` is present, redirect to the `/facilities/:osID?sort_by=contributors_desc&embed=1` (with preserving other URL parameters) regardless of active `enable_production_location_page` flag.
