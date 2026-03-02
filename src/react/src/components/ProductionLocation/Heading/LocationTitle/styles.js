@@ -35,7 +35,6 @@ export default theme => {
         osIdValue: Object.freeze({
             ...typography.inlineHighlight,
             fontSize: '18px',
-            fontWeight: 500,
         }),
         osIdInfoButton: Object.freeze({
             padding: spacing * 0.5,

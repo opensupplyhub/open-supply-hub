@@ -30,6 +30,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
     return (
         <div className={`${classes.container} ${className || ''}`}>
             <div className={classes.titleRow}>
+                {/* h3: Section title per typographyStyles */}
                 <Typography
                     component="h3"
                     className={classes.sectionTitle}
@@ -94,12 +95,14 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                             <Typography
                                 component="span"
                                 className={classes.label}
+                                variant="body1"
                             >
                                 Claimed
                             </Typography>
                             {showSubsectionInfo && (
                                 <Typography
                                     component="p"
+                                    variant="body1"
                                     className={classes.subsectionText}
                                 >
                                     {CLAIMED_SUBSECTION_TEXT}
@@ -118,12 +121,14 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                             <Typography
                                 component="span"
                                 className={classes.label}
+                                variant="body1"
                             >
                                 Crowdsourced
                             </Typography>
                             {showSubsectionInfo && (
                                 <Typography
                                     component="p"
+                                    variant="body1"
                                     className={classes.subsectionText}
                                 >
                                     {CROWDSOURCED_SUBSECTION_TEXT}{' '}
@@ -150,12 +155,14 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                             <Typography
                                 component="span"
                                 className={classes.label}
+                                variant="body1"
                             >
                                 Partner Data
                             </Typography>
                             {showSubsectionInfo && (
                                 <Typography
                                     component="p"
+                                    variant="body1"
                                     className={classes.subsectionText}
                                 >
                                     {PARTNER_SUBSECTION_TEXT}{' '}
