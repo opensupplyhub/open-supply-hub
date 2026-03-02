@@ -45,6 +45,7 @@ export const getTypographyStyles = theme => {
             color: theme.palette.text.secondary,
         }),
         inlineHighlight: Object.freeze({
+            fontSize: '18px',
             fontWeight: 500,
             color: theme.palette.text.primary,
             display: 'inline',
