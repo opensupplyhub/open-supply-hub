@@ -1,14 +1,14 @@
 import { getTypographyStyles } from '../../../../util/typographyStyles';
 import COLOURS from '../../../../util/COLOURS';
+import commonStyles from '../../commonStyles';
 
 export default theme => {
     const typography = getTypographyStyles(theme);
     const spacing = theme.spacing.unit ?? 8;
     return Object.freeze({
         container: Object.freeze({
-            backgroundColor: theme.palette.background.paper,
-            paddingTop: spacing,
-            paddingBottom: spacing * 2,
+            ...commonStyles(theme).container,
+            padding: '20px 20px 20px 36px',
         }),
         titleRow: Object.freeze({
             display: 'flex',
@@ -31,6 +31,17 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
+        switchWrap: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            marginLeft: 'auto',
+        }),
+        switchLabel: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '14px',
+            marginRight: spacing,
+        }),
+        switch: Object.freeze({}),
         descriptionList: Object.freeze({
             marginTop: 0,
         }),
@@ -39,7 +50,7 @@ export default theme => {
         }),
         itemContent: Object.freeze({
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             gap: spacing * 2,
         }),
         itemText: Object.freeze({
@@ -48,19 +59,19 @@ export default theme => {
         }),
         iconCrowdsourced: Object.freeze({
             flexShrink: 0,
-            marginTop: 2,
+            marginRight: spacing,
             fontSize: 20,
             color: COLOURS.DARK_GREY,
         }),
         iconClaimed: Object.freeze({
             flexShrink: 0,
-            marginTop: 2,
+            marginRight: spacing,
             fontSize: 20,
             color: COLOURS.DARK_GREEN,
         }),
         iconPartner: Object.freeze({
             flexShrink: 0,
-            marginTop: 2,
+            marginRight: spacing,
             fontSize: 20,
             color: COLOURS.MATERIAL_BLUE,
         }),
@@ -68,11 +79,18 @@ export default theme => {
             ...typography.formLabelTight,
             fontSize: '18px',
         }),
-        description: Object.freeze({
-            ...typography.sectionDescription,
+        subsectionText: Object.freeze({
             ...typography.bodyText,
+            fontSize: '16px',
             marginTop: spacing * 0.5,
             marginBottom: 0,
+        }),
+        learnMoreLink: Object.freeze({
+            color: theme.palette.primary.main,
+            textDecoration: 'none',
+            '&:hover': {
+                textDecoration: 'underline',
+            },
         }),
     });
 };
