@@ -13,19 +13,22 @@ export default () =>
         }),
         /* First column: label (140px) */
         labelColumn: Object.freeze({
-            width: 140,
-            flexShrink: 0,
+            width: '165px',
+            flexDirection: 'row',
         }),
-        tooltipIconColumn: Object.freeze({
-            width: 28,
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
+        labelItem: Object.freeze({
+            width: '80%',
         }),
         label: Object.freeze({
             fontSize: '16px',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
+        }),
+        tooltipIconItem: Object.freeze({
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            width: '20%',
         }),
         /* Second column: value + meta block */
         valueColumn: Object.freeze({
@@ -35,15 +38,14 @@ export default () =>
         valueWithTooltip: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
+            marginBottom: '4px',
         }),
         value: Object.freeze({
             fontSize: 16,
             lineHeight: 1.4,
-            fontWeight: 700,
-            color: COLOURS.NEAR_BLACK,
+            fontWeight: 500,
         }),
         tooltipIcon: Object.freeze({
-            marginRight: 4,
             color: COLOURS.DARK_GREY,
             cursor: 'help',
             fontSize: 18,
@@ -52,26 +54,27 @@ export default () =>
         }),
         statusChip: Object.freeze({
             height: 24,
-            fontSize: 12,
+            fontSize: '14px',
             fontWeight: 600,
-            borderRadius: 4,
+            borderRadius: 0,
             '& .MuiChip-label': Object.freeze({
                 paddingLeft: 8,
                 paddingRight: 8,
             }),
         }),
         claimedChip: Object.freeze({
-            backgroundColor: COLOURS.DARK_GREEN,
-            color: COLOURS.WHITE,
+            backgroundColor: '#f0fdf480',
+            color: COLOURS.DARK_GREEN,
         }),
         crowdsourcedChip: Object.freeze({
-            backgroundColor: COLOURS.DARK_SLATE_GREY,
-            color: COLOURS.WHITE,
+            backgroundColor: '#fff7ed80',
+            color: '#C2410C',
         }),
         metaRow: Object.freeze({
             fontSize: 14,
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
+            marginBottom: '4px',
         }),
         metaRowSecondary: Object.freeze({
             fontSize: 14,
@@ -88,6 +91,10 @@ export default () =>
             fontSize: 18,
             color: COLOURS.DARK_GREY,
         }),
+        contributorName: Object.freeze({
+            fontSize: '16px',
+            color: COLOURS.DARK_GREY,
+        }),
         dateBlock: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
@@ -98,6 +105,10 @@ export default () =>
             fontSize: 18,
             color: COLOURS.DARK_GREY,
         }),
+        dateText: Object.freeze({
+            fontSize: '16px',
+            color: COLOURS.DARK_GREY,
+        }),
         metaSeparator: Object.freeze({
             marginLeft: 4,
             marginRight: 4,
@@ -106,15 +117,13 @@ export default () =>
         sourcesButton: Object.freeze({
             textTransform: 'none',
             fontWeight: 500,
-            fontSize: 14,
+            fontSize: '16px',
             padding: 0,
             minHeight: 0,
-            textDecoration: 'underline',
             color: COLOURS.PURPLE,
             '&:hover': Object.freeze({
                 backgroundColor: 'transparent',
                 textDecoration: 'underline',
-                color: COLOURS.DARK_PURPLE,
             }),
         }),
     });

@@ -7,8 +7,9 @@ export function formatDataPointDate(date) {
     if (!date) return '';
     const d = typeof date === 'string' ? new Date(date) : date;
     if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleDateString('en-GB', {
-        month: 'short',
+    return d.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
         year: 'numeric',
     });
 }
@@ -20,9 +21,7 @@ export function formatDataPointDate(date) {
  */
 export function getSourcesCount(drawerData) {
     if (!drawerData) return 0;
-    const promoted = drawerData.promotedContribution ? 1 : 0;
-    const list = Array.isArray(drawerData.contributions)
+    return Array.isArray(drawerData.contributions)
         ? drawerData.contributions.length
         : 0;
-    return promoted + list;
 }

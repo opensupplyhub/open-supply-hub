@@ -4,7 +4,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import productionLocationDetailsGeneralFieldsStyles from './styles';
-import DataPoint, { STATUS_CLAIMED } from '../DataPoint/DataPoint';
+import DataPoint, { STATUS_CROWDSOURCED } from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 
 /**
@@ -81,7 +81,7 @@ const ProductionLocationDetailsGeneralFields = ({ classes, data }) => {
                 label="Production Location Name"
                 value={facilityName || '—'}
                 tooltipText="The name of the production facility as reported by contributors."
-                statusLabel={STATUS_CLAIMED}
+                statusLabel={STATUS_CROWDSOURCED}
                 contributorName={
                     facilityName ? 'Zaber and Zubair Fabrics Ltd' : null
                 }

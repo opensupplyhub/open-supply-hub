@@ -4,13 +4,13 @@ import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
 import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
-import Icon from '@material-ui/core/Icon';
-import InfoIcon from '@material-ui/icons/Info';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+// import InfoIcon from '@material-ui/icons/Info';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 
 import ScheduleIcon from '@material-ui/icons/Schedule';
-import PersonIcon from '@material-ui/icons/Person';
+import PersonIcon from '@material-ui/icons/PersonOutline';
 
 import { formatDataPointDate, getSourcesCount } from './utils';
 import dataPointStyles from './styles';
@@ -42,39 +42,31 @@ const DataPoint = ({
 
     const tooltipIcon = tooltipText ? (
         <Tooltip title={tooltipText} placement="top" enterDelay={200}>
-            <Icon
+            <HelpOutlineIcon
                 className={classes.tooltipIcon}
                 fontSize="small"
                 aria-label={tooltipText}
-            >
-                <InfoIcon />
-            </Icon>
+            />
         </Tooltip>
     ) : null;
 
     return (
-        <Grid
-            container
-            className={classes.root}
-            spacing={3}
-            wrap="nowrap"
-            role="group"
-        >
-            <Grid item className={classes.labelColumn}>
-                <Typography className={classes.label} variant="body2">
-                    {label}
-                </Typography>
-            </Grid>
-            <Grid item className={classes.tooltipIconColumn}>
-                {tooltipIcon}
+        <Grid container className={classes.root} wrap="nowrap">
+            <Grid item container className={classes.labelColumn}>
+                <Grid item className={classes.labelItem}>
+                    <Typography className={classes.label} variant="body2">
+                        {label}
+                    </Typography>
+                </Grid>
+                <Grid item className={classes.tooltipIconItem}>
+                    {tooltipIcon}
+                </Grid>
             </Grid>
             <Grid
                 item
                 container
                 className={classes.valueColumn}
-                zeroMinWidth
                 direction="column"
-                spacing={1}
             >
                 <Grid item className={classes.valueWithTooltip}>
                     <Typography className={classes.value} variant="body1">
@@ -87,7 +79,6 @@ const DataPoint = ({
                         item
                         alignItems="center"
                         wrap="wrap"
-                        spacing={1}
                         className={classes.metaRow}
                     >
                         {statusLabel ? (
@@ -111,6 +102,7 @@ const DataPoint = ({
                                     <Typography
                                         variant="body2"
                                         component="span"
+                                        className={classes.contributorName}
                                     >
                                         {contributorName}
                                     </Typography>
@@ -125,7 +117,6 @@ const DataPoint = ({
                         container
                         alignItems="center"
                         wrap="wrap"
-                        spacing={1}
                         className={classes.metaRowSecondary}
                     >
                         {date ? (
@@ -138,6 +129,7 @@ const DataPoint = ({
                                     <Typography
                                         variant="body2"
                                         component="span"
+                                        className={classes.dateText}
                                     >
                                         {formatDataPointDate(date)}
                                     </Typography>
