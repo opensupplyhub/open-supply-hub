@@ -44,6 +44,10 @@ export default theme => {
         switch: Object.freeze({}),
         descriptionList: Object.freeze({
             marginTop: 0,
+            '& > *:nth-child(2)': {
+                paddingLeft: spacing * 2,
+                paddingRight: spacing * 2,
+            },
         }),
         descriptionItem: Object.freeze({
             display: 'block',
