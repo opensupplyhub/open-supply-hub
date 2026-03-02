@@ -59,9 +59,7 @@ const mapStateToProps = ({
     embedded: !!embed,
     data,
     embed,
-    useProductionLocationPage: shouldUseProductionLocationPage(
-        featureFlags,
-    ),
+    useProductionLocationPage: shouldUseProductionLocationPage(featureFlags),
 });
 
 const mapDispatchToProps = dispatch => ({
