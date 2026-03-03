@@ -20,20 +20,20 @@ export default () =>
             width: '80%',
         }),
         label: Object.freeze({
-            fontSize: '16px',
+            fontSize: '18px',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
         }),
         tooltipIconItem: Object.freeze({
             display: 'flex',
             alignItems: 'flex-start',
-            justifyContent: 'center',
             width: '20%',
         }),
         /* Second column: value + meta block */
         valueColumn: Object.freeze({
             minWidth: 0,
             flex: 1,
+            overflow: 'hidden',
         }),
         valueWithTooltip: Object.freeze({
             display: 'inline-flex',
@@ -41,22 +41,23 @@ export default () =>
             marginBottom: '4px',
         }),
         value: Object.freeze({
-            fontSize: 16,
+            fontSize: '18px',
+            fontWeight: 600,
             lineHeight: 1.4,
-            fontWeight: 500,
         }),
         tooltipIcon: Object.freeze({
             color: COLOURS.DARK_GREY,
             cursor: 'help',
-            fontSize: 18,
+            fontSize: '18px',
             opacity: 0,
             transition: 'opacity 0.2s ease',
         }),
         statusChip: Object.freeze({
             height: 24,
-            fontSize: '14px',
+            fontSize: '16px',
             fontWeight: 600,
             borderRadius: 0,
+            marginRight: '8px',
             '& .MuiChip-label': Object.freeze({
                 paddingLeft: 8,
                 paddingRight: 8,
@@ -70,43 +71,63 @@ export default () =>
             backgroundColor: '#fff7ed80',
             color: '#C2410C',
         }),
+        metaRowContainer: Object.freeze({
+            marginLeft: '-16px',
+        }),
         metaRow: Object.freeze({
-            fontSize: 14,
+            fontSize: '16px',
+            width: 'fit-content',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
             marginBottom: '4px',
+            marginLeft: '16px',
         }),
         metaRowSecondary: Object.freeze({
-            fontSize: 14,
+            fontSize: '16px',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
+            width: 'fit-content',
+        }),
+        contributorItem: Object.freeze({
+            width: 'fit-content',
         }),
         contributor: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
-            marginRight: 12,
         }),
         personIcon: Object.freeze({
             marginRight: 4,
-            fontSize: 18,
+            fontSize: '16px',
             color: COLOURS.DARK_GREY,
         }),
         contributorName: Object.freeze({
-            fontSize: '16px',
+            fontSize: '18px',
             color: COLOURS.DARK_GREY,
+        }),
+        dateItem: Object.freeze({
+            position: 'relative',
+            marginLeft: '16px',
+            '&::before': Object.freeze({
+                content: "'·'",
+                fontSize: '20px',
+                position: 'absolute',
+                left: '-9px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: COLOURS.DARK_GREY,
+            }),
         }),
         dateBlock: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
-            marginRight: 4,
         }),
         dateIcon: Object.freeze({
             marginRight: 4,
-            fontSize: 18,
+            fontSize: '13px',
             color: COLOURS.DARK_GREY,
         }),
         dateText: Object.freeze({
-            fontSize: '16px',
+            fontSize: '18px',
             color: COLOURS.DARK_GREY,
         }),
         metaSeparator: Object.freeze({
@@ -114,10 +135,23 @@ export default () =>
             marginRight: 4,
             color: COLOURS.DARK_GREY,
         }),
+        sourcesButtonItem: Object.freeze({
+            marginLeft: '16px',
+            position: 'relative',
+            '&::before': Object.freeze({
+                content: "'·'",
+                fontSize: '20px',
+                position: 'absolute',
+                left: '-9px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: COLOURS.DARK_GREY,
+            }),
+        }),
         sourcesButton: Object.freeze({
             textTransform: 'none',
-            fontWeight: 500,
-            fontSize: '16px',
+            fontWeight: 600,
+            fontSize: '18px',
             padding: 0,
             minHeight: 0,
             color: COLOURS.PURPLE,
