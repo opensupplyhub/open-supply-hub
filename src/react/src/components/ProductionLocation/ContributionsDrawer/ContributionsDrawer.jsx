@@ -30,7 +30,7 @@ import {
     LEARN_MORE_LABEL,
     LEARN_MORE_OPEN_DATA_MODEL_URL,
 } from './constants';
-import getInfoPromotedText from './utils';
+import getInfoPromotedText from './utils.jsx';
 import contributionsDrawerStyles from './styles';
 
 const ContributionsDrawer = ({
