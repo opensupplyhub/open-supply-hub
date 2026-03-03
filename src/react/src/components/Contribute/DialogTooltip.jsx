@@ -93,7 +93,6 @@ const DialogTooltip = ({
         <Tooltip
             enterDelay={interactive ? 0 : 200}
             leaveDelay={interactive ? 0 : 200}
-            interactive={interactive}
             open={interactive ? open : undefined}
             onClose={interactive ? () => setOpen(false) : undefined}
             title={titleContent}
