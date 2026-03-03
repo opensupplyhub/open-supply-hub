@@ -7,6 +7,7 @@ const DataSourceItem = ({
     classes,
     Icon,
     iconClassName,
+    labelClassName,
     title,
     subsectionText,
     showSubsectionInfo,
@@ -18,7 +19,7 @@ const DataSourceItem = ({
             <Icon className={iconClassName} aria-hidden />
             <Typography
                 component="span"
-                className={classes.label}
+                className={labelClassName}
                 variant="body1"
             >
                 {title}
@@ -56,6 +57,7 @@ DataSourceItem.propTypes = {
     classes: PropTypes.object.isRequired,
     Icon: PropTypes.func.isRequired,
     iconClassName: PropTypes.string.isRequired,
+    labelClassName: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
     subsectionText: PropTypes.string.isRequired,
     showSubsectionInfo: PropTypes.bool.isRequired,

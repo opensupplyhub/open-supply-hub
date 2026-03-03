@@ -19,6 +19,7 @@ export default {
     NOTE_GREEN: '#c8e6c9',
     GREEN_TEXT: '#2e7d32',
     DARK_MATERIAL_GREEN: '#1b5e20',
+    TEAL_GREEN: '#318178',
 
     // Reds
     LIGHT_RED: '#FFEAEA',

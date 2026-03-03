@@ -67,7 +67,7 @@ export default theme => {
             width: 20,
             height: 20,
             fontSize: 20,
-            color: COLOURS.DARK_GREY,
+            color: COLOURS.ORANGE,
         }),
         iconClaimed: Object.freeze({
             flexShrink: 0,
@@ -81,11 +81,26 @@ export default theme => {
             width: 20,
             height: 20,
             fontSize: 20,
-            color: COLOURS.MATERIAL_BLUE,
+            color: COLOURS.TEAL_GREEN,
         }),
         label: Object.freeze({
             ...typography.formLabelTight,
             fontSize: '1.125rem',
+        }),
+        labelClaimed: Object.freeze({
+            ...typography.formLabelTight,
+            fontSize: '1.125rem',
+            color: COLOURS.DARK_GREEN,
+        }),
+        labelCrowdsourced: Object.freeze({
+            ...typography.formLabelTight,
+            fontSize: '1.125rem',
+            color: COLOURS.ORANGE,
+        }),
+        labelPartner: Object.freeze({
+            ...typography.formLabelTight,
+            fontSize: '1.125rem',
+            color: COLOURS.TEAL_GREEN,
         }),
         subsectionText: Object.freeze({
             ...typography.bodyText,

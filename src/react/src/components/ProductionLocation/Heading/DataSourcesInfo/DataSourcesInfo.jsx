@@ -81,6 +81,11 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                         classes={classes}
                         Icon={item.Icon}
                         iconClassName={classes[item.iconClassNameKey]}
+                        labelClassName={
+                            item.labelClassNameKey
+                                ? classes[item.labelClassNameKey]
+                                : classes.label
+                        }
                         title={item.title}
                         subsectionText={item.subsectionText}
                         showSubsectionInfo={showSubsectionInfo}

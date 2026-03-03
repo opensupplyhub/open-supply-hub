@@ -12,6 +12,7 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
     Object.freeze({
         Icon: CheckCircleOutline,
         iconClassNameKey: 'iconClaimed',
+        labelClassNameKey: 'labelClaimed',
         title: 'Claimed',
         subsectionText:
             'General information & operational details submitted by production location',
@@ -21,6 +22,7 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
     Object.freeze({
         Icon: People,
         iconClassNameKey: 'iconCrowdsourced',
+        labelClassNameKey: 'labelCrowdsourced',
         title: 'Crowdsourced',
         subsectionText:
             "General information shared by supply chain stakeholders & OS Hub's research team",
@@ -29,6 +31,7 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
     Object.freeze({
         Icon: HandshakeIcon,
         iconClassNameKey: 'iconPartner',
+        labelClassNameKey: 'labelPartner',
         title: 'Partner Data',
         subsectionText:
             'Additional social or environmental information shared by third party platforms',
