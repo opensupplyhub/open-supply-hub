@@ -182,7 +182,7 @@ DataPoint.propTypes = {
         promotedContribution: object,
         contributions: array,
         title: string,
-        subtitle: string,
+        subtitle: oneOfType([string, node]),
     }),
     onOpenDrawer: func,
     renderDrawer: func,
