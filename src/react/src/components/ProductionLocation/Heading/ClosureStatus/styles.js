@@ -5,6 +5,7 @@ export default theme =>
             borderRadius: 0,
             display: 'flex',
             justifyContent: 'flex-start',
+            marginBottom: theme.spacing.unit * 3,
         },
         contentContainer: {
             width: '100%',
@@ -43,7 +44,7 @@ export default theme =>
         },
         text: {
             color: 'rgb(255, 255, 255)',
-            fontSize: '14px',
+            fontSize: '1rem',
             textAlign: 'left',
         },
         statusPending: {

@@ -64,7 +64,7 @@ const ProductionLocationDetailClosureStatus = ({
 };
 
 ProductionLocationDetailClosureStatus.propTypes = {
-    data: PropTypes.object.isRequired,
+    data: PropTypes.object,
     clearFacility: PropTypes.func.isRequired,
     classes: PropTypes.shape({
         status: PropTypes.string,
@@ -80,6 +80,7 @@ ProductionLocationDetailClosureStatus.propTypes = {
 };
 
 ProductionLocationDetailClosureStatus.defaultProps = {
+    data: null,
     useProductionLocationPage: false,
     search: '',
 };
