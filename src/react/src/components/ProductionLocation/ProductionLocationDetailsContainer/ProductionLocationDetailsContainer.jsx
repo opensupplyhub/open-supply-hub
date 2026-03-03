@@ -98,7 +98,7 @@ function ProductionLocationDetailsContainer({
             <Grid item xs={12} md={10}>
                 <ProductionLocationDetailsContent
                     data={data}
-                    embed={embed}
+                    embed={!!embed}
                     clearFacility={clearFacility}
                     useProductionLocationPage={useProductionLocationPage}
                     location={location}
