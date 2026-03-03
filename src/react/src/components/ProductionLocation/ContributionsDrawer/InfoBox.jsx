@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { object, string, node, oneOf } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import InfoIcon from '@material-ui/icons/InfoOutlined';
 import { withStyles } from '@material-ui/core/styles';
@@ -68,12 +68,12 @@ const InfoBox = ({
 };
 
 InfoBox.propTypes = {
-    classes: PropTypes.object.isRequired,
-    title: PropTypes.string,
-    children: PropTypes.node.isRequired,
-    variant: PropTypes.oneOf(['promoted', 'contributions']),
-    learnMoreUrl: PropTypes.string,
-    learnMoreLabel: PropTypes.string,
+    classes: object.isRequired,
+    title: string,
+    children: node.isRequired,
+    variant: oneOf(['promoted', 'contributions']),
+    learnMoreUrl: string,
+    learnMoreLabel: string,
 };
 
 InfoBox.defaultProps = {

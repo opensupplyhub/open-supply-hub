@@ -1,5 +1,16 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import {
+    object,
+    bool,
+    func,
+    string,
+    node,
+    shape,
+    oneOfType,
+    instanceOf,
+    arrayOf,
+    number,
+} from 'prop-types';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -144,35 +155,29 @@ const ContributionsDrawer = ({
 };
 
 ContributionsDrawer.propTypes = {
-    classes: PropTypes.object.isRequired,
-    open: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    title: PropTypes.string,
-    subtitle: PropTypes.node,
-    promotedContribution: PropTypes.shape({
-        value: PropTypes.string,
-        sourceName: PropTypes.string,
-        date: PropTypes.oneOfType([
-            PropTypes.string,
-            PropTypes.instanceOf(Date),
-        ]),
-        linkUrl: PropTypes.string,
+    classes: object.isRequired,
+    open: bool.isRequired,
+    onClose: func.isRequired,
+    title: string,
+    subtitle: node,
+    promotedContribution: shape({
+        value: string,
+        sourceName: string,
+        date: oneOfType([string, instanceOf(Date)]),
+        linkUrl: string,
     }),
-    contributions: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-            value: PropTypes.string,
-            sourceName: PropTypes.string,
-            date: PropTypes.oneOfType([
-                PropTypes.string,
-                PropTypes.instanceOf(Date),
-            ]),
-            linkUrl: PropTypes.string,
+    contributions: arrayOf(
+        shape({
+            id: oneOfType([string, number]),
+            value: string,
+            sourceName: string,
+            date: oneOfType([string, instanceOf(Date)]),
+            linkUrl: string,
         }),
     ),
-    infoPromotedTitle: PropTypes.string,
-    infoPromotedText: PropTypes.string,
-    infoContributionsText: PropTypes.string,
+    infoPromotedTitle: string,
+    infoPromotedText: string,
+    infoContributionsText: string,
 };
 
 ContributionsDrawer.defaultProps = {

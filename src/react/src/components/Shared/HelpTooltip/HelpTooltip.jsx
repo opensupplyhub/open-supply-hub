@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { string, number, shape, object } from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import { withStyles } from '@material-ui/core/styles';
@@ -29,15 +29,15 @@ HelpTooltip.defaultProps = {
 };
 
 HelpTooltip.propTypes = {
-    title: PropTypes.string.isRequired,
-    placement: PropTypes.string,
-    enterDelay: PropTypes.number,
-    classes: PropTypes.shape({
-        popper: PropTypes.string,
-        tooltip: PropTypes.string.isRequired,
-        icon: PropTypes.string.isRequired,
+    title: string.isRequired,
+    placement: string,
+    enterDelay: number,
+    classes: shape({
+        popper: string,
+        tooltip: string.isRequired,
+        icon: string.isRequired,
     }).isRequired,
-    className: PropTypes.string,
+    className: string,
 };
 
 export default withStyles(styles)(HelpTooltip);

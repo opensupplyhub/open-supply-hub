@@ -1,12 +1,12 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { object, string, oneOfType, instanceOf, bool } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import ScheduleIcon from '@material-ui/icons/Schedule';
 
 import formatContributionDate from './utils';
-import styles from './styles';
+import contributionCardStyles from './styles';
 
 const ContributionCard = ({ classes, value, sourceName, date, promoted }) => (
     <div
@@ -65,11 +65,11 @@ const ContributionCard = ({ classes, value, sourceName, date, promoted }) => (
 );
 
 ContributionCard.propTypes = {
-    classes: PropTypes.object.isRequired,
-    value: PropTypes.string.isRequired,
-    sourceName: PropTypes.string,
-    date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
-    promoted: PropTypes.bool,
+    classes: object.isRequired,
+    value: string.isRequired,
+    sourceName: string,
+    date: oneOfType([string, instanceOf(Date)]),
+    promoted: bool,
 };
 
 ContributionCard.defaultProps = {
@@ -78,4 +78,4 @@ ContributionCard.defaultProps = {
     promoted: false,
 };
 
-export default withStyles(styles)(ContributionCard);
+export default withStyles(contributionCardStyles)(ContributionCard);

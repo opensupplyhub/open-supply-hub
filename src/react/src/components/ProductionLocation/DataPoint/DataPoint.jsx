@@ -1,5 +1,15 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import {
+    object,
+    string,
+    oneOfType,
+    node,
+    instanceOf,
+    oneOf,
+    shape,
+    array,
+    func,
+} from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
@@ -162,21 +172,21 @@ const DataPoint = ({
 };
 
 DataPoint.propTypes = {
-    classes: PropTypes.object.isRequired,
-    label: PropTypes.string.isRequired,
-    value: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
-    tooltipText: PropTypes.string,
-    statusLabel: PropTypes.oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
-    contributorName: PropTypes.string,
-    date: PropTypes.oneOfType([PropTypes.string, PropTypes.instanceOf(Date)]),
-    drawerData: PropTypes.shape({
-        promotedContribution: PropTypes.object,
-        contributions: PropTypes.array,
-        title: PropTypes.string,
-        subtitle: PropTypes.string,
+    classes: object.isRequired,
+    label: string.isRequired,
+    value: oneOfType([string, node]).isRequired,
+    tooltipText: string,
+    statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
+    contributorName: string,
+    date: oneOfType([string, instanceOf(Date)]),
+    drawerData: shape({
+        promotedContribution: object,
+        contributions: array,
+        title: string,
+        subtitle: string,
     }),
-    onOpenDrawer: PropTypes.func,
-    renderDrawer: PropTypes.func,
+    onOpenDrawer: func,
+    renderDrawer: func,
 };
 
 DataPoint.defaultProps = {

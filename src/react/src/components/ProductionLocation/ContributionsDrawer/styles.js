@@ -1,14 +1,6 @@
 import COLOURS from '../../../util/COLOURS';
 
-/**
- * Drawer styles aligned with design:
- * - Header: title + icon left, close right; subtitle below
- * - Section labels: uppercase grey
- * - Info boxes: purple (promoted) / blue (contributions) with left border
- * - Contribution cards: white, value bold, source purple, date + link right
- */
-// eslint-disable-next-line no-unused-vars
-export default theme =>
+export default () =>
     Object.freeze({
         drawerPaper: Object.freeze({
             width: 390,
