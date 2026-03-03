@@ -26,14 +26,18 @@ const ProductionLocationDetailsTitle = ({ classes, data }) => {
     return (
         <div className={classes.container}>
             {/* h1: Page title per typographyStyles */}
-            <Typography component="h1" className={classes.title} variant="h1">
+            <Typography
+                component="h1"
+                className={classes.title}
+                variant="headline"
+            >
                 {locationName}
             </Typography>
             <div className={classes.osIdRow}>
                 <span className={classes.osIdValueWithTooltip}>
                     <Typography
                         component="h2"
-                        variant="h2"
+                        variant="title"
                         className={classes.osIdValue}
                     >
                         OS ID: {osId}

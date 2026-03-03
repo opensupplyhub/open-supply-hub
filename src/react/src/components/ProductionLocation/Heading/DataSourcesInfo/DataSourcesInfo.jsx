@@ -24,7 +24,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                 <Typography
                     component="h3"
                     className={classes.sectionTitle}
-                    variant="h3"
+                    variant="title"
                 >
                     Understanding Data Sources
                 </Typography>

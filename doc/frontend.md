@@ -10,6 +10,7 @@ How to use typography across the application: which shared styles to use, how to
 - **Usage:** Call `getTypographyStyles(theme)` in your component's `withStyles` (or `makeStyles`) and spread the returned keys into your class objects; then pass those classes to MUI `Typography` via `className={classes.xyz}`.
 - **Rule:** Prefer these tokens over hardcoding font sizes/weights so headings, labels, body text, and links stay consistent.
 - **Body text size:** Use `1rem` for body and paragraph text (section description, bodyText, inline highlight). In this app the root font size is the browser default (typically 16px), so 1rem resolves accordingly.
+- **MUI v3 Typography variants:** Use `component` for semantics (e.g. `component="h1"`) and `variant` for MUI’s styling. Valid variants are: `"display4"`, `"display3"`, `"display2"`, `"display1"`, `"headline"`, `"title"`, `"subheading"`, `"body2"`, `"body1"`, `"caption"`, `"button"`, `"srOnly"`, `"inherit"`. Do not use `variant="h1"` / `"h2"` / `"h3"` (they are not supported in MUI v3). Use `variant="headline"` for page title, `variant="title"` for major/section headings, `variant="subheading"` for sub-sections.
 
 ---
 
@@ -17,9 +18,9 @@ How to use typography across the application: which shared styles to use, how to
 
 | Role | When to use | Style key | Typical MUI usage |
 |------|-------------|-----------|-------------------|
-| **Page title** | Main title of a page (e.g. facility/location name) | (custom from `formLabelTight`) | `<Typography component="h1" variant="h1" className={classes.title} />` |
-| **Major section** | Big section blocks (e.g. claim intro) | (custom as needed) | `component="h2"`, `variant="h2"` |
-| **Section title** | Subsections ("Understanding Data Sources", "Partner Data", etc.) | `sectionTitle` | `component="h3"`, `variant="h3"`, `className` with `...typography.sectionTitle` |
+| **Page title** | Main title of a page (e.g. facility/location name) | (custom from `formLabelTight`) | `<Typography component="h1" variant="headline" className={classes.title} />` |
+| **Major section** | Big section blocks (e.g. claim intro) | (custom as needed) | `component="h2"`, `variant="title"` |
+| **Section title** | Subsections ("Understanding Data Sources", "Partner Data", etc.) | `sectionTitle` | `component="h3"`, `variant="title"`, `className` with `...typography.sectionTitle` |
 | **Field / UI label** | Form labels, bold labels ("OS ID:", "CLAIMED PROFILE", "Claimed", "Crowdsourced") | `formLabel` or `formLabelTight` | `component="span"` or `"label"`, `variant="body1"`, `className` with `...typography.formLabelTight` |
 | **Body / paragraph** | Normal paragraphs, descriptions, "Show more" labels | `bodyText` | `component="p"` or `"span"`, `variant="body1"`, `className` with `...typography.bodyText` |
 | **Section description** | Intro or explanatory block under a section | `sectionDescription` | `component="p"`, `variant="body1"`, `className` with `...typography.sectionDescription` |
@@ -56,19 +57,19 @@ How to use typography across the application: which shared styles to use, how to
 
 - **h1 – Page title**  
   One per page (e.g. facility/location name).  
-  Example: `component="h1"`, `variant="h1"`, `className` from styles that extend `formLabelTight` (e.g. 28px, 700 for prominence).
+  Example: `component="h1"`, `variant="headline"`, `className` from styles that extend `formLabelTight` (e.g. 28px, 700 for prominence).
 
 - **h2 – Major section**  
   Top-level sections (e.g. claim intro).  
-  `component="h2"`, `variant="h2"`, plus custom class if needed.
+  `component="h2"`, `variant="title"`, plus custom class if needed.
 
 - **h3 – Section title**  
   Subsections ("Understanding Data Sources", "Partner Data", "Interactive map", etc.).  
-  `component="h3"`, `variant="h3"`, `className` with `...typography.sectionTitle` (and margin overrides as needed, e.g. `marginTop: 0`).
+  `component="h3"`, `variant="title"`, `className` with `...typography.sectionTitle` (and margin overrides as needed, e.g. `marginTop: 0`).
 
 - **h4 / h5 / h6**  
   Use sparingly for sub-subsections (e.g. ClaimFlag uses `h4` for "CLAIMED PROFILE").  
-  Prefer a class that extends `formLabelTight` or `sectionTitle` so sizing stays consistent.
+  Prefer a class that extends `formLabelTight` or `sectionTitle` so sizing stays consistent. Use MUI v3 variants such as `"title"` or `"subheading"` (not `"h4"`/`"h5"`/`"h6"`).
 
 ---
 
@@ -101,7 +102,7 @@ How to use typography across the application: which shared styles to use, how to
 
 2. In the JSX:  
    Use MUI `Typography` with both:
-   - **Semantic props:** `component` and `variant` (e.g. `component="h3"`, `variant="h3"` for section titles).
+   - **Semantic props:** `component` (e.g. `component="h3"`) for the HTML element and `variant` for MUI v3 styling (e.g. `variant="title"` or `variant="subheading"` — use only valid MUI v3 variants, not `"h1"`/`"h2"`/`"h3"`).
    - **Visual style:** `className={classes.yourClass}` where `yourClass` spreads the right typography token and any local overrides.
 
 3. Keep **one** clear hierarchy per page: one h1, then h2/h3 as needed; use the table in §2 to pick the right style key and component/variant.
