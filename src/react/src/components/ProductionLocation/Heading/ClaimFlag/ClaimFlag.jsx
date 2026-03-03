@@ -1,11 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import Typography from '@material-ui/core/Typography';
-import Icon from '@material-ui/core/Icon';
+import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
-
-import BadgeClaimed from '../../../BadgeClaimed';
 
 import {
     makeClaimFacilityLinkWithFeatureFlag,
@@ -13,47 +10,83 @@ import {
 } from '../../../../util/util';
 import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
 
-import { getBackgroundColorClass, getMainText } from './utils';
-import facilityDetailsClaimFlagStyles from './styles';
+import { formatClaimDate } from './utils';
+import ClaimStatusRow from './ClaimStatusRow';
+import ClaimSubtitleRow from './ClaimSubtitleRow';
+import productionLocationDetailsClaimFlagStyles from './styles';
 
-const FacilityDetailsClaimFlag = ({
+const ClaimFlag = ({
     classes,
     osId,
     isClaimed,
     isPending,
     isEmbed,
     isV1ClaimsFlowEnabled,
+    claimInfo,
 }) => {
     if (isEmbed) return null;
-    const rootVariantClass =
-        classes[getBackgroundColorClass(isClaimed, isPending)];
+
     const claimFacilityLink = makeClaimFacilityLinkWithFeatureFlag(
         osId,
         isV1ClaimsFlowEnabled,
     );
+    const contributorName =
+        typeof claimInfo?.contributor === 'string'
+            ? claimInfo.contributor
+            : claimInfo?.contributor?.name ?? null;
+    const claimedAt = claimInfo?.approved_at ?? claimInfo?.created_at;
+    const formattedDate = formatClaimDate(claimedAt);
+    const showSubtitleRow =
+        (!isClaimed && !isPending) ||
+        (isClaimed && (contributorName || formattedDate));
+
     return (
-        <div className={rootVariantClass} data-testid="claim-banner">
-            <div className={classes.contentContainer}>
-                <Icon className={classes.itemPadding}>
-                    <BadgeClaimed />
-                </Icon>
-                <Typography className={classes.itemPadding}>
-                    {getMainText(isClaimed, isPending)}
-                </Typography>
-                {!isClaimed && !isPending ? (
-                    <Typography className={classes.itemPadding}>
-                        <Link
-                            to={claimFacilityLink}
-                            href={claimFacilityLink}
-                            className={classes.link}
-                        >
-                            I want to claim this production location
-                        </Link>
-                    </Typography>
-                ) : null}
-            </div>
-        </div>
+        <Grid
+            container
+            direction="column"
+            className={classes.root}
+            data-testid="claim-banner"
+        >
+            <ClaimStatusRow
+                classes={classes}
+                isClaimed={isClaimed}
+                isPending={isPending}
+            />
+            {showSubtitleRow && (
+                <ClaimSubtitleRow
+                    classes={classes}
+                    claimFacilityLink={claimFacilityLink}
+                    isClaimed={isClaimed}
+                    isPending={isPending}
+                    contributorName={contributorName}
+                    formattedDate={formattedDate}
+                />
+            )}
+        </Grid>
     );
+};
+
+ClaimFlag.propTypes = {
+    classes: PropTypes.object.isRequired,
+    osId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    isClaimed: PropTypes.bool.isRequired,
+    isPending: PropTypes.bool.isRequired,
+    isEmbed: PropTypes.bool,
+    isV1ClaimsFlowEnabled: PropTypes.bool.isRequired,
+    claimInfo: PropTypes.shape({
+        contributor: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.shape({ name: PropTypes.string }),
+        ]),
+        created_at: PropTypes.string,
+        approved_at: PropTypes.string,
+    }),
+};
+
+ClaimFlag.defaultProps = {
+    isEmbed: false,
+    claimInfo: null,
+    osId: null,
 };
 
 const mapStateToProps = ({ featureFlags: { flags } }) => {
@@ -68,5 +101,5 @@ const mapStateToProps = ({ featureFlags: { flags } }) => {
 };
 
 export default connect(mapStateToProps)(
-    withStyles(facilityDetailsClaimFlagStyles)(FacilityDetailsClaimFlag),
+    withStyles(productionLocationDetailsClaimFlagStyles)(ClaimFlag),
 );
