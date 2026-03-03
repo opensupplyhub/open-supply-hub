@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
-import InfoIcon from '@material-ui/icons/Info';
 
 import {
     makeClaimFacilityLinkWithFeatureFlag,
