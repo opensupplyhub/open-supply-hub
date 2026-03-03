@@ -4,7 +4,7 @@ import Typography from '@material-ui/core/Typography';
 import InfoIcon from '@material-ui/icons/InfoOutlined';
 import { withStyles } from '@material-ui/core/styles';
 
-import styles from './styles';
+import infoBoxStyles from './styles';
 
 const InfoBox = ({
     classes,
@@ -83,4 +83,4 @@ InfoBox.defaultProps = {
     learnMoreLabel: null,
 };
 
-export default withStyles(styles)(InfoBox);
+export default withStyles(infoBoxStyles)(InfoBox);

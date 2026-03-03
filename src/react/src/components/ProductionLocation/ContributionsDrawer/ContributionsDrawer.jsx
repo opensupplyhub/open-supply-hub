@@ -21,7 +21,7 @@ import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 
 import ContributionCard from './ContributionCard';
 import InfoBox from './InfoBox';
-import styles from './styles';
+import contributionsDrawerStyles from './styles';
 
 const DEFAULT_TITLE = 'All Data Sources';
 const PROMOTED_SECTION_LABEL = 'Highlighted Data Source';
@@ -190,4 +190,4 @@ ContributionsDrawer.defaultProps = {
     infoContributionsText: null,
 };
 
-export default withStyles(styles)(ContributionsDrawer);
+export default withStyles(contributionsDrawerStyles)(ContributionsDrawer);

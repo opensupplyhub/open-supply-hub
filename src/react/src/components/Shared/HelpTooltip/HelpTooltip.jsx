@@ -1,9 +1,9 @@
 import React from 'react';
-import { string, number, shape, object } from 'prop-types';
+import { string, number, shape } from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import { withStyles } from '@material-ui/core/styles';
-import styles from './styles';
+import helpTooltipStyles from './styles';
 
 const HelpTooltip = ({ title, placement, enterDelay, classes, className }) => (
     <Tooltip
@@ -40,4 +40,4 @@ HelpTooltip.propTypes = {
     className: string,
 };
 
-export default withStyles(styles)(HelpTooltip);
+export default withStyles(helpTooltipStyles)(HelpTooltip);
