@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import ScheduleIcon from '@material-ui/icons/Schedule';
 
-import formatContributionDate from './utils';
+import { formatDisplayDate } from '../../utils';
 import contributionCardStyles from './styles';
 
 const ContributionCard = ({ classes, value, sourceName, date, promoted }) => (
@@ -56,7 +56,7 @@ const ContributionCard = ({ classes, value, sourceName, date, promoted }) => (
                                     : classes.dateIcon
                             }
                         />
-                        {formatContributionDate(date)}
+                        {formatDisplayDate(date)}
                     </span>
                 ) : null}
             </div>

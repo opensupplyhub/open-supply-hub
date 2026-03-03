@@ -19,11 +19,10 @@ import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/PersonOutline';
 
 import HelpTooltip from '../../Shared/HelpTooltip/HelpTooltip';
-import { formatDataPointDate, getSourcesCount } from './utils';
+import { formatDisplayDate } from '../utils';
+import { getSourcesCount } from './utils';
+import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import dataPointStyles from './styles';
-
-const STATUS_CLAIMED = 'Claimed';
-const STATUS_CROWDSOURCED = 'Crowdsourced';
 
 const DataPoint = ({
     classes,
@@ -139,7 +138,7 @@ const DataPoint = ({
                                                 component="span"
                                                 className={classes.dateText}
                                             >
-                                                {formatDataPointDate(date)}
+                                                {formatDisplayDate(date)}
                                             </Typography>
                                         </span>
                                     </Grid>
@@ -200,4 +199,4 @@ DataPoint.defaultProps = {
 };
 
 export default withStyles(dataPointStyles)(DataPoint);
-export { STATUS_CLAIMED, STATUS_CROWDSOURCED };
+export { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';

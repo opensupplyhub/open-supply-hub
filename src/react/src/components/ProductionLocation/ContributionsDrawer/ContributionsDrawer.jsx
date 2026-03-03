@@ -19,37 +19,19 @@ import Divider from '@material-ui/core/Divider';
 import CloseIcon from '@material-ui/icons/Close';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 
-import ContributionCard from './ContributionCard';
-import InfoBox from './InfoBox';
+import ContributionCard from './ContributionCard/ContributionCard';
+import InfoBox from './InfoBox/InfoBox';
+import {
+    DEFAULT_TITLE,
+    PROMOTED_SECTION_LABEL,
+    CONTRIBUTIONS_SECTION_LABEL,
+    INFO_PROMOTED_TITLE,
+    INFO_CONTRIBUTIONS_TEXT,
+    LEARN_MORE_LABEL,
+    LEARN_MORE_OPEN_DATA_MODEL_URL,
+} from './constants';
+import { getInfoPromotedText } from './utils';
 import contributionsDrawerStyles from './styles';
-
-const DEFAULT_TITLE = 'All Data Sources';
-const PROMOTED_SECTION_LABEL = 'Highlighted Data Source';
-const CONTRIBUTIONS_SECTION_LABEL = 'Other Data Sources';
-const INFO_PROMOTED_TITLE = 'Why is this data source displayed first?';
-const getInfoPromotedText = classes => (
-    <>
-        OS Hub automatically prioritizes data in this order: (1) claimed
-        locations where owners/managers submitted data, (2) most frequently
-        submitted values. The OS Hub team also actively moderates to promote
-        quality data. To request reordering, email Support with the OS ID,
-        preferred data entry, and justification.{' '}
-        <a
-            href="mailto:support@opensupplyhub.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={classes.supportLink}
-        >
-            Support
-        </a>{' '}
-        with the OS ID, preferred data entry, and justification.
-    </>
-);
-const INFO_CONTRIBUTIONS_TEXT =
-    'Multiple organizations may have shared information for this data point. You can see the list of historical data sources below. Click on the organization name to learn more about them and the data they have shared';
-const LEARN_MORE_LABEL = 'Learn more about our open data model';
-const LEARN_MORE_OPEN_DATA_MODEL_URL =
-    'https://info.opensupplyhub.org/resources/an-open-data-model';
 
 const ContributionsDrawer = ({
     classes,
