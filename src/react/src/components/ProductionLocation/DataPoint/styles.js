@@ -6,7 +6,6 @@ export default () =>
         root: Object.freeze({
             paddingTop: 12,
             paddingBottom: 12,
-            marginBottom: 24,
             '&:hover $tooltipIcon': Object.freeze({
                 opacity: 1,
             }),
@@ -29,6 +28,9 @@ export default () =>
             alignItems: 'flex-start',
             width: '20%',
         }),
+        tooltipIcon: Object.freeze({
+            opacity: 0,
+        }),
         /* Second column: value + meta block */
         valueColumn: Object.freeze({
             minWidth: 0,
@@ -44,13 +46,6 @@ export default () =>
             fontSize: '18px',
             fontWeight: 600,
             lineHeight: 1.4,
-        }),
-        tooltipIcon: Object.freeze({
-            color: COLOURS.DARK_GREY,
-            cursor: 'help',
-            fontSize: '18px',
-            opacity: 0,
-            transition: 'opacity 0.2s ease',
         }),
         statusChip: Object.freeze({
             height: 24,
@@ -96,7 +91,8 @@ export default () =>
             alignItems: 'center',
         }),
         personIcon: Object.freeze({
-            marginRight: 4,
+            marginRight: '4px',
+            marginTop: '2px',
             fontSize: '16px',
             color: COLOURS.DARK_GREY,
         }),
@@ -125,6 +121,7 @@ export default () =>
             marginRight: 4,
             fontSize: '13px',
             color: COLOURS.DARK_GREY,
+            marginTop: '3px',
         }),
         dateText: Object.freeze({
             fontSize: '18px',

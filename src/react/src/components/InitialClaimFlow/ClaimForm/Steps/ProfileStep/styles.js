@@ -44,6 +44,9 @@ export const profileStepStyles = theme =>
             fontSize: '21px',
             fontWeight: 600,
         }),
+        helpTooltip: Object.freeze({
+            marginLeft: theme.spacing.unit / 2,
+        }),
         inputStyles: Object.freeze({
             backgroundColor: COLOURS.WHITE,
             fontSize: '18px',
@@ -125,25 +128,6 @@ export const profileStepStyles = theme =>
         }),
         greenBg: Object.freeze({
             backgroundColor: COLOURS.LIGHT_GREEN,
-        }),
-        helpIcon: Object.freeze({
-            fontSize: '1rem',
-            color: COLOURS.DARK_GREY,
-            marginLeft: theme.spacing.unit / 2,
-        }),
-        helpIconButton: Object.freeze({
-            padding: 0,
-            '&:hover': {
-                backgroundColor: 'transparent',
-            },
-        }),
-        tooltip: Object.freeze({
-            fontSize: '14px',
-            backgroundColor: COLOURS.WHITE,
-            color: 'rgba(0, 0, 0, 0.87)',
-            border: `1px solid ${COLOURS.GREY}`,
-            padding: theme.spacing.unit * 1.5,
-            maxWidth: 300,
         }),
     });
 

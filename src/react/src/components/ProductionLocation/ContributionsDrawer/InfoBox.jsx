@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
-import Icon from '@material-ui/core/Icon';
+import InfoIcon from '@material-ui/icons/InfoOutlined';
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './styles';
@@ -21,6 +21,12 @@ const InfoBox = ({
     const titleClass = isPromoted
         ? classes.infoTitle
         : `${classes.infoTitle} ${classes.infoTitleBlue}`;
+    const infoTextClass = isPromoted
+        ? classes.infoTextPromoted
+        : classes.infoTextContributions;
+    const learnMoreLinkClass = isPromoted
+        ? classes.learnMoreLinkPromoted
+        : classes.learnMoreLinkContributions;
     const showInfoIcon = !isPromoted;
 
     const content = (
@@ -30,7 +36,7 @@ const InfoBox = ({
                     {title}
                 </Typography>
             ) : null}
-            <Typography className={classes.infoText} component="div">
+            <Typography className={infoTextClass} component="div">
                 {children}
             </Typography>
             {learnMoreUrl && learnMoreLabel ? (
@@ -38,7 +44,7 @@ const InfoBox = ({
                     href={learnMoreUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={classes.learnMoreLink}
+                    className={learnMoreLinkClass}
                 >
                     {learnMoreLabel}
                     <span className={classes.learnMoreArrow}>→</span>
@@ -51,7 +57,7 @@ const InfoBox = ({
         <div className={`${classes.infoBox} ${boxClass}`}>
             {showInfoIcon ? (
                 <div className={classes.infoBoxWithIcon}>
-                    <Icon className={classes.infoIcon}>info</Icon>
+                    <InfoIcon className={classes.infoIcon} />
                     <div className={classes.infoBoxContent}>{content}</div>
                 </div>
             ) : (

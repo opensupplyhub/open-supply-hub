@@ -11,12 +11,11 @@ import COLOURS from '../../../util/COLOURS';
 export default theme =>
     Object.freeze({
         drawerPaper: Object.freeze({
-            maxWidth: 560,
-            minWidth: '33%',
+            width: 390,
             boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
         }),
         drawerContent: Object.freeze({
-            padding: '16px 72px 24px 72px',
+            padding: '24px',
             overflowY: 'auto',
             height: '100%',
         }),
@@ -34,20 +33,22 @@ export default theme =>
         }),
         titleIcon: Object.freeze({
             fontSize: 24,
-            color: COLOURS.DARK_GREY,
+            color: COLOURS.PURPLE,
         }),
         title: Object.freeze({
             fontWeight: 700,
-            fontSize: 20,
+            fontSize: '1.4rem',
             lineHeight: 1.3,
             color: COLOURS.NEAR_BLACK,
+            marginLeft: '10px',
         }),
         subtitle: Object.freeze({
             marginTop: 8,
             marginBottom: 0,
-            fontSize: 14,
+            fontSize: '1rem',
             lineHeight: 1.4,
             color: COLOURS.DARK_GREY,
+            paddingBottom: '16px',
         }),
         closeButton: Object.freeze({
             margin: -8,
@@ -58,12 +59,11 @@ export default theme =>
             }),
         }),
         sectionLabel: Object.freeze({
-            fontSize: 11,
-            fontWeight: 700,
+            fontSize: '0.9rem',
             color: COLOURS.DARK_GREY,
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
-            marginTop: 24,
+            marginTop: '16px',
             marginBottom: 8,
             lineHeight: 1.2,
         }),
@@ -73,15 +73,14 @@ export default theme =>
             marginBottom: 16,
         }),
         infoBoxPromoted: Object.freeze({
-            backgroundColor: COLOURS.LIGHT_PURPLE_BG,
-            borderLeft: `4px solid ${COLOURS.PURPLE}`,
+            backgroundColor: '#F8F5FB',
+            border: `1px solid #E2D1F0`,
         }),
         infoBoxContributions: Object.freeze({
             backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
-            borderLeft: `4px solid ${COLOURS.MATERIAL_BLUE}`,
+            border: `1px solid #C0DBFE`,
         }),
         infoTitle: Object.freeze({
-            fontWeight: 700,
             fontSize: 14,
             lineHeight: 1.4,
             color: COLOURS.PURPLE,
@@ -89,6 +88,13 @@ export default theme =>
         }),
         infoTitleBlue: Object.freeze({
             color: COLOURS.MATERIAL_BLUE,
+        }),
+        supportLink: Object.freeze({
+            color: COLOURS.PURPLE,
+            textDecoration: 'none',
+            '&:hover': Object.freeze({
+                textDecoration: 'underline',
+            }),
         }),
         infoBoxWithIcon: Object.freeze({
             display: 'flex',
@@ -100,29 +106,45 @@ export default theme =>
             color: COLOURS.MATERIAL_BLUE,
             flexShrink: 0,
             marginTop: 2,
+            marginRight: '8px',
         }),
         infoBoxContent: Object.freeze({
             flex: 1,
         }),
-        infoText: Object.freeze({
+        infoTextPromoted: Object.freeze({
             fontSize: 14,
             lineHeight: 1.5,
             color: COLOURS.DARK_GREY,
         }),
-        learnMoreLink: Object.freeze({
+        infoTextContributions: Object.freeze({
+            fontSize: '1rem',
+            lineHeight: 1.5,
+            color: COLOURS.DARK_GREY,
+        }),
+        learnMoreLinkContributions: Object.freeze({
             marginTop: 8,
             display: 'inline-flex',
             alignItems: 'center',
             color: COLOURS.MATERIAL_BLUE,
-            fontSize: 14,
+            fontSize: '1rem',
             fontWeight: 500,
             textDecoration: 'none',
             '&:hover': Object.freeze({
                 textDecoration: 'underline',
             }),
         }),
+        learnMoreLinkPromoted: Object.freeze({
+            marginTop: 8,
+            display: 'inline-flex',
+            alignItems: 'center',
+            olor: COLOURS.MATERIAL_BLUE,
+            fontSize: '14px',
+            fontWeight: 500,
+            textDecoration: 'none',
+        }),
         learnMoreArrow: Object.freeze({
             marginLeft: 4,
+            marginTop: '2px',
         }),
         contributionCard: Object.freeze({
             backgroundColor: COLOURS.WHITE,
@@ -131,26 +153,43 @@ export default theme =>
             padding: 16,
             marginBottom: 8,
         }),
+        contributionCardPromoted: Object.freeze({
+            backgroundColor: '#F8F5FB',
+        }),
+        contributionValueContainer: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        }),
         contributionValue: Object.freeze({
-            fontWeight: 700,
-            fontSize: 16,
+            fontWeight: 600,
+            fontSize: '18px',
             lineHeight: 1.4,
             color: COLOURS.NEAR_BLACK,
+            marginBottom: '8px',
+        }),
+        contributionValuePromoted: Object.freeze({
+            fontSize: '1.25rem',
+        }),
+        contributionSourceContainer: Object.freeze({
+            maxWidth: '45%',
         }),
         contributionSource: Object.freeze({
-            fontSize: 14,
+            fontSize: '1rem',
             lineHeight: 1.4,
             color: COLOURS.PURPLE,
-            marginTop: 4,
         }),
-        contributionMeta: Object.freeze({
+        contributionSourcePromoted: Object.freeze({
+            fontSize: '1.1rem',
+        }),
+        contributionMetaContainer: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            marginTop: 8,
             fontSize: 14,
             color: COLOURS.DARK_GREY,
             gap: 8,
+            maxWidth: '45%',
         }),
         contributionLink: Object.freeze({
             padding: 4,
@@ -159,14 +198,18 @@ export default theme =>
         dateWithIcon: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
+            fontSize: '1rem',
+        }),
+        dateWithIconPromoted: Object.freeze({
+            fontSize: '1.1rem',
         }),
         dateIcon: Object.freeze({
             marginRight: 4,
-            fontSize: 18,
+            marginTop: '2px',
+            fontSize: '13px',
             color: COLOURS.DARK_GREY,
         }),
-        listScroll: Object.freeze({
-            maxHeight: 320,
-            overflowY: 'auto',
+        dateIconPromoted: Object.freeze({
+            fontSize: '0.9rem',
         }),
     });

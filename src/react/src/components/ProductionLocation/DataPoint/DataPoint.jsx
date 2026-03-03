@@ -1,17 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
-import Tooltip from '@material-ui/core/Tooltip';
 import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
-// import InfoIcon from '@material-ui/icons/Info';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
-
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/PersonOutline';
 
+import HelpTooltip from '../../Shared/HelpTooltip/HelpTooltip';
 import { formatDataPointDate, getSourcesCount } from './utils';
 import dataPointStyles from './styles';
 
@@ -41,13 +38,11 @@ const DataPoint = ({
     };
 
     const tooltipIcon = tooltipText ? (
-        <Tooltip title={tooltipText} placement="top" enterDelay={200}>
-            <HelpOutlineIcon
-                className={classes.tooltipIcon}
-                fontSize="small"
-                aria-label={tooltipText}
-            />
-        </Tooltip>
+        <HelpTooltip
+            title={tooltipText}
+            enterDelay={200}
+            className={classes.tooltipIcon}
+        />
     ) : null;
 
     return (

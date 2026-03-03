@@ -8,12 +8,10 @@ import Build from '@material-ui/icons/Build';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Spa from '@material-ui/icons/Spa';
 
-import Tooltip from '@material-ui/core/Tooltip';
-import HelpOutline from '@material-ui/icons/HelpOutline';
-import IconButton from '@material-ui/core/IconButton';
 import Switch from '@material-ui/core/Switch';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import FormFieldHint from '../../../Shared/FormFieldHint/FormFieldHint';
+import HelpTooltip from '../../../../Shared/HelpTooltip/HelpTooltip';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
@@ -136,21 +134,10 @@ const ProfileStep = ({
                             label={
                                 <>
                                     Production Location Name in Native Language
-                                    <Tooltip
+                                    <HelpTooltip
+                                        className={classes.helpTooltip}
                                         title="Enter the production location name in the local language if different from the English name"
-                                        placement="top"
-                                        classes={{ tooltip: classes.tooltip }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
+                                    />
                                 </>
                             }
                             classes={{ title: classes.formLabel }}
@@ -192,25 +179,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Company Phone
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Main phone number for contacting this production location directly"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -264,27 +236,10 @@ const ProfileStep = ({
                                     label={
                                         <>
                                             Company Website
-                                            <Tooltip
+                                            <HelpTooltip
+                                                className={classes.helpTooltip}
                                                 title="Official website URL for this specific production location (if available)"
-                                                placement="top"
-                                                classes={{
-                                                    tooltip: classes.tooltip,
-                                                }}
-                                            >
-                                                <IconButton
-                                                    size="small"
-                                                    disableRipple
-                                                    className={
-                                                        classes.helpIconButton
-                                                    }
-                                                >
-                                                    <HelpOutline
-                                                        className={
-                                                            classes.helpIcon
-                                                        }
-                                                    />
-                                                </IconButton>
-                                            </Tooltip>
+                                            />
                                         </>
                                     }
                                     classes={{ title: classes.formLabel }}
@@ -342,21 +297,10 @@ const ProfileStep = ({
                             label={
                                 <>
                                     Production Location Description
-                                    <Tooltip
+                                    <HelpTooltip
+                                        className={classes.helpTooltip}
                                         title="Provide a brief overview of what this production location manufactures and its main business activities"
-                                        placement="top"
-                                        classes={{ tooltip: classes.tooltip }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
+                                    />
                                 </>
                             }
                             classes={{ title: classes.formLabel }}
@@ -481,25 +425,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Office Name
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Name of the corporate office or headquarters"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -542,25 +471,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Office Address
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Physical address of the office location"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -702,25 +616,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Location Type(s)
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -776,25 +675,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Processing Type(s)
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -858,25 +742,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Product Types
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -909,25 +778,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Number of Workers
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Total number of employees working at this production location, can be a number or a range (e.g., 100, 100-150)"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -969,25 +823,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Percentage of Female Workers
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Percentage of female employees out of the total workforce at this location"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -1037,25 +876,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Minimum Order Quantity
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Smallest order quantity this production location will accept from customers"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -1112,25 +936,10 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Average Lead Time
-                                        <Tooltip
+                                        <HelpTooltip
+                                            className={classes.helpTooltip}
                                             title="Typical time required from order confirmation to product delivery"
-                                            placement="top"
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <IconButton
-                                                size="small"
-                                                disableRipple
-                                                className={
-                                                    classes.helpIconButton
-                                                }
-                                            >
-                                                <HelpOutline
-                                                    className={classes.helpIcon}
-                                                />
-                                            </IconButton>
-                                        </Tooltip>
+                                        />
                                     </>
                                 }
                                 classes={{ title: classes.formLabel }}
@@ -1221,21 +1030,10 @@ const ProfileStep = ({
                             label={
                                 <>
                                     Affiliations
-                                    <Tooltip
+                                    <HelpTooltip
+                                        className={classes.helpTooltip}
                                         title="Organizations, parent companies, or partner entities your facility is formally connected to"
-                                        placement="top"
-                                        classes={{ tooltip: classes.tooltip }}
-                                    >
-                                        <IconButton
-                                            size="small"
-                                            disableRipple
-                                            className={classes.helpIconButton}
-                                        >
-                                            <HelpOutline
-                                                className={classes.helpIcon}
-                                            />
-                                        </IconButton>
-                                    </Tooltip>
+                                    />
                                 </>
                             }
                             classes={{ title: classes.formLabel }}

@@ -1,0 +1,21 @@
+import COLOURS from '../../../util/COLOURS';
+
+export default theme =>
+    Object.freeze({
+        popper: Object.freeze({
+            opacity: 1,
+        }),
+        tooltip: Object.freeze({
+            fontSize: '14px',
+            backgroundColor: COLOURS.WHITE,
+            color: COLOURS.BLACK,
+            border: `1px solid ${COLOURS.GREY}`,
+            padding: theme.spacing.unit * 1.5,
+            maxWidth: 300,
+        }),
+        icon: Object.freeze({
+            fontSize: '1rem',
+            color: COLOURS.DARK_GREY,
+            cursor: 'pointer',
+        }),
+    });

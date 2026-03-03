@@ -4,24 +4,41 @@ import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
-
+import Divider from '@material-ui/core/Divider';
 import CloseIcon from '@material-ui/icons/Close';
-import GroupIcon from '@material-ui/icons/Group';
+import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 
 import ContributionCard from './ContributionCard';
 import InfoBox from './InfoBox';
 import styles from './styles';
 
-const DEFAULT_TITLE = 'All Data Contributions';
-const PROMOTED_SECTION_LABEL = 'PROMOTED CONTRIBUTION';
-const CONTRIBUTIONS_SECTION_LABEL = 'CONTRIBUTIONS';
-const INFO_PROMOTED_TITLE =
-    'Why is this data displayed over other contributions?';
-const INFO_PROMOTED_TEXT =
-    'OS Hub prioritizes data from claimed production location owners and verified sources. When multiple entries exist, we display the most recently verified data from the highest-confidence source.';
+const DEFAULT_TITLE = 'All Data Sources';
+const PROMOTED_SECTION_LABEL = 'Highlighted Data Source';
+const CONTRIBUTIONS_SECTION_LABEL = 'Other Data Sources';
+const INFO_PROMOTED_TITLE = 'Why is this data source displayed first?';
+const getInfoPromotedText = classes => (
+    <>
+        OS Hub automatically prioritizes data in this order: (1) claimed
+        locations where owners/managers submitted data, (2) most frequently
+        submitted values. The OS Hub team also actively moderates to promote
+        quality data. To request reordering, email Support with the OS ID,
+        preferred data entry, and justification.{' '}
+        <a
+            href="mailto:support@opensupplyhub.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={classes.supportLink}
+        >
+            Support
+        </a>{' '}
+        with the OS ID, preferred data entry, and justification.
+    </>
+);
 const INFO_CONTRIBUTIONS_TEXT =
-    'Multiple organizations may contribute data about the same production location. Each contributor uploads data via a named list — use list names to understand the context and source of the data.';
+    'Multiple organizations may have shared information for this data point. You can see the list of historical data sources below. Click on the organization name to learn more about them and the data they have shared';
 const LEARN_MORE_LABEL = 'Learn more about our open data model';
+const LEARN_MORE_OPEN_DATA_MODEL_URL =
+    'https://info.opensupplyhub.org/resources/an-open-data-model';
 
 const ContributionsDrawer = ({
     classes,
@@ -34,7 +51,6 @@ const ContributionsDrawer = ({
     infoPromotedTitle,
     infoPromotedText,
     infoContributionsText,
-    learnMoreUrl,
 }) => {
     const contributionsCount = Array.isArray(contributions)
         ? contributions.length
@@ -54,7 +70,7 @@ const ContributionsDrawer = ({
             <div className={classes.drawerContent}>
                 <div className={classes.header}>
                     <div className={classes.headerLeft}>
-                        <GroupIcon className={classes.titleIcon} />
+                        <PeopleOutlineIcon className={classes.titleIcon} />
                         <Typography className={classes.title} component="h2">
                             {title || DEFAULT_TITLE}
                         </Typography>
@@ -72,7 +88,7 @@ const ContributionsDrawer = ({
                         {subtitle}
                     </Typography>
                 ) : null}
-
+                <Divider height={1} />
                 {promotedContribution ? (
                     <>
                         <Typography
@@ -85,13 +101,13 @@ const ContributionsDrawer = ({
                             title={infoPromotedTitle || INFO_PROMOTED_TITLE}
                             variant="promoted"
                         >
-                            {infoPromotedText || INFO_PROMOTED_TEXT}
+                            {infoPromotedText || getInfoPromotedText(classes)}
                         </InfoBox>
                         <ContributionCard
                             value={promotedContribution.value}
                             sourceName={promotedContribution.sourceName}
                             date={promotedContribution.date}
-                            linkUrl={promotedContribution.linkUrl}
+                            promoted
                         />
                     </>
                 ) : null}
@@ -102,7 +118,7 @@ const ContributionsDrawer = ({
                 <InfoBox
                     title={null}
                     variant="contributions"
-                    learnMoreUrl={learnMoreUrl}
+                    learnMoreUrl={LEARN_MORE_OPEN_DATA_MODEL_URL}
                     learnMoreLabel={LEARN_MORE_LABEL}
                 >
                     {infoContributionsText || INFO_CONTRIBUTIONS_TEXT}
@@ -118,7 +134,6 @@ const ContributionsDrawer = ({
                                 value={item.value}
                                 sourceName={item.sourceName}
                                 date={item.date}
-                                linkUrl={item.linkUrl}
                             />
                         ))}
                     </div>
@@ -158,7 +173,6 @@ ContributionsDrawer.propTypes = {
     infoPromotedTitle: PropTypes.string,
     infoPromotedText: PropTypes.string,
     infoContributionsText: PropTypes.string,
-    learnMoreUrl: PropTypes.string,
 };
 
 ContributionsDrawer.defaultProps = {
@@ -169,7 +183,6 @@ ContributionsDrawer.defaultProps = {
     infoPromotedTitle: null,
     infoPromotedText: null,
     infoContributionsText: null,
-    learnMoreUrl: null,
 };
 
 export default withStyles(styles)(ContributionsDrawer);
