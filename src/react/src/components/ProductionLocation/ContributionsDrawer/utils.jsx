@@ -1,11 +1,6 @@
 import React from 'react';
 
-/**
- * Return the default "Why is this data source displayed first?" info text (JSX).
- * @param {object} classes - withStyles classes (must include supportLink)
- * @returns {React.ReactNode}
- */
-export function getInfoPromotedText(classes) {
+export default function getInfoPromotedText(classes) {
     return (
         <>
             OS Hub automatically prioritizes data in this order: (1) claimed

@@ -5,7 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import ScheduleIcon from '@material-ui/icons/Schedule';
 
-import { formatDisplayDate } from '../../utils';
+import formatDisplayDate from '../../utils';
 import contributionCardStyles from './styles';
 
 const ContributionCard = ({ classes, value, sourceName, date, promoted }) => (

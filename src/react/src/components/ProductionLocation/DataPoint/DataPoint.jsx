@@ -19,8 +19,8 @@ import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/PersonOutline';
 
 import HelpTooltip from '../../Shared/HelpTooltip/HelpTooltip';
-import { formatDisplayDate } from '../utils';
-import { getSourcesCount } from './utils';
+import formatDisplayDate from '../utils';
+import getSourcesCount from './utils';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import dataPointStyles from './styles';
 
