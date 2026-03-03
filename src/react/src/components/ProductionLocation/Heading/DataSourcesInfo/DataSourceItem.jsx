@@ -13,7 +13,7 @@ const DataSourceItem = ({
     showLearnMore,
     learnMoreUrl,
 }) => (
-    <Grid item sm={12} md={4} className={classes.descriptionItem}>
+    <Grid item xs={12} md={4} className={classes.descriptionItem}>
         <div className={classes.itemRow}>
             <Icon className={iconClassName} aria-hidden />
             <Typography
