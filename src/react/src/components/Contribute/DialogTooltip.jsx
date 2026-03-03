@@ -3,6 +3,7 @@ import { shape, string, node, bool } from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
+import InteractiveTrigger from './InteractiveTrigger';
 import { makeDialogTooltipStyles } from '../../util/styles';
 
 const LEAVE_TRIGGER_DELAY_MS = 150;
@@ -77,66 +78,16 @@ const DialogTooltip = ({
         popperProps.onBlur = handlePopperLeave;
     }
 
-    // Support user accessibility by adding keyboard navigation.
-    let triggerWrapper = childComponent;
-    if (interactive) {
-        const handleKeyDown = e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleTriggerEnter();
-            }
-            childComponent.props?.onKeyDown?.(e);
-        };
-        let triggerContent;
-        if (React.isValidElement(childComponent)) {
-            triggerContent = React.cloneElement(childComponent, {
-                onFocus: e => {
-                    handleTriggerEnter();
-                    childComponent.props.onFocus?.(e);
-                },
-                onBlur: e => {
-                    handleTriggerLeave();
-                    childComponent.props.onBlur?.(e);
-                },
-                onKeyDown: handleKeyDown,
-                'aria-describedby': tooltipId,
-            });
-        } else {
-            triggerContent = (
-                <button
-                    type="button"
-                    onFocus={handleTriggerEnter}
-                    onBlur={handleTriggerLeave}
-                    onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleTriggerEnter();
-                        }
-                    }}
-                    aria-describedby={tooltipId}
-                    style={{
-                        display: 'inline',
-                        margin: 0,
-                        padding: 0,
-                        border: 'none',
-                        background: 'none',
-                        font: 'inherit',
-                    }}
-                >
-                    {childComponent}
-                </button>
-            );
-        }
-        triggerWrapper = (
-            <span
-                onMouseEnter={handleTriggerEnter}
-                onMouseLeave={handleTriggerLeave}
-                style={{ display: 'inline-flex' }}
-            >
-                {triggerContent}
-            </span>
-        );
-    }
+    const triggerWrapper = interactive ? (
+        <InteractiveTrigger
+            childComponent={childComponent}
+            tooltipId={tooltipId}
+            onEnter={handleTriggerEnter}
+            onLeave={handleTriggerLeave}
+        />
+    ) : (
+        childComponent
+    );
 
     return (
         <Tooltip
