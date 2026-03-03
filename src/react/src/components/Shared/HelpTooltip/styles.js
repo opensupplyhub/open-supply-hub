@@ -5,6 +5,9 @@ export default theme =>
         popper: Object.freeze({
             opacity: 1,
         }),
+        defaultTooltipIcon: Object.freeze({
+            display: 'inline-flex',
+        }),
         tooltip: Object.freeze({
             fontSize: '14px',
             backgroundColor: COLOURS.WHITE,

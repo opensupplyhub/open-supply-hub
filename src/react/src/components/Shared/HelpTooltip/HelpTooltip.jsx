@@ -12,7 +12,7 @@ const HelpTooltip = ({ title, placement, enterDelay, classes, className }) => (
         enterDelay={enterDelay}
         classes={{ popper: classes.popper, tooltip: classes.tooltip }}
     >
-        <span className={className}>
+        <span className={`${className} ${classes.defaultTooltipIcon}`}>
             <HelpOutline
                 className={classes.icon}
                 fontSize="small"
