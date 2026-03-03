@@ -4,10 +4,10 @@ import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import ProductionLocationDetailsDataSourcesInfo from '../../components/ProductionLocation/Heading/DataSourcesInfo/DataSourcesInfo';
 
 jest.mock('../../components/Contribute/DialogTooltip', () => {
-    const React = require('react');
-    return function MockDialogTooltip({ childComponent }) {
+    function MockDialogTooltip({ childComponent }) {
         return <>{childComponent}</>;
-    };
+    }
+    return MockDialogTooltip;
 });
 
 const theme = createMuiTheme();

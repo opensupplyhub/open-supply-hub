@@ -113,8 +113,8 @@ How to use typography across the application: which shared styles to use, how to
 
 | Use case | component | variant | Typography style key |
 |----------|-----------|--------|----------------------|
-| Page title (e.g. facility name) | h1 | h1 | formLabelTight (custom size/weight) |
-| Section title | h3 | h3 | sectionTitle |
+| Page title (e.g. facility name) | h1 | headline | formLabelTight (custom size/weight) |
+| Section title | h3 | title | sectionTitle |
 | Field / subsection label | span | body1 | formLabelTight |
 | Paragraph / body | p | body1 | bodyText or sectionDescription |
 | Inline emphasis (name, ID, date) | span | — | inlineHighlight |

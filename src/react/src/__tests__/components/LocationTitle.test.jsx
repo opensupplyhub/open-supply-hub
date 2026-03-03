@@ -8,17 +8,17 @@ jest.mock('react-toastify', () => ({
 }));
 
 jest.mock('../../components/CopySearch', () => {
-    const React = require('react');
-    return function MockCopySearch({ children }) {
+    function MockCopySearch({ children }) {
         return <>{children}</>;
-    };
+    }
+    return MockCopySearch;
 });
 
 jest.mock('../../components/Contribute/DialogTooltip', () => {
-    const React = require('react');
-    return function MockDialogTooltip({ childComponent }) {
+    function MockDialogTooltip({ childComponent }) {
         return <>{childComponent}</>;
-    };
+    }
+    return MockDialogTooltip;
 });
 
 const theme = createMuiTheme();

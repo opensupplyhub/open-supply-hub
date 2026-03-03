@@ -12,7 +12,7 @@ export default theme => {
         }),
         title: Object.freeze({
             ...typography.formLabelTight,
-            fontSize: '28px',
+            fontSize: '3rem',
             fontWeight: 700,
             marginTop: 0,
             marginBottom: spacing,
