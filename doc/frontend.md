@@ -9,6 +9,7 @@ How to use typography across the application: which shared styles to use, how to
 - **File:** `src/react/src/util/typographyStyles.js`
 - **Usage:** Call `getTypographyStyles(theme)` in your component's `withStyles` (or `makeStyles`) and spread the returned keys into your class objects; then pass those classes to MUI `Typography` via `className={classes.xyz}`.
 - **Rule:** Prefer these tokens over hardcoding font sizes/weights so headings, labels, body text, and links stay consistent.
+- **Body text size:** Use `1rem` for body and paragraph text (section description, bodyText, inline highlight). In this app the root font size is the browser default (typically 16px), so 1rem resolves accordingly.
 
 ---
 
@@ -38,15 +39,15 @@ How to use typography across the application: which shared styles to use, how to
   Use for h3-level section titles.
 
 - **sectionDescription**  
-  `fontSize: '18px'`, `marginBottom: '10px'`.  
+  `fontSize: '1rem'`, `marginBottom: '10px'`.
   Use for the first paragraph or intro under a section.
 
 - **bodyText**  
-  `fontSize: '18px'`, `color: theme.palette.text.secondary`.  
+  `fontSize: '1rem'`, `color: theme.palette.text.secondary`.
   Use for regular body and secondary text.
 
 - **inlineHighlight**  
-  `fontWeight: 500`, `color: theme.palette.text.primary`, `display: 'inline'`.  
+  `fontSize: '1rem'`, `fontWeight: 500`, `color: theme.palette.text.primary`, `display: 'inline'`.
   Use for emphasized inline pieces (e.g. facility name, date, OS ID value).
 
 ---
@@ -75,7 +76,7 @@ How to use typography across the application: which shared styles to use, how to
 
 - **Paragraphs:**  
   `component="p"`, `variant="body1"`, and a class that includes `...typography.bodyText` (and optionally `...typography.sectionDescription` for intro blocks).  
-  Override `fontSize` or `marginBottom` only when needed (e.g. 16px for subsection text).
+  Body text uses `fontSize: '1rem'`. Override `fontSize` or `marginBottom` only when needed.
 
 - **Inline text / labels:**  
   `component="span"`, `variant="body1"`, and either `formLabelTight` (labels) or `bodyText` (secondary inline).
