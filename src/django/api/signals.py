@@ -2,6 +2,7 @@ import logging
 import json
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from opensearchpy.exceptions import \
@@ -15,6 +16,7 @@ from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_location import FacilityLocation
 from api.models.facility.facility_alias import FacilityAlias
 from api.models.moderation_event import ModerationEvent
+from api.models.source import Source
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -121,3 +123,37 @@ for model in [
     FacilityLocation
 ]:
     post_save.connect(set_origin_source_on_create, sender=model)
+
+
+@receiver(post_save, sender=Source)
+def update_extended_fields_on_source_contributor_change(
+    sender, instance, created, update_fields, **kwargs
+):
+    """
+    Update ExtendedField contributor when Source contributor changes.
+    This addresses OSDEV-2159: Extended fields retain original contributor
+    after list source reassignment.
+    """
+    # Skip if this is a new Source being created
+    if created:
+        return
+
+    # Skip if update_fields is specified and doesn't include contributor
+    if (update_fields and
+            'contributor_id' not in update_fields and
+            'contributor' not in update_fields):
+        return
+
+    # Update all ExtendedField records linked to this source
+    # Use atomic transaction to ensure consistency
+    with transaction.atomic():
+        updated_count = ExtendedField.objects.filter(
+            facility_list_item__source=instance
+        ).update(contributor=instance.contributor)
+
+        if updated_count > 0:
+            log.info(
+                f"[Source Contributor Change] Updated {updated_count} "
+                f"ExtendedField(s) for Source {instance.id} to "
+                f"contributor {instance.contributor_id}"
+            )
