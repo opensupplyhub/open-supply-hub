@@ -37,15 +37,15 @@ export const getTypographyStyles = theme => {
             marginTop: '25px',
         }),
         sectionDescription: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1rem', // 16px
             marginBottom: '10px',
         }),
         bodyText: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1rem', // 16px
             color: theme.palette.text.secondary,
         }),
         inlineHighlight: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1rem', // 16px
             fontWeight: 500,
             color: theme.palette.text.primary,
             display: 'inline',

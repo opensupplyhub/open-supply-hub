@@ -30,16 +30,13 @@ const ProductionLocationDetailsTitle = ({ classes, data }) => {
                 {locationName}
             </Typography>
             <div className={classes.osIdRow}>
-                <Typography
-                    component="span"
-                    className={classes.osIdLabel}
-                    variant="body1"
-                >
-                    OS ID:{' '}
-                </Typography>
                 <span className={classes.osIdValueWithTooltip}>
-                    <Typography component="span" className={classes.osIdValue}>
-                        {osId}
+                    <Typography
+                        component="h2"
+                        variant="h2"
+                        className={classes.osIdValue}
+                    >
+                        OS ID: {osId}
                     </Typography>
                     <DialogTooltip
                         text={OS_ID_TOOLTIP_TEXT}

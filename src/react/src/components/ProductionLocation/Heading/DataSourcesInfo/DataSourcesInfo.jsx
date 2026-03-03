@@ -59,7 +59,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                         component="span"
                         className={classes.switchLabel}
                     >
-                        Show more
+                        <b>{showSubsectionInfo ? 'Close' : 'Open'}</b>
                     </Typography>
                     <Switch
                         checked={showSubsectionInfo}
@@ -84,12 +84,8 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                         title={item.title}
                         subsectionText={item.subsectionText}
                         showSubsectionInfo={showSubsectionInfo}
-                        showLearnMore={Boolean(item.showLearnMore)}
-                        learnMoreUrl={
-                            item.showLearnMore
-                                ? DATA_SOURCES_LEARN_MORE_URL
-                                : null
-                        }
+                        showLearnMore={Boolean(item.learnMoreUrl)}
+                        learnMoreUrl={item.learnMoreUrl || null}
                     />
                 ))}
             </Grid>

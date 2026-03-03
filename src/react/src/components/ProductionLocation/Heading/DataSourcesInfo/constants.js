@@ -1,6 +1,7 @@
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import People from '@material-ui/icons/People';
-import GroupWork from '@material-ui/icons/GroupWork';
+
+import HandshakeIcon from '../../../HandshakeIcon';
 
 export const DATA_SOURCES_TOOLTIP_TEXT =
     'Open Supply Hub is collaboratively mapping global supply chains. This model means that data comes into the platform in a few ways.';
@@ -14,6 +15,8 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
         title: 'Claimed',
         subsectionText:
             'General information & operational details submitted by production location',
+        learnMoreUrl:
+            'https://info.opensupplyhub.org/resources/claim-a-facility',
     }),
     Object.freeze({
         Icon: People,
@@ -21,14 +24,14 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
         title: 'Crowdsourced',
         subsectionText:
             "General information shared by supply chain stakeholders & OS Hub's research team",
-        showLearnMore: true,
+        learnMoreUrl: DATA_SOURCES_LEARN_MORE_URL,
     }),
     Object.freeze({
-        Icon: GroupWork,
+        Icon: HandshakeIcon,
         iconClassNameKey: 'iconPartner',
         title: 'Partner Data',
         subsectionText:
             'Additional social or environmental information shared by third party platforms',
-        showLearnMore: true,
+        learnMoreUrl: 'https://info.opensupplyhub.org/data-integrations',
     }),
 ]);

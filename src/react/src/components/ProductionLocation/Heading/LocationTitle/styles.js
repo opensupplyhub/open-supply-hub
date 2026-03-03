@@ -23,10 +23,6 @@ export default theme => {
             alignItems: 'center',
             gap: `${spacing}px ${spacing * 2}px`,
         }),
-        osIdLabel: Object.freeze({
-            ...typography.formLabelTight,
-            fontSize: '18px',
-        }),
         osIdValueWithTooltip: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
@@ -34,7 +30,7 @@ export default theme => {
         }),
         osIdValue: Object.freeze({
             ...typography.inlineHighlight,
-            fontSize: '18px',
+            fontSize: '21px',
         }),
         osIdInfoButton: Object.freeze({
             padding: spacing * 0.5,

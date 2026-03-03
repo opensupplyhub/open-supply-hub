@@ -14,40 +14,41 @@ const DataSourceItem = ({
     learnMoreUrl,
 }) => (
     <Grid item sm={12} md={4} className={classes.descriptionItem}>
-        <div className={classes.itemContent}>
+        <div className={classes.itemRow}>
             <Icon className={iconClassName} aria-hidden />
-            <div className={classes.itemText}>
-                <Typography
-                    component="span"
-                    className={classes.label}
-                    variant="body1"
-                >
-                    {title}
-                </Typography>
-                {showSubsectionInfo && (
-                    <Typography
-                        component="p"
-                        variant="body1"
-                        className={classes.subsectionText}
-                    >
-                        {subsectionText}
-                        {showLearnMore && learnMoreUrl && (
-                            <>
-                                {' '}
-                                <a
-                                    href={learnMoreUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={classes.learnMoreLink}
-                                >
-                                    Learn more →
-                                </a>
-                            </>
-                        )}
-                    </Typography>
-                )}
-            </div>
+            <Typography
+                component="span"
+                className={classes.label}
+                variant="body1"
+            >
+                {title}
+            </Typography>
         </div>
+        {/* Hidden text with margin-left to align with subtitle */}
+        {showSubsectionInfo && (
+            <div className={classes.itemHiddenTextWrap}>
+                <Typography
+                    component="p"
+                    variant="body1"
+                    className={classes.subsectionText}
+                >
+                    {subsectionText}
+                    {showLearnMore && learnMoreUrl && (
+                        <>
+                            <br />
+                            <a
+                                href={learnMoreUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={classes.learnMoreLink}
+                            >
+                                Learn more →
+                            </a>
+                        </>
+                    )}
+                </Typography>
+            </div>
+        )}
     </Grid>
 );
 

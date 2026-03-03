@@ -38,55 +38,59 @@ export default theme => {
         }),
         switchLabel: Object.freeze({
             ...typography.bodyText,
-            fontSize: '14px',
-            marginRight: spacing,
+            fontSize: '0.875rem',
         }),
         switch: Object.freeze({}),
         descriptionList: Object.freeze({
             marginTop: 0,
             '& > *:nth-child(2)': {
-                paddingLeft: spacing * 2,
-                paddingRight: spacing * 2,
+                [theme.breakpoints.up('md')]: {
+                    paddingLeft: spacing * 2,
+                    paddingRight: spacing * 2,
+                },
             },
         }),
         descriptionItem: Object.freeze({
             display: 'block',
         }),
-        itemContent: Object.freeze({
+        itemRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: spacing * 2,
+            gap: '8px',
         }),
-        itemText: Object.freeze({
-            flex: 1,
-            minWidth: 0,
+        itemHiddenTextWrap: Object.freeze({
+            marginTop: spacing * 0.5,
+            marginLeft: 20 + spacing,
         }),
         iconCrowdsourced: Object.freeze({
             flexShrink: 0,
-            marginRight: spacing,
+            width: 20,
+            height: 20,
             fontSize: 20,
             color: COLOURS.DARK_GREY,
         }),
         iconClaimed: Object.freeze({
             flexShrink: 0,
-            marginRight: spacing,
+            width: 20,
+            height: 20,
             fontSize: 20,
             color: COLOURS.DARK_GREEN,
         }),
         iconPartner: Object.freeze({
             flexShrink: 0,
-            marginRight: spacing,
+            width: 20,
+            height: 20,
             fontSize: 20,
             color: COLOURS.MATERIAL_BLUE,
         }),
         label: Object.freeze({
             ...typography.formLabelTight,
-            fontSize: '18px',
+            fontSize: '1.125rem',
         }),
         subsectionText: Object.freeze({
             ...typography.bodyText,
-            fontSize: '16px',
-            marginTop: spacing * 0.5,
+            fontSize: '0.875rem',
+            marginTop: 0,
             marginBottom: 0,
         }),
         learnMoreLink: Object.freeze({
