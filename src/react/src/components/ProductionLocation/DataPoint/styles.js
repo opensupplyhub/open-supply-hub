@@ -2,7 +2,6 @@ import COLOURS from '../../../util/COLOURS';
 
 export default () =>
     Object.freeze({
-        /* Root: Grid container - label column 140px, value column 1fr; spacing from Grid spacing={3} */
         root: Object.freeze({
             paddingTop: 12,
             paddingBottom: 12,
@@ -10,7 +9,6 @@ export default () =>
                 opacity: 1,
             }),
         }),
-        /* First column: label (140px) */
         labelColumn: Object.freeze({
             width: '165px',
             flexDirection: 'row',
@@ -31,7 +29,6 @@ export default () =>
         tooltipIcon: Object.freeze({
             opacity: 0,
         }),
-        /* Second column: value + meta block */
         valueColumn: Object.freeze({
             minWidth: 0,
             flex: 1,
