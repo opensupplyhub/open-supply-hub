@@ -26,6 +26,14 @@ const navItems = [
     },
 ];
 
+const handleClick = (event, to) => {
+    event.preventDefault();
+    const id = to.replace('#', '');
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 const NavBar = ({ classes }) => (
     <div className={`${classes.container} ${classes.navContainer}`}>
         <Typography variant="title" className={classes.title} component="h3">
@@ -40,7 +48,11 @@ const NavBar = ({ classes }) => (
                     }`}
                     disableGutters
                 >
-                    <Link to={to} className={classes.link}>
+                    <Link
+                        to={to}
+                        onClick={event => handleClick(event, to)}
+                        className={classes.link}
+                    >
                         <Icon
                             className={`${classes.menuIcon} ${
                                 active ? classes.menuIconActive : ''
