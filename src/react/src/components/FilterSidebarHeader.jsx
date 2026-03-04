@@ -4,25 +4,6 @@ import { withStyles, Grid } from '@material-ui/core';
 import { connect } from 'react-redux';
 import { get } from 'lodash';
 
-const checkHasActiveFilters = filters =>
-    filters.facilityFreeTextQuery !== '' ||
-    filters.contributors.length > 0 ||
-    filters.contributorTypes.length > 0 ||
-    filters.countries.length > 0 ||
-    filters.claimStatuses.length > 0 ||
-    filters.sectors.length > 0 ||
-    filters.parentCompany.length > 0 ||
-    filters.facilityType.length > 0 ||
-    filters.processingType.length > 0 ||
-    filters.productType.length > 0 ||
-    filters.numberOfWorkers.length > 0 ||
-    filters.dataSources.length > 0 ||
-    filters.moderationStatuses.length > 0 ||
-    filters.nativeLanguageName !== '' ||
-    filters.combineContributors !== '' ||
-    filters.boundary !== null ||
-    filters.lists.length > 0;
-
 import FacilityIcon from './FacilityIcon';
 import ResultsSortDropdown from './ResultsSortDropdown';
 import ShowOnly from './ShowOnly';
@@ -39,7 +20,6 @@ const FilterSidebarHeader = ({
     embed,
     user,
     isSameContributor,
-    hasActiveFilters,
 }) => (
     <div className={`${classes.header} results-height-subtract`}>
         <h1 className={classes.headerText}>
