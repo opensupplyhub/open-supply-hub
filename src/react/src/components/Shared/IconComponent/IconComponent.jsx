@@ -12,7 +12,6 @@ import HelpOutline from '@material-ui/icons/HelpOutline';
 import { withStyles } from '@material-ui/core/styles';
 
 import useInteractiveTooltip from './hooks';
-import getAriaLabelFromTitle from './utils';
 import iconComponentStyles from './styles';
 
 const IconComponent = ({
@@ -53,11 +52,7 @@ const IconComponent = ({
                 onMouseEnter={handleTriggerEnter}
                 onMouseLeave={handleTriggerLeave}
             >
-                <Icon
-                    className={classes.icon}
-                    fontSize="small"
-                    aria-label={getAriaLabelFromTitle(title)}
-                />
+                <Icon className={classes.icon} fontSize="small" />
             </span>
         </Tooltip>
     );

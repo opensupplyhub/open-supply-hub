@@ -3,7 +3,7 @@ import { string, node, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 import learnMoreLinkStyles from './styles';
-import { DEFAULT_LINK_TEXT } from './constants';
+import DEFAULT_LINK_TEXT from './constants';
 
 const LearnMoreLink = ({ href, children, classes }) => (
     <p className={classes.paragraph}>
