@@ -7,6 +7,11 @@ export default () =>
             paddingBottom: 12,
             '&:hover $tooltipIcon': Object.freeze({
                 opacity: 1,
+                '& > svg': Object.freeze({
+                    '&:hover': Object.freeze({
+                        color: COLOURS.PURPLE,
+                    }),
+                }),
             }),
         }),
         labelColumn: Object.freeze({

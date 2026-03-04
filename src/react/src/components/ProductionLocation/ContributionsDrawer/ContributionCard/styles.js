@@ -38,6 +38,30 @@ export default () =>
         contributionSourcePromoted: Object.freeze({
             fontSize: '1.1rem',
         }),
+        contributionSourceLink: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: '1rem',
+            lineHeight: 1.4,
+            color: COLOURS.PURPLE,
+            textDecoration: 'none',
+            cursor: 'pointer',
+            '&:hover': Object.freeze({
+                textDecoration: 'underline',
+            }),
+        }),
+        contributionSourceLinkPromoted: Object.freeze({
+            fontSize: '1.1rem',
+        }),
+        contributionSourceIcon: Object.freeze({
+            fontSize: 14,
+            color: COLOURS.PURPLE,
+            marginLeft: '4px',
+        }),
+        contributionSourceIconPromoted: Object.freeze({
+            fontSize: 16,
+        }),
         contributionMetaContainer: Object.freeze({
             display: 'flex',
             alignItems: 'center',

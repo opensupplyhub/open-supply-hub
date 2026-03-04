@@ -27,6 +27,7 @@ function getMockDrawerDataForName(facilityName) {
             sourceName: 'Zaber and Zubair Fabrics Ltd',
             date: '2022-11-15',
             linkUrl: null,
+            contributorId: 101,
         },
         contributions: [
             {
@@ -34,18 +35,21 @@ function getMockDrawerDataForName(facilityName) {
                 sourceName: 'International Accord Foundation',
                 date: '2025-12-01',
                 linkUrl: null,
+                contributorId: 102,
             },
             {
                 value: 'Noman Group',
                 sourceName: 'Marks & Spencer',
                 date: '2025-08-01',
                 linkUrl: null,
+                contributorId: 103,
             },
             {
                 value: 'The Noman Group',
                 sourceName: 'JD Williams',
                 date: '2025-05-01',
                 linkUrl: null,
+                contributorId: 104,
             },
         ],
     };
