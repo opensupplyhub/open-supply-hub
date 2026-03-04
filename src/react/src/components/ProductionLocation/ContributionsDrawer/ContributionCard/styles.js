@@ -5,7 +5,6 @@ export default () =>
         contributionCard: Object.freeze({
             backgroundColor: COLOURS.WHITE,
             border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
-            borderRadius: 6,
             padding: 16,
             marginBottom: 8,
         }),

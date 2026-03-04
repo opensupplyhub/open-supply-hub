@@ -11,7 +11,7 @@ import Spa from '@material-ui/icons/Spa';
 import Switch from '@material-ui/core/Switch';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import FormFieldHint from '../../../Shared/FormFieldHint/FormFieldHint';
-import HelpTooltip from '../../../../Shared/HelpTooltip/HelpTooltip';
+import IconComponent from '../../../../Shared/IconComponent/IconComponent';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
@@ -134,7 +134,7 @@ const ProfileStep = ({
                             label={
                                 <>
                                     Production Location Name in Native Language
-                                    <HelpTooltip
+                                    <IconComponent
                                         className={classes.helpTooltip}
                                         title="Enter the production location name in the local language if different from the English name"
                                     />
@@ -179,7 +179,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Company Phone
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Main phone number for contacting this production location directly"
                                         />
@@ -236,7 +236,7 @@ const ProfileStep = ({
                                     label={
                                         <>
                                             Company Website
-                                            <HelpTooltip
+                                            <IconComponent
                                                 className={classes.helpTooltip}
                                                 title="Official website URL for this specific production location (if available)"
                                             />
@@ -297,7 +297,7 @@ const ProfileStep = ({
                             label={
                                 <>
                                     Production Location Description
-                                    <HelpTooltip
+                                    <IconComponent
                                         className={classes.helpTooltip}
                                         title="Provide a brief overview of what this production location manufactures and its main business activities"
                                     />
@@ -425,7 +425,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Office Name
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Name of the corporate office or headquarters"
                                         />
@@ -471,7 +471,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Office Address
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Physical address of the office location"
                                         />
@@ -616,7 +616,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Location Type(s)
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
                                         />
@@ -675,7 +675,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Processing Type(s)
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
                                         />
@@ -742,7 +742,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Product Types
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
                                         />
@@ -778,7 +778,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Number of Workers
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Total number of employees working at this production location, can be a number or a range (e.g., 100, 100-150)"
                                         />
@@ -823,7 +823,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Percentage of Female Workers
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Percentage of female employees out of the total workforce at this location"
                                         />
@@ -876,7 +876,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Minimum Order Quantity
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Smallest order quantity this production location will accept from customers"
                                         />
@@ -936,7 +936,7 @@ const ProfileStep = ({
                                 label={
                                     <>
                                         Average Lead Time
-                                        <HelpTooltip
+                                        <IconComponent
                                             className={classes.helpTooltip}
                                             title="Typical time required from order confirmation to product delivery"
                                         />
@@ -1030,7 +1030,7 @@ const ProfileStep = ({
                             label={
                                 <>
                                     Affiliations
-                                    <HelpTooltip
+                                    <IconComponent
                                         className={classes.helpTooltip}
                                         title="Organizations, parent companies, or partner entities your facility is formally connected to"
                                     />

@@ -4,7 +4,6 @@ export default () =>
     Object.freeze({
         infoBox: Object.freeze({
             padding: 16,
-            borderRadius: 8,
             marginBottom: 16,
         }),
         infoBoxPromoted: Object.freeze({

@@ -16,6 +16,9 @@ export default theme =>
             padding: theme.spacing.unit * 1.5,
             maxWidth: 300,
         }),
+        tooltipVisible: Object.freeze({
+            opacity: '1 !important',
+        }),
         icon: Object.freeze({
             fontSize: '1rem',
             color: COLOURS.DARK_GREY,

@@ -18,7 +18,7 @@ import { withStyles } from '@material-ui/core/styles';
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/PersonOutline';
 
-import HelpTooltip from '../../Shared/HelpTooltip/HelpTooltip';
+import IconComponent from '../../Shared/IconComponent/IconComponent';
 import formatDisplayDate from '../utils';
 import getSourcesCount from './utils';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
@@ -47,11 +47,7 @@ const DataPoint = ({
     };
 
     const tooltipIcon = tooltipText ? (
-        <HelpTooltip
-            title={tooltipText}
-            enterDelay={200}
-            className={classes.tooltipIcon}
-        />
+        <IconComponent title={tooltipText} className={classes.tooltipIcon} />
     ) : null;
 
     return (
