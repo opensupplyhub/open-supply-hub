@@ -5,13 +5,13 @@ export default theme =>
     Object.freeze({
         ...commonStyles(theme),
         navContainer: Object.freeze({
-            padding: '8px',
+            padding: '12px',
             marginBottom: theme.spacing.unit,
         }),
         title: Object.freeze({
             fontWeight: 600,
             fontSize: '1.125rem',
-            padding: '4px 12px 8px',
+            margin: '0 0 12px 0',
         }),
         menuList: Object.freeze({
             padding: 0,
@@ -19,10 +19,9 @@ export default theme =>
         menuItem: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            padding: '6px 12px',
-            borderRadius: 0,
-            minHeight: 'unset',
+            padding: '0 12px',
             height: '36px',
+            borderRadius: 0,
             gap: '8px',
             transition: 'background-color 0.2s ease',
             '&:hover': {
@@ -43,9 +42,8 @@ export default theme =>
             color: theme.palette.primary.main,
         }),
         menuLabel: Object.freeze({
-            fontWeight: 500,
-            fontSize: '0.875rem',
-            color: theme.palette.text.primary,
+            fontSize: '1rem',
+            color: COLOURS.BLACK,
         }),
         menuLabelActive: Object.freeze({
             fontWeight: 600,
