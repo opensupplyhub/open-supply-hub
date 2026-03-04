@@ -1,8 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import ArrowBack from '@material-ui/icons/ArrowBackIos';
+import ArrowRightAlt from '@material-ui/icons/ArrowRightAlt';
 
 import { resetSingleFacility } from '../../../../actions/facilities';
 import { facilitiesRoute } from '../../../../util/constants';
@@ -14,19 +13,22 @@ function ProductionLocationDetailsBackToSearch({
     clearFacility,
     history: { push },
 }) {
+    const onClick = event => {
+        event.preventDefault();
+        clearFacility();
+        push(facilitiesRoute);
+    };
+
     return (
         <div className={classes.buttonContainer}>
-            <Button
-                color="primary"
-                className={classes.backButton}
-                onClick={() => {
-                    clearFacility();
-                    push(facilitiesRoute);
-                }}
+            <a
+                href={facilitiesRoute}
+                className={classes.backLink}
+                onClick={onClick}
             >
-                <ArrowBack />
-                Back to search results
-            </Button>
+                <ArrowRightAlt style={{ transform: 'rotate(180deg)' }} />
+                <span className={classes.text}>Back to search results</span>
+            </a>
         </div>
     );
 }
