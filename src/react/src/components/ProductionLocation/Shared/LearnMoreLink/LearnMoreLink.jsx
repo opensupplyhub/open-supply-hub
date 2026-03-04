@@ -1,8 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { string, node, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 import learnMoreLinkStyles from './styles';
+import { DEFAULT_LINK_TEXT } from './constants';
 
 const LearnMoreLink = ({ href, children, classes }) => (
     <p className={classes.paragraph}>
@@ -18,16 +19,16 @@ const LearnMoreLink = ({ href, children, classes }) => (
 );
 
 LearnMoreLink.propTypes = {
-    href: PropTypes.string.isRequired,
-    children: PropTypes.node,
-    classes: PropTypes.shape({
-        paragraph: PropTypes.string.isRequired,
-        link: PropTypes.string.isRequired,
+    href: string.isRequired,
+    children: node,
+    classes: shape({
+        paragraph: string.isRequired,
+        link: string.isRequired,
     }).isRequired,
 };
 
 LearnMoreLink.defaultProps = {
-    children: 'Learn more →',
+    children: DEFAULT_LINK_TEXT,
 };
 
 export default withStyles(learnMoreLinkStyles)(LearnMoreLink);
