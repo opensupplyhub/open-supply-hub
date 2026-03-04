@@ -6,6 +6,7 @@ import partition from 'lodash/partition';
 import FacilityDetailsItem from './FacilityDetailsItem';
 
 import { facilityDetailsActions } from '../util/constants';
+import { makeProfileRouteLink } from '../util/util';
 
 const getDetailsText = ({
     embed,
@@ -70,6 +71,16 @@ const FacilityDetailsLocation = ({ data, embed }) => {
                 secondary={detailsText}
                 embed={embed}
                 isFromClaim={canonicalLocationData?.is_from_claim}
+                contributorProfileUrl={
+                    canonicalLocationData?.contributor_id
+                        ? makeProfileRouteLink(
+                              canonicalLocationData.contributor_id,
+                          )
+                        : null
+                }
+                contributorName={
+                    canonicalLocationData?.contributor_name ?? null
+                }
                 additionalContent={otherLocationsData
                     .filter(item => !item.has_invalid_location)
                     .map((item, i) => ({
@@ -77,6 +88,10 @@ const FacilityDetailsLocation = ({ data, embed }) => {
                         secondary: item.contributor_name,
                         key: `${item.lng}, ${item.lat} - ${i}`,
                         isFromClaim: item.is_from_claim,
+                        contributorProfileUrl: item.contributor_id
+                            ? makeProfileRouteLink(item.contributor_id)
+                            : null,
+                        contributorName: item.contributor_name ?? null,
                     }))}
             />
         </>

@@ -83,6 +83,8 @@ const FacilityDetailsContributorsDrawer = ({
                                 <Link
                                     to={makeProfileRouteLink(contributor.id)}
                                     className={`${classes.primaryText} ${classes.link}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                 >
                                     {contributor.contributor_name}
                                 </Link>

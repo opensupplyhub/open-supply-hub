@@ -51,6 +51,9 @@ const FacilityDetailsItem = ({
     additionalContentTextPlural = 'entries',
     partnerConfigFields,
     showDivider,
+    contributorProfileUrl,
+    contributorName,
+    secondaryDate,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
@@ -73,6 +76,9 @@ const FacilityDetailsItem = ({
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
                 partnerConfigFields={partnerConfigFields}
+                contributorProfileUrl={contributorProfileUrl}
+                contributorName={contributorName}
+                secondaryDate={secondaryDate}
             />
             <ShowOnly when={hasAdditionalContent}>
                 <Button
@@ -110,6 +116,9 @@ const FacilityDetailsItem = ({
                             isVerified={isVerified}
                             isFromClaim={isFromClaim}
                             partnerConfigFields={partnerConfigFields}
+                            contributorProfileUrl={contributorProfileUrl}
+                            contributorName={contributorName}
+                            secondaryDate={secondaryDate}
                         />
                     </div>
                     {isOpen &&
@@ -164,6 +173,9 @@ FacilityDetailsItem.propTypes = {
         displayText: PropTypes.string,
     }),
     showDivider: PropTypes.bool,
+    contributorProfileUrl: PropTypes.string,
+    contributorName: PropTypes.string,
+    secondaryDate: PropTypes.string,
 };
 
 FacilityDetailsItem.defaultProps = {
@@ -184,6 +196,9 @@ FacilityDetailsItem.defaultProps = {
     additionalContentTextPlural: 'entries',
     partnerConfigFields: null,
     showDivider: false,
+    contributorProfileUrl: null,
+    contributorName: null,
+    secondaryDate: null,
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsItem);

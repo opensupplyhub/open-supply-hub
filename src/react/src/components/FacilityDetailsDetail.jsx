@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Tooltip from '@material-ui/core/Tooltip';
+import { Link } from 'react-router-dom';
 
 import ShowOnly from './ShowOnly';
 import BadgeVerified from './BadgeVerified';
@@ -54,6 +55,18 @@ const detailsStyles = theme =>
             lineHeight: '21px',
             verticalAlign: 'baseline',
         },
+        contributorLink: {
+            color: theme.palette.primary.main,
+            textDecoration: 'none',
+            fontWeight: 500,
+            '&:hover': {
+                textDecoration: 'underline',
+            },
+            '&:focus': {
+                outline: '2px solid',
+                outlineOffset: '2px',
+            },
+        },
     });
 
 const CLAIM_EXPLANATORY_TEXT =
@@ -74,50 +87,94 @@ const FacilityDetailsDetail = ({
     isFromClaim,
     classes,
     partnerConfigFields,
-}) => (
-    <div className={classes.root} data-testid="facility-details-detail">
-        <ShowOnly when={isVerified || isFromClaim}>
-            <div className={classes.badgeWrapper}>
-                <ShowOnly when={isVerified && !isFromClaim}>
-                    <BadgeVerified />
-                </ShowOnly>
-                <FeatureFlag flag={CLAIM_A_FACILITY}>
-                    <ShowOnly when={isFromClaim}>
-                        <Tooltip title={CLAIM_EXPLANATORY_TEXT}>
-                            <BadgeVerified />
-                        </Tooltip>
-                    </ShowOnly>
-                </FeatureFlag>
-            </div>
-        </ShowOnly>
-        <div>
-            <Typography className={classes.primaryText} component="div">
-                {jsonSchema ? (
-                    <PartnerFieldSchemaValue
-                        value={primary}
-                        jsonSchema={jsonSchema}
-                        partnerConfigFields={partnerConfigFields}
-                    />
-                ) : (
-                    primary || locationLabeled
-                )}
-                {unit ? <span className={classes.unitText}>{unit}</span> : null}
-            </Typography>
-            {sourceBy ? (
-                <Typography
-                    className={classes.sourceText}
-                    component="div"
-                    dangerouslySetInnerHTML={{ __html: sourceBy }}
-                />
-            ) : null}
-            {secondary ? (
-                <Typography className={classes.secondaryText}>
-                    {secondary}
+    contributorProfileUrl,
+    contributorName,
+    secondaryDate,
+}) => {
+    const renderSecondary = () => {
+        if (!secondary && !(contributorProfileUrl && contributorName)) {
+            return null;
+        }
+        if (contributorProfileUrl && contributorName) {
+            return (
+                <Typography className={classes.secondaryText} component="span">
+                    {secondaryDate ? (
+                        <>
+                            {secondaryDate} by{' '}
+                            <Link
+                                to={contributorProfileUrl}
+                                className={classes.contributorLink}
+                                aria-label={`View profile of ${contributorName}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {contributorName}
+                            </Link>
+                        </>
+                    ) : (
+                        <Link
+                            to={contributorProfileUrl}
+                            className={classes.contributorLink}
+                            aria-label={`View profile of ${contributorName}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {contributorName}
+                        </Link>
+                    )}
                 </Typography>
-            ) : null}
+            );
+        }
+        return (
+            <Typography className={classes.secondaryText}>
+                {secondary}
+            </Typography>
+        );
+    };
+
+    return (
+        <div className={classes.root} data-testid="facility-details-detail">
+            <ShowOnly when={isVerified || isFromClaim}>
+                <div className={classes.badgeWrapper}>
+                    <ShowOnly when={isVerified && !isFromClaim}>
+                        <BadgeVerified />
+                    </ShowOnly>
+                    <FeatureFlag flag={CLAIM_A_FACILITY}>
+                        <ShowOnly when={isFromClaim}>
+                            <Tooltip title={CLAIM_EXPLANATORY_TEXT}>
+                                <BadgeVerified />
+                            </Tooltip>
+                        </ShowOnly>
+                    </FeatureFlag>
+                </div>
+            </ShowOnly>
+            <div>
+                <Typography className={classes.primaryText} component="div">
+                    {jsonSchema ? (
+                        <PartnerFieldSchemaValue
+                            value={primary}
+                            jsonSchema={jsonSchema}
+                            partnerConfigFields={partnerConfigFields}
+                        />
+                    ) : (
+                        primary || locationLabeled
+                    )}
+                    {unit ? (
+                        <span className={classes.unitText}>{unit}</span>
+                    ) : null}
+                </Typography>
+                {sourceBy ? (
+                    <Typography
+                        className={classes.sourceText}
+                        component="div"
+                        dangerouslySetInnerHTML={{ __html: sourceBy }}
+                    />
+                ) : null}
+                {renderSecondary()}
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 FacilityDetailsDetail.propTypes = {
     primary: PropTypes.oneOfType([
@@ -136,6 +193,9 @@ FacilityDetailsDetail.propTypes = {
         baseUrl: PropTypes.string,
         displayText: PropTypes.string,
     }),
+    contributorProfileUrl: PropTypes.string,
+    contributorName: PropTypes.string,
+    secondaryDate: PropTypes.string,
     classes: PropTypes.shape({
         root: PropTypes.string,
         badgeWrapper: PropTypes.string,
@@ -143,6 +203,7 @@ FacilityDetailsDetail.propTypes = {
         secondaryText: PropTypes.string,
         sourceText: PropTypes.string,
         unitText: PropTypes.string,
+        contributorLink: PropTypes.string,
     }).isRequired,
 };
 
@@ -156,6 +217,9 @@ FacilityDetailsDetail.defaultProps = {
     isVerified: false,
     isFromClaim: false,
     partnerConfigFields: null,
+    contributorProfileUrl: null,
+    contributorName: null,
+    secondaryDate: null,
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsDetail);

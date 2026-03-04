@@ -2650,6 +2650,33 @@ describe('formatExtendedField', () => {
         expect(result.isVerified).toBe(true);
         expect(result.isFromClaim).toBe(false);
     });
+
+    it('includes contributor profile link fields when contributor_id is present', () => {
+        const result = formatExtendedField({
+            ...baseProps,
+            value: ['Val'],
+            field_name: 'name',
+            contributor_id: 42,
+        });
+
+        expect(result.contributor_id).toBe(42);
+        expect(result.contributor_name).toBe('Test Contributor');
+        expect(result.contributorProfileUrl).toBe('/profile/42');
+        expect(result.contributorName).toBe('Test Contributor');
+        expect(result.secondaryDate).toBe('October 1, 2025');
+    });
+
+    it('sets contributor link fields to null when contributor_id is absent', () => {
+        const result = formatExtendedField({
+            ...baseProps,
+            value: ['Val'],
+            field_name: 'name',
+        });
+
+        expect(result.contributor_id).toBeNull();
+        expect(result.contributorProfileUrl).toBeNull();
+        expect(result.secondaryDate).toBe('October 1, 2025');
+    });
 });
 
 describe('processDromoResults', () => {

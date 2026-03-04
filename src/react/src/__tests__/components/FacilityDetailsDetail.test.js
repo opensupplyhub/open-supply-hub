@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import FacilityDetailsDetail from './../../components/FacilityDetailsDetail';
 
 describe('FacilityDetailsDetail', () => {
@@ -162,6 +163,49 @@ describe('FacilityDetailsDetail', () => {
         const { container } = render(<FacilityDetailsDetail {...props} />);
 
         expect(container.querySelector('.unitText')).not.toBeInTheDocument();
+    });
+
+    test('renders secondary as plain text when no contributor link props', () => {
+        const props = {
+            primary: 'Test Primary',
+            secondary: 'October 1, 2025 by Acme Corp',
+            classes: {
+                root: 'root',
+                primaryText: 'primaryText',
+                secondaryText: 'secondaryText',
+            },
+        };
+
+        render(<FacilityDetailsDetail {...props} />);
+
+        expect(screen.getByText('October 1, 2025 by Acme Corp')).toBeInTheDocument();
+    });
+
+    test('renders contributor name as profile link when contributorProfileUrl and contributorName are present', () => {
+        const props = {
+            primary: 'Test Value',
+            contributorProfileUrl: '/profile/10',
+            contributorName: 'Acme Corp',
+            secondaryDate: 'October 1, 2025',
+            classes: {
+                root: 'root',
+                primaryText: 'primaryText',
+                secondaryText: 'secondaryText',
+                contributorLink: 'contributorLink',
+            },
+        };
+
+        render(
+            <MemoryRouter>
+                <FacilityDetailsDetail {...props} />
+            </MemoryRouter>,
+        );
+
+        expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+        const link = screen.getByRole('link', { name: /View profile of Acme Corp/i });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute('href', '/profile/10');
+        expect(screen.getByText(/October 1, 2025 by/)).toBeInTheDocument();
     });
 });
 

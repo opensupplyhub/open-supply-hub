@@ -1819,6 +1819,7 @@ export const formatExtendedField = ({
     label,
     json_schema,
     contributor_name,
+    contributor_id,
     is_from_claim,
     is_verified,
     formatValue = rawValue => rawValue,
@@ -1840,6 +1841,14 @@ export const formatExtendedField = ({
         isVerified: is_verified,
         isFromClaim: is_from_claim,
         key: uuidv4(),
+        contributor_id: contributor_id ?? null,
+        contributor_name: contributor_name ?? null,
+        contributorProfileUrl:
+            contributor_id != null
+                ? makeProfileRouteLink(contributor_id)
+                : null,
+        contributorName: contributor_name ?? null,
+        secondaryDate: created_at ? formatAttribution(created_at) : null,
     };
 };
 
