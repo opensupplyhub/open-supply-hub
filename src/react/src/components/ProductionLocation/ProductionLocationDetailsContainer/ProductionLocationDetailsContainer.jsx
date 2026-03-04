@@ -89,11 +89,13 @@ function ProductionLocationDetailsContainer({
 
     return (
         <Grid container className={classes.root} spacing={8}>
-            <Grid item xs={12} md={2}>
+            <Grid item xs={12} md={2} className={classes.sidebarContainer}>
                 <BackToSearch history={history} />
-                <NavBar />
-                <ContributeFields osId={osID} />
-                <SupplyChain />
+                <Grid className={classes.sidebar}>
+                    <NavBar />
+                    <ContributeFields osId={osID} />
+                    <SupplyChain />
+                </Grid>
             </Grid>
             <Grid item xs={12} md={10}>
                 <ProductionLocationDetailsContent

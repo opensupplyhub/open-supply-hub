@@ -19,4 +19,14 @@ export default theme =>
             color: theme.palette.error.main,
             marginBottom: theme.spacing.unit,
         }),
+        sidebar: {
+            [theme.breakpoints.up('md')]: {
+                position: 'sticky',
+                top: '10px',
+                alignSelf: 'flex-start',
+            },
+            [theme.breakpoints.up('lg')]: {
+                top: '120px',
+            },
+        },
     });
