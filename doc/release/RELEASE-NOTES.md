@@ -38,6 +38,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2356](https://opensupplyhub.atlassian.net/browse/OSDEV-2356) - Added `GET api/partner-field-groups/` endpoint to retrieve partner field groups with pagination support and CDN caching for the endpoint (and additional endpoints for partner fields and contributors).
 * [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
 * [OSDEV-2375](https://opensupplyhub.atlassian.net/browse/OSDEV-2375) - Created UI for the location name, OS ID, and "Understanding Data Sources" sections. Introduced `doc/frontend.md` with UI development considerations.
+* [OSDEV-2366](https://opensupplyhub.atlassian.net/browse/OSDEV-2366) - Added "Jump to" section to the sidebar with links to the different sections of the Production Location page.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
