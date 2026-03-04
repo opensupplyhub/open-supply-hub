@@ -6,30 +6,24 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 
-import Description from '@material-ui/icons/Description';
-import Room from '@material-ui/icons/Room';
-import Assignment from '@material-ui/icons/Assignment';
-import PlaylistAddCheck from '@material-ui/icons/PlaylistAddCheck';
-import VerifiedUser from '@material-ui/icons/VerifiedUser';
-import Spa from '@material-ui/icons/Spa';
-import AccountBalanceWallet from '@material-ui/icons/AccountBalanceWallet';
-import HelpOutline from '@material-ui/icons/HelpOutline';
+import Overview from '../../../Icons/Overview';
+import GeneralInformation from '../../../Icons/GeneralInformation';
+import OperationalDetails from '../../../Icons/OperationalDetails';
 
 import navBarStyles from './styles';
 
 const navItems = [
-    { to: '#overview', label: 'Overview', Icon: Description },
-    { to: '#location', label: 'Location', Icon: Room },
-    { to: '#claimed_data', label: 'Claimed data', Icon: Assignment },
+    { to: '#overview', label: 'Overview', Icon: Overview },
     {
-        to: '#assessments',
-        label: 'Assessments and Audits',
-        Icon: PlaylistAddCheck,
+        to: '#general-information',
+        label: 'General Information',
+        Icon: GeneralInformation,
     },
-    { to: '#certifications', label: 'Certifications', Icon: VerifiedUser },
-    { to: '#emissions', label: 'Emissions', Icon: Spa },
-    { to: '#living_wage', label: 'Living Wage', Icon: AccountBalanceWallet },
-    { to: '#grievance', label: 'Grievance Mechanism', Icon: HelpOutline },
+    {
+        to: '#operational-details',
+        label: 'Operational Details',
+        Icon: OperationalDetails,
+    },
 ];
 
 const NavBar = ({ classes }) => (
