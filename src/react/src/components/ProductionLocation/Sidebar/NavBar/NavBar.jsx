@@ -6,38 +6,69 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 
+import Overview from '../../../Icons/Overview';
+import GeneralInformation from '../../../Icons/GeneralInformation';
+import OperationalDetails from '../../../Icons/OperationalDetails';
+
 import navBarStyles from './styles';
 
+const navItems = [
+    { to: '#overview', label: 'Overview', Icon: Overview },
+    {
+        to: '#general-information',
+        label: 'General Information',
+        Icon: GeneralInformation,
+    },
+    {
+        to: '#operational-details',
+        label: 'Operational Details',
+        Icon: OperationalDetails,
+    },
+];
+
+const handleClick = (event, to) => {
+    event.preventDefault();
+    const id = to.replace('#', '');
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 const NavBar = ({ classes }) => (
-    <div className={classes.container}>
+    <div className={`${classes.container} ${classes.navContainer}`}>
         <Typography variant="title" className={classes.title} component="h3">
             Jump to
         </Typography>
-        <MenuList>
-            <MenuItem>
-                <Link to="#overview">Overview</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#location">Location</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#claimed_data">Claimed data</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#assessments">Assessments and Audits</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#certifications">Certifications</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#emissions">Emissions</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#living_wage">Living Wage</Link>
-            </MenuItem>
-            <MenuItem>
-                <Link to="#grievance">Grievance Mechanism</Link>
-            </MenuItem>
+        <MenuList className={classes.menuList}>
+            {navItems.map(({ to, label, Icon, active }) => (
+                <MenuItem
+                    key={to}
+                    className={`${classes.menuItem} ${
+                        active ? classes.menuItemActive : ''
+                    }`}
+                    disableGutters
+                >
+                    <Link
+                        to={to}
+                        onClick={event => handleClick(event, to)}
+                        className={classes.link}
+                    >
+                        <Icon
+                            className={`${classes.menuIcon} ${
+                                active ? classes.menuIconActive : ''
+                            }`}
+                        />
+                        <Typography
+                            variant="body1"
+                            className={`${classes.menuLabel} ${
+                                active ? classes.menuLabelActive : ''
+                            }`}
+                        >
+                            {label}
+                        </Typography>
+                    </Link>
+                </MenuItem>
+            ))}
         </MenuList>
     </div>
 );

@@ -91,9 +91,11 @@ function ProductionLocationDetailsContainer({
         <Grid container className={classes.root}>
             <Grid item xs={12} md={2}>
                 <BackToSearch history={history} />
-                <NavBar />
-                <ContributeFields osId={osID} />
-                <SupplyChain />
+                <Grid className={classes.sidebar}>
+                    <NavBar />
+                    <ContributeFields osId={osID} />
+                    <SupplyChain />
+                </Grid>
             </Grid>
             <Grid item xs={12} md={10}>
                 <ProductionLocationDetailsContent
