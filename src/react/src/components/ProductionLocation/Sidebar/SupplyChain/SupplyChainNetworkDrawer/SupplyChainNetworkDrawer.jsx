@@ -75,7 +75,7 @@ const SupplyChainNetworkDrawer = ({
                     shared data about this production location
                 </Typography>
 
-                <Divider height={1} />
+                <Divider style={{ height: 1 }} />
 
                 <Typography className={classes.sectionLabel} component="p">
                     {allSourcesLabel}
