@@ -66,6 +66,7 @@ function VectorTileFacilitiesMap({
     isMobile,
     disableZoom,
     disableZoomToSearch,
+    googleLayerType = 'roadmap',
 }) {
     const mapRef = useUpdateLeafletMapImperatively(resetButtonClickCount, {
         osID,
@@ -132,8 +133,12 @@ function VectorTileFacilitiesMap({
                     REGION: DEFAULT_COUNTRY_CODE,
                     VERSION: '3.57',
                 }}
-                type="roadmap"
-                styles={mapStyle === 'silver' ? SILVER_MAP_STYLE : null}
+                type={googleLayerType}
+                styles={
+                    mapStyle === 'silver' && googleLayerType === 'roadmap'
+                        ? SILVER_MAP_STYLE
+                        : null
+                }
                 continuousWorld
                 minZoom={1}
                 zIndex={1}
@@ -185,6 +190,7 @@ function VectorTileFacilitiesMap({
 
 VectorTileFacilitiesMap.defaultProps = {
     facilityDetailsData: null,
+    googleLayerType: 'roadmap',
 };
 
 VectorTileFacilitiesMap.propTypes = {
@@ -205,6 +211,7 @@ VectorTileFacilitiesMap.propTypes = {
     }).isRequired,
     facilityDetailsData: facilityDetailsPropType,
     gridColorRamp: arrayOf(array).isRequired,
+    googleLayerType: string,
 };
 
 function mapStateToProps({

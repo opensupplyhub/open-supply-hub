@@ -29,5 +29,9 @@ export default theme => {
                 height: '457px',
             },
         }),
+        mapInner: Object.freeze({
+            height: '100%',
+            width: '100%',
+        }),
     });
 };

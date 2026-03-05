@@ -56,7 +56,7 @@ const ProductionLocationDetailsContent = ({
                     <GeneralFields />
                 </Grid>
                 <Grid item sm={12} md={5}>
-                    <DetailsMap />
+                    <DetailsMap data={data} />
                 </Grid>
             </Grid>
             <ClaimDataContainer className={classes.containerItem} />

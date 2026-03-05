@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { bool } from 'prop-types';
+import { bool, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
@@ -40,7 +40,11 @@ class Map extends Component {
 
     render() {
         const { hasError } = this.state;
-        const { useProductionLocationPage, isEmbedded } = this.props;
+        const {
+            useProductionLocationPage,
+            isEmbedded,
+            googleLayerType,
+        } = this.props;
 
         const renderDetailRoute = () => (
             <FeatureFlag
@@ -48,7 +52,11 @@ class Map extends Component {
                 alternative={
                     <Route
                         render={props => (
-                            <FacilitiesMap {...props} disableZoom />
+                            <FacilitiesMap
+                                {...props}
+                                disableZoom
+                                googleLayerType={googleLayerType}
+                            />
                         )}
                     />
                 }
@@ -59,6 +67,7 @@ class Map extends Component {
                             {...props}
                             disableZoom
                             disableZoomToSearch
+                            googleLayerType={googleLayerType}
                         />
                     )}
                 />
@@ -138,12 +147,14 @@ Map.propTypes = {
     user: userPropType,
     useProductionLocationPage: bool,
     isEmbedded: bool,
+    googleLayerType: string,
 };
 
 Map.defaultProps = {
     user: USER_DEFAULT_STATE,
     useProductionLocationPage: false,
     isEmbedded: false,
+    googleLayerType: 'roadmap',
 };
 
 function mapStateToProps({
