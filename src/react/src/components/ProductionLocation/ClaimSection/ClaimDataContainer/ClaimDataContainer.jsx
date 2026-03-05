@@ -3,7 +3,8 @@ import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
 import claimDataContainerStyles from './styles';
-import DataPoint, { STATUS_CLAIMED } from '../../DataPoint/DataPoint';
+import DataPoint from '../../DataPoint/DataPoint';
+import { STATUS_CLAIMED } from '../../DataPoint/constants';
 
 const ClaimDataContainer = ({ classes, className }) => (
     <div className={`${classes.container} ${className || ''}`}>

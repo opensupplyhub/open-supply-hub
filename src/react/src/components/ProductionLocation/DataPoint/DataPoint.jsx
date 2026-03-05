@@ -51,7 +51,7 @@ const DataPoint = ({
     ) : null;
 
     return (
-        <Grid container className={classes.root} wrap="nowrap">
+        <Grid container className={classes.root}>
             <Grid item container className={classes.labelColumn}>
                 <Grid item className={classes.labelItem}>
                     <Typography className={classes.label} variant="body2">
@@ -62,12 +62,7 @@ const DataPoint = ({
                     {tooltipIcon}
                 </Grid>
             </Grid>
-            <Grid
-                item
-                container
-                className={classes.valueColumn}
-                direction="column"
-            >
+            <Grid item container className={classes.valueColumn}>
                 <Grid item className={classes.valueWithTooltip}>
                     <Typography className={classes.value} variant="body1">
                         {value}
@@ -76,13 +71,7 @@ const DataPoint = ({
 
                 <Grid item container className={classes.metaRowContainer}>
                     {(contributorName || statusLabel) && (
-                        <Grid
-                            container
-                            item
-                            alignItems="center"
-                            wrap="wrap"
-                            className={classes.metaRow}
-                        >
+                        <Grid container item className={classes.metaRow}>
                             {statusLabel ? (
                                 <Grid item>
                                     <Chip
@@ -117,8 +106,6 @@ const DataPoint = ({
                         <Grid
                             item
                             container
-                            alignItems="center"
-                            wrap="wrap"
                             className={classes.metaRowSecondary}
                         >
                             {date ? (
@@ -195,4 +182,3 @@ DataPoint.defaultProps = {
 };
 
 export default withStyles(dataPointStyles)(DataPoint);
-export { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';

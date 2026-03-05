@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-    string,
-    number,
-    shape,
-    elementType,
-    oneOfType,
-    node,
-} from 'prop-types';
+import { string, number, shape, func, oneOfType, node } from 'prop-types';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpOutline from '@material-ui/icons/HelpOutline';
 import { withStyles } from '@material-ui/core/styles';
@@ -47,7 +40,7 @@ const IconComponent = ({
         >
             <span
                 className={`${className || ''} ${classes.defaultTooltipIcon} ${
-                    open && classes.tooltipVisible
+                    open ? classes.tooltipVisible : ''
                 }`}
                 onMouseEnter={handleTriggerEnter}
                 onMouseLeave={handleTriggerLeave}
@@ -76,7 +69,7 @@ IconComponent.propTypes = {
         icon: string.isRequired,
     }).isRequired,
     className: string,
-    icon: elementType,
+    icon: func,
 };
 
 export default withStyles(iconComponentStyles)(IconComponent);

@@ -5,6 +5,7 @@ export default () =>
         root: Object.freeze({
             paddingTop: '12px',
             paddingBottom: '12px',
+            flexWrap: 'nowrap',
             '&:hover $tooltipIcon': Object.freeze({
                 opacity: 1,
                 '& > svg': Object.freeze({
@@ -38,6 +39,7 @@ export default () =>
             minWidth: 0,
             flex: 1,
             overflow: 'hidden',
+            flexDirection: 'column',
         }),
         valueWithTooltip: Object.freeze({
             display: 'inline-flex',
@@ -78,12 +80,16 @@ export default () =>
             color: COLOURS.DARK_GREY,
             marginBottom: '4px',
             marginLeft: '16px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
         }),
         metaRowSecondary: Object.freeze({
             fontSize: '1rem',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
             width: 'fit-content',
+            alignItems: 'center',
+            flexWrap: 'wrap',
         }),
         contributorItem: Object.freeze({
             width: 'fit-content',

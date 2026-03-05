@@ -1,12 +1,12 @@
 import React from 'react';
-import { string, node, shape } from 'prop-types';
+import { string, node, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 import learnMoreLinkStyles from './styles';
 import DEFAULT_LINK_TEXT from './constants';
 
 const LearnMoreLink = ({ href, children, classes }) => (
-    <p className={classes.paragraph}>
+    <div className={classes.linkContainer}>
         <a
             href={href}
             target="_blank"
@@ -15,16 +15,13 @@ const LearnMoreLink = ({ href, children, classes }) => (
         >
             {children}
         </a>
-    </p>
+    </div>
 );
 
 LearnMoreLink.propTypes = {
     href: string.isRequired,
     children: node,
-    classes: shape({
-        paragraph: string.isRequired,
-        link: string.isRequired,
-    }).isRequired,
+    classes: object.isRequired,
 };
 
 LearnMoreLink.defaultProps = {

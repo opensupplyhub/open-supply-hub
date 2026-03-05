@@ -4,7 +4,8 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import productionLocationDetailsGeneralFieldsStyles from './styles';
-import DataPoint, { STATUS_CROWDSOURCED } from '../DataPoint/DataPoint';
+import DataPoint from '../DataPoint/DataPoint';
+import { STATUS_CROWDSOURCED } from '../DataPoint/constants';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 import COLOURS from '../../../util/COLOURS';
 
