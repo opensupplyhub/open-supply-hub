@@ -219,7 +219,7 @@ SupplyChainNetworkDrawer.propTypes = {
     ),
     publicContributors: arrayOf(
         shape({
-            id: number,
+            id: number.isRequired,
             contributor_name: string,
             contributor_type: string,
             list_names: arrayOf(string),
