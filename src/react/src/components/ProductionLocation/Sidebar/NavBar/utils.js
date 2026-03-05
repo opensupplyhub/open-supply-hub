@@ -1,8 +1,9 @@
 import env from '../../../../util/env';
 
 /**
- * Returns the icon URL, replacing 'minio' with 'localhost'
- * if the environment is local. Otherwise, returns the original URL.
+ * When Django saves the icon URL, it uses the "minio" hostname
+ * because it is running within the same network and cannot use "localhost".
+ * This function replaces the hostname with "localhost" for local development.
  *
  * @param {string} url - The original icon URL.
  * @returns {string} The processed icon URL.
