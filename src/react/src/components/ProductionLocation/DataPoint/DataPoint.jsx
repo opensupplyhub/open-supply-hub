@@ -9,16 +9,19 @@ import {
     shape,
     array,
     func,
+    number,
 } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Chip from '@material-ui/core/Chip';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
+import { Link } from 'react-router-dom';
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/PersonOutline';
 
 import IconComponent from '../../Shared/IconComponent/IconComponent';
+import { profileRoute } from '../../../util/constants';
 import formatDisplayDate from '../utils';
 import getSourcesCount from './utils';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
@@ -31,6 +34,7 @@ const DataPoint = ({
     tooltipText,
     statusLabel,
     contributorName,
+    userId,
     date,
     drawerData,
     onOpenDrawer,
@@ -90,13 +94,29 @@ const DataPoint = ({
                                             fontSize="small"
                                             className={classes.personIcon}
                                         />
-                                        <Typography
-                                            variant="body2"
-                                            component="span"
-                                            className={classes.contributorName}
-                                        >
-                                            {contributorName}
-                                        </Typography>
+                                        {userId != null ? (
+                                            <Link
+                                                to={profileRoute.replace(
+                                                    ':id',
+                                                    String(userId),
+                                                )}
+                                                className={`${classes.contributorName} ${classes.contributorNameLink}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                {contributorName}
+                                            </Link>
+                                        ) : (
+                                            <Typography
+                                                variant="body2"
+                                                component="span"
+                                                className={
+                                                    classes.contributorName
+                                                }
+                                            >
+                                                {contributorName}
+                                            </Typography>
+                                        )}
                                     </span>
                                 </Grid>
                             ) : null}
@@ -160,6 +180,7 @@ DataPoint.propTypes = {
     tooltipText: string,
     statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
     contributorName: string,
+    userId: oneOfType([string, number]),
     date: oneOfType([string, instanceOf(Date)]),
     drawerData: shape({
         promotedContribution: object,
@@ -175,6 +196,7 @@ DataPoint.defaultProps = {
     tooltipText: null,
     statusLabel: null,
     contributorName: null,
+    userId: null,
     date: null,
     drawerData: null,
     onOpenDrawer: null,

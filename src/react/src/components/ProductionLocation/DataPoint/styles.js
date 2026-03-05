@@ -108,6 +108,14 @@ export default () =>
             fontSize: '1.125rem',
             color: COLOURS.DARK_GREY,
         }),
+        contributorNameLink: Object.freeze({
+            textDecoration: 'none',
+            cursor: 'pointer',
+            fontWeight: 500,
+            '&:hover': Object.freeze({
+                textDecoration: 'underline',
+            }),
+        }),
         dateItem: Object.freeze({
             position: 'relative',
             marginLeft: '16px',

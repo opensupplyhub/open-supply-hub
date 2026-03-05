@@ -24,7 +24,7 @@ const ContributionCard = ({
     sourceName,
     date,
     promoted,
-    contributorId,
+    userId,
 }) => (
     <div
         className={
@@ -45,9 +45,9 @@ const ContributionCard = ({
         <div className={classes.contributionValueContainer}>
             <div className={classes.contributionSourceContainer}>
                 {sourceName &&
-                    (contributorId != null ? (
+                    (userId != null ? (
                         <Link
-                            to={makeProfileRouteLink(contributorId)}
+                            to={makeProfileRouteLink(userId)}
                             className={
                                 promoted
                                     ? `${classes.contributionSourceLink} ${classes.contributionSourceLinkPromoted}`
@@ -109,14 +109,14 @@ ContributionCard.propTypes = {
     sourceName: string,
     date: oneOfType([string, instanceOf(Date)]),
     promoted: bool,
-    contributorId: oneOfType([string, number]),
+    userId: oneOfType([string, number]),
 };
 
 ContributionCard.defaultProps = {
     sourceName: null,
     date: null,
     promoted: false,
-    contributorId: null,
+    userId: null,
 };
 
 export default withStyles(contributionCardStyles)(ContributionCard);

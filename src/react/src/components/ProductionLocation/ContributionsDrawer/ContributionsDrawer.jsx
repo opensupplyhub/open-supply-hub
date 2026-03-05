@@ -101,7 +101,7 @@ const ContributionsDrawer = ({
                             sourceName={promotedContribution.sourceName}
                             date={promotedContribution.date}
                             promoted
-                            contributorId={promotedContribution.contributorId}
+                            userId={promotedContribution.userId}
                         />
                     </>
                 ) : null}
@@ -128,7 +128,7 @@ const ContributionsDrawer = ({
                                 value={item.value}
                                 sourceName={item.sourceName}
                                 date={item.date}
-                                contributorId={item.contributorId}
+                                userId={item.userId}
                             />
                         ))}
                     </div>
@@ -149,7 +149,7 @@ ContributionsDrawer.propTypes = {
         sourceName: string,
         date: oneOfType([string, instanceOf(Date)]),
         linkUrl: string,
-        contributorId: oneOfType([string, number]),
+        userId: oneOfType([string, number]),
     }),
     contributions: arrayOf(
         shape({
@@ -158,7 +158,7 @@ ContributionsDrawer.propTypes = {
             sourceName: string,
             date: oneOfType([string, instanceOf(Date)]),
             linkUrl: string,
-            contributorId: oneOfType([string, number]),
+            userId: oneOfType([string, number]),
         }),
     ),
     infoPromotedTitle: string,
