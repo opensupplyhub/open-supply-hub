@@ -3,8 +3,8 @@ import COLOURS from '../../../util/COLOURS';
 export default () =>
     Object.freeze({
         root: Object.freeze({
-            paddingTop: 12,
-            paddingBottom: 12,
+            paddingTop: '12px',
+            paddingBottom: '12px',
             '&:hover $tooltipIcon': Object.freeze({
                 opacity: 1,
                 '& > svg': Object.freeze({
@@ -22,7 +22,7 @@ export default () =>
             width: '80%',
         }),
         label: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1.125rem',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
         }),
@@ -45,19 +45,19 @@ export default () =>
             marginBottom: '4px',
         }),
         value: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1.125rem',
             fontWeight: 600,
             lineHeight: 1.4,
         }),
         statusChip: Object.freeze({
-            height: 24,
-            fontSize: '16px',
+            height: '24px',
+            fontSize: '1rem',
             fontWeight: 600,
             borderRadius: 0,
             marginRight: '8px',
             '& .MuiChip-label': Object.freeze({
-                paddingLeft: 8,
-                paddingRight: 8,
+                paddingLeft: '8px',
+                paddingRight: '8px',
             }),
         }),
         claimedChip: Object.freeze({
@@ -72,7 +72,7 @@ export default () =>
             marginLeft: '-16px',
         }),
         metaRow: Object.freeze({
-            fontSize: '16px',
+            fontSize: '1rem',
             width: 'fit-content',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
@@ -80,7 +80,7 @@ export default () =>
             marginLeft: '16px',
         }),
         metaRowSecondary: Object.freeze({
-            fontSize: '16px',
+            fontSize: '1rem',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
             width: 'fit-content',
@@ -95,11 +95,11 @@ export default () =>
         personIcon: Object.freeze({
             marginRight: '4px',
             marginTop: '2px',
-            fontSize: '16px',
+            fontSize: '1rem',
             color: COLOURS.DARK_GREY,
         }),
         contributorName: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1.125rem',
             color: COLOURS.DARK_GREY,
         }),
         dateItem: Object.freeze({
@@ -107,7 +107,7 @@ export default () =>
             marginLeft: '16px',
             '&::before': Object.freeze({
                 content: "'·'",
-                fontSize: '20px',
+                fontSize: '1.25rem',
                 position: 'absolute',
                 left: '-9px',
                 top: '50%',
@@ -120,18 +120,18 @@ export default () =>
             alignItems: 'center',
         }),
         dateIcon: Object.freeze({
-            marginRight: 4,
-            fontSize: '13px',
+            marginRight: '4px',
+            fontSize: '0.8125rem',
             color: COLOURS.DARK_GREY,
             marginTop: '3px',
         }),
         dateText: Object.freeze({
-            fontSize: '18px',
+            fontSize: '1.125rem',
             color: COLOURS.DARK_GREY,
         }),
         metaSeparator: Object.freeze({
-            marginLeft: 4,
-            marginRight: 4,
+            marginLeft: '4px',
+            marginRight: '4px',
             color: COLOURS.DARK_GREY,
         }),
         sourcesButtonItem: Object.freeze({
@@ -139,7 +139,7 @@ export default () =>
             position: 'relative',
             '&::before': Object.freeze({
                 content: "'·'",
-                fontSize: '20px',
+                fontSize: '1.25rem',
                 position: 'absolute',
                 left: '-9px',
                 top: '50%',
@@ -150,9 +150,9 @@ export default () =>
         sourcesButton: Object.freeze({
             textTransform: 'none',
             fontWeight: 600,
-            fontSize: '18px',
-            padding: 0,
-            minHeight: 0,
+            fontSize: '1.125rem',
+            padding: '0px',
+            minHeight: '0px',
             color: COLOURS.PURPLE,
             '&:hover': Object.freeze({
                 backgroundColor: 'transparent',

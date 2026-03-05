@@ -9,12 +9,12 @@ export default theme =>
             display: 'inline-flex',
         }),
         tooltip: Object.freeze({
-            fontSize: '14px',
+            fontSize: '0.875rem',
             backgroundColor: COLOURS.WHITE,
             color: COLOURS.BLACK,
             border: `1px solid ${COLOURS.GREY}`,
-            padding: theme.spacing.unit * 1.5,
-            maxWidth: 300,
+            padding: `${theme.spacing.unit * 1.5}px`,
+            maxWidth: '300px',
         }),
         tooltipVisible: Object.freeze({
             opacity: '1 !important',

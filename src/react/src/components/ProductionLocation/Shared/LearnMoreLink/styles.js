@@ -3,8 +3,8 @@ import COLOURS from '../../../../util/COLOURS';
 export default () =>
     Object.freeze({
         paragraph: Object.freeze({
-            marginTop: 8,
-            marginBottom: 0,
+            marginTop: '8px',
+            marginBottom: '0px',
         }),
         link: Object.freeze({
             color: COLOURS.PURPLE,

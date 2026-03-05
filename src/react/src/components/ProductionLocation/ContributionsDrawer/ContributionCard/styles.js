@@ -5,8 +5,8 @@ export default () =>
         contributionCard: Object.freeze({
             backgroundColor: COLOURS.WHITE,
             border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
-            padding: 16,
-            marginBottom: 8,
+            padding: '16px',
+            marginBottom: '8px',
         }),
         contributionCardPromoted: Object.freeze({
             backgroundColor: '#F8F5FB',
@@ -18,7 +18,7 @@ export default () =>
         }),
         contributionValue: Object.freeze({
             fontWeight: 600,
-            fontSize: '18px',
+            fontSize: '1.125rem',
             lineHeight: 1.4,
             color: COLOURS.NEAR_BLACK,
             marginBottom: '8px',
@@ -40,7 +40,7 @@ export default () =>
         contributionSourceLink: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 4,
+            gap: '4px',
             fontSize: '1rem',
             lineHeight: 1.4,
             color: COLOURS.PURPLE,
@@ -54,24 +54,24 @@ export default () =>
             fontSize: '1.1rem',
         }),
         contributionSourceIcon: Object.freeze({
-            fontSize: 14,
+            fontSize: '0.875rem',
             color: COLOURS.PURPLE,
             marginLeft: '4px',
         }),
         contributionSourceIconPromoted: Object.freeze({
-            fontSize: 16,
+            fontSize: '1rem',
         }),
         contributionMetaContainer: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            fontSize: 14,
+            fontSize: '0.875rem',
             color: COLOURS.DARK_GREY,
-            gap: 8,
+            gap: '8px',
             maxWidth: '45%',
         }),
         contributionLink: Object.freeze({
-            padding: 4,
+            padding: '4px',
             color: COLOURS.DARK_GREY,
         }),
         dateWithIcon: Object.freeze({
@@ -83,9 +83,9 @@ export default () =>
             fontSize: '1.1rem',
         }),
         dateIcon: Object.freeze({
-            marginRight: 4,
+            marginRight: '4px',
             marginTop: '2px',
-            fontSize: '13px',
+            fontSize: '0.8125rem',
             color: COLOURS.DARK_GREY,
         }),
         dateIconPromoted: Object.freeze({

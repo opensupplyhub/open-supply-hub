@@ -3,8 +3,8 @@ import COLOURS from '../../../../util/COLOURS';
 export default () =>
     Object.freeze({
         infoBox: Object.freeze({
-            padding: 16,
-            marginBottom: 16,
+            padding: '16px',
+            marginBottom: '16px',
         }),
         infoBoxPromoted: Object.freeze({
             backgroundColor: '#F8F5FB',
@@ -15,10 +15,10 @@ export default () =>
             border: `1px solid #C0DBFE`,
         }),
         infoTitle: Object.freeze({
-            fontSize: 14,
+            fontSize: '0.875rem',
             lineHeight: 1.4,
             color: COLOURS.PURPLE,
-            marginBottom: 8,
+            marginBottom: '8px',
         }),
         infoTitleBlue: Object.freeze({
             color: COLOURS.MATERIAL_BLUE,
@@ -26,20 +26,20 @@ export default () =>
         infoBoxWithIcon: Object.freeze({
             display: 'flex',
             alignItems: 'flex-start',
-            gap: 8,
+            gap: '8px',
         }),
         infoIcon: Object.freeze({
-            fontSize: 20,
+            fontSize: '1.25rem',
             color: COLOURS.MATERIAL_BLUE,
             flexShrink: 0,
-            marginTop: 2,
+            marginTop: '2px',
             marginRight: '8px',
         }),
         infoBoxContent: Object.freeze({
             flex: 1,
         }),
         infoTextPromoted: Object.freeze({
-            fontSize: 14,
+            fontSize: '0.875rem',
             lineHeight: 1.5,
             color: COLOURS.DARK_GREY,
         }),
@@ -49,28 +49,26 @@ export default () =>
             color: COLOURS.DARK_GREY,
         }),
         learnMoreLinkContributions: Object.freeze({
-            marginTop: 8,
+            marginTop: '8px',
             display: 'inline-flex',
             alignItems: 'center',
             color: COLOURS.MATERIAL_BLUE,
             fontSize: '1rem',
-            fontWeight: 500,
             textDecoration: 'none',
             '&:hover': Object.freeze({
                 textDecoration: 'underline',
             }),
         }),
         learnMoreLinkPromoted: Object.freeze({
-            marginTop: 8,
+            marginTop: '8px',
             display: 'inline-flex',
             alignItems: 'center',
             color: COLOURS.MATERIAL_BLUE,
-            fontSize: '14px',
-            fontWeight: 500,
+            fontSize: '0.875rem',
             textDecoration: 'none',
         }),
         learnMoreArrow: Object.freeze({
-            marginLeft: 4,
+            marginLeft: '4px',
             marginTop: '2px',
         }),
     });

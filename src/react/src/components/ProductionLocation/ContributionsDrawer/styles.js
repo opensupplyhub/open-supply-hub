@@ -3,7 +3,7 @@ import COLOURS from '../../../util/COLOURS';
 export default () =>
     Object.freeze({
         drawerPaper: Object.freeze({
-            width: 390,
+            width: '390px',
             boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
         }),
         drawerContent: Object.freeze({
@@ -15,16 +15,16 @@ export default () =>
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
-            marginBottom: 12,
+            marginBottom: '12px',
         }),
         headerLeft: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: 8,
+            gap: '8px',
         }),
         titleIcon: Object.freeze({
-            fontSize: 24,
+            fontSize: '1.5rem',
             color: COLOURS.PURPLE,
         }),
         title: Object.freeze({
@@ -35,15 +35,15 @@ export default () =>
             marginLeft: '10px',
         }),
         subtitle: Object.freeze({
-            marginTop: 8,
-            marginBottom: 0,
+            marginTop: '8px',
+            marginBottom: '0px',
             fontSize: '1rem',
             lineHeight: 1.4,
             color: COLOURS.DARK_GREY,
             paddingBottom: '16px',
         }),
         closeButton: Object.freeze({
-            margin: -8,
+            margin: '-8px',
             color: COLOURS.DARK_GREY,
             '&:hover': Object.freeze({
                 backgroundColor: COLOURS.HOVER_GREY,
@@ -56,7 +56,7 @@ export default () =>
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
             marginTop: '16px',
-            marginBottom: 8,
+            marginBottom: '8px',
             lineHeight: 1.2,
         }),
         supportLink: Object.freeze({
@@ -67,7 +67,7 @@ export default () =>
             }),
         }),
         listScroll: Object.freeze({
-            maxHeight: 320,
+            maxHeight: '320px',
             overflowY: 'auto',
         }),
     });
