@@ -57,21 +57,6 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
                 <span
                     className={`${classes.copyButtonWrap} ${classes.copyButtonWrapFirst}`}
                 >
-                    <CopySearch toastText="Copied link">
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            className={classes.copyButton}
-                            aria-label="Copy link"
-                        >
-                            <ContentCopyIcon />
-                            <span className={classes.buttonText}>
-                                Copy Link
-                            </span>
-                        </Button>
-                    </CopySearch>
-                </span>
-                <span className={classes.copyButtonWrap}>
                     <CopyToClipboard
                         text={osId}
                         onCopy={() => toast('Copied OS ID to clipboard')}
@@ -88,6 +73,21 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
                             </span>
                         </Button>
                     </CopyToClipboard>
+                </span>
+                <span className={classes.copyButtonWrap}>
+                    <CopySearch toastText="Copied link">
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            className={classes.copyButton}
+                            aria-label="Copy link"
+                        >
+                            <ContentCopyIcon />
+                            <span className={classes.buttonText}>
+                                Copy Link
+                            </span>
+                        </Button>
+                    </CopySearch>
                 </span>
             </div>
         )}
