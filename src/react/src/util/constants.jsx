@@ -521,7 +521,7 @@ export const facilityListSummaryStatusMessages = Object.freeze({
     AWAITING: 'Some potential matches require your feedback.',
     PROCESSING: 'The list is still being processed.',
     COMPLETED: 'This list has been processed successfully.',
-    REJECTED: 'This list is in the feedback phase and will not be processed.',
+    REJECTED: 'This list is in the feedback phase.',
 });
 
 export const listUploadTroubleshootingEmail = 'support@opensupplyhub.org';
