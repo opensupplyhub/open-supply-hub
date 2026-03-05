@@ -33,5 +33,12 @@ export default theme => {
             height: '100%',
             width: '100%',
         }),
+        centerButton: Object.freeze({
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[2],
+            '&:hover': {
+                backgroundColor: theme.palette.grey[100],
+            },
+        }),
     });
 };

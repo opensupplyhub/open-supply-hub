@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
+import IconButton from '@material-ui/core/IconButton';
 import {
     Map as ReactLeafletMap,
     TileLayer,
     Marker,
     ZoomControl,
 } from 'react-leaflet';
+import Control from 'react-leaflet-control';
+import MyLocationIcon from '@material-ui/icons/MyLocation';
 import get from 'lodash/get';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -31,6 +34,8 @@ import {
  * without requiring the Google Maps API.
  */
 function ProductionLocationDetailsMap({ classes, data }) {
+    const mapRef = useRef(null);
+
     const coordinates = get(data, 'geometry.coordinates', null);
     const center = useMemo(() => {
         if (Array.isArray(coordinates) && coordinates.length >= 2) {
@@ -45,6 +50,13 @@ function ProductionLocationDetailsMap({ classes, data }) {
             ? [coordinates[1], coordinates[0]]
             : null;
 
+    const handleCenterOnLocation = useCallback(() => {
+        const map = mapRef.current?.leafletElement;
+        if (map && center) {
+            map.setView(center, zoom);
+        }
+    }, [center, zoom]);
+
     return (
         <div className={classes.container}>
             <Typography
@@ -57,6 +69,7 @@ function ProductionLocationDetailsMap({ classes, data }) {
             <div className={classes.mapContainer}>
                 <div className={classes.mapInner}>
                     <ReactLeafletMap
+                        ref={mapRef}
                         center={center}
                         zoom={zoom}
                         style={mapContainerStyles}
@@ -71,6 +84,16 @@ function ProductionLocationDetailsMap({ classes, data }) {
                             minZoom={2}
                             maxZoom={19}
                         />
+                        <Control position="topleft">
+                            <IconButton
+                                size="small"
+                                className={classes.centerButton}
+                                onClick={handleCenterOnLocation}
+                                aria-label="Center map on facility location"
+                            >
+                                <MyLocationIcon />
+                            </IconButton>
+                        </Control>
                         <ZoomControl position="bottomright" />
                         {position && (
                             <Marker position={position} icon={markerIcon} />
