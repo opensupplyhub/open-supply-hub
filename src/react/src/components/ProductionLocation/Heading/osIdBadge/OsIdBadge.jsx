@@ -2,15 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { toast } from 'react-toastify';
-import InfoIcon from '@material-ui/icons/Info';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import CopySearch from '../../../CopySearch';
 import ContentCopyIcon from '../../../ContentCopyIcon';
-import DialogTooltip from '../../../Contribute/DialogTooltip';
+import IconComponent from '../../../Shared/IconComponent/IconComponent';
+import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
 
 import productionLocationDetailsOsIdBadgeStyles from './styles';
 import { OS_ID_TOOLTIP_TEXT, OS_ID_LEARN_MORE_URL } from './constants';
@@ -25,31 +25,15 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
             >
                 <span className={classes.osIdLabel}>OS ID</span>: {osId}
             </Typography>
-            <DialogTooltip
-                text={OS_ID_TOOLTIP_TEXT}
-                textHref={
-                    <p style={{ marginTop: 8, marginBottom: 0 }}>
-                        <a
-                            href={OS_ID_LEARN_MORE_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: 'white' }}
-                        >
-                            Learn more →
-                        </a>
-                    </p>
+            <IconComponent
+                title={
+                    <>
+                        {OS_ID_TOOLTIP_TEXT}
+                        <LearnMoreLink href={OS_ID_LEARN_MORE_URL} />
+                    </>
                 }
-                interactive
-                childComponent={
-                    <IconButton
-                        className={classes.osIdInfoButton}
-                        size="small"
-                        aria-label="More information about OS ID"
-                        disableRipple
-                    >
-                        <InfoIcon style={{ width: 16, height: 16 }} />
-                    </IconButton>
-                }
+                icon={InfoOutlined}
+                className={classes.osIdInfoButton}
             />
         </div>
         {osId && (
