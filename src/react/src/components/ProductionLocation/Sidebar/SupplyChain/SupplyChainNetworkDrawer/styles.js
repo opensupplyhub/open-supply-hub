@@ -1,60 +1,43 @@
-import COLOURS from '../../../../util/COLOURS';
+import COLOURS from '../../../../../util/COLOURS';
 
-export default () =>
+export default theme =>
     Object.freeze({
         drawerPaper: Object.freeze({
-            width: 390,
+            maxWidth: '560px',
+            minWidth: '33%',
             boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
         }),
         drawerContent: Object.freeze({
-            padding: '24px',
+            padding: '1rem 4.5rem',
             overflowY: 'auto',
             height: '100%',
         }),
         header: Object.freeze({
             display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            marginBottom: 4,
-        }),
-        headerLeft: Object.freeze({
-            display: 'flex',
+            justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: 8,
         }),
-        titleIcon: Object.freeze({
-            fontSize: 24,
-            color: COLOURS.PURPLE,
-        }),
+        closeButton: Object.freeze({}),
         title: Object.freeze({
-            fontWeight: 700,
-            fontSize: '1.4rem',
-            lineHeight: 1.3,
+            fontWeight: 900,
+            fontSize: '2rem',
             color: COLOURS.NEAR_BLACK,
-            marginLeft: '8px',
+            marginBottom: theme.spacing.unit,
         }),
         subtitle: Object.freeze({
-            fontSize: '0.9rem',
+            fontWeight: 600,
+            fontSize: '1rem',
             color: COLOURS.DARK_GREY,
-            marginBottom: '16px',
-        }),
-        closeButton: Object.freeze({
-            margin: -8,
-            color: COLOURS.DARK_GREY,
-            '&:hover': Object.freeze({
-                backgroundColor: COLOURS.HOVER_GREY,
-                color: COLOURS.PURPLE,
-            }),
+            marginBottom: '2rem',
         }),
         infoBox: Object.freeze({
             backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
-            border: `1px solid #C0DBFE`,
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 16,
+            border: `1px solid ${COLOURS.LIGHT_BLUE_BORDER}`,
+            padding: theme.spacing.unit * 2,
+            marginBottom: theme.spacing.unit * 2,
             display: 'flex',
             alignItems: 'flex-start',
-            gap: 8,
+            gap: theme.spacing.unit,
         }),
         infoIcon: Object.freeze({
             fontSize: 18,
@@ -78,39 +61,44 @@ export default () =>
             }),
         }),
         typeSummary: Object.freeze({
-            marginBottom: 16,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 6,
+            marginBottom: theme.spacing.unit * 2,
         }),
         typeChip: Object.freeze({
-            fontSize: '0.9rem',
+            display: 'inline-block',
+            fontSize: '0.85rem',
             color: COLOURS.NEAR_BLACK,
-            lineHeight: 1.8,
+            backgroundColor: COLOURS.LIGHT_GREY,
+            padding: '2px 10px',
         }),
         divider: Object.freeze({
-            marginBottom: 16,
+            marginBottom: theme.spacing.unit * 2,
         }),
         contributorEntry: Object.freeze({
-            paddingBottom: 16,
-            marginBottom: 8,
-            borderBottom: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
-        }),
-        contributorNameRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            marginBottom: 2,
+            boxShadow: '0px 1px 0px 0px rgb(240, 240, 240)',
+            paddingTop: theme.spacing.unit,
+            paddingBottom: theme.spacing.unit,
         }),
         contributorName: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
             fontSize: '1rem',
             fontWeight: 600,
             color: COLOURS.PURPLE,
             textDecoration: 'none',
+            marginBottom: 2,
+            overflowWrap: 'break-word',
             '&:hover': Object.freeze({
                 textDecoration: 'underline',
             }),
         }),
-        externalIcon: Object.freeze({
+        externalLinkIcon: Object.freeze({
             fontSize: 14,
-            color: COLOURS.PURPLE,
+            verticalAlign: 'middle',
+            flexShrink: 0,
         }),
         contributorType: Object.freeze({
             fontSize: '0.85rem',
@@ -118,11 +106,18 @@ export default () =>
             marginBottom: 6,
         }),
         listEntry: Object.freeze({
+            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
+            padding: `${theme.spacing.unit}px ${theme.spacing.unit * 1.5}px`,
+            marginBottom: theme.spacing.unit,
+            backgroundColor: COLOURS.WHITE,
+        }),
+        listEntryLabel: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            paddingLeft: 8,
-            marginBottom: 4,
+            gap: 4,
+            fontSize: '0.75rem',
+            color: COLOURS.DARK_GREY,
+            marginBottom: 2,
         }),
         listIcon: Object.freeze({
             fontSize: 14,
@@ -130,15 +125,16 @@ export default () =>
             flexShrink: 0,
         }),
         listName: Object.freeze({
-            fontSize: '0.85rem',
-            color: COLOURS.DARK_GREY,
+            fontSize: '0.875rem',
+            color: COLOURS.NEAR_BLACK,
+            fontWeight: 500,
         }),
         sectionHeader: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            marginTop: 24,
-            marginBottom: 12,
+            gap: theme.spacing.unit,
+            marginTop: theme.spacing.unit * 3,
+            marginBottom: theme.spacing.unit * 1.5,
         }),
         sectionHeaderIcon: Object.freeze({
             fontSize: 20,

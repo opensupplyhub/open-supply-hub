@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { screen, fireEvent } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import SupplyChainNetwork from '../../components/ProductionLocation/SupplyChainNetwork/SupplyChainNetwork';
+import SupplyChain from '../../components/ProductionLocation/Sidebar/SupplyChain/SupplyChain';
 
 const publicContributor = {
     id: 1,
@@ -39,7 +39,7 @@ const nonPublicContributorNullType = {
 const renderSection = (contributors = []) =>
     renderWithProviders(
         <Router>
-            <SupplyChainNetwork contributors={contributors} />
+            <SupplyChain contributors={contributors} />
         </Router>,
     );
 
@@ -51,10 +51,8 @@ describe('SupplyChainNetwork section', () => {
         ).not.toBeInTheDocument();
     });
 
-    test('renders nothing when all contributors have no name', () => {
-        renderSection([
-            { id: 1, contributor_type: 'Brand / Retailer', count: 1 },
-        ]);
+    test('renders nothing when all contributors have no name and no type', () => {
+        renderSection([{ id: 1, count: 1 }]);
         expect(
             screen.queryByText('Supply Chain Network'),
         ).not.toBeInTheDocument();
@@ -91,6 +89,54 @@ describe('SupplyChainNetwork section', () => {
         expect(screen.getByText('Global Auditors Inc')).toBeInTheDocument();
     });
 
+    test('renders public contributors grouped by contributor type', () => {
+        // Three contributors: two Brand / Retailers surrounding one Auditor in API order.
+        // After grouping the two Brand / Retailers must appear consecutively.
+        const brandA = {
+            id: 10,
+            contributor_name: 'Brand A',
+            contributor_type: 'Brand / Retailer',
+            list_name: 'List A',
+            count: 1,
+        };
+        const auditor = {
+            id: 11,
+            contributor_name: 'Solo Auditor',
+            contributor_type: 'Auditor',
+            list_name: 'Audit List',
+            count: 1,
+        };
+        const brandB = {
+            id: 12,
+            contributor_name: 'Brand B',
+            contributor_type: 'Brand / Retailer',
+            list_name: 'List B',
+            count: 1,
+        };
+
+        // API returns them interleaved: Brand A, Auditor, Brand B
+        renderSection([brandA, auditor, brandB]);
+
+        const links = screen
+            .getAllByRole('link')
+            .filter(el =>
+                ['Brand A', 'Solo Auditor', 'Brand B'].includes(
+                    el.textContent,
+                ),
+            );
+
+        const names = links.map(el => el.textContent);
+        const brandAIndex = names.indexOf('Brand A');
+        const brandBIndex = names.indexOf('Brand B');
+        const auditorIndex = names.indexOf('Solo Auditor');
+
+        // The two Brand / Retailer contributors must not have the Auditor between them
+        expect(Math.abs(brandAIndex - brandBIndex)).toBe(1);
+        expect(auditorIndex).not.toBe(
+            Math.min(brandAIndex, brandBIndex) + 1,
+        );
+    });
+
     test('renders "View all N data sources" trigger button', () => {
         renderSection([publicContributor, nonPublicContributor]);
 
@@ -110,7 +156,7 @@ describe('SupplyChainNetwork section', () => {
         fireEvent.click(trigger);
 
         // After clicking, the drawer close button should be accessible
-        expect(screen.getByLabelText('Close')).toBeInTheDocument();
+        expect(screen.getByLabelText('close')).toBeInTheDocument();
     });
 
     test('filters out non-public contributors with null contributor_type', () => {
@@ -199,6 +245,6 @@ describe('SupplyChainNetworkDrawer', () => {
 
     test('drawer close button is present after opening', () => {
         openDrawer([publicContributor]);
-        expect(screen.getByLabelText('Close')).toBeInTheDocument();
+        expect(screen.getByLabelText('close')).toBeInTheDocument();
     });
 });

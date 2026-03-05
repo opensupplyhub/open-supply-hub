@@ -1,5 +1,5 @@
 import React from 'react';
-import { object, bool, func, arrayOf, shape, string, number } from 'prop-types';
+import { bool, func, arrayOf, shape, string, number } from 'prop-types';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -9,15 +9,18 @@ import CloseIcon from '@material-ui/icons/Close';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import ListIcon from '@material-ui/icons/List';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { Link } from 'react-router-dom';
 
-import { makeProfileRouteLink } from '../../../../util/util';
+import { makeProfileRouteLink } from '../../../../../util/util';
+import pluralizeContributorType from '../utils';
 import {
     DRAWER_TITLE,
     ANONYMIZED_SECTION_TITLE,
     INFO_TEXT,
     LEARN_MORE_LABEL,
     LEARN_MORE_URL,
+    UPLOADED_VIA_LIST_LABEL,
 } from './constants';
 import supplyChainNetworkDrawerStyles from './styles';
 
@@ -36,25 +39,29 @@ const SupplyChainNetworkDrawer = ({
         onClose={onClose}
         classes={{ paper: classes.drawerPaper }}
     >
-        <div className={classes.drawerContent}>
+        <div
+            className={classes.drawerContent}
+            data-testid="supply-chain-drawer"
+        >
             <div className={classes.header}>
-                <div className={classes.headerLeft}>
-                    <PeopleOutlineIcon className={classes.titleIcon} />
-                    <Typography className={classes.title} component="h2">
-                        {DRAWER_TITLE}
-                    </Typography>
-                </div>
                 <IconButton
                     className={classes.closeButton}
-                    aria-label="Close"
+                    aria-label="close"
                     onClick={onClose}
+                    autoFocus
+                    data-testid="supply-chain-drawer-close"
                 >
                     <CloseIcon />
                 </IconButton>
             </div>
+
+            <Typography className={classes.title} component="h2">
+                {DRAWER_TITLE}
+            </Typography>
             <Typography className={classes.subtitle} component="p">
-                {totalCount} organizations have shared data about this
-                production location
+                {totalCount}{' '}
+                {totalCount === 1 ? 'organization has' : 'organizations have'}{' '}
+                shared data about this production location
             </Typography>
 
             <div className={classes.infoBox}>
@@ -82,24 +89,24 @@ const SupplyChainNetworkDrawer = ({
                             className={classes.typeChip}
                             component="p"
                         >
-                            {count} {type}
+                            <strong>{count}</strong>{' '}
+                            {pluralizeContributorType(type, count)}
                         </Typography>
                     ))}
                 </div>
             )}
 
-            <Divider className={classes.divider} />
+            {typeCounts.length > 0 && <Divider className={classes.divider} />}
 
             {publicContributors.map(contributor => (
                 <div key={contributor.id} className={classes.contributorEntry}>
-                    <div className={classes.contributorNameRow}>
-                        <Link
-                            to={makeProfileRouteLink(contributor.id)}
-                            className={classes.contributorName}
-                        >
-                            {contributor.contributor_name}
-                        </Link>
-                    </div>
+                    <Link
+                        to={makeProfileRouteLink(contributor.id)}
+                        className={classes.contributorName}
+                    >
+                        {contributor.contributor_name}
+                        <OpenInNewIcon className={classes.externalLinkIcon} />
+                    </Link>
                     {contributor.contributor_type && (
                         <Typography
                             className={classes.contributorType}
@@ -117,12 +124,18 @@ const SupplyChainNetworkDrawer = ({
                                         key={`${contributor.id}-${listName}`}
                                         className={classes.listEntry}
                                     >
-                                        <ListIcon
-                                            className={classes.listIcon}
-                                        />
+                                        <Typography
+                                            className={classes.listEntryLabel}
+                                            component="p"
+                                        >
+                                            <ListIcon
+                                                className={classes.listIcon}
+                                            />
+                                            {UPLOADED_VIA_LIST_LABEL}
+                                        </Typography>
                                         <Typography
                                             className={classes.listName}
-                                            component="span"
+                                            component="p"
                                         >
                                             {listName}
                                         </Typography>
@@ -151,7 +164,11 @@ const SupplyChainNetworkDrawer = ({
                             className={classes.anonymizedType}
                             component="p"
                         >
-                            {contributor.count} {contributor.contributor_type}
+                            {contributor.count}{' '}
+                            {pluralizeContributorType(
+                                contributor.contributor_type,
+                                contributor.count,
+                            )}
                         </Typography>
                     ))}
                 </>
@@ -161,7 +178,6 @@ const SupplyChainNetworkDrawer = ({
 );
 
 SupplyChainNetworkDrawer.propTypes = {
-    classes: object.isRequired,
     open: bool.isRequired,
     onClose: func.isRequired,
     totalCount: number,
@@ -176,14 +192,13 @@ SupplyChainNetworkDrawer.propTypes = {
             id: number,
             contributor_name: string,
             contributor_type: string,
-            is_verified: bool,
             list_names: arrayOf(string),
         }),
     ),
     nonPublicContributors: arrayOf(
         shape({
-            contributor_type: string,
-            count: number,
+            contributor_type: string.isRequired,
+            count: number.isRequired,
         }),
     ),
 };
