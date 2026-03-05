@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { connect } from 'react-redux';
 
 import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
@@ -11,8 +12,9 @@ import GeneralInformation from '../../../Icons/GeneralInformation';
 import OperationalDetails from '../../../Icons/OperationalDetails';
 
 import navBarStyles from './styles';
+import getIconURL from './utils';
 
-const navItems = [
+const defaultNavItems = [
     { to: '#overview', label: 'Overview', Icon: Overview },
     {
         to: '#general-information',
@@ -26,51 +28,91 @@ const navItems = [
     },
 ];
 
-const handleClick = (event, to) => {
-    event.preventDefault();
-    const id = to.replace('#', '');
-    const element = document.getElementById(id);
-    if (!element) return;
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
+    const handleClick = (event, to) => {
+        event.preventDefault();
+        const id = to.replace('#', '');
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const navItems = useMemo(
+        () => [
+            ...defaultNavItems,
+            ...groups.map(group => ({
+                to: `#${group.uuid}`,
+                label: group.name,
+                Image: () => (
+                    <img
+                        src={getIconURL(group.icon_file)}
+                        width={18}
+                        height={18}
+                        alt={group.name}
+                    />
+                ),
+            })),
+        ],
+        [groups],
+    );
+
+    return (
+        <div className={`${classes.container} ${classes.navContainer}`}>
+            <Typography
+                variant="title"
+                className={classes.title}
+                component="h3"
+            >
+                Jump to
+            </Typography>
+            <MenuList className={classes.menuList}>
+                {navItems.map(({ to, label, Icon, Image, active }) => (
+                    <MenuItem
+                        key={to}
+                        className={`${classes.menuItem} ${
+                            active ? classes.menuItemActive : ''
+                        }`}
+                        disableGutters
+                    >
+                        <Link
+                            to={to}
+                            onClick={event => handleClick(event, to)}
+                            className={classes.link}
+                        >
+                            {Image ? (
+                                <Image
+                                    className={`${classes.menuImage} ${
+                                        active ? classes.menuImageActive : ''
+                                    }`}
+                                />
+                            ) : (
+                                <Icon
+                                    className={`${classes.menuIcon} ${
+                                        active ? classes.menuIconActive : ''
+                                    }`}
+                                />
+                            )}
+                            <Typography
+                                variant="body1"
+                                className={`${classes.menuLabel} ${
+                                    active ? classes.menuLabelActive : ''
+                                }`}
+                            >
+                                {label}
+                            </Typography>
+                        </Link>
+                    </MenuItem>
+                ))}
+            </MenuList>
+        </div>
+    );
 };
 
-const NavBar = ({ classes }) => (
-    <div className={`${classes.container} ${classes.navContainer}`}>
-        <Typography variant="title" className={classes.title} component="h3">
-            Jump to
-        </Typography>
-        <MenuList className={classes.menuList}>
-            {navItems.map(({ to, label, Icon, active }) => (
-                <MenuItem
-                    key={to}
-                    className={`${classes.menuItem} ${
-                        active ? classes.menuItemActive : ''
-                    }`}
-                    disableGutters
-                >
-                    <Link
-                        to={to}
-                        onClick={event => handleClick(event, to)}
-                        className={classes.link}
-                    >
-                        <Icon
-                            className={`${classes.menuIcon} ${
-                                active ? classes.menuIconActive : ''
-                            }`}
-                        />
-                        <Typography
-                            variant="body1"
-                            className={`${classes.menuLabel} ${
-                                active ? classes.menuLabelActive : ''
-                            }`}
-                        >
-                            {label}
-                        </Typography>
-                    </Link>
-                </MenuItem>
-            ))}
-        </MenuList>
-    </div>
-);
+const mapStateToProps = ({ partnerFieldGroups: { data, fetching } }) => ({
+    partnerFieldGroups: {
+        groups: data?.results || [],
+        fetching,
+    },
+});
 
-export default withStyles(navBarStyles)(NavBar);
+export default connect(mapStateToProps)(withStyles(navBarStyles)(NavBar));

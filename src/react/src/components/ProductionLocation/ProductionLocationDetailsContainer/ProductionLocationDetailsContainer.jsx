@@ -23,6 +23,7 @@ import {
     fetchSingleFacility,
     resetSingleFacility,
 } from '../../../actions/facilities';
+import { fetchPartnerFieldGroups } from '../../../actions/partnerFieldGroups';
 
 import productionLocationDetailsContainerStyles from './styles';
 
@@ -39,6 +40,8 @@ function ProductionLocationDetailsContainer({
     embed,
     fetchFacility,
     clearFacility,
+    getPartnerFieldGroups,
+    partnerFieldGroupsData,
 }) {
     const normalizedOsID =
         getLastPathParameter(location?.pathname || '') ||
@@ -48,6 +51,12 @@ function ProductionLocationDetailsContainer({
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
     }, [normalizedOsID, contributors, fetchFacility]);
+
+    useEffect(() => {
+        if (!partnerFieldGroupsData) {
+            getPartnerFieldGroups();
+        }
+    }, [getPartnerFieldGroups, partnerFieldGroupsData]);
 
     // Run cleanup only on unmount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,6 +126,7 @@ const mapStateToProps = ({
     filters: { contributors },
     featureFlags,
     embeddedMap: { embed },
+    partnerFieldGroups: { data: partnerFieldGroupsData },
 }) => ({
     data,
     fetching,
@@ -124,6 +134,7 @@ const mapStateToProps = ({
     contributors: contributors || [],
     useProductionLocationPage: shouldUseProductionLocationPage(featureFlags),
     embed,
+    partnerFieldGroupsData,
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -134,6 +145,7 @@ const mapDispatchToProps = dispatch => ({
         return dispatch(fetchSingleFacility(id, 0, contributors, true));
     },
     clearFacility: () => dispatch(resetSingleFacility()),
+    getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
 });
 
 export default withRouter(
