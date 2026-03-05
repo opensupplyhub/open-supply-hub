@@ -6,9 +6,6 @@ import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
-import Overview from '../../../Icons/Overview';
-import GeneralInformation from '../../../Icons/GeneralInformation';
-import OperationalDetails from '../../../Icons/OperationalDetails';
 
 import Overview from '../../../Icons/Overview';
 import GeneralInformation from '../../../Icons/GeneralInformation';
