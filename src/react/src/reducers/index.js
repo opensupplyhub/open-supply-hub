@@ -38,6 +38,7 @@ import ContributeProductionLocationReducer from './ContributeProductionLocationR
 import DashboardModerationQueueReducer from './DashboardModerationQueueReducer';
 import DashboardContributionRecordReducer from './DashboardContributionRecordReducer';
 import ClaimFormReducer from './ClaimFormReducer';
+import PartnerFieldGroupsReducer from './PartnerFieldGroupsReducer';
 
 export default combineReducers({
     auth: AuthReducer,
@@ -72,4 +73,5 @@ export default combineReducers({
     dashboardModerationQueue: DashboardModerationQueueReducer,
     dashboardContributionRecord: DashboardContributionRecordReducer,
     claimForm: ClaimFormReducer,
+    partnerFieldGroups: PartnerFieldGroupsReducer,
 });

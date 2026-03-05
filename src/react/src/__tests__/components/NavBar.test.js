@@ -4,11 +4,25 @@ import { screen, fireEvent } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import NavBar from '../../components/ProductionLocation/Sidebar/NavBar/NavBar';
 
-const renderNavBar = () =>
+const mockGroups = [
+    {
+        uuid: 'group-1',
+        name: 'Certifications',
+        icon_file: 'https://example.com/icons/cert.png',
+    },
+    {
+        uuid: 'group-2',
+        name: 'Supply Chain',
+        icon_file: 'https://example.com/icons/chain.png',
+    },
+];
+
+const renderNavBar = (preloadedState = {}) =>
     renderWithProviders(
         <MemoryRouter>
             <NavBar />
         </MemoryRouter>,
+        { preloadedState },
     );
 
 describe('NavBar', () => {
@@ -18,12 +32,63 @@ describe('NavBar', () => {
         expect(screen.getByText('Jump to')).toBeInTheDocument();
     });
 
-    test('renders all three navigation items', () => {
+    test('renders default navigation items when no groups are loaded', () => {
         renderNavBar();
 
         expect(screen.getByText('Overview')).toBeInTheDocument();
         expect(screen.getByText('General Information')).toBeInTheDocument();
         expect(screen.getByText('Operational Details')).toBeInTheDocument();
+    });
+
+    test('renders partner field group items alongside defaults', () => {
+        renderNavBar({
+            partnerFieldGroups: {
+                fetching: false,
+                data: { results: mockGroups },
+                error: null,
+            },
+        });
+
+        expect(screen.getByText('Overview')).toBeInTheDocument();
+        expect(screen.getByText('General Information')).toBeInTheDocument();
+        expect(screen.getByText('Operational Details')).toBeInTheDocument();
+
+        expect(screen.getByText('Certifications')).toBeInTheDocument();
+        expect(screen.getByText('Supply Chain')).toBeInTheDocument();
+    });
+
+    test('renders group icons with correct src and alt', () => {
+        renderNavBar({
+            partnerFieldGroups: {
+                fetching: false,
+                data: { results: mockGroups },
+                error: null,
+            },
+        });
+
+        const certImg = screen.getByAltText('Certifications');
+        expect(certImg).toHaveAttribute(
+            'src',
+            'https://example.com/icons/cert.png',
+        );
+
+        const chainImg = screen.getByAltText('Supply Chain');
+        expect(chainImg).toHaveAttribute(
+            'src',
+            'https://example.com/icons/chain.png',
+        );
+    });
+
+    test('renders only default items when data is null', () => {
+        renderNavBar({
+            partnerFieldGroups: {
+                fetching: false,
+                data: null,
+                error: null,
+            },
+        });
+
+        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
     });
 
     test('clicking a link scrolls to the matching section', () => {
