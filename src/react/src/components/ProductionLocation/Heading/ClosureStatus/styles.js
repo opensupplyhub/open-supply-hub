@@ -5,7 +5,7 @@ export default theme =>
             borderRadius: 0,
             display: 'flex',
             justifyContent: 'flex-start',
-            marginBottom: theme.spacing.unit * 3,
+            marginBottom: theme.spacing.unit * 2,
         },
         contentContainer: {
             width: '100%',
