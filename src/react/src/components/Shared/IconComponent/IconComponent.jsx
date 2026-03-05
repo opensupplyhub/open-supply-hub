@@ -14,6 +14,7 @@ const IconComponent = ({
     classes,
     className,
     icon: Icon,
+    'data-testid': dataTestId,
 }) => {
     const {
         open,
@@ -44,6 +45,7 @@ const IconComponent = ({
                 }`}
                 onMouseEnter={handleTriggerEnter}
                 onMouseLeave={handleTriggerLeave}
+                data-testid={dataTestId}
             >
                 <Icon className={classes.icon} fontSize="small" />
             </span>
@@ -70,6 +72,7 @@ IconComponent.propTypes = {
     }).isRequired,
     className: string,
     icon: func,
+    'data-testid': string,
 };
 
 export default withStyles(iconComponentStyles)(IconComponent);

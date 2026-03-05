@@ -20,6 +20,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
     * Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
 * [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - Moved single-facility data loading and redirect logic into the Production Location details container so the sidebar (including the "Contribute to this profile" section) and main content render with consistent facility data.
+* [OSDEV-2370](https://opensupplyhub.atlassian.net/browse/OSDEV-2370) - Created reusable data point and drawer components for the Production Location page redesign:
+    * Introduced shared `IconComponent` (interactive tooltip with icon) and `LearnMoreLink`; refactored OS ID badge, Data Sources, and Claim status to use them.
+    * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
+    * Claim form profile step and related tooltips now use `IconComponent`.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.

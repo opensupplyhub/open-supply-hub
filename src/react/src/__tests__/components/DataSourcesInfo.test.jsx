@@ -84,9 +84,7 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         expect(
-            screen.getByRole('button', {
-                name: /more information about data sources/i,
-            }),
+            screen.getByTestId('data-sources-info-tooltip'),
         ).toBeInTheDocument();
     });
 

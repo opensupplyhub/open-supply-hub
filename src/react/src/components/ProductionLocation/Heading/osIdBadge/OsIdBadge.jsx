@@ -34,6 +34,7 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
                 }
                 icon={InfoOutlined}
                 className={classes.osIdInfoButton}
+                data-testid="os-id-badge-info"
             />
         </div>
         {osId && (

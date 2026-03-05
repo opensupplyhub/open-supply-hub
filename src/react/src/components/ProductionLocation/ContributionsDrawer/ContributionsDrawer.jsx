@@ -60,11 +60,18 @@ const ContributionsDrawer = ({
             onClose={onClose}
             classes={{ paper: classes.drawerPaper }}
         >
-            <div className={classes.drawerContent}>
+            <div
+                className={classes.drawerContent}
+                data-testid="contributions-drawer"
+            >
                 <div className={classes.header}>
                     <div className={classes.headerLeft}>
                         <PeopleOutlineIcon className={classes.titleIcon} />
-                        <Typography className={classes.title} component="h2">
+                        <Typography
+                            className={classes.title}
+                            component="h2"
+                            data-testid="contributions-drawer-title"
+                        >
                             {title || DEFAULT_TITLE}
                         </Typography>
                     </div>
@@ -72,6 +79,7 @@ const ContributionsDrawer = ({
                         className={classes.closeButton}
                         aria-label="Close"
                         onClick={onClose}
+                        data-testid="contributions-drawer-close"
                     >
                         <CloseIcon />
                     </IconButton>
@@ -102,6 +110,7 @@ const ContributionsDrawer = ({
                             date={promotedContribution.date}
                             promoted
                             userId={promotedContribution.userId}
+                            data-testid="contribution-card-promoted"
                         />
                     </>
                 ) : null}
@@ -118,7 +127,10 @@ const ContributionsDrawer = ({
                     {infoContributionsText || INFO_CONTRIBUTIONS_TEXT}
                 </InfoBox>
                 {contributionsCount > 0 ? (
-                    <div className={classes.listScroll}>
+                    <div
+                        className={classes.listScroll}
+                        data-testid="contributions-drawer-list"
+                    >
                         {contributions.map((item, index) => (
                             <ContributionCard
                                 key={
@@ -129,6 +141,7 @@ const ContributionsDrawer = ({
                                 sourceName={item.sourceName}
                                 date={item.date}
                                 userId={item.userId}
+                                data-testid="contribution-card"
                             />
                         ))}
                     </div>

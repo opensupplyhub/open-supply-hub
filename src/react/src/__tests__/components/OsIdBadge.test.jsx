@@ -51,11 +51,7 @@ describe('ProductionLocationDetailsOsIdBadge', () => {
     test('renders info button for OS ID tooltip', () => {
         renderOsIdBadge({ osId: 'CN2021250D1DTN7' });
 
-        expect(
-            screen.getByRole('button', {
-                name: /more information about os id/i,
-            }),
-        ).toBeInTheDocument();
+        expect(screen.getByTestId('os-id-badge-info')).toBeInTheDocument();
     });
 
     test('shows Copy Link and Copy OS ID buttons when osId is present', () => {

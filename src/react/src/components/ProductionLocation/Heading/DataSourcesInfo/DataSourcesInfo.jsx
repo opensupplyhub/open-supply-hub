@@ -37,6 +37,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     }
                     icon={InfoOutlined}
                     className={classes.infoButton}
+                    data-testid="data-sources-info-tooltip"
                 />
                 <div className={classes.switchWrap}>
                     <Typography

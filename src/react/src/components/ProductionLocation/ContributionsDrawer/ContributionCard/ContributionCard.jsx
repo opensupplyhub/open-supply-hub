@@ -25,6 +25,7 @@ const ContributionCard = ({
     date,
     promoted,
     userId,
+    'data-testid': dataTestId,
 }) => (
     <div
         className={
@@ -32,6 +33,7 @@ const ContributionCard = ({
                 ? `${classes.contributionCard} ${classes.contributionCardPromoted}`
                 : classes.contributionCard
         }
+        data-testid={dataTestId}
     >
         <Typography
             className={
@@ -110,6 +112,7 @@ ContributionCard.propTypes = {
     date: oneOfType([string, instanceOf(Date)]),
     promoted: bool,
     userId: oneOfType([string, number]),
+    'data-testid': string,
 };
 
 ContributionCard.defaultProps = {

@@ -55,10 +55,14 @@ const DataPoint = ({
     ) : null;
 
     return (
-        <Grid container className={classes.root}>
+        <Grid container className={classes.root} data-testid="data-point">
             <Grid item container className={classes.labelColumn}>
                 <Grid item className={classes.labelItem}>
-                    <Typography className={classes.label} variant="body2">
+                    <Typography
+                        className={classes.label}
+                        variant="body2"
+                        data-testid="data-point-label"
+                    >
                         {label}
                     </Typography>
                 </Grid>
@@ -68,7 +72,11 @@ const DataPoint = ({
             </Grid>
             <Grid item container className={classes.valueColumn}>
                 <Grid item className={classes.valueWithTooltip}>
-                    <Typography className={classes.value} variant="body1">
+                    <Typography
+                        className={classes.value}
+                        variant="body1"
+                        data-testid="data-point-value"
+                    >
                         {value}
                     </Typography>
                 </Grid>
@@ -84,12 +92,16 @@ const DataPoint = ({
                                         className={`${classes.statusChip} ${
                                             getStatusChipClass() || ''
                                         }`}
+                                        data-testid="data-point-status-chip"
                                     />
                                 </Grid>
                             ) : null}
                             {contributorName ? (
                                 <Grid item>
-                                    <span className={classes.contributor}>
+                                    <span
+                                        className={classes.contributor}
+                                        data-testid="data-point-contributor"
+                                    >
                                         <PersonIcon
                                             fontSize="small"
                                             className={classes.personIcon}
@@ -131,7 +143,10 @@ const DataPoint = ({
                             {date ? (
                                 <>
                                     <Grid item className={classes.dateItem}>
-                                        <span className={classes.dateBlock}>
+                                        <span
+                                            className={classes.dateBlock}
+                                            data-testid="data-point-date"
+                                        >
                                             <ScheduleIcon
                                                 fontSize="small"
                                                 className={classes.dateIcon}
