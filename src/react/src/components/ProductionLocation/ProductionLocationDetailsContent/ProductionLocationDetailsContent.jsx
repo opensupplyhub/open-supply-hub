@@ -17,7 +17,7 @@ import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetail
 import { facilityClaimStatusChoicesEnum } from '../../../util/constants';
 
 import productionLocationDetailsContentStyles from './styles';
-import OsIdBadge from '../Heading/osIdBadge/OsIdBadge';
+import OsIdBadge from '../Heading/OsIdBadge/OsIdBadge';
 
 const ProductionLocationDetailsContent = ({
     classes,
