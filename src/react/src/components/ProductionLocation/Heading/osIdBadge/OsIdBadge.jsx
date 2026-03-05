@@ -17,7 +17,7 @@ import { OS_ID_TOOLTIP_TEXT, OS_ID_LEARN_MORE_URL } from './constants';
 
 const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
     <div className={classes.osIdRow}>
-        <span className={classes.osIdValueWithTooltip}>
+        <div className={classes.osIdValueWithTooltip}>
             <Typography
                 component="h2"
                 variant="title"
@@ -51,9 +51,9 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
                     </IconButton>
                 }
             />
-        </span>
+        </div>
         {osId && (
-            <span className={classes.osIdActions}>
+            <div className={classes.osIdActions}>
                 <span
                     className={`${classes.copyButtonWrap} ${classes.copyButtonWrapFirst}`}
                 >
@@ -89,7 +89,7 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
                         </Button>
                     </CopyToClipboard>
                 </span>
-            </span>
+            </div>
         )}
     </div>
 );
