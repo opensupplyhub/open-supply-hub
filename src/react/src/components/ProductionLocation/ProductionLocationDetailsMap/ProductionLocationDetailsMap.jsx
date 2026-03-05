@@ -2,13 +2,12 @@ import React, { useMemo, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import {
-    Map as ReactLeafletMap,
-    TileLayer,
-    Marker,
-    ZoomControl,
-} from 'react-leaflet';
+import Launch from '@material-ui/icons/Launch';
+import Button from '@material-ui/core/Button';
+import { Map as ReactLeafletMap, TileLayer, Marker } from 'react-leaflet';
 import Control from 'react-leaflet-control';
+import AddIcon from '@material-ui/icons/Add';
+import RemoveIcon from '@material-ui/icons/Remove';
 import MyLocationIcon from '@material-ui/icons/MyLocation';
 import get from 'lodash/get';
 import { withStyles } from '@material-ui/core/styles';
@@ -22,6 +21,7 @@ import {
     markerIcon,
     mapContainerStyles,
 } from './constants';
+// import ExternalLinkIcon from './ExternalLinkIcon';
 import {
     detailsZoomLevel,
     initialCenter,
@@ -57,6 +57,24 @@ function ProductionLocationDetailsMap({ classes, data }) {
         }
     }, [center, zoom]);
 
+    const handleZoomIn = useCallback(() => {
+        const map = mapRef.current?.leafletElement;
+        if (map) map.zoomIn();
+    }, []);
+
+    const handleZoomOut = useCallback(() => {
+        const map = mapRef.current?.leafletElement;
+        if (map) map.zoomOut();
+    }, []);
+
+    const googleMapsUrl = useMemo(() => {
+        if (Array.isArray(center) && center.length >= 2) {
+            const [lat, lng] = center;
+            return `https://www.google.com/maps?q=${lat},${lng}`;
+        }
+        return null;
+    }, [center]);
+
     return (
         <div className={classes.container}>
             <Typography
@@ -64,6 +82,7 @@ function ProductionLocationDetailsMap({ classes, data }) {
                 variant="title"
                 className={classes.sectionTitle}
             >
+                <Launch />
                 Geographic information
             </Typography>
             <div className={classes.mapContainer}>
@@ -85,16 +104,48 @@ function ProductionLocationDetailsMap({ classes, data }) {
                             maxZoom={19}
                         />
                         <Control position="topleft">
-                            <IconButton
-                                size="small"
-                                className={classes.centerButton}
-                                onClick={handleCenterOnLocation}
-                                aria-label="Center map on facility location"
-                            >
-                                <MyLocationIcon />
-                            </IconButton>
+                            <div className={classes.mapControlsRow}>
+                                <IconButton
+                                    size="small"
+                                    className={classes.mapControlButton}
+                                    onClick={handleZoomIn}
+                                    aria-label="Zoom in"
+                                >
+                                    <AddIcon />
+                                </IconButton>
+                                <IconButton
+                                    size="small"
+                                    className={classes.mapControlButton}
+                                    onClick={handleZoomOut}
+                                    aria-label="Zoom out"
+                                >
+                                    <RemoveIcon />
+                                </IconButton>
+                                <IconButton
+                                    size="small"
+                                    className={classes.mapControlButton}
+                                    onClick={handleCenterOnLocation}
+                                    aria-label="Center map on facility location"
+                                >
+                                    <MyLocationIcon />
+                                </IconButton>
+                            </div>
                         </Control>
-                        <ZoomControl position="bottomright" />
+                        {googleMapsUrl && (
+                            <Control position="bottomright">
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    className={classes.googleMapsButton}
+                                    href={googleMapsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    startIcon={<Launch />}
+                                >
+                                    Open in Google Maps
+                                </Button>
+                            </Control>
+                        )}
                         {position && (
                             <Marker position={position} icon={markerIcon} />
                         )}

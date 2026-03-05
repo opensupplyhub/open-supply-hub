@@ -33,7 +33,27 @@ export default theme => {
             height: '100%',
             width: '100%',
         }),
-        centerButton: Object.freeze({
+        mapControlsRow: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            '& > * + *': {
+                marginTop: theme.spacing.unit,
+            },
+        }),
+        mapControlButton: Object.freeze({
+            width: 34,
+            height: 34,
+            minWidth: 34,
+            minHeight: 34,
+            padding: 0,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[2],
+            '&:hover': {
+                backgroundColor: theme.palette.grey[100],
+            },
+        }),
+        googleMapsButton: Object.freeze({
             backgroundColor: theme.palette.background.paper,
             boxShadow: theme.shadows[2],
             '&:hover': {
