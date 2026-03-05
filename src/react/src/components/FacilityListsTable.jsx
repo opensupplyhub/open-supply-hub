@@ -162,7 +162,7 @@ function FacilityListsTable({ facilityLists, history: { push } }) {
                                                 status = 'Pending approval';
                                             }
                                         } else if (list.status === 'REJECTED') {
-                                            status = 'Rejected';
+                                            status = 'Feedback Phase';
                                         } else if (list.status === 'REPLACED') {
                                             status = 'Replaced';
                                         } else if (list.status === 'APPROVED') {
