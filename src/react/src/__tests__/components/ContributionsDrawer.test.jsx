@@ -12,7 +12,7 @@ const renderContributionsDrawer = (props = {}) =>
         <MemoryRouter>
             <MuiThemeProvider theme={theme}>
                 <ContributionsDrawer
-                    open={true}
+                    open
                     onClose={jest.fn()}
                     {...props}
                 />
@@ -27,6 +27,7 @@ function DrawerWithTrigger() {
             <MuiThemeProvider theme={theme}>
                 <button
                     type="button"
+                    aria-label="Open drawer"
                     data-testid="open-drawer-trigger"
                     onClick={() => setOpen(true)}
                 />

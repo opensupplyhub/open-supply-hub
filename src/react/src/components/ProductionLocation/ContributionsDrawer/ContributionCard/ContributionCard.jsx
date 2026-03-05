@@ -120,6 +120,7 @@ ContributionCard.defaultProps = {
     date: null,
     promoted: false,
     userId: null,
+    'data-testid': undefined,
 };
 
 export default withStyles(contributionCardStyles)(ContributionCard);

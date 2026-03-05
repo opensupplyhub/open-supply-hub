@@ -58,6 +58,7 @@ IconComponent.defaultProps = {
     enterDelay: 0,
     className: undefined,
     icon: HelpOutline,
+    'data-testid': undefined,
 };
 
 IconComponent.propTypes = {
