@@ -10,6 +10,10 @@ import Overview from '../../../Icons/Overview';
 import GeneralInformation from '../../../Icons/GeneralInformation';
 import OperationalDetails from '../../../Icons/OperationalDetails';
 
+import Overview from '../../../Icons/Overview';
+import GeneralInformation from '../../../Icons/GeneralInformation';
+import OperationalDetails from '../../../Icons/OperationalDetails';
+
 import navBarStyles from './styles';
 import getIconURL from './utils';
 
