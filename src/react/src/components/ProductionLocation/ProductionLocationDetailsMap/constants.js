@@ -1,11 +1,11 @@
 import L from 'leaflet';
 
-// OpenTopoMap: free topographic/terrain-style tiles (no Google API required).
-// See https://leafletjs.com/ and https://opentopomap.org/
-export const OPENTOPOMAP_URL =
-    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-export const OPENTOPOMAP_ATTRIBUTION =
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://opentopomap.org">OpenTopoMap</a>';
+// ESRI World Imagery: satellite/aerial base layer (no API key required).
+// See https://leafletjs.com/ and https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9
+export const SATELLITE_TILE_URL =
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+export const SATELLITE_TILE_ATTRIBUTION =
+    '&copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, and the GIS User Community';
 
 export const markerIcon = L.icon({
     iconUrl: '/images/selectedmarker.png',

@@ -14,8 +14,8 @@ import 'leaflet/dist/leaflet.css';
 
 import productionLocationDetailsMapStyles from './styles';
 import {
-    OPENTOPOMAP_URL,
-    OPENTOPOMAP_ATTRIBUTION,
+    SATELLITE_TILE_URL,
+    SATELLITE_TILE_ATTRIBUTION,
     markerIcon,
     mapContainerStyles,
 } from './constants';
@@ -26,9 +26,9 @@ import {
 } from '../../../util/constants.facilitiesMap';
 
 /**
- * Renders the production location detail map with a terrain-style base layer
- * using Leaflet's TileLayer and OpenTopoMap (no Google Maps API). Avoids
- * "google is not defined" and grey tiles; uses the same pattern as Leaflet docs.
+ * Renders the production location detail map with a satellite (aerial) base layer
+ * using Leaflet's TileLayer and ESRI World Imagery. Keeps the map interactive
+ * without requiring the Google Maps API.
  */
 function ProductionLocationDetailsMap({ classes, data }) {
     const coordinates = get(data, 'geometry.coordinates', null);
@@ -66,10 +66,10 @@ function ProductionLocationDetailsMap({ classes, data }) {
                         maxZoom={18}
                     >
                         <TileLayer
-                            url={OPENTOPOMAP_URL}
-                            attribution={OPENTOPOMAP_ATTRIBUTION}
+                            url={SATELLITE_TILE_URL}
+                            attribution={SATELLITE_TILE_ATTRIBUTION}
                             minZoom={2}
-                            maxZoom={17}
+                            maxZoom={19}
                         />
                         <ZoomControl position="bottomright" />
                         {position && (
