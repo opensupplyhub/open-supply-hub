@@ -7,15 +7,19 @@ export const SATELLITE_TILE_URL =
 export const SATELLITE_TILE_ATTRIBUTION =
     '&copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, and the GIS User Community';
 
-export const markerIcon = L.icon({
-    iconUrl: '/images/selectedmarker.png',
-    iconSize: [30, 40],
-    iconAnchor: [15, 40],
-    popupAnchor: null,
-    shadowUrl: null,
-    shadowSize: null,
-    shadowAnchor: null,
-});
+const createIcon = iconUrl =>
+    L.icon({
+        iconUrl,
+        iconSize: [30, 40],
+        iconAnchor: [15, 40],
+        popupAnchor: null,
+        shadowUrl: null,
+        shadowSize: null,
+        shadowAnchor: null,
+    });
+
+export const markerIcon = createIcon('/images/selectedmarker.png');
+export const unselectedMarkerIcon = createIcon('/images/marker.png');
 
 export const mapContainerStyles = Object.freeze({
     height: '100%',

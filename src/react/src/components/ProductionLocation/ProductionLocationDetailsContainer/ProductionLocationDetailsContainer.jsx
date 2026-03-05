@@ -21,9 +21,11 @@ import {
 } from '../../../util/util';
 import {
     fetchSingleFacility,
+    fetchFacilities,
     resetSingleFacility,
 } from '../../../actions/facilities';
 import { fetchPartnerFieldGroups } from '../../../actions/partnerFieldGroups';
+import { setFiltersFromQueryString } from '../../../actions/filters';
 
 import productionLocationDetailsContainerStyles from './styles';
 
@@ -42,6 +44,8 @@ function ProductionLocationDetailsContainer({
     clearFacility,
     getPartnerFieldGroups,
     partnerFieldGroupsData,
+    hydrateFiltersFromQueryString,
+    fetchFacilitiesForMap,
 }) {
     const normalizedOsID =
         getLastPathParameter(location?.pathname || '') ||
@@ -57,6 +61,17 @@ function ProductionLocationDetailsContainer({
             getPartnerFieldGroups();
         }
     }, [getPartnerFieldGroups, partnerFieldGroupsData]);
+    // Hydrate filters from URL and fetch facilities list so the map shows all facilities.
+    // Intentionally depend only on location.search so we don't re-fetch on every render
+    // (dispatch props are new references each time and would cause a request loop / throttling).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        const search = location?.search || '';
+        if (search) {
+            hydrateFiltersFromQueryString(search);
+        }
+        fetchFacilitiesForMap();
+    }, [location?.search]);
 
     // Run cleanup only on unmount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,7 +152,7 @@ const mapStateToProps = ({
     partnerFieldGroupsData,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch, { history }) => ({
     fetchFacility: (id, contributorId) => {
         const hasContributors =
             isArray(contributorId) && !isEmpty(contributorId);
@@ -146,6 +161,15 @@ const mapDispatchToProps = dispatch => ({
     },
     clearFacility: () => dispatch(resetSingleFacility()),
     getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
+    hydrateFiltersFromQueryString: qs =>
+        dispatch(setFiltersFromQueryString(qs)),
+    fetchFacilitiesForMap: () =>
+        dispatch(
+            fetchFacilities({
+                pushNewRoute: history?.push || (() => {}),
+                activateFacilitiesTab: false,
+            }),
+        ),
 });
 
 export default withRouter(
