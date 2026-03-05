@@ -378,7 +378,7 @@ const ContactInfoStep = ({
                             </div>
                         </div>
                         <Typography className={classes.sectionDescription}>
-                            Toggle &quot;Yes&quot; to add public contact
+                            Toggle &ldquo;Yes&rdquo; to add public contact
                             details. When enabled, contact info will be visible
                             on your Open Supply Hub profile for sourcing
                             requests, general inquiries, and potential business

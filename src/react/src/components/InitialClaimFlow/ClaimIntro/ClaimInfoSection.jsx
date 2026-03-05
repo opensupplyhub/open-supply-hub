@@ -31,8 +31,10 @@ const ClaimInfoSection = ({ classes, children }) => (
                             variant="body2"
                             className={classes.boxDescription}
                         >
-                            Claim requests must be submitted by a current
-                            employee of the location or its parent company
+                            Claim requests must be submitted by an owner or
+                            manager of the production location or of its parent
+                            company. Claim Requests submitted by a buyer or
+                            other stakeholder will not be approved.
                         </Typography>
                     </li>
                     <li>
@@ -40,9 +42,10 @@ const ClaimInfoSection = ({ classes, children }) => (
                             variant="body2"
                             className={classes.boxDescription}
                         >
-                            If you&apos;re not an owner or manager, you can
-                            still proceed by providing your supervisor&apos;s
-                            contact information for verification
+                            If you&apos;re an employee of the production
+                            location but not an owner or manager, you can still
+                            proceed by providing your supervisor&apos;s contact
+                            information for approval.
                         </Typography>
                     </li>
                 </ul>
@@ -59,7 +62,8 @@ const ClaimInfoSection = ({ classes, children }) => (
                     <Typography component="h2" className={classes.boxHeader}>
                         <span className={classes.stepNumber}>2</span>
                         <span className={classes.stepTitle}>
-                            Prove Your Name and Role
+                            Submit ONE of the following to confirm your name,
+                            title and connection to the company
                         </span>
                     </Typography>
                     <ul className={classes.boxList}>
@@ -134,7 +138,8 @@ const ClaimInfoSection = ({ classes, children }) => (
                     <Typography component="h2" className={classes.boxHeader}>
                         <span className={classes.stepNumber}>3</span>
                         <span className={classes.stepTitle}>
-                            Prove Company Name and Address
+                            Submit ONE of the following to confirm name and
+                            address of the company
                         </span>
                     </Typography>
                     <ul className={classes.boxList}>
