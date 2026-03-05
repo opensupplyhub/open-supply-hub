@@ -1,33 +1,33 @@
-export default theme =>
-    Object.freeze({
-        root: {
-            color: '#191919',
-            display: 'flex',
-            justifyContent: 'center',
-            borderTop: '2px solid #F9F7F7',
-            borderBottom: '2px solid #F9F7F7',
-        },
-        contentContainer: {
-            width: '320px',
-            height: '200px',
-            padding: theme.spacing.unit * 3,
-            [theme.breakpoints.up('sm')]: {
-                width: '385px',
-                maxWidth: '100%',
-            },
-            [theme.breakpoints.up('md')]: {
-                width: '100%',
-                maxWidth: '1072px',
-                height: '457px',
-                maxHeight: '100%',
-            },
-        },
+import { getTypographyStyles } from '../../../util/typographyStyles';
+import commonStyles from '../commonStyles';
+
+export default theme => {
+    const typography = getTypographyStyles(theme);
+    return Object.freeze({
+        container: Object.freeze({
+            ...commonStyles(theme).container,
+            padding: '20px',
+        }),
         title: {
             marginBottom: theme.spacing.unit,
         },
-        dragHint: {
-            fontSize: '0.875rem',
-            color: theme.palette.text.secondary,
-            marginBottom: theme.spacing.unit,
-        },
+        sectionTitle: Object.freeze({
+            ...typography.sectionTitle,
+            marginTop: 0,
+            marginBottom: 0,
+            marginRight: 0,
+        }),
+        mapContainer: Object.freeze({
+            width: '100%',
+            height: '200px',
+            [theme.breakpoints.up('sm')]: {
+                maxWidth: '100%',
+                height: '320px',
+            },
+            [theme.breakpoints.up('md')]: {
+                maxWidth: '1072px',
+                height: '457px',
+            },
+        }),
     });
+};

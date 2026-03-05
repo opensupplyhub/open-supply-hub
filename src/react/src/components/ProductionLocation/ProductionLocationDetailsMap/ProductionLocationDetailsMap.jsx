@@ -12,14 +12,15 @@ import productionLocationDetailsMapStyles from './styles';
  * flow as the facility details page is used, avoiding "google is not defined" errors.
  */
 const ProductionLocationDetailsMap = ({ classes }) => (
-    <div className={classes.root}>
-        <Typography variant="title" className={classes.title} component="h3">
-            Interactive map
+    <div className={classes.container}>
+        <Typography
+            component="h3"
+            variant="title"
+            className={classes.sectionTitle}
+        >
+            Geographic information
         </Typography>
-        <Typography component="p" className={classes.dragHint}>
-            Drag to pan
-        </Typography>
-        <div className={classes.contentContainer}>
+        <div className={classes.mapContainer}>
             <Map height="100%" />
         </div>
     </div>
