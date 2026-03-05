@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
+import get from 'lodash/get';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 
@@ -16,6 +17,7 @@ import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetail
 import { facilityClaimStatusChoicesEnum } from '../../../util/constants';
 
 import productionLocationDetailsContentStyles from './styles';
+import OsIdBadge from '../Heading/osIdBadge/OsIdBadge';
 
 const ProductionLocationDetailsContent = ({
     classes,
@@ -29,6 +31,7 @@ const ProductionLocationDetailsContent = ({
         data?.properties?.claim_info?.status ===
         facilityClaimStatusChoicesEnum.PENDING;
     const isClaimed = !isPendingClaim && !!data?.properties?.claim_info;
+    const osId = get(data, 'properties.os_id', '') || '';
 
     return (
         <div className={classes.container}>
@@ -40,6 +43,7 @@ const ProductionLocationDetailsContent = ({
                 claimInfo={data?.properties?.claim_info}
                 isEmbed={!!embed}
             />
+            <OsIdBadge osId={osId} />
             <ClosureStatus
                 data={data}
                 clearFacility={clearFacility}
