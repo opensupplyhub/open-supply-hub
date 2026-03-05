@@ -1,70 +1,110 @@
 import COLOURS from '../../../../../util/COLOURS';
 
-export default theme =>
+export default () =>
     Object.freeze({
         drawerPaper: Object.freeze({
-            maxWidth: '560px',
-            minWidth: '33%',
+            width: '390px',
             boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
         }),
         drawerContent: Object.freeze({
-            padding: '1rem 4.5rem',
+            padding: '24px',
             overflowY: 'auto',
             height: '100%',
         }),
         header: Object.freeze({
             display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
         }),
-        closeButton: Object.freeze({}),
+        headerLeft: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+        }),
+        titleIcon: Object.freeze({
+            fontSize: '1.5rem',
+            color: COLOURS.PURPLE,
+        }),
         title: Object.freeze({
-            fontWeight: 900,
-            fontSize: '2rem',
+            fontWeight: 700,
+            fontSize: '1.4rem',
+            lineHeight: 1.3,
             color: COLOURS.NEAR_BLACK,
-            marginBottom: theme.spacing.unit,
+            marginLeft: '10px',
         }),
         subtitle: Object.freeze({
-            fontWeight: 600,
+            marginTop: '8px',
+            marginBottom: '0px',
             fontSize: '1rem',
+            lineHeight: 1.4,
             color: COLOURS.DARK_GREY,
-            marginBottom: '2rem',
+            paddingBottom: '16px',
+        }),
+        closeButton: Object.freeze({
+            margin: '-8px',
+            color: COLOURS.DARK_GREY,
+            '&:hover': Object.freeze({
+                backgroundColor: COLOURS.HOVER_GREY,
+                color: COLOURS.PURPLE,
+            }),
+        }),
+        sectionLabel: Object.freeze({
+            fontSize: '0.9rem',
+            color: COLOURS.DARK_GREY,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            marginTop: '16px',
+            marginBottom: '8px',
+            lineHeight: 1.2,
         }),
         infoBox: Object.freeze({
             backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
-            border: `1px solid ${COLOURS.LIGHT_BLUE_BORDER}`,
-            padding: theme.spacing.unit * 2,
-            marginBottom: theme.spacing.unit * 2,
+            border: `1px solid #C0DBFE`,
+            padding: '16px',
+            marginBottom: '16px',
+        }),
+        infoBoxWithIcon: Object.freeze({
             display: 'flex',
             alignItems: 'flex-start',
-            gap: theme.spacing.unit,
+            gap: '8px',
         }),
         infoIcon: Object.freeze({
-            fontSize: 18,
+            fontSize: '1.25rem',
             color: COLOURS.MATERIAL_BLUE,
             flexShrink: 0,
-            marginTop: 2,
+            marginTop: '2px',
+            marginRight: '8px',
+        }),
+        infoBoxContent: Object.freeze({
+            flex: 1,
         }),
         infoText: Object.freeze({
-            fontSize: '0.85rem',
+            fontSize: '1rem',
             lineHeight: 1.5,
             color: COLOURS.DARK_GREY,
         }),
         learnMoreLink: Object.freeze({
-            display: 'block',
-            marginTop: 6,
-            fontSize: '0.85rem',
+            marginTop: '8px',
+            display: 'inline-flex',
+            alignItems: 'center',
             color: COLOURS.MATERIAL_BLUE,
+            fontSize: '1rem',
             textDecoration: 'none',
             '&:hover': Object.freeze({
                 textDecoration: 'underline',
             }),
         }),
+        learnMoreArrow: Object.freeze({
+            marginLeft: '4px',
+            marginTop: '2px',
+        }),
         typeSummary: Object.freeze({
             display: 'flex',
             flexWrap: 'wrap',
             gap: 6,
-            marginBottom: theme.spacing.unit * 2,
+            marginBottom: '16px',
         }),
         typeChip: Object.freeze({
             display: 'inline-block',
@@ -73,13 +113,15 @@ export default theme =>
             backgroundColor: COLOURS.LIGHT_GREY,
             padding: '2px 10px',
         }),
-        divider: Object.freeze({
-            marginBottom: theme.spacing.unit * 2,
+        listScroll: Object.freeze({
+            maxHeight: '320px',
+            overflowY: 'auto',
         }),
         contributorEntry: Object.freeze({
-            boxShadow: '0px 1px 0px 0px rgb(240, 240, 240)',
-            paddingTop: theme.spacing.unit,
-            paddingBottom: theme.spacing.unit,
+            backgroundColor: COLOURS.WHITE,
+            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
+            padding: '16px',
+            marginBottom: '8px',
         }),
         contributorName: Object.freeze({
             display: 'inline-flex',
@@ -107,8 +149,8 @@ export default theme =>
         }),
         listEntry: Object.freeze({
             border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
-            padding: `${theme.spacing.unit}px ${theme.spacing.unit * 1.5}px`,
-            marginBottom: theme.spacing.unit,
+            padding: '8px 12px',
+            marginBottom: '8px',
             backgroundColor: COLOURS.WHITE,
         }),
         listEntryLabel: Object.freeze({
@@ -129,24 +171,8 @@ export default theme =>
             color: COLOURS.NEAR_BLACK,
             fontWeight: 500,
         }),
-        sectionHeader: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: theme.spacing.unit,
-            marginTop: theme.spacing.unit * 3,
-            marginBottom: theme.spacing.unit * 1.5,
-        }),
-        sectionHeaderIcon: Object.freeze({
-            fontSize: 20,
-            color: COLOURS.NEAR_BLACK,
-        }),
-        sectionTitle: Object.freeze({
-            fontWeight: 700,
-            fontSize: '1rem',
-            color: COLOURS.NEAR_BLACK,
-        }),
         anonymizedType: Object.freeze({
-            fontSize: '0.95rem',
+            fontSize: '1rem',
             color: COLOURS.NEAR_BLACK,
             lineHeight: 1.8,
         }),
