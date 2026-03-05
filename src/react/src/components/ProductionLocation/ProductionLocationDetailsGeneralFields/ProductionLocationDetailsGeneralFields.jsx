@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -16,10 +15,6 @@ const ProductionLocationDetailsGeneralFields = ({ classes }) => (
         </Typography>
     </div>
 );
-
-ProductionLocationDetailsGeneralFields.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
 
 export default withStyles(productionLocationDetailsGeneralFieldsStyles)(
     ProductionLocationDetailsGeneralFields,
