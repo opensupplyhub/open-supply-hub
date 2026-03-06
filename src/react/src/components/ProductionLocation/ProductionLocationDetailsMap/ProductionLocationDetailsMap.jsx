@@ -10,6 +10,7 @@ import Control from 'react-leaflet-control';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import MyLocationIcon from '@material-ui/icons/MyLocation';
+import LaunchIcon from '@material-ui/icons/Launch';
 import get from 'lodash/get';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -186,13 +187,22 @@ function ProductionLocationDetailsMap({
                         {googleMapsUrl && (
                             <Control position="bottomright">
                                 <Button
+                                    component="span"
                                     size="small"
                                     variant="outlined"
+                                    color="default"
                                     className={classes.googleMapsButton}
-                                    href={googleMapsUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                    onClick={() =>
+                                        window.open(
+                                            googleMapsUrl,
+                                            '_blank',
+                                            'noopener,noreferrer',
+                                        )
+                                    }
                                 >
+                                    <LaunchIcon
+                                        className={classes.googleMapsButtonIcon}
+                                    />
                                     Open in Google Maps
                                 </Button>
                             </Control>

@@ -49,16 +49,31 @@ export default theme => {
             padding: 0,
             backgroundColor: theme.palette.background.paper,
             boxShadow: theme.shadows[2],
+            color: theme.palette.text.secondary,
             '&:hover': {
                 backgroundColor: theme.palette.grey[100],
             },
         }),
         googleMapsButton: Object.freeze({
+            ...typography.bodyText,
             backgroundColor: theme.palette.background.paper,
             boxShadow: theme.shadows[2],
+            color: theme.palette.text.secondary,
+            textTransform: 'none',
+            borderColor: theme.palette.grey[400],
+            '&, & .MuiButton-label, & svg': {
+                color: theme.palette.text.secondary,
+            },
             '&:hover': {
                 backgroundColor: theme.palette.grey[100],
+                borderColor: theme.palette.grey[500],
+                '&, & .MuiButton-label, & svg': {
+                    color: theme.palette.text.secondary,
+                },
             },
+        }),
+        googleMapsButtonIcon: Object.freeze({
+            marginRight: theme.spacing.unit,
         }),
     });
 };
