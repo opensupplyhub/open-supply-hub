@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
-import ProductionLocationDetailsOsIdBadge from '../../components/ProductionLocation/Heading/osIdBadge/OsIdBadge';
+import ProductionLocationDetailsOsIdBadge from '../../components/ProductionLocation/Heading/OsIdBadge/OsIdBadge';
 
 jest.mock('react-toastify', () => ({
     toast: jest.fn(),

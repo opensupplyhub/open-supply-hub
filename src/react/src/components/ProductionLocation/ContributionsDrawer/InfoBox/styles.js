@@ -7,12 +7,12 @@ export default () =>
             marginBottom: '16px',
         }),
         infoBoxPromoted: Object.freeze({
-            backgroundColor: '#F8F5FB',
-            border: `1px solid #E2D1F0`,
+            backgroundColor: COLOURS.LIGHT_LAVENDER,
+            border: `1px solid ${COLOURS.LIGHT_LAVENDER_BORDER}`,
         }),
         infoBoxContributions: Object.freeze({
             backgroundColor: COLOURS.EXTRA_LIGHT_BLUE,
-            border: `1px solid #C0DBFE`,
+            border: `1px solid ${COLOURS.LIGHT_SKY_BLUE}`,
         }),
         infoTitle: Object.freeze({
             fontSize: '0.875rem',

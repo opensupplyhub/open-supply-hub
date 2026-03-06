@@ -10,12 +10,11 @@ import {
 import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-
 import ScheduleIcon from '@material-ui/icons/Schedule';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 
-import { makeProfileRouteLink } from '../../../../util/util';
-import formatDisplayDate from '../../utils';
+import { makeProfileRouteLink, formatDate } from '../../../../util/util';
+import { DATE_FORMATS } from '../../../../util/constants';
 import contributionCardStyles from './styles';
 
 const ContributionCard = ({
@@ -97,7 +96,7 @@ const ContributionCard = ({
                                     : classes.dateIcon
                             }
                         />
-                        {formatDisplayDate(date)}
+                        {formatDate(date, DATE_FORMATS.LONG)}
                     </span>
                 ) : null}
             </div>

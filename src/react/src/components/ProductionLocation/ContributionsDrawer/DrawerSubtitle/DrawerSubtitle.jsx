@@ -1,15 +1,15 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { object, string, number } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import drawerSubtitleStyles from './styles';
 
-const DrawerSubtitle = ({ classes, fieldName, uniqueContributorCount }) => {
+const DrawerSubtitle = ({ classes, fieldName, contributorCount }) => {
     if (fieldName == null || fieldName === '') {
         return null;
     }
-    const count = uniqueContributorCount;
+    const count = contributorCount;
     const orgText =
         count === 1 ? '1 organization has' : `${count} organizations have`;
     return (
@@ -25,9 +25,9 @@ const DrawerSubtitle = ({ classes, fieldName, uniqueContributorCount }) => {
 };
 
 DrawerSubtitle.propTypes = {
-    classes: PropTypes.object.isRequired,
-    fieldName: PropTypes.string,
-    uniqueContributorCount: PropTypes.number.isRequired,
+    classes: object.isRequired,
+    fieldName: string,
+    contributorCount: number.isRequired,
 };
 
 DrawerSubtitle.defaultProps = {

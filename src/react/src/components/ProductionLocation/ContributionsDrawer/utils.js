@@ -10,13 +10,15 @@ export const getContributionsSectionLabel = contributions => {
         : CONTRIBUTIONS_SECTION_LABEL;
 };
 
-export const getUniqueContributorCount = contributions => {
+export const getContributorCount = contributions => {
     if (!Array.isArray(contributions) || contributions.length === 0) {
         return 0;
     }
     const definedIds = contributions
         .map(contribution => contribution?.userId)
         .filter(id => id != null);
+
     const uniqueCount = new Set(definedIds).size;
-    return uniqueCount;
+    const anonymousCount = contributions.length - definedIds.length;
+    return uniqueCount + anonymousCount;
 };

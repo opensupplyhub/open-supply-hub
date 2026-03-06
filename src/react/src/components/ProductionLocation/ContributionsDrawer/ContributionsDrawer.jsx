@@ -31,7 +31,7 @@ import {
 import InfoPromotedText from './InfoPromotedText/InfoPromotedText';
 import DrawerSubtitle from './DrawerSubtitle/DrawerSubtitle';
 import {
-    getUniqueContributorCount,
+    getContributorCount,
     getContributionsCount,
     getContributionsSectionLabel,
 } from './utils';
@@ -46,7 +46,10 @@ const ContributionsDrawer = ({
     contributions,
 }) => {
     const contributionsCount = getContributionsCount(contributions);
-    const uniqueContributorCount = getUniqueContributorCount(contributions);
+    const contributorCount = getContributorCount([
+        ...contributions,
+        promotedContribution,
+    ]);
     const sectionLabel = getContributionsSectionLabel(contributions);
 
     return (
@@ -82,7 +85,7 @@ const ContributionsDrawer = ({
                 </div>
                 <DrawerSubtitle
                     fieldName={fieldName}
-                    uniqueContributorCount={uniqueContributorCount}
+                    contributorCount={contributorCount}
                 />
                 <Divider />
                 {promotedContribution ? (
@@ -124,10 +127,7 @@ const ContributionsDrawer = ({
                     {INFO_CONTRIBUTIONS_TEXT}
                 </InfoBox>
                 {contributionsCount > 0 ? (
-                    <div
-                        className={classes.listScroll}
-                        data-testid="contributions-drawer-list"
-                    >
+                    <div data-testid="contributions-drawer-list">
                         {contributions.map((item, index) => (
                             <ContributionCard
                                 key={

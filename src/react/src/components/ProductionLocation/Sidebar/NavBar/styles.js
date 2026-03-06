@@ -43,7 +43,7 @@ export default theme =>
         }),
         menuLabel: Object.freeze({
             fontSize: '1.15rem',
-            color: COLOURS.BLACK,
+            fontWeight: 500,
         }),
         menuLabelActive: Object.freeze({
             fontWeight: 600,

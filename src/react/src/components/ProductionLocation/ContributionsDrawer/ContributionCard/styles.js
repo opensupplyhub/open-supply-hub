@@ -9,7 +9,7 @@ export default () =>
             marginBottom: '8px',
         }),
         contributionCardPromoted: Object.freeze({
-            backgroundColor: '#F8F5FB',
+            backgroundColor: COLOURS.LIGHT_LAVENDER,
         }),
         contributionValueContainer: Object.freeze({
             display: 'flex',

@@ -51,8 +51,4 @@ export default () =>
             marginBottom: '8px',
             lineHeight: 1.2,
         }),
-        listScroll: Object.freeze({
-            maxHeight: '320px',
-            overflowY: 'auto',
-        }),
     });

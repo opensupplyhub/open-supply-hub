@@ -24,7 +24,7 @@ export default () =>
         }),
         label: Object.freeze({
             fontSize: '1.125rem',
-            lineHeight: 1.43,
+            lineHeight: 1.7,
             color: COLOURS.DARK_GREY,
         }),
         tooltipIconItem: Object.freeze({
@@ -63,12 +63,12 @@ export default () =>
             }),
         }),
         claimedChip: Object.freeze({
-            backgroundColor: '#f0fdf480',
+            backgroundColor: COLOURS.CLAIMED_CHIP_BG,
             color: COLOURS.DARK_GREEN,
         }),
         crowdsourcedChip: Object.freeze({
-            backgroundColor: '#fff7ed80',
-            color: '#C2410C',
+            backgroundColor: COLOURS.CROWDSOURCED_CHIP_BG,
+            color: COLOURS.CROWDSOURCED_CHIP_TEXT,
         }),
         metaRowContainer: Object.freeze({
             marginLeft: '-16px',
@@ -78,7 +78,6 @@ export default () =>
             width: 'fit-content',
             lineHeight: 1.43,
             color: COLOURS.DARK_GREY,
-            marginBottom: '4px',
             marginLeft: '16px',
             alignItems: 'center',
             flexWrap: 'wrap',
@@ -106,6 +105,7 @@ export default () =>
         }),
         contributorName: Object.freeze({
             fontSize: '1.125rem',
+            lineHeight: 1.7,
             color: COLOURS.DARK_GREY,
         }),
         contributorNameLink: Object.freeze({
@@ -141,6 +141,7 @@ export default () =>
         }),
         dateText: Object.freeze({
             fontSize: '1.125rem',
+            lineHeight: 1.7,
             color: COLOURS.DARK_GREY,
         }),
         metaSeparator: Object.freeze({
@@ -159,18 +160,6 @@ export default () =>
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: COLOURS.DARK_GREY,
-            }),
-        }),
-        sourcesButton: Object.freeze({
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '1.125rem',
-            padding: '0px',
-            minHeight: '0px',
-            color: COLOURS.PURPLE,
-            '&:hover': Object.freeze({
-                backgroundColor: 'transparent',
-                textDecoration: 'underline',
             }),
         }),
     });

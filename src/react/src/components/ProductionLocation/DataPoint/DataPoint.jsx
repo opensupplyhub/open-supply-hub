@@ -13,7 +13,6 @@ import {
 } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Chip from '@material-ui/core/Chip';
-import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
@@ -21,9 +20,10 @@ import ScheduleIcon from '@material-ui/icons/Schedule';
 import PersonIcon from '@material-ui/icons/PersonOutline';
 
 import IconComponent from '../../Shared/IconComponent/IconComponent';
-import { profileRoute } from '../../../util/constants';
-import formatDisplayDate from '../utils';
+import { profileRoute, DATE_FORMATS } from '../../../util/constants';
+import { formatDate } from '../../../util/util';
 import getSourcesCount from './utils';
+import SourcesButton from './SourcesButton/SourcesButton';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import dataPointStyles from './styles';
 
@@ -156,7 +156,10 @@ const DataPoint = ({
                                                 component="span"
                                                 className={classes.dateText}
                                             >
-                                                {formatDisplayDate(date)}
+                                                {formatDate(
+                                                    date,
+                                                    DATE_FORMATS.LONG,
+                                                )}
                                             </Typography>
                                         </span>
                                     </Grid>
@@ -167,14 +170,10 @@ const DataPoint = ({
                                     item
                                     className={classes.sourcesButtonItem}
                                 >
-                                    <Button
-                                        className={classes.sourcesButton}
-                                        onClick={onOpenDrawer}
-                                        aria-label={`View ${sourcesCount} sources`}
-                                        data-testid="data-point-sources-button"
-                                    >
-                                        +{sourcesCount} data sources
-                                    </Button>
+                                    <SourcesButton
+                                        sourcesCount={sourcesCount}
+                                        onOpenDrawer={onOpenDrawer}
+                                    />
                                 </Grid>
                             )}
                         </Grid>
