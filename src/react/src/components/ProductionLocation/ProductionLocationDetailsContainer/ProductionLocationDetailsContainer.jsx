@@ -7,6 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import isEmpty from 'lodash/isEmpty';
 import isArray from 'lodash/isArray';
+import noop from 'lodash/noop';
 
 import BackToSearch from '../Sidebar/BackToSearch/BackToSearch';
 import NavBar from '../Sidebar/NavBar/NavBar';
@@ -21,9 +22,11 @@ import {
 } from '../../../util/util';
 import {
     fetchSingleFacility,
+    fetchFacilities,
     resetSingleFacility,
 } from '../../../actions/facilities';
 import { fetchPartnerFieldGroups } from '../../../actions/partnerFieldGroups';
+import { setFiltersFromQueryString } from '../../../actions/filters';
 
 import productionLocationDetailsContainerStyles from './styles';
 
@@ -42,27 +45,49 @@ function ProductionLocationDetailsContainer({
     clearFacility,
     getPartnerFieldGroups,
     partnerFieldGroupsData,
+    hydrateFiltersFromQueryString,
+    fetchFacilitiesForMap,
 }) {
     const normalizedOsID =
         getLastPathParameter(location?.pathname || '') ||
         getLastPathParameter(osID) ||
         osID;
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
-    }, [normalizedOsID, contributors, fetchFacility]);
+    }, [normalizedOsID, contributors]);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!partnerFieldGroupsData) {
             getPartnerFieldGroups();
         }
-    }, [getPartnerFieldGroups, partnerFieldGroupsData]);
+    }, [partnerFieldGroupsData]);
+    // Hydrate filters from URL and fetch facilities list so the map shows all facilities.
+    // Intentionally depend only on location.search so we don't re-fetch on every render
+    // (dispatch props are new references each time and would cause a request loop / throttling).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        const search = location?.search || '';
+        if (search) {
+            hydrateFiltersFromQueryString(search);
+        }
+        fetchFacilitiesForMap();
+    }, [location?.search]);
 
     // Run cleanup only on unmount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => () => clearFacility(), []);
 
-    if (fetching) {
+    const requestedId = normalizedOsID || '';
+    const loadedId = data?.id || '';
+    const isStaleData =
+        requestedId &&
+        loadedId &&
+        requestedId.toLowerCase() !== loadedId.toLowerCase();
+
+    if (fetching || isStaleData) {
         return (
             <div className={classes.loadingRoot}>
                 <CircularProgress />
@@ -84,7 +109,9 @@ function ProductionLocationDetailsContainer({
         );
     }
 
-    if (data?.id && data?.id !== osID) {
+    const isSameFacility = requestedId.toLowerCase() === loadedId.toLowerCase();
+    const needsCanonicalRedirect = isSameFacility && requestedId !== loadedId;
+    if (data?.id && needsCanonicalRedirect) {
         return (
             <Redirect
                 to={makeFacilityDetailLinkOnRedirect(
@@ -146,6 +173,17 @@ const mapDispatchToProps = dispatch => ({
     },
     clearFacility: () => dispatch(resetSingleFacility()),
     getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
+    hydrateFiltersFromQueryString: qs =>
+        dispatch(setFiltersFromQueryString(qs)),
+    // Use no-op for pushNewRoute so that when the API returns 1 facility we don't
+    // redirect (which would re-trigger this page's useEffect and cause a request loop).
+    fetchFacilitiesForMap: () =>
+        dispatch(
+            fetchFacilities({
+                pushNewRoute: noop,
+                activateFacilitiesTab: false,
+            }),
+        ),
 });
 
 export default withRouter(
