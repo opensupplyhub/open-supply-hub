@@ -18,6 +18,7 @@ import 'leaflet/dist/leaflet.css';
 
 import VectorTileFacilitiesLayer from '../../VectorTileFacilitiesLayer';
 import VectorTileFacilityGridLayer from '../../VectorTileFacilityGridLayer';
+import VectorTileGridLegend from '../../VectorTileGridLegend';
 
 import productionLocationDetailsMapStyles from './styles';
 import {
@@ -42,6 +43,7 @@ import { productionLocationDetailsRoute } from '../../../util/constants';
 function ProductionLocationDetailsMap({
     classes,
     singleFacilityData,
+    gridColorRamp,
     history: { push },
     match: { params: { osID } = {} } = {},
 }) {
@@ -208,6 +210,13 @@ function ProductionLocationDetailsMap({
                             </Control>
                         )}
                         <Control position="bottomleft">
+                            <VectorTileGridLegend
+                                currentZoomLevel={currentMapZoomLevel}
+                                gridColorRamp={gridColorRamp}
+                                label="Production locations"
+                            />
+                        </Control>
+                        <Control position="bottomleft">
                             <Typography
                                 component="span"
                                 className={classes.mapDragHint}
@@ -242,6 +251,7 @@ function ProductionLocationDetailsMap({
 ProductionLocationDetailsMap.propTypes = {
     classes: PropTypes.object.isRequired,
     singleFacilityData: PropTypes.object,
+    gridColorRamp: PropTypes.arrayOf(PropTypes.array),
     history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
     match: PropTypes.shape({
         params: PropTypes.shape({ osID: PropTypes.string }),
@@ -250,15 +260,18 @@ ProductionLocationDetailsMap.propTypes = {
 
 ProductionLocationDetailsMap.defaultProps = {
     singleFacilityData: null,
+    gridColorRamp: [],
 };
 
 function mapStateToProps({
     facilities: {
         singleFacility: { data: singleFacilityData },
     },
+    vectorTileLayer: { gridColorRamp },
 }) {
     return {
         singleFacilityData: singleFacilityData || null,
+        gridColorRamp: gridColorRamp || [],
     };
 }
 
