@@ -31,15 +31,11 @@ export default theme => {
             flexShrink: 0,
         }),
         mapContainer: Object.freeze({
-            width: '100%',
-            height: '200px',
-            [theme.breakpoints.up('sm')]: {
-                maxWidth: '100%',
-                height: '320px',
-            },
-            [theme.breakpoints.up('md')]: {
-                maxWidth: '1072px',
-                height: '457px',
+            width: 'auto',
+            maxWidth: '100%',
+            height: '320px',
+            [theme.breakpoints.down('md')]: {
+                height: '380px',
             },
         }),
         mapInner: Object.freeze({
