@@ -12,7 +12,7 @@ export default {
     // Greens
     GREEN: '#E0F5E3',
     DARK_GREEN: '#4A9957',
-    CLAIMED_CHIP_BG: '#f0fdf480',
+    CLAIMED_CHIP_BG: '#F0FDF480',
     MINT_GREEN: '#C0EBC7',
     OLIVA_GREEN: '#799679',
     MATERIAL_GREEN: '#388e3c',
@@ -44,7 +44,7 @@ export default {
     DARK_AMBER: '#ffa000',
     DEEP_ORANGE: '#e65100',
     ORANGE: '#f57c00',
-    CROWDSOURCED_CHIP_BG: '#fff7ed80',
+    CROWDSOURCED_CHIP_BG: '#FFF7ED80',
     CROWDSOURCED_CHIP_TEXT: '#C2410C',
     AMBER_YELLOW: '#fbc02d',
     LIGHT_AMBER: '#fff8e1',
