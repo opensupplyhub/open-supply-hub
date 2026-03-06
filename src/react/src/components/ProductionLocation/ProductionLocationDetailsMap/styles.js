@@ -1,5 +1,6 @@
 import { getTypographyStyles } from '../../../util/typographyStyles';
 import commonStyles from '../commonStyles';
+import COLOURS from '../../../util/COLOURS';
 
 export default theme => {
     const typography = getTypographyStyles(theme);
@@ -74,6 +75,18 @@ export default theme => {
         }),
         googleMapsButtonIcon: Object.freeze({
             marginRight: theme.spacing.unit,
+        }),
+        mapDragHint: Object.freeze({
+            display: 'inline-block',
+            paddingTop: '0.25rem',
+            paddingBottom: '0.35rem',
+            paddingLeft: theme.spacing.unit,
+            paddingRight: theme.spacing.unit,
+            fontSize: '0.875rem',
+            lineHeight: 1,
+            color: COLOURS.WHITE,
+            backgroundColor: '#00000080',
+            cursor: 'grab',
         }),
     });
 };

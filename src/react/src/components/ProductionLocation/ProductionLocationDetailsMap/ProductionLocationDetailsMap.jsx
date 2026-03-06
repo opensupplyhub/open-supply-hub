@@ -207,6 +207,14 @@ function ProductionLocationDetailsMap({
                                 </Button>
                             </Control>
                         )}
+                        <Control position="bottomleft">
+                            <Typography
+                                component="span"
+                                className={classes.mapDragHint}
+                            >
+                                Drag to pan
+                            </Typography>
+                        </Control>
                         <VectorTileFacilitiesLayer
                             handleMarkerClick={handleMarkerClick}
                             handleFacilityClick={handleFacilityClick}
