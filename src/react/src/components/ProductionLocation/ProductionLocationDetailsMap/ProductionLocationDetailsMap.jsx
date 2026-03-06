@@ -1,51 +1,55 @@
-import React, { useMemo, useRef, useCallback } from 'react';
+import React, { useMemo, useRef, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
-import { Map as ReactLeafletMap, TileLayer, Marker } from 'react-leaflet';
+import { Map as ReactLeafletMap, TileLayer } from 'react-leaflet';
 import Control from 'react-leaflet-control';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import MyLocationIcon from '@material-ui/icons/MyLocation';
 import get from 'lodash/get';
-import L from 'leaflet';
 import { withStyles } from '@material-ui/core/styles';
 
 import 'leaflet/dist/leaflet.css';
-import 'react-leaflet-markercluster/dist/styles.min.css';
-import '../../../styles/css/leafletMap.css';
+
+import VectorTileFacilitiesLayer from '../../VectorTileFacilitiesLayer';
+import VectorTileFacilityGridLayer from '../../VectorTileFacilityGridLayer';
 
 import productionLocationDetailsMapStyles from './styles';
 import {
     SATELLITE_TILE_URL,
     SATELLITE_TILE_ATTRIBUTION,
-    markerIcon,
-    unselectedMarkerIcon,
     mapContainerStyles,
 } from './constants';
 import {
     detailsZoomLevel,
     initialCenter,
     initialZoom,
+    maxVectorTileFacilitiesGridZoom,
 } from '../../../util/constants.facilitiesMap';
 import { productionLocationDetailsRoute } from '../../../util/constants';
 
 /**
  * Production location detail map: satellite base layer, zoom/center controls,
- * all facilities as markers (from Redux), and Open in Google Maps.
+ * vector-tile facilities (markers when zoomed in, circles with count when zoomed out),
+ * and Open in Google Maps. Clicking other locations navigates or shows a popup list
+ * when multiple facilities share the same point.
  */
 function ProductionLocationDetailsMap({
     classes,
-    data: facilitiesData,
     singleFacilityData,
     history: { push },
     match: { params: { osID } = {} } = {},
 }) {
     const mapRef = useRef(null);
+    const [currentMapZoomLevel, setCurrentMapZoomLevel] = useState(
+        get(singleFacilityData, 'geometry.coordinates')
+            ? detailsZoomLevel
+            : initialZoom,
+    );
 
     const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
     const center = useMemo(() => {
@@ -82,16 +86,46 @@ function ProductionLocationDetailsMap({
         return null;
     }, [center]);
 
-    const navigateToProductionLocation = useCallback(
-        id => push(productionLocationDetailsRoute.replace(':osID', id)),
+    const handleMarkerClick = useCallback(
+        e => {
+            const id = get(e, 'layer.properties.id', null);
+            if (id) {
+                push(productionLocationDetailsRoute.replace(':osID', id));
+            }
+        },
         [push],
     );
 
-    const features = get(facilitiesData, 'features', []).filter(
-        f =>
-            Array.isArray(get(f, 'geometry.coordinates')) &&
-            get(f, 'geometry.coordinates', []).length >= 2,
+    const handleFacilityClick = useCallback(
+        id => {
+            if (id) {
+                push(productionLocationDetailsRoute.replace(':osID', id));
+            }
+        },
+        [push],
     );
+
+    const handleCellClick = useCallback(event => {
+        const { xmin, ymin, xmax, ymax, count } = get(
+            event,
+            'layer.properties',
+            {},
+        );
+        const leafletMap = mapRef.current?.leafletElement;
+        if (count && leafletMap) {
+            leafletMap.fitBounds([
+                [ymin, xmin],
+                [ymax, xmax],
+            ]);
+        }
+    }, []);
+
+    const handleZoomEnd = useCallback(e => {
+        const newZoom = get(e, 'target._zoom', null);
+        if (typeof newZoom === 'number') {
+            setCurrentMapZoomLevel(newZoom);
+        }
+    }, []);
 
     return (
         <div className={classes.container}>
@@ -113,6 +147,7 @@ function ProductionLocationDetailsMap({
                         scrollWheelZoom={false}
                         minZoom={2}
                         maxZoom={18}
+                        onZoomEnd={handleZoomEnd}
                     >
                         <TileLayer
                             url={SATELLITE_TILE_URL}
@@ -162,48 +197,23 @@ function ProductionLocationDetailsMap({
                                 </Button>
                             </Control>
                         )}
-                        <MarkerClusterGroup
-                            showCoverageOnHover={false}
-                            removeOutsideVisibleBounds
-                            spiderfyOnMaxZoom={false}
-                            iconCreateFunction={cluster => {
-                                const clusterCount = cluster.getChildCount();
-                                const [iconClassName, iconSize] = (() => {
-                                    if (clusterCount < 10)
-                                        return ['cluster-icon-one', [53, 53]];
-                                    if (clusterCount < 25)
-                                        return ['cluster-icon-two', [55, 55]];
-                                    if (clusterCount < 50)
-                                        return ['cluster-icon-three', [65, 65]];
-                                    if (clusterCount < 100)
-                                        return ['cluster-icon-four', [78, 78]];
-                                    return ['cluster-icon-five', [90, 90]];
-                                })();
-                                return L.divIcon({
-                                    className: `cluster-icon ${iconClassName}`,
-                                    iconSize,
-                                    html: `<span style="margin:-0.1rem; display: block">${clusterCount}</span>`,
-                                });
-                            }}
-                        >
-                            {features.map(f => (
-                                <Marker
-                                    key={f.id}
-                                    position={[
-                                        get(f, 'geometry.coordinates[1]', null),
-                                        get(f, 'geometry.coordinates[0]', null),
-                                    ]}
-                                    icon={
-                                        f.id === osID
-                                            ? markerIcon
-                                            : unselectedMarkerIcon
-                                    }
-                                    onClick={() =>
-                                        navigateToProductionLocation(f.id)
-                                    }
-                                />
-                            ))}
-                        </MarkerClusterGroup>
+                        <VectorTileFacilitiesLayer
+                            handleMarkerClick={handleMarkerClick}
+                            handleFacilityClick={handleFacilityClick}
+                            osID={osID}
+                            pushRoute={push}
+                            minZoom={maxVectorTileFacilitiesGridZoom + 1}
+                            maxZoom={22}
+                        />
+                        {currentMapZoomLevel <=
+                            maxVectorTileFacilitiesGridZoom && (
+                            <VectorTileFacilityGridLayer
+                                handleCellClick={handleCellClick}
+                                minZoom={1}
+                                maxZoom={maxVectorTileFacilitiesGridZoom}
+                                zoomLevel={currentMapZoomLevel}
+                            />
+                        )}
                     </ReactLeafletMap>
                 </div>
             </div>
@@ -213,7 +223,6 @@ function ProductionLocationDetailsMap({
 
 ProductionLocationDetailsMap.propTypes = {
     classes: PropTypes.object.isRequired,
-    data: PropTypes.object,
     singleFacilityData: PropTypes.object,
     history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
     match: PropTypes.shape({
@@ -222,18 +231,15 @@ ProductionLocationDetailsMap.propTypes = {
 };
 
 ProductionLocationDetailsMap.defaultProps = {
-    data: null,
     singleFacilityData: null,
 };
 
 function mapStateToProps({
     facilities: {
-        facilities: { data },
         singleFacility: { data: singleFacilityData },
     },
 }) {
     return {
-        data: data || null,
         singleFacilityData: singleFacilityData || null,
     };
 }
