@@ -156,7 +156,7 @@ describe('SupplyChainNetwork section', () => {
         fireEvent.click(trigger);
 
         // After clicking, the drawer close button should be accessible
-        expect(screen.getByLabelText('close')).toBeInTheDocument();
+        expect(screen.getByLabelText('Close')).toBeInTheDocument();
     });
 
     test('filters out non-public contributors with null contributor_type', () => {
@@ -245,6 +245,6 @@ describe('SupplyChainNetworkDrawer', () => {
 
     test('drawer close button is present after opening', () => {
         openDrawer([publicContributor]);
-        expect(screen.getByLabelText('close')).toBeInTheDocument();
+        expect(screen.getByLabelText('Close')).toBeInTheDocument();
     });
 });
