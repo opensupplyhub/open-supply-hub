@@ -34,6 +34,8 @@ import {
 } from '../../../util/constants.facilitiesMap';
 import { productionLocationDetailsRoute } from '../../../util/constants';
 
+import GeneralInformation from '../../Icons/GeneralInformation';
+
 /**
  * Production location detail map: satellite base layer, zoom/center controls,
  * vector-tile facilities (markers when zoomed in, circles with count when zoomed out),
@@ -132,13 +134,20 @@ function ProductionLocationDetailsMap({
 
     return (
         <div className={classes.container}>
-            <Typography
-                component="h3"
-                variant="title"
-                className={classes.sectionTitle}
-            >
-                Geographic information
-            </Typography>
+            <div className={classes.sectionTitleRow}>
+                <GeneralInformation
+                    width={20}
+                    height={20}
+                    className={classes.sectionTitleIcon}
+                />
+                <Typography
+                    component="h3"
+                    variant="title"
+                    className={classes.sectionTitle}
+                >
+                    Geographic information
+                </Typography>
+            </div>
             <div className={classes.mapContainer}>
                 <div className={classes.mapInner}>
                     <ReactLeafletMap

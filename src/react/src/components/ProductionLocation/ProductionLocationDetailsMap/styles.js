@@ -12,11 +12,23 @@ export default theme => {
         title: {
             marginBottom: theme.spacing.unit,
         },
+        sectionTitleRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: `${theme.spacing.unit}px`,
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            paddingBottom: theme.spacing.unit * 1.5,
+            marginBottom: theme.spacing.unit * 2,
+        }),
         sectionTitle: Object.freeze({
             ...typography.sectionTitle,
             marginTop: 0,
             marginBottom: 0,
             marginRight: 0,
+        }),
+        sectionTitleIcon: Object.freeze({
+            color: theme.palette.text.secondary,
+            flexShrink: 0,
         }),
         mapContainer: Object.freeze({
             width: '100%',
