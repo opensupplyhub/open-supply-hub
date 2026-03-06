@@ -46,8 +46,7 @@ const InfoBox = ({
                     rel="noopener noreferrer"
                     className={learnMoreLinkClass}
                 >
-                    {learnMoreLabel}
-                    <span className={classes.learnMoreArrow}>→</span>
+                    {learnMoreLabel} →
                 </a>
             ) : null}
         </>

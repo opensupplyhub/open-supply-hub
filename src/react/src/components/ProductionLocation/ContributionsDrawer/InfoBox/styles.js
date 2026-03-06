@@ -67,8 +67,4 @@ export default () =>
             fontSize: '0.875rem',
             textDecoration: 'none',
         }),
-        learnMoreArrow: Object.freeze({
-            marginLeft: '4px',
-            marginTop: '2px',
-        }),
     });

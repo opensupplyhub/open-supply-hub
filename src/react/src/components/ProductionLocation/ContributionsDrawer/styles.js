@@ -34,14 +34,6 @@ export default () =>
             color: COLOURS.NEAR_BLACK,
             marginLeft: '10px',
         }),
-        subtitle: Object.freeze({
-            marginTop: '8px',
-            marginBottom: '0px',
-            fontSize: '1rem',
-            lineHeight: 1.4,
-            color: COLOURS.DARK_GREY,
-            paddingBottom: '16px',
-        }),
         closeButton: Object.freeze({
             margin: '-8px',
             color: COLOURS.DARK_GREY,
@@ -58,13 +50,6 @@ export default () =>
             marginTop: '16px',
             marginBottom: '8px',
             lineHeight: 1.2,
-        }),
-        supportLink: Object.freeze({
-            color: COLOURS.PURPLE,
-            textDecoration: 'none',
-            '&:hover': Object.freeze({
-                textDecoration: 'underline',
-            }),
         }),
         listScroll: Object.freeze({
             maxHeight: '320px',

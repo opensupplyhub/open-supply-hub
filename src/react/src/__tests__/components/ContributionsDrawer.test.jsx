@@ -34,7 +34,6 @@ function DrawerWithTrigger() {
                 <ContributionsDrawer
                     open={open}
                     onClose={() => setOpen(false)}
-                    title="All Data Sources"
                 />
             </MuiThemeProvider>
         </MemoryRouter>

@@ -4,7 +4,6 @@ import {
     bool,
     func,
     string,
-    node,
     shape,
     oneOfType,
     instanceOf,
@@ -24,34 +23,31 @@ import InfoBox from './InfoBox/InfoBox';
 import {
     DEFAULT_TITLE,
     PROMOTED_SECTION_LABEL,
-    CONTRIBUTIONS_SECTION_LABEL,
     INFO_PROMOTED_TITLE,
     INFO_CONTRIBUTIONS_TEXT,
     LEARN_MORE_LABEL,
     LEARN_MORE_OPEN_DATA_MODEL_URL,
 } from './constants';
-import getInfoPromotedText from './utils.jsx';
+import InfoPromotedText from './InfoPromotedText/InfoPromotedText';
+import DrawerSubtitle from './DrawerSubtitle/DrawerSubtitle';
+import {
+    getUniqueContributorCount,
+    getContributionsCount,
+    getContributionsSectionLabel,
+} from './utils';
 import contributionsDrawerStyles from './styles';
 
 const ContributionsDrawer = ({
     classes,
     open,
     onClose,
-    title,
-    subtitle,
+    fieldName,
     promotedContribution,
     contributions,
-    infoPromotedTitle,
-    infoPromotedText,
-    infoContributionsText,
 }) => {
-    const contributionsCount = Array.isArray(contributions)
-        ? contributions.length
-        : 0;
-    const sectionLabel =
-        contributionsCount > 0
-            ? `${CONTRIBUTIONS_SECTION_LABEL} (${contributionsCount})`
-            : CONTRIBUTIONS_SECTION_LABEL;
+    const contributionsCount = getContributionsCount(contributions);
+    const uniqueContributorCount = getUniqueContributorCount(contributions);
+    const sectionLabel = getContributionsSectionLabel(contributions);
 
     return (
         <Drawer
@@ -72,7 +68,7 @@ const ContributionsDrawer = ({
                             component="h2"
                             data-testid="contributions-drawer-title"
                         >
-                            {title || DEFAULT_TITLE}
+                            {DEFAULT_TITLE}
                         </Typography>
                     </div>
                     <IconButton
@@ -84,25 +80,22 @@ const ContributionsDrawer = ({
                         <CloseIcon />
                     </IconButton>
                 </div>
-                {subtitle ? (
-                    <Typography className={classes.subtitle} component="p">
-                        {subtitle}
-                    </Typography>
-                ) : null}
-                <Divider height={1} />
+                <DrawerSubtitle
+                    fieldName={fieldName}
+                    uniqueContributorCount={uniqueContributorCount}
+                />
+                <Divider />
                 {promotedContribution ? (
                     <>
                         <Typography
                             className={classes.sectionLabel}
                             component="p"
+                            variant="body1"
                         >
                             {PROMOTED_SECTION_LABEL}
                         </Typography>
-                        <InfoBox
-                            title={infoPromotedTitle || INFO_PROMOTED_TITLE}
-                            variant="promoted"
-                        >
-                            {infoPromotedText || getInfoPromotedText(classes)}
+                        <InfoBox title={INFO_PROMOTED_TITLE} variant="promoted">
+                            <InfoPromotedText />
                         </InfoBox>
                         <ContributionCard
                             value={promotedContribution.value}
@@ -115,7 +108,11 @@ const ContributionsDrawer = ({
                     </>
                 ) : null}
 
-                <Typography className={classes.sectionLabel} component="p">
+                <Typography
+                    className={classes.sectionLabel}
+                    component="p"
+                    variant="body1"
+                >
                     {sectionLabel}
                 </Typography>
                 <InfoBox
@@ -124,7 +121,7 @@ const ContributionsDrawer = ({
                     learnMoreUrl={LEARN_MORE_OPEN_DATA_MODEL_URL}
                     learnMoreLabel={LEARN_MORE_LABEL}
                 >
-                    {infoContributionsText || INFO_CONTRIBUTIONS_TEXT}
+                    {INFO_CONTRIBUTIONS_TEXT}
                 </InfoBox>
                 {contributionsCount > 0 ? (
                     <div
@@ -155,8 +152,7 @@ ContributionsDrawer.propTypes = {
     classes: object.isRequired,
     open: bool.isRequired,
     onClose: func.isRequired,
-    title: string,
-    subtitle: node,
+    fieldName: string,
     promotedContribution: shape({
         value: string,
         sourceName: string,
@@ -174,19 +170,12 @@ ContributionsDrawer.propTypes = {
             userId: oneOfType([string, number]),
         }),
     ),
-    infoPromotedTitle: string,
-    infoPromotedText: string,
-    infoContributionsText: string,
 };
 
 ContributionsDrawer.defaultProps = {
-    title: DEFAULT_TITLE,
-    subtitle: null,
+    fieldName: null,
     promotedContribution: null,
     contributions: [],
-    infoPromotedTitle: null,
-    infoPromotedText: null,
-    infoContributionsText: null,
 };
 
 export default withStyles(contributionsDrawerStyles)(ContributionsDrawer);
