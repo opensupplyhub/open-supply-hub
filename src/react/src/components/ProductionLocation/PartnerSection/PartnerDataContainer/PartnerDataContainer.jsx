@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
 import Typography from '@material-ui/core/Typography';
@@ -7,7 +8,7 @@ import ParentSectionItem from '../ParentSectionItem/ParentSectionItem';
 
 import partnerDataContainerStyles from './styles';
 
-function PartnerDataContainer({ classes }) {
+function PartnerDataContainer({ classes, groups }) {
     return (
         <Grid container className={classes.root}>
             <Grid item md={12}>
@@ -21,47 +22,36 @@ function PartnerDataContainer({ classes }) {
             </Grid>
             <Grid item md={12}>
                 <Typography variant="subheading" component="h3">
-                    Data provided by third-party integration partners. Use our
-                    API to access this data programmatically.
+                    The following information is provided by third-party
+                    partners who host additional social or environmental data
+                    related to this production location, its context, and/or its
+                    operations.{' '}
+                    <a
+                        href="https://info.opensupplyhub.org/data-integrations"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Learn more.
+                    </a>
                 </Typography>
             </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Assessments and Audits"
-                    tooltipText="(from BE) Assessments provide standardized evaluations of production location practices, helping brands verify compliance and identify areas for improvement."
-                    disclaimer="Disclaimer (from BE): Assessment data is provided by third parties and may not reflect current conditions. Always verify critical information independently."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Certifications"
-                    tooltipText="(from BE) Certifications provide third-party verification that production locations meet recognized standards for quality, environmental, and social responsibility."
-                    disclaimer="Disclaimer (from BE): Certification status may change. Always verify validity dates and check directly with certifying bodies for the most current information."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Emissions"
-                    tooltipText="(from BE) Environmental metrics help brands assess and reduce the ecological footprint of their supply chains by tracking emissions, resource usage, and waste."
-                    disclaimer="Disclaimer (from BE): Environmental data is often self-reported or estimated. Methodologies may vary between sources and should be considered indicative rather than absolute."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Living Wage"
-                    tooltipText="(from BE) Living wage data helps assess whether workers earn enough to meet basic needs, supporting fair compensation practices across supply chains."
-                    disclaimer="Disclaimer (from BE): Wage benchmarks are estimates based on regional data and may not reflect actual wages paid at this facility."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Grievance Mechanism Placeholder Title"
-                    tooltipText="(from BE) Grievance mechanisms allow workers to report concerns anonymously. These integrations show which third-party platforms are active at this facility."
-                    disclaimer="Disclaimer (from BE): Open Supply Hub does not operate a grievance mechanism and cannot receive or investigate complaints. Information shown is based on partner-submitted sources and may not reflect all available mechanisms, including government or state-based processes. Open Supply Hub does not verify the effectiveness, accessibility, or outcomes of any listed mechanism."
-                />
-            </Grid>
+            {groups.map(group => (
+                <Grid item md={12} key={group.uuid} id={group.uuid}>
+                    <ParentSectionItem
+                        title={group.name}
+                        tooltipText={group.description}
+                        disclaimer={group.helper_text}
+                    />
+                </Grid>
+            ))}
         </Grid>
     );
 }
 
-export default withStyles(partnerDataContainerStyles)(PartnerDataContainer);
+const mapStateToProps = ({ partnerFieldGroups: { data } }) => ({
+    groups: data?.results || [],
+});
+
+export default connect(mapStateToProps)(
+    withStyles(partnerDataContainerStyles)(PartnerDataContainer),
+);
