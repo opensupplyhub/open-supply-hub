@@ -141,35 +141,36 @@ const SupplyChainNetworkDrawer = ({
                                 </Typography>
                             )}
                             {contributor.list_names &&
-                                contributor.list_names.map(
-                                    listName =>
-                                        listName && (
-                                            <div
-                                                key={`${contributor.id}-${listName}`}
-                                                className={classes.listEntry}
+                                contributor.list_names
+                                    .map((name, i) => ({
+                                        name,
+                                        key: `${contributor.id}-${i}`,
+                                    }))
+                                    .filter(({ name }) => name)
+                                    .map(({ name: listName, key }) => (
+                                        <div
+                                            key={key}
+                                            className={classes.listEntry}
+                                        >
+                                            <Typography
+                                                className={
+                                                    classes.listEntryLabel
+                                                }
+                                                component="p"
                                             >
-                                                <Typography
-                                                    className={
-                                                        classes.listEntryLabel
-                                                    }
-                                                    component="p"
-                                                >
-                                                    <ListIcon
-                                                        className={
-                                                            classes.listIcon
-                                                        }
-                                                    />
-                                                    {UPLOADED_VIA_LIST_LABEL}
-                                                </Typography>
-                                                <Typography
-                                                    className={classes.listName}
-                                                    component="p"
-                                                >
-                                                    {listName}
-                                                </Typography>
-                                            </div>
-                                        ),
-                                )}
+                                                <ListIcon
+                                                    className={classes.listIcon}
+                                                />
+                                                {UPLOADED_VIA_LIST_LABEL}
+                                            </Typography>
+                                            <Typography
+                                                className={classes.listName}
+                                                component="p"
+                                            >
+                                                {listName}
+                                            </Typography>
+                                        </div>
+                                    ))}
                         </div>
                     ))}
                 </div>
