@@ -16,6 +16,7 @@ export default theme => {
         }),
         titleAccent: Object.freeze({
             ...typography.bodyText,
+            fontSize: '1.15rem',
         }),
     });
 };
