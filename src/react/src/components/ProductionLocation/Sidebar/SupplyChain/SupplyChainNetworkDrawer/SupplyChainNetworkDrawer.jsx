@@ -9,7 +9,6 @@ import CloseIcon from '@material-ui/icons/Close';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import ListIcon from '@material-ui/icons/List';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { Link } from 'react-router-dom';
 
 import { makeProfileRouteLink } from '../../../../../util/util';
@@ -132,9 +131,6 @@ const SupplyChainNetworkDrawer = ({
                                 className={classes.contributorName}
                             >
                                 {contributor.contributor_name}
-                                <OpenInNewIcon
-                                    className={classes.externalLinkIcon}
-                                />
                             </Link>
                             {contributor.contributor_type && (
                                 <Typography

@@ -137,11 +137,6 @@ export default () =>
                 textDecoration: 'underline',
             }),
         }),
-        externalLinkIcon: Object.freeze({
-            fontSize: 14,
-            verticalAlign: 'middle',
-            flexShrink: 0,
-        }),
         contributorType: Object.freeze({
             fontSize: '0.85rem',
             color: COLOURS.DARK_GREY,
