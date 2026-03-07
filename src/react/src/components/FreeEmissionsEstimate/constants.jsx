@@ -4,15 +4,31 @@ const energySourcePlaceholder = 'Enter value in Joules (J)';
 
 export const freeEmissionsEstimateFormConfig = Object.freeze({
     title: Object.freeze({
-        label: '🌍 Free Emissions Estimates',
+        label: '🌍 Free Greenhouse Gas (GHG) Emissions Estimates',
     }),
     description: Object.freeze({
         label: (
             <>
                 Fill in these fields, and Open Supply Hub—together with{' '}
-                <strong>Climate TRACE</strong>—will provide a free emissions
-                estimate for this location. This also helps your partners
-                calculate emissions across their entire value chain.
+                <a
+                    href="https://climatetrace.org/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <strong>Climate TRACE</strong>
+                </a>
+                —will provide free GHG emissions and annual activity estimates
+                for this location on your OS Hub profile, for you and your
+                customers to use in your sustainability initiatives.{' '}
+                <a
+                    href="https://climatetrace.org/news/feeling-the-heat-global-warming-potentials-and-20-vs-100"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Learn more about how this will be calculated and when it
+                    will appear
+                </a>
+                .
             </>
         ),
     }),

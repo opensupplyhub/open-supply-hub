@@ -77,7 +77,7 @@ describe('ClaimIntro component', () => {
             const { getByText } = renderComponent();
 
             expect(
-                getByText(/In order to submit a claim request/)
+                getByText(/Review the steps below to confirm your eligibility/)
             ).toBeInTheDocument();
         });
 
