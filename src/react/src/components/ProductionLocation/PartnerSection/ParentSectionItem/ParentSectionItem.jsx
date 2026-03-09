@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -9,11 +9,34 @@ import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import { renderPartnerField } from '../../../PartnerFields/PartnerFieldsSection/utils.jsx';
 import getIconURL from '../../Sidebar/NavBar/utils';
+import {
+    clearScrollTargetSection,
+    toggleSectionOpen,
+} from '../../../../actions/partnerFieldGroups';
 
 import parentSectionItemStyles from './styles';
 
-const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const ParentSectionItem = ({
+    classes,
+    group,
+    partnerFields,
+    facilityData,
+    isOpen,
+    scrollTargetId,
+    dispatch,
+}) => {
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        if (scrollTargetId === group.uuid) {
+            dispatch(clearScrollTargetSection());
+            containerRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        }
+    }, [scrollTargetId, group.uuid, dispatch]);
+
     const renderedFields = useMemo(() => {
         if (!isOpen || !partnerFields) return [];
         return partnerFields
@@ -21,21 +44,25 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
             .filter(Boolean);
     }, [isOpen, partnerFields, facilityData]);
 
+    const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
+
+    const handleKeyDown = event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleToggle();
+        }
+    };
+
     return (
-        <div className={classes.container}>
+        <div className={classes.container} ref={containerRef}>
             <div
                 className={`${classes.header}${
                     isOpen ? ` ${classes.headerOpen}` : ''
                 }`}
                 role="button"
                 tabIndex={0}
-                onClick={() => setIsOpen(prev => !prev)}
-                onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setIsOpen(prev => !prev);
-                    }
-                }}
+                onClick={handleToggle}
+                onKeyDown={handleKeyDown}
             >
                 <div className={classes.headerLeft}>
                     {group.icon_file && (
@@ -55,8 +82,8 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
                         {group.name}
                     </Typography>
                     <div
-                        onClick={e => e.stopPropagation()}
-                        onKeyDown={e => e.stopPropagation()}
+                        onClick={event => event.stopPropagation()}
+                        onKeyDown={event => event.stopPropagation()}
                         role="presentation"
                     >
                         <IconComponent
@@ -80,8 +107,8 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
                     <Switch
                         color="primary"
                         checked={isOpen}
-                        onChange={() => setIsOpen(prev => !prev)}
-                        onClick={e => e.stopPropagation()}
+                        onChange={handleToggle}
+                        onClick={event => event.stopPropagation()}
                         className={classes.switchWrapper}
                     />
                 </div>
@@ -112,12 +139,10 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
     );
 };
 
-const mapStateToProps = ({
-    facilities: {
-        singleFacility: { data: facilityData },
-    },
-}) => ({
-    facilityData,
+const mapStateToProps = (state, ownProps) => ({
+    facilityData: state.facilities.singleFacility.data,
+    scrollTargetId: state.partnerFieldGroups.scrollTargetId,
+    isOpen: !!state.partnerFieldGroups.openSectionIds[ownProps.group.uuid],
 });
 
 export default connect(mapStateToProps)(

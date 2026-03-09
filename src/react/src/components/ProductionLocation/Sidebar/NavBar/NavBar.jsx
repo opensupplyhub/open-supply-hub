@@ -11,6 +11,7 @@ import Overview from '../../../Icons/Overview';
 import GeneralInformation from '../../../Icons/GeneralInformation';
 import OperationalDetails from '../../../Icons/OperationalDetails';
 
+import { setScrollTargetSection } from '../../../../actions/partnerFieldGroups';
 import navBarStyles from './styles';
 import getIconURL from './utils';
 
@@ -28,13 +29,23 @@ const defaultNavItems = [
     },
 ];
 
-const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
+const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
+    const groupIds = useMemo(() => groups.map(group => group.uuid), [groups]);
+
     const handleClick = (event, to) => {
         event.preventDefault();
         const id = to.replace('#', '');
+
+        if (groupIds.includes(id)) {
+            dispatch(setScrollTargetSection(id));
+            return;
+        }
+
         const element = document.getElementById(id);
-        if (!element) return;
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     };
 
     const navItems = useMemo(
