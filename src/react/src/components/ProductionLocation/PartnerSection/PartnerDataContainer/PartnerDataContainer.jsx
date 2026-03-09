@@ -1,17 +1,38 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
+import { preparePartnerFields } from '../../../PartnerFields/PartnerFieldsSection/utils.jsx';
 import ParentSectionItem from '../ParentSectionItem/ParentSectionItem';
 
 import partnerDataContainerStyles from './styles';
 
-function PartnerDataContainer({ classes, groups }) {
+function PartnerDataContainer({ classes, groups, facilityData }) {
+    const partnerFields = useMemo(
+        () => preparePartnerFields(facilityData) ?? [],
+        [facilityData],
+    );
+
+    const availableFieldNames = useMemo(
+        () => new Set(partnerFields.map(f => f.fieldName)),
+        [partnerFields],
+    );
+
+    const partnerGroups = useMemo(
+        () =>
+            groups.filter(group =>
+                group.partner_fields.some(name =>
+                    availableFieldNames.has(name),
+                ),
+            ),
+        [groups, availableFieldNames],
+    );
+
     return (
         <Grid container className={classes.root}>
-            <Grid item md={12}>
+            <Grid item xs={12}>
                 <Typography
                     variant="title"
                     className={classes.title}
@@ -20,8 +41,11 @@ function PartnerDataContainer({ classes, groups }) {
                     Partner Data
                 </Typography>
             </Grid>
-            <Grid item md={12}>
-                <Typography variant="subheading" component="h3">
+            <Grid item xs={12}>
+                <Typography
+                    variant="subheading"
+                    className={classes.description}
+                >
                     The following information is provided by third-party
                     partners who host additional social or environmental data
                     related to this production location, its context, and/or its
@@ -35,12 +59,12 @@ function PartnerDataContainer({ classes, groups }) {
                     </a>
                 </Typography>
             </Grid>
-            {groups.map(group => (
-                <Grid item md={12} key={group.uuid} id={group.uuid}>
+            {partnerGroups.map(group => (
+                <Grid item xs={12} key={group.uuid} id={group.uuid}>
                     <ParentSectionItem
-                        title={group.name}
-                        tooltipText={group.description}
-                        disclaimer={group.helper_text}
+                        group={group}
+                        partnerFields={partnerFields}
+                        facilityData={facilityData}
                     />
                 </Grid>
             ))}
@@ -48,8 +72,14 @@ function PartnerDataContainer({ classes, groups }) {
     );
 }
 
-const mapStateToProps = ({ partnerFieldGroups: { data } }) => ({
+const mapStateToProps = ({
+    partnerFieldGroups: { data },
+    facilities: {
+        singleFacility: { data: facilityData },
+    },
+}) => ({
     groups: data?.results || [],
+    facilityData,
 });
 
 export default connect(mapStateToProps)(
