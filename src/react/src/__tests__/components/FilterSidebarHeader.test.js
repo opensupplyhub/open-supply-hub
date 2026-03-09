@@ -13,6 +13,32 @@ jest.mock('../../components/DownloadLimitInfo', () => () => (
     <div data-testid="mock-download-limit-info">Mocked DownloadLimitInfo</div>
 ));
 
+const emptyFilters = {
+    facilityFreeTextQuery: '',
+    contributors: [],
+    contributorTypes: [],
+    countries: [],
+    claimStatuses: [],
+    sectors: [],
+    sortAlgorithm: '',
+    parentCompany: [],
+    facilityType: [],
+    processingType: [],
+    productType: [],
+    numberOfWorkers: [],
+    dataSources: [],
+    moderationStatuses: [],
+    nativeLanguageName: '',
+    combineContributors: '',
+    boundary: null,
+    lists: [],
+};
+
+const activeFilters = {
+    ...emptyFilters,
+    facilityFreeTextQuery: 'test',
+};
+
 describe('FilterSidebarHeader component', () => {
     const renderComponent = ({ preloadedState = {}, props = {} } = {}) =>
         renderWithProviders(<FilterSidebarHeader {...props} />, {
@@ -36,6 +62,7 @@ describe('FilterSidebarHeader component', () => {
                 embeddedMap: {
                     embed: false,
                 },
+                filters: emptyFilters,
             },
             props: {
                 multiLine: false,
@@ -62,6 +89,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
+                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -87,6 +115,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
+                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -112,6 +141,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
+                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -137,6 +167,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: true, // Embed mode.
                     },
+                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -162,6 +193,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
+                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -187,6 +219,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
+                    filters: activeFilters,
                     featureFlags: {
                         flags: {
                             private_instance: true, // Private instance flag active.
@@ -217,6 +250,7 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
+                    filters: activeFilters,
                     featureFlags: {
                         flags: {
                             private_instance: false, // Private instance flag not active.
@@ -228,6 +262,34 @@ describe('FilterSidebarHeader component', () => {
                 },
             });
             expect(getByTestId('mock-download-limit-info')).toBeInTheDocument();
+        });
+
+        test('does not display DownloadLimitInfo when no search criteria or filters are applied', () => {
+            const { queryByTestId } = renderComponent({
+                preloadedState: {
+                    facilities: {
+                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                    },
+                    auth: {
+                        user: {
+                            user: {
+                                isAnon: false,
+                                allowed_records_number: 5000,
+                            },
+                        },
+                    },
+                    embeddedMap: {
+                        embed: false,
+                    },
+                    filters: emptyFilters, // No search criteria or filters.
+                },
+                props: {
+                    multiLine: false,
+                },
+            });
+            expect(
+                queryByTestId('mock-download-limit-info'),
+            ).not.toBeInTheDocument();
         });
     });
 });

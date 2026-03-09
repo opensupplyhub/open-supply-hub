@@ -29,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
 
 ### Bugfix
+* [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
 * [OSDEV-2381](https://opensupplyhub.atlassian.net/browse/OSDEV-2381) - Updated the `Kafka 3.8.0` download URL to use the Apache archive repository instead of the primary distribution server.
 
 ### What's new
