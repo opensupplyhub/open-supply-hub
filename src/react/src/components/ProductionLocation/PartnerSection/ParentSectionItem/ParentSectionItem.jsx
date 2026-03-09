@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -23,7 +24,9 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
     return (
         <div className={classes.container}>
             <div
-                className={classes.header}
+                className={`${classes.header}${
+                    isOpen ? ` ${classes.headerOpen}` : ''
+                }`}
                 role="button"
                 tabIndex={0}
                 onClick={() => setIsOpen(prev => !prev)}
@@ -94,9 +97,6 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
                                 component="div"
                                 className={classes.disclaimerText}
                             >
-                                <span className={classes.disclaimerLabel}>
-                                    Disclaimer:
-                                </span>{' '}
                                 <span
                                     // eslint-disable-next-line react/no-danger
                                     dangerouslySetInnerHTML={{
@@ -112,4 +112,14 @@ const ParentSectionItem = ({ classes, group, partnerFields, facilityData }) => {
     );
 };
 
-export default withStyles(parentSectionItemStyles)(ParentSectionItem);
+const mapStateToProps = ({
+    facilities: {
+        singleFacility: { data: facilityData },
+    },
+}) => ({
+    facilityData,
+});
+
+export default connect(mapStateToProps)(
+    withStyles(parentSectionItemStyles)(ParentSectionItem),
+);

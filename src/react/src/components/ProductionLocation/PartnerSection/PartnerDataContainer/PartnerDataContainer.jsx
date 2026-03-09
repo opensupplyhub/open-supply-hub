@@ -4,30 +4,15 @@ import { withStyles } from '@material-ui/core/styles';
 
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import { preparePartnerFields } from '../../../PartnerFields/PartnerFieldsSection/utils.jsx';
 import ParentSectionItem from '../ParentSectionItem/ParentSectionItem';
 
 import partnerDataContainerStyles from './styles';
+import getPartnerFieldsAndGroups from './utils';
 
 function PartnerDataContainer({ classes, groups, facilityData }) {
-    const partnerFields = useMemo(
-        () => preparePartnerFields(facilityData) ?? [],
-        [facilityData],
-    );
-
-    const availableFieldNames = useMemo(
-        () => new Set(partnerFields.map(f => f.fieldName)),
-        [partnerFields],
-    );
-
-    const partnerGroups = useMemo(
-        () =>
-            groups.filter(group =>
-                group.partner_fields.some(name =>
-                    availableFieldNames.has(name),
-                ),
-            ),
-        [groups, availableFieldNames],
+    const { partnerFields, partnerGroups } = useMemo(
+        () => getPartnerFieldsAndGroups(facilityData, groups),
+        [facilityData, groups],
     );
 
     return (
@@ -64,7 +49,6 @@ function PartnerDataContainer({ classes, groups, facilityData }) {
                     <ParentSectionItem
                         group={group}
                         partnerFields={partnerFields}
-                        facilityData={facilityData}
                     />
                 </Grid>
             ))}

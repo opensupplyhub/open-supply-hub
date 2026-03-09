@@ -1,75 +1,79 @@
-export default theme =>
-    Object.freeze({
+import { getTypographyStyles } from '../../../../util/typographyStyles';
+import COLOURS from '../../../../util/COLOURS';
+import commonStyles from '../../commonStyles';
+
+export default theme => {
+    const typography = getTypographyStyles(theme);
+    const spacing = theme.spacing.unit ?? 8;
+    return Object.freeze({
         container: Object.freeze({
-            backgroundColor: 'white',
-            border: '1px solid #E7E8EA',
-            borderRadius: '8px',
-            marginBottom: theme.spacing.unit * 2,
+            ...commonStyles(theme).container,
+            border: `1px solid ${COLOURS.ACCENT_GREY}`,
+            borderRadius: 0,
+            marginBottom: spacing * 2,
             overflow: 'hidden',
         }),
         header: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px`,
+            padding: `${spacing * 2}px ${spacing * 3}px`,
             cursor: 'pointer',
             '&:focus': {
                 outline: 'none',
             },
         }),
+        headerOpen: Object.freeze({
+            borderBottom: `1px solid ${COLOURS.ACCENT_GREY}`,
+        }),
         headerLeft: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: `${theme.spacing.unit}px`,
+            gap: `${spacing}px`,
         }),
         headerRight: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: `${theme.spacing.unit / 2}px`,
+            gap: `${spacing * 0.5}px`,
         }),
         iconImage: Object.freeze({
             flexShrink: 0,
         }),
         title: Object.freeze({
-            fontSize: '18px',
-            fontWeight: 700,
-            lineHeight: '22px',
+            ...typography.sectionTitle,
+            fontSize: '1.125rem',
+            marginTop: 0,
+            marginBottom: 0,
         }),
         infoIcon: Object.freeze({
-            fontSize: '20px',
-            color: '#6E707E',
+            fontSize: '1.25rem',
+            color: theme.palette.text.secondary,
             cursor: 'pointer',
         }),
         toggleLabel: Object.freeze({
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#6E707E',
+            ...typography.bodyText,
+            fontSize: '0.875rem',
         }),
         switchWrapper: Object.freeze({
             zIndex: 1,
         }),
         contentArea: Object.freeze({
-            padding: `0 ${theme.spacing.unit * 3}px ${
-                theme.spacing.unit * 3
-            }px`,
+            padding: `0 ${spacing * 3}px ${spacing * 3}px`,
         }),
         disclaimer: Object.freeze({
-            backgroundColor: '#F9F7F7',
-            borderRadius: '4px',
-            padding: `${theme.spacing.unit * 2}px`,
-            marginTop: theme.spacing.unit * 3,
+            backgroundColor: COLOURS.LIGHT_GREY,
+            borderRadius: '0',
+            padding: `${spacing * 2}px`,
+            marginTop: spacing * 3,
         }),
         disclaimerText: Object.freeze({
-            fontSize: '14px',
-            lineHeight: '20px',
-            color: '#191919',
+            ...typography.bodyText,
+            fontSize: '0.875rem',
+            color: COLOURS.JET_BLACK,
             '& p': {
                 margin: 0,
                 display: 'inline',
             },
         }),
-        disclaimerLabel: Object.freeze({
-            fontWeight: 700,
-            color: '#8428FA',
-        }),
     });
+};
