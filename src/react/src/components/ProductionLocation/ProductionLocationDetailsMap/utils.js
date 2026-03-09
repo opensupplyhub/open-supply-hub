@@ -1,6 +1,7 @@
 import get from 'lodash/get';
 import head from 'lodash/head';
 import partition from 'lodash/partition';
+import uniqBy from 'lodash/uniqBy';
 
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
 import { FIELD_TYPE } from './constants';
@@ -13,12 +14,13 @@ export const getContributorStatus = (contributorName, isFromClaim) => {
 };
 
 /**
- * Returns the contributor info (name, userId, date, status) for a given
- * field type derived from the singleFacilityData Redux object.
+ * Returns contributor info (name, userId, date, status) and drawer data
+ * (promotedContribution + contributions) for a given field type derived from
+ * the singleFacilityData Redux object.
  *
  * @param {Object} singleFacilityData
  * @param {string} fieldType - one of FIELD_TYPE.*
- * @returns {{ contributorName: string, userId: number|string|null, date: string, status: string|null }}
+ * @returns {{ contributorName: string, userId: number|string|null, date: string, status: string|null, drawerData: object }}
  */
 export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
     switch (fieldType) {
@@ -30,9 +32,25 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 'properties.extended_fields.address',
                 [],
             );
-            const canonicalField =
-                addressFields.find(f => f.value === address) ||
-                addressFields[0];
+
+            // Same-contributor same-address
+            // entries from different dates remain distinct.
+            const uniqueAddressFields = uniqBy(
+                addressFields,
+                f =>
+                    (get(f, 'value', '') || '') +
+                    (get(f, 'created_at', '') || '') +
+                    (get(f, 'contributor_name', '') || ''),
+            );
+
+            const [canonicalFields, otherFields] = partition(
+                uniqueAddressFields,
+                f => f.value === address,
+            );
+            const canonicalField = canonicalFields[0] || uniqueAddressFields[0];
+            const contributions = canonicalFields[0]
+                ? otherFields
+                : uniqueAddressFields.slice(1);
 
             const contributorName =
                 get(canonicalField, 'contributor_name', '') || '';
@@ -43,7 +61,32 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 get(canonicalField, 'is_from_claim', false),
             );
 
-            return { contributorName, userId, date, status };
+            const promotedContribution = canonicalField
+                ? {
+                      value: get(canonicalField, 'value', '') || '',
+                      sourceName: contributorName,
+                      date:
+                          get(canonicalField, 'created_at', '') ||
+                          get(canonicalField, 'updated_at', '') ||
+                          '',
+                      userId,
+                  }
+                : null;
+
+            const drawerData = {
+                promotedContribution,
+                contributions: contributions.map(field => ({
+                    value: get(field, 'value', '') || '',
+                    sourceName: get(field, 'contributor_name', '') || '',
+                    date:
+                        get(field, 'created_at', '') ||
+                        get(field, 'updated_at', '') ||
+                        '',
+                    userId: get(field, 'contributor_id', null),
+                })),
+            };
+
+            return { contributorName, userId, date, status, drawerData };
         }
 
         case FIELD_TYPE.COORDINATES: {
@@ -63,7 +106,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 'properties.other_locations',
                 [],
             );
-            const [canonicalLocations] = partition(
+            const [canonicalLocations, nonCanonicalLocations] = partition(
                 otherLocations,
                 ({
                     lng,
@@ -102,7 +145,33 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 get(canonicalLocation, 'is_from_claim', false),
             );
 
-            return { contributorName, userId, date, status };
+            const primaryCoordValue =
+                Array.isArray(coordinates) && coordinates.length >= 2
+                    ? `${coordinates[1]}, ${coordinates[0]}`
+                    : '';
+            const promotedValue = canonicalLocation
+                ? `${canonicalLocation.lat}, ${canonicalLocation.lng}`
+                : primaryCoordValue;
+
+            const promotedContribution = {
+                value: promotedValue,
+                sourceName: contributorName,
+                date,
+                userId,
+            };
+
+            const contributions = nonCanonicalLocations
+                .filter(item => !item.has_invalid_location)
+                .map(item => ({
+                    value: `${item.lat}, ${item.lng}`,
+                    sourceName: get(item, 'contributor_name', '') || '',
+                    date: '',
+                    userId: get(item, 'contributor_id', null),
+                }));
+
+            const drawerData = { promotedContribution, contributions };
+
+            return { contributorName, userId, date, status, drawerData };
         }
 
         default:
@@ -111,6 +180,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 userId: null,
                 date: '',
                 status: null,
+                drawerData: { promotedContribution: null, contributions: [] },
             };
     }
 };

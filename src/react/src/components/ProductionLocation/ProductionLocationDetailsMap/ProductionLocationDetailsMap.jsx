@@ -39,6 +39,7 @@ import { productionLocationDetailsRoute } from '../../../util/constants';
 import GeneralInformation from '../../Icons/GeneralInformation';
 import IconComponent from '../../Shared/IconComponent/IconComponent';
 import DataPoint from '../DataPoint/DataPoint';
+import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 import { FIELD_TYPE, getFieldContributorInfo } from './utils';
 
 /**
@@ -60,6 +61,8 @@ function ProductionLocationDetailsMap({
             ? detailsZoomLevel
             : initialZoom,
     );
+    const [addressDrawerOpen, setAddressDrawerOpen] = useState(false);
+    const [coordinatesDrawerOpen, setCoordinatesDrawerOpen] = useState(false);
 
     const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
     const address = get(singleFacilityData, 'properties.address', '') || '';
@@ -73,6 +76,7 @@ function ProductionLocationDetailsMap({
         userId: addressUserId,
         date: addressDate,
         status: addressStatus,
+        drawerData: addressDrawerData,
     } = useMemo(
         () => getFieldContributorInfo(singleFacilityData, FIELD_TYPE.ADDRESS),
         [singleFacilityData],
@@ -83,6 +87,7 @@ function ProductionLocationDetailsMap({
         userId: coordinatesUserId,
         date: coordinatesDate,
         status: coordinatesStatus,
+        drawerData: coordinatesDrawerData,
     } = useMemo(
         () =>
             getFieldContributorInfo(singleFacilityData, FIELD_TYPE.COORDINATES),
@@ -303,6 +308,19 @@ function ProductionLocationDetailsMap({
                         contributorName={addressContributorName || null}
                         userId={addressUserId}
                         date={addressDate || null}
+                        drawerData={addressDrawerData}
+                        onOpenDrawer={() => setAddressDrawerOpen(true)}
+                        renderDrawer={() => (
+                            <ContributionsDrawer
+                                open={addressDrawerOpen}
+                                onClose={() => setAddressDrawerOpen(false)}
+                                fieldName="Address"
+                                promotedContribution={
+                                    addressDrawerData.promotedContribution
+                                }
+                                contributions={addressDrawerData.contributions}
+                            />
+                        )}
                     />
                 </div>
                 <div data-testid="production-location-coordinates-row">
@@ -313,6 +331,21 @@ function ProductionLocationDetailsMap({
                         contributorName={coordinatesContributorName || null}
                         userId={coordinatesUserId}
                         date={coordinatesDate || null}
+                        drawerData={coordinatesDrawerData}
+                        onOpenDrawer={() => setCoordinatesDrawerOpen(true)}
+                        renderDrawer={() => (
+                            <ContributionsDrawer
+                                open={coordinatesDrawerOpen}
+                                onClose={() => setCoordinatesDrawerOpen(false)}
+                                fieldName="Coordinates"
+                                promotedContribution={
+                                    coordinatesDrawerData.promotedContribution
+                                }
+                                contributions={
+                                    coordinatesDrawerData.contributions
+                                }
+                            />
+                        )}
                     />
                 </div>
             </div>
