@@ -15,7 +15,7 @@ export default theme => {
         sectionTitleRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: `${theme.spacing.unit}px`,
+            gap: '4px',
             borderBottom: `1px solid ${theme.palette.divider}`,
             paddingBottom: theme.spacing.unit * 1.5,
             marginBottom: theme.spacing.unit * 2,
@@ -29,6 +29,14 @@ export default theme => {
         sectionTitleIcon: Object.freeze({
             color: theme.palette.text.secondary,
             flexShrink: 0,
+        }),
+        sectionTitleInfoButton: Object.freeze({
+            padding: theme.spacing.unit * 0.5,
+            color: theme.palette.text.secondary,
+            '&:hover': {
+                color: theme.palette.text.primary,
+                backgroundColor: theme.palette.action.hover,
+            },
         }),
         mapContainer: Object.freeze({
             width: 'auto',

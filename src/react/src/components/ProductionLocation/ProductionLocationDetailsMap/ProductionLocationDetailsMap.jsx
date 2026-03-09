@@ -11,6 +11,7 @@ import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import MyLocationIcon from '@material-ui/icons/MyLocation';
 import LaunchIcon from '@material-ui/icons/Launch';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import get from 'lodash/get';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -25,6 +26,7 @@ import {
     SATELLITE_TILE_URL,
     SATELLITE_TILE_ATTRIBUTION,
     mapContainerStyles,
+    GEOGRAPHIC_INFORMATION_TOOLTIP,
 } from './constants';
 import {
     detailsZoomLevel,
@@ -35,6 +37,7 @@ import {
 import { productionLocationDetailsRoute } from '../../../util/constants';
 
 import GeneralInformation from '../../Icons/GeneralInformation';
+import IconComponent from '../../Shared/IconComponent/IconComponent';
 import DataPoint from '../DataPoint/DataPoint';
 import { FIELD_TYPE, getFieldContributorInfo } from './utils';
 
@@ -176,6 +179,12 @@ function ProductionLocationDetailsMap({
                 >
                     Geographic information
                 </Typography>
+                <IconComponent
+                    title={GEOGRAPHIC_INFORMATION_TOOLTIP}
+                    icon={InfoOutlined}
+                    className={classes.sectionTitleInfoButton}
+                    data-testid="geographic-information-tooltip"
+                />
             </div>
             <div className={classes.mapContainer}>
                 <div className={classes.mapInner}>

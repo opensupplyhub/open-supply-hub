@@ -30,3 +30,6 @@ export const FIELD_TYPE = Object.freeze({
     ADDRESS: 'address',
     COORDINATES: 'coordinates',
 });
+
+export const GEOGRAPHIC_INFORMATION_TOOLTIP =
+    'Physical address and geographic coordinates for this production location.';
