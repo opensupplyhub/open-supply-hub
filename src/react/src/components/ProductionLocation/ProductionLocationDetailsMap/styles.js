@@ -96,5 +96,8 @@ export default theme => {
             backgroundColor: '#00000080',
             cursor: 'grab',
         }),
+        infoGrid: Object.freeze({
+            marginTop: theme.spacing.unit * 2,
+        }),
     });
 };

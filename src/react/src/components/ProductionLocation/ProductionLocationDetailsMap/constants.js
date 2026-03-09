@@ -25,3 +25,8 @@ export const mapContainerStyles = Object.freeze({
     height: '100%',
     width: '100%',
 });
+
+export const FIELD_TYPE = Object.freeze({
+    ADDRESS: 'address',
+    COORDINATES: 'coordinates',
+});

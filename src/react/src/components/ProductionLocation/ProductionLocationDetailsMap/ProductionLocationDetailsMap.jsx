@@ -35,6 +35,8 @@ import {
 import { productionLocationDetailsRoute } from '../../../util/constants';
 
 import GeneralInformation from '../../Icons/GeneralInformation';
+import DataPoint from '../DataPoint/DataPoint';
+import { FIELD_TYPE, getFieldContributorInfo } from './utils';
 
 /**
  * Production location detail map: satellite base layer, zoom/center controls,
@@ -57,6 +59,33 @@ function ProductionLocationDetailsMap({
     );
 
     const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
+    const address = get(singleFacilityData, 'properties.address', '') || '';
+    const coordinatesDisplay =
+        Array.isArray(coordinates) && coordinates.length >= 2
+            ? `${coordinates[1]}, ${coordinates[0]}`
+            : '';
+
+    const {
+        contributorName: addressContributorName,
+        userId: addressUserId,
+        date: addressDate,
+        status: addressStatus,
+    } = useMemo(
+        () => getFieldContributorInfo(singleFacilityData, FIELD_TYPE.ADDRESS),
+        [singleFacilityData],
+    );
+
+    const {
+        contributorName: coordinatesContributorName,
+        userId: coordinatesUserId,
+        date: coordinatesDate,
+        status: coordinatesStatus,
+    } = useMemo(
+        () =>
+            getFieldContributorInfo(singleFacilityData, FIELD_TYPE.COORDINATES),
+        [singleFacilityData],
+    );
+
     const center = useMemo(() => {
         if (Array.isArray(coordinates) && coordinates.length >= 2) {
             return [coordinates[1], coordinates[0]];
@@ -251,6 +280,31 @@ function ProductionLocationDetailsMap({
                             />
                         )}
                     </ReactLeafletMap>
+                </div>
+            </div>
+            <div
+                className={classes.infoGrid}
+                data-testid="production-location-info-grid"
+            >
+                <div data-testid="production-location-address-row">
+                    <DataPoint
+                        label="Address"
+                        value={address || '—'}
+                        statusLabel={addressStatus}
+                        contributorName={addressContributorName || null}
+                        userId={addressUserId}
+                        date={addressDate || null}
+                    />
+                </div>
+                <div data-testid="production-location-coordinates-row">
+                    <DataPoint
+                        label="Coordinates"
+                        value={coordinatesDisplay || '—'}
+                        statusLabel={coordinatesStatus}
+                        contributorName={coordinatesContributorName || null}
+                        userId={coordinatesUserId}
+                        date={coordinatesDate || null}
+                    />
                 </div>
             </div>
         </div>
