@@ -74,7 +74,6 @@ function FacilitiesMap({
     isEmbedded,
     isMobile,
     disableZoom,
-    googleLayerType = 'roadmap',
 }) {
     const mapRef = useRef(null);
 
@@ -250,7 +249,7 @@ function FacilitiesMap({
                     REGION: DEFAULT_COUNTRY_CODE,
                     VERSION: '3.57',
                 }}
-                type={googleLayerType}
+                type="roadmap"
                 continuousWorld
                 minZoom={1}
             />
@@ -344,7 +343,6 @@ function FacilitiesMap({
 FacilitiesMap.defaultProps = {
     data: null,
     facilityDetailsData: null,
-    googleLayerType: 'roadmap',
 };
 
 FacilitiesMap.propTypes = {
@@ -358,7 +356,6 @@ FacilitiesMap.propTypes = {
             osID: string,
         }),
     }).isRequired,
-    googleLayerType: string,
 };
 
 function mapStateToProps({

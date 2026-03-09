@@ -72,7 +72,6 @@ export default () =>
         }),
         metaRowContainer: Object.freeze({
             marginLeft: '-16px',
-            flexDirection: 'column',
         }),
         metaRow: Object.freeze({
             fontSize: '1rem',
@@ -120,6 +119,15 @@ export default () =>
         dateItem: Object.freeze({
             position: 'relative',
             marginLeft: '16px',
+            '&::before': Object.freeze({
+                content: "'·'",
+                fontSize: '1.25rem',
+                position: 'absolute',
+                left: '-9px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: COLOURS.DARK_GREY,
+            }),
         }),
         dateBlock: Object.freeze({
             display: 'inline-flex',
