@@ -76,8 +76,18 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             );
             const canonicalLocation = head(canonicalLocations);
 
+            // Prefer the contributor from the canonical other_location entry
+            // (covers claims and admin location corrections). Fall back to
+            // created_from.contributor for the common case where the primary
+            // coordinates came directly from the original list-item geocoding.
             const contributorName =
-                get(canonicalLocation, 'contributor_name', '') || '';
+                get(canonicalLocation, 'contributor_name', '') ||
+                get(
+                    singleFacilityData,
+                    'properties.created_from.contributor',
+                    '',
+                ) ||
+                '';
             const userId = get(canonicalLocation, 'contributor_id', null);
             // other_locations items don't carry created_at; fall back to the
             // facility's origin-contribution date as the best available approximation.
