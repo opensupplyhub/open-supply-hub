@@ -17,7 +17,7 @@ import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetail
 import { facilityClaimStatusChoicesEnum } from '../../../util/constants';
 
 import productionLocationDetailsContentStyles from './styles';
-import OsIdBadge from '../Heading/osIdBadge/OsIdBadge';
+import OsIdBadge from '../Heading/OsIdBadge/OsIdBadge';
 
 const ProductionLocationDetailsContent = ({
     classes,
@@ -53,7 +53,7 @@ const ProductionLocationDetailsContent = ({
             <DataSourcesInfo className={classes.containerItem} />
             <Grid container className={classes.containerItem}>
                 <Grid item sm={12} md={7}>
-                    <GeneralFields />
+                    <GeneralFields data={data} />
                 </Grid>
                 <Grid item sm={12} md={5}>
                     <DetailsMap />

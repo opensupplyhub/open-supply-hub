@@ -9,11 +9,11 @@ export default theme =>
         }),
         title: Object.freeze({
             fontWeight: 600,
-            fontSize: '1.125rem',
+            fontSize: '1.25rem',
         }),
         subtitle: Object.freeze({
             color: theme.palette.text.secondary,
-            fontSize: '0.875rem',
+            fontSize: '1rem',
             marginBottom: '12px',
         }),
         actionsList: Object.freeze({
@@ -50,6 +50,6 @@ export default theme =>
         }),
         actionLabel: Object.freeze({
             fontWeight: 500,
-            fontSize: '1rem',
+            fontSize: '1.15rem',
         }),
     });

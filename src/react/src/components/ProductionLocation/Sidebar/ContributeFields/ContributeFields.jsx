@@ -46,7 +46,7 @@ const ProductionLocationDetailsContributeFields = ({
                 Contribute to this profile
             </Typography>
             <Typography variant="body1" className={classes.subtitle}>
-                Help improve supply chain transparency
+                Ways you can improve data on this page
             </Typography>
             <Grid container spacing={0} className={classes.actionsList}>
                 <Grid item className={classes.actionItemWrapper}>
@@ -118,7 +118,9 @@ const ProductionLocationDetailsContributeFields = ({
                             variant="body1"
                             className={classes.actionLabel}
                         >
-                            {isClosed ? 'Report Reopened' : 'Report Closed'}
+                            {isClosed
+                                ? 'Report Reopened'
+                                : 'Report Closure / Move'}
                         </Typography>
                     </div>
                 </Grid>
