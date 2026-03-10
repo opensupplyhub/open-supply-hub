@@ -190,6 +190,54 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         expect(result.drawerData.contributions).toHaveLength(2);
     });
 
+    it('includes extra canonical entries (same address) in contributions', () => {
+        // Two different contributors both report the canonical address.
+        // Only the first becomes the promoted entry; the second must appear
+        // in contributions rather than being silently discarded.
+        const data = {
+            properties: {
+                address: '123 Main St',
+                extended_fields: {
+                    address: [
+                        {
+                            value: '123 Main St',
+                            contributor_name: 'Org A',
+                            contributor_id: 1,
+                            created_at: '2023-01-01T00:00:00Z',
+                            updated_at: '2023-01-01T00:00:00Z',
+                            is_from_claim: false,
+                        },
+                        {
+                            value: '123 Main St',
+                            contributor_name: 'Org B',
+                            contributor_id: 2,
+                            created_at: '2023-02-01T00:00:00Z',
+                            updated_at: '2023-02-01T00:00:00Z',
+                            is_from_claim: false,
+                        },
+                        {
+                            value: 'Other St',
+                            contributor_name: 'Org C',
+                            contributor_id: 3,
+                            created_at: '2023-03-01T00:00:00Z',
+                            updated_at: '2023-03-01T00:00:00Z',
+                            is_from_claim: false,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.contributorName).toBe('Org A');
+        // Org B (second canonical) + Org C (non-canonical) = 2 contributions
+        expect(result.drawerData.contributions).toHaveLength(2);
+        expect(
+            result.drawerData.contributions.map(c => c.sourceName),
+        ).toEqual(['Org B', 'Org C']);
+    });
+
     it('sets STATUS_CLAIMED when the canonical field is_from_claim is true', () => {
         const data = {
             properties: {
@@ -340,6 +388,55 @@ describe('getFieldContributorInfo — COORDINATES', () => {
 
         expect(result.drawerData.contributions).toHaveLength(1);
         expect(result.drawerData.contributions[0].sourceName).toBe('Valid Org');
+    });
+
+    it('includes extra canonical locations in contributions', () => {
+        // Two is_from_claim entries: first becomes the promoted location,
+        // second must appear in contributions rather than being dropped.
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [
+                    {
+                        lat: 51.0,
+                        lng: 0.0,
+                        contributor_name: 'Claim A',
+                        contributor_id: 10,
+                        is_from_claim: true,
+                        has_invalid_location: false,
+                    },
+                    {
+                        lat: 52.0,
+                        lng: 1.0,
+                        contributor_name: 'Claim B',
+                        contributor_id: 20,
+                        is_from_claim: true,
+                        has_invalid_location: false,
+                    },
+                    {
+                        lat: 53.0,
+                        lng: 2.0,
+                        contributor_name: 'Non-claim Org',
+                        contributor_id: 30,
+                        is_from_claim: false,
+                        has_invalid_location: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.contributorName).toBe('Claim A');
+        // Claim B (second canonical) + Non-claim Org = 2 contributions
+        expect(result.drawerData.contributions).toHaveLength(2);
+        expect(
+            result.drawerData.contributions.map(c => c.sourceName),
+        ).toEqual(['Claim B', 'Non-claim Org']);
     });
 
     it('uses created_from date only when contributor also comes from created_from', () => {

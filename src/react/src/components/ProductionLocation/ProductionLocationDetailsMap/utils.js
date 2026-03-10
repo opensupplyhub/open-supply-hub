@@ -48,8 +48,10 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 f => f.value === address,
             );
             const canonicalField = canonicalFields[0] || uniqueAddressFields[0];
+            // Include all remaining canonical entries (same address, different
+            // contributor/date) so they are not silently discarded.
             const contributions = canonicalFields[0]
-                ? otherFields
+                ? [...canonicalFields.slice(1), ...otherFields]
                 : uniqueAddressFields.slice(1);
 
             const contributorName =
@@ -165,14 +167,21 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 userId,
             };
 
-            const contributions = nonCanonicalLocations
-                .filter(item => !item.has_invalid_location)
-                .map(item => ({
-                    value: `${item.lat}, ${item.lng}`,
-                    sourceName: get(item, 'contributor_name', '') || '',
-                    date: '',
-                    userId: get(item, 'contributor_id', null),
-                }));
+            // Include remaining canonical locations (slice(1)) so that
+            // additional claims/corrections are not silently discarded.
+            const contributions = [
+                ...canonicalLocations
+                    .slice(1)
+                    .filter(item => !item.has_invalid_location),
+                ...nonCanonicalLocations.filter(
+                    item => !item.has_invalid_location,
+                ),
+            ].map(item => ({
+                value: `${item.lat}, ${item.lng}`,
+                sourceName: get(item, 'contributor_name', '') || '',
+                date: '',
+                userId: get(item, 'contributor_id', null),
+            }));
 
             const drawerData = { promotedContribution, contributions };
 
