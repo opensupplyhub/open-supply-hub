@@ -47,12 +47,15 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 uniqueAddressFields,
                 f => f.value === address,
             );
-            const canonicalField = canonicalFields[0] || uniqueAddressFields[0];
-            // Include all remaining canonical entries (same address, different
-            // contributor/date) so they are not silently discarded.
-            const contributions = canonicalFields[0]
+            // Do not fall back to an arbitrary entry when no field matches the
+            // canonical address: that would attribute provenance to a
+            // contributor who submitted a different address value entirely.
+            const canonicalField = canonicalFields[0] || null;
+            // When there is no canonical match, surface every known submission
+            // in the drawer (no promoted contribution, all fields listed).
+            const contributions = canonicalField
                 ? [...canonicalFields.slice(1), ...otherFields]
-                : uniqueAddressFields.slice(1);
+                : uniqueAddressFields;
 
             const contributorName =
                 get(canonicalField, 'contributor_name', '') || '';

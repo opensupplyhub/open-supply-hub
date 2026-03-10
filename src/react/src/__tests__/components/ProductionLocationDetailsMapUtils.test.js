@@ -85,7 +85,11 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         expect(result.drawerData.contributions[0].sourceName).toBe('Other Org');
     });
 
-    it('falls back to the first entry when no field matches properties.address', () => {
+    it('shows no attribution and surfaces all fields when no entry matches properties.address', () => {
+        // No extended_field value matches properties.address. Promoting
+        // uniqueAddressFields[0] arbitrarily would attribute the displayed
+        // address to a contributor who submitted a different value. Instead,
+        // canonicalField is null and all submissions appear in contributions.
         const data = {
             properties: {
                 address: 'No Match',
@@ -114,9 +118,17 @@ describe('getFieldContributorInfo — ADDRESS', () => {
 
         const result = getFieldContributorInfo(data, ADDR);
 
-        expect(result.contributorName).toBe('First Org');
-        expect(result.drawerData.contributions).toHaveLength(1);
-        expect(result.drawerData.contributions[0].sourceName).toBe('Second Org');
+        // No canonical match → no attribution on the displayed address row.
+        expect(result.contributorName).toBe('');
+        expect(result.userId).toBeNull();
+        expect(result.date).toBe('');
+        expect(result.status).toBeNull();
+        expect(result.drawerData.promotedContribution).toBeNull();
+        // All extended_fields appear in the drawer.
+        expect(result.drawerData.contributions).toHaveLength(2);
+        expect(
+            result.drawerData.contributions.map(c => c.sourceName),
+        ).toEqual(['First Org', 'Second Org']);
     });
 
     it('deduplicates entries with identical value + created_at + contributor_name', () => {
@@ -139,9 +151,11 @@ describe('getFieldContributorInfo — ADDRESS', () => {
 
         const result = getFieldContributorInfo(data, ADDR);
 
-        // 3 identical raw entries → deduped to 1; that 1 becomes the canonical
-        // (first) with no remaining contributions.
-        expect(result.drawerData.contributions).toHaveLength(0);
+        // 3 identical raw entries → deduped to 1. properties.address ('Other')
+        // doesn't match the entry's value ('123 Main St'), so no canonical
+        // field is promoted. The 1 deduplicated entry appears in contributions.
+        expect(result.drawerData.promotedContribution).toBeNull();
+        expect(result.drawerData.contributions).toHaveLength(1);
     });
 
     it('keeps entries separate when value+contributor match but created_at differs', () => {
