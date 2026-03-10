@@ -8,7 +8,7 @@ import Grid from '@material-ui/core/Grid';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import PartnershipIcon from '../../../Icons/Partnership';
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
-import PartnerSectionItem from '../ParentSectionItem/PartnerSectionItem';
+import PartnerSectionItem from '../PartnerSectionItem/PartnerSectionItem';
 
 import partnerDataContainerStyles from './styles';
 import getPartnerFieldsAndGroups from './utils';

@@ -1,7 +1,7 @@
 import React from 'react';
 import get from 'lodash/get';
 import { formatExtendedField } from '../../../../util/util.js';
-import FacilityDetailsItem from '../../../../components/FacilityDetailsItem.jsx';
+import FacilityDetailsItem from '../../../FacilityDetailsItem.jsx';
 
 export default function PartnerFieldItem({
     field: { fieldName, formatValue, label, partnerConfigFields },
