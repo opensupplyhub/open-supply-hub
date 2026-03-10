@@ -27,5 +27,5 @@ export const formatClaimDate = date => {
     if (!date) return null;
     const parsedDate = moment(date);
     if (!parsedDate.isValid()) return null;
-    return parsedDate.utc().format('LL');
+    return parsedDate.format('LL');
 };
