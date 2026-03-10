@@ -28,6 +28,7 @@ jest.mock(
 jest.mock('../../actions/facilities', () => ({
     fetchSingleFacility: () => ({ type: 'noop' }),
     resetSingleFacility: () => ({ type: 'RESET_SINGLE_FACILITY' }),
+    fetchFacilities: () => () => {},
 }));
 
 jest.mock('../../actions/partnerFieldGroups', () => ({
