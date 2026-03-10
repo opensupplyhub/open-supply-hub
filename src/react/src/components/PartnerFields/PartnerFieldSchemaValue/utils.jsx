@@ -89,10 +89,15 @@ export const renderProperties = (
     schemaProperties,
     partnerConfigFields,
 ) =>
-    Object.keys(value).reduce((acc, propertyKey) => {
+    Object.keys(schemaProperties).reduce((acc, propertyKey) => {
         if (shouldSkipProperty(propertyKey, schemaProperties)) {
             return acc;
         }
+
+        if (!(propertyKey in value)) {
+            return acc;
+        }
+
         const rendered = renderProperty(
             propertyKey,
             value,
