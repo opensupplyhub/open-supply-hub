@@ -60,7 +60,10 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const contributorName =
                 get(canonicalField, 'contributor_name', '') || '';
             const userId = get(canonicalField, 'contributor_id', null);
-            const date = get(canonicalField, 'created_at', '') || '';
+            const date =
+                get(canonicalField, 'created_at', '') ||
+                get(canonicalField, 'updated_at', '') ||
+                '';
             const status = getContributorStatus(
                 contributorName,
                 get(canonicalField, 'is_from_claim', false),
