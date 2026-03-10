@@ -123,8 +123,10 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             // (covers claims and admin location corrections). Fall back to
             // created_from.contributor for the common case where the primary
             // coordinates came directly from the original list-item geocoding.
+            const locationContributorName =
+                get(canonicalLocation, 'contributor_name', '') || '';
             const contributorName =
-                get(canonicalLocation, 'contributor_name', '') ||
+                locationContributorName ||
                 get(
                     singleFacilityData,
                     'properties.created_from.contributor',
@@ -132,14 +134,17 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ) ||
                 '';
             const userId = get(canonicalLocation, 'contributor_id', null);
-            // other_locations items don't carry created_at; fall back to the
-            // facility's origin-contribution date as the best available approximation.
-            const date =
-                get(
-                    singleFacilityData,
-                    'properties.created_from.created_at',
-                    '',
-                ) || '';
+            // other_locations items don't carry created_at. Only attach the
+            // created_from date when the contributor itself also comes from
+            // created_from; showing a date that belongs to a different
+            // contributor would be misleading.
+            const date = locationContributorName
+                ? ''
+                : get(
+                      singleFacilityData,
+                      'properties.created_from.created_at',
+                      '',
+                  ) || '';
             const status = getContributorStatus(
                 contributorName,
                 get(canonicalLocation, 'is_from_claim', false),

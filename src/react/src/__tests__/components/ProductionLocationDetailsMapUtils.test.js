@@ -342,6 +342,60 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         expect(result.drawerData.contributions[0].sourceName).toBe('Valid Org');
     });
 
+    it('uses created_from date only when contributor also comes from created_from', () => {
+        // No matching other_location → both contributor and date come from
+        // created_from, so provenance is consistent.
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.contributorName).toBe('Origin Org');
+        expect(result.date).toBe('2023-01-01T00:00:00Z');
+        expect(result.drawerData.promotedContribution.date).toBe(
+            '2023-01-01T00:00:00Z',
+        );
+    });
+
+    it('suppresses created_from date when canonical location provides the contributor', () => {
+        // other_locations carries contributor_name but no created_at.
+        // Showing created_from.created_at here would be misleading because
+        // it belongs to a different contributor.
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [
+                    {
+                        lat: 51.0,
+                        lng: 0.0,
+                        contributor_name: 'Claimed Org',
+                        contributor_id: 99,
+                        is_from_claim: true,
+                        has_invalid_location: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.contributorName).toBe('Claimed Org');
+        expect(result.date).toBe('');
+        expect(result.drawerData.promotedContribution.date).toBe('');
+    });
+
     it('formats the promoted coordinate value as "lat, lng"', () => {
         const data = {
             geometry: { coordinates: [-73.8314318, 40.762569] },
