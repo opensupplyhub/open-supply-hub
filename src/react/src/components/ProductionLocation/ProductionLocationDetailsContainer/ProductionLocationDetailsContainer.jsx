@@ -56,7 +56,7 @@ function ProductionLocationDetailsContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
-    }, [normalizedOsID, contributors]);
+    }, [normalizedOsID]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
