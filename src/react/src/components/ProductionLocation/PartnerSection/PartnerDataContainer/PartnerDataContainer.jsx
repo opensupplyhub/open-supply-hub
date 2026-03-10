@@ -4,6 +4,9 @@ import { withStyles } from '@material-ui/core/styles';
 
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
+import PartnershipIcon from '../../../Icons/Partnership';
+import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import PartnerSectionItem from '../ParentSectionItem/PartnerSectionItem';
 
 import partnerDataContainerStyles from './styles';
@@ -18,15 +21,21 @@ function PartnerDataContainer({ classes, groups, facilityData }) {
     return (
         <Grid container className={classes.root}>
             <Grid item xs={12}>
-                <Typography
-                    variant="title"
-                    className={classes.title}
-                    component="h3"
-                >
-                    Partner Data
-                </Typography>
-            </Grid>
-            <Grid item xs={12}>
+                <div className={classes.titleRow}>
+                    <PartnershipIcon className={classes.icon} />
+                    <Typography
+                        variant="title"
+                        className={classes.title}
+                        component="h3"
+                    >
+                        Partner Data
+                    </Typography>
+                    <IconComponent
+                        title="Information provided by third-party partners who host additional social or environmental data."
+                        icon={InfoOutlined}
+                        className={classes.infoButton}
+                    />
+                </div>
                 <Typography
                     variant="subheading"
                     className={classes.description}
