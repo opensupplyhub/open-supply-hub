@@ -3,7 +3,10 @@
 // because ES `import` statements are hoisted above any code by Babel, which
 // would make the polyfill arrive too late.
 /* eslint-disable global-require */
-const { TextEncoder: NodeTextEncoder, TextDecoder: NodeTextDecoder } = require('util');
+const {
+    TextEncoder: NodeTextEncoder,
+    TextDecoder: NodeTextDecoder,
+} = require('util');
 
 global.TextEncoder = global.TextEncoder || NodeTextEncoder;
 global.TextDecoder = global.TextDecoder || NodeTextDecoder;
