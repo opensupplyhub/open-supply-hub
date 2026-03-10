@@ -12,6 +12,7 @@ import GeneralInformation from '../../../Icons/GeneralInformation';
 import OperationalDetails from '../../../Icons/OperationalDetails';
 
 import { setScrollTargetSection } from '../../../../actions/partnerFieldGroups';
+import { HEADER_HEIGHT } from '../../../../util/constants';
 import navBarStyles from './styles';
 import getIconURL from './utils';
 
@@ -44,7 +45,11 @@ const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
         const element = document.getElementById(id);
 
         if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const top =
+                element.getBoundingClientRect().top +
+                window.scrollY -
+                HEADER_HEIGHT;
+            window.scrollTo({ top, behavior: 'smooth' });
         }
     };
 

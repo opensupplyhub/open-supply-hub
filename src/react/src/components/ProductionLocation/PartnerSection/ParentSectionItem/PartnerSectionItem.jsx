@@ -12,6 +12,7 @@ import {
     clearScrollTargetSection,
     toggleSectionOpen,
 } from '../../../../actions/partnerFieldGroups.js';
+import { HEADER_HEIGHT } from '../../../../util/constants';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
 
@@ -34,10 +35,13 @@ const PartnerSectionItem = ({
             // Wait for the collapse to finish transitioning before scrolling.
             // Alternative would be complex logic to track the collapse state.
             setTimeout(() => {
-                containerRef.current?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start',
-                });
+                if (containerRef.current) {
+                    const top =
+                        containerRef.current.getBoundingClientRect().top +
+                        window.scrollY -
+                        HEADER_HEIGHT;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                }
             }, transitionDurationMs);
         }
     }, [scrollTargetId, group.uuid, dispatch]);
