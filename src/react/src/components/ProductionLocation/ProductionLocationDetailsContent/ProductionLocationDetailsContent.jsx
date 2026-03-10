@@ -59,7 +59,11 @@ const ProductionLocationDetailsContent = ({
                     <DetailsMap />
                 </Grid>
             </Grid>
-            <ClaimDataContainer className={classes.containerItem} />
+            <ClaimDataContainer
+                className={classes.containerItem}
+                claimInfo={data?.properties?.claim_info}
+                isClaimed={isClaimed}
+            />
             <Divider variant="middle" className={classes.containerItem} />
             <PartnerDataContainer />
         </div>
