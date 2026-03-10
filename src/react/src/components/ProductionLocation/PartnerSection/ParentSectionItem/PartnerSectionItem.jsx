@@ -15,6 +15,8 @@ import {
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
 
+const transitionDurationMs = 300;
+
 const PartnerSectionItem = ({
     classes,
     group,
@@ -29,10 +31,14 @@ const PartnerSectionItem = ({
     useEffect(() => {
         if (scrollTargetId === group.uuid) {
             dispatch(clearScrollTargetSection());
-            containerRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start',
-            });
+            // Wait for the collapse to finish transitioning before scrolling.
+            // Alternative would be complex logic to track the collapse state.
+            setTimeout(() => {
+                containerRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                });
+            }, transitionDurationMs);
         }
     }, [scrollTargetId, group.uuid, dispatch]);
 
@@ -115,7 +121,7 @@ const PartnerSectionItem = ({
                     />
                 </div>
             </div>
-            <Collapse in={isOpen}>
+            <Collapse in={isOpen} timeout={transitionDurationMs}>
                 <div className={classes.contentArea}>
                     {(columns.left.length > 0 || columns.right.length > 0) && (
                         <Grid container spacing={4} alignItems="flex-start">
