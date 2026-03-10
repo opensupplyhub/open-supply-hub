@@ -56,20 +56,21 @@ function ProductionLocationDetailsMap({
     match: { params: { osID } = {} } = {},
 }) {
     const mapRef = useRef(null);
+
+    const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
+    const hasCoordinates =
+        Array.isArray(coordinates) && coordinates.length >= 2;
+
     const [currentMapZoomLevel, setCurrentMapZoomLevel] = useState(
-        get(singleFacilityData, 'geometry.coordinates')
-            ? detailsZoomLevel
-            : initialZoom,
+        hasCoordinates ? detailsZoomLevel : initialZoom,
     );
     const [addressDrawerOpen, setAddressDrawerOpen] = useState(false);
     const [coordinatesDrawerOpen, setCoordinatesDrawerOpen] = useState(false);
 
-    const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
     const address = get(singleFacilityData, 'properties.address', '') || '';
-    const coordinatesDisplay =
-        Array.isArray(coordinates) && coordinates.length >= 2
-            ? `${coordinates[1]}, ${coordinates[0]}`
-            : '';
+    const coordinatesDisplay = hasCoordinates
+        ? `${coordinates[1]}, ${coordinates[0]}`
+        : '';
 
     const {
         contributorName: addressContributorName,
@@ -101,7 +102,7 @@ function ProductionLocationDetailsMap({
         return [initialCenter.lat, initialCenter.lng];
     }, [coordinates]);
 
-    const zoom = coordinates ? detailsZoomLevel : initialZoom;
+    const zoom = hasCoordinates ? detailsZoomLevel : initialZoom;
 
     const handleCenterOnLocation = useCallback(() => {
         const map = mapRef.current?.leafletElement;
@@ -121,12 +122,10 @@ function ProductionLocationDetailsMap({
     }, []);
 
     const googleMapsUrl = useMemo(() => {
-        if (Array.isArray(center) && center.length >= 2) {
-            const [lat, lng] = center;
-            return `https://www.google.com/maps?q=${lat},${lng}`;
-        }
-        return null;
-    }, [center]);
+        if (!hasCoordinates) return null;
+        const [lat, lng] = center;
+        return `https://www.google.com/maps?q=${lat},${lng}`;
+    }, [hasCoordinates, center]);
 
     const handleMarkerClick = useCallback(
         e => {
