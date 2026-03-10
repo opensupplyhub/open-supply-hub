@@ -6,8 +6,6 @@ import {
     node,
     instanceOf,
     oneOf,
-    shape,
-    array,
     func,
     number,
 } from 'prop-types';
@@ -142,7 +140,14 @@ const DataPoint = ({
                         >
                             {date ? (
                                 <>
-                                    <Grid item className={classes.dateItem}>
+                                    <Grid
+                                        item
+                                        className={`${classes.dateItem} ${
+                                            contributorName
+                                                ? classes.metaDotSeparator
+                                                : ''
+                                        }`}
+                                    >
                                         <span
                                             className={classes.dateBlock}
                                             data-testid="data-point-date"
@@ -168,7 +173,9 @@ const DataPoint = ({
                             {showSourcesButton && (
                                 <Grid
                                     item
-                                    className={classes.sourcesButtonItem}
+                                    className={`${classes.sourcesButtonItem} ${
+                                        date ? classes.metaDotSeparator : ''
+                                    }`}
                                 >
                                     <SourcesButton
                                         sourcesCount={sourcesCount}
@@ -196,12 +203,7 @@ DataPoint.propTypes = {
     contributorName: string,
     userId: oneOfType([string, number]),
     date: oneOfType([string, instanceOf(Date)]),
-    drawerData: shape({
-        promotedContribution: object,
-        contributions: array,
-        title: string,
-        subtitle: oneOfType([string, node]),
-    }),
+    drawerData: object,
     onOpenDrawer: func,
     renderDrawer: func,
 };

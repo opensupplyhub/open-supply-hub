@@ -6,25 +6,24 @@ import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
-
-import Overview from '../../../Icons/Overview';
-import GeneralInformation from '../../../Icons/GeneralInformation';
-import OperationalDetails from '../../../Icons/OperationalDetails';
+import OverviewIcon from '../../../Icons/Overview';
+import GeneralInformationIcon from '../../../Icons/GeneralInformation';
+import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
 import navBarStyles from './styles';
 import getIconURL from './utils';
 
 const defaultNavItems = [
-    { to: '#overview', label: 'Overview', Icon: Overview },
+    { to: '#overview', label: 'Overview', Icon: OverviewIcon },
     {
         to: '#general-information',
         label: 'General Information',
-        Icon: GeneralInformation,
+        Icon: GeneralInformationIcon,
     },
     {
         to: '#operational-details',
         label: 'Operational Details',
-        Icon: OperationalDetails,
+        Icon: OperationalDetailsIcon,
     },
 ];
 

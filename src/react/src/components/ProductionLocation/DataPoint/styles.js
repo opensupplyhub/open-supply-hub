@@ -118,6 +118,8 @@ export default () =>
         }),
         dateItem: Object.freeze({
             position: 'relative',
+        }),
+        metaDotSeparator: Object.freeze({
             marginLeft: '16px',
             '&::before': Object.freeze({
                 content: "'·'",
@@ -150,16 +152,6 @@ export default () =>
             color: COLOURS.DARK_GREY,
         }),
         sourcesButtonItem: Object.freeze({
-            marginLeft: '16px',
             position: 'relative',
-            '&::before': Object.freeze({
-                content: "'·'",
-                fontSize: '1.25rem',
-                position: 'absolute',
-                left: '-9px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: COLOURS.DARK_GREY,
-            }),
         }),
     });
