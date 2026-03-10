@@ -328,7 +328,38 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         expect(result.drawerData.contributions[0].sourceName).toBe('Other Org');
     });
 
-    it('identifies canonical location by is_from_claim when not invalid', () => {
+    it('identifies a claim as canonical when its coordinates match the geometry', () => {
+        // Claim whose lat/lng match geometry.coordinates → canonical.
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [
+                    {
+                        lat: 40.7,
+                        lng: -73.8,
+                        contributor_name: 'Claimed Org',
+                        contributor_id: 10,
+                        is_from_claim: true,
+                        has_invalid_location: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.contributorName).toBe('Claimed Org');
+        expect(result.status).toBe(STATUS_CLAIMED);
+    });
+
+    it('does not treat a claim as canonical when its coordinates differ from the geometry', () => {
+        // Claim lat/lng differ from geometry.coordinates (e.g. after an admin
+        // location correction post-claim-approval). The claim must fall to
+        // contributions and provenance falls back to created_from.
         const data = {
             geometry: { coordinates: [-73.8, 40.7] },
             properties: {
@@ -351,8 +382,13 @@ describe('getFieldContributorInfo — COORDINATES', () => {
 
         const result = getFieldContributorInfo(data, COORDS);
 
-        expect(result.contributorName).toBe('Claimed Org');
-        expect(result.status).toBe(STATUS_CLAIMED);
+        // Claim is not canonical → fall back to created_from attribution.
+        expect(result.contributorName).toBe('Origin Org');
+        // The mismatched claim still appears as a contribution.
+        expect(result.drawerData.contributions).toHaveLength(1);
+        expect(result.drawerData.contributions[0].sourceName).toBe(
+            'Claimed Org',
+        );
     });
 
     it('filters has_invalid_location entries from contributions', () => {
@@ -390,17 +426,18 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         expect(result.drawerData.contributions[0].sourceName).toBe('Valid Org');
     });
 
-    it('includes extra canonical locations in contributions', () => {
-        // Two is_from_claim entries: first becomes the promoted location,
-        // second must appear in contributions rather than being dropped.
+    it('includes non-matching other_locations in contributions', () => {
+        // One entry matches geometry.coordinates → canonical.
+        // The remaining entries (claim and non-claim with different lat/lng)
+        // must appear in contributions rather than being dropped.
         const data = {
             geometry: { coordinates: [-73.8, 40.7] },
             properties: {
                 other_locations: [
                     {
-                        lat: 51.0,
-                        lng: 0.0,
-                        contributor_name: 'Claim A',
+                        lat: 40.7,
+                        lng: -73.8,
+                        contributor_name: 'Matching Org',
                         contributor_id: 10,
                         is_from_claim: true,
                         has_invalid_location: false,
@@ -408,7 +445,7 @@ describe('getFieldContributorInfo — COORDINATES', () => {
                     {
                         lat: 52.0,
                         lng: 1.0,
-                        contributor_name: 'Claim B',
+                        contributor_name: 'Other Claim',
                         contributor_id: 20,
                         is_from_claim: true,
                         has_invalid_location: false,
@@ -431,12 +468,12 @@ describe('getFieldContributorInfo — COORDINATES', () => {
 
         const result = getFieldContributorInfo(data, COORDS);
 
-        expect(result.contributorName).toBe('Claim A');
-        // Claim B (second canonical) + Non-claim Org = 2 contributions
+        expect(result.contributorName).toBe('Matching Org');
+        // Other Claim + Non-claim Org = 2 contributions
         expect(result.drawerData.contributions).toHaveLength(2);
         expect(
             result.drawerData.contributions.map(c => c.sourceName),
-        ).toEqual(['Claim B', 'Non-claim Org']);
+        ).toEqual(['Other Claim', 'Non-claim Org']);
     });
 
     it('uses created_from date only when contributor also comes from created_from', () => {
@@ -466,13 +503,14 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         // other_locations carries contributor_name but no created_at.
         // Showing created_from.created_at here would be misleading because
         // it belongs to a different contributor.
+        // The entry's lat/lng must match geometry.coordinates to be canonical.
         const data = {
             geometry: { coordinates: [-73.8, 40.7] },
             properties: {
                 other_locations: [
                     {
-                        lat: 51.0,
-                        lng: 0.0,
+                        lat: 40.7,
+                        lng: -73.8,
                         contributor_name: 'Claimed Org',
                         contributor_id: 99,
                         is_from_claim: true,

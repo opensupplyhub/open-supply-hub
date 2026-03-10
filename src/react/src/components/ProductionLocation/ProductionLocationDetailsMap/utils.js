@@ -108,16 +108,18 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 'properties.other_locations',
                 [],
             );
+            // An entry is canonical only when its coordinates match the point
+            // actually rendered on the map (geometry.coordinates). Using
+            // is_from_claim alone as a canonical signal would attribute
+            // provenance to a different coordinate when the claim's lat/lng
+            // diverges from the displayed geometry (e.g. after an admin
+            // location correction post-claim-approval).
             const [canonicalLocations, nonCanonicalLocations] = partition(
                 otherLocations,
-                ({
-                    lng,
-                    lat,
-                    is_from_claim: isFromClaim,
-                    has_invalid_location: hasInvalidLocation,
-                }) =>
-                    (isFromClaim && !hasInvalidLocation) ||
-                    (lng === facilityLng && lat === facilityLat),
+                ({ lng, lat, has_invalid_location: hasInvalidLocation }) =>
+                    !hasInvalidLocation &&
+                    lng === facilityLng &&
+                    lat === facilityLat,
             );
             const canonicalLocation = head(canonicalLocations);
 
