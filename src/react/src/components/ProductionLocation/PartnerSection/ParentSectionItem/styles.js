@@ -75,5 +75,10 @@ export default theme => {
                 display: 'inline',
             },
         }),
+        fieldItem: Object.freeze({
+            '&:not(:first-child)': {
+                marginTop: spacing * 2,
+            },
+        }),
     });
 };

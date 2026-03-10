@@ -6,17 +6,16 @@ import Grid from '@material-ui/core/Grid';
 import Switch from '@material-ui/core/Switch';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
-import IconComponent from '../../../Shared/IconComponent/IconComponent';
-import { renderPartnerField } from '../../../PartnerFields/PartnerFieldsSection/utils.jsx';
-import getIconURL from '../../Sidebar/NavBar/utils';
+import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
+import getIconURL from '../../Sidebar/NavBar/utils.js';
 import {
     clearScrollTargetSection,
     toggleSectionOpen,
-} from '../../../../actions/partnerFieldGroups';
+} from '../../../../actions/partnerFieldGroups.js';
+import parentSectionItemStyles from './styles.js';
+import PartnerFieldItem from './PartnerFieldItem.jsx';
 
-import parentSectionItemStyles from './styles';
-
-const ParentSectionItem = ({
+const PartnerSectionItem = ({
     classes,
     group,
     partnerFields,
@@ -37,12 +36,15 @@ const ParentSectionItem = ({
         }
     }, [scrollTargetId, group.uuid, dispatch]);
 
-    const renderedFields = useMemo(() => {
-        if (!isOpen || !partnerFields) return [];
-        return partnerFields
-            .map(field => renderPartnerField({ ...field, data: facilityData }))
-            .filter(Boolean);
-    }, [isOpen, partnerFields, facilityData]);
+    const columns = useMemo(() => {
+        if (!isOpen || !partnerFields) return { left: [], right: [] };
+        const fields = partnerFields.filter(field => field);
+        const mid = Math.ceil(fields.length / 2);
+        return {
+            left: fields.slice(0, mid),
+            right: fields.slice(mid),
+        };
+    }, [isOpen, partnerFields]);
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -115,8 +117,31 @@ const ParentSectionItem = ({
             </div>
             <Collapse in={isOpen}>
                 <div className={classes.contentArea}>
-                    {renderedFields.length > 0 && (
-                        <Grid container>{renderedFields}</Grid>
+                    {(columns.left.length > 0 || columns.right.length > 0) && (
+                        <Grid container spacing={4} alignItems="flex-start">
+                            <Grid item xs={12} sm={6}>
+                                {columns.left.map(field => (
+                                    <div className={classes.fieldItem}>
+                                        <PartnerFieldItem
+                                            key={field.fieldName}
+                                            field={field}
+                                            facilityData={facilityData}
+                                        />
+                                    </div>
+                                ))}
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                {columns.right.map(field => (
+                                    <div className={classes.fieldItem}>
+                                        <PartnerFieldItem
+                                            key={field.fieldName}
+                                            field={field}
+                                            facilityData={facilityData}
+                                        />
+                                    </div>
+                                ))}
+                            </Grid>
+                        </Grid>
                     )}
                     {group.description && (
                         <div className={classes.disclaimer}>
@@ -146,5 +171,5 @@ const mapStateToProps = (state, ownProps) => ({
 });
 
 export default connect(mapStateToProps)(
-    withStyles(parentSectionItemStyles)(ParentSectionItem),
+    withStyles(parentSectionItemStyles)(PartnerSectionItem),
 );

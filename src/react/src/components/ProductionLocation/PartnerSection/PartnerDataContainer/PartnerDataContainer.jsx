@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import ParentSectionItem from '../ParentSectionItem/ParentSectionItem';
+import PartnerSectionItem from '../ParentSectionItem/PartnerSectionItem';
 
 import partnerDataContainerStyles from './styles';
 import getPartnerFieldsAndGroups from './utils';
@@ -46,7 +46,7 @@ function PartnerDataContainer({ classes, groups, facilityData }) {
             </Grid>
             {partnerGroups.map(group => (
                 <Grid item xs={12} key={group.uuid} id={group.uuid}>
-                    <ParentSectionItem
+                    <PartnerSectionItem
                         group={group}
                         partnerFields={partnerFields}
                     />
