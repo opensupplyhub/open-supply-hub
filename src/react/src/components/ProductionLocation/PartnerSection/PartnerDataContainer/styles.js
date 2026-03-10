@@ -4,6 +4,9 @@ export default theme => {
         root: Object.freeze({
             paddingTop: spacing * 2,
         }),
+        divider: Object.freeze({
+            marginBottom: spacing,
+        }),
         titleRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
