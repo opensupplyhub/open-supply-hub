@@ -120,12 +120,16 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             // provenance to a different coordinate when the claim's lat/lng
             // diverges from the displayed geometry (e.g. after an admin
             // location correction post-claim-approval).
+            // A small epsilon (1e-10 °, ≈ 0.01 mm) guards against floating-
+            // point precision differences that can arise when the same PostGIS
+            // point is serialized via different paths (GeoJSON vs ST_X/ST_Y).
+            const COORD_EPSILON = 1e-10;
             const [canonicalLocations, nonCanonicalLocations] = partition(
                 otherLocations,
                 ({ lng, lat, has_invalid_location: hasInvalidLocation }) =>
                     !hasInvalidLocation &&
-                    lng === facilityLng &&
-                    lat === facilityLat,
+                    Math.abs(lng - facilityLng) < COORD_EPSILON &&
+                    Math.abs(lat - facilityLat) < COORD_EPSILON,
             );
             const canonicalLocation = head(canonicalLocations);
 
