@@ -31,7 +31,7 @@ class JSONTextField(models.JSONField):
 
     def from_db_value(self, value, expression, connection):
         """
-        Prevent Django from calling json.loads on an already-deserialized value.
+        Prevent Django from calling json.loads on a deserialized value.
         """
         if value is None:
             return value
