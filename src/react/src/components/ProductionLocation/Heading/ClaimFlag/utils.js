@@ -24,7 +24,8 @@ export const getMainText = (isClaimed, isPending) => {
 };
 
 export const formatClaimDate = date => {
-    if (date == null || date === '') return null;
-    if (!moment(date).isValid()) return null;
-    return moment(date).format('LL');
+    if (!date) return null;
+    const parsedDate = moment(date);
+    if (!parsedDate.isValid()) return null;
+    return parsedDate.utc().format('LL');
 };
