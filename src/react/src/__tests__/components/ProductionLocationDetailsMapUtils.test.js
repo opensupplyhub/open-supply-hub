@@ -15,9 +15,6 @@ jest.mock('leaflet', () => ({ icon: jest.fn(() => ({})) }));
 const ADDR = 'address';
 const COORDS = 'coordinates';
 
-// ---------------------------------------------------------------------------
-// getContributorStatus
-// ---------------------------------------------------------------------------
 describe('getContributorStatus', () => {
     it('returns null when contributorName is falsy', () => {
         expect(getContributorStatus('', false)).toBeNull();
@@ -34,9 +31,6 @@ describe('getContributorStatus', () => {
     });
 });
 
-// ---------------------------------------------------------------------------
-// getFieldContributorInfo — ADDRESS
-// ---------------------------------------------------------------------------
 describe('getFieldContributorInfo — ADDRESS', () => {
     it('returns empty defaults when singleFacilityData is null', () => {
         const result = getFieldContributorInfo(null, ADDR);
@@ -303,7 +297,6 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         const result = getFieldContributorInfo(data, COORDS);
 
         expect(result.contributorName).toBe('Origin Org');
-        expect(result.date).toBe('2023-01-01T00:00:00Z');
     });
 
     it('identifies canonical location by matching lat/lng', () => {
@@ -488,61 +481,6 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         expect(
             result.drawerData.contributions.map(c => c.sourceName),
         ).toEqual(['Other Claim', 'Non-claim Org']);
-    });
-
-    it('uses created_from date only when contributor also comes from created_from', () => {
-        // No matching other_location → both contributor and date come from
-        // created_from, so provenance is consistent.
-        const data = {
-            geometry: { coordinates: [-73.8, 40.7] },
-            properties: {
-                other_locations: [],
-                created_from: {
-                    contributor: 'Origin Org',
-                    created_at: '2023-01-01T00:00:00Z',
-                },
-            },
-        };
-
-        const result = getFieldContributorInfo(data, COORDS);
-
-        expect(result.contributorName).toBe('Origin Org');
-        expect(result.date).toBe('2023-01-01T00:00:00Z');
-        expect(result.drawerData.promotedContribution.date).toBe(
-            '2023-01-01T00:00:00Z',
-        );
-    });
-
-    it('suppresses created_from date when canonical location provides the contributor', () => {
-        // other_locations carries contributor_name but no created_at.
-        // Showing created_from.created_at here would be misleading because
-        // it belongs to a different contributor.
-        // The entry's lat/lng must match geometry.coordinates to be canonical.
-        const data = {
-            geometry: { coordinates: [-73.8, 40.7] },
-            properties: {
-                other_locations: [
-                    {
-                        lat: 40.7,
-                        lng: -73.8,
-                        contributor_name: 'Claimed Org',
-                        contributor_id: 99,
-                        is_from_claim: true,
-                        has_invalid_location: false,
-                    },
-                ],
-                created_from: {
-                    contributor: 'Origin Org',
-                    created_at: '2023-01-01T00:00:00Z',
-                },
-            },
-        };
-
-        const result = getFieldContributorInfo(data, COORDS);
-
-        expect(result.contributorName).toBe('Claimed Org');
-        expect(result.date).toBe('');
-        expect(result.drawerData.promotedContribution.date).toBe('');
     });
 
     it('formats the promoted coordinate value as "lat, lng"', () => {

@@ -148,17 +148,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ) ||
                 '';
             const userId = get(canonicalLocation, 'contributor_id', null);
-            // other_locations items don't carry created_at. Only attach the
-            // created_from date when the contributor itself also comes from
-            // created_from; showing a date that belongs to a different
-            // contributor would be misleading.
-            const date = locationContributorName
-                ? ''
-                : get(
-                      singleFacilityData,
-                      'properties.created_from.created_at',
-                      '',
-                  ) || '';
+            const date = '';
             const status = getContributorStatus(
                 contributorName,
                 get(canonicalLocation, 'is_from_claim', false),
