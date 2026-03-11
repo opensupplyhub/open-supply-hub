@@ -58,15 +58,12 @@ function ProductionLocationDetailsContainer({
         fetchFacility(normalizedOsID, contributors);
     }, [normalizedOsID]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (!partnerFieldGroupsData) {
             getPartnerFieldGroups();
         }
-    }, [partnerFieldGroupsData]);
-    // Hydrate filters from URL and fetch facilities list so the map shows all facilities.
-    // Intentionally depend only on location.search so we don't re-fetch on every render
-    // (dispatch props are new references each time and would cause a request loop / throttling).
+    }, [partnerFieldGroupsData, getPartnerFieldGroups]);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const search = location?.search || '';
@@ -76,7 +73,6 @@ function ProductionLocationDetailsContainer({
         fetchFacilitiesForMap();
     }, [location?.search]);
 
-    // Run cleanup only on unmount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => () => clearFacility(), []);
 
@@ -175,8 +171,6 @@ const mapDispatchToProps = dispatch => ({
     getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
     hydrateFiltersFromQueryString: qs =>
         dispatch(setFiltersFromQueryString(qs)),
-    // Use no-op for pushNewRoute so that when the API returns 1 facility we don't
-    // redirect (which would re-trigger this page's useEffect and cause a request loop).
     fetchFacilitiesForMap: () =>
         dispatch(
             fetchFacilities({

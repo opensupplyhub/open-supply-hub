@@ -7,9 +7,6 @@ import {
     STATUS_CROWDSOURCED,
 } from '../../components/ProductionLocation/DataPoint/constants';
 
-// constants.js (imported transitively by utils.js) calls L.icon at module
-// initialisation time. jest.mock is hoisted before imports at runtime, so the
-// order here is only for the linter.
 jest.mock('leaflet', () => ({ icon: jest.fn(() => ({})) }));
 
 const ADDR = 'address';
@@ -481,6 +478,66 @@ describe('getFieldContributorInfo — COORDINATES', () => {
         expect(
             result.drawerData.contributions.map(c => c.sourceName),
         ).toEqual(['Other Claim', 'Non-claim Org']);
+    });
+
+    it('does not treat a null-coordinate entry as canonical when facility also has null coordinates', () => {
+        const data = {
+            geometry: null,
+            properties: {
+                other_locations: [
+                    {
+                        lat: null,
+                        lng: null,
+                        contributor_name: 'Null Coord Org',
+                        contributor_id: 1,
+                        is_from_claim: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.contributorName).toBe('Origin Org');
+        expect(result.drawerData.contributions).toHaveLength(0);
+    });
+
+    it('excludes null-coordinate entries from contributions even when has_invalid_location is absent', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [
+                    {
+                        lat: null,
+                        lng: null,
+                        contributor_name: 'Null Coord Org',
+                        contributor_id: 1,
+                        is_from_claim: false,
+                    },
+                    {
+                        lat: 51.0,
+                        lng: 0.0,
+                        contributor_name: 'Valid Org',
+                        contributor_id: 2,
+                        is_from_claim: false,
+                        has_invalid_location: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.drawerData.contributions).toHaveLength(1);
+        expect(result.drawerData.contributions[0].sourceName).toBe('Valid Org');
     });
 
     it('formats the promoted coordinate value as "lat, lng"', () => {

@@ -6,14 +6,9 @@ import { Provider } from 'react-redux';
 
 import ProductionLocationDetailsMap from '../../components/ProductionLocation/ProductionLocationDetailsMap/ProductionLocationDetailsMap';
 
-// constants.js calls L.icon() at module initialisation time.
 jest.mock('leaflet', () => ({ icon: jest.fn(() => ({})) }));
 jest.mock('leaflet/dist/leaflet.css', () => {});
 
-// react-leaflet's Map receives a ref. Explicit React.xxx calls inside jest.mock
-// factories are blocked by babel-plugin-jest-hoist (which runs before the JSX
-// transform), so we use a plain functional component here — the ref warning
-// in tests is acceptable.
 jest.mock('react-leaflet', () => ({
     Map: ({ children }) => <div data-testid="leaflet-map">{children}</div>,
     TileLayer: () => null,
@@ -25,9 +20,6 @@ jest.mock('../../components/VectorTileFacilitiesLayer', () => () => null);
 jest.mock('../../components/VectorTileFacilityGridLayer', () => () => null);
 jest.mock('../../components/VectorTileGridLegend', () => () => null);
 
-// DataPoint and ContributionsDrawer transitively import util.js which depends
-// on packages not installed in the test environment. Stub them with lightweight
-// components that preserve the behaviour under test.
 jest.mock(
     '../../components/ProductionLocation/DataPoint/DataPoint',
     () => ({
@@ -100,8 +92,6 @@ const makeFacility = (overrides = {}) => ({
     ...overrides,
 });
 
-// Use a minimal store instead of the full configureStore to avoid pulling in
-// reducers that transitively import util.js.
 const makeStore = facilityData =>
     createStore(() => ({
         facilities: { singleFacility: { data: facilityData } },

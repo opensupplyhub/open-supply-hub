@@ -14,13 +14,15 @@ export const getContributorStatus = (contributorName, isFromClaim) => {
 };
 
 /**
- * Returns contributor info (name, userId, date, status) and drawer data
- * (promotedContribution + contributions) for a given field type derived from
- * the singleFacilityData Redux object.
- *
  * @param {Object} singleFacilityData
- * @param {string} fieldType - one of FIELD_TYPE.*
- * @returns {{ contributorName: string, userId: number|string|null, date: string, status: string|null, drawerData: object }}
+ * @param {string} fieldType
+ * @returns {{
+ * contributorName: string,
+ * userId: number|string|null,
+ * date: string,
+ * status: string|null,
+ * drawerData: object
+ * }}
  */
 export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
     switch (fieldType) {
@@ -120,13 +122,14 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             // provenance to a different coordinate when the claim's lat/lng
             // diverges from the displayed geometry (e.g. after an admin
             // location correction post-claim-approval).
-            // A small epsilon (1e-10 °, ≈ 0.01 mm) guards against floating-
-            // point precision differences that can arise when the same PostGIS
-            // point is serialized via different paths (GeoJSON vs ST_X/ST_Y).
             const COORD_EPSILON = 1e-10;
             const [canonicalLocations, nonCanonicalLocations] = partition(
                 otherLocations,
                 ({ lng, lat, has_invalid_location: hasInvalidLocation }) =>
+                    facilityLat != null &&
+                    facilityLng != null &&
+                    lat != null &&
+                    lng != null &&
                     !hasInvalidLocation &&
                     Math.abs(lng - facilityLng) < COORD_EPSILON &&
                     Math.abs(lat - facilityLat) < COORD_EPSILON,
@@ -171,12 +174,16 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
 
             // Include remaining canonical locations (slice(1)) so that
             // additional claims/corrections are not silently discarded.
+            const hasValidCoords = item => item.lat != null && item.lng != null;
             const contributions = [
                 ...canonicalLocations
                     .slice(1)
-                    .filter(item => !item.has_invalid_location),
+                    .filter(
+                        item =>
+                            !item.has_invalid_location && hasValidCoords(item),
+                    ),
                 ...nonCanonicalLocations.filter(
-                    item => !item.has_invalid_location,
+                    item => !item.has_invalid_location && hasValidCoords(item),
                 ),
             ].map(item => ({
                 value: `${item.lat}, ${item.lng}`,
