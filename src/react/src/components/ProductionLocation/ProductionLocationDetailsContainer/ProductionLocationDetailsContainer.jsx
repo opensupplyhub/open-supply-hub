@@ -26,7 +26,10 @@ import {
     resetSingleFacility,
 } from '../../../actions/facilities';
 import { fetchPartnerFieldGroups } from '../../../actions/partnerFieldGroups';
-import { setFiltersFromQueryString } from '../../../actions/filters';
+import {
+    setFiltersFromQueryString,
+    resetAllFilters,
+} from '../../../actions/filters';
 
 import productionLocationDetailsContainerStyles from './styles';
 
@@ -46,6 +49,7 @@ function ProductionLocationDetailsContainer({
     getPartnerFieldGroups,
     partnerFieldGroupsData,
     hydrateFiltersFromQueryString,
+    resetFilters,
     fetchFacilitiesForMap,
 }) {
     const normalizedOsID =
@@ -69,6 +73,8 @@ function ProductionLocationDetailsContainer({
         const search = location?.search || '';
         if (search) {
             hydrateFiltersFromQueryString(search);
+        } else {
+            resetFilters();
         }
         fetchFacilitiesForMap();
     }, [location?.search]);
@@ -171,6 +177,7 @@ const mapDispatchToProps = dispatch => ({
     getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
     hydrateFiltersFromQueryString: qs =>
         dispatch(setFiltersFromQueryString(qs)),
+    resetFilters: () => dispatch(resetAllFilters()),
     fetchFacilitiesForMap: () =>
         dispatch(
             fetchFacilities({

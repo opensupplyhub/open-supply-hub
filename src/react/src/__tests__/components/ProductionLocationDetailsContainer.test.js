@@ -31,6 +31,11 @@ jest.mock('../../actions/facilities', () => ({
     fetchFacilities: () => () => {},
 }));
 
+jest.mock('../../actions/filters', () => ({
+    setFiltersFromQueryString: () => ({ type: 'noop' }),
+    resetAllFilters: () => ({ type: 'RESET_ALL_FILTERS' }),
+}));
+
 jest.mock('../../actions/partnerFieldGroups', () => ({
     startFetchPartnerFieldGroups: () => ({ type: 'noop' }),
     failFetchPartnerFieldGroups: () => ({ type: 'noop' }),
