@@ -64,6 +64,9 @@ const PartnerSectionItem = ({
         }
     };
 
+    const hasPartnerFields =
+        columns.left.length > 0 || columns.right.length > 0;
+
     return (
         <div className={classes.container} ref={containerRef}>
             <div
@@ -131,7 +134,7 @@ const PartnerSectionItem = ({
             </div>
             <Collapse in={isOpen} timeout={transitionDurationMs}>
                 <div className={classes.contentArea}>
-                    {(columns.left.length > 0 || columns.right.length > 0) && (
+                    {hasPartnerFields && (
                         <Grid container spacing={8} alignItems="flex-start">
                             <Grid item xs={12} sm={6}>
                                 {columns.left.map(field => (
