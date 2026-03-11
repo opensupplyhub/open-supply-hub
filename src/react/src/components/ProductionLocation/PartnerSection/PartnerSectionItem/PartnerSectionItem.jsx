@@ -6,6 +6,7 @@ import Grid from '@material-ui/core/Grid';
 import Switch from '@material-ui/core/Switch';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
+import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
 import getIconURL from '../../Sidebar/NavBar/utils.js';
 import {
@@ -21,7 +22,6 @@ const transitionDurationMs = 300;
 const PartnerSectionItem = ({
     classes,
     group,
-    partnerFields,
     facilityData,
     isOpen,
     scrollTargetId,
@@ -47,14 +47,13 @@ const PartnerSectionItem = ({
     }, [scrollTargetId, group.uuid, dispatch]);
 
     const columns = useMemo(() => {
-        if (!isOpen || !partnerFields) return { left: [], right: [] };
-        const fields = partnerFields.filter(field => field);
-        const mid = Math.ceil(fields.length / 2);
+        if (!isOpen || !group.partnerFields) return { left: [], right: [] };
+        const mid = Math.ceil(group.partnerFields.length / 2);
         return {
-            left: fields.slice(0, mid),
-            right: fields.slice(mid),
+            left: group.partnerFields.slice(0, mid),
+            right: group.partnerFields.slice(mid),
         };
-    }, [isOpen, partnerFields]);
+    }, [isOpen, group]);
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -77,13 +76,18 @@ const PartnerSectionItem = ({
                 onKeyDown={handleKeyDown}
             >
                 <div className={classes.headerLeft}>
-                    {group.icon_file && (
+                    {group.icon_file ? (
                         <img
                             src={getIconURL(group.icon_file)}
                             width={20}
                             height={20}
                             alt={group.name}
                             className={classes.iconImage}
+                        />
+                    ) : (
+                        <Tab
+                            className={classes.iconImage}
+                            style={{ height: 20, width: 20 }}
                         />
                     )}
                     <Typography
@@ -128,7 +132,7 @@ const PartnerSectionItem = ({
             <Collapse in={isOpen} timeout={transitionDurationMs}>
                 <div className={classes.contentArea}>
                     {(columns.left.length > 0 || columns.right.length > 0) && (
-                        <Grid container spacing={4} alignItems="flex-start">
+                        <Grid container spacing={8} alignItems="flex-start">
                             <Grid item xs={12} sm={6}>
                                 {columns.left.map(field => (
                                     <div

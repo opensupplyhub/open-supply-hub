@@ -1,21 +1,21 @@
 import { preparePartnerFields } from '../../../PartnerFields/PartnerFieldsSection/utils.jsx';
 
 /**
- * The API returns all configured partner field groups regardless of whether
- * the current facility actually has data for them. Without filtering, the UI
- * would display empty group sections. This pairs the facility's actual partner
- * field data with only the groups that contain at least one matching field.
+ * Enriches each group with its matching partner fields extracted from facility data.
  *
- * @param {Object} facilityData - The facility data from the API.
- * @param {Array} groups - The partner field groups from the API.
- * @returns {Object} An object containing the partner fields and groups.
+ * @param {Object} facilityData - Facility object whose `properties.partner_fields`
+ *   are parsed by `preparePartnerFields`.
+ * @param {Array<Object>} groups - Groups to enrich; each must contain a
+ *   `partner_fields` array of field-name strings used for filtering.
+ * @returns {Array<Object>} A new array of groups, each augmented with a
+ *   `partnerFields` property holding the resolved field objects.
  */
-export default function getPartnerFieldsAndGroups(facilityData, groups) {
+export default function getPartnerGroupsWithFields(facilityData, groups) {
     const partnerFields = preparePartnerFields(facilityData) ?? [];
-    const availableFieldNames = new Set(partnerFields.map(f => f.fieldName));
-    const partnerGroups = groups.filter(group =>
-        group.partner_fields.some(name => availableFieldNames.has(name)),
-    );
-
-    return { partnerFields, partnerGroups };
+    return groups.map(group => ({
+        ...group,
+        partnerFields: partnerFields.filter(field =>
+            group.partner_fields.includes(field.fieldName),
+        ),
+    }));
 }

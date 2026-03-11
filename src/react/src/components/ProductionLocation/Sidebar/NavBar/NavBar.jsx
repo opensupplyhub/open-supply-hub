@@ -5,6 +5,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
+import Tab from '@material-ui/icons/Tab';
 import Typography from '@material-ui/core/Typography';
 
 import Overview from '../../../Icons/Overview';
@@ -59,14 +60,16 @@ const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
             ...groups.map(group => ({
                 to: `#${group.uuid}`,
                 label: group.name,
-                Image: () => (
-                    <img
-                        src={getIconURL(group.icon_file)}
-                        width={18}
-                        height={18}
-                        alt={group.name}
-                    />
-                ),
+                Image: group.icon_file
+                    ? () => (
+                          <img
+                              src={getIconURL(group.icon_file)}
+                              width={18}
+                              height={18}
+                              alt={group.name}
+                          />
+                      )
+                    : () => <Tab style={{ height: 18, width: 18 }} />,
             })),
         ],
         [groups],

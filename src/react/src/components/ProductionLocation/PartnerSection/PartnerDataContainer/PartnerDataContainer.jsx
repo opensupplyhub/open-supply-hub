@@ -12,13 +12,14 @@ import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import PartnerSectionItem from '../PartnerSectionItem/PartnerSectionItem';
 
 import partnerDataContainerStyles from './styles';
-import getPartnerFieldsAndGroups from './utils';
+import getPartnerGroupsWithFields from './utils';
 
 function PartnerDataContainer({ classes, groups, facilityData, fetching }) {
-    const { partnerFields, partnerGroups } = useMemo(
-        () => getPartnerFieldsAndGroups(facilityData, groups),
+    const partnerGroups = useMemo(
+        () => getPartnerGroupsWithFields(facilityData, groups),
         [facilityData, groups],
     );
+
     const hasPartnerData = useMemo(() => {
         const fields = facilityData?.properties?.partner_fields;
         if (!fields) return false;
@@ -78,10 +79,7 @@ function PartnerDataContainer({ classes, groups, facilityData, fetching }) {
                 {!fetching &&
                     partnerGroups.map(group => (
                         <Grid item xs={12} key={group.uuid} id={group.uuid}>
-                            <PartnerSectionItem
-                                group={group}
-                                partnerFields={partnerFields}
-                            />
+                            <PartnerSectionItem group={group} />
                         </Grid>
                     ))}
             </Grid>
