@@ -5,7 +5,7 @@ import { withRouter } from 'react-router';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
-import { Map as ReactLeafletMap, TileLayer } from 'react-leaflet';
+import { Map as ReactLeafletMap, TileLayer, Marker } from 'react-leaflet';
 import Control from 'react-leaflet-control';
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
@@ -17,7 +17,9 @@ import { withStyles } from '@material-ui/core/styles';
 
 import 'leaflet/dist/leaflet.css';
 
-import VectorTileFacilitiesLayer from '../../VectorTileFacilitiesLayer';
+import VectorTileFacilitiesLayer, {
+    createMarkerIcon,
+} from '../../VectorTileFacilitiesLayer';
 import VectorTileFacilityGridLayer from '../../VectorTileFacilityGridLayer';
 import VectorTileGridLegend from '../../VectorTileGridLegend';
 
@@ -34,7 +36,10 @@ import {
     initialZoom,
     maxVectorTileFacilitiesGridZoom,
 } from '../../../util/constants.facilitiesMap';
-import { productionLocationDetailsRoute } from '../../../util/constants';
+import {
+    productionLocationDetailsRoute,
+    SelectedMarkerColor,
+} from '../../../util/constants';
 
 import GeneralInformation from '../../Icons/GeneralInformation';
 import IconComponent from '../../Shared/IconComponent/IconComponent';
@@ -101,6 +106,11 @@ function ProductionLocationDetailsMap({
         }
         return [initialCenter.lat, initialCenter.lng];
     }, [coordinates]);
+
+    const selectedMarkerIcon = useMemo(
+        () => createMarkerIcon(SelectedMarkerColor),
+        [],
+    );
 
     const zoom = hasCoordinates ? detailsZoomLevel : initialZoom;
 
@@ -283,6 +293,14 @@ function ProductionLocationDetailsMap({
                             minZoom={maxVectorTileFacilitiesGridZoom + 1}
                             maxZoom={22}
                         />
+                        {hasCoordinates && (
+                            <Marker
+                                position={center}
+                                icon={selectedMarkerIcon}
+                                zIndexOffset={1000}
+                                interactive={false}
+                            />
+                        )}
                         {currentMapZoomLevel <=
                             maxVectorTileFacilitiesGridZoom && (
                             <VectorTileFacilityGridLayer
