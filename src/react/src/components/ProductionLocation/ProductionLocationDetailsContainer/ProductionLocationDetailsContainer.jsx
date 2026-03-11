@@ -83,7 +83,7 @@ function ProductionLocationDetailsContainer({
         loadedId &&
         requestedId.toLowerCase() !== loadedId.toLowerCase();
 
-    if (fetching || isStaleData) {
+    if (fetching || (isStaleData && !error?.length)) {
         return (
             <div className={classes.loadingRoot}>
                 <CircularProgress />
