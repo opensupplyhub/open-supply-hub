@@ -11,8 +11,6 @@ export default theme => {
             padding: '20px',
         }),
         titleRow: Object.freeze({
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            paddingBottom: theme.spacing.unit * 1.5,
             display: 'flex',
             flexWrap: 'nowrap',
             alignItems: 'center',
@@ -38,7 +36,18 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
+        switchWrap: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            marginLeft: 'auto',
+        }),
+        switchLabel: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.875rem',
+        }),
+        switch: Object.freeze({}),
         dataPointsList: Object.freeze({
+            borderTop: `1px solid ${theme.palette.divider}`,
             paddingLeft: '16px',
         }),
         divider: Object.freeze({
