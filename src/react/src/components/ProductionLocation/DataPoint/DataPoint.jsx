@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     object,
     string,
@@ -20,7 +20,7 @@ import PersonIcon from '@material-ui/icons/PersonOutline';
 import IconComponent from '../../Shared/IconComponent/IconComponent';
 import { profileRoute, DATE_FORMATS } from '../../../util/constants';
 import { formatDate } from '../../../util/util';
-import getSourcesCount from './utils';
+import { getContributionsCount } from '../ContributionsDrawer/utils';
 import SourcesButton from './SourcesButton/SourcesButton';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import dataPointStyles from './styles';
@@ -36,17 +36,21 @@ const DataPoint = ({
     date,
     drawerData,
     onOpenDrawer,
-    renderDrawer,
 }) => {
-    const sourcesCount = getSourcesCount(drawerData);
-    const showSourcesButton = sourcesCount > 0 && onOpenDrawer && renderDrawer;
-
-    const getStatusChipClass = () => {
+    const sourcesCount = useMemo(
+        () => getContributionsCount(drawerData?.contributions),
+        [drawerData?.contributions],
+    );
+    const showSourcesButton = useMemo(() => sourcesCount > 0 && onOpenDrawer, [
+        sourcesCount,
+        onOpenDrawer,
+    ]);
+    const statusChipClass = useMemo(() => {
         if (statusLabel === STATUS_CLAIMED) return classes.claimedChip;
         if (statusLabel === STATUS_CROWDSOURCED)
             return classes.crowdsourcedChip;
         return null;
-    };
+    }, [statusLabel, classes]);
 
     const tooltipIcon = tooltipText ? (
         <IconComponent title={tooltipText} className={classes.tooltipIcon} />
@@ -88,7 +92,7 @@ const DataPoint = ({
                                         label={statusLabel}
                                         size="small"
                                         className={`${classes.statusChip} ${
-                                            getStatusChipClass() || ''
+                                            statusChipClass || ''
                                         }`}
                                         data-testid="data-point-status-chip"
                                     />
@@ -187,9 +191,6 @@ const DataPoint = ({
                     )}
                 </Grid>
             </Grid>
-            {renderDrawer && typeof renderDrawer === 'function'
-                ? renderDrawer()
-                : null}
         </Grid>
     );
 };
@@ -198,14 +199,13 @@ DataPoint.propTypes = {
     classes: object.isRequired,
     label: string.isRequired,
     value: oneOfType([string, node]).isRequired,
-    tooltipText: string,
+    tooltipText: oneOfType([string, node]),
     statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
     contributorName: string,
     userId: oneOfType([string, number]),
     date: oneOfType([string, instanceOf(Date)]),
     drawerData: object,
     onOpenDrawer: func,
-    renderDrawer: func,
 };
 
 DataPoint.defaultProps = {
@@ -216,7 +216,6 @@ DataPoint.defaultProps = {
     date: null,
     drawerData: null,
     onOpenDrawer: null,
-    renderDrawer: null,
 };
 
 export default withStyles(dataPointStyles)(DataPoint);

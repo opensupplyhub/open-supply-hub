@@ -49,7 +49,7 @@ const ProductionLocationDetailsContributeFields = ({
                 Ways you can improve data on this page
             </Typography>
             <Grid container spacing={0} className={classes.actionsList}>
-                <Grid item className={classes.actionItemWrapper}>
+                <Grid item>
                     <Link
                         to={makeContributeProductionLocationUpdateURL(osId)}
                         target="_blank"
@@ -66,7 +66,7 @@ const ProductionLocationDetailsContributeFields = ({
                         </Typography>
                     </Link>
                 </Grid>
-                <Grid item className={classes.actionItemWrapper}>
+                <Grid item>
                     <a
                         href={makeReportADuplicateEmailLink(osId)}
                         className={classes.actionItem}
@@ -82,7 +82,7 @@ const ProductionLocationDetailsContributeFields = ({
                     </a>
                 </Grid>
                 <ShowOnly when={showDisputeClaim}>
-                    <Grid item className={classes.actionItemWrapper}>
+                    <Grid item>
                         <a
                             href={makeDisputeClaimEmailLink(osId)}
                             className={classes.actionItem}
@@ -98,7 +98,7 @@ const ProductionLocationDetailsContributeFields = ({
                         </a>
                     </Grid>
                 </ShowOnly>
-                <Grid item className={classes.actionItemWrapper}>
+                <Grid item>
                     <div
                         role="button"
                         tabIndex={0}

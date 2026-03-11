@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     object,
     bool,
@@ -45,20 +45,21 @@ const ContributionsDrawer = ({
     promotedContribution,
     contributions,
 }) => {
-    const contributionsCount = getContributionsCount(contributions);
-    const contributorCount = getContributorCount([
-        ...contributions,
-        promotedContribution,
-    ]);
-    const sectionLabel = getContributionsSectionLabel(contributions);
+    const contributionsCount = useMemo(
+        () => getContributionsCount(contributions),
+        [contributions],
+    );
+    const contributorCount = useMemo(
+        () => getContributorCount([...contributions, promotedContribution]),
+        [contributions, promotedContribution],
+    );
+    const sectionLabel = useMemo(
+        () => getContributionsSectionLabel(contributions),
+        [contributions],
+    );
 
     return (
-        <Drawer
-            anchor="right"
-            open={open}
-            onClose={onClose}
-            classes={{ paper: classes.drawerPaper }}
-        >
+        <Drawer open={open} onClose={onClose} anchor="right">
             <div
                 className={classes.drawerContent}
                 data-testid="contributions-drawer"

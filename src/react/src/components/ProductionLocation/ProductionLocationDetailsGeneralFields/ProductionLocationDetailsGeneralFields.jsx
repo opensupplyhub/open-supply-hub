@@ -12,7 +12,7 @@ import LearnMoreLink from '../Shared/LearnMoreLink/LearnMoreLink';
 import GeneralInformationIcon from '../../Icons/GeneralInformation';
 import DataPoint from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
-import getVisibleFields from './utils';
+import { getVisibleFields, getSelectedDrawerItem } from './utils';
 import useDrawerState from './hooks';
 import { SHOW_ADDITIONAL_IDENTIFIERS } from '../../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
@@ -26,13 +26,23 @@ const ProductionLocationDetailsGeneralFields = ({
     activeFeatureFlags,
     featureFlagsFetching,
 }) => {
-    const [openDrawerFieldKey, openDrawer, closeDrawer] = useDrawerState(null);
+    const [
+        openDrawerFieldKey,
+        isDrawerOpen,
+        openDrawer,
+        closeDrawer,
+    ] = useDrawerState(null);
     const showAdditionalIdentifiers =
         !featureFlagsFetching &&
         activeFeatureFlags.includes(SHOW_ADDITIONAL_IDENTIFIERS);
     const visibleItems = useMemo(
         () => getVisibleFields(data, showAdditionalIdentifiers),
         [data, showAdditionalIdentifiers],
+    );
+
+    const selectedDrawerItem = useMemo(
+        () => getSelectedDrawerItem(visibleItems, openDrawerFieldKey),
+        [visibleItems, openDrawerFieldKey],
     );
 
     const renderDataPoints = items =>
@@ -49,26 +59,6 @@ const ProductionLocationDetailsGeneralFields = ({
                     drawerData={item.drawerData}
                     onOpenDrawer={
                         item.drawerData ? () => openDrawer(item.key) : undefined
-                    }
-                    renderDrawer={
-                        item.drawerData
-                            ? () =>
-                                  openDrawerFieldKey === item.key ? (
-                                      <ContributionsDrawer
-                                          open
-                                          onClose={closeDrawer}
-                                          fieldName={item.label}
-                                          promotedContribution={
-                                              item.drawerData
-                                                  .promotedContribution
-                                          }
-                                          contributions={
-                                              item.drawerData.contributions ||
-                                              []
-                                          }
-                                      />
-                                  ) : null
-                            : undefined
                     }
                 />
             </Grid>
@@ -105,6 +95,17 @@ const ProductionLocationDetailsGeneralFields = ({
             <Grid item xs={12} className={classes.dataList}>
                 {renderDataPoints(visibleItems)}
             </Grid>
+            <ContributionsDrawer
+                open={isDrawerOpen}
+                onClose={closeDrawer}
+                fieldName={selectedDrawerItem?.label}
+                promotedContribution={
+                    selectedDrawerItem?.drawerData?.promotedContribution
+                }
+                contributions={
+                    selectedDrawerItem?.drawerData?.contributions ?? []
+                }
+            />
         </Grid>
     );
 };

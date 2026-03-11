@@ -1,3 +1,6 @@
+import React from 'react';
+import LearnMoreLink from './Shared/LearnMoreLink/LearnMoreLink';
+
 export const FIELD_CONFIG = Object.freeze({
     name: Object.freeze({
         label: 'Name',
@@ -59,9 +62,18 @@ export const FIELD_CONFIG = Object.freeze({
         tooltipText: '',
     }),
     status: Object.freeze({
-        label: 'Status',
-        tooltipText:
-            'Closure status reported or verified for this production location.',
+        label: 'Closure Status',
+        tooltipText: (
+            <>
+                Indicates whether this production location has been reported as
+                closed by a supply chain network member, or verified as closed
+                by the OS Hub team. Verified closures have been confirmed
+                through our review process.{' '}
+                <LearnMoreLink href="https://open-supply.files.svdcdn.com/production/assets/downloads/Open-Supply-Hub-Policy_-Marking-facilities-as-closed.pdf?dm=1667241212">
+                    Learn more →
+                </LearnMoreLink>
+            </>
+        ),
     }),
 });
 

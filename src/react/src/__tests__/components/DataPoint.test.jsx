@@ -86,7 +86,6 @@ describe('DataPoint', () => {
             value: 'Value',
             drawerData: { contributions: [], title: 'Title', subtitle: null },
             onOpenDrawer: jest.fn(),
-            renderDrawer: () => null,
         });
 
         expect(screen.queryByTestId('data-point-sources-button')).not.toBeInTheDocument();

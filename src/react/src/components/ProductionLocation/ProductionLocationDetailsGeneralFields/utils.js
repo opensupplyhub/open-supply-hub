@@ -8,7 +8,7 @@ import {
     ADDITIONAL_IDENTIFIERS,
 } from '../../../util/constants';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
-import FIELD_CONFIG from '../constants';
+import FIELD_CONFIG from '../constants.jsx';
 
 const toDrawerContribution = (item, valueStr) => ({
     value: valueStr,
@@ -91,7 +91,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 get(data, 'properties.created_from.contributor', ''),
             );
             const nameFields = filterByUniqueField(data, 'name');
-            const [defaultNameField] = partition(
+            const [defaultNameField, otherNameFields] = partition(
                 nameFields,
                 field => field.primary === coreName,
             );
@@ -100,11 +100,6 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 : {
                       primary: coreName,
                       secondary: createdFrom,
-                      isFromClaim: get(
-                          data,
-                          'properties.created_from.is_from_claim',
-                          false,
-                      ),
                   };
             const rawNameValues = get(
                 data,
@@ -123,7 +118,6 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 ) ||
                 rawNameValues[0] ||
                 null;
-            const restRaw = rawNameValues.filter(rawItem => rawItem !== topRaw);
             const promotedContribution =
                 topRaw &&
                 (() => {
@@ -136,15 +130,24 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                         val != null ? String(val) : '',
                     );
                 })();
-            const contributions = restRaw.map(item => {
-                const val =
-                    typeof item.value === 'string'
-                        ? item.value
-                        : item.value?.name || item.value?.raw_value;
-                return toDrawerContribution(
-                    item,
-                    val != null ? String(val) : '',
-                );
+            const contributions = otherNameFields.map(field => {
+                const rawItem = rawNameValues.find(raw => {
+                    const formatted = formatExtendedField(raw);
+                    return (
+                        formatted.primary === field.primary &&
+                        formatted.secondary === field.secondary
+                    );
+                });
+                const valueStr =
+                    field.primary != null ? String(field.primary) : '';
+                return rawItem
+                    ? toDrawerContribution(rawItem, valueStr)
+                    : {
+                          value: valueStr,
+                          sourceName: null,
+                          date: null,
+                          userId: undefined,
+                      };
             });
             const drawerData =
                 promotedContribution || contributions.length
@@ -305,9 +308,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                     value: valueDisplay,
                     tooltipText: FIELD_CONFIG[fieldName].tooltipText,
                     statusLabel: getStatusLabel(topGroup.isFromClaim),
-                    contributorName: topGroup.secondary
-                        ? null
-                        : topRaw.contributor_name || null,
+                    contributorName: topRaw.contributor_name || null,
                     userId: topRaw.contributor_id,
                     date: topRaw.created_at,
                     drawerData: {
@@ -334,9 +335,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 value: topValue.primary,
                 tooltipText: FIELD_CONFIG[fieldName].tooltipText,
                 statusLabel: getStatusLabel(topValue.isFromClaim),
-                contributorName: topValue.secondary
-                    ? null
-                    : values[0].contributor_name || null,
+                contributorName: values[0].contributor_name || null,
                 userId: values[0].contributor_id,
                 date: values[0].created_at,
                 drawerData: {
@@ -386,7 +385,12 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
     return [nameConfig, sectorConfig, ...extendedConfigs, statusConfig];
 };
 
-const getVisibleFields = (data, includeAdditionalIdentifiers) => {
+export const getSelectedDrawerItem = (items, fieldKey) =>
+    fieldKey
+        ? (items && items.find(item => item.key === fieldKey)) ?? null
+        : null;
+
+export const getVisibleFields = (data, includeAdditionalIdentifiers) => {
     if (!data) return [];
     const configs = getOrderedFieldConfigs(includeAdditionalIdentifiers);
     return configs
@@ -397,5 +401,3 @@ const getVisibleFields = (data, includeAdditionalIdentifiers) => {
         })
         .filter(Boolean);
 };
-
-export default getVisibleFields;
