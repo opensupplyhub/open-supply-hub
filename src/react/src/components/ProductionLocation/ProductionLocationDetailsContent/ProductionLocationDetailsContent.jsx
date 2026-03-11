@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
 import Grid from '@material-ui/core/Grid';
-import Divider from '@material-ui/core/Divider';
 
 import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
 import ClosureStatus from '../Heading/ClosureStatus/ClosureStatus';
@@ -60,7 +59,6 @@ const ProductionLocationDetailsContent = ({
                 </Grid>
             </Grid>
             <ClaimDataContainer className={classes.containerItem} />
-            <Divider variant="middle" className={classes.containerItem} />
             <PartnerDataContainer />
         </div>
     );
