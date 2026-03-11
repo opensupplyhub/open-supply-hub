@@ -6,6 +6,7 @@ import {
     instanceOf,
     bool,
     number,
+    node,
 } from 'prop-types';
 import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
@@ -106,7 +107,7 @@ const ContributionCard = ({
 
 ContributionCard.propTypes = {
     classes: object.isRequired,
-    value: string.isRequired,
+    value: oneOfType([string, node]).isRequired,
     sourceName: string,
     date: oneOfType([string, instanceOf(Date)]),
     promoted: bool,

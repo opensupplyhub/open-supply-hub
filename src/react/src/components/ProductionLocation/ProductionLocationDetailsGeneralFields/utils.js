@@ -55,24 +55,6 @@ const formatActivityReports = data => {
     return items;
 };
 
-const stringifyPrimary = primary => {
-    if (typeof primary === 'string') return primary;
-    if (!Array.isArray(primary)) return primary != null ? String(primary) : '';
-    return primary
-        .map(part => {
-            if (typeof part === 'string') return part;
-            if (part && part.props && part.props.children !== undefined) {
-                const {
-                    props: { children },
-                } = part;
-                return Array.isArray(children) ? children.join('') : children;
-            }
-            return '';
-        })
-        .filter(Boolean)
-        .join(', ');
-};
-
 const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
     const extendedTypes = includeAdditionalIdentifiers
         ? EXTENDED_FIELD_TYPES
@@ -282,23 +264,23 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                     topGroup.primary,
                     fieldName,
                 );
-                const valueStr = stringifyPrimary(topGroup.primary);
                 const topRaw = groupedContributions[0].items[0];
                 const promotedContribution = toDrawerContribution(
                     topRaw,
-                    valueStr,
+                    valueDisplay,
                 );
                 const restGroups = formattedGroups.slice(1);
                 const contributions = restGroups.flatMap(
                     (formattedGroup, groupIndex) => {
                         const group = groupedContributions[groupIndex + 1];
-                        const groupValueStr = stringifyPrimary(
+                        const groupValueDisplay = renderUniqueListItems(
                             formattedGroup.primary,
+                            fieldName,
                         );
                         return (group?.items || []).map(contributionItem =>
                             toDrawerContribution(
                                 contributionItem,
-                                groupValueStr,
+                                groupValueDisplay,
                             ),
                         );
                     },
@@ -318,17 +300,21 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 };
             }
             const topValue = formatField(values[0]);
-            const valueStr = stringifyPrimary(topValue.primary);
+            const promotedValueDisplay = renderUniqueListItems(
+                topValue.primary,
+                fieldName,
+            );
             const promotedContribution = toDrawerContribution(
                 values[0],
-                valueStr,
+                promotedValueDisplay,
             );
             const contributions = values.slice(1).map(extendedItem => {
                 const formatted = formatField(extendedItem);
-                return toDrawerContribution(
-                    extendedItem,
-                    stringifyPrimary(formatted.primary),
+                const valueDisplay = renderUniqueListItems(
+                    formatted.primary,
+                    fieldName,
                 );
+                return toDrawerContribution(extendedItem, valueDisplay);
             });
             return {
                 label: FIELD_CONFIG[fieldName].label,
