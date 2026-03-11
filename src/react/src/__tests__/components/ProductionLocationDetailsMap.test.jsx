@@ -12,11 +12,16 @@ jest.mock('leaflet/dist/leaflet.css', () => {});
 jest.mock('react-leaflet', () => ({
     Map: ({ children }) => <div data-testid="leaflet-map">{children}</div>,
     TileLayer: () => null,
+    Marker: () => null,
 }));
 
 jest.mock('react-leaflet-control', () => ({ children }) => <>{children}</>);
 
-jest.mock('../../components/VectorTileFacilitiesLayer', () => () => null);
+jest.mock('../../components/VectorTileFacilitiesLayer', () => ({
+    __esModule: true,
+    default: () => null,
+    createMarkerIcon: () => ({}),
+}));
 jest.mock('../../components/VectorTileFacilityGridLayer', () => () => null);
 jest.mock('../../components/VectorTileGridLegend', () => () => null);
 
