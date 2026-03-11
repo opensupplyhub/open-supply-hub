@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
 
 import { withStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Tab from '@material-ui/icons/Tab';
@@ -92,34 +91,29 @@ const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
                             active ? classes.menuItemActive : ''
                         }`}
                         disableGutters
+                        onClick={event => handleClick(event, to)}
                     >
-                        <Link
-                            to={to}
-                            onClick={event => handleClick(event, to)}
-                            className={classes.link}
-                        >
-                            {Image ? (
-                                <Image
-                                    className={`${classes.menuImage} ${
-                                        active ? classes.menuImageActive : ''
-                                    }`}
-                                />
-                            ) : (
-                                <Icon
-                                    className={`${classes.menuIcon} ${
-                                        active ? classes.menuIconActive : ''
-                                    }`}
-                                />
-                            )}
-                            <Typography
-                                variant="body1"
-                                className={`${classes.menuLabel} ${
-                                    active ? classes.menuLabelActive : ''
+                        {Image ? (
+                            <Image
+                                className={`${classes.menuImage} ${
+                                    active ? classes.menuImageActive : ''
                                 }`}
-                            >
-                                {label}
-                            </Typography>
-                        </Link>
+                            />
+                        ) : (
+                            <Icon
+                                className={`${classes.menuIcon} ${
+                                    active ? classes.menuIconActive : ''
+                                }`}
+                            />
+                        )}
+                        <Typography
+                            variant="body1"
+                            className={`${classes.menuLabel} ${
+                                active ? classes.menuLabelActive : ''
+                            }`}
+                        >
+                            {label}
+                        </Typography>
                     </MenuItem>
                 ))}
             </MenuList>

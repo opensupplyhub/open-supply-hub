@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -9,15 +9,13 @@ import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
 import getIconURL from '../../Sidebar/NavBar/utils.js';
-import {
-    clearScrollTargetSection,
-    toggleSectionOpen,
-} from '../../../../actions/partnerFieldGroups.js';
-import { HEADER_HEIGHT } from '../../../../util/constants.jsx';
+import { toggleSectionOpen } from '../../../../actions/partnerFieldGroups.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
-
-const transitionDurationMs = 300;
+import {
+    useScrollToSection,
+    transitionDurationMs,
+} from './useScrollToSection.jsx';
 
 const PartnerSectionItem = ({
     classes,
@@ -27,24 +25,11 @@ const PartnerSectionItem = ({
     scrollTargetId,
     dispatch,
 }) => {
-    const containerRef = useRef(null);
-
-    useEffect(() => {
-        if (scrollTargetId === group.uuid) {
-            dispatch(clearScrollTargetSection());
-            // Wait for the collapse to finish transitioning before scrolling.
-            // Alternative would be complex logic to track the collapse state.
-            setTimeout(() => {
-                if (containerRef.current) {
-                    const top =
-                        containerRef.current.getBoundingClientRect().top +
-                        window.scrollY -
-                        HEADER_HEIGHT;
-                    window.scrollTo({ top, behavior: 'smooth' });
-                }
-            }, transitionDurationMs);
-        }
-    }, [scrollTargetId, group.uuid, dispatch]);
+    const containerRef = useScrollToSection(
+        scrollTargetId,
+        group.uuid,
+        dispatch,
+    );
 
     const columns = useMemo(() => {
         if (!isOpen || !group.partnerFields) return { left: [], right: [] };
