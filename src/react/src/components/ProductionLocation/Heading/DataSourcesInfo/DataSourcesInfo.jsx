@@ -59,7 +59,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     />
                 </div>
             </div>
-            <Grid container className={classes.descriptionList}>
+            <Grid container className={classes.descriptionList} spacing={16}>
                 {DATA_SOURCES_ITEMS.map(item => (
                     <DataSourceItem
                         key={item.title}

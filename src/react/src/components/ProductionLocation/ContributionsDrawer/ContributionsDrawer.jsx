@@ -46,10 +46,11 @@ const ContributionsDrawer = ({
     contributions,
 }) => {
     const contributionsCount = getContributionsCount(contributions);
-    const contributorCount = getContributorCount([
-        ...contributions,
-        promotedContribution,
-    ]);
+    const contributorCount = getContributorCount(
+        promotedContribution
+            ? [...contributions, promotedContribution]
+            : contributions,
+    );
     const sectionLabel = getContributionsSectionLabel(contributions);
 
     return (

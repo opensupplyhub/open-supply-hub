@@ -116,6 +116,27 @@ describe('ContributionsDrawer', () => {
         expect(screen.getByTestId('contribution-card')).toBeInTheDocument();
     });
 
+    test('does not count null promotedContribution as an anonymous contributor', () => {
+        renderContributionsDrawer({
+            open: true,
+            onClose: () => {},
+            fieldName: 'Address',
+            promotedContribution: null,
+            contributions: [
+                {
+                    value: '123 Main St',
+                    sourceName: 'Source A',
+                    date: '2022-01-01',
+                    userId: 1,
+                },
+            ],
+        });
+
+        expect(
+            screen.getByTestId('contributions-drawer-subtitle'),
+        ).toHaveTextContent('1 organization has contributed data for Address');
+    });
+
     test('renders promoted card when promotedContribution provided', () => {
         renderContributionsDrawer({
             open: true,
