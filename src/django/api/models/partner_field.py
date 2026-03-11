@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django_ckeditor_5.fields import CKEditor5Field
 
 from api.constants import PARTNER_FIELD_LIST_KEY, PARTNER_FIELD_NAMES_KEY
+from api.fields import JSONTextField
 from api.models.partner_field_manager import PartnerFieldManager
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class PartnerField(models.Model):
             "Rich text field describing the source of this partner field."
         ),
     )
-    json_schema = models.JSONField(
+    json_schema = JSONTextField(
         blank=True,
         null=True,
         help_text=(
