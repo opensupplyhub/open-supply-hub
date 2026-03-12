@@ -20,6 +20,7 @@ import {
 } from '../../../FacilityDetailsClaimedInfo/utils';
 
 import claimDataContainerStyles from './styles';
+import sortClaimFields from './utils';
 
 const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
     const [isOpen, setIsOpen] = useState(true);
@@ -43,8 +44,8 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
         office || null,
     );
 
-    const displayableFields = filter(fieldsConfig, field =>
-        hasDisplayableValue(field.getValue()),
+    const displayableFields = sortClaimFields(
+        filter(fieldsConfig, field => hasDisplayableValue(field.getValue())),
     );
 
     if (isEmpty(displayableFields)) {
