@@ -52,7 +52,10 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
     }
 
     return (
-        <div className={`${classes.container} ${className || ''}`}>
+        <div
+            id="operational-details"
+            className={`${classes.container} ${className || ''}`}
+        >
             <div className={classes.titleRow}>
                 <BadgeClaimed className={classes.titleIcon} />
                 <Typography
