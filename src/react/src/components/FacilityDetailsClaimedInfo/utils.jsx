@@ -50,7 +50,7 @@ export const formatEnergyConsumption = energyData => {
  * elements).
  */
 export const hasDisplayableValue = value => {
-    if (!value) return false;
+    if (value === null || value === undefined) return false;
 
     // Handle string values.
     if (typeof value === 'string') {
@@ -67,7 +67,7 @@ export const hasDisplayableValue = value => {
         return value.length > 0;
     }
 
-    // Handle other truthy values (numbers, objects, etc.).
+    // Handle numbers (including 0), objects, etc.
     return true;
 };
 

@@ -1,8 +1,8 @@
 import React from 'react';
+import { fireEvent } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimDataContainer from '../../components/ProductionLocation/ClaimSection/ClaimDataContainer/ClaimDataContainer';
 import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/constants';
-
 
 const makeClaimInfo = (overrides = {}) => ({
     facility: {
@@ -85,6 +85,60 @@ describe('ClaimDataContainer — section header', () => {
         const { getByTestId } = renderComponent();
         expect(getByTestId('claim-data-info-tooltip')).toBeInTheDocument();
     });
+
+    it('renders the toggle switch', () => {
+        const { getByRole } = renderComponent();
+        expect(
+            getByRole('checkbox', {
+                name: /show operational details submitted by management/i,
+            }),
+        ).toBeInTheDocument();
+    });
+
+    it('shows "Close" label when content is open by default', () => {
+        const { getByText } = renderComponent();
+        expect(getByText('Close')).toBeInTheDocument();
+    });
+
+    it('sets the operational-details id on the root element', () => {
+        const { container } = renderComponent();
+        expect(container.querySelector('#operational-details')).toBeInTheDocument();
+    });
+});
+
+describe('ClaimDataContainer — toggle switch', () => {
+    it('content is visible by default', () => {
+        const { getByText } = renderComponent();
+        expect(getByText('A sample facility.')).toBeInTheDocument();
+    });
+
+    it('hides content when toggled closed', () => {
+        const { getByRole, queryByText } = renderComponent();
+        const toggle = getByRole('checkbox', {
+            name: /show operational details submitted by management/i,
+        });
+        fireEvent.click(toggle);
+        expect(queryByText('A sample facility.')).not.toBeInTheDocument();
+    });
+
+    it('shows "Open" label when content is closed', () => {
+        const { getByRole, getByText } = renderComponent();
+        const toggle = getByRole('checkbox', {
+            name: /show operational details submitted by management/i,
+        });
+        fireEvent.click(toggle);
+        expect(getByText('Open')).toBeInTheDocument();
+    });
+
+    it('shows content again when toggled back open', () => {
+        const { getByRole, getByText } = renderComponent();
+        const toggle = getByRole('checkbox', {
+            name: /show operational details submitted by management/i,
+        });
+        fireEvent.click(toggle);
+        fireEvent.click(toggle);
+        expect(getByText('A sample facility.')).toBeInTheDocument();
+    });
 });
 
 describe('ClaimDataContainer — field labels and values', () => {
@@ -162,6 +216,44 @@ describe('ClaimDataContainer — field labels and values', () => {
         expect(queryByText('Office Name')).not.toBeInTheDocument();
         expect(queryByText('Office Address')).not.toBeInTheDocument();
         expect(queryByText('Office Phone Number')).not.toBeInTheDocument();
+    });
+
+    it('renders female_workers_percentage field when value is 0', () => {
+        const { getByText } = renderComponent({
+            claimInfo: makeClaimInfo({
+                facility: { female_workers_percentage: 0 },
+                contact: null,
+                office: null,
+            }),
+        });
+        expect(
+            getByText('Percentage of female workers', { exact: true }),
+        ).toBeInTheDocument();
+    });
+});
+
+describe('ClaimDataContainer — field ordering', () => {
+    it('renders fields in the order defined by FIELD_ORDER', () => {
+        const { getAllByTestId } = renderComponent();
+        const labels = getAllByTestId('data-point-label').map(
+            el => el.textContent,
+        );
+
+        const websiteIndex = labels.indexOf('Website');
+        const phoneIndex = labels.indexOf('Phone Number');
+        const officeNameIndex = labels.indexOf('Office Name');
+        const descriptionIndex = labels.indexOf('Description');
+        const certificationsIndex = labels.indexOf(
+            'Certifications/Standards/Regulations',
+        );
+        const affiliationsIndex = labels.indexOf('Affiliations');
+        const minimumOrderIndex = labels.indexOf('Minimum Order');
+
+        expect(websiteIndex).toBeLessThan(phoneIndex);
+        expect(phoneIndex).toBeLessThan(officeNameIndex);
+        expect(descriptionIndex).toBeLessThan(certificationsIndex);
+        expect(certificationsIndex).toBeLessThan(affiliationsIndex);
+        expect(affiliationsIndex).toBeLessThan(minimumOrderIndex);
     });
 });
 
