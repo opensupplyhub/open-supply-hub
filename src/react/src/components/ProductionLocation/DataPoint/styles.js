@@ -26,6 +26,7 @@ export default () =>
             fontSize: '1.125rem',
             lineHeight: 1.7,
             color: COLOURS.DARK_GREY,
+            wordWrap: 'break-word',
         }),
         tooltipIconItem: Object.freeze({
             display: 'flex',
