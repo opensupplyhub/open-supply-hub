@@ -201,4 +201,35 @@ describe('PartnerFieldSchemaValue', () => {
 
         expect(container).toBeEmptyDOMElement();
     });
+
+    it('renders field using schema default when value key is missing', () => {
+        const value = {
+            internal_id: 'abc-123',
+        };
+        const jsonSchema = {
+            type: 'object',
+            properties: {
+                internal_id: {
+                    type: 'string',
+                    title: 'Internal ID',
+                },
+                status: {
+                    type: 'string',
+                    title: 'Status',
+                    default: 'active',
+                },
+            },
+        };
+
+        render(
+            <PartnerFieldSchemaValue value={value} jsonSchema={jsonSchema} />,
+        );
+
+        expect(
+            screen.getByText('Internal ID:').closest('div'),
+        ).toHaveTextContent('abc-123');
+        expect(
+            screen.getByText('Status:').closest('div'),
+        ).toHaveTextContent('active');
+    });
 });

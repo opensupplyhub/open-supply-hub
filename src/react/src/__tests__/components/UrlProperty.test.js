@@ -64,4 +64,21 @@ describe('UrlProperty', () => {
         const link = screen.getByRole('link', { name: 'Visit Site' });
         expect(link).toHaveAttribute('href', 'https://example.com');
     });
+
+    it('falls back to schema default when value is missing', () => {
+        render(
+            <UrlProperty
+                {...defaultProps}
+                value={{}}
+                schemaProperties={{
+                    website: { default: 'https://default.com' },
+                }}
+            />,
+        );
+
+        const link = screen.getByRole('link', {
+            name: 'https://default.com',
+        });
+        expect(link).toHaveAttribute('href', 'https://default.com');
+    });
 });

@@ -12,7 +12,14 @@ const DateTimeProperty = ({
     classes,
 }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const formattedDateTime = getFormattedDateValue(propertyKey, value, 'LLL');
+    const schemaProperty = schemaProperties[propertyKey] || {};
+    const formattedDateTime =
+        getFormattedDateValue(propertyKey, value, 'LLL') ||
+        getFormattedDateValue(
+            propertyKey,
+            { [propertyKey]: schemaProperty.default },
+            'LLL',
+        );
 
     return (
         <div className={classes.container}>

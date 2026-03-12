@@ -7,7 +7,14 @@ import PartnerFieldLabel from '../PartnerFieldLabel/PartnerFieldLabel';
 
 const DateProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const formattedDate = getFormattedDateValue(propertyKey, value, 'LL');
+    const schemaProperty = schemaProperties[propertyKey];
+    const formattedDate =
+        getFormattedDateValue(propertyKey, value, 'LL') ||
+        getFormattedDateValue(
+            propertyKey,
+            { [propertyKey]: schemaProperty.default },
+            'LL',
+        );
 
     return (
         <div className={classes.container}>

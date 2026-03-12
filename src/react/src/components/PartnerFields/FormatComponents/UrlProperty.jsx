@@ -7,7 +7,8 @@ import PartnerFieldLabel from '../PartnerFieldLabel/PartnerFieldLabel';
 
 const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const propertyValue = value[propertyKey];
+    const schemaProperty = schemaProperties[propertyKey] || {};
+    const propertyValue = value[propertyKey] || schemaProperty.default;
 
     if (!propertyValue) {
         return null;
