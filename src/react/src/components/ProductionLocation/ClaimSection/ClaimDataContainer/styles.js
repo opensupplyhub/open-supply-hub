@@ -38,6 +38,16 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
+        switchWrap: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            marginLeft: 'auto',
+        }),
+        switchLabel: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.875rem',
+        }),
+        switch: Object.freeze({}),
         dataPointsList: Object.freeze({
             paddingLeft: '16px',
         }),
