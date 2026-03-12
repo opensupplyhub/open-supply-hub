@@ -68,6 +68,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                     }
                     icon={InfoOutlined}
                     className={classes.infoButton}
+                    data-testid="claim-data-info-tooltip"
                 />
             </div>
             <div className={classes.dataPointsList}>
