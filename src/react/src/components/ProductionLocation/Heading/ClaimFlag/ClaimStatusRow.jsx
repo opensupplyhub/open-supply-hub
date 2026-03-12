@@ -47,7 +47,7 @@ const ClaimStatusRow = ({ classes, isClaimed, isPending }) => {
                 className={classes.row}
             >
                 <Grid item className={iconColumnClassName}>
-                    <BadgeClaimed />
+                    <BadgeClaimed fontSize="24px" />
                 </Grid>
                 <Grid item className={classes.statusContent}>
                     <div className={classes.statusRow}>
