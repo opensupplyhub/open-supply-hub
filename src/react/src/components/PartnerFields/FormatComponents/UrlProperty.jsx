@@ -1,4 +1,5 @@
 import React from 'react';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema, getLinkTextFromSchema } from '../utils';
@@ -29,8 +30,10 @@ const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
                 href={propertyValue}
                 target="_blank"
                 rel="noopener noreferrer"
+                className={classes.link}
             >
-                {linkText}
+                <span>{linkText}</span>
+                <OpenInNewIcon className={classes.linkIcon} />
             </a>
         </div>
     );

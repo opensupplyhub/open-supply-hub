@@ -59,4 +59,25 @@ describe('UriProperty', () => {
             'https://example.com/resource',
         );
     });
+
+    it('renders an external link icon inside the link', () => {
+        render(<UriProperty {...defaultProps} />);
+
+        const link = screen.getByRole('link');
+        expect(link.querySelector('svg')).toBeInTheDocument();
+    });
+
+    it('uses schemaProperty.text as link text when defined', () => {
+        render(
+            <UriProperty
+                {...defaultProps}
+                schemaProperties={{
+                    link: { text: 'Custom Link Text' },
+                }}
+            />,
+        );
+
+        const link = screen.getByRole('link', { name: 'Custom Link Text' });
+        expect(link).toHaveAttribute('href', 'https://example.com/resource');
+    });
 });

@@ -52,6 +52,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Sidebar "Jump to" navigation links to individual partner groups; clicking a link opens the corresponding section and smoothly scrolls it into view.
     * Added `UrlProperty` format component and `url` format type support for partner field JSON schemas, enabling clickable links with customizable link text.
     * Includes loading state with a spinner while partner field groups are being fetched.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Enhanced partner field property components:
+    * Extracted a reusable `PartnerFieldLabel` component with bold, dark-slate-grey styling, replacing inline title rendering across all property components (`DateProperty`, `DateTimeProperty`, `UriProperty`, `UrlProperty`, `DefaultProperty`, `IntegerProperty`).
+    * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
+    * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
+    * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

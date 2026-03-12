@@ -19,6 +19,16 @@ export const getLinkTextFromSchema = (
         return value[textKey];
     }
 
+    if (!schemaProperties) {
+        return defaultValue;
+    }
+
+    const schemaProperty = schemaProperties[propertyKey] || {};
+
+    if (schemaProperty.text) {
+        return schemaProperty.text;
+    }
+
     return defaultValue;
 };
 

@@ -70,6 +70,17 @@ describe('getLinkTextFromSchema', () => {
             'https://example.com',
         );
     });
+
+    it('returns schemaProperty.text when _text key is not in schema', () => {
+        const schemaProperties = {
+            url: { type: 'string', format: 'uri', text: 'Click here' },
+        };
+        const value = { url: 'https://example.com' };
+
+        expect(
+            getLinkTextFromSchema('url', value, schemaProperties, value.url),
+        ).toBe('Click here');
+    });
 });
 
 describe('getFormattedDateValue', () => {
