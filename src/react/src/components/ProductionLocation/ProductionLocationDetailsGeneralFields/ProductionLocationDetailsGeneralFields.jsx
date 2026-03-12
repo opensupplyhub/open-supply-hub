@@ -66,7 +66,12 @@ const ProductionLocationDetailsGeneralFields = ({
         ));
 
     return (
-        <Grid id="general-information" container className={classes.container}>
+        <Grid
+            id="general-information"
+            container
+            className={classes.container}
+            data-testid="production-location-details-general-fields"
+        >
             <Grid item container xs={12} className={classes.titleRow}>
                 <GeneralInformationIcon
                     width={20}

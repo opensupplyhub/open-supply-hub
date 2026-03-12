@@ -72,7 +72,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 get(data, 'properties.created_from.contributor', ''),
             );
             const nameFields = filterByUniqueField(data, 'name');
-            const [defaultNameField, otherNameFields] = partition(
+            const [defaultNameField] = partition(
                 nameFields,
                 field => field.primary === coreName,
             );
@@ -101,10 +101,23 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
             };
             const promotedContribution = toDrawerContribution(
                 topRaw,
-                topRaw.value,
+                top.primary,
             );
-            const contributions = otherNameFields.map(field =>
-                toDrawerContribution(field, field.primary),
+            const rawNameValuesFilteredLikeOther = uniqBy(
+                rawNameValues.filter(
+                    rawItem =>
+                        formatExtendedField(rawItem).primary !== coreName,
+                ),
+                rawItem => {
+                    const formatted = formatExtendedField(rawItem);
+                    return formatted.primary + formatted.secondary;
+                },
+            );
+            const contributions = rawNameValuesFilteredLikeOther.map(rawItem =>
+                toDrawerContribution(
+                    rawItem,
+                    formatExtendedField(rawItem).primary,
+                ),
             );
             const drawerData =
                 promotedContribution || contributions.length

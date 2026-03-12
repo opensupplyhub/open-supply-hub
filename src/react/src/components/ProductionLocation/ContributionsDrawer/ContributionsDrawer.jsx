@@ -1,15 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-    object,
-    bool,
-    func,
-    string,
-    shape,
-    oneOfType,
-    instanceOf,
-    arrayOf,
-    number,
-} from 'prop-types';
+import { object, bool, func, string, array } from 'prop-types';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -54,7 +44,7 @@ const ContributionsDrawer = ({
         [contributions, promotedContribution],
     );
     const sectionLabel = useMemo(
-        () => getContributionsSectionLabel(contributions),
+        () => getContributionsSectionLabel(contributionsCount),
         [contributions],
     );
 
@@ -154,23 +144,8 @@ ContributionsDrawer.propTypes = {
     open: bool.isRequired,
     onClose: func.isRequired,
     fieldName: string,
-    promotedContribution: shape({
-        value: string,
-        sourceName: string,
-        date: oneOfType([string, instanceOf(Date)]),
-        linkUrl: string,
-        userId: oneOfType([string, number]),
-    }),
-    contributions: arrayOf(
-        shape({
-            id: oneOfType([string, number]),
-            value: string,
-            sourceName: string,
-            date: oneOfType([string, instanceOf(Date)]),
-            linkUrl: string,
-            userId: oneOfType([string, number]),
-        }),
-    ),
+    promotedContribution: object,
+    contributions: array,
 };
 
 ContributionsDrawer.defaultProps = {

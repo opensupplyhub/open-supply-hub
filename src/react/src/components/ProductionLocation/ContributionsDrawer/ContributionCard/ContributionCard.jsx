@@ -36,6 +36,7 @@ const ContributionCard = ({
         data-testid={dataTestId}
     >
         <Typography
+            component="div"
             className={
                 promoted
                     ? `${classes.contributionValue} ${classes.contributionValuePromoted}`
