@@ -19,9 +19,8 @@ export default theme => {
             marginBottom: theme.spacing.unit * 2,
         }),
         titleIcon: Object.freeze({
-            display: 'inline-flex',
-            alignItems: 'center',
             flexShrink: 0,
+            fontSize: 20,
             color: COLOURS.DARK_GREEN,
             marginRight: spacing * 1.5,
         }),
