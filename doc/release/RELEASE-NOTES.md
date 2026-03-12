@@ -56,7 +56,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added `ClaimDataContainer` component that displays operational details submitted by management through the claim process for claimed production locations.
     * The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
     * Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
-    * The section only appears when the production location has an approved claim and contains displayable claim data.
+    * The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
