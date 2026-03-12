@@ -4,6 +4,10 @@ import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
+import filter from 'lodash/filter';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
+import isString from 'lodash/isString';
 
 import DataPoint from '../../DataPoint/DataPoint';
 import { STATUS_CLAIMED } from '../../DataPoint/constants';
@@ -24,12 +28,12 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
 
     const { facility, contact, office } = claimInfo;
 
-    const contributorName =
-        typeof claimInfo.contributor === 'string'
-            ? claimInfo.contributor
-            : claimInfo.contributor?.name ?? null;
+    const contributorName = isString(claimInfo.contributor)
+        ? claimInfo.contributor
+        : get(claimInfo, 'contributor.name', null);
 
-    const claimedAt = claimInfo.approved_at ?? claimInfo.created_at ?? null;
+    const claimedAt =
+        get(claimInfo, 'approved_at') || get(claimInfo, 'created_at') || null;
 
     const fieldsConfig = getLocationFieldsConfig(
         facility || {},
@@ -37,11 +41,11 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
         office || null,
     );
 
-    const displayableFields = fieldsConfig.filter(field =>
+    const displayableFields = filter(fieldsConfig, field =>
         hasDisplayableValue(field.getValue()),
     );
 
-    if (displayableFields.length === 0) {
+    if (isEmpty(displayableFields)) {
         return null;
     }
 
