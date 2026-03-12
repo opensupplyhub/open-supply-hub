@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema } from '../../utils';
 import getPropertyValueAsString from './utils';
 import { commonPropertyStyles } from '../../styles';
+import PartnerFieldLabel from '../../PartnerFieldLabel';
 
 const DefaultProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
@@ -11,7 +12,7 @@ const DefaultProperty = ({ propertyKey, value, schemaProperties, classes }) => {
 
     return (
         <div className={classes.container}>
-            {title && `${title}: `}
+            {title && <PartnerFieldLabel title={title} />}
             {stringValue}
         </div>
     );

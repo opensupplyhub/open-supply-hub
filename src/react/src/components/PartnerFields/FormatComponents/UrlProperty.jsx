@@ -3,6 +3,7 @@ import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema, getLinkTextFromSchema } from '../utils';
 import { commonPropertyStyles } from '../styles';
+import PartnerFieldLabel from '../PartnerFieldLabel';
 
 const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
@@ -21,7 +22,7 @@ const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
 
     return (
         <div className={classes.container}>
-            {title && `${title}: `}
+            {title && <PartnerFieldLabel title={title} />}
             <a
                 key={`${propertyKey}-url-${propertyValue}`}
                 href={propertyValue}

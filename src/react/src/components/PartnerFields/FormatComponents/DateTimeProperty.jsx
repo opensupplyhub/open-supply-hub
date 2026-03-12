@@ -3,6 +3,7 @@ import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema, getFormattedDateValue } from '../utils';
 import { commonPropertyStyles } from '../styles';
+import PartnerFieldLabel from '../PartnerFieldLabel';
 
 const DateTimeProperty = ({
     propertyKey,
@@ -15,7 +16,7 @@ const DateTimeProperty = ({
 
     return (
         <div className={classes.container}>
-            {title && `${title}: `}
+            {title && <PartnerFieldLabel title={title} />}
             {formattedDateTime}
         </div>
     );
