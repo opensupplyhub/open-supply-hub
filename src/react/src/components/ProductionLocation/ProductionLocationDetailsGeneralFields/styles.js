@@ -1,5 +1,7 @@
-export default theme =>
-    Object.freeze({
+export default theme => {
+    const spacing = theme.spacing.unit ?? 8;
+
+    return Object.freeze({
         container: Object.freeze({
             padding: '20px',
             backgroundColor: 'white',
@@ -8,16 +10,24 @@ export default theme =>
             },
         }),
         titleRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            flexDirection: 'row',
+            gap: '8px',
+            marginBottom: '12px',
+        }),
+        titleItem: Object.freeze({
+            display: 'inline-flex',
         }),
         title: Object.freeze({
-            marginLeft: theme.spacing.unit,
-            marginBottom: theme.spacing.unit,
+            lineHeight: '1.3125rem',
         }),
         infoIcon: Object.freeze({
-            marginLeft: theme.spacing.unit,
+            padding: spacing * 0.5,
+            '&:hover': {
+                color: theme.palette.text.primary,
+                backgroundColor: theme.palette.action.hover,
+            },
+        }),
+        dividerContainer: Object.freeze({
+            marginBottom: '16px',
         }),
         dataList: Object.freeze({
             display: 'flex',
@@ -25,3 +35,4 @@ export default theme =>
             gap: '16px',
         }),
     });
+};

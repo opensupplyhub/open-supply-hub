@@ -2,7 +2,6 @@ import get from 'lodash/get';
 import uniqBy from 'lodash/uniqBy';
 import partition from 'lodash/partition';
 import { formatAttribution, formatExtendedField } from '../../../util/util';
-import renderUniqueListItems from '../../../util/renderUtils';
 import {
     EXTENDED_FIELD_TYPES,
     ADDITIONAL_IDENTIFIERS,
@@ -10,9 +9,9 @@ import {
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
 import FIELD_CONFIG from '../constants.jsx';
 
-const toDrawerContribution = (item, valueStr) => ({
-    value: valueStr,
-    sourceName: item.contributor_name || item.source_by || null,
+const toDrawerContribution = (item, value) => ({
+    value,
+    sourceName: item.contributor_name || null,
     date: item.created_at || null,
     userId: item.contributor_id != null ? item.contributor_id : undefined,
 });
@@ -88,49 +87,25 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 'properties.extended_fields.name',
                 [],
             );
-            const topPrimary = top.primary;
-            const topRaw =
-                rawNameValues.find(
-                    rawItem =>
-                        formatExtendedField(rawItem).primary === topPrimary ||
-                        (typeof rawItem.value === 'string'
-                            ? rawItem.value
-                            : rawItem.value?.name ||
-                              rawItem.value?.raw_value) === topPrimary,
-                ) ||
-                rawNameValues[0] ||
-                null;
-            const promotedContribution =
-                topRaw &&
-                (() => {
-                    const val =
-                        typeof topRaw.value === 'string'
-                            ? topRaw.value
-                            : topRaw.value?.name || topRaw.value?.raw_value;
-                    return toDrawerContribution(
-                        topRaw,
-                        val != null ? String(val) : '',
-                    );
-                })();
-            const contributions = otherNameFields.map(field => {
-                const rawItem = rawNameValues.find(raw => {
-                    const formatted = formatExtendedField(raw);
-                    return (
-                        formatted.primary === field.primary &&
-                        formatted.secondary === field.secondary
-                    );
-                });
-                const valueStr =
-                    field.primary != null ? String(field.primary) : '';
-                return rawItem
-                    ? toDrawerContribution(rawItem, valueStr)
-                    : {
-                          value: valueStr,
-                          sourceName: null,
-                          date: null,
-                          userId: undefined,
-                      };
-            });
+            const topRaw = rawNameValues.find(
+                rawItem => formatExtendedField(rawItem).primary === top.primary,
+            ) || {
+                value: coreName,
+                contributor_name: get(
+                    data,
+                    'properties.created_from.contributor',
+                    '',
+                ),
+                created_at: get(data, 'properties.created_from.created_at', ''),
+                contributor_id: null,
+            };
+            const promotedContribution = toDrawerContribution(
+                topRaw,
+                topRaw.value,
+            );
+            const contributions = otherNameFields.map(field =>
+                toDrawerContribution(field, field.primary),
+            );
             const drawerData =
                 promotedContribution || contributions.length
                     ? {
@@ -143,13 +118,9 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 value: top.primary,
                 tooltipText: FIELD_CONFIG.name.tooltipText,
                 statusLabel: getStatusLabel(top.isFromClaim),
-                contributorName: topRaw
-                    ? topRaw.contributor_name || null
-                    : get(data, 'properties.created_from.contributor', null),
-                userId: topRaw ? topRaw.contributor_id : null,
-                date: topRaw
-                    ? topRaw.created_at
-                    : get(data, 'properties.created_from.created_at', null),
+                contributorName: promotedContribution.sourceName,
+                userId: promotedContribution.userId,
+                date: promotedContribution.date,
                 drawerData,
             };
         },
@@ -260,39 +231,31 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                     .filter(Boolean);
                 if (!formattedGroups.length) return null;
                 const topGroup = formattedGroups[0];
-                const valueDisplay = renderUniqueListItems(
-                    topGroup.primary,
-                    fieldName,
-                );
                 const topRaw = groupedContributions[0].items[0];
                 const promotedContribution = toDrawerContribution(
                     topRaw,
-                    valueDisplay,
+                    topGroup.primary,
                 );
                 const restGroups = formattedGroups.slice(1);
                 const contributions = restGroups.flatMap(
                     (formattedGroup, groupIndex) => {
                         const group = groupedContributions[groupIndex + 1];
-                        const groupValueDisplay = renderUniqueListItems(
-                            formattedGroup.primary,
-                            fieldName,
-                        );
                         return (group?.items || []).map(contributionItem =>
                             toDrawerContribution(
                                 contributionItem,
-                                groupValueDisplay,
+                                formattedGroup.primary,
                             ),
                         );
                     },
                 );
                 return {
                     label: FIELD_CONFIG[fieldName].label,
-                    value: valueDisplay,
+                    value: promotedContribution.value,
                     tooltipText: FIELD_CONFIG[fieldName].tooltipText,
                     statusLabel: getStatusLabel(topGroup.isFromClaim),
-                    contributorName: topRaw.contributor_name || null,
-                    userId: topRaw.contributor_id,
-                    date: topRaw.created_at,
+                    contributorName: promotedContribution.sourceName,
+                    userId: promotedContribution.userId,
+                    date: promotedContribution.date,
                     drawerData: {
                         promotedContribution,
                         contributions,
@@ -300,21 +263,13 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 };
             }
             const topValue = formatField(values[0]);
-            const promotedValueDisplay = renderUniqueListItems(
-                topValue.primary,
-                fieldName,
-            );
             const promotedContribution = toDrawerContribution(
                 values[0],
-                promotedValueDisplay,
+                topValue.primary,
             );
             const contributions = values.slice(1).map(extendedItem => {
                 const formatted = formatField(extendedItem);
-                const valueDisplay = renderUniqueListItems(
-                    formatted.primary,
-                    fieldName,
-                );
-                return toDrawerContribution(extendedItem, valueDisplay);
+                return toDrawerContribution(extendedItem, formatted.primary);
             });
             return {
                 label: FIELD_CONFIG[fieldName].label,
@@ -351,14 +306,15 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                 date: item.date || null,
                 userId: undefined,
             }));
+
             return {
                 label: FIELD_CONFIG.status.label,
-                value: first.primary,
+                value: promotedContribution.value,
                 tooltipText: FIELD_CONFIG.status.tooltipText,
                 statusLabel: STATUS_CROWDSOURCED,
-                contributorName: first.sourceName || null,
-                userId: null,
-                date: first.date || null,
+                contributorName: promotedContribution.sourceName,
+                userId: promotedContribution.userId,
+                date: promotedContribution.date,
                 drawerData: {
                     promotedContribution,
                     contributions,

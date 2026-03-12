@@ -66,30 +66,36 @@ const ProductionLocationDetailsGeneralFields = ({
 
     return (
         <Grid id="general-information" container className={classes.container}>
-            <Grid item xs={12} className={classes.titleRow}>
-                <GeneralInformationIcon width={24} height={24} />
-                <Typography
-                    variant="title"
-                    className={classes.title}
-                    component="h3"
-                >
-                    General Information
-                </Typography>
-                <IconComponent
-                    title={
-                        <>
-                            Core identifying information about this production
-                            location.{' '}
-                            <LearnMoreLink href="https://info.opensupplyhub.org/resources/preparing-data">
-                                Learn more about each data point.
-                            </LearnMoreLink>
-                        </>
-                    }
-                    icon={InfoOutlined}
-                    className={classes.infoIcon}
-                />
+            <Grid item container xs={12} className={classes.titleRow}>
+                <Grid item className={classes.titleItem}>
+                    <GeneralInformationIcon width={20} height={20} />
+                </Grid>
+                <Grid item className={classes.titleItem}>
+                    <Typography
+                        variant="title"
+                        className={classes.title}
+                        component="h3"
+                    >
+                        General Information
+                    </Typography>
+                </Grid>
+                <Grid item className={classes.titleItem}>
+                    <IconComponent
+                        title={
+                            <>
+                                Core identifying information about this
+                                production location.{' '}
+                                <LearnMoreLink href="https://info.opensupplyhub.org/resources/preparing-data">
+                                    Learn more about each data point.
+                                </LearnMoreLink>
+                            </>
+                        }
+                        icon={InfoOutlined}
+                        className={classes.infoIcon}
+                    />
+                </Grid>
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} className={classes.dividerContainer}>
                 <Divider />
             </Grid>
             <Grid item xs={12} className={classes.dataList}>
