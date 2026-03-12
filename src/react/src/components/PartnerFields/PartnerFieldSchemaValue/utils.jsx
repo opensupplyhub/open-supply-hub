@@ -10,7 +10,7 @@ const getFormatFromSchema = propertySchema => propertySchema?.format || null;
 
 const getTypeFromSchema = propertySchema => propertySchema?.type || null;
 
-const shouldSkipProperty = (propertyKey, schemaProperties) => {
+export const shouldSkipProperty = (propertyKey, schemaProperties) => {
     if (!(propertyKey in schemaProperties)) {
         return true;
     }
@@ -23,7 +23,7 @@ const shouldSkipProperty = (propertyKey, schemaProperties) => {
     const baseSchema = schemaProperties[baseKey];
     const baseFormat = getFormatFromSchema(baseSchema);
 
-    return baseFormat === FORMAT_TYPES.URI;
+    return [FORMAT_TYPES.URI, FORMAT_TYPES.URL].includes(baseFormat);
 };
 
 const isNestedObject = (propertySchema, propertyValue) =>
@@ -89,10 +89,15 @@ export const renderProperties = (
     schemaProperties,
     partnerConfigFields,
 ) =>
-    Object.keys(value).reduce((acc, propertyKey) => {
+    Object.keys(schemaProperties).reduce((acc, propertyKey) => {
         if (shouldSkipProperty(propertyKey, schemaProperties)) {
             return acc;
         }
+
+        if (!(propertyKey in value)) {
+            return acc;
+        }
+
         const rendered = renderProperty(
             propertyKey,
             value,

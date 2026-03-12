@@ -45,7 +45,12 @@ const legendStyles = Object.freeze({
     }),
 });
 
-function VectorTileGridLegend({ currentZoomLevel, gridColorRamp, classes }) {
+function VectorTileGridLegend({
+    currentZoomLevel,
+    gridColorRamp,
+    classes,
+    label = '# facilities',
+}) {
     if (
         !currentZoomLevel ||
         currentZoomLevel > maxVectorTileFacilitiesGridZoom
@@ -69,7 +74,7 @@ function VectorTileGridLegend({ currentZoomLevel, gridColorRamp, classes }) {
             style={legendStyles.legendStyle}
             className={classes.legendStyle}
         >
-            <div style={legendStyles.mainLabel}># facilities</div>
+            <div style={legendStyles.mainLabel}>{label}</div>
             <div style={legendStyles.ramp}>
                 {gridColorRamp.map((colorDef, i, a) =>
                     legendCell(colorDef[1], 20 - 2 * (a.length - 1 - i)),
