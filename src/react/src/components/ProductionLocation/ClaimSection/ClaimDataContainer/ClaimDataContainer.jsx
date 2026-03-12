@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { object, bool, shape, oneOfType, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Divider from '@material-ui/core/Divider';
 import Switch from '@material-ui/core/Switch';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import filter from 'lodash/filter';
@@ -97,7 +96,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
             </div>
             {isOpen && (
                 <div className={classes.dataPointsList}>
-                    {displayableFields.map((field, index) => (
+                    {displayableFields.map(field => (
                         <React.Fragment key={field.key}>
                             <DataPoint
                                 label={field.label}
@@ -106,9 +105,6 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                                 contributorName={contributorName}
                                 date={claimedAt}
                             />
-                            {index < displayableFields.length - 1 && (
-                                <Divider className={classes.divider} />
-                            )}
                         </React.Fragment>
                     ))}
                 </div>

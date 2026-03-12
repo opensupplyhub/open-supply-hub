@@ -51,8 +51,5 @@ export default theme => {
         dataPointsList: Object.freeze({
             paddingLeft: '16px',
         }),
-        divider: Object.freeze({
-            backgroundColor: theme.palette.divider,
-        }),
     });
 };
