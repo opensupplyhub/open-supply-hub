@@ -14,9 +14,6 @@ export default theme => {
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            paddingBottom: theme.spacing.unit * 1.5,
-            marginBottom: theme.spacing.unit * 2,
         }),
         titleIcon: Object.freeze({
             flexShrink: 0,
@@ -49,7 +46,13 @@ export default theme => {
         }),
         switch: Object.freeze({}),
         dataPointsList: Object.freeze({
-            paddingLeft: '16px',
+            borderTop: `1px solid ${theme.palette.divider}`,
+            marginTop: spacing * 2.5,
+            marginLeft: -(spacing * 2.5),
+            marginRight: -(spacing * 2.5),
+            paddingTop: spacing * 2.5,
+            paddingLeft: spacing * 2.5 + 16,
+            paddingRight: spacing * 2.5,
         }),
     });
 };
