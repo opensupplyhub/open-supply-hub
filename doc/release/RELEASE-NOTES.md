@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 * 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
 * 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
+* 0202_add_alter_partnerfield_to_use_json.py - Alters `PartnerField.json_schema` from `jsonb` to PostgreSQL `json` type (via the new `JSONTextField`) to preserve the key order defined in partner field schemas, ensuring consistent field rendering on the frontend.
 
 ### Code/API changes
 * [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
@@ -24,6 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Introduced shared `IconComponent` (interactive tooltip with icon) and `LearnMoreLink`; refactored OS ID badge, Data Sources, and Claim status to use them.
     * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
     * Claim form profile step and related tooltips now use `IconComponent`.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
@@ -43,6 +45,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
 * [OSDEV-2375](https://opensupplyhub.atlassian.net/browse/OSDEV-2375) - Created UI for the location name, OS ID, and "Understanding Data Sources" sections. Introduced `doc/frontend.md` with UI development considerations.
 * [OSDEV-2366](https://opensupplyhub.atlassian.net/browse/OSDEV-2366) - Added "Jump to" section to the sidebar with links to the different sections of the Production Location page.
+* [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Implemented the Geographical Information section on the Production Location page, displaying an interactive satellite map with zoom controls, location centering, and "Open in Google Maps" link. Added Address and Coordinates data points below the map, each with contributor metadata and a drawer showing all contributions for that field.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Integrated the Partner Data section into the Production Location page:
+    * Added `PartnerDataContainer` that fetches partner field groups from the API and renders them when partner data is available for a production location.
+    * Each partner group is displayed as a collapsible `PartnerSectionItem` with a toggle switch, partner icon, helper text tooltip, and a two-column layout of partner fields.
+    * Sidebar "Jump to" navigation links to individual partner groups; clicking a link opens the corresponding section and smoothly scrolls it into view.
+    * Added `UrlProperty` format component and `url` format type support for partner field JSON schemas, enabling clickable links with customizable link text.
+    * Includes loading state with a spinner while partner field groups are being fetched.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

@@ -94,18 +94,14 @@ describe('NavBar', () => {
     test('clicking a link scrolls to the matching section', () => {
         renderNavBar();
 
-        const scrollIntoView = jest.fn();
+        window.scrollTo = jest.fn();
         const target = document.createElement('div');
         target.id = 'overview';
-        target.scrollIntoView = scrollIntoView;
         document.body.appendChild(target);
 
         fireEvent.click(screen.getByText('Overview'));
 
-        expect(scrollIntoView).toHaveBeenCalledWith({
-            behavior: 'smooth',
-            block: 'start',
-        });
+        expect(window.scrollTo).toHaveBeenCalled();
 
         document.body.removeChild(target);
     });
