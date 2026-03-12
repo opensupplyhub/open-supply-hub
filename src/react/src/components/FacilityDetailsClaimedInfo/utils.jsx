@@ -84,6 +84,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'website',
         label: 'Website',
+        tooltipText:
+            'Official website URL for this specific production location.',
         getValue: () =>
             location.website ? (
                 <a
@@ -114,26 +116,36 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'phone_number',
         label: 'Phone Number',
+        tooltipText:
+            'Main phone number for contacting this production location directly.',
         getValue: () => location.phone_number,
     },
     {
         key: 'minimum_order',
         label: 'Minimum Order',
+        tooltipText:
+            'Smallest order quantity this production location will accept from customers.',
         getValue: () => location.minimum_order,
     },
     {
         key: 'average_lead_time',
         label: 'Average Lead Time',
+        tooltipText:
+            'Typical time required from order confirmation to product delivery.',
         getValue: () => location.average_lead_time,
     },
     {
         key: 'female_workers_percentage',
         label: 'Percentage of female workers',
+        tooltipText:
+            'Percentage of female employees out of the total workforce at this location.',
         getValue: () => location.female_workers_percentage,
     },
     {
         key: 'affiliations',
         label: 'Affiliations',
+        tooltipText:
+            'Industry associations and partner entities as declared by the production location. OS Hub does not independently verify this information.',
         getValue: () =>
             location.affiliations && location.affiliations.length
                 ? renderUniqueListItems(
@@ -144,6 +156,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'certifications',
         label: 'Certifications/Standards/Regulations',
+        tooltipText:
+            'Certifications and standards the production location self-reports as adhering to. OS Hub does not verify this information.',
         getValue: () =>
             location.certifications && location.certifications.length
                 ? renderUniqueListItems(
@@ -167,6 +181,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'estimated_annual_throughput',
         label: 'Estimated Annual Throughput',
+        tooltipText:
+            'Total amount of materials or products processed by this location per year.',
         getValue: () =>
             location.estimated_annual_throughput
                 ? `${location.estimated_annual_throughput} kg/year`
@@ -175,6 +191,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'actual_annual_energy_consumption',
         label: 'Actual Annual Energy Consumption',
+        tooltipText:
+            'Annual energy consumption by source reported by this production location.',
         getValue: () => {
             const formattedData = formatEnergyConsumption(
                 location.actual_annual_energy_consumption,
@@ -188,11 +206,13 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               {
                   key: 'office_name',
                   label: 'Office Name',
+                  tooltipText: 'Name of the corporate office or headquarters.',
                   getValue: () => office.name,
               },
               {
                   key: 'office_address',
                   label: 'Office Address',
+                  tooltipText: 'Physical address of the office location.',
                   getValue: () =>
                       `${office.address || ' '} ${office.country || ' '}`,
               },
@@ -208,6 +228,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
         key: 'description',
         label: 'Description',
         fullWidth: true,
+        tooltipText:
+            'A brief overview of what this production location manufactures and its main business activities.',
         getValue: () => location.description,
     },
 ];

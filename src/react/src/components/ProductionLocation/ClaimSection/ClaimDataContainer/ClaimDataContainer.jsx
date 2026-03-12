@@ -104,6 +104,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                             <DataPoint
                                 label={field.label}
                                 value={field.getValue()}
+                                tooltipText={field.tooltipText}
                                 statusLabel={STATUS_CLAIMED}
                                 contributorName={contributorName}
                                 date={claimedAt}
