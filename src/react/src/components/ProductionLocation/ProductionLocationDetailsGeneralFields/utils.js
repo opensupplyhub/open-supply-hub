@@ -63,7 +63,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
           );
 
     const nameConfig = {
-        key: 'name',
+        key: FIELD_CONFIG.name.key,
         getDataPointProps: data => {
             if (!data) return null;
             const coreName = get(data, 'properties.name', '');
@@ -127,7 +127,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
     };
 
     const sectorConfig = {
-        key: 'sector',
+        key: FIELD_CONFIG.sector.key,
         getDataPointProps: data => {
             if (!data) return null;
             const sectors = get(data, 'properties.sector', []);
@@ -288,7 +288,7 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
     }));
 
     const statusConfig = {
-        key: 'status',
+        key: FIELD_CONFIG.status.key,
         getDataPointProps: data => {
             if (!data) return null;
             const items = formatActivityReports(data);

@@ -4,9 +4,7 @@ import partition from 'lodash/partition';
 import uniqBy from 'lodash/uniqBy';
 
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
-import { FIELD_TYPE } from './constants';
-
-export { FIELD_TYPE };
+import { FIELD_CONFIG } from '../constants';
 
 export const getContributorStatus = (contributorName, isFromClaim) => {
     if (!contributorName) return null;
@@ -26,7 +24,7 @@ export const getContributorStatus = (contributorName, isFromClaim) => {
  */
 export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
     switch (fieldType) {
-        case FIELD_TYPE.ADDRESS: {
+        case FIELD_CONFIG.address.key: {
             const address =
                 get(singleFacilityData, 'properties.address', '') || '';
             const addressFields = get(
@@ -97,7 +95,9 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             };
 
             return {
-                key: fieldType,
+                key: 'address',
+                label: FIELD_CONFIG.address.label,
+                tooltipText: FIELD_CONFIG.address.tooltipText,
                 contributorName,
                 userId,
                 date,
@@ -106,7 +106,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             };
         }
 
-        case FIELD_TYPE.COORDINATES: {
+        case FIELD_CONFIG.coordinates.key: {
             const coordinates = get(
                 singleFacilityData,
                 'geometry.coordinates',
@@ -202,7 +202,9 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const drawerData = { promotedContribution, contributions };
 
             return {
-                key: fieldType,
+                key: 'coordinates',
+                label: FIELD_CONFIG.coordinates.label,
+                tooltipText: FIELD_CONFIG.coordinates.tooltipText,
                 contributorName,
                 userId,
                 date,
@@ -213,7 +215,9 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
 
         default:
             return {
-                key: fieldType,
+                key: null,
+                label: null,
+                tooltipText: null,
                 contributorName: '',
                 userId: null,
                 date: '',

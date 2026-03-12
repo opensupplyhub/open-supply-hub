@@ -46,7 +46,8 @@ import IconComponent from '../../Shared/IconComponent/IconComponent';
 import DataPoint from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 import useDrawerState from '../hooks';
-import { FIELD_TYPE, getFieldContributorInfo } from './utils';
+import { getFieldContributorInfo } from './utils';
+import { FIELD_CONFIG } from '..//constants';
 import getSelectedDrawerField from '../utils';
 
 /**
@@ -83,36 +84,31 @@ const ProductionLocationDetailsMap = ({
         ? `${coordinates[1]}, ${coordinates[0]}`
         : '';
 
-    const {
-        contributorName: addressContributorName,
-        userId: addressUserId,
-        date: addressDate,
-        status: addressStatus,
-        drawerData: addressDrawerData,
-    } = useMemo(
-        () => getFieldContributorInfo(singleFacilityData, FIELD_TYPE.ADDRESS),
+    const addressInfo = useMemo(
+        () =>
+            getFieldContributorInfo(
+                singleFacilityData,
+                FIELD_CONFIG.address.key,
+            ),
         [singleFacilityData],
     );
 
-    const {
-        contributorName: coordinatesContributorName,
-        userId: coordinatesUserId,
-        date: coordinatesDate,
-        status: coordinatesStatus,
-        drawerData: coordinatesDrawerData,
-    } = useMemo(
+    const coordinatesInfo = useMemo(
         () =>
-            getFieldContributorInfo(singleFacilityData, FIELD_TYPE.COORDINATES),
+            getFieldContributorInfo(
+                singleFacilityData,
+                FIELD_CONFIG.coordinates.key,
+            ),
         [singleFacilityData],
     );
 
     const selectedDrawerContent = useMemo(
         () =>
             getSelectedDrawerField(
-                [addressDrawerData, coordinatesDrawerData],
+                [addressInfo, coordinatesInfo],
                 openDrawerFieldKey,
             ),
-        [openDrawerFieldKey],
+        [openDrawerFieldKey, addressInfo, coordinatesInfo],
     );
 
     const center = useMemo(() => {
@@ -336,14 +332,15 @@ const ProductionLocationDetailsMap = ({
                     <DataPoint
                         label="Address"
                         value={address || '—'}
-                        statusLabel={addressStatus}
-                        contributorName={addressContributorName || null}
-                        userId={addressUserId}
-                        date={addressDate || null}
-                        drawerData={addressDrawerData}
+                        statusLabel={addressInfo.status}
+                        contributorName={addressInfo.contributorName || null}
+                        userId={addressInfo.userId}
+                        date={addressInfo.date || null}
+                        drawerData={addressInfo.drawerData}
+                        tooltipText={addressInfo.tooltipText}
                         onOpenDrawer={
-                            addressDrawerData
-                                ? () => openDrawer('address')
+                            addressInfo.drawerData
+                                ? () => openDrawer(addressInfo.key)
                                 : undefined
                         }
                     />
@@ -352,14 +349,17 @@ const ProductionLocationDetailsMap = ({
                     <DataPoint
                         label="Coordinates"
                         value={coordinatesDisplay || '—'}
-                        statusLabel={coordinatesStatus}
-                        contributorName={coordinatesContributorName || null}
-                        userId={coordinatesUserId}
-                        date={coordinatesDate || null}
-                        drawerData={coordinatesDrawerData}
+                        statusLabel={coordinatesInfo.status}
+                        contributorName={
+                            coordinatesInfo.contributorName || null
+                        }
+                        userId={coordinatesInfo.userId}
+                        date={coordinatesInfo.date || null}
+                        drawerData={coordinatesInfo.drawerData}
+                        tooltipText={coordinatesInfo.tooltipText}
                         onOpenDrawer={
-                            coordinatesDrawerData
-                                ? () => openDrawer('coordinates')
+                            coordinatesInfo.drawerData
+                                ? () => openDrawer(coordinatesInfo.key)
                                 : undefined
                         }
                     />
