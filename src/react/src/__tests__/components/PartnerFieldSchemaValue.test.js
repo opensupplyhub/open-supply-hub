@@ -72,9 +72,9 @@ describe('PartnerFieldSchemaValue', () => {
 
         render(<PartnerFieldSchemaValue value={value} jsonSchema={jsonSchema} />);
 
-        const text = screen.getByText('Internal ID: abc-123-xyz');
-        expect(text).toBeInTheDocument();
-        expect(text.tagName).toBe('DIV');
+        const label = screen.getByText('Internal ID:');
+        expect(label).toBeInTheDocument();
+        expect(label.closest('div')).toHaveTextContent('abc-123-xyz');
     });
 
     it('renders mixed URI and non-URI fields correctly, skipping _text property', () => {
@@ -111,8 +111,8 @@ describe('PartnerFieldSchemaValue', () => {
         expect(link).toBeInTheDocument();
         expect(link).toHaveAttribute('href', 'https://example.com/report');
 
-        expect(screen.getByText('Internal ID: ABC-123')).toBeInTheDocument();
-        expect(screen.getByText('Status: active')).toBeInTheDocument();
+        expect(screen.getByText('Internal ID:').closest('div')).toHaveTextContent('ABC-123');
+        expect(screen.getByText('Status:').closest('div')).toHaveTextContent('active');
 
         const urlTextElements = screen.queryAllByText('View Report');
         expect(urlTextElements.length).toBe(1);
@@ -160,7 +160,7 @@ describe('PartnerFieldSchemaValue', () => {
             'href',
             'https://portal.example.com/reports/report-42',
         );
-        expect(screen.getByText('Status: active')).toBeInTheDocument();
+        expect(screen.getByText('Status:').closest('div')).toHaveTextContent('active');
     });
 
     it('falls back to default renderer when schema loses uri-reference format', () => {
@@ -189,9 +189,9 @@ describe('PartnerFieldSchemaValue', () => {
             />,
         );
 
-        const text = screen.getByText('Partner field: report-42');
-        expect(text).toBeInTheDocument();
-        expect(text.tagName).toBe('DIV');
+        const label = screen.getByText('Partner field:');
+        expect(label).toBeInTheDocument();
+        expect(label.closest('div')).toHaveTextContent('report-42');
     });
 
     it('returns nothing when schema or object data is missing', () => {
