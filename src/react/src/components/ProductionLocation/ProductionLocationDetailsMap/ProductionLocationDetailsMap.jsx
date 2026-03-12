@@ -41,11 +41,13 @@ import {
     SelectedMarkerColor,
 } from '../../../util/constants';
 
-import GeneralInformation from '../../Icons/GeneralInformation';
+import MapPointer from '../../Icons/MapPointer';
 import IconComponent from '../../Shared/IconComponent/IconComponent';
 import DataPoint from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
+import useDrawerState from '../hooks';
 import { FIELD_TYPE, getFieldContributorInfo } from './utils';
+import getSelectedDrawerField from '../utils';
 
 /**
  * Production location detail map: satellite base layer, zoom/center controls,
@@ -53,13 +55,13 @@ import { FIELD_TYPE, getFieldContributorInfo } from './utils';
  * and Open in Google Maps. Clicking other locations navigates or shows a popup list
  * when multiple facilities share the same point.
  */
-function ProductionLocationDetailsMap({
+const ProductionLocationDetailsMap = ({
     classes,
     singleFacilityData,
     gridColorRamp,
     history: { push },
     match: { params: { osID } = {} } = {},
-}) {
+}) => {
     const mapRef = useRef(null);
 
     const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
@@ -69,8 +71,12 @@ function ProductionLocationDetailsMap({
     const [currentMapZoomLevel, setCurrentMapZoomLevel] = useState(
         hasCoordinates ? detailsZoomLevel : initialZoom,
     );
-    const [addressDrawerOpen, setAddressDrawerOpen] = useState(false);
-    const [coordinatesDrawerOpen, setCoordinatesDrawerOpen] = useState(false);
+    const [
+        openDrawerFieldKey,
+        isDrawerOpen,
+        openDrawer,
+        closeDrawer,
+    ] = useDrawerState(null);
 
     const address = get(singleFacilityData, 'properties.address', '') || '';
     const coordinatesDisplay = hasCoordinates
@@ -98,6 +104,15 @@ function ProductionLocationDetailsMap({
         () =>
             getFieldContributorInfo(singleFacilityData, FIELD_TYPE.COORDINATES),
         [singleFacilityData],
+    );
+
+    const selectedDrawerContent = useMemo(
+        () =>
+            getSelectedDrawerField(
+                [addressDrawerData, coordinatesDrawerData],
+                openDrawerFieldKey,
+            ),
+        [openDrawerFieldKey],
     );
 
     const center = useMemo(() => {
@@ -181,7 +196,7 @@ function ProductionLocationDetailsMap({
     return (
         <div className={classes.container}>
             <div className={classes.sectionTitleRow}>
-                <GeneralInformation
+                <MapPointer
                     width={20}
                     height={20}
                     className={classes.sectionTitleIcon}
@@ -191,7 +206,7 @@ function ProductionLocationDetailsMap({
                     variant="title"
                     className={classes.sectionTitle}
                 >
-                    Geographic information
+                    Geographic Information
                 </Typography>
                 <IconComponent
                     title={GEOGRAPHIC_INFORMATION_TOOLTIP}
@@ -326,18 +341,11 @@ function ProductionLocationDetailsMap({
                         userId={addressUserId}
                         date={addressDate || null}
                         drawerData={addressDrawerData}
-                        onOpenDrawer={() => setAddressDrawerOpen(true)}
-                        renderDrawer={() => (
-                            <ContributionsDrawer
-                                open={addressDrawerOpen}
-                                onClose={() => setAddressDrawerOpen(false)}
-                                fieldName="Address"
-                                promotedContribution={
-                                    addressDrawerData.promotedContribution
-                                }
-                                contributions={addressDrawerData.contributions}
-                            />
-                        )}
+                        onOpenDrawer={
+                            addressDrawerData
+                                ? () => openDrawer('address')
+                                : undefined
+                        }
                     />
                 </div>
                 <div data-testid="production-location-coordinates-row">
@@ -349,26 +357,28 @@ function ProductionLocationDetailsMap({
                         userId={coordinatesUserId}
                         date={coordinatesDate || null}
                         drawerData={coordinatesDrawerData}
-                        onOpenDrawer={() => setCoordinatesDrawerOpen(true)}
-                        renderDrawer={() => (
-                            <ContributionsDrawer
-                                open={coordinatesDrawerOpen}
-                                onClose={() => setCoordinatesDrawerOpen(false)}
-                                fieldName="Coordinates"
-                                promotedContribution={
-                                    coordinatesDrawerData.promotedContribution
-                                }
-                                contributions={
-                                    coordinatesDrawerData.contributions
-                                }
-                            />
-                        )}
+                        onOpenDrawer={
+                            coordinatesDrawerData
+                                ? () => openDrawer('coordinates')
+                                : undefined
+                        }
                     />
                 </div>
             </div>
+            <ContributionsDrawer
+                open={isDrawerOpen}
+                onClose={closeDrawer}
+                fieldName={selectedDrawerContent?.label}
+                promotedContribution={
+                    selectedDrawerContent?.drawerData?.promotedContribution
+                }
+                contributions={
+                    selectedDrawerContent?.drawerData?.contributions ?? []
+                }
+            />
         </div>
     );
-}
+};
 
 ProductionLocationDetailsMap.propTypes = {
     classes: PropTypes.object.isRequired,

@@ -1,23 +1,27 @@
+import { getTypographyStyles } from '../../../util/typographyStyles';
+
 export default theme => {
     const spacing = theme.spacing.unit ?? 8;
+    const typography = getTypographyStyles(theme);
 
     return Object.freeze({
         container: Object.freeze({
             padding: '20px',
             backgroundColor: 'white',
-            [theme.breakpoints.up('md')]: {
-                marginRight: theme.spacing.unit,
-            },
         }),
         titleRow: Object.freeze({
             gap: '8px',
             marginBottom: '12px',
+            alignItems: 'center',
         }),
-        titleItem: Object.freeze({
-            display: 'inline-flex',
+        titleIcon: Object.freeze({
+            color: theme.palette.text.secondary,
         }),
         title: Object.freeze({
-            lineHeight: '1.3125rem',
+            ...typography.sectionTitle,
+            marginTop: 0,
+            marginBottom: 0,
+            marginRight: 0,
         }),
         infoIcon: Object.freeze({
             padding: spacing * 0.5,

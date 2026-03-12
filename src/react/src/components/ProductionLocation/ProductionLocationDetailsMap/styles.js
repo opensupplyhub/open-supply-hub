@@ -15,7 +15,7 @@ export default theme => {
         sectionTitleRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
+            gap: '8px',
             borderBottom: `1px solid ${theme.palette.divider}`,
             paddingBottom: theme.spacing.unit * 1.5,
             marginBottom: theme.spacing.unit * 2,

@@ -82,113 +82,97 @@ const DataPoint = ({
                         {value}
                     </Typography>
                 </Grid>
-
-                <Grid item container className={classes.metaRowContainer}>
-                    {(contributorName || statusLabel) && (
-                        <Grid container item className={classes.metaRow}>
-                            {statusLabel ? (
-                                <Grid item>
-                                    <Chip
-                                        label={statusLabel}
-                                        size="small"
-                                        className={`${classes.statusChip} ${
-                                            statusChipClass || ''
-                                        }`}
-                                        data-testid="data-point-status-chip"
-                                    />
-                                </Grid>
-                            ) : null}
-                            {contributorName ? (
-                                <Grid item>
-                                    <span
-                                        className={classes.contributor}
-                                        data-testid="data-point-contributor"
-                                    >
-                                        <PersonIcon
-                                            fontSize="small"
-                                            className={classes.personIcon}
-                                        />
-                                        {userId != null ? (
-                                            <Link
-                                                to={profileRoute.replace(
-                                                    ':id',
-                                                    String(userId),
-                                                )}
-                                                className={`${classes.contributorName} ${classes.contributorNameLink}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                {contributorName}
-                                            </Link>
-                                        ) : (
-                                            <Typography
-                                                variant="body2"
-                                                component="span"
-                                                className={
-                                                    classes.contributorName
-                                                }
-                                            >
-                                                {contributorName}
-                                            </Typography>
-                                        )}
-                                    </span>
-                                </Grid>
-                            ) : null}
-                        </Grid>
-                    )}
-                    {(date || showSourcesButton) && (
-                        <Grid
-                            item
-                            container
-                            className={classes.metaRowSecondary}
-                        >
-                            {date ? (
-                                <>
-                                    <Grid
-                                        item
-                                        className={`${classes.dateItem} ${
-                                            contributorName
-                                                ? classes.metaDotSeparator
-                                                : ''
-                                        }`}
-                                    >
-                                        <span
-                                            className={classes.dateBlock}
-                                            data-testid="data-point-date"
-                                        >
-                                            <ScheduleIcon
-                                                fontSize="small"
-                                                className={classes.dateIcon}
-                                            />
-                                            <Typography
-                                                variant="body2"
-                                                component="span"
-                                                className={classes.dateText}
-                                            >
-                                                {formatDate(
-                                                    date,
-                                                    DATE_FORMATS.LONG,
-                                                )}
-                                            </Typography>
-                                        </span>
-                                    </Grid>
-                                </>
-                            ) : null}
-                            {showSourcesButton && (
-                                <Grid
-                                    item
-                                    className={`${classes.sourcesButtonItem} ${
-                                        date ? classes.metaDotSeparator : ''
+                <Grid item container className={classes.metaRowWrapper}>
+                    <Grid item container className={classes.metaRow}>
+                        {statusLabel && (
+                            <Grid item>
+                                <Chip
+                                    label={statusLabel}
+                                    size="small"
+                                    className={`${classes.statusChip} ${
+                                        statusChipClass || ''
                                     }`}
+                                    data-testid="data-point-status-chip"
+                                />
+                            </Grid>
+                        )}
+                        {contributorName && (
+                            <Grid item>
+                                <span
+                                    className={classes.contributor}
+                                    data-testid="data-point-contributor"
                                 >
-                                    <SourcesButton
-                                        sourcesCount={sourcesCount}
-                                        onOpenDrawer={onOpenDrawer}
+                                    <PersonIcon
+                                        fontSize="small"
+                                        className={classes.personIcon}
                                     />
-                                </Grid>
-                            )}
-                        </Grid>
-                    )}
+                                    {userId != null ? (
+                                        <Link
+                                            to={profileRoute.replace(
+                                                ':id',
+                                                String(userId),
+                                            )}
+                                            className={`${classes.contributorName} ${classes.contributorNameLink}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            {contributorName}
+                                        </Link>
+                                    ) : (
+                                        <Typography
+                                            variant="body2"
+                                            component="span"
+                                            className={classes.contributorName}
+                                        >
+                                            {contributorName}
+                                        </Typography>
+                                    )}
+                                </span>
+                            </Grid>
+                        )}
+                        {date && (
+                            <Grid
+                                item
+                                className={`${classes.dateItem} ${
+                                    contributorName
+                                        ? classes.metaDotSeparator
+                                        : ''
+                                }`}
+                            >
+                                <span
+                                    className={classes.dateBlock}
+                                    data-testid="data-point-date"
+                                >
+                                    <ScheduleIcon
+                                        fontSize="small"
+                                        className={classes.dateIcon}
+                                    />
+                                    <Typography
+                                        variant="body2"
+                                        component="span"
+                                        className={classes.dateText}
+                                    >
+                                        {formatDate(date, DATE_FORMATS.LONG)}
+                                    </Typography>
+                                </span>
+                            </Grid>
+                        )}
+                        {showSourcesButton && (
+                            <Grid
+                                item
+                                className={`${classes.sourcesButtonItem} ${
+                                    date || contributorName
+                                        ? classes.metaDotSeparator
+                                        : ''
+                                }`}
+                            >
+                                <SourcesButton
+                                    sourcesCount={sourcesCount}
+                                    onOpenDrawer={onOpenDrawer}
+                                />
+                            </Grid>
+                        )}
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>

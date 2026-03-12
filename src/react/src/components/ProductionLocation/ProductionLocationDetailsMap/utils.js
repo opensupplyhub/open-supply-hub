@@ -96,7 +96,14 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 })),
             };
 
-            return { contributorName, userId, date, status, drawerData };
+            return {
+                key: fieldType,
+                contributorName,
+                userId,
+                date,
+                status,
+                drawerData,
+            };
         }
 
         case FIELD_TYPE.COORDINATES: {
@@ -194,11 +201,19 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
 
             const drawerData = { promotedContribution, contributions };
 
-            return { contributorName, userId, date, status, drawerData };
+            return {
+                key: fieldType,
+                contributorName,
+                userId,
+                date,
+                status,
+                drawerData,
+            };
         }
 
         default:
             return {
+                key: fieldType,
                 contributorName: '',
                 userId: null,
                 date: '',

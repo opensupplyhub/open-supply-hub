@@ -327,19 +327,16 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
     return [nameConfig, sectorConfig, ...extendedConfigs, statusConfig];
 };
 
-export const getSelectedDrawerItem = (items, fieldKey) =>
-    fieldKey
-        ? (items && items.find(item => item.key === fieldKey)) ?? null
-        : null;
-
-export const getVisibleFields = (data, includeAdditionalIdentifiers) => {
+const getVisibleFields = (data, includeAdditionalIdentifiers) => {
     if (!data) return [];
     const configs = getOrderedFieldConfigs(includeAdditionalIdentifiers);
     return configs
         .map(config => {
             const props = config.getDataPointProps(data);
             if (!props || props.value == null) return null;
-            return { key: config.key, label: config.label, ...props };
+            return { key: config.key, ...props };
         })
         .filter(Boolean);
 };
+
+export default getVisibleFields;

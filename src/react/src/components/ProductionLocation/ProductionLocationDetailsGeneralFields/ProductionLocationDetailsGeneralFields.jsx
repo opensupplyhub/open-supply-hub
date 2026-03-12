@@ -12,8 +12,9 @@ import LearnMoreLink from '../Shared/LearnMoreLink/LearnMoreLink';
 import GeneralInformationIcon from '../../Icons/GeneralInformation';
 import DataPoint from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
-import { getVisibleFields, getSelectedDrawerItem } from './utils';
-import useDrawerState from './hooks';
+import getSelectedDrawerField from '../utils';
+import getVisibleFields from './utils';
+import useDrawerState from '../hooks';
 import { SHOW_ADDITIONAL_IDENTIFIERS } from '../../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
 import { featureFlagPropType } from '../../../util/propTypes';
@@ -35,14 +36,14 @@ const ProductionLocationDetailsGeneralFields = ({
     const showAdditionalIdentifiers =
         !featureFlagsFetching &&
         activeFeatureFlags.includes(SHOW_ADDITIONAL_IDENTIFIERS);
-    const visibleItems = useMemo(
+    const visibleFields = useMemo(
         () => getVisibleFields(data, showAdditionalIdentifiers),
         [data, showAdditionalIdentifiers],
     );
 
-    const selectedDrawerItem = useMemo(
-        () => getSelectedDrawerItem(visibleItems, openDrawerFieldKey),
-        [visibleItems, openDrawerFieldKey],
+    const selectedDrawerField = useMemo(
+        () => getSelectedDrawerField(visibleFields, openDrawerFieldKey),
+        [visibleFields, openDrawerFieldKey],
     );
 
     const renderDataPoints = items =>
@@ -67,49 +68,47 @@ const ProductionLocationDetailsGeneralFields = ({
     return (
         <Grid id="general-information" container className={classes.container}>
             <Grid item container xs={12} className={classes.titleRow}>
-                <Grid item className={classes.titleItem}>
-                    <GeneralInformationIcon width={20} height={20} />
-                </Grid>
-                <Grid item className={classes.titleItem}>
-                    <Typography
-                        variant="title"
-                        className={classes.title}
-                        component="h3"
-                    >
-                        General Information
-                    </Typography>
-                </Grid>
-                <Grid item className={classes.titleItem}>
-                    <IconComponent
-                        title={
-                            <>
-                                Core identifying information about this
-                                production location.{' '}
-                                <LearnMoreLink href="https://info.opensupplyhub.org/resources/preparing-data">
-                                    Learn more about each data point.
-                                </LearnMoreLink>
-                            </>
-                        }
-                        icon={InfoOutlined}
-                        className={classes.infoIcon}
-                    />
-                </Grid>
+                <GeneralInformationIcon
+                    width={20}
+                    height={20}
+                    className={classes.titleIcon}
+                />
+                <Typography
+                    variant="title"
+                    className={classes.title}
+                    component="h3"
+                >
+                    General Information
+                </Typography>
+                <IconComponent
+                    title={
+                        <>
+                            Core identifying information about this production
+                            location.{' '}
+                            <LearnMoreLink href="https://info.opensupplyhub.org/resources/preparing-data">
+                                Learn more about each data point.
+                            </LearnMoreLink>
+                        </>
+                    }
+                    icon={InfoOutlined}
+                    className={classes.infoIcon}
+                />
             </Grid>
             <Grid item xs={12} className={classes.dividerContainer}>
                 <Divider />
             </Grid>
             <Grid item xs={12} className={classes.dataList}>
-                {renderDataPoints(visibleItems)}
+                {renderDataPoints(visibleFields)}
             </Grid>
             <ContributionsDrawer
                 open={isDrawerOpen}
                 onClose={closeDrawer}
-                fieldName={selectedDrawerItem?.label}
+                fieldName={selectedDrawerField?.label}
                 promotedContribution={
-                    selectedDrawerItem?.drawerData?.promotedContribution
+                    selectedDrawerField?.drawerData?.promotedContribution
                 }
                 contributions={
-                    selectedDrawerItem?.drawerData?.contributions ?? []
+                    selectedDrawerField?.drawerData?.contributions ?? []
                 }
             />
         </Grid>
