@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { object, bool, shape, oneOfType, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Divider from '@material-ui/core/Divider';
-import Switch from '@material-ui/core/Switch';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import DataPoint from '../../DataPoint/DataPoint';
@@ -19,8 +18,6 @@ import {
 import claimDataContainerStyles from './styles';
 
 const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
     if (!isClaimed || !claimInfo) {
         return null;
     }
@@ -72,44 +69,23 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                     icon={InfoOutlined}
                     className={classes.infoButton}
                 />
-                <div className={classes.switchWrap}>
-                    <Typography
-                        component="span"
-                        className={classes.switchLabel}
-                    >
-                        <b>{isOpen ? 'Close' : 'Open'}</b>
-                    </Typography>
-                    <Switch
-                        checked={isOpen}
-                        onChange={e => setIsOpen(e.target.checked)}
-                        color="primary"
-                        size="small"
-                        className={classes.switch}
-                        inputProps={{
-                            'aria-label':
-                                'Show operational details submitted by management',
-                        }}
-                    />
-                </div>
             </div>
-            {isOpen && (
-                <div className={classes.dataPointsList}>
-                    {displayableFields.map((field, index) => (
-                        <React.Fragment key={field.key}>
-                            <DataPoint
-                                label={field.label}
-                                value={field.getValue()}
-                                statusLabel={STATUS_CLAIMED}
-                                contributorName={contributorName}
-                                date={claimedAt}
-                            />
-                            {index < displayableFields.length - 1 && (
-                                <Divider className={classes.divider} />
-                            )}
-                        </React.Fragment>
-                    ))}
-                </div>
-            )}
+            <div className={classes.dataPointsList}>
+                {displayableFields.map((field, index) => (
+                    <React.Fragment key={field.key}>
+                        <DataPoint
+                            label={field.label}
+                            value={field.getValue()}
+                            statusLabel={STATUS_CLAIMED}
+                            contributorName={contributorName}
+                            date={claimedAt}
+                        />
+                        {index < displayableFields.length - 1 && (
+                            <Divider className={classes.divider} />
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
         </div>
     );
 };

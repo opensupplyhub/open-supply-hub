@@ -12,8 +12,11 @@ export default theme => {
         }),
         titleRow: Object.freeze({
             display: 'flex',
-            flexWrap: 'nowrap',
             alignItems: 'center',
+            gap: '4px',
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            paddingBottom: theme.spacing.unit * 1.5,
+            marginBottom: theme.spacing.unit * 2,
         }),
         titleIcon: Object.freeze({
             display: 'inline-flex',
@@ -36,18 +39,7 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
-        switchWrap: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            marginLeft: 'auto',
-        }),
-        switchLabel: Object.freeze({
-            ...typography.bodyText,
-            fontSize: '0.875rem',
-        }),
-        switch: Object.freeze({}),
         dataPointsList: Object.freeze({
-            borderTop: `1px solid ${theme.palette.divider}`,
             paddingLeft: '16px',
         }),
         divider: Object.freeze({
