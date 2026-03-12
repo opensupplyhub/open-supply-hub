@@ -46,7 +46,7 @@ describe('getLinkTextFromSchema', () => {
         };
         const value = { url: 'https://example.com' };
 
-        expect(getLinkTextFromSchema('url', value, schemaProperties)).toBe(
+        expect(getLinkTextFromSchema('url', value, schemaProperties, value.url)).toBe(
             'https://example.com',
         );
     });
@@ -58,7 +58,7 @@ describe('getLinkTextFromSchema', () => {
         };
         const value = { url: 'https://example.com' };
 
-        expect(getLinkTextFromSchema('url', value, schemaProperties)).toBe(
+        expect(getLinkTextFromSchema('url', value, schemaProperties, value.url)).toBe(
             'https://example.com',
         );
     });
@@ -66,7 +66,7 @@ describe('getLinkTextFromSchema', () => {
     it('falls back to the property value when schemaProperties is null', () => {
         const value = { url: 'https://example.com' };
 
-        expect(getLinkTextFromSchema('url', value, null)).toBe(
+        expect(getLinkTextFromSchema('url', value, null, value.url)).toBe(
             'https://example.com',
         );
     });

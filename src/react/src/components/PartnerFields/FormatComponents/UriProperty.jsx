@@ -16,6 +16,7 @@ const UriProperty = ({ propertyKey, value, schemaProperties, classes }) => {
         propertyKey,
         value,
         schemaProperties,
+        propertyValue,
     );
 
     return (

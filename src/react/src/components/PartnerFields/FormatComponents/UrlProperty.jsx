@@ -16,6 +16,7 @@ const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
         propertyKey,
         value,
         schemaProperties,
+        propertyValue,
     );
 
     return (
