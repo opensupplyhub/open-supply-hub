@@ -13,11 +13,11 @@ export const getContributorCount = contributions => {
         return 0;
     }
     const sourceNames = contributions
-        .map(contribution => contribution?.sourceName)
-        .filter(
-            sourceName =>
-                sourceName != null && String(sourceName).trim() !== '',
-        );
+        .map(contribution => {
+            const name = contribution?.sourceName;
+            return name != null ? String(name).trim() : name;
+        })
+        .filter(sourceName => sourceName != null && sourceName !== '');
 
     const uniqueCount = new Set(sourceNames).size;
     return uniqueCount;
