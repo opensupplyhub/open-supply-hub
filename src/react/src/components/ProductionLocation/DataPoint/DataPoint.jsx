@@ -8,20 +8,18 @@ import {
     oneOf,
     func,
     number,
+    bool,
 } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Chip from '@material-ui/core/Chip';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom';
-import ScheduleIcon from '@material-ui/icons/Schedule';
-import PersonIcon from '@material-ui/icons/PersonOutline';
 
 import IconComponent from '../../Shared/IconComponent/IconComponent';
-import { profileRoute, DATE_FORMATS } from '../../../util/constants';
-import { formatDate } from '../../../util/util';
 import { getContributionsCount } from '../ContributionsDrawer/utils';
 import SourcesButton from './SourcesButton/SourcesButton';
+import MetaContributor from './MetaContributor/MetaContributor';
+import MetaDate from './MetaDate/MetaDate';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import dataPointStyles from './styles';
 
@@ -36,6 +34,7 @@ const DataPoint = ({
     date,
     drawerData,
     onOpenDrawer,
+    multiline,
 }) => {
     const sourcesCount = useMemo(
         () => getContributionsCount(drawerData?.contributions),
@@ -55,6 +54,83 @@ const DataPoint = ({
     const tooltipIcon = tooltipText ? (
         <IconComponent title={tooltipText} className={classes.tooltipIcon} />
     ) : null;
+
+    const dateDot = !multiline && contributorName;
+    const sourcesDot = multiline ? date : date || contributorName;
+
+    const statusItem = statusLabel && (
+        <Grid item>
+            <Chip
+                label={statusLabel}
+                size="small"
+                className={`${classes.statusChip} ${statusChipClass || ''}`}
+                data-testid="data-point-status-chip"
+            />
+        </Grid>
+    );
+    const contributorItem = contributorName && (
+        <Grid item>
+            <MetaContributor
+                contributorName={contributorName}
+                userId={userId}
+            />
+        </Grid>
+    );
+    const dateItem = date && (
+        <Grid
+            item
+            className={`${classes.dateItem} ${
+                dateDot ? classes.metaDotSeparator : ''
+            }`}
+        >
+            <MetaDate date={date} />
+        </Grid>
+    );
+    const sourcesItem = showSourcesButton && (
+        <Grid
+            item
+            className={`${classes.sourcesButtonItem} ${
+                sourcesDot ? classes.metaDotSeparator : ''
+            }`}
+        >
+            <SourcesButton
+                sourcesCount={sourcesCount}
+                onOpenDrawer={onOpenDrawer}
+            />
+        </Grid>
+    );
+
+    const metaContent = multiline ? (
+        <>
+            <Grid
+                item
+                container
+                className={classes.metaRow}
+                data-testid="data-point-meta-line-1"
+            >
+                {statusItem}
+                {contributorItem}
+            </Grid>
+            {(date || showSourcesButton) && (
+                <Grid
+                    item
+                    container
+                    className={classes.metaRow}
+                    data-testid="data-point-meta-line-2"
+                >
+                    {dateItem}
+                    {sourcesItem}
+                </Grid>
+            )}
+        </>
+    ) : (
+        <Grid item container className={classes.metaRow}>
+            {statusItem}
+            {contributorItem}
+            {dateItem}
+            {sourcesItem}
+        </Grid>
+    );
 
     return (
         <Grid container className={classes.root} data-testid="data-point">
@@ -82,97 +158,14 @@ const DataPoint = ({
                         {value}
                     </Typography>
                 </Grid>
-                <Grid item container className={classes.metaRowWrapper}>
-                    <Grid item container className={classes.metaRow}>
-                        {statusLabel && (
-                            <Grid item>
-                                <Chip
-                                    label={statusLabel}
-                                    size="small"
-                                    className={`${classes.statusChip} ${
-                                        statusChipClass || ''
-                                    }`}
-                                    data-testid="data-point-status-chip"
-                                />
-                            </Grid>
-                        )}
-                        {contributorName && (
-                            <Grid item>
-                                <span
-                                    className={classes.contributor}
-                                    data-testid="data-point-contributor"
-                                >
-                                    <PersonIcon
-                                        fontSize="small"
-                                        className={classes.personIcon}
-                                    />
-                                    {userId != null ? (
-                                        <Link
-                                            to={profileRoute.replace(
-                                                ':id',
-                                                String(userId),
-                                            )}
-                                            className={`${classes.contributorName} ${classes.contributorNameLink}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            {contributorName}
-                                        </Link>
-                                    ) : (
-                                        <Typography
-                                            variant="body2"
-                                            component="span"
-                                            className={classes.contributorName}
-                                        >
-                                            {contributorName}
-                                        </Typography>
-                                    )}
-                                </span>
-                            </Grid>
-                        )}
-                        {date && (
-                            <Grid
-                                item
-                                className={`${classes.dateItem} ${
-                                    contributorName
-                                        ? classes.metaDotSeparator
-                                        : ''
-                                }`}
-                            >
-                                <span
-                                    className={classes.dateBlock}
-                                    data-testid="data-point-date"
-                                >
-                                    <ScheduleIcon
-                                        fontSize="small"
-                                        className={classes.dateIcon}
-                                    />
-                                    <Typography
-                                        variant="body2"
-                                        component="span"
-                                        className={classes.dateText}
-                                    >
-                                        {formatDate(date, DATE_FORMATS.LONG)}
-                                    </Typography>
-                                </span>
-                            </Grid>
-                        )}
-                        {showSourcesButton && (
-                            <Grid
-                                item
-                                className={`${classes.sourcesButtonItem} ${
-                                    date || contributorName
-                                        ? classes.metaDotSeparator
-                                        : ''
-                                }`}
-                            >
-                                <SourcesButton
-                                    sourcesCount={sourcesCount}
-                                    onOpenDrawer={onOpenDrawer}
-                                />
-                            </Grid>
-                        )}
-                    </Grid>
+                <Grid
+                    item
+                    container
+                    className={`${classes.metaRowWrapper} ${
+                        multiline ? classes.metaRowWrapperMultiline : ''
+                    }`}
+                >
+                    {metaContent}
                 </Grid>
             </Grid>
         </Grid>
@@ -190,6 +183,7 @@ DataPoint.propTypes = {
     date: oneOfType([string, instanceOf(Date)]),
     drawerData: object,
     onOpenDrawer: func,
+    multiline: bool,
 };
 
 DataPoint.defaultProps = {
@@ -200,6 +194,7 @@ DataPoint.defaultProps = {
     date: null,
     drawerData: null,
     onOpenDrawer: null,
+    multiline: false,
 };
 
 export default withStyles(dataPointStyles)(DataPoint);
