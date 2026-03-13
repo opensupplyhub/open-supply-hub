@@ -6,10 +6,18 @@ import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/co
 
 const makeClaimInfo = (overrides = {}) => ({
     facility: {
+        name_native_language: 'Тестовая фабрика',
+        sector: ['Apparel'],
+        facility_type: 'Cut and Sew / RMG',
+        other_facility_type: null,
+        product_types: ['T-shirts', 'Jackets'],
+        production_types: ['Knitting', 'Printing'],
         website: 'https://example.com',
+        parent_company: { id: 'Acme Holdings', name: 'Acme Holdings' },
         phone_number: '+1 234 567 8900',
         minimum_order: '100 units',
         average_lead_time: '30 days',
+        workers_count: '50-100',
         female_workers_percentage: 60,
         affiliations: ['Fair Trade'],
         certifications: ['ISO 9001'],
@@ -146,10 +154,17 @@ describe('ClaimDataContainer — field labels and values', () => {
         const { getByText } = renderComponent();
 
         const expectedLabels = [
+            'Name in Native Language',
+            'Sector',
+            'Facility Type',
+            'Product Types',
+            'Production Types',
             'Website',
+            'Parent Company',
             'Contact Person',
             'Contact Email',
             'Phone Number',
+            'Number of Workers',
             'Minimum Order',
             'Average Lead Time',
             'Affiliations',
@@ -239,21 +254,33 @@ describe('ClaimDataContainer — field ordering', () => {
             el => el.textContent,
         );
 
-        const websiteIndex = labels.indexOf('Website');
-        const phoneIndex = labels.indexOf('Phone Number');
-        const officeNameIndex = labels.indexOf('Office Name');
-        const descriptionIndex = labels.indexOf('Description');
-        const certificationsIndex = labels.indexOf(
-            'Certifications/Standards/Regulations',
-        );
-        const affiliationsIndex = labels.indexOf('Affiliations');
-        const minimumOrderIndex = labels.indexOf('Minimum Order');
+        const indexOf = label => labels.indexOf(label);
 
-        expect(websiteIndex).toBeLessThan(phoneIndex);
-        expect(phoneIndex).toBeLessThan(officeNameIndex);
-        expect(descriptionIndex).toBeLessThan(certificationsIndex);
-        expect(certificationsIndex).toBeLessThan(affiliationsIndex);
-        expect(affiliationsIndex).toBeLessThan(minimumOrderIndex);
+        expect(indexOf('Name in Native Language')).toBeLessThan(
+            indexOf('Sector'),
+        );
+        expect(indexOf('Sector')).toBeLessThan(indexOf('Facility Type'));
+        expect(indexOf('Facility Type')).toBeLessThan(
+            indexOf('Product Types'),
+        );
+        expect(indexOf('Product Types')).toBeLessThan(
+            indexOf('Production Types'),
+        );
+        expect(indexOf('Production Types')).toBeLessThan(indexOf('Website'));
+        expect(indexOf('Website')).toBeLessThan(indexOf('Parent Company'));
+        expect(indexOf('Parent Company')).toBeLessThan(indexOf('Phone Number'));
+        expect(indexOf('Description')).toBeLessThan(
+            indexOf('Certifications/Standards/Regulations'),
+        );
+        expect(indexOf('Certifications/Standards/Regulations')).toBeLessThan(
+            indexOf('Affiliations'),
+        );
+        expect(indexOf('Affiliations')).toBeLessThan(
+            indexOf('Number of Workers'),
+        );
+        expect(indexOf('Number of Workers')).toBeLessThan(
+            indexOf('Minimum Order'),
+        );
     });
 });
 
