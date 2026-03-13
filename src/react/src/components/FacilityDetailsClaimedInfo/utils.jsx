@@ -80,55 +80,6 @@ export const hasDisplayableValue = value => {
  * - fullWidth: whether field should take full width (optional)
  */
 export const getLocationFieldsConfig = (location, contact, office) => [
-    // Name in native language.
-    {
-        key: 'name_native_language',
-        label: 'Name in Native Language',
-        tooltipText:
-            'The production location name in the local language if different from the English name.',
-        getValue: () => location.name_native_language,
-    },
-    // Sector.
-    {
-        key: 'sector',
-        label: 'Sector',
-        getValue: () =>
-            location.sector && location.sector.length
-                ? renderUniqueListItems(orderBy(location.sector, identity))
-                : null,
-    },
-    // Facility type.
-    {
-        key: 'facility_type',
-        label: 'Facility Type',
-        getValue: () => location.facility_type,
-    },
-    {
-        key: 'other_facility_type',
-        label: 'Other Facility Type',
-        getValue: () => location.other_facility_type,
-    },
-    // Product and production types.
-    {
-        key: 'product_types',
-        label: 'Product Types',
-        getValue: () =>
-            location.product_types && location.product_types.length
-                ? renderUniqueListItems(
-                      orderBy(location.product_types, identity),
-                  )
-                : null,
-    },
-    {
-        key: 'production_types',
-        label: 'Production Types',
-        getValue: () =>
-            location.production_types && location.production_types.length
-                ? renderUniqueListItems(
-                      orderBy(location.production_types, identity),
-                  )
-                : null,
-    },
     // Location website.
     {
         key: 'website',
@@ -145,12 +96,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
                     {location.website}
                 </a>
             ) : null,
-    },
-    // Parent company.
-    {
-        key: 'parent_company',
-        label: 'Parent Company',
-        getValue: () => location.parent_company?.name || null,
     },
     // Contact fields (only if contact exists).
     ...(contact
@@ -188,11 +133,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
         tooltipText:
             'Typical time required from order confirmation to product delivery.',
         getValue: () => location.average_lead_time,
-    },
-    {
-        key: 'workers_count',
-        label: 'Number of Workers',
-        getValue: () => location.workers_count,
     },
     {
         key: 'female_workers_percentage',
