@@ -52,12 +52,19 @@ export default () =>
             fontWeight: 600,
             lineHeight: 1.4,
         }),
+        metaRowWrapper: Object.freeze({
+            marginLeft: '-16px',
+        }),
+        metaRow: Object.freeze({
+            marginLeft: '16px',
+            columnGap: '16px',
+            alignItems: 'center',
+        }),
         statusChip: Object.freeze({
             height: '24px',
             fontSize: '1rem',
             fontWeight: 600,
             borderRadius: 0,
-            marginRight: '8px',
             '& .MuiChip-label': Object.freeze({
                 paddingLeft: '8px',
                 paddingRight: '8px',
@@ -70,29 +77,6 @@ export default () =>
         crowdsourcedChip: Object.freeze({
             backgroundColor: COLOURS.CROWDSOURCED_CHIP_BG,
             color: COLOURS.CROWDSOURCED_CHIP_TEXT,
-        }),
-        metaRowContainer: Object.freeze({
-            marginLeft: '-16px',
-        }),
-        metaRow: Object.freeze({
-            fontSize: '1rem',
-            width: 'fit-content',
-            lineHeight: 1.43,
-            color: COLOURS.DARK_GREY,
-            marginLeft: '16px',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-        }),
-        metaRowSecondary: Object.freeze({
-            fontSize: '1rem',
-            lineHeight: 1.43,
-            color: COLOURS.DARK_GREY,
-            width: 'fit-content',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-        }),
-        contributorItem: Object.freeze({
-            width: 'fit-content',
         }),
         contributor: Object.freeze({
             display: 'inline-flex',
@@ -119,7 +103,8 @@ export default () =>
         }),
         dateItem: Object.freeze({
             position: 'relative',
-            marginLeft: '16px',
+        }),
+        metaDotSeparator: Object.freeze({
             '&::before': Object.freeze({
                 content: "'·'",
                 fontSize: '1.25rem',
@@ -151,16 +136,6 @@ export default () =>
             color: COLOURS.DARK_GREY,
         }),
         sourcesButtonItem: Object.freeze({
-            marginLeft: '16px',
             position: 'relative',
-            '&::before': Object.freeze({
-                content: "'·'",
-                fontSize: '1.25rem',
-                position: 'absolute',
-                left: '-9px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: COLOURS.DARK_GREY,
-            }),
         }),
     });

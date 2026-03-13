@@ -6,10 +6,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Tab from '@material-ui/icons/Tab';
 import Typography from '@material-ui/core/Typography';
-
-import Overview from '../../../Icons/Overview';
-import GeneralInformation from '../../../Icons/GeneralInformation';
-import OperationalDetails from '../../../Icons/OperationalDetails';
+import OverviewIcon from '../../../Icons/Overview';
+import GeneralInformationIcon from '../../../Icons/GeneralInformation';
+import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
 import { setScrollTargetSection } from '../../../../actions/partnerFieldGroups';
 import { HEADER_HEIGHT } from '../../../../util/constants';
@@ -17,16 +16,16 @@ import navBarStyles from './styles';
 import getIconURL from './utils';
 
 const defaultNavItems = [
-    { to: '#overview', label: 'Overview', Icon: Overview },
+    { to: '#overview', label: 'Overview', Icon: OverviewIcon },
     {
         to: '#general-information',
         label: 'General Information',
-        Icon: GeneralInformation,
+        Icon: GeneralInformationIcon,
     },
     {
         to: '#operational-details',
         label: 'Operational Details',
-        Icon: OperationalDetails,
+        Icon: OperationalDetailsIcon,
     },
 ];
 

@@ -50,7 +50,7 @@ const ProductionLocationDetailsContent = ({
                 search={location?.search || ''}
             />
             <DataSourcesInfo className={classes.containerItem} />
-            <Grid container className={classes.containerItem}>
+            <Grid container className={classes.containerItem} spacing={16}>
                 <Grid item sm={12} md={7}>
                     <GeneralFields data={data} />
                 </Grid>

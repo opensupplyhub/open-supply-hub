@@ -117,11 +117,11 @@ const renderMap = (facilityData = null) =>
 
 describe('ProductionLocationDetailsMap', () => {
     describe('section header', () => {
-        it('renders the "Geographic information" section title', () => {
+        it('renders the "Geographic Information" section title', () => {
             renderMap(makeFacility());
 
             expect(
-                screen.getByText('Geographic information'),
+                screen.getByText('Geographic Information'),
             ).toBeInTheDocument();
         });
     });
