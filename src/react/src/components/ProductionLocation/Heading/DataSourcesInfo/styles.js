@@ -8,7 +8,7 @@ export default theme => {
     return Object.freeze({
         container: Object.freeze({
             ...commonStyles(theme).container,
-            padding: '20px 20px 20px 36px',
+            padding: '20px',
         }),
         titleRow: Object.freeze({
             display: 'flex',
