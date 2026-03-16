@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { object, bool, shape, oneOfType, string } from 'prop-types';
+import { object, bool, shape, oneOfType, string, number } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Switch from '@material-ui/core/Switch';
@@ -34,6 +34,8 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
     const contributorName = isString(claimInfo.contributor)
         ? claimInfo.contributor
         : get(claimInfo, 'contributor.name', null);
+
+    const contributorUserId = get(claimInfo, 'user_id', null);
 
     const claimedAt =
         get(claimInfo, 'approved_at') || get(claimInfo, 'created_at') || null;
@@ -108,6 +110,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                                 tooltipText={field.tooltipText}
                                 statusLabel={STATUS_CLAIMED}
                                 contributorName={contributorName}
+                                userId={contributorUserId}
                                 date={claimedAt}
                             />
                         </React.Fragment>
@@ -126,6 +129,7 @@ ClaimDataContainer.propTypes = {
         contact: object,
         office: object,
         contributor: oneOfType([string, shape({ name: string })]),
+        user_id: number,
         approved_at: string,
         created_at: string,
     }),
