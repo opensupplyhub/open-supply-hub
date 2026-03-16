@@ -94,7 +94,8 @@ export const renderProperties = (
             return acc;
         }
 
-        if (!(propertyKey in value)) {
+        const propertySchema = schemaProperties[propertyKey] || {};
+        if (!(propertyKey in value) && !propertySchema.default) {
             return acc;
         }
 
