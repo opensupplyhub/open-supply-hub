@@ -24,7 +24,7 @@ import claimDataContainerStyles from './styles';
 import sortClaimFields from './utils';
 
 const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleToggle = () => setIsOpen(prev => !prev);
 
