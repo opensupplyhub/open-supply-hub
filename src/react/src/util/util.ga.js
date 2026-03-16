@@ -190,3 +190,31 @@ export const clearGATrackingDecision = () => {
         window.console.warn(e);
     }
 };
+
+export const trackAccountConfirmation = () => {
+    try {
+        // Only track if user has accepted GA tracking.
+        if (!userHasAcceptedGATracking()) {
+            return null;
+        }
+
+        // Check if gtag is available.
+        if (typeof window.gtag === 'undefined') {
+            return null;
+        }
+
+        window.gtag('event', 'ACCOUNT_CONFIRMATION', {
+            hitType: 'event',
+            eventAction: 'ACCOUNT_CONFIRMATION',
+            eventCategory: 'USER_REGISTRATION',
+            eventLabel: 'User successfully confirmed their account',
+            nonInteraction: true,
+            anonymizeIp: true,
+        });
+
+        return 'Account confirmation event tracked';
+    } catch (e) {
+        window.console.warn(e);
+        return null;
+    }
+};
