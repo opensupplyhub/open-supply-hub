@@ -1,5 +1,4 @@
 import React from 'react';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema, getLinkTextFromSchema } from '../utils';
@@ -33,7 +32,6 @@ const UriProperty = ({ propertyKey, value, schemaProperties, classes }) => {
                 className={classes.link}
             >
                 <span>{linkText}</span>
-                <OpenInNewIcon className={classes.linkIcon} />
             </a>
         </div>
     );
