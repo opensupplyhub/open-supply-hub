@@ -57,6 +57,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
     * Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
     * The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Enhanced partner field property components:
+    * Extracted a reusable `PartnerFieldLabel` component with bold, dark-slate-grey styling, replacing inline title rendering across all property components (`DateProperty`, `DateTimeProperty`, `UriProperty`, `UrlProperty`, `DefaultProperty`, `IntegerProperty`).
+    * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
+    * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
+    * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

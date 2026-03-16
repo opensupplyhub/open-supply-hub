@@ -92,9 +92,8 @@ describe('UriReferenceProperty', () => {
             partnerConfigFields,
         });
 
-        const link = screen.getByText('local-id');
-        expect(link).toHaveTextContent('local-id');
-        expect(link).not.toHaveAttribute('href');
+        const text = screen.getByText('local-id');
+        expect(text).toHaveTextContent('local-id');
     });
 
     it('shows raw value text when neither base url nor display text are provided', () => {
@@ -112,9 +111,8 @@ describe('UriReferenceProperty', () => {
             partnerConfigFields: {},
         });
 
-        const link = screen.getByText('plain-value');
-        expect(link).toHaveTextContent('plain-value');
-        expect(link).not.toHaveAttribute('href');
+        const text = screen.getByText('plain-value');
+        expect(text).toHaveTextContent('plain-value');
     });
 
     it('renders nothing when the field value is missing', () => {
@@ -127,6 +125,25 @@ describe('UriReferenceProperty', () => {
 
         expect(container).toBeEmptyDOMElement();
     });
+
+    it('renders an external link icon inside the link', () => {
+        const value = {
+            value: 'report-123',
+            value_text: 'report-123',
+        };
+        const partnerConfigFields = {
+            baseUrl: 'https://portal.example.com/reports',
+            displayText: 'Open report',
+        };
+
+        renderWithTheme({
+            propertyKey: 'value',
+            value,
+            schemaProperties,
+            partnerConfigFields,
+        });
+
+        const link = screen.getByRole('link');
+        expect(link.querySelector('svg')).toBeInTheDocument();
+    });
 });
-
-

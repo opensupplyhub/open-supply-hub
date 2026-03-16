@@ -143,4 +143,27 @@ describe('renderProperties', () => {
 
         expect(result).toHaveLength(2);
     });
+
+    it('includes properties with schema default when not in value', () => {
+        const schema = {
+            name: { type: 'string', title: 'Name' },
+            age: { type: 'integer', title: 'Age', default: 25 },
+        };
+        const value = { name: 'Alice' };
+        const result = renderProperties(value, schema, {});
+
+        expect(result).toHaveLength(2);
+        result.forEach(el => expect(React.isValidElement(el)).toBe(true));
+    });
+
+    it('still skips properties without default and not in value', () => {
+        const schema = {
+            name: { type: 'string', title: 'Name' },
+            age: { type: 'integer', title: 'Age' },
+        };
+        const value = { name: 'Alice' };
+        const result = renderProperties(value, schema, {});
+
+        expect(result).toHaveLength(1);
+    });
 });
