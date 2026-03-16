@@ -2,6 +2,7 @@ import React from 'react';
 import get from 'lodash/get';
 import { formatExtendedField } from '../../../../util/util.js';
 import FacilityDetailsItem from '../../../FacilityDetailsItem.jsx';
+import ContributorLink from './ContributorLink';
 
 export default function PartnerFieldItem({
     field: { fieldName, formatValue, label, partnerConfigFields },
@@ -21,7 +22,11 @@ export default function PartnerFieldItem({
             formatValue,
         });
 
-    const topValue = formatField(values[0]);
+    const topItem = Object.assign({}, values[0]);
+    const topValue = {
+        ...formatField(topItem),
+        secondary: <ContributorLink {...topItem} />,
+    };
 
     return (
         <FacilityDetailsItem

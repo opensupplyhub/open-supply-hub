@@ -80,5 +80,8 @@ export default theme => {
                 marginTop: spacing * 2,
             },
         }),
+        contributorLink: Object.freeze({
+            textDecoration: 'none',
+        }),
     });
 };
