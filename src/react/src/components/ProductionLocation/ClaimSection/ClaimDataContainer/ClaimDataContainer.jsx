@@ -116,6 +116,10 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                         onChange={handleToggle}
                         onClick={event => event.stopPropagation()}
                         className={classes.switchWrapper}
+                        inputProps={{
+                            'aria-label':
+                                'Show operational details submitted by management',
+                        }}
                     />
                 </div>
             </div>
