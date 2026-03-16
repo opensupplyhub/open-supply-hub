@@ -21,6 +21,7 @@ import SourcesButton from './SourcesButton/SourcesButton';
 import MetaContributor from './MetaContributor/MetaContributor';
 import MetaDate from './MetaDate/MetaDate';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
+import getStatusChipClass from './utils';
 import dataPointStyles from './styles';
 
 const DataPoint = ({
@@ -34,22 +35,10 @@ const DataPoint = ({
     date,
     drawerData,
     onOpenDrawer,
-    multiline,
 }) => {
-    const sourcesCount = useMemo(
-        () => getContributionsCount(drawerData?.contributions),
-        [drawerData?.contributions],
-    );
-    const showSourcesButton = useMemo(() => sourcesCount > 0 && onOpenDrawer, [
-        sourcesCount,
-        onOpenDrawer,
-    ]);
-    const statusChipClass = useMemo(() => {
-        if (statusLabel === STATUS_CLAIMED) return classes.claimedChip;
-        if (statusLabel === STATUS_CROWDSOURCED)
-            return classes.crowdsourcedChip;
-        return null;
-    }, [statusLabel, classes]);
+    const sourcesCount = getContributionsCount(drawerData?.contributions);
+    const showSourcesButton = sourcesCount > 0 && onOpenDrawer;
+    const statusChipClass = getStatusChipClass(statusLabel, classes);
 
     const tooltipIcon = tooltipText ? (
         <IconComponent title={tooltipText} className={classes.tooltipIcon} />

@@ -63,27 +63,32 @@ export const FIELD_CONFIG = Object.freeze({
     duns_id: Object.freeze({
         key: 'duns_id',
         label: 'DUNS ID',
-        tooltipText: '',
+        tooltipText:
+            'The Dun & Bradstreet unique nine-digit identifier used to track and verify business entities globally.',
     }),
     lei_id: Object.freeze({
         key: 'lei_id',
         label: 'LEI ID',
-        tooltipText: '',
+        tooltipText:
+            'The Legal Entity Identifier, a globally unique code used to identify legally registered organizations participating in financial transactions.',
     }),
     rba_id: Object.freeze({
         key: 'rba_id',
         label: 'RBA ID',
-        tooltipText: '',
+        tooltipText:
+            'The Responsible Business Alliance unique identifier assigned to this production location for auditing, assessment and membership records.',
     }),
     parent_company_os_id: Object.freeze({
         key: 'parent_company_os_id',
         label: 'Parent Company OS ID',
-        tooltipText: '',
+        tooltipText:
+            'The Open Supply Hub identifier for the parent company that owns or controls this production location. Links to the parent company profile.',
     }),
     isic_4: Object.freeze({
         key: 'isic_4',
         label: 'ISIC 4',
-        tooltipText: '',
+        tooltipText:
+            'The International Standard Industrial Classification (ISIC Rev. 4) code as defined by the United Nations indicating the primary economic activity of this production location based on the ISIC taxonomy classification.',
     }),
     status: Object.freeze({
         key: 'status',
@@ -102,4 +107,20 @@ export const FIELD_CONFIG = Object.freeze({
     }),
 });
 
-export default FIELD_CONFIG;
+/** Display order for General Information section fields. */
+export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
+    FIELD_CONFIG.name.key,
+    FIELD_CONFIG.parent_company.key,
+    FIELD_CONFIG.sector.key,
+    FIELD_CONFIG.product_type.key,
+    FIELD_CONFIG.facility_type.key,
+    FIELD_CONFIG.processing_type.key,
+    FIELD_CONFIG.number_of_workers.key,
+    FIELD_CONFIG.native_language_name.key,
+    FIELD_CONFIG.parent_company_os_id.key,
+    FIELD_CONFIG.isic_4.key,
+    FIELD_CONFIG.rba_id.key,
+    FIELD_CONFIG.duns_id.key,
+    FIELD_CONFIG.lei_id.key,
+    FIELD_CONFIG.status.key,
+]);

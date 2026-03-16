@@ -7,7 +7,7 @@ import {
     ADDITIONAL_IDENTIFIERS,
 } from '../../../util/constants';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
-import FIELD_CONFIG from '../constants.jsx';
+import { ORDERED_GENERAL_FIELD_KEYS, FIELD_CONFIG } from '../constants.jsx';
 
 const toDrawerContribution = (item, value) => ({
     value,
@@ -336,8 +336,18 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
         },
     };
 
-    // Return the field configs in the order fields should be displayed.
-    return [nameConfig, sectorConfig, ...extendedConfigs, statusConfig];
+    const configMap = {
+        [nameConfig.key]: nameConfig,
+        [sectorConfig.key]: sectorConfig,
+        [statusConfig.key]: statusConfig,
+        ...Object.fromEntries(extendedConfigs.map(c => [c.key, c])),
+    };
+    const keysToInclude = includeAdditionalIdentifiers
+        ? [...ORDERED_GENERAL_FIELD_KEYS]
+        : ORDERED_GENERAL_FIELD_KEYS.filter(
+              k => !ADDITIONAL_IDENTIFIERS.includes(k),
+          );
+    return keysToInclude.map(key => configMap[key]).filter(Boolean);
 };
 
 const getVisibleFields = (data, includeAdditionalIdentifiers) => {
