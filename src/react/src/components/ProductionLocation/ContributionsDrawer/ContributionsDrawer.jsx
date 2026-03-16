@@ -1,15 +1,5 @@
-import React from 'react';
-import {
-    object,
-    bool,
-    func,
-    string,
-    shape,
-    oneOfType,
-    instanceOf,
-    arrayOf,
-    number,
-} from 'prop-types';
+import React, { useMemo } from 'react';
+import { object, bool, func, string, array } from 'prop-types';
 import Drawer from '@material-ui/core/Drawer';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -45,21 +35,21 @@ const ContributionsDrawer = ({
     promotedContribution,
     contributions,
 }) => {
-    const contributionsCount = getContributionsCount(contributions);
-    const contributorCount = getContributorCount(
-        promotedContribution
-            ? [...contributions, promotedContribution]
-            : contributions,
+    const contributionsCount = useMemo(
+        () => getContributionsCount(contributions),
+        [contributions],
     );
-    const sectionLabel = getContributionsSectionLabel(contributions);
+    const contributorCount = useMemo(
+        () => getContributorCount([...contributions, promotedContribution]),
+        [contributions, promotedContribution],
+    );
+    const sectionLabel = useMemo(
+        () => getContributionsSectionLabel(contributionsCount),
+        [contributions],
+    );
 
     return (
-        <Drawer
-            anchor="right"
-            open={open}
-            onClose={onClose}
-            classes={{ paper: classes.drawerPaper }}
-        >
+        <Drawer open={open} onClose={onClose} anchor="right">
             <div
                 className={classes.drawerContent}
                 data-testid="contributions-drawer"
@@ -154,23 +144,8 @@ ContributionsDrawer.propTypes = {
     open: bool.isRequired,
     onClose: func.isRequired,
     fieldName: string,
-    promotedContribution: shape({
-        value: string,
-        sourceName: string,
-        date: oneOfType([string, instanceOf(Date)]),
-        linkUrl: string,
-        userId: oneOfType([string, number]),
-    }),
-    contributions: arrayOf(
-        shape({
-            id: oneOfType([string, number]),
-            value: string,
-            sourceName: string,
-            date: oneOfType([string, instanceOf(Date)]),
-            linkUrl: string,
-            userId: oneOfType([string, number]),
-        }),
-    ),
+    promotedContribution: object,
+    contributions: array,
 };
 
 ContributionsDrawer.defaultProps = {

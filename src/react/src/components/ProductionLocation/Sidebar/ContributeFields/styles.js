@@ -22,7 +22,6 @@ export default theme =>
             margin: 0,
             gap: '6px',
         }),
-        actionItemWrapper: Object.freeze({}),
         actionItem: Object.freeze({
             display: 'flex',
             alignItems: 'center',
