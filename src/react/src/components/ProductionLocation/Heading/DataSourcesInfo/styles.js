@@ -15,6 +15,7 @@ export default theme => {
             flexWrap: 'nowrap',
             alignItems: 'center',
             marginBottom: spacing * 2,
+            cursor: 'pointer',
         }),
         sectionTitle: Object.freeze({
             ...typography.sectionTitle,
