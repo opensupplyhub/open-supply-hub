@@ -1,5 +1,4 @@
 import React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimDataContainer from '../../components/ProductionLocation/ClaimSection/ClaimDataContainer/ClaimDataContainer';
 import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/constants';
