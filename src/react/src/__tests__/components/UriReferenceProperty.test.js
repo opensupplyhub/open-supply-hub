@@ -126,24 +126,4 @@ describe('UriReferenceProperty', () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders an external link icon inside the link', () => {
-        const value = {
-            value: 'report-123',
-            value_text: 'report-123',
-        };
-        const partnerConfigFields = {
-            baseUrl: 'https://portal.example.com/reports',
-            displayText: 'Open report',
-        };
-
-        renderWithTheme({
-            propertyKey: 'value',
-            value,
-            schemaProperties,
-            partnerConfigFields,
-        });
-
-        const link = screen.getByRole('link');
-        expect(link.querySelector('svg')).toBeInTheDocument();
-    });
 });

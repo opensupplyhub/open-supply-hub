@@ -32,13 +32,13 @@ const PartnerSectionItem = ({
     );
 
     const columns = useMemo(() => {
-        if (!isOpen || !group.partnerFields) return { left: [], right: [] };
+        if (!group.partnerFields) return { left: [], right: [] };
         const mid = Math.ceil(group.partnerFields.length / 2);
         return {
             left: group.partnerFields.slice(0, mid),
             right: group.partnerFields.slice(mid),
         };
-    }, [isOpen, group]);
+    }, [group]);
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -51,6 +51,8 @@ const PartnerSectionItem = ({
 
     const hasPartnerFields =
         columns.left.length > 0 || columns.right.length > 0;
+
+    if (!hasPartnerFields) return null;
 
     return (
         <div className={classes.container} ref={containerRef}>
