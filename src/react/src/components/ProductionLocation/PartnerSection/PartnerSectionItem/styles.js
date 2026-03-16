@@ -17,7 +17,7 @@ export default theme => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: `${spacing * 2}px ${spacing * 3}px`,
+            padding: `20px`,
             cursor: 'pointer',
             '&:focus': {
                 outline: 'none',
@@ -58,7 +58,7 @@ export default theme => {
             zIndex: 1,
         }),
         contentArea: Object.freeze({
-            padding: `0 ${spacing * 3}px ${spacing * 3}px`,
+            padding: `0 20px 20px`,
         }),
         disclaimer: Object.freeze({
             backgroundColor: COLOURS.LIGHT_GREY,
