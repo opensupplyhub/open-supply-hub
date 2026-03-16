@@ -9,6 +9,7 @@ const makeGroup = (overrides = {}) => ({
     icon_file: null,
     helper_text: '<p>Helper</p>',
     description: '',
+    partnerFields: [{ fieldName: 'field-1', label: 'Field 1' }],
     ...overrides,
 });
 
