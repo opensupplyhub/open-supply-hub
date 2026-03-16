@@ -3,6 +3,7 @@ import { object, bool, shape, oneOfType, string, number } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Switch from '@material-ui/core/Switch';
+import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import filter from 'lodash/filter';
 import get from 'lodash/get';
@@ -24,6 +25,15 @@ import sortClaimFields from './utils';
 
 const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
     const [isOpen, setIsOpen] = useState(true);
+
+    const handleToggle = () => setIsOpen(prev => !prev);
+
+    const handleKeyDown = event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleToggle();
+        }
+    };
 
     if (!isClaimed || !claimInfo) {
         return null;
@@ -59,48 +69,57 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
             id="operational-details"
             className={`${classes.container} ${className || ''}`}
         >
-            <div className={classes.titleRow}>
-                <BadgeClaimed className={classes.titleIcon} />
-                <Typography
-                    variant="title"
-                    className={classes.sectionTitle}
-                    component="h3"
-                >
-                    Operational Details Submitted by Management
-                </Typography>
-                <IconComponent
-                    title={
-                        <>
-                            Data provided by the production location management
-                            through the claim process.
-                            <LearnMoreLink href="https://info.opensupplyhub.org/resources/claim-a-facility" />
-                        </>
-                    }
-                    icon={InfoOutlined}
-                    className={classes.infoButton}
-                    data-testid="claim-data-info-tooltip"
-                />
-                <div className={classes.switchWrap}>
+            <div
+                className={`${classes.header}${
+                    isOpen ? ` ${classes.headerOpen}` : ''
+                }`}
+                role="button"
+                tabIndex={0}
+                onClick={handleToggle}
+                onKeyDown={handleKeyDown}
+            >
+                <div className={classes.headerLeft}>
+                    <BadgeClaimed className={classes.titleIcon} />
                     <Typography
-                        component="span"
-                        className={classes.switchLabel}
+                        variant="title"
+                        className={classes.title}
+                        component="h3"
                     >
-                        <b>{isOpen ? 'Close' : 'Open'}</b>
+                        Operational Details Submitted by Management
+                    </Typography>
+                    <div
+                        onClick={event => event.stopPropagation()}
+                        onKeyDown={event => event.stopPropagation()}
+                        role="presentation"
+                    >
+                        <IconComponent
+                            title={
+                                <>
+                                    Data provided by the production location
+                                    management through the claim process.
+                                    <LearnMoreLink href="https://info.opensupplyhub.org/resources/claim-a-facility" />
+                                </>
+                            }
+                            icon={InfoOutlined}
+                            className={classes.infoIcon}
+                            data-testid="claim-data-info-tooltip"
+                        />
+                    </div>
+                </div>
+                <div className={classes.headerRight}>
+                    <Typography className={classes.toggleLabel}>
+                        {isOpen ? 'Close' : 'Open'}
                     </Typography>
                     <Switch
-                        checked={isOpen}
-                        onChange={e => setIsOpen(e.target.checked)}
                         color="primary"
-                        size="small"
-                        className={classes.switch}
-                        inputProps={{
-                            'aria-label':
-                                'Show operational details submitted by management',
-                        }}
+                        checked={isOpen}
+                        onChange={handleToggle}
+                        onClick={event => event.stopPropagation()}
+                        className={classes.switchWrapper}
                     />
                 </div>
             </div>
-            {isOpen && (
+            <Collapse in={isOpen}>
                 <div className={classes.dataPointsList}>
                     {displayableFields.map(field => (
                         <React.Fragment key={field.key}>
@@ -116,7 +135,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                         </React.Fragment>
                     ))}
                 </div>
-            )}
+            </Collapse>
         </div>
     );
 };

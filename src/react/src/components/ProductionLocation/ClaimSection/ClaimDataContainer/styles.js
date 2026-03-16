@@ -8,48 +8,56 @@ export default theme => {
     return Object.freeze({
         container: Object.freeze({
             ...commonStyles(theme).container,
-            padding: '20px',
+            border: `1px solid ${COLOURS.ACCENT_GREY}`,
+            borderRadius: 0,
+            overflow: 'hidden',
         }),
-        titleRow: Object.freeze({
+        header: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
+            justifyContent: 'space-between',
+            padding: `${spacing * 2}px ${spacing * 3}px`,
+            cursor: 'pointer',
+            '&:focus': {
+                outline: 'none',
+            },
+        }),
+        headerOpen: Object.freeze({
+            borderBottom: `1px solid ${COLOURS.ACCENT_GREY}`,
+        }),
+        headerLeft: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: `${spacing}px`,
+        }),
+        headerRight: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: `${spacing * 0.5}px`,
         }),
         titleIcon: Object.freeze({
             flexShrink: 0,
             fontSize: 20,
             color: COLOURS.DARK_GREEN,
-            marginRight: spacing * 1.5,
         }),
-        sectionTitle: Object.freeze({
+        title: Object.freeze({
             ...typography.sectionTitle,
             marginTop: 0,
             marginBottom: 0,
         }),
-        infoButton: Object.freeze({
-            marginLeft: spacing * 0.5,
-            padding: spacing * 0.5,
+        infoIcon: Object.freeze({
+            fontSize: '1.25rem',
             color: theme.palette.text.secondary,
-            '&:hover': {
-                color: theme.palette.text.primary,
-                backgroundColor: theme.palette.action.hover,
-            },
+            cursor: 'pointer',
         }),
-        switchWrap: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            marginLeft: 'auto',
-        }),
-        switchLabel: Object.freeze({
+        toggleLabel: Object.freeze({
             ...typography.bodyText,
             fontSize: '0.875rem',
         }),
-        switch: Object.freeze({}),
+        switchWrapper: Object.freeze({
+            zIndex: 1,
+        }),
         dataPointsList: Object.freeze({
-            borderTop: `1px solid ${theme.palette.divider}`,
-            marginTop: spacing * 2.5,
-            marginLeft: -(spacing * 2.5),
-            marginRight: -(spacing * 2.5),
             padding: '20px',
         }),
     });
