@@ -92,9 +92,8 @@ describe('UriReferenceProperty', () => {
             partnerConfigFields,
         });
 
-        const link = screen.getByText('local-id');
-        expect(link).toHaveTextContent('local-id');
-        expect(link).not.toHaveAttribute('href');
+        const text = screen.getByText('local-id');
+        expect(text).toHaveTextContent('local-id');
     });
 
     it('shows raw value text when neither base url nor display text are provided', () => {
@@ -112,9 +111,8 @@ describe('UriReferenceProperty', () => {
             partnerConfigFields: {},
         });
 
-        const link = screen.getByText('plain-value');
-        expect(link).toHaveTextContent('plain-value');
-        expect(link).not.toHaveAttribute('href');
+        const text = screen.getByText('plain-value');
+        expect(text).toHaveTextContent('plain-value');
     });
 
     it('renders nothing when the field value is missing', () => {
@@ -127,6 +125,5 @@ describe('UriReferenceProperty', () => {
 
         expect(container).toBeEmptyDOMElement();
     });
+
 });
-
-

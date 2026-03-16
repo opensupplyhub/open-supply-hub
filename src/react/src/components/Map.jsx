@@ -118,6 +118,11 @@ class Map extends Component {
                         />
                         <Route
                             exact
+                            path={productionLocationDetailsRoute}
+                            render={() => renderDetailRoute()}
+                        />
+                        <Route
+                            exact
                             path={facilitiesRoute}
                             render={() => renderFacilitiesRoute()}
                         />

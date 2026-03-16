@@ -2,39 +2,54 @@ import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
 
 import { withStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
+import Tab from '@material-ui/icons/Tab';
 import Typography from '@material-ui/core/Typography';
+import OverviewIcon from '../../../Icons/Overview';
+import GeneralInformationIcon from '../../../Icons/GeneralInformation';
+import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
-import Overview from '../../../Icons/Overview';
-import GeneralInformation from '../../../Icons/GeneralInformation';
-import OperationalDetails from '../../../Icons/OperationalDetails';
-
+import { setScrollTargetSection } from '../../../../actions/partnerFieldGroups';
+import { HEADER_HEIGHT } from '../../../../util/constants';
 import navBarStyles from './styles';
 import getIconURL from './utils';
 
 const defaultNavItems = [
-    { to: '#overview', label: 'Overview', Icon: Overview },
+    { to: '#overview', label: 'Overview', Icon: OverviewIcon },
     {
         to: '#general-information',
         label: 'General Information',
-        Icon: GeneralInformation,
+        Icon: GeneralInformationIcon,
     },
     {
         to: '#operational-details',
         label: 'Operational Details',
-        Icon: OperationalDetails,
+        Icon: OperationalDetailsIcon,
     },
 ];
 
-const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
+const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
+    const groupIds = useMemo(() => groups.map(group => group.uuid), [groups]);
+
     const handleClick = (event, to) => {
         event.preventDefault();
         const id = to.replace('#', '');
+
+        if (groupIds.includes(id)) {
+            dispatch(setScrollTargetSection(id));
+            return;
+        }
+
         const element = document.getElementById(id);
-        if (!element) return;
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        if (element) {
+            const top =
+                element.getBoundingClientRect().top +
+                window.scrollY -
+                HEADER_HEIGHT;
+            window.scrollTo({ top, behavior: 'smooth' });
+        }
     };
 
     const navItems = useMemo(
@@ -43,14 +58,16 @@ const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
             ...groups.map(group => ({
                 to: `#${group.uuid}`,
                 label: group.name,
-                Image: () => (
-                    <img
-                        src={getIconURL(group.icon_file)}
-                        width={18}
-                        height={18}
-                        alt={group.name}
-                    />
-                ),
+                Image: group.icon_file
+                    ? () => (
+                          <img
+                              src={getIconURL(group.icon_file)}
+                              width={18}
+                              height={18}
+                              alt={group.name}
+                          />
+                      )
+                    : () => <Tab style={{ height: 18, width: 18 }} />,
             })),
         ],
         [groups],
@@ -73,34 +90,29 @@ const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
                             active ? classes.menuItemActive : ''
                         }`}
                         disableGutters
+                        onClick={event => handleClick(event, to)}
                     >
-                        <Link
-                            to={to}
-                            onClick={event => handleClick(event, to)}
-                            className={classes.link}
-                        >
-                            {Image ? (
-                                <Image
-                                    className={`${classes.menuImage} ${
-                                        active ? classes.menuImageActive : ''
-                                    }`}
-                                />
-                            ) : (
-                                <Icon
-                                    className={`${classes.menuIcon} ${
-                                        active ? classes.menuIconActive : ''
-                                    }`}
-                                />
-                            )}
-                            <Typography
-                                variant="body1"
-                                className={`${classes.menuLabel} ${
-                                    active ? classes.menuLabelActive : ''
+                        {Image ? (
+                            <Image
+                                className={`${classes.menuImage} ${
+                                    active ? classes.menuImageActive : ''
                                 }`}
-                            >
-                                {label}
-                            </Typography>
-                        </Link>
+                            />
+                        ) : (
+                            <Icon
+                                className={`${classes.menuIcon} ${
+                                    active ? classes.menuIconActive : ''
+                                }`}
+                            />
+                        )}
+                        <Typography
+                            variant="body1"
+                            className={`${classes.menuLabel} ${
+                                active ? classes.menuLabelActive : ''
+                            }`}
+                        >
+                            {label}
+                        </Typography>
                     </MenuItem>
                 ))}
             </MenuList>

@@ -14,6 +14,12 @@ export const completeFetchPartnerFieldGroups = createAction(
     'COMPLETE_FETCH_PARTNER_FIELD_GROUPS',
 );
 
+export const setScrollTargetSection = createAction('SET_SCROLL_TARGET_SECTION');
+export const clearScrollTargetSection = createAction(
+    'CLEAR_SCROLL_TARGET_SECTION',
+);
+export const toggleSectionOpen = createAction('TOGGLE_SECTION_OPEN');
+
 const fetchURL = '/api/partner-field-groups/?limit=100';
 
 export function fetchPartnerFieldGroups() {

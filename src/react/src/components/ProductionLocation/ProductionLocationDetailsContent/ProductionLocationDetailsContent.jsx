@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
 import Grid from '@material-ui/core/Grid';
-import Divider from '@material-ui/core/Divider';
 
 import ClaimFlag from '../Heading/ClaimFlag/ClaimFlag';
 import ClosureStatus from '../Heading/ClosureStatus/ClosureStatus';
@@ -17,7 +16,7 @@ import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetail
 import { facilityClaimStatusChoicesEnum } from '../../../util/constants';
 
 import productionLocationDetailsContentStyles from './styles';
-import OsIdBadge from '../Heading/osIdBadge/OsIdBadge';
+import OsIdBadge from '../Heading/OsIdBadge/OsIdBadge';
 
 const ProductionLocationDetailsContent = ({
     classes,
@@ -51,16 +50,19 @@ const ProductionLocationDetailsContent = ({
                 search={location?.search || ''}
             />
             <DataSourcesInfo className={classes.containerItem} />
-            <Grid container className={classes.containerItem}>
+            <Grid container className={classes.containerItem} spacing={16}>
                 <Grid item sm={12} md={7}>
-                    <GeneralFields />
+                    <GeneralFields data={data} />
                 </Grid>
                 <Grid item sm={12} md={5}>
                     <DetailsMap />
                 </Grid>
             </Grid>
-            <ClaimDataContainer className={classes.containerItem} />
-            <Divider variant="middle" className={classes.containerItem} />
+            <ClaimDataContainer
+                className={classes.containerItem}
+                claimInfo={data?.properties?.claim_info}
+                isClaimed={isClaimed}
+            />
             <PartnerDataContainer />
         </div>
     );

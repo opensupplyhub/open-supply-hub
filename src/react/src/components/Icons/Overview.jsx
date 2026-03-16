@@ -1,27 +1,18 @@
 import React from 'react';
 
-export default function Overview(props) {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={props.width || '24'}
-            height={props.height || '24'}
-            viewBox={props.viewBox || '0 0 24 24'}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="lucide lucide-building2 w-5 h-5"
-            {...props}
-        >
-            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
-            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
-            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
-            <path d="M10 6h4" />
-            <path d="M10 10h4" />
-            <path d="M10 14h4" />
-            <path d="M10 18h4" />
-        </svg>
-    );
-}
+const Overview = props => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={props.width || '24'}
+        height={props.height || '24'}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        focusable="false"
+        aria-hidden="true"
+        {...props}
+    >
+        <path d="M15 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.89 2 1.99 2H19c1.1 0 2-.9 2-2V9zM5 19V5h9v5h5v9zM9 8c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1m0 4c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1m0 4c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1" />
+    </svg>
+);
+
+export default Overview;

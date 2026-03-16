@@ -10,7 +10,7 @@ export default theme =>
         }),
         title: Object.freeze({
             fontWeight: 600,
-            fontSize: '1.125rem',
+            fontSize: '1.25rem',
             margin: '0 0 12px 0',
         }),
         menuList: Object.freeze({
@@ -42,8 +42,8 @@ export default theme =>
             color: theme.palette.primary.main,
         }),
         menuLabel: Object.freeze({
-            fontSize: '1rem',
-            color: COLOURS.BLACK,
+            fontSize: '1.15rem',
+            fontWeight: 500,
         }),
         menuLabelActive: Object.freeze({
             fontWeight: 600,
