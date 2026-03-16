@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
     object,
     string,
@@ -37,20 +37,14 @@ const DataPoint = ({
     drawerData,
     onOpenDrawer,
 }) => {
-    const sourcesCount = useMemo(
-        () => getContributionsCount(drawerData?.contributions),
-        [drawerData?.contributions],
-    );
-    const showSourcesButton = useMemo(() => sourcesCount > 0 && onOpenDrawer, [
-        sourcesCount,
-        onOpenDrawer,
-    ]);
-    const statusChipClass = useMemo(() => {
-        if (statusLabel === STATUS_CLAIMED) return classes.claimedChip;
-        if (statusLabel === STATUS_CROWDSOURCED)
-            return classes.crowdsourcedChip;
-        return null;
-    }, [statusLabel, classes]);
+    const sourcesCount = getContributionsCount(drawerData?.contributions);
+    const showSourcesButton = sourcesCount > 0 && onOpenDrawer;
+    const statusChipClass =
+        statusLabel === STATUS_CLAIMED
+            ? classes.claimedChip
+            : statusLabel === STATUS_CROWDSOURCED
+              ? classes.crowdsourcedChip
+              : null;
 
     const tooltipIcon = tooltipText ? (
         <IconComponent title={tooltipText} className={classes.tooltipIcon} />
