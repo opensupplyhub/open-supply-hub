@@ -2,12 +2,9 @@ import COLOURS from '../../../util/COLOURS';
 
 export default () =>
     Object.freeze({
-        drawerPaper: Object.freeze({
-            width: '390px',
-            boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
-        }),
         drawerContent: Object.freeze({
             padding: '24px',
+            width: '390px',
             overflowY: 'auto',
             height: '100%',
         }),
