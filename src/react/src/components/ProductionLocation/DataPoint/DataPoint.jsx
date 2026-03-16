@@ -43,8 +43,8 @@ const DataPoint = ({
         statusLabel === STATUS_CLAIMED
             ? classes.claimedChip
             : statusLabel === STATUS_CROWDSOURCED
-              ? classes.crowdsourcedChip
-              : null;
+            ? classes.crowdsourcedChip
+            : null;
 
     const tooltipIcon = tooltipText ? (
         <IconComponent title={tooltipText} className={classes.tooltipIcon} />
