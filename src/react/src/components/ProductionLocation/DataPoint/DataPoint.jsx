@@ -23,6 +23,7 @@ import { formatDate } from '../../../util/util';
 import { getContributionsCount } from '../ContributionsDrawer/utils';
 import SourcesButton from './SourcesButton/SourcesButton';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
+import getStatusChipClass from './utils';
 import dataPointStyles from './styles';
 
 const DataPoint = ({
@@ -39,12 +40,7 @@ const DataPoint = ({
 }) => {
     const sourcesCount = getContributionsCount(drawerData?.contributions);
     const showSourcesButton = sourcesCount > 0 && onOpenDrawer;
-    const statusChipClass =
-        statusLabel === STATUS_CLAIMED
-            ? classes.claimedChip
-            : statusLabel === STATUS_CROWDSOURCED
-            ? classes.crowdsourcedChip
-            : null;
+    const statusChipClass = getStatusChipClass(statusLabel, classes);
 
     const tooltipIcon = tooltipText ? (
         <IconComponent title={tooltipText} className={classes.tooltipIcon} />
