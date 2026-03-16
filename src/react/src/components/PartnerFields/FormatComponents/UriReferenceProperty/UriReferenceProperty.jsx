@@ -2,6 +2,7 @@ import React from 'react';
 import { string, object, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { getDescription, getAbsoluteUri, getDisplayLinkText } from './utils';
 import { getLinkTextFromSchema } from '../../utils';
 import { commonPropertyStyles } from '../../styles';
@@ -14,6 +15,7 @@ const UriReferenceProperty = ({
     classes,
 }) => {
     const propertyValue = value[propertyKey];
+
     if (!propertyValue) {
         return null;
     }
@@ -25,6 +27,7 @@ const UriReferenceProperty = ({
         propertyKey,
         value,
         schemaProperties,
+        propertyValue,
     );
 
     const { baseUrl, displayText } = partnerConfigFields;
@@ -51,8 +54,10 @@ const UriReferenceProperty = ({
                 href={absoluteUri}
                 target="_blank"
                 rel="noopener noreferrer"
+                className={classes.link}
             >
-                {displayLinkText}
+                <span>{displayLinkText}</span>
+                <OpenInNewIcon className={classes.linkIcon} />
             </a>
         </div>
     );
