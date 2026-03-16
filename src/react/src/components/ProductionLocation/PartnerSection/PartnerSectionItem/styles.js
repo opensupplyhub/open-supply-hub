@@ -80,5 +80,10 @@ export default theme => {
                 marginTop: spacing * 2,
             },
         }),
+        contributorLink: Object.freeze({
+            '&:hover': {
+                color: theme.palette.primary.main,
+            },
+        }),
     });
 };
