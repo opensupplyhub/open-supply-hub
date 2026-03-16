@@ -6,6 +6,9 @@ export default theme =>
             },
         }),
         containerItem: Object.freeze({
-            marginBottom: theme.spacing.unit,
+            marginBottom: '16px',
+        }),
+        containerItemInner: Object.freeze({
+            paddingBottom: `0px !important`,
         }),
     });
