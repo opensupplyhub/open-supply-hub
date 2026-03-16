@@ -1,6 +1,6 @@
 import COLOURS from '../../../util/COLOURS';
 
-export default () =>
+export default theme =>
     Object.freeze({
         root: Object.freeze({
             paddingTop: '12px',
@@ -16,8 +16,11 @@ export default () =>
             }),
         }),
         labelColumn: Object.freeze({
-            width: '165px',
+            width: '220px',
             flexDirection: 'row',
+            [theme.breakpoints.down('md')]: {
+                width: '165px',
+            },
         }),
         labelItem: Object.freeze({
             width: '80%',

@@ -50,9 +50,7 @@ export default theme => {
             marginTop: spacing * 2.5,
             marginLeft: -(spacing * 2.5),
             marginRight: -(spacing * 2.5),
-            paddingTop: spacing * 2.5,
-            paddingLeft: spacing * 2.5 + 16,
-            paddingRight: spacing * 2.5,
+            padding: '20px',
         }),
     });
 };
