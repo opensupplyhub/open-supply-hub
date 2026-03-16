@@ -343,6 +343,7 @@ const ProductionLocationDetailsMap = ({
                                 ? () => openDrawer(addressInfo.key)
                                 : undefined
                         }
+                        multiline
                     />
                 </div>
                 <div data-testid="production-location-coordinates-row">
@@ -362,6 +363,7 @@ const ProductionLocationDetailsMap = ({
                                 ? () => openDrawer(coordinatesInfo.key)
                                 : undefined
                         }
+                        multiline
                     />
                 </div>
             </div>
