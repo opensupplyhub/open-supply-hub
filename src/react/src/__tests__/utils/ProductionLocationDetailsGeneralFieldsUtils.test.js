@@ -1,5 +1,5 @@
 import getVisibleFields from '../../components/ProductionLocation/ProductionLocationDetailsGeneralFields/utils';
-import FIELD_CONFIG from '../../components/ProductionLocation/constants.jsx';
+import { FIELD_CONFIG } from '../../components/ProductionLocation/constants.jsx';
 
 /**
  * Anonymized facility fixture for getVisibleFields tests.
@@ -363,11 +363,11 @@ describe('getVisibleFields', () => {
     describe('exact full output (full fixture)', () => {
         const expectedKeysWithoutRba = [
             'name',
-            'sector',
             'parent_company',
-            'processing_type',
-            'facility_type',
+            'sector',
             'product_type',
+            'facility_type',
+            'processing_type',
             'number_of_workers',
             'parent_company_os_id',
             'isic_4',
@@ -375,15 +375,15 @@ describe('getVisibleFields', () => {
         ];
         const expectedKeysWithRba = [
             'name',
-            'sector',
             'parent_company',
-            'processing_type',
-            'facility_type',
+            'sector',
             'product_type',
+            'facility_type',
+            'processing_type',
             'number_of_workers',
-            'rba_id',
             'parent_company_os_id',
             'isic_4',
+            'rba_id',
             'status',
         ];
 
@@ -398,8 +398,8 @@ describe('getVisibleFields', () => {
             expect(result).toHaveLength(expectedKeysWithoutRba.length);
             expect(result.map(field => field.key)).toEqual(expectedKeysWithoutRba);
             expect(result[0].value).toBe('Facility A');
-            expect(result[1].value).toBe('Apparel');
-            expect(result[2].value).toBe('Parent A');
+            expect(result[1].value).toBe('Parent A');
+            expect(result[2].value).toBe('Apparel');
             expect(result[6].value).toBe('500');
             expect(result[result.length - 1].value).toBe('Verified closed');
             expect(result[result.length - 1].key).toBe('status');
@@ -416,7 +416,7 @@ describe('getVisibleFields', () => {
             expect(result).toHaveLength(expectedKeysWithRba.length);
             expect(result.map(field => field.key)).toEqual(expectedKeysWithRba);
             const rbaIndex = result.findIndex(field => field.key === 'rba_id');
-            expect(rbaIndex).toBe(7);
+            expect(rbaIndex).toBe(9);
             expect(result[rbaIndex].value).toBe('RBA-001');
         });
     });
