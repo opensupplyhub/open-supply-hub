@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
 * 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
 * 0202_add_alter_partnerfield_to_use_json.py - Alters `PartnerField.json_schema` from `jsonb` to PostgreSQL `json` type (via the new `JSONTextField`) to preserve the key order defined in partner field schemas, ensuring consistent field rendering on the frontend.
+* 0203_add_user_id_to_index_claim_info.py - Updates the `index_claim_info` function to include `user_id` (contributor admin id) in the contributor object of the `claim_info` JSON in `api_facilityindex`, enabling the contributor name to be rendered as a profile link in the Operational Details Submitted by Management section.
 
 ### Code/API changes
 * [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
@@ -57,6 +58,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added `ClaimDataContainer` component that displays operational details submitted by management through the claim process for claimed production locations.
     * The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
     * Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
+        * The contributor name is a link to the contributor’s profile when a user ID is available.
     * The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
 * [OSDEV-2371](https://opensupplyhub.atlassian.net/browse/OSDEV-2371) - Implemented the General Information section on the new Production Location page:
     * Displays core identifying fields (name, sector, parent company, processing type, facility type (shown as location type on this page), product type, number of workers, optional identifiers, ISIC 4, closure status) as data points with status, contributor, and date.
