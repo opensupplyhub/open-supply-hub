@@ -5,7 +5,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
-import Divider from '@material-ui/core/Divider';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import PartnershipIcon from '../../../Icons/Partnership';
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
@@ -32,7 +31,6 @@ function PartnerDataContainer({ classes, groups, facilityData, fetching }) {
 
     return (
         <>
-            <Divider variant="middle" className={classes.divider} />
             <Grid container className={classes.root}>
                 <Grid item xs={12}>
                     <div className={classes.titleRow}>

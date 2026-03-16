@@ -17,7 +17,7 @@ export default theme => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: `20px`,
+            padding: `10px 20px`,
             cursor: 'pointer',
             '&:focus': {
                 outline: 'none',
