@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
     object,
     string,
@@ -35,6 +35,7 @@ const DataPoint = ({
     date,
     drawerData,
     onOpenDrawer,
+    multiline,
 }) => {
     const sourcesCount = getContributionsCount(drawerData?.contributions);
     const showSourcesButton = sourcesCount > 0 && onOpenDrawer;
