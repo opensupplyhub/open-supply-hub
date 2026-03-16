@@ -81,8 +81,9 @@ export default theme => {
             },
         }),
         contributorLink: Object.freeze({
-            textDecoration: 'none',
-            color: theme.palette.primary.main,
+            '&:hover': {
+                color: theme.palette.primary.main,
+            },
         }),
     });
 };

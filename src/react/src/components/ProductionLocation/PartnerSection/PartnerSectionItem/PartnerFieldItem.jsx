@@ -16,16 +16,20 @@ export default function PartnerFieldItem({
 
     if (!values.length || !values[0]) return null;
 
-    const formatField = item =>
-        formatExtendedField({
+    const formatField = item => {
+        const formatted = formatExtendedField({
             ...item,
             formatValue,
         });
+        return {
+            ...formatted,
+            secondary: <ContributorLink {...item} />,
+        };
+    };
 
     const topItem = Object.assign({}, values[0]);
     const topValue = {
         ...formatField(topItem),
-        secondary: <ContributorLink {...topItem} />,
     };
 
     return (
