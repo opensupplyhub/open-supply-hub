@@ -51,10 +51,20 @@ const ProductionLocationDetailsContent = ({
             />
             <DataSourcesInfo className={classes.containerItem} />
             <Grid container className={classes.containerItem} spacing={16}>
-                <Grid item sm={12} md={7}>
+                <Grid
+                    item
+                    sm={12}
+                    md={7}
+                    className={classes.containerItemInner}
+                >
                     <GeneralFields data={data} />
                 </Grid>
-                <Grid item sm={12} md={5}>
+                <Grid
+                    item
+                    sm={12}
+                    md={5}
+                    className={classes.containerItemInner}
+                >
                     <DetailsMap />
                 </Grid>
             </Grid>
