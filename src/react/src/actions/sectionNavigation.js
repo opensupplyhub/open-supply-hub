@@ -5,3 +5,4 @@ export const clearScrollTargetSection = createAction(
     'CLEAR_SCROLL_TARGET_SECTION',
 );
 export const toggleSectionOpen = createAction('TOGGLE_SECTION_OPEN');
+export const resetSectionNavigation = createAction('RESET_SECTION_NAVIGATION');

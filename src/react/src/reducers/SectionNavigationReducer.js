@@ -5,6 +5,7 @@ import {
     setScrollTargetSection,
     clearScrollTargetSection,
     toggleSectionOpen,
+    resetSectionNavigation,
 } from '../actions/sectionNavigation';
 
 const initialState = Object.freeze({
@@ -27,6 +28,7 @@ export default createReducer(
                     [uuid]: { $set: !state.openSectionIds[uuid] },
                 },
             }),
+        [resetSectionNavigation]: () => initialState,
     },
     initialState,
 );

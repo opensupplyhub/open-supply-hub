@@ -30,6 +30,7 @@ import {
     setFiltersFromQueryString,
     resetAllFilters,
 } from '../../../actions/filters';
+import { resetSectionNavigation } from '../../../actions/sectionNavigation';
 
 import productionLocationDetailsContainerStyles from './styles';
 
@@ -51,6 +52,7 @@ function ProductionLocationDetailsContainer({
     hydrateFiltersFromQueryString,
     resetFilters,
     fetchFacilitiesForMap,
+    resetNavigation,
 }) {
     const normalizedOsID =
         getLastPathParameter(location?.pathname || '') ||
@@ -80,7 +82,13 @@ function ProductionLocationDetailsContainer({
     }, [location?.search]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => () => clearFacility(), []);
+    useEffect(
+        () => () => {
+            clearFacility();
+            resetNavigation();
+        },
+        [],
+    );
 
     const requestedId = normalizedOsID || '';
     const loadedId = data?.id || '';
@@ -174,6 +182,7 @@ const mapDispatchToProps = dispatch => ({
         return dispatch(fetchSingleFacility(id, 0, contributors, true));
     },
     clearFacility: () => dispatch(resetSingleFacility()),
+    resetNavigation: () => dispatch(resetSectionNavigation()),
     getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
     hydrateFiltersFromQueryString: qs =>
         dispatch(setFiltersFromQueryString(qs)),
