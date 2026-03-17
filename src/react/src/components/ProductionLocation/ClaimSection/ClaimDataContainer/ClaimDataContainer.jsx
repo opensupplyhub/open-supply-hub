@@ -1,14 +1,11 @@
-import React, { useState } from 'react';
-import { object, bool, shape, oneOfType, string, number } from 'prop-types';
+import React from 'react';
+import { connect } from 'react-redux';
+import { object, bool, string, number, arrayOf, shape, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Switch from '@material-ui/core/Switch';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
-import filter from 'lodash/filter';
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-import isString from 'lodash/isString';
 
 import DataPoint from '../../DataPoint/DataPoint';
 import { STATUS_CLAIMED } from '../../DataPoint/constants';
@@ -16,17 +13,39 @@ import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
 import BadgeClaimed from '../../../BadgeClaimed';
 import {
-    getLocationFieldsConfig,
-    hasDisplayableValue,
-} from '../../../FacilityDetailsClaimedInfo/utils';
+    getClaimDisplayData,
+    getIsClaimed,
+} from '../../../../selectors/claimDataSelectors';
+import { toggleSectionOpen } from '../../../../actions/sectionNavigation';
+import {
+    useScrollToSection,
+    transitionDurationMs,
+} from '../../PartnerSection/PartnerSectionItem/useScrollToSection';
 
 import claimDataContainerStyles from './styles';
-import sortClaimFields from './utils';
 
-const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
-    const [isOpen, setIsOpen] = useState(false);
+const SECTION_ID = 'operational-details';
 
-    const handleToggle = () => setIsOpen(prev => !prev);
+const ClaimDataContainer = ({
+    classes,
+    className,
+    isClaimed,
+    hasDisplayableFields,
+    displayableFields,
+    contributorName,
+    contributorUserId,
+    claimedAt,
+    isOpen,
+    scrollTargetId,
+    dispatch,
+}) => {
+    const containerRef = useScrollToSection(
+        scrollTargetId,
+        SECTION_ID,
+        dispatch,
+    );
+
+    const handleToggle = () => dispatch(toggleSectionOpen(SECTION_ID));
 
     const handleKeyDown = event => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -35,38 +54,14 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
         }
     };
 
-    if (!isClaimed || !claimInfo) {
-        return null;
-    }
-
-    const { facility, contact, office } = claimInfo;
-
-    const contributorName = isString(claimInfo.contributor)
-        ? claimInfo.contributor
-        : get(claimInfo, 'contributor.name', null);
-
-    const contributorUserId = get(claimInfo, 'user_id', null);
-
-    const claimedAt =
-        get(claimInfo, 'approved_at') || get(claimInfo, 'created_at') || null;
-
-    const fieldsConfig = getLocationFieldsConfig(
-        facility || {},
-        contact || null,
-        office || null,
-    );
-
-    const displayableFields = sortClaimFields(
-        filter(fieldsConfig, field => hasDisplayableValue(field.getValue())),
-    );
-
-    if (isEmpty(displayableFields)) {
+    if (!isClaimed || !hasDisplayableFields) {
         return null;
     }
 
     return (
         <div
-            id="operational-details"
+            id={SECTION_ID}
+            ref={containerRef}
             className={`${classes.container} ${className || ''}`}
         >
             <div
@@ -123,7 +118,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                     />
                 </div>
             </div>
-            <Collapse in={isOpen}>
+            <Collapse in={isOpen} timeout={transitionDurationMs}>
                 <div className={classes.dataPointsList}>
                     {displayableFields.map(field => (
                         <React.Fragment key={field.key}>
@@ -147,22 +142,39 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
 ClaimDataContainer.propTypes = {
     classes: object.isRequired,
     className: string,
-    claimInfo: shape({
-        facility: object,
-        contact: object,
-        office: object,
-        contributor: oneOfType([string, shape({ name: string })]),
-        user_id: number,
-        approved_at: string,
-        created_at: string,
-    }),
-    isClaimed: bool,
+    isClaimed: bool.isRequired,
+    hasDisplayableFields: bool,
+    displayableFields: arrayOf(
+        shape({
+            key: string.isRequired,
+            label: string.isRequired,
+            getValue: func.isRequired,
+        }),
+    ).isRequired,
+    contributorName: string,
+    contributorUserId: number,
+    claimedAt: string,
+    isOpen: bool.isRequired,
+    scrollTargetId: string,
+    dispatch: func.isRequired,
 };
 
 ClaimDataContainer.defaultProps = {
     className: '',
-    claimInfo: null,
-    isClaimed: false,
+    contributorName: null,
+    contributorUserId: null,
+    claimedAt: null,
+    scrollTargetId: null,
+    hasDisplayableFields: false,
 };
 
-export default withStyles(claimDataContainerStyles)(ClaimDataContainer);
+const mapStateToProps = state => ({
+    isClaimed: getIsClaimed(state),
+    ...getClaimDisplayData(state),
+    isOpen: !!state.sectionNavigation.openSectionIds[SECTION_ID],
+    scrollTargetId: state.sectionNavigation.scrollTargetId,
+});
+
+export default connect(mapStateToProps)(
+    withStyles(claimDataContainerStyles)(ClaimDataContainer),
+);

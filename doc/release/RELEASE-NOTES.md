@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
     * Claim form profile step and related tooltips now use `IconComponent`.
 * [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Extracted section navigation state (`scrollTargetId`, `openSectionIds`) from `PartnerFieldGroupsReducer` into a dedicated `SectionNavigationReducer`. Added memoized claim data selectors (`claimDataSelectors.js`) so both `ClaimDataContainer` and `NavBar` derive claimed status from the store.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
@@ -73,6 +74,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Displays a breakdown of contributing organizations by type with counts (e.g. "3 Brands", "1 Auditor") and pluralized type labels; public contributors are listed as named links sorted by type.
     * "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
         * An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

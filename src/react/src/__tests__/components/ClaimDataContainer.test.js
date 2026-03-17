@@ -4,6 +4,7 @@ import ClaimDataContainer from '../../components/ProductionLocation/ClaimSection
 import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/constants';
 
 const makeClaimInfo = (overrides = {}) => ({
+    status: 'APPROVED',
     facility: {
         website: 'https://example.com',
         phone_number: '+1 234 567 8900',
@@ -34,29 +35,44 @@ const makeClaimInfo = (overrides = {}) => ({
     ...overrides,
 });
 
-const renderComponent = (props = {}) => {
-    const claimInfo =
-        'claimInfo' in props ? props.claimInfo : makeClaimInfo();
+const makePreloadedState = claimInfo => ({
+    facilities: {
+        singleFacility: {
+            data: claimInfo
+                ? { properties: { claim_info: claimInfo } }
+                : { properties: {} },
+            fetching: false,
+            error: null,
+        },
+        facilities: {
+            data: null,
+            fetching: false,
+            error: null,
+            nextPageURL: null,
+            isInfiniteLoading: false,
+        },
+    },
+});
+
+const renderComponent = ({ claimInfo, className } = {}) => {
+    const resolvedClaimInfo =
+        claimInfo === undefined ? makeClaimInfo() : claimInfo;
     return renderWithProviders(
-        <ClaimDataContainer
-            isClaimed={props.isClaimed ?? true}
-            claimInfo={claimInfo}
-            className={props.className}
-        />,
+        <ClaimDataContainer className={className} />,
+        { preloadedState: makePreloadedState(resolvedClaimInfo) },
     );
 };
 
 describe('ClaimDataContainer — empty state', () => {
     it('renders nothing when isClaimed is false', () => {
-        const { container } = renderComponent({ isClaimed: false });
+        const { container } = renderComponent({
+            claimInfo: makeClaimInfo({ status: 'PENDING' }),
+        });
         expect(container.firstChild).toBeNull();
     });
 
     it('renders nothing when claimInfo is null', () => {
-        const { container } = renderComponent({
-            isClaimed: true,
-            claimInfo: null,
-        });
+        const { container } = renderComponent({ claimInfo: null });
         expect(container.firstChild).toBeNull();
     });
 

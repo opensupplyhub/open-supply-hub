@@ -15,7 +15,7 @@ const makeGroup = (overrides = {}) => ({
 
 const defaultState = {
     facilities: { singleFacility: { data: null } },
-    partnerFieldGroups: {
+    sectionNavigation: {
         scrollTargetId: null,
         openSectionIds: {},
     },
@@ -48,7 +48,7 @@ describe('PartnerSectionItem component', () => {
         const { getByText } = renderComponent(
             { group: makeGroup({ uuid: 'open-1' }) },
             {
-                partnerFieldGroups: {
+                sectionNavigation: {
                     scrollTargetId: null,
                     openSectionIds: { 'open-1': true },
                 },
@@ -69,7 +69,7 @@ describe('PartnerSectionItem component', () => {
         const { getByText } = renderComponent(
             { group: makeGroup({ uuid: 'desc-1', description: '<b>Note</b>' }) },
             {
-                partnerFieldGroups: {
+                sectionNavigation: {
                     scrollTargetId: null,
                     openSectionIds: { 'desc-1': true },
                 },
