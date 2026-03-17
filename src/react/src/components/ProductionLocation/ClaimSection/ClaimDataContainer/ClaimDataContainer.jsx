@@ -45,8 +45,6 @@ const ClaimDataContainer = ({
         dispatch,
     );
 
-    console.log({ scrollTargetId });
-
     const handleToggle = () => dispatch(toggleSectionOpen(SECTION_ID));
 
     const handleKeyDown = event => {
