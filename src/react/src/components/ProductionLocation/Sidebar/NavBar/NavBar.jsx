@@ -22,9 +22,28 @@ const NavBar = ({
     hasOperationalDetails,
 }) => {
     const navItems = useMemo(() => {
-        const handleOperationalDetails = () => {
-            console.log('handleOperationalDetails');
-        };
+        function handleOperationalDetailsClick() {
+            const id = 'operational-details';
+            console.log({ id });
+            return event => {
+                event.preventDefault();
+            };
+        }
+
+        function handleGroupClick(id) {
+            return event => {
+                event.preventDefault();
+                dispatch(setScrollTargetSection(id));
+            };
+        }
+
+        function handleDefaultSectionClick(id) {
+            return event => {
+                event.preventDefault();
+                const element = document.getElementById(id);
+                scrollToSection(element);
+            };
+        }
 
         return [
             ...[
@@ -32,11 +51,13 @@ const NavBar = ({
                     to: '#overview',
                     label: 'Overview',
                     Icon: OverviewIcon,
+                    handler: handleDefaultSectionClick('overview'),
                 },
                 {
                     to: '#general-information',
                     label: 'General Information',
                     Icon: GeneralInformationIcon,
+                    handler: handleDefaultSectionClick('general-information'),
                 },
             ],
             ...(hasOperationalDetails
@@ -45,13 +66,14 @@ const NavBar = ({
                           to: '#operational-details',
                           label: 'Operational Details',
                           Icon: OperationalDetailsIcon,
-                          handler: handleOperationalDetails,
+                          handler: handleOperationalDetailsClick,
                       },
                   ]
                 : []),
             ...groups.map(group => ({
                 to: `#${group.uuid}`,
                 label: group.name,
+                handler: handleGroupClick(group.uuid),
                 Image: group.icon_file
                     ? () => (
                           <img
@@ -66,27 +88,6 @@ const NavBar = ({
         ];
     }, [groups, hasOperationalDetails]);
 
-    const groupIds = useMemo(() => groups.map(group => group.uuid), [groups]);
-
-    const handleClick = (event, to) => {
-        event.preventDefault();
-        const id = to.replace('#', '');
-
-        const handler = navItems.find(item => item.to === to)?.handler;
-
-        if (handler) {
-            handler();
-            return;
-        }
-
-        if (groupIds.includes(id)) {
-            dispatch(setScrollTargetSection(id));
-            return;
-        }
-
-        scrollToSection(document.getElementById(id));
-    };
-
     return (
         <div className={`${classes.container} ${classes.navContainer}`}>
             <Typography
@@ -97,14 +98,14 @@ const NavBar = ({
                 Jump to
             </Typography>
             <MenuList className={classes.menuList}>
-                {navItems.map(({ to, label, Icon, Image, active }) => (
+                {navItems.map(({ to, label, Icon, Image, active, handler }) => (
                     <MenuItem
                         key={to}
                         className={`${classes.menuItem} ${
                             active ? classes.menuItemActive : ''
                         }`}
                         disableGutters
-                        onClick={event => handleClick(event, to)}
+                        onClick={handler}
                     >
                         {Image ? (
                             <Image
