@@ -12,6 +12,7 @@ import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
 import { setScrollTargetSection } from '../../../../actions/sectionNavigation';
 import { getClaimDisplayData } from '../../../../selectors/claimDataSelectors';
+import { getVisiblePartnerGroups } from '../../../../selectors/partnerFieldGroupsSelectors';
 import navBarStyles from './styles';
 import { getIconURL, scrollToSection } from './utils';
 
@@ -133,12 +134,12 @@ const NavBar = ({
 };
 
 const mapStateToProps = state => {
-    const { data, fetching } = state.partnerFieldGroups;
+    const { fetching } = state.partnerFieldGroups;
     const { hasDisplayableFields } = getClaimDisplayData(state);
 
     return {
         partnerFieldGroups: {
-            groups: data?.results || [],
+            groups: getVisiblePartnerGroups(state),
             fetching,
         },
         hasOperationalDetails: hasDisplayableFields,

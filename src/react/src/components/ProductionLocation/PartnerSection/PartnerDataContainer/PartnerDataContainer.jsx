@@ -10,15 +10,15 @@ import PartnershipIcon from '../../../Icons/Partnership';
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import PartnerSectionItem from '../PartnerSectionItem/PartnerSectionItem';
 
+import { getEnrichedPartnerGroups } from '../../../../selectors/partnerFieldGroupsSelectors';
 import partnerDataContainerStyles from './styles';
-import getPartnerGroupsWithFields from './utils';
 
-function PartnerDataContainer({ classes, groups, facilityData, fetching }) {
-    const partnerGroups = useMemo(
-        () => getPartnerGroupsWithFields(facilityData, groups),
-        [facilityData, groups],
-    );
-
+function PartnerDataContainer({
+    classes,
+    partnerGroups,
+    facilityData,
+    fetching,
+}) {
     const hasPartnerData = useMemo(() => {
         const fields = facilityData?.properties?.partner_fields;
         if (!fields) return false;
@@ -85,15 +85,10 @@ function PartnerDataContainer({ classes, groups, facilityData, fetching }) {
     );
 }
 
-const mapStateToProps = ({
-    partnerFieldGroups: { data, fetching },
-    facilities: {
-        singleFacility: { data: facilityData },
-    },
-}) => ({
-    groups: data?.results || [],
-    facilityData,
-    fetching,
+const mapStateToProps = state => ({
+    partnerGroups: getEnrichedPartnerGroups(state),
+    facilityData: state.facilities.singleFacility.data,
+    fetching: state.partnerFieldGroups.fetching,
 });
 
 export default connect(mapStateToProps)(
