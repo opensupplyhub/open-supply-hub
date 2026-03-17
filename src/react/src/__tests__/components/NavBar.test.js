@@ -37,7 +37,6 @@ describe('NavBar', () => {
 
         expect(screen.getByText('Overview')).toBeInTheDocument();
         expect(screen.getByText('General Information')).toBeInTheDocument();
-        expect(screen.getByText('Operational Details')).toBeInTheDocument();
     });
 
     test('renders partner field group items alongside defaults', () => {
@@ -51,7 +50,6 @@ describe('NavBar', () => {
 
         expect(screen.getByText('Overview')).toBeInTheDocument();
         expect(screen.getByText('General Information')).toBeInTheDocument();
-        expect(screen.getByText('Operational Details')).toBeInTheDocument();
 
         expect(screen.getByText('Certifications')).toBeInTheDocument();
         expect(screen.getByText('Supply Chain')).toBeInTheDocument();
@@ -88,7 +86,7 @@ describe('NavBar', () => {
             },
         });
 
-        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+        expect(screen.getAllByRole('menuitem')).toHaveLength(2);
     });
 
     test('clicking a link scrolls to the matching section', () => {

@@ -8,7 +8,7 @@ import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
-import getIconURL from '../../Sidebar/NavBar/utils.js';
+import { getIconURL } from '../../Sidebar/NavBar/utils.js';
 import { toggleSectionOpen } from '../../../../actions/partnerFieldGroups.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';

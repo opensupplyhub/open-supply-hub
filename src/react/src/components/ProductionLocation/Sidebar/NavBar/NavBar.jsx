@@ -11,50 +11,44 @@ import GeneralInformationIcon from '../../../Icons/GeneralInformation';
 import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
 import { setScrollTargetSection } from '../../../../actions/partnerFieldGroups';
-import { HEADER_HEIGHT } from '../../../../util/constants';
+import { getClaimDisplayData } from '../../../../selectors/claimDataSelectors';
 import navBarStyles from './styles';
-import getIconURL from './utils';
+import { getIconURL, scrollToSection } from './utils';
 
-const defaultNavItems = [
-    { to: '#overview', label: 'Overview', Icon: OverviewIcon },
-    {
-        to: '#general-information',
-        label: 'General Information',
-        Icon: GeneralInformationIcon,
-    },
-    {
-        to: '#operational-details',
-        label: 'Operational Details',
-        Icon: OperationalDetailsIcon,
-    },
-];
+const NavBar = ({
+    classes,
+    partnerFieldGroups: { groups },
+    dispatch,
+    hasOperationalDetails,
+}) => {
+    const navItems = useMemo(() => {
+        const handleOperationalDetails = () => {
+            console.log('handleOperationalDetails');
+        };
 
-const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
-    const groupIds = useMemo(() => groups.map(group => group.uuid), [groups]);
-
-    const handleClick = (event, to) => {
-        event.preventDefault();
-        const id = to.replace('#', '');
-
-        if (groupIds.includes(id)) {
-            dispatch(setScrollTargetSection(id));
-            return;
-        }
-
-        const element = document.getElementById(id);
-
-        if (element) {
-            const top =
-                element.getBoundingClientRect().top +
-                window.scrollY -
-                HEADER_HEIGHT;
-            window.scrollTo({ top, behavior: 'smooth' });
-        }
-    };
-
-    const navItems = useMemo(
-        () => [
-            ...defaultNavItems,
+        return [
+            ...[
+                {
+                    to: '#overview',
+                    label: 'Overview',
+                    Icon: OverviewIcon,
+                },
+                {
+                    to: '#general-information',
+                    label: 'General Information',
+                    Icon: GeneralInformationIcon,
+                },
+            ],
+            ...(hasOperationalDetails
+                ? [
+                      {
+                          to: '#operational-details',
+                          label: 'Operational Details',
+                          Icon: OperationalDetailsIcon,
+                          handler: handleOperationalDetails,
+                      },
+                  ]
+                : []),
             ...groups.map(group => ({
                 to: `#${group.uuid}`,
                 label: group.name,
@@ -69,9 +63,29 @@ const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
                       )
                     : () => <Tab style={{ height: 18, width: 18 }} />,
             })),
-        ],
-        [groups],
-    );
+        ];
+    }, [groups, hasOperationalDetails]);
+
+    const groupIds = useMemo(() => groups.map(group => group.uuid), [groups]);
+
+    const handleClick = (event, to) => {
+        event.preventDefault();
+        const id = to.replace('#', '');
+
+        const handler = navItems.find(item => item.to === to)?.handler;
+
+        if (handler) {
+            handler();
+            return;
+        }
+
+        if (groupIds.includes(id)) {
+            dispatch(setScrollTargetSection(id));
+            return;
+        }
+
+        scrollToSection(document.getElementById(id));
+    };
 
     return (
         <div className={`${classes.container} ${classes.navContainer}`}>
@@ -120,11 +134,17 @@ const NavBar = ({ classes, partnerFieldGroups: { groups }, dispatch }) => {
     );
 };
 
-const mapStateToProps = ({ partnerFieldGroups: { data, fetching } }) => ({
-    partnerFieldGroups: {
-        groups: data?.results || [],
-        fetching,
-    },
-});
+const mapStateToProps = state => {
+    const { data, fetching } = state.partnerFieldGroups;
+    const { hasDisplayableFields } = getClaimDisplayData(state);
+
+    return {
+        partnerFieldGroups: {
+            groups: data?.results || [],
+            fetching,
+        },
+        hasOperationalDetails: hasDisplayableFields,
+    };
+};
 
 export default connect(mapStateToProps)(withStyles(navBarStyles)(NavBar));
