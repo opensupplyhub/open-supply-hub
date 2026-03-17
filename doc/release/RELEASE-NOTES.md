@@ -70,7 +70,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
     * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
     * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
-*  [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
