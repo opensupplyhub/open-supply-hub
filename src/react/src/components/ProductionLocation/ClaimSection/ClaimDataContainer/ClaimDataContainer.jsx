@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { object, bool, string, number, arrayOf, shape, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -16,8 +16,15 @@ import {
     getClaimDisplayData,
     getIsClaimed,
 } from '../../../../selectors/claimDataSelectors';
+import { toggleSectionOpen } from '../../../../actions/sectionNavigation';
+import {
+    useScrollToSection,
+    transitionDurationMs,
+} from '../../PartnerSection/PartnerSectionItem/useScrollToSection';
 
 import claimDataContainerStyles from './styles';
+
+const SECTION_ID = 'operational-details';
 
 const ClaimDataContainer = ({
     classes,
@@ -28,10 +35,19 @@ const ClaimDataContainer = ({
     contributorName,
     contributorUserId,
     claimedAt,
+    isOpen,
+    scrollTargetId,
+    dispatch,
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useScrollToSection(
+        scrollTargetId,
+        SECTION_ID,
+        dispatch,
+    );
 
-    const handleToggle = () => setIsOpen(prev => !prev);
+    console.log({ scrollTargetId });
+
+    const handleToggle = () => dispatch(toggleSectionOpen(SECTION_ID));
 
     const handleKeyDown = event => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -46,7 +62,8 @@ const ClaimDataContainer = ({
 
     return (
         <div
-            id="operational-details"
+            id={SECTION_ID}
+            ref={containerRef}
             className={`${classes.container} ${className || ''}`}
         >
             <div
@@ -103,7 +120,7 @@ const ClaimDataContainer = ({
                     />
                 </div>
             </div>
-            <Collapse in={isOpen}>
+            <Collapse in={isOpen} timeout={transitionDurationMs}>
                 <div className={classes.dataPointsList}>
                     {displayableFields.map(field => (
                         <React.Fragment key={field.key}>
@@ -128,7 +145,7 @@ ClaimDataContainer.propTypes = {
     classes: object.isRequired,
     className: string,
     isClaimed: bool.isRequired,
-    hasDisplayableFields: bool.isRequired,
+    hasDisplayableFields: bool,
     displayableFields: arrayOf(
         shape({
             key: string.isRequired,
@@ -139,6 +156,9 @@ ClaimDataContainer.propTypes = {
     contributorName: string,
     contributorUserId: number,
     claimedAt: string,
+    isOpen: bool.isRequired,
+    scrollTargetId: string,
+    dispatch: func.isRequired,
 };
 
 ClaimDataContainer.defaultProps = {
@@ -146,11 +166,15 @@ ClaimDataContainer.defaultProps = {
     contributorName: null,
     contributorUserId: null,
     claimedAt: null,
+    scrollTargetId: null,
+    hasDisplayableFields: false,
 };
 
 const mapStateToProps = state => ({
     isClaimed: getIsClaimed(state),
     ...getClaimDisplayData(state),
+    isOpen: !!state.sectionNavigation.openSectionIds[SECTION_ID],
+    scrollTargetId: state.sectionNavigation.scrollTargetId,
 });
 
 export default connect(mapStateToProps)(

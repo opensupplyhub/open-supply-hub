@@ -10,7 +10,7 @@ import OverviewIcon from '../../../Icons/Overview';
 import GeneralInformationIcon from '../../../Icons/GeneralInformation';
 import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
-import { setScrollTargetSection } from '../../../../actions/partnerFieldGroups';
+import { setScrollTargetSection } from '../../../../actions/sectionNavigation';
 import { getClaimDisplayData } from '../../../../selectors/claimDataSelectors';
 import navBarStyles from './styles';
 import { getIconURL, scrollToSection } from './utils';
@@ -22,12 +22,9 @@ const NavBar = ({
     hasOperationalDetails,
 }) => {
     const navItems = useMemo(() => {
-        function handleOperationalDetailsClick() {
-            const id = 'operational-details';
-            console.log({ id });
-            return event => {
-                event.preventDefault();
-            };
+        function handleOperationalDetailsClick(event) {
+            event.preventDefault();
+            dispatch(setScrollTargetSection('operational-details'));
         }
 
         function handleGroupClick(id) {

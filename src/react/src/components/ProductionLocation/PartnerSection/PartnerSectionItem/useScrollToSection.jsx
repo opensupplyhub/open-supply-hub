@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { clearScrollTargetSection } from '../../../../actions/partnerFieldGroups';
+import { clearScrollTargetSection } from '../../../../actions/sectionNavigation';
 import { HEADER_HEIGHT } from '../../../../util/constants';
 
 export const transitionDurationMs = 100;

@@ -9,7 +9,7 @@ import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
 import { getIconURL } from '../../Sidebar/NavBar/utils.js';
-import { toggleSectionOpen } from '../../../../actions/partnerFieldGroups.js';
+import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
 import {
@@ -174,8 +174,8 @@ const PartnerSectionItem = ({
 
 const mapStateToProps = (state, ownProps) => ({
     facilityData: state.facilities.singleFacility.data,
-    scrollTargetId: state.partnerFieldGroups.scrollTargetId,
-    isOpen: !!state.partnerFieldGroups.openSectionIds[ownProps.group.uuid],
+    scrollTargetId: state.sectionNavigation.scrollTargetId,
+    isOpen: !!state.sectionNavigation.openSectionIds[ownProps.group.uuid],
 });
 
 export default connect(mapStateToProps)(
