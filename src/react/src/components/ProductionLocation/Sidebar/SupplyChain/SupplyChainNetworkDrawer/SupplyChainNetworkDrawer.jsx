@@ -1,28 +1,16 @@
 import React from 'react';
 import { object, bool, func, arrayOf, shape, string, number } from 'prop-types';
 import Drawer from '@material-ui/core/Drawer';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
 import Divider from '@material-ui/core/Divider';
 import { withStyles } from '@material-ui/core/styles';
-import CloseIcon from '@material-ui/icons/Close';
-import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
-import ListIcon from '@material-ui/icons/List';
-import { Link } from 'react-router-dom';
 
-import { makeProfileRouteLink } from '../../../../../util/util';
-import pluralizeContributorType from '../utils';
-import {
-    DRAWER_TITLE,
-    ANONYMIZED_SECTION_TITLE,
-    ALL_DATA_SOURCES_LABEL,
-    INFO_TEXT,
-    LEARN_MORE_LABEL,
-    LEARN_MORE_URL,
-    UPLOADED_VIA_LIST_LABEL,
-} from './constants';
 import supplyChainNetworkDrawerStyles from './styles';
+import DrawerHeader from './DrawerHeader/DrawerHeader';
+import DrawerSubtitle from './DrawerSubtitle/DrawerSubtitle';
+import InfoBoxSection from './InfoBoxSection/InfoBoxSection';
+import TypeSummarySection from './TypeSummarySection/TypeSummarySection';
+import PublicContributorsSection from './PublicContributorsSection/PublicContributorsSection';
+import AnonymizedSection from './AnonymizedSection/AnonymizedSection';
 
 const SupplyChainNetworkDrawer = ({
     classes,
@@ -32,176 +20,38 @@ const SupplyChainNetworkDrawer = ({
     typeCounts,
     publicContributors,
     nonPublicContributors,
-}) => {
-    const allSourcesLabel =
-        totalCount > 0
-            ? `${ALL_DATA_SOURCES_LABEL} (${totalCount})`
-            : ALL_DATA_SOURCES_LABEL;
-
-    return (
-        <Drawer
-            anchor="right"
-            open={open}
-            onClose={onClose}
-            classes={{ paper: classes.drawerPaper }}
+}) => (
+    <Drawer anchor="right" open={open} onClose={onClose}>
+        <div
+            className={classes.drawerContent}
+            data-testid="supply-chain-drawer"
         >
-            <div
-                className={classes.drawerContent}
-                data-testid="supply-chain-drawer"
-            >
-                <div className={classes.header}>
-                    <div className={classes.headerLeft}>
-                        <PeopleOutlineIcon className={classes.titleIcon} />
-                        <Typography className={classes.title} component="h2">
-                            {DRAWER_TITLE}
-                        </Typography>
-                    </div>
-                    <IconButton
-                        className={classes.closeButton}
-                        aria-label="Close"
-                        onClick={onClose}
-                        data-testid="supply-chain-drawer-close"
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </div>
-
-                <Typography className={classes.subtitle} component="p">
-                    {totalCount}{' '}
-                    {totalCount === 1
-                        ? 'organization has'
-                        : 'organizations have'}{' '}
-                    shared data about this production location
-                </Typography>
-
-                <Divider style={{ height: 1 }} />
-
-                <Typography className={classes.sectionLabel} component="p">
-                    {allSourcesLabel}
-                </Typography>
-
-                <div className={classes.infoBox}>
-                    <div className={classes.infoBoxWithIcon}>
-                        <InfoOutlinedIcon className={classes.infoIcon} />
-                        <div className={classes.infoBoxContent}>
-                            <Typography
-                                className={classes.infoText}
-                                component="div"
-                            >
-                                {INFO_TEXT}
-                            </Typography>
-                            <a
-                                href={LEARN_MORE_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={classes.learnMoreLink}
-                            >
-                                {LEARN_MORE_LABEL}
-                                <span className={classes.learnMoreArrow}>
-                                    →
-                                </span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                {typeCounts.length > 0 && (
-                    <div className={classes.typeSummary}>
-                        {typeCounts.map(({ type, count }) => (
-                            <Typography
-                                key={type}
-                                className={classes.typeChip}
-                                component="p"
-                            >
-                                <strong>{count}</strong>{' '}
-                                {pluralizeContributorType(type, count)}
-                            </Typography>
-                        ))}
-                    </div>
-                )}
-
-                <div className={classes.listScroll}>
-                    {publicContributors.map(contributor => (
-                        <div
-                            key={contributor.id}
-                            className={classes.contributorEntry}
-                        >
-                            <Link
-                                to={makeProfileRouteLink(contributor.id)}
-                                className={classes.contributorName}
-                            >
-                                {contributor.contributor_name}
-                            </Link>
-                            {contributor.contributor_type && (
-                                <Typography
-                                    className={classes.contributorType}
-                                    component="p"
-                                >
-                                    {contributor.contributor_type}
-                                </Typography>
-                            )}
-                            {contributor.list_names &&
-                                contributor.list_names
-                                    .map((name, i) => ({
-                                        name,
-                                        key: `${contributor.id}-${i}`,
-                                    }))
-                                    .filter(({ name }) => name)
-                                    .map(({ name: listName, key }) => (
-                                        <div
-                                            key={key}
-                                            className={classes.listEntry}
-                                        >
-                                            <Typography
-                                                className={
-                                                    classes.listEntryLabel
-                                                }
-                                                component="p"
-                                            >
-                                                <ListIcon
-                                                    className={classes.listIcon}
-                                                />
-                                                {UPLOADED_VIA_LIST_LABEL}
-                                            </Typography>
-                                            <Typography
-                                                className={classes.listName}
-                                                component="p"
-                                            >
-                                                {listName}
-                                            </Typography>
-                                        </div>
-                                    ))}
-                        </div>
-                    ))}
-                </div>
-
-                {nonPublicContributors.length > 0 && (
-                    <>
-                        <Typography
-                            className={classes.sectionLabel}
-                            component="p"
-                        >
-                            {ANONYMIZED_SECTION_TITLE}
-                        </Typography>
-                        {nonPublicContributors.map(contributor => (
-                            <Typography
-                                key={contributor.contributor_type}
-                                className={classes.anonymizedType}
-                                component="p"
-                            >
-                                {contributor.count}{' '}
-                                {pluralizeContributorType(
-                                    contributor.contributor_type,
-                                    contributor.count,
-                                )}
-                            </Typography>
-                        ))}
-                    </>
-                )}
-            </div>
-        </Drawer>
-    );
-};
+            <DrawerHeader onClose={onClose} />
+            <DrawerSubtitle totalCount={totalCount} />
+            <Divider className={classes.divider} />
+            <InfoBoxSection />
+            {typeCounts.length > 0 && (
+                <TypeSummarySection typeCounts={typeCounts} />
+            )}
+            {publicContributors.length > 0 && (
+                <>
+                    <Divider className={classes.divider} />
+                    <PublicContributorsSection
+                        publicContributors={publicContributors}
+                    />
+                </>
+            )}
+            {nonPublicContributors.length > 0 && (
+                <>
+                    <Divider className={classes.divider} />
+                    <AnonymizedSection
+                        nonPublicContributors={nonPublicContributors}
+                    />
+                </>
+            )}
+        </div>
+    </Drawer>
+);
 
 SupplyChainNetworkDrawer.propTypes = {
     classes: object.isRequired,

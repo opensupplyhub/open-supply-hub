@@ -132,9 +132,7 @@ function ProductionLocationDetailsContainer({
                 <Grid className={classes.sidebar}>
                     <NavBar />
                     <ContributeFields osId={osID} />
-                    <SupplyChain
-                        contributors={data?.properties?.contributors ?? []}
-                    />
+                    <SupplyChain />
                 </Grid>
             </Grid>
             <Grid item xs={12} md={10}>

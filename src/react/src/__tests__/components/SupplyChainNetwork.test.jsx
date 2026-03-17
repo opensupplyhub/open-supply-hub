@@ -36,11 +36,24 @@ const nonPublicContributorNullType = {
     name: '2 Others',
 };
 
+const getPreloadedState = (contributors = []) => ({
+    facilities: {
+        singleFacility: {
+            data: {
+                properties: {
+                    contributors,
+                },
+            },
+        },
+    },
+});
+
 const renderSection = (contributors = []) =>
     renderWithProviders(
         <Router>
-            <SupplyChain contributors={contributors} />
+            <SupplyChain />
         </Router>,
+        { preloadedState: getPreloadedState(contributors) },
     );
 
 describe('SupplyChainNetwork section', () => {
@@ -140,7 +153,6 @@ describe('SupplyChainNetwork section', () => {
     test('renders "View all N data sources" trigger button', () => {
         renderSection([publicContributor, nonPublicContributor]);
 
-        // totalCount = publicContributor.count(1) + nonPublicContributor.count(3) = 4
         expect(
             screen.getByRole('button', { name: /View all 4 data sources/i }),
         ).toBeInTheDocument();

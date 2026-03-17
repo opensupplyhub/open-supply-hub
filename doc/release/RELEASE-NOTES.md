@@ -69,6 +69,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
     * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
     * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
+* [OSDEV-2367](https://opensupplyhub.atlassian.net/browse/OSDEV-2367) - Implemented the Supply Chain Network section on the new Production Location page sidebar:
+    * Displays a breakdown of contributing organizations by type with counts (e.g. "3 Brands", "1 Auditor") and pluralized type labels; public contributors are listed as named links sorted by type.
+    * "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
+        * An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
