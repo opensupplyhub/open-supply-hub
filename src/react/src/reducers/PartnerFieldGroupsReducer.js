@@ -5,17 +5,12 @@ import {
     startFetchPartnerFieldGroups,
     failFetchPartnerFieldGroups,
     completeFetchPartnerFieldGroups,
-    setScrollTargetSection,
-    clearScrollTargetSection,
-    toggleSectionOpen,
 } from '../actions/partnerFieldGroups';
 
 const initialState = Object.freeze({
     fetching: false,
     data: null,
     error: null,
-    scrollTargetId: null,
-    openSectionIds: {},
 });
 
 export default createReducer(
@@ -37,19 +32,6 @@ export default createReducer(
                     data: { $set: data },
                 }),
             ),
-        [setScrollTargetSection]: (state, scrollTargetId) =>
-            update(state, {
-                scrollTargetId: { $set: scrollTargetId },
-                openSectionIds: { [scrollTargetId]: { $set: true } },
-            }),
-        [clearScrollTargetSection]: state =>
-            update(state, { scrollTargetId: { $set: null } }),
-        [toggleSectionOpen]: (state, uuid) =>
-            update(state, {
-                openSectionIds: {
-                    [uuid]: { $set: !state.openSectionIds[uuid] },
-                },
-            }),
     },
     initialState,
 );

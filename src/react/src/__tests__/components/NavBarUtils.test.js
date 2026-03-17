@@ -1,4 +1,4 @@
-import getIconURL from '../../components/ProductionLocation/Sidebar/NavBar/utils';
+import { getIconURL } from '../../components/ProductionLocation/Sidebar/NavBar/utils';
 import env from '../../util/env';
 
 jest.mock('../../util/env');

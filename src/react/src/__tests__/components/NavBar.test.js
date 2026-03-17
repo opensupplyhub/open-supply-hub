@@ -9,13 +9,28 @@ const mockGroups = [
         uuid: 'group-1',
         name: 'Certifications',
         icon_file: 'https://example.com/icons/cert.png',
+        partner_fields: ['certifications'],
     },
     {
         uuid: 'group-2',
         name: 'Supply Chain',
         icon_file: 'https://example.com/icons/chain.png',
+        partner_fields: ['supply_chain'],
     },
 ];
+
+const mockFacilityData = {
+    properties: {
+        partner_fields: {
+            certifications: [
+                { value: 'ISO 9001', field_name: 'certifications' },
+            ],
+            supply_chain: [
+                { value: 'Tier 1', field_name: 'supply_chain' },
+            ],
+        },
+    },
+};
 
 const renderNavBar = (preloadedState = {}) =>
     renderWithProviders(
@@ -37,7 +52,6 @@ describe('NavBar', () => {
 
         expect(screen.getByText('Overview')).toBeInTheDocument();
         expect(screen.getByText('General Information')).toBeInTheDocument();
-        expect(screen.getByText('Operational Details')).toBeInTheDocument();
     });
 
     test('renders partner field group items alongside defaults', () => {
@@ -47,11 +61,13 @@ describe('NavBar', () => {
                 data: { results: mockGroups },
                 error: null,
             },
+            facilities: {
+                singleFacility: { data: mockFacilityData },
+            },
         });
 
         expect(screen.getByText('Overview')).toBeInTheDocument();
         expect(screen.getByText('General Information')).toBeInTheDocument();
-        expect(screen.getByText('Operational Details')).toBeInTheDocument();
 
         expect(screen.getByText('Certifications')).toBeInTheDocument();
         expect(screen.getByText('Supply Chain')).toBeInTheDocument();
@@ -63,6 +79,9 @@ describe('NavBar', () => {
                 fetching: false,
                 data: { results: mockGroups },
                 error: null,
+            },
+            facilities: {
+                singleFacility: { data: mockFacilityData },
             },
         });
 
@@ -88,7 +107,7 @@ describe('NavBar', () => {
             },
         });
 
-        expect(screen.getAllByRole('menuitem')).toHaveLength(3);
+        expect(screen.getAllByRole('menuitem')).toHaveLength(2);
     });
 
     test('clicking a link scrolls to the matching section', () => {

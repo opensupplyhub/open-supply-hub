@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
     * Claim form profile step and related tooltips now use `IconComponent`.
 * [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Extracted section navigation state (`scrollTargetId`, `openSectionIds`) from `PartnerFieldGroupsReducer` into a dedicated `SectionNavigationReducer`. Added memoized claim data selectors (`claimDataSelectors.js`) so both `ClaimDataContainer` and `NavBar` derive claimed status from the store.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
@@ -69,6 +70,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
     * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
     * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
