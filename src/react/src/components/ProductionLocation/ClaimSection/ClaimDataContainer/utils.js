@@ -1,11 +1,13 @@
 import sortBy from 'lodash/sortBy';
 
 const FIELD_ORDER = [
-    'name_native_language',
     'website',
     'phone_number',
+    'contact_email',
+    'contact_name',
     'office_name',
     'office_address',
+    'office_phone_number',
     'description',
     'certifications',
     'affiliations',
@@ -14,6 +16,8 @@ const FIELD_ORDER = [
     'female_workers_percentage',
     'estimated_annual_throughput',
     'actual_annual_energy_consumption',
+    'opening_date',
+    'closing_date',
 ];
 
 const sortClaimFields = fields =>

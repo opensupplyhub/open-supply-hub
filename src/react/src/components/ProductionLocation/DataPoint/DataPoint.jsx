@@ -42,7 +42,11 @@ const DataPoint = ({
     const statusChipClass = getStatusChipClass(statusLabel, classes);
 
     const tooltipIcon = tooltipText ? (
-        <IconComponent title={tooltipText} className={classes.tooltipIcon} />
+        <IconComponent
+            title={tooltipText}
+            className={classes.tooltipIcon}
+            data-testid="data-point-tooltip-icon"
+        />
     ) : null;
 
     const dateDot = !multiline && contributorName;

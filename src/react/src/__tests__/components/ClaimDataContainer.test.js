@@ -6,15 +6,22 @@ import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/co
 const makeClaimInfo = (overrides = {}) => ({
     status: 'APPROVED',
     facility: {
+        sector: ['Apparel'],
+        facility_type: 'Cut and Sew / RMG',
+        other_facility_type: null,
+        product_types: ['T-shirts', 'Jackets'],
+        production_types: ['Knitting', 'Printing'],
         website: 'https://example.com',
+        parent_company: { id: 'Acme Holdings', name: 'Acme Holdings' },
         phone_number: '+1 234 567 8900',
         minimum_order: '100 units',
         average_lead_time: '30 days',
+        workers_count: '50-100',
         female_workers_percentage: 60,
         affiliations: ['Fair Trade'],
         certifications: ['ISO 9001'],
         opening_date: '2010',
-        closing_date: null,
+        closing_date: '2020-01',
         estimated_annual_throughput: 20000,
         actual_annual_energy_consumption: null,
         description: 'A sample facility.',
@@ -126,20 +133,28 @@ describe('ClaimDataContainer — field labels and values', () => {
         const { getByText } = renderComponent();
 
         const expectedLabels = [
-            'Website',
+            'Company Website',
+            'Company Phone',
             'Contact Person',
             'Contact Email',
-            'Phone Number',
-            'Minimum Order',
-            'Average Lead Time',
-            'Affiliations',
-            'Certifications/Standards/Regulations',
-            'Opening Date',
-            'Estimated Annual Throughput',
             'Office Name',
             'Office Address',
             'Office Phone Number',
             'Description',
+            'Certifications / Standards / Regulations',
+            'Affiliations',
+            'Minimum Order Quantity',
+            'Average Lead Time',
+            'Percentage of Female Workers',
+            'Opening Date',
+            'Closing Date',
+            'Estimated Annual Throughput',
+            'Sector',
+            'Facility Type',
+            'Product Types',
+            'Production Types',
+            'Parent Company',
+            'Number of Workers',
         ];
 
         expectedLabels.forEach(label => {
@@ -207,7 +222,7 @@ describe('ClaimDataContainer — field labels and values', () => {
             }),
         });
         expect(
-            getByText('Percentage of female workers', { exact: true }),
+            getByText('Percentage of Female Workers', { exact: true }),
         ).toBeInTheDocument();
     });
 });
@@ -219,21 +234,67 @@ describe('ClaimDataContainer — field ordering', () => {
             el => el.textContent,
         );
 
-        const websiteIndex = labels.indexOf('Website');
-        const phoneIndex = labels.indexOf('Phone Number');
-        const officeNameIndex = labels.indexOf('Office Name');
-        const descriptionIndex = labels.indexOf('Description');
-        const certificationsIndex = labels.indexOf(
-            'Certifications/Standards/Regulations',
-        );
-        const affiliationsIndex = labels.indexOf('Affiliations');
-        const minimumOrderIndex = labels.indexOf('Minimum Order');
+        const indexOf = label => labels.indexOf(label);
 
-        expect(websiteIndex).toBeLessThan(phoneIndex);
-        expect(phoneIndex).toBeLessThan(officeNameIndex);
-        expect(descriptionIndex).toBeLessThan(certificationsIndex);
-        expect(certificationsIndex).toBeLessThan(affiliationsIndex);
-        expect(affiliationsIndex).toBeLessThan(minimumOrderIndex);
+        // Explicitly ordered fields follow the FIELD_ORDER sequence.
+        expect(indexOf('Company Website')).toBeLessThan(
+            indexOf('Company Phone'),
+        );
+        expect(indexOf('Company Phone')).toBeLessThan(indexOf('Contact Email'));
+        expect(indexOf('Contact Email')).toBeLessThan(
+            indexOf('Contact Person'),
+        );
+        expect(indexOf('Contact Person')).toBeLessThan(indexOf('Office Name'));
+        expect(indexOf('Office Name')).toBeLessThan(
+            indexOf('Office Address'),
+        );
+        expect(indexOf('Office Address')).toBeLessThan(
+            indexOf('Office Phone Number'),
+        );
+        expect(indexOf('Office Phone Number')).toBeLessThan(
+            indexOf('Description'),
+        );
+        expect(indexOf('Description')).toBeLessThan(
+            indexOf('Certifications / Standards / Regulations'),
+        );
+        expect(
+            indexOf('Certifications / Standards / Regulations'),
+        ).toBeLessThan(indexOf('Affiliations'));
+        expect(indexOf('Affiliations')).toBeLessThan(
+            indexOf('Minimum Order Quantity'),
+        );
+        expect(indexOf('Minimum Order Quantity')).toBeLessThan(
+            indexOf('Average Lead Time'),
+        );
+        expect(indexOf('Average Lead Time')).toBeLessThan(
+            indexOf('Percentage of Female Workers'),
+        );
+        expect(indexOf('Percentage of Female Workers')).toBeLessThan(
+            indexOf('Estimated Annual Throughput'),
+        );
+        expect(indexOf('Opening Date')).toBeLessThan(indexOf('Closing Date'));
+
+        // Fields not in FIELD_ORDER appear after all explicitly ordered fields.
+        expect(indexOf('Closing Date')).toBeLessThan(indexOf('Sector'));
+    });
+});
+
+describe('ClaimDataContainer — field tooltips', () => {
+    const hasTooltipIcon = (getByText, label) => {
+        const labelEl = getByText(label, { exact: true });
+        const dataPoint = labelEl.closest('[data-testid="data-point"]');
+        return !!dataPoint?.querySelector('[data-testid="data-point-tooltip-icon"]');
+    };
+
+    it.each([
+        'Contact Person',
+        'Contact Email',
+        'Office Phone Number',
+        'Opening Date',
+        'Closing Date',
+    ])('renders a tooltip icon for the "%s" field', label => {
+        const { getByText } = renderComponent();
+        expect(hasTooltipIcon(getByText, label)).toBe(true);
     });
 });
 
