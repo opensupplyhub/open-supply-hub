@@ -14,6 +14,7 @@ import LaunchIcon from '@material-ui/icons/Launch';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import get from 'lodash/get';
 import { withStyles } from '@material-ui/core/styles';
+import Divider from '@material-ui/core/Divider';
 
 import 'leaflet/dist/leaflet.css';
 
@@ -211,160 +212,167 @@ const ProductionLocationDetailsMap = ({
                     data-testid="geographic-information-tooltip"
                 />
             </div>
-            <div className={classes.mapContainer}>
-                <div className={classes.mapInner}>
-                    <ReactLeafletMap
-                        ref={mapRef}
-                        center={center}
-                        zoom={zoom}
-                        style={mapContainerStyles}
-                        zoomControl={false}
-                        scrollWheelZoom={false}
-                        minZoom={2}
-                        maxZoom={18}
-                        onZoomEnd={handleZoomEnd}
-                    >
-                        <TileLayer
-                            url={SATELLITE_TILE_URL}
-                            attribution={SATELLITE_TILE_ATTRIBUTION}
+            <Divider className={classes.divider} />
+            <div className={classes.mapContainerWrapper}>
+                <div className={classes.mapContainer}>
+                    <div className={classes.mapInner}>
+                        <ReactLeafletMap
+                            ref={mapRef}
+                            center={center}
+                            zoom={zoom}
+                            style={mapContainerStyles}
+                            zoomControl={false}
+                            scrollWheelZoom={false}
                             minZoom={2}
-                            maxZoom={19}
-                        />
-                        <Control position="topleft">
-                            <div className={classes.mapControlsRow}>
-                                <IconButton
-                                    size="small"
-                                    className={classes.mapControlButton}
-                                    onClick={handleZoomIn}
-                                    aria-label="Zoom in"
-                                >
-                                    <AddIcon />
-                                </IconButton>
-                                <IconButton
-                                    size="small"
-                                    className={classes.mapControlButton}
-                                    onClick={handleZoomOut}
-                                    aria-label="Zoom out"
-                                >
-                                    <RemoveIcon />
-                                </IconButton>
-                                <IconButton
-                                    size="small"
-                                    className={classes.mapControlButton}
-                                    onClick={handleCenterOnLocation}
-                                    aria-label="Center map on facility location"
-                                >
-                                    <MyLocationIcon />
-                                </IconButton>
-                            </div>
-                        </Control>
-                        {googleMapsUrl && (
-                            <Control position="bottomright">
-                                <Button
-                                    component="span"
-                                    size="small"
-                                    variant="outlined"
-                                    color="default"
-                                    className={classes.googleMapsButton}
-                                    onClick={() =>
-                                        window.open(
-                                            googleMapsUrl,
-                                            '_blank',
-                                            'noopener,noreferrer',
-                                        )
-                                    }
-                                >
-                                    <LaunchIcon
-                                        className={classes.googleMapsButtonIcon}
-                                    />
-                                    Open in Google Maps
-                                </Button>
+                            maxZoom={18}
+                            onZoomEnd={handleZoomEnd}
+                        >
+                            <TileLayer
+                                url={SATELLITE_TILE_URL}
+                                attribution={SATELLITE_TILE_ATTRIBUTION}
+                                minZoom={2}
+                                maxZoom={19}
+                            />
+                            <Control position="topleft">
+                                <div className={classes.mapControlsRow}>
+                                    <IconButton
+                                        size="small"
+                                        className={classes.mapControlButton}
+                                        onClick={handleZoomIn}
+                                        aria-label="Zoom in"
+                                    >
+                                        <AddIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        size="small"
+                                        className={classes.mapControlButton}
+                                        onClick={handleZoomOut}
+                                        aria-label="Zoom out"
+                                    >
+                                        <RemoveIcon />
+                                    </IconButton>
+                                    <IconButton
+                                        size="small"
+                                        className={classes.mapControlButton}
+                                        onClick={handleCenterOnLocation}
+                                        aria-label="Center map on facility location"
+                                    >
+                                        <MyLocationIcon />
+                                    </IconButton>
+                                </div>
                             </Control>
-                        )}
-                        <Control position="bottomleft">
-                            <VectorTileGridLegend
-                                currentZoomLevel={currentMapZoomLevel}
-                                gridColorRamp={gridColorRamp}
-                                label="Production locations"
+                            {googleMapsUrl && (
+                                <Control position="bottomright">
+                                    <Button
+                                        component="span"
+                                        size="small"
+                                        variant="outlined"
+                                        color="default"
+                                        className={classes.googleMapsButton}
+                                        onClick={() =>
+                                            window.open(
+                                                googleMapsUrl,
+                                                '_blank',
+                                                'noopener,noreferrer',
+                                            )
+                                        }
+                                    >
+                                        <LaunchIcon
+                                            className={
+                                                classes.googleMapsButtonIcon
+                                            }
+                                        />
+                                        Open in Google Maps
+                                    </Button>
+                                </Control>
+                            )}
+                            <Control position="bottomleft">
+                                <VectorTileGridLegend
+                                    currentZoomLevel={currentMapZoomLevel}
+                                    gridColorRamp={gridColorRamp}
+                                    label="Production locations"
+                                />
+                            </Control>
+                            <Control position="bottomleft">
+                                <Typography
+                                    component="span"
+                                    className={classes.mapDragHint}
+                                >
+                                    Drag to pan
+                                </Typography>
+                            </Control>
+                            <VectorTileFacilitiesLayer
+                                handleMarkerClick={handleMarkerClick}
+                                handleFacilityClick={handleFacilityClick}
+                                osID={osID}
+                                pushRoute={push}
+                                minZoom={maxVectorTileFacilitiesGridZoom + 1}
+                                maxZoom={22}
                             />
-                        </Control>
-                        <Control position="bottomleft">
-                            <Typography
-                                component="span"
-                                className={classes.mapDragHint}
-                            >
-                                Drag to pan
-                            </Typography>
-                        </Control>
-                        <VectorTileFacilitiesLayer
-                            handleMarkerClick={handleMarkerClick}
-                            handleFacilityClick={handleFacilityClick}
-                            osID={osID}
-                            pushRoute={push}
-                            minZoom={maxVectorTileFacilitiesGridZoom + 1}
-                            maxZoom={22}
+                            {hasCoordinates && (
+                                <Marker
+                                    position={center}
+                                    icon={selectedMarkerIcon}
+                                    zIndexOffset={1000}
+                                    interactive={false}
+                                />
+                            )}
+                            {currentMapZoomLevel <=
+                                maxVectorTileFacilitiesGridZoom && (
+                                <VectorTileFacilityGridLayer
+                                    handleCellClick={handleCellClick}
+                                    minZoom={1}
+                                    maxZoom={maxVectorTileFacilitiesGridZoom}
+                                    zoomLevel={currentMapZoomLevel}
+                                />
+                            )}
+                        </ReactLeafletMap>
+                    </div>
+                </div>
+                <div
+                    className={classes.infoGrid}
+                    data-testid="production-location-info-grid"
+                >
+                    <div data-testid="production-location-address-row">
+                        <DataPoint
+                            label="Address"
+                            value={address || '—'}
+                            statusLabel={addressInfo.status}
+                            contributorName={
+                                addressInfo.contributorName || null
+                            }
+                            userId={addressInfo.userId}
+                            date={addressInfo.date || null}
+                            drawerData={addressInfo.drawerData}
+                            tooltipText={addressInfo.tooltipText}
+                            onOpenDrawer={
+                                addressInfo.drawerData
+                                    ? () => openDrawer(addressInfo.key)
+                                    : undefined
+                            }
+                            multiline
                         />
-                        {hasCoordinates && (
-                            <Marker
-                                position={center}
-                                icon={selectedMarkerIcon}
-                                zIndexOffset={1000}
-                                interactive={false}
-                            />
-                        )}
-                        {currentMapZoomLevel <=
-                            maxVectorTileFacilitiesGridZoom && (
-                            <VectorTileFacilityGridLayer
-                                handleCellClick={handleCellClick}
-                                minZoom={1}
-                                maxZoom={maxVectorTileFacilitiesGridZoom}
-                                zoomLevel={currentMapZoomLevel}
-                            />
-                        )}
-                    </ReactLeafletMap>
-                </div>
-            </div>
-            <div
-                className={classes.infoGrid}
-                data-testid="production-location-info-grid"
-            >
-                <div data-testid="production-location-address-row">
-                    <DataPoint
-                        label="Address"
-                        value={address || '—'}
-                        statusLabel={addressInfo.status}
-                        contributorName={addressInfo.contributorName || null}
-                        userId={addressInfo.userId}
-                        date={addressInfo.date || null}
-                        drawerData={addressInfo.drawerData}
-                        tooltipText={addressInfo.tooltipText}
-                        onOpenDrawer={
-                            addressInfo.drawerData
-                                ? () => openDrawer(addressInfo.key)
-                                : undefined
-                        }
-                        multiline
-                    />
-                </div>
-                <div data-testid="production-location-coordinates-row">
-                    <DataPoint
-                        label="Coordinates"
-                        value={coordinatesDisplay || '—'}
-                        statusLabel={coordinatesInfo.status}
-                        contributorName={
-                            coordinatesInfo.contributorName || null
-                        }
-                        userId={coordinatesInfo.userId}
-                        date={coordinatesInfo.date || null}
-                        drawerData={coordinatesInfo.drawerData}
-                        tooltipText={coordinatesInfo.tooltipText}
-                        onOpenDrawer={
-                            coordinatesInfo.drawerData
-                                ? () => openDrawer(coordinatesInfo.key)
-                                : undefined
-                        }
-                        multiline
-                    />
+                    </div>
+                    <div data-testid="production-location-coordinates-row">
+                        <DataPoint
+                            label="Coordinates"
+                            value={coordinatesDisplay || '—'}
+                            statusLabel={coordinatesInfo.status}
+                            contributorName={
+                                coordinatesInfo.contributorName || null
+                            }
+                            userId={coordinatesInfo.userId}
+                            date={coordinatesInfo.date || null}
+                            drawerData={coordinatesInfo.drawerData}
+                            tooltipText={coordinatesInfo.tooltipText}
+                            onOpenDrawer={
+                                coordinatesInfo.drawerData
+                                    ? () => openDrawer(coordinatesInfo.key)
+                                    : undefined
+                            }
+                            multiline
+                        />
+                    </div>
                 </div>
             </div>
             <ContributionsDrawer

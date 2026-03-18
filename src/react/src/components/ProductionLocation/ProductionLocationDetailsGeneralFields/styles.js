@@ -6,14 +6,13 @@ export default theme => {
 
     return Object.freeze({
         container: Object.freeze({
-            padding: '20px',
             backgroundColor: 'white',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         }),
         titleRow: Object.freeze({
             gap: '8px',
-            marginBottom: '12px',
             alignItems: 'center',
+            padding: '20px',
         }),
         titleIcon: Object.freeze({
             color: theme.palette.text.secondary,
@@ -31,13 +30,15 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
-        dividerContainer: Object.freeze({
-            marginBottom: '16px',
+        divider: Object.freeze({
+            width: '100%',
+            marginBottom: '8px',
         }),
         dataList: Object.freeze({
             display: 'flex',
             flexDirection: 'column',
             gap: '16px',
+            padding: `0 20px 20px 20px`,
         }),
     });
 };
