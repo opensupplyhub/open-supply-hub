@@ -6,8 +6,12 @@ import uniqBy from 'lodash/uniqBy';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
 import { FIELD_CONFIG } from '../constants';
 
-export const getContributorStatus = (contributorName, isFromClaim) => {
-    if (!contributorName) return null;
+export const getContributorStatus = (
+    contributorName,
+    isFromClaim,
+    hasData = false,
+) => {
+    if (!contributorName && !hasData) return null;
     return isFromClaim ? STATUS_CLAIMED : STATUS_CROWDSOURCED;
 };
 
@@ -67,6 +71,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const status = getContributorStatus(
                 contributorName,
                 get(canonicalField, 'is_from_claim', false),
+                uniqueAddressFields.length > 0,
             );
 
             const promotedContribution = canonicalField
