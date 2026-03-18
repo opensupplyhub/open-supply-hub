@@ -67,7 +67,7 @@ export const hasDisplayableValue = value => {
         return value.length > 0;
     }
 
-    // Handle numbers (including 0), objects, etc.
+    // Handle other truthy values (numbers, objects, etc.).
     return true;
 };
 
@@ -80,10 +80,74 @@ export const hasDisplayableValue = value => {
  * - fullWidth: whether field should take full width (optional)
  */
 export const getLocationFieldsConfig = (location, contact, office) => [
+    // Native language name.
+    {
+        key: 'name_native_language',
+        label: 'Name in Native Language',
+        tooltipText:
+            'The production location name in the local language if different from the English name.',
+        getValue: () => location.name_native_language || null,
+    },
+    // Sector.
+    {
+        key: 'sector',
+        label: 'Sector',
+        getValue: () =>
+            location.sector && location.sector.length
+                ? renderUniqueListItems(orderBy(location.sector, identity))
+                : null,
+    },
+    // Facility type.
+    {
+        key: 'facility_type',
+        label: 'Facility Type',
+        getValue: () => location.facility_type || null,
+    },
+    // Other facility type.
+    {
+        key: 'other_facility_type',
+        label: 'Other Facility Type',
+        getValue: () => location.other_facility_type || null,
+    },
+    // Product types.
+    {
+        key: 'product_types',
+        label: 'Product Types',
+        getValue: () =>
+            location.product_types && location.product_types.length
+                ? renderUniqueListItems(
+                      orderBy(location.product_types, identity),
+                  )
+                : null,
+    },
+    // Production types.
+    {
+        key: 'production_types',
+        label: 'Production Types',
+        getValue: () =>
+            location.production_types && location.production_types.length
+                ? renderUniqueListItems(
+                      orderBy(location.production_types, identity),
+                  )
+                : null,
+    },
+    // Parent company.
+    {
+        key: 'parent_company',
+        label: 'Parent Company',
+        getValue: () =>
+            location.parent_company ? location.parent_company.name : null,
+    },
+    // Number of workers.
+    {
+        key: 'workers_count',
+        label: 'Number of Workers',
+        getValue: () => location.workers_count || null,
+    },
     // Location website.
     {
         key: 'website',
-        label: 'Website',
+        label: 'Company Website',
         tooltipText:
             'Official website URL for this specific production location.',
         getValue: () =>
@@ -103,11 +167,15 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               {
                   key: 'contact_name',
                   label: 'Contact Person',
+                  tooltipText:
+                      'Primary contact person at this production location.',
                   getValue: () => contact.name,
               },
               {
                   key: 'contact_email',
                   label: 'Contact Email',
+                  tooltipText:
+                      'Email address for contacting this production location.',
                   getValue: () => contact.email,
               },
           ]
@@ -115,14 +183,14 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     // Location fields.
     {
         key: 'phone_number',
-        label: 'Phone Number',
+        label: 'Company Phone',
         tooltipText:
             'Main phone number for contacting this production location directly.',
         getValue: () => location.phone_number,
     },
     {
         key: 'minimum_order',
-        label: 'Minimum Order',
+        label: 'Minimum Order Quantity',
         tooltipText:
             'Smallest order quantity this production location will accept from customers.',
         getValue: () => location.minimum_order,
@@ -136,7 +204,7 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     },
     {
         key: 'female_workers_percentage',
-        label: 'Percentage of female workers',
+        label: 'Percentage of Female Workers',
         tooltipText:
             'Percentage of female employees out of the total workforce at this location.',
         getValue: () => location.female_workers_percentage,
@@ -155,7 +223,7 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     },
     {
         key: 'certifications',
-        label: 'Certifications/Standards/Regulations',
+        label: 'Certifications / Standards / Regulations',
         tooltipText:
             'Certifications and standards the production location self-reports as adhering to. OS Hub does not verify this information.',
         getValue: () =>
@@ -168,11 +236,15 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'opening_date',
         label: 'Opening Date',
+        tooltipText:
+            'The date the production location officially started operations.',
         getValue: () => location.opening_date || null,
     },
     {
         key: 'closing_date',
         label: 'Closing Date',
+        tooltipText:
+            'The date the production location permanently stopped operating.',
         getValue: () =>
             location.closing_date
                 ? moment(location.closing_date, 'YYYY-MM').format('MMMM YYYY')
@@ -219,6 +291,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               {
                   key: 'office_phone_number',
                   label: 'Office Phone Number',
+                  tooltipText:
+                      'Phone number for the corporate office or headquarters.',
                   getValue: () => office.phone_number,
               },
           ]

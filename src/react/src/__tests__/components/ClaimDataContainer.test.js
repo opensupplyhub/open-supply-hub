@@ -22,7 +22,7 @@ const makeClaimInfo = (overrides = {}) => ({
         affiliations: ['Fair Trade'],
         certifications: ['ISO 9001'],
         opening_date: '2010',
-        closing_date: null,
+        closing_date: '2020-01',
         estimated_annual_throughput: 20000,
         actual_annual_energy_consumption: null,
         description: 'A sample facility.',
@@ -135,26 +135,28 @@ describe('ClaimDataContainer — field labels and values', () => {
 
         const expectedLabels = [
             'Name in Native Language',
-            'Sector',
-            'Facility Type',
-            'Product Types',
-            'Production Types',
-            'Website',
-            'Parent Company',
+            'Company Website',
+            'Company Phone',
             'Contact Person',
             'Contact Email',
-            'Phone Number',
-            'Number of Workers',
-            'Minimum Order',
-            'Average Lead Time',
-            'Affiliations',
-            'Certifications/Standards/Regulations',
-            'Opening Date',
-            'Estimated Annual Throughput',
             'Office Name',
             'Office Address',
             'Office Phone Number',
             'Description',
+            'Certifications / Standards / Regulations',
+            'Affiliations',
+            'Minimum Order Quantity',
+            'Average Lead Time',
+            'Percentage of Female Workers',
+            'Opening Date',
+            'Closing Date',
+            'Estimated Annual Throughput',
+            'Sector',
+            'Facility Type',
+            'Product Types',
+            'Production Types',
+            'Parent Company',
+            'Number of Workers',
         ];
 
         expectedLabels.forEach(label => {
@@ -222,7 +224,7 @@ describe('ClaimDataContainer — field labels and values', () => {
             }),
         });
         expect(
-            getByText('Percentage of female workers', { exact: true }),
+            getByText('Percentage of Female Workers', { exact: true }),
         ).toBeInTheDocument();
     });
 });
@@ -236,31 +238,68 @@ describe('ClaimDataContainer — field ordering', () => {
 
         const indexOf = label => labels.indexOf(label);
 
+        // Explicitly ordered fields follow the FIELD_ORDER sequence.
         expect(indexOf('Name in Native Language')).toBeLessThan(
-            indexOf('Sector'),
+            indexOf('Company Website'),
         );
-        expect(indexOf('Sector')).toBeLessThan(indexOf('Facility Type'));
-        expect(indexOf('Facility Type')).toBeLessThan(
-            indexOf('Product Types'),
+        expect(indexOf('Company Website')).toBeLessThan(
+            indexOf('Company Phone'),
         );
-        expect(indexOf('Product Types')).toBeLessThan(
-            indexOf('Production Types'),
+        expect(indexOf('Company Phone')).toBeLessThan(indexOf('Contact Email'));
+        expect(indexOf('Contact Email')).toBeLessThan(
+            indexOf('Contact Person'),
         );
-        expect(indexOf('Production Types')).toBeLessThan(indexOf('Website'));
-        expect(indexOf('Website')).toBeLessThan(indexOf('Parent Company'));
-        expect(indexOf('Parent Company')).toBeLessThan(indexOf('Phone Number'));
+        expect(indexOf('Contact Person')).toBeLessThan(indexOf('Office Name'));
+        expect(indexOf('Office Name')).toBeLessThan(
+            indexOf('Office Address'),
+        );
+        expect(indexOf('Office Address')).toBeLessThan(
+            indexOf('Office Phone Number'),
+        );
+        expect(indexOf('Office Phone Number')).toBeLessThan(
+            indexOf('Description'),
+        );
         expect(indexOf('Description')).toBeLessThan(
-            indexOf('Certifications/Standards/Regulations'),
+            indexOf('Certifications / Standards / Regulations'),
         );
-        expect(indexOf('Certifications/Standards/Regulations')).toBeLessThan(
-            indexOf('Affiliations'),
-        );
+        expect(
+            indexOf('Certifications / Standards / Regulations'),
+        ).toBeLessThan(indexOf('Affiliations'));
         expect(indexOf('Affiliations')).toBeLessThan(
-            indexOf('Number of Workers'),
+            indexOf('Minimum Order Quantity'),
         );
-        expect(indexOf('Number of Workers')).toBeLessThan(
-            indexOf('Minimum Order'),
+        expect(indexOf('Minimum Order Quantity')).toBeLessThan(
+            indexOf('Average Lead Time'),
         );
+        expect(indexOf('Average Lead Time')).toBeLessThan(
+            indexOf('Percentage of Female Workers'),
+        );
+        expect(indexOf('Percentage of Female Workers')).toBeLessThan(
+            indexOf('Estimated Annual Throughput'),
+        );
+        expect(indexOf('Opening Date')).toBeLessThan(indexOf('Closing Date'));
+
+        // Fields not in FIELD_ORDER appear after all explicitly ordered fields.
+        expect(indexOf('Closing Date')).toBeLessThan(indexOf('Sector'));
+    });
+});
+
+describe('ClaimDataContainer — field tooltips', () => {
+    const hasTooltipIcon = (getByText, label) => {
+        const labelEl = getByText(label, { exact: true });
+        const dataPoint = labelEl.closest('[data-testid="data-point"]');
+        return !!dataPoint?.querySelector('[data-testid="data-point-tooltip-icon"]');
+    };
+
+    it.each([
+        'Contact Person',
+        'Contact Email',
+        'Office Phone Number',
+        'Opening Date',
+        'Closing Date',
+    ])('renders a tooltip icon for the "%s" field', label => {
+        const { getByText } = renderComponent();
+        expect(hasTooltipIcon(getByText, label)).toBe(true);
     });
 });
 
