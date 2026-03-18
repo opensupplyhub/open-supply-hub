@@ -39,6 +39,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             'claim_id',
             'action_reason_text_cleaned',
             'action_reason_text_raw',
+            'backfilled_fields',
         ]
 
     def __init__(

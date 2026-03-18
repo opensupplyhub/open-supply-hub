@@ -159,6 +159,7 @@ class ProductionLocationDataProcessor(ContributionProcessor):
             # Create a deep copy to avoid mutating the original data.
             backfilled_data = copy.deepcopy(cc_ready_data)
             default_required_fields = fetch_required_fields(event_dto.os.id)
+            backfilled_field_names = []
 
             # Add the required fields directly
             # (before ContriCleaner processing).
@@ -168,7 +169,9 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                     backfilled_data[field] = default_required_fields.get(
                         field, ''
                     )
+                    backfilled_field_names.append(field)
 
+            event_dto.backfilled_fields = backfilled_field_names
             return backfilled_data
 
         # Return original data if no backfill is needed.
