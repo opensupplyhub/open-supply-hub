@@ -26,6 +26,15 @@ describe('getContributorStatus', () => {
     it('returns STATUS_CROWDSOURCED when isFromClaim is false', () => {
         expect(getContributorStatus('Test Org', false)).toBe(STATUS_CROWDSOURCED);
     });
+
+    it('returns STATUS_CROWDSOURCED when contributorName is falsy but hasData is true', () => {
+        expect(getContributorStatus('', false, true)).toBe(STATUS_CROWDSOURCED);
+        expect(getContributorStatus(null, false, true)).toBe(STATUS_CROWDSOURCED);
+    });
+
+    it('returns STATUS_CLAIMED when contributorName is falsy but hasData is true and isFromClaim is true', () => {
+        expect(getContributorStatus('', true, true)).toBe(STATUS_CLAIMED);
+    });
 });
 
 describe('getFieldContributorInfo — ADDRESS', () => {
@@ -109,11 +118,12 @@ describe('getFieldContributorInfo — ADDRESS', () => {
 
         const result = getFieldContributorInfo(data, ADDR);
 
-        // No canonical match → no attribution on the displayed address row.
+        // No canonical match → no specific contributor attribution, but
+        // Crowdsourced badge is still shown because address data exists.
         expect(result.contributorName).toBe('');
         expect(result.userId).toBeNull();
         expect(result.date).toBe('');
-        expect(result.status).toBeNull();
+        expect(result.status).toBe(STATUS_CROWDSOURCED);
         expect(result.drawerData.promotedContribution).toBeNull();
         // All extended_fields appear in the drawer.
         expect(result.drawerData.contributions).toHaveLength(2);
