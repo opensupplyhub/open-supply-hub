@@ -61,6 +61,7 @@ const ProductionLocationDetailsGeneralFields = ({
                     onOpenDrawer={
                         item.drawerData ? () => openDrawer(item.key) : undefined
                     }
+                    multiline
                 />
             </Grid>
         ));

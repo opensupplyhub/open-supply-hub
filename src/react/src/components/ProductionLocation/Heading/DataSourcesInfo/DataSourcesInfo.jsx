@@ -18,9 +18,24 @@ import productionLocationDetailsDataSourcesInfoStyles from './styles';
 const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
     const [showSubsectionInfo, setShowSubsectionInfo] = useState(false);
 
+    const handleToggle = () => setShowSubsectionInfo(prev => !prev);
+
+    const handleKeyDown = event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleToggle();
+        }
+    };
+
     return (
         <div className={`${classes.container} ${className || ''}`}>
-            <div className={classes.titleRow}>
+            <div
+                className={classes.titleRow}
+                role="button"
+                tabIndex={0}
+                onClick={handleToggle}
+                onKeyDown={handleKeyDown}
+            >
                 <Typography
                     component="h3"
                     className={classes.sectionTitle}
@@ -48,7 +63,8 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     </Typography>
                     <Switch
                         checked={showSubsectionInfo}
-                        onChange={e => setShowSubsectionInfo(e.target.checked)}
+                        onChange={handleToggle}
+                        onClick={event => event.stopPropagation()}
                         color="primary"
                         size="small"
                         className={classes.switch}

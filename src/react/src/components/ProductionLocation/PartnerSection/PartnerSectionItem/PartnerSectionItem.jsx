@@ -8,8 +8,8 @@ import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
-import getIconURL from '../../Sidebar/NavBar/utils.js';
-import { toggleSectionOpen } from '../../../../actions/partnerFieldGroups.js';
+import { getIconURL } from '../../Sidebar/NavBar/utils.js';
+import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
 import {
@@ -32,13 +32,13 @@ const PartnerSectionItem = ({
     );
 
     const columns = useMemo(() => {
-        if (!isOpen || !group.partnerFields) return { left: [], right: [] };
+        if (!group.partnerFields) return { left: [], right: [] };
         const mid = Math.ceil(group.partnerFields.length / 2);
         return {
             left: group.partnerFields.slice(0, mid),
             right: group.partnerFields.slice(mid),
         };
-    }, [isOpen, group]);
+    }, [group]);
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -51,6 +51,8 @@ const PartnerSectionItem = ({
 
     const hasPartnerFields =
         columns.left.length > 0 || columns.right.length > 0;
+
+    if (!hasPartnerFields) return null;
 
     return (
         <div className={classes.container} ref={containerRef}>
@@ -172,8 +174,8 @@ const PartnerSectionItem = ({
 
 const mapStateToProps = (state, ownProps) => ({
     facilityData: state.facilities.singleFacility.data,
-    scrollTargetId: state.partnerFieldGroups.scrollTargetId,
-    isOpen: !!state.partnerFieldGroups.openSectionIds[ownProps.group.uuid],
+    scrollTargetId: state.sectionNavigation.scrollTargetId,
+    isOpen: !!state.sectionNavigation.openSectionIds[ownProps.group.uuid],
 });
 
 export default connect(mapStateToProps)(

@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
 * 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
 * 0202_add_alter_partnerfield_to_use_json.py - Alters `PartnerField.json_schema` from `jsonb` to PostgreSQL `json` type (via the new `JSONTextField`) to preserve the key order defined in partner field schemas, ensuring consistent field rendering on the frontend.
+* 0203_add_user_id_to_index_claim_info.py - Updates the `index_claim_info` function to include `user_id` (contributor admin id) in the contributor object of the `claim_info` JSON in `api_facilityindex`, enabling the contributor name to be rendered as a profile link in the Operational Details Submitted by Management section.
 
 ### Code/API changes
 * [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
@@ -26,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
     * Claim form profile step and related tooltips now use `IconComponent`.
 * [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Extracted section navigation state (`scrollTargetId`, `openSectionIds`) from `PartnerFieldGroupsReducer` into a dedicated `SectionNavigationReducer`. Added memoized claim data selectors (`claimDataSelectors.js`) so both `ClaimDataContainer` and `NavBar` derive claimed status from the store.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
@@ -52,10 +54,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Sidebar "Jump to" navigation links to individual partner groups; clicking a link opens the corresponding section and smoothly scrolls it into view.
     * Added `UrlProperty` format component and `url` format type support for partner field JSON schemas, enabling clickable links with customizable link text.
     * Includes loading state with a spinner while partner field groups are being fetched.
+    * Makes the partner field contributor link clickable and opens the contributor profile in a new tab.
 * [OSDEV-2372](https://opensupplyhub.atlassian.net/browse/OSDEV-2372) - Implemented the Operational Details section on the Production Location page:
     * Added `ClaimDataContainer` component that displays operational details submitted by management through the claim process for claimed production locations.
     * The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
     * Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
+        * The contributor name is a link to the contributor’s profile when a user ID is available.
     * The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
 * [OSDEV-2371](https://opensupplyhub.atlassian.net/browse/OSDEV-2371) - Implemented the General Information section on the new Production Location page:
     * Displays core identifying fields (name, sector, parent company, processing type, facility type (shown as location type on this page), product type, number of workers, optional identifiers, ISIC 4, closure status) as data points with status, contributor, and date.
@@ -66,6 +70,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
     * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
     * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
+* [OSDEV-2367](https://opensupplyhub.atlassian.net/browse/OSDEV-2367) - Implemented the Supply Chain Network section on the new Production Location page sidebar:
+    * Displays a breakdown of contributing organizations by type with counts (e.g. "3 Brands", "1 Auditor") and pluralized type labels; public contributors are listed as named links sorted by type.
+    * "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
+        * An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

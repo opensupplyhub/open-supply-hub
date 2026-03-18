@@ -10,7 +10,7 @@ export default theme => {
             flexWrap: 'wrap',
             alignItems: 'center',
             gap: `${spacing}px ${spacing * 2}px`,
-            padding: '12px',
+            padding: '12px 20px',
             border: `1px solid ${COLOURS.LIGHT_PURPLE_BORDER}`,
             backgroundColor: 'rgba(128, 64, 191, 0.05)',
             marginBottom: theme.spacing.unit * 2,

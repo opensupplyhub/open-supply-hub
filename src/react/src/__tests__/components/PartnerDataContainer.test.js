@@ -29,6 +29,8 @@ const buildState = (facilityData, groups = [], fetching = false) => ({
     partnerFieldGroups: {
         data: { results: groups },
         fetching,
+    },
+    sectionNavigation: {
         scrollTargetId: null,
         openSectionIds: {},
     },

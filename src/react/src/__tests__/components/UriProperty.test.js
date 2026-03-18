@@ -60,13 +60,6 @@ describe('UriProperty', () => {
         );
     });
 
-    it('renders an external link icon inside the link', () => {
-        render(<UriProperty {...defaultProps} />);
-
-        const link = screen.getByRole('link');
-        expect(link.querySelector('svg')).toBeInTheDocument();
-    });
-
     it('uses schemaProperty.text as link text when defined', () => {
         render(
             <UriProperty

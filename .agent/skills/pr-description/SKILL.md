@@ -12,7 +12,9 @@ A PR description is a public record of change. It must communicate:
 1. **What** change is being made — summarize so readers understand without reading the entire diff.
 2. **Why** these changes are being made — what context did the author have? What decisions aren't reflected in the code?
 
-The description becomes a permanent part of version control history. Future developers will search for the PR based on its description. If all the important information is in the code and not the description, it will be much harder to locate. And even after finding it, they need to understand *why* the change was made — code reveals what the software does, but not why it exists.
+The description becomes a permanent part of version control history. Future developers will search for the PR based on its description. If all the important information is in the code and not the description, it will be much harder to locate. And even after finding it, they need to understand _why_ the change was made — code reveals what the software does, but not why it exists.
+
+THE DESCRIPTION SHOULD BE EASY TO READ AND CONCISE.
 
 ## Gathering Context
 
@@ -83,7 +85,7 @@ The first few words describe what the PR does. The rest talks about the problem 
 >
 > Continuing the long-range goal of refactoring the Borglet Hierarchy.
 
-The first line describes what the PR does and how this is a change from the past. The rest describes the specific implementation, the context, that the solution isn't ideal, and possible future direction. It explains *why* the change is being made.
+The first line describes what the PR does and how this is a change from the past. The rest describes the specific implementation, the context, that the solution isn't ideal, and possible future direction. It explains _why_ the change is being made.
 
 ### Small PR that needs some context
 
@@ -91,7 +93,7 @@ The first line describes what the PR does and how this is a change from the past
 >
 > This allows consumers who are already using this as in Python3 to depend on a rule that is next to the original status build rule instead of somewhere in their own tree. It encourages new consumers to use Python3 if they can, instead of Python2, and significantly simplifies some automated build file refactoring tools being worked on currently.
 
-The first sentence describes what's being done. The rest explains *why* and gives the reviewer context.
+The first sentence describes what's being done. The rest explains _why_ and gives the reviewer context.
 
 ## Using Tags
 
@@ -100,10 +102,12 @@ Tags are manually entered labels that categorize PRs (e.g. `[tag]`, `#tag`, `tag
 If using tags, consider whether they belong in the body or the first line. Limit tag usage in the first line so it doesn't obscure the content.
 
 Good:
+
 - `[banana] Peel the banana before eating.`
 - `#banana #apple: Assemble a fruit basket.`
 
 Bad:
+
 - `[banana peeler factory factory][apple picking service] Assemble a fruit basket.` — too many/long tags overwhelm the first line.
 
 ## Review Before Submitting

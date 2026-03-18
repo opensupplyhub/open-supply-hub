@@ -8,6 +8,7 @@ export default theme => {
         container: Object.freeze({
             padding: '20px',
             backgroundColor: 'white',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         }),
         titleRow: Object.freeze({
             gap: '8px',

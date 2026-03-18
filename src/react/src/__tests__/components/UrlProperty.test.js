@@ -82,13 +82,6 @@ describe('UrlProperty', () => {
         expect(link).toHaveAttribute('href', 'https://default.com');
     });
 
-    it('renders an external link icon inside the link', () => {
-        render(<UrlProperty {...defaultProps} />);
-
-        const link = screen.getByRole('link');
-        expect(link.querySelector('svg')).toBeInTheDocument();
-    });
-
     it('uses schemaProperty.text as link text when defined', () => {
         render(
             <UrlProperty

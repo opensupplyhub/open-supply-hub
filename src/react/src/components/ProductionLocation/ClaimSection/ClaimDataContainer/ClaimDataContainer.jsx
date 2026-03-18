@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import { object, bool, shape, oneOfType, string } from 'prop-types';
+import React from 'react';
+import { connect } from 'react-redux';
+import { object, bool, string, number, arrayOf, shape, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Switch from '@material-ui/core/Switch';
+import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
-import filter from 'lodash/filter';
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-import isString from 'lodash/isString';
 
 import DataPoint from '../../DataPoint/DataPoint';
 import { STATUS_CLAIMED } from '../../DataPoint/constants';
@@ -15,82 +13,104 @@ import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
 import BadgeClaimed from '../../../BadgeClaimed';
 import {
-    getLocationFieldsConfig,
-    hasDisplayableValue,
-} from '../../../FacilityDetailsClaimedInfo/utils';
+    getClaimDisplayData,
+    getIsClaimed,
+} from '../../../../selectors/claimDataSelectors';
+import { toggleSectionOpen } from '../../../../actions/sectionNavigation';
+import {
+    useScrollToSection,
+    transitionDurationMs,
+} from '../../PartnerSection/PartnerSectionItem/useScrollToSection';
 
 import claimDataContainerStyles from './styles';
-import sortClaimFields from './utils';
 
-const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
-    const [isOpen, setIsOpen] = useState(true);
+const SECTION_ID = 'operational-details';
 
-    if (!isClaimed || !claimInfo) {
-        return null;
-    }
-
-    const { facility, contact, office } = claimInfo;
-
-    const contributorName = isString(claimInfo.contributor)
-        ? claimInfo.contributor
-        : get(claimInfo, 'contributor.name', null);
-
-    const claimedAt =
-        get(claimInfo, 'approved_at') || get(claimInfo, 'created_at') || null;
-
-    const fieldsConfig = getLocationFieldsConfig(
-        facility || {},
-        contact || null,
-        office || null,
+const ClaimDataContainer = ({
+    classes,
+    className,
+    isClaimed,
+    hasDisplayableFields,
+    displayableFields,
+    contributorName,
+    contributorUserId,
+    claimedAt,
+    isOpen,
+    scrollTargetId,
+    dispatch,
+}) => {
+    const containerRef = useScrollToSection(
+        scrollTargetId,
+        SECTION_ID,
+        dispatch,
     );
 
-    const displayableFields = sortClaimFields(
-        filter(fieldsConfig, field => hasDisplayableValue(field.getValue())),
-    );
+    const handleToggle = () => dispatch(toggleSectionOpen(SECTION_ID));
 
-    if (isEmpty(displayableFields)) {
+    const handleKeyDown = event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleToggle();
+        }
+    };
+
+    if (!isClaimed || !hasDisplayableFields) {
         return null;
     }
 
     return (
         <div
-            id="operational-details"
+            id={SECTION_ID}
+            ref={containerRef}
             className={`${classes.container} ${className || ''}`}
         >
-            <div className={classes.titleRow}>
-                <BadgeClaimed className={classes.titleIcon} />
-                <Typography
-                    variant="title"
-                    className={classes.sectionTitle}
-                    component="h3"
-                >
-                    Operational Details Submitted by Management
-                </Typography>
-                <IconComponent
-                    title={
-                        <>
-                            Data provided by the production location management
-                            through the claim process.
-                            <LearnMoreLink href="https://info.opensupplyhub.org/resources/claim-a-facility" />
-                        </>
-                    }
-                    icon={InfoOutlined}
-                    className={classes.infoButton}
-                    data-testid="claim-data-info-tooltip"
-                />
-                <div className={classes.switchWrap}>
+            <div
+                className={`${classes.header}${
+                    isOpen ? ` ${classes.headerOpen}` : ''
+                }`}
+                role="button"
+                tabIndex={0}
+                onClick={handleToggle}
+                onKeyDown={handleKeyDown}
+            >
+                <div className={classes.headerLeft}>
+                    <BadgeClaimed className={classes.titleIcon} />
                     <Typography
-                        component="span"
-                        className={classes.switchLabel}
+                        variant="title"
+                        className={classes.title}
+                        component="h3"
                     >
-                        <b>{isOpen ? 'Close' : 'Open'}</b>
+                        Operational Details Submitted by Management
+                    </Typography>
+                    <div
+                        onClick={event => event.stopPropagation()}
+                        onKeyDown={event => event.stopPropagation()}
+                        role="presentation"
+                    >
+                        <IconComponent
+                            title={
+                                <>
+                                    Data provided by the production location
+                                    management through the claim process.
+                                    <LearnMoreLink href="https://info.opensupplyhub.org/resources/claim-a-facility" />
+                                </>
+                            }
+                            icon={InfoOutlined}
+                            className={classes.infoIcon}
+                            data-testid="claim-data-info-tooltip"
+                        />
+                    </div>
+                </div>
+                <div className={classes.headerRight}>
+                    <Typography className={classes.toggleLabel}>
+                        {isOpen ? 'Close' : 'Open'}
                     </Typography>
                     <Switch
-                        checked={isOpen}
-                        onChange={e => setIsOpen(e.target.checked)}
                         color="primary"
-                        size="small"
-                        className={classes.switch}
+                        checked={isOpen}
+                        onChange={handleToggle}
+                        onClick={event => event.stopPropagation()}
+                        className={classes.switchWrapper}
                         inputProps={{
                             'aria-label':
                                 'Show operational details submitted by management',
@@ -98,7 +118,7 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                     />
                 </div>
             </div>
-            {isOpen && (
+            <Collapse in={isOpen} timeout={transitionDurationMs}>
                 <div className={classes.dataPointsList}>
                     {displayableFields.map(field => (
                         <React.Fragment key={field.key}>
@@ -108,12 +128,13 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
                                 tooltipText={field.tooltipText}
                                 statusLabel={STATUS_CLAIMED}
                                 contributorName={contributorName}
+                                userId={contributorUserId}
                                 date={claimedAt}
                             />
                         </React.Fragment>
                     ))}
                 </div>
-            )}
+            </Collapse>
         </div>
     );
 };
@@ -121,21 +142,39 @@ const ClaimDataContainer = ({ classes, className, claimInfo, isClaimed }) => {
 ClaimDataContainer.propTypes = {
     classes: object.isRequired,
     className: string,
-    claimInfo: shape({
-        facility: object,
-        contact: object,
-        office: object,
-        contributor: oneOfType([string, shape({ name: string })]),
-        approved_at: string,
-        created_at: string,
-    }),
-    isClaimed: bool,
+    isClaimed: bool.isRequired,
+    hasDisplayableFields: bool,
+    displayableFields: arrayOf(
+        shape({
+            key: string.isRequired,
+            label: string.isRequired,
+            getValue: func.isRequired,
+        }),
+    ).isRequired,
+    contributorName: string,
+    contributorUserId: number,
+    claimedAt: string,
+    isOpen: bool.isRequired,
+    scrollTargetId: string,
+    dispatch: func.isRequired,
 };
 
 ClaimDataContainer.defaultProps = {
     className: '',
-    claimInfo: null,
-    isClaimed: false,
+    contributorName: null,
+    contributorUserId: null,
+    claimedAt: null,
+    scrollTargetId: null,
+    hasDisplayableFields: false,
 };
 
-export default withStyles(claimDataContainerStyles)(ClaimDataContainer);
+const mapStateToProps = state => ({
+    isClaimed: getIsClaimed(state),
+    ...getClaimDisplayData(state),
+    isOpen: !!state.sectionNavigation.openSectionIds[SECTION_ID],
+    scrollTargetId: state.sectionNavigation.scrollTargetId,
+});
+
+export default connect(mapStateToProps)(
+    withStyles(claimDataContainerStyles)(ClaimDataContainer),
+);

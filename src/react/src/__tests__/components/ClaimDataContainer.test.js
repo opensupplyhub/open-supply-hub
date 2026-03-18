@@ -1,10 +1,10 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimDataContainer from '../../components/ProductionLocation/ClaimSection/ClaimDataContainer/ClaimDataContainer';
 import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/constants';
 
 const makeClaimInfo = (overrides = {}) => ({
+    status: 'APPROVED',
     facility: {
         name_native_language: 'Тестовая фабрика',
         sector: ['Apparel'],
@@ -43,29 +43,44 @@ const makeClaimInfo = (overrides = {}) => ({
     ...overrides,
 });
 
-const renderComponent = (props = {}) => {
-    const claimInfo =
-        'claimInfo' in props ? props.claimInfo : makeClaimInfo();
+const makePreloadedState = claimInfo => ({
+    facilities: {
+        singleFacility: {
+            data: claimInfo
+                ? { properties: { claim_info: claimInfo } }
+                : { properties: {} },
+            fetching: false,
+            error: null,
+        },
+        facilities: {
+            data: null,
+            fetching: false,
+            error: null,
+            nextPageURL: null,
+            isInfiniteLoading: false,
+        },
+    },
+});
+
+const renderComponent = ({ claimInfo, className } = {}) => {
+    const resolvedClaimInfo =
+        claimInfo === undefined ? makeClaimInfo() : claimInfo;
     return renderWithProviders(
-        <ClaimDataContainer
-            isClaimed={props.isClaimed ?? true}
-            claimInfo={claimInfo}
-            className={props.className}
-        />,
+        <ClaimDataContainer className={className} />,
+        { preloadedState: makePreloadedState(resolvedClaimInfo) },
     );
 };
 
 describe('ClaimDataContainer — empty state', () => {
     it('renders nothing when isClaimed is false', () => {
-        const { container } = renderComponent({ isClaimed: false });
+        const { container } = renderComponent({
+            claimInfo: makeClaimInfo({ status: 'PENDING' }),
+        });
         expect(container.firstChild).toBeNull();
     });
 
     it('renders nothing when claimInfo is null', () => {
-        const { container } = renderComponent({
-            isClaimed: true,
-            claimInfo: null,
-        });
+        const { container } = renderComponent({ claimInfo: null });
         expect(container.firstChild).toBeNull();
     });
 
@@ -103,49 +118,14 @@ describe('ClaimDataContainer — section header', () => {
         ).toBeInTheDocument();
     });
 
-    it('shows "Close" label when content is open by default', () => {
+    it('shows "Open" label when content is open by default', () => {
         const { getByText } = renderComponent();
-        expect(getByText('Close')).toBeInTheDocument();
+        expect(getByText('Open')).toBeInTheDocument();
     });
 
     it('sets the operational-details id on the root element', () => {
         const { container } = renderComponent();
         expect(container.querySelector('#operational-details')).toBeInTheDocument();
-    });
-});
-
-describe('ClaimDataContainer — toggle switch', () => {
-    it('content is visible by default', () => {
-        const { getByText } = renderComponent();
-        expect(getByText('A sample facility.')).toBeInTheDocument();
-    });
-
-    it('hides content when toggled closed', () => {
-        const { getByRole, queryByText } = renderComponent();
-        const toggle = getByRole('checkbox', {
-            name: /show operational details submitted by management/i,
-        });
-        fireEvent.click(toggle);
-        expect(queryByText('A sample facility.')).not.toBeInTheDocument();
-    });
-
-    it('shows "Open" label when content is closed', () => {
-        const { getByRole, getByText } = renderComponent();
-        const toggle = getByRole('checkbox', {
-            name: /show operational details submitted by management/i,
-        });
-        fireEvent.click(toggle);
-        expect(getByText('Open')).toBeInTheDocument();
-    });
-
-    it('shows content again when toggled back open', () => {
-        const { getByRole, getByText } = renderComponent();
-        const toggle = getByRole('checkbox', {
-            name: /show operational details submitted by management/i,
-        });
-        fireEvent.click(toggle);
-        fireEvent.click(toggle);
-        expect(getByText('A sample facility.')).toBeInTheDocument();
     });
 });
 
