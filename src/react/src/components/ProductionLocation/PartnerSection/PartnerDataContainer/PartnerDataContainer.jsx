@@ -12,6 +12,7 @@ import PartnerSectionItem from '../PartnerSectionItem/PartnerSectionItem';
 
 import { getEnrichedPartnerGroups } from '../../../../selectors/partnerFieldGroupsSelectors';
 import partnerDataContainerStyles from './styles';
+import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
 
 function PartnerDataContainer({
     classes,
@@ -35,7 +36,10 @@ function PartnerDataContainer({
                 <Grid item xs={12}>
                     <div className={classes.titleRow}>
                         {!fetching && (
-                            <PartnershipIcon className={classes.icon} />
+                            <PartnershipIcon
+                                className={classes.icon}
+                                color="#8428FA"
+                            />
                         )}
                         {fetching && <CircularProgress size={24} />}
                         <Typography
@@ -49,7 +53,15 @@ function PartnerDataContainer({
                         </Typography>
                         {!fetching && (
                             <IconComponent
-                                title="Information provided by third-party partners who host additional social or environmental data."
+                                title={
+                                    <>
+                                        Are you a data provider and want your
+                                        data listed here? Looking to access this
+                                        data for compliance reporting, risk
+                                        analysis, or supplier monitoring?
+                                        <LearnMoreLink href="https://info.opensupplyhub.org/data-integrations" />
+                                    </>
+                                }
                                 icon={InfoOutlined}
                                 className={classes.infoButton}
                             />
