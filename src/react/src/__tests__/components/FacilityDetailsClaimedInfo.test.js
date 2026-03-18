@@ -49,11 +49,11 @@ describe('FacilityDetailsClaimedInfo component', () => {
         const { getByText } = renderComponent(data);
 
         // Test field labels.
-        expect(getByText('Company Website', { exact: true })).toBeInTheDocument();
+        expect(getByText('Website', { exact: true })).toBeInTheDocument();
         expect(getByText('Contact Person', { exact: true })).toBeInTheDocument();
         expect(getByText('Contact Email', { exact: true })).toBeInTheDocument();
-        expect(getByText('Company Phone', { exact: true })).toBeInTheDocument();
-        expect(getByText('Minimum Order Quantity', { exact: true })).toBeInTheDocument();
+        expect(getByText('Phone Number', { exact: true })).toBeInTheDocument();
+        expect(getByText('Minimum Order', { exact: true })).toBeInTheDocument();
         expect(getByText('Average Lead Time', { exact: true })).toBeInTheDocument();
         expect(getByText('Opening Date', { exact: true })).toBeInTheDocument();
         expect(getByText('Closing Date', { exact: true })).toBeInTheDocument();

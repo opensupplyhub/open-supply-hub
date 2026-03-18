@@ -7,7 +7,7 @@ import isEmpty from 'lodash/isEmpty';
 import {
     getLocationFieldsConfig,
     hasDisplayableValue,
-} from '../components/FacilityDetailsClaimedInfo/utils';
+} from '../components/ProductionLocation/ClaimSection/utils';
 import sortClaimFields from '../components/ProductionLocation/ClaimSection/ClaimDataContainer/utils';
 import { facilityClaimStatusChoicesEnum } from '../util/constants';
 

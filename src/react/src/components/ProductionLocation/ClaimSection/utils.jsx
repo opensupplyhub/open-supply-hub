@@ -3,9 +3,9 @@ import moment from 'moment';
 import orderBy from 'lodash/orderBy';
 import identity from 'lodash/identity';
 
-import ENERGY_SOURCE_UNITS from './constants';
-import renderUniqueListItems from '../../util/renderUtils';
-import { addProtocolToWebsiteURLIfMissing } from '../../util/util';
+import ENERGY_SOURCE_UNITS from '../../FacilityDetailsClaimedInfo/constants';
+import renderUniqueListItems from '../../../util/renderUtils';
+import { addProtocolToWebsiteURLIfMissing } from '../../../util/util';
 
 /**
  * Format energy source name from snake_case to Title Case.
@@ -47,10 +47,10 @@ export const formatEnergyConsumption = energyData => {
 
 /**
  * Check if value is valid for display (handles both strings and React
- * elements).
+ * elements). Numeric zero is treated as displayable.
  */
 export const hasDisplayableValue = value => {
-    if (!value) return false;
+    if (value === null || value === undefined) return false;
 
     // Handle string values.
     if (typeof value === 'string') {
@@ -72,18 +72,77 @@ export const hasDisplayableValue = value => {
 };
 
 /**
- * Configuration for location claim information fields.
+ * Configuration for production location claim information fields.
  * Each field defines:
  * - key: unique identifier
  * - label: display label
+ * - tooltipText: optional tooltip description
  * - getValue: function to extract/format value from location data
  * - fullWidth: whether field should take full width (optional)
  */
 export const getLocationFieldsConfig = (location, contact, office) => [
+    // Sector.
+    {
+        key: 'sector',
+        label: 'Sector',
+        getValue: () =>
+            location.sector && location.sector.length
+                ? renderUniqueListItems(orderBy(location.sector, identity))
+                : null,
+    },
+    // Facility type.
+    {
+        key: 'facility_type',
+        label: 'Facility Type',
+        getValue: () => location.facility_type || null,
+    },
+    // Other facility type.
+    {
+        key: 'other_facility_type',
+        label: 'Other Facility Type',
+        getValue: () => location.other_facility_type || null,
+    },
+    // Product types.
+    {
+        key: 'product_types',
+        label: 'Product Types',
+        getValue: () =>
+            location.product_types && location.product_types.length
+                ? renderUniqueListItems(
+                      orderBy(location.product_types, identity),
+                  )
+                : null,
+    },
+    // Production types.
+    {
+        key: 'production_types',
+        label: 'Production Types',
+        getValue: () =>
+            location.production_types && location.production_types.length
+                ? renderUniqueListItems(
+                      orderBy(location.production_types, identity),
+                  )
+                : null,
+    },
+    // Parent company.
+    {
+        key: 'parent_company',
+        label: 'Parent Company',
+        getValue: () =>
+            location.parent_company ? location.parent_company.name : null,
+    },
+    // Number of workers.
+    {
+        key: 'workers_count',
+        label: 'Number of Workers',
+        getValue: () => location.workers_count || null,
+    },
     // Location website.
     {
         key: 'website',
-        label: 'Website',
+        label: 'Company Website',
+        tooltipText:
+            'Official website URL for this specific production location.',
         getValue: () =>
             location.website ? (
                 <a
@@ -101,11 +160,15 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               {
                   key: 'contact_name',
                   label: 'Contact Person',
+                  tooltipText:
+                      'Primary contact person at this production location.',
                   getValue: () => contact.name,
               },
               {
                   key: 'contact_email',
                   label: 'Contact Email',
+                  tooltipText:
+                      'Email address for contacting this production location.',
                   getValue: () => contact.email,
               },
           ]
@@ -113,27 +176,37 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     // Location fields.
     {
         key: 'phone_number',
-        label: 'Phone Number',
+        label: 'Company Phone',
+        tooltipText:
+            'Main phone number for contacting this production location directly.',
         getValue: () => location.phone_number,
     },
     {
         key: 'minimum_order',
-        label: 'Minimum Order',
+        label: 'Minimum Order Quantity',
+        tooltipText:
+            'Smallest order quantity this production location will accept from customers.',
         getValue: () => location.minimum_order,
     },
     {
         key: 'average_lead_time',
         label: 'Average Lead Time',
+        tooltipText:
+            'Typical time required from order confirmation to product delivery.',
         getValue: () => location.average_lead_time,
     },
     {
         key: 'female_workers_percentage',
-        label: 'Percentage of female workers',
+        label: 'Percentage of Female Workers',
+        tooltipText:
+            'Percentage of female employees out of the total workforce at this location.',
         getValue: () => location.female_workers_percentage,
     },
     {
         key: 'affiliations',
         label: 'Affiliations',
+        tooltipText:
+            'Industry associations and partner entities as declared by the production location. OS Hub does not independently verify this information.',
         getValue: () =>
             location.affiliations && location.affiliations.length
                 ? renderUniqueListItems(
@@ -143,7 +216,9 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     },
     {
         key: 'certifications',
-        label: 'Certifications/Standards/Regulations',
+        label: 'Certifications / Standards / Regulations',
+        tooltipText:
+            'Certifications and standards the production location self-reports as adhering to. OS Hub does not verify this information.',
         getValue: () =>
             location.certifications && location.certifications.length
                 ? renderUniqueListItems(
@@ -154,11 +229,15 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'opening_date',
         label: 'Opening Date',
+        tooltipText:
+            'The date the production location officially started operations.',
         getValue: () => location.opening_date || null,
     },
     {
         key: 'closing_date',
         label: 'Closing Date',
+        tooltipText:
+            'The date the production location permanently stopped operating.',
         getValue: () =>
             location.closing_date
                 ? moment(location.closing_date, 'YYYY-MM').format('MMMM YYYY')
@@ -167,6 +246,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'estimated_annual_throughput',
         label: 'Estimated Annual Throughput',
+        tooltipText:
+            'Total amount of materials or products processed by this location per year.',
         getValue: () =>
             location.estimated_annual_throughput
                 ? `${location.estimated_annual_throughput} kg/year`
@@ -175,6 +256,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     {
         key: 'actual_annual_energy_consumption',
         label: 'Actual Annual Energy Consumption',
+        tooltipText:
+            'Annual energy consumption by source reported by this production location.',
         getValue: () => {
             const formattedData = formatEnergyConsumption(
                 location.actual_annual_energy_consumption,
@@ -188,17 +271,21 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               {
                   key: 'office_name',
                   label: 'Office Name',
+                  tooltipText: 'Name of the corporate office or headquarters.',
                   getValue: () => office.name,
               },
               {
                   key: 'office_address',
                   label: 'Office Address',
+                  tooltipText: 'Physical address of the office location.',
                   getValue: () =>
                       `${office.address || ' '} ${office.country || ' '}`,
               },
               {
                   key: 'office_phone_number',
                   label: 'Office Phone Number',
+                  tooltipText:
+                      'Phone number for the corporate office or headquarters.',
                   getValue: () => office.phone_number,
               },
           ]
@@ -208,6 +295,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
         key: 'description',
         label: 'Description',
         fullWidth: true,
+        tooltipText:
+            'A brief overview of what this production location manufactures and its main business activities.',
         getValue: () => location.description,
     },
 ];
