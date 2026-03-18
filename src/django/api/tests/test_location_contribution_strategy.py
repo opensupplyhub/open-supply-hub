@@ -1156,9 +1156,6 @@ class TestLocationContributionStrategy(APITestCase):
     def test_patch_no_required_fields_backfills_and_records_backfilled_fields(
         self,
     ):
-        """PATCH with no name/address/country triggers backfill and stores which
-        fields were backfilled on the moderation event.
-        """
         existing_facility = self._create_existing_facility()
 
         input_data = {'source': 'API'}
