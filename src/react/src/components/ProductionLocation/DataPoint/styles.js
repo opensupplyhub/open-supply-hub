@@ -14,11 +14,20 @@ export default theme =>
                     }),
                 }),
             }),
+            [theme.breakpoints.down('xs')]: {
+                flexDirection: 'column',
+            },
         }),
         labelColumn: Object.freeze({
             width: '220px',
             flexDirection: 'row',
+            [theme.breakpoints.down('lg')]: {
+                width: '165px',
+            },
             [theme.breakpoints.down('md')]: {
+                width: '120px',
+            },
+            [theme.breakpoints.down('sm')]: {
                 width: '165px',
             },
         }),

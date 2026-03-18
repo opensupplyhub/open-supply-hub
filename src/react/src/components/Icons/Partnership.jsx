@@ -9,7 +9,7 @@ export default function PartnershipIcon({ className, ...rest }) {
             height={rest.height || '24'}
             viewBox={rest.viewBox || '0 0 24 24'}
             fill="none"
-            stroke="currentColor"
+            stroke="black"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"

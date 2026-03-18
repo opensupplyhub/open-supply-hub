@@ -53,16 +53,16 @@ const ProductionLocationDetailsContent = ({
             <Grid container className={classes.containerItem} spacing={16}>
                 <Grid
                     item
-                    sm={12}
-                    md={7}
+                    md={12}
+                    lg={7}
                     className={classes.containerItemInner}
                 >
                     <GeneralFields data={data} />
                 </Grid>
                 <Grid
                     item
-                    sm={12}
-                    md={5}
+                    md={12}
+                    lg={5}
                     className={classes.containerItemInner}
                 >
                     <DetailsMap />
