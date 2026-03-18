@@ -1158,7 +1158,10 @@ class TestLocationContributionStrategy(APITestCase):
     ):
         existing_facility = self._create_existing_facility()
 
-        input_data = {'source': 'API'}
+        input_data = {
+            'source': 'API',
+            'sector': 'Apparel'
+        }
 
         event_dto = CreateModerationEventDTO(
             contributor=self.contributor,
