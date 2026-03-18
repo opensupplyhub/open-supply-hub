@@ -1,7 +1,6 @@
 import sortBy from 'lodash/sortBy';
 
 const FIELD_ORDER = [
-    'name_native_language',
     'website',
     'phone_number',
     'contact_email',

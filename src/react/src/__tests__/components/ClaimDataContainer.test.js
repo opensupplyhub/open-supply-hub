@@ -6,7 +6,6 @@ import { STATUS_CLAIMED } from '../../components/ProductionLocation/DataPoint/co
 const makeClaimInfo = (overrides = {}) => ({
     status: 'APPROVED',
     facility: {
-        name_native_language: 'Тестовая фабрика',
         sector: ['Apparel'],
         facility_type: 'Cut and Sew / RMG',
         other_facility_type: null,
@@ -134,7 +133,6 @@ describe('ClaimDataContainer — field labels and values', () => {
         const { getByText } = renderComponent();
 
         const expectedLabels = [
-            'Name in Native Language',
             'Company Website',
             'Company Phone',
             'Contact Person',
@@ -239,9 +237,6 @@ describe('ClaimDataContainer — field ordering', () => {
         const indexOf = label => labels.indexOf(label);
 
         // Explicitly ordered fields follow the FIELD_ORDER sequence.
-        expect(indexOf('Name in Native Language')).toBeLessThan(
-            indexOf('Company Website'),
-        );
         expect(indexOf('Company Website')).toBeLessThan(
             indexOf('Company Phone'),
         );

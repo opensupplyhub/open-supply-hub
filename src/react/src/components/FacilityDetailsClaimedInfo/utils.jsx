@@ -80,14 +80,6 @@ export const hasDisplayableValue = value => {
  * - fullWidth: whether field should take full width (optional)
  */
 export const getLocationFieldsConfig = (location, contact, office) => [
-    // Native language name.
-    {
-        key: 'name_native_language',
-        label: 'Name in Native Language',
-        tooltipText:
-            'The production location name in the local language if different from the English name.',
-        getValue: () => location.name_native_language || null,
-    },
     // Sector.
     {
         key: 'sector',
