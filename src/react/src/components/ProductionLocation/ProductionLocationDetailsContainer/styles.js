@@ -4,6 +4,9 @@ export default theme =>
             background: theme.palette.background.grey,
             padding: '48px 5% 120px 5%',
             flexWrap: 'nowrap',
+            [theme.breakpoints.down('lg')]: {
+                padding: '28px 1.5% 60px 1.5%',
+            },
             [theme.breakpoints.down('sm')]: {
                 flexWrap: 'wrap',
             },
