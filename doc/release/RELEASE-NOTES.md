@@ -75,6 +75,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
         * An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Updated section icon colors, improved responsive layout and breakpoints across General Information, Geographical Information, Partner Data, and DataPoint components, updated the Partner Data tooltip with a data-integrations "Learn More" link, and capped the Supply Chain sidebar to 7 visible contributors.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

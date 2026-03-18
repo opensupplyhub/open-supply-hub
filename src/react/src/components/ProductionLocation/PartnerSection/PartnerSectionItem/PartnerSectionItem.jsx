@@ -17,6 +17,8 @@ import {
     transitionDurationMs,
 } from './useScrollToSection.jsx';
 
+const emptyCKEditor5Field = '<p>&nbsp;</p>';
+
 const PartnerSectionItem = ({
     classes,
     group,
@@ -92,18 +94,21 @@ const PartnerSectionItem = ({
                         onKeyDown={event => event.stopPropagation()}
                         role="presentation"
                     >
-                        <IconComponent
-                            title={
-                                <span
-                                    // eslint-disable-next-line react/no-danger
-                                    dangerouslySetInnerHTML={{
-                                        __html: group.helper_text,
-                                    }}
+                        {group.helper_text &&
+                            group.helper_text !== emptyCKEditor5Field && (
+                                <IconComponent
+                                    title={
+                                        <span
+                                            // eslint-disable-next-line react/no-danger
+                                            dangerouslySetInnerHTML={{
+                                                __html: group.helper_text,
+                                            }}
+                                        />
+                                    }
+                                    icon={InfoOutlined}
+                                    className={classes.infoIcon}
                                 />
-                            }
-                            icon={InfoOutlined}
-                            className={classes.infoIcon}
-                        />
+                            )}
                     </div>
                 </div>
                 <div className={classes.headerRight}>
@@ -151,21 +156,22 @@ const PartnerSectionItem = ({
                             </Grid>
                         </Grid>
                     )}
-                    {group.description && (
-                        <div className={classes.disclaimer}>
-                            <Typography
-                                component="div"
-                                className={classes.disclaimerText}
-                            >
-                                <span
-                                    // eslint-disable-next-line react/no-danger
-                                    dangerouslySetInnerHTML={{
-                                        __html: group.description,
-                                    }}
-                                />
-                            </Typography>
-                        </div>
-                    )}
+                    {group.description &&
+                        group.description !== emptyCKEditor5Field && (
+                            <div className={classes.disclaimer}>
+                                <Typography
+                                    component="div"
+                                    className={classes.disclaimerText}
+                                >
+                                    <span
+                                        // eslint-disable-next-line react/no-danger
+                                        dangerouslySetInnerHTML={{
+                                            __html: group.description,
+                                        }}
+                                    />
+                                </Typography>
+                            </div>
+                        )}
                 </div>
             </Collapse>
         </div>
