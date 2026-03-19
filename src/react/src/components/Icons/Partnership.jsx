@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function PartnershipIcon({ className, ...rest }) {
+export default function PartnershipIcon({ className, color, ...rest }) {
     const baseClass = 'lucide lucide-handshake w-6 h-6 text-primary';
     return (
         <svg
@@ -9,7 +9,7 @@ export default function PartnershipIcon({ className, ...rest }) {
             height={rest.height || '24'}
             viewBox={rest.viewBox || '0 0 24 24'}
             fill="none"
-            stroke="currentColor"
+            stroke={color || 'black'}
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"

@@ -7,7 +7,7 @@ const MapPointer = props => (
         height={props.height || '24'}
         viewBox={props.viewBox || '0 0 24 24'}
         fill="none"
-        stroke="currentColor"
+        stroke="black"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

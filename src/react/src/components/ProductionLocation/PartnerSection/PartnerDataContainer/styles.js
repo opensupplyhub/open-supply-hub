@@ -1,5 +1,9 @@
+import { getTypographyStyles } from '../../../../util/typographyStyles';
+
 export default theme => {
     const spacing = theme.spacing.unit ?? 8;
+    const typography = getTypographyStyles(theme);
+
     return Object.freeze({
         root: Object.freeze({
             paddingTop: spacing * 2,
@@ -17,8 +21,11 @@ export default theme => {
             flexShrink: 0,
         }),
         title: Object.freeze({
+            ...typography.sectionTitle,
             marginTop: 0,
             marginBottom: 0,
+            marginRight: '2px',
+            fontWeight: 'bold',
         }),
         infoButton: Object.freeze({
             marginLeft: spacing * -0.5,
@@ -26,6 +33,7 @@ export default theme => {
         }),
         description: Object.freeze({
             marginBottom: spacing * 2,
+            fontSize: '1.25rem',
         }),
     });
 };

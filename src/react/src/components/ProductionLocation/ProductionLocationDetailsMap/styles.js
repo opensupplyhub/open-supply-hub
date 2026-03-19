@@ -7,18 +7,18 @@ export default theme => {
     return Object.freeze({
         container: Object.freeze({
             ...commonStyles(theme).container,
-            padding: '20px',
         }),
         title: {
             marginBottom: theme.spacing.unit,
         },
+        divider: Object.freeze({
+            marginBottom: '20px',
+        }),
         sectionTitleRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            paddingBottom: theme.spacing.unit * 1.5,
-            marginBottom: theme.spacing.unit * 2,
+            padding: '20px',
         }),
         sectionTitle: Object.freeze({
             ...typography.sectionTitle,
@@ -106,6 +106,9 @@ export default theme => {
         }),
         infoGrid: Object.freeze({
             marginTop: theme.spacing.unit * 2,
+        }),
+        mapContainerWrapper: Object.freeze({
+            padding: `0 20px 20px 20px`,
         }),
     });
 };

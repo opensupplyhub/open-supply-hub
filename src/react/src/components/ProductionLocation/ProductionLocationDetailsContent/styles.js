@@ -7,6 +7,9 @@ export default theme =>
         }),
         containerItem: Object.freeze({
             marginBottom: '16px',
+            [theme.breakpoints.down('md')]: {
+                flexDirection: 'column',
+            },
         }),
         containerItemInner: Object.freeze({
             paddingBottom: `0px !important`,
