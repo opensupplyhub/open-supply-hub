@@ -6,7 +6,7 @@ const Overview = props => (
         width={props.width || '24'}
         height={props.height || '24'}
         viewBox="0 0 24 24"
-        fill="currentColor"
+        fill="black"
         focusable="false"
         aria-hidden="true"
         {...props}

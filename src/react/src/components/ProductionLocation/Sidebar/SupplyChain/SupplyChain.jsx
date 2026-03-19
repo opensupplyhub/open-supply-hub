@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
@@ -21,6 +21,11 @@ const SupplyChain = ({ classes, contributors = [] }) => {
         sortedPublicContributors,
         aggregatedNonPublic,
     } = useDerivedContributors(contributors);
+
+    const visiblePublicContributors = useMemo(
+        () => sortedPublicContributors.slice(0, 7),
+        [sortedPublicContributors],
+    );
 
     if (!visibleContributors.length) return null;
 
@@ -49,7 +54,7 @@ const SupplyChain = ({ classes, contributors = [] }) => {
             )}
             {sortedPublicContributors.length > 0 && (
                 <Grid container className={classes.contributorList}>
-                    {sortedPublicContributors.map(contributor => (
+                    {visiblePublicContributors.map(contributor => (
                         <Grid item key={contributor.id}>
                             <Link
                                 to={makeProfileRouteLink(contributor.id)}

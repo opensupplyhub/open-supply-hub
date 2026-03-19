@@ -135,7 +135,7 @@ function ProductionLocationDetailsContainer({
 
     return (
         <Grid container className={classes.root}>
-            <Grid item xs={12} md={2}>
+            <Grid item xs={12} md={2} className={classes.sidebarContainer}>
                 <BackToSearch history={history} />
                 <Grid className={classes.sidebar}>
                     <NavBar />

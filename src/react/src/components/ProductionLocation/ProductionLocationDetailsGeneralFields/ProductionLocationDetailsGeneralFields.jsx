@@ -100,9 +100,7 @@ const ProductionLocationDetailsGeneralFields = ({
                     className={classes.infoIcon}
                 />
             </Grid>
-            <Grid item xs={12} className={classes.dividerContainer}>
-                <Divider />
-            </Grid>
+            <Divider className={classes.divider} />
             <Grid item xs={12} className={classes.dataList}>
                 {renderDataPoints(visibleFields)}
             </Grid>
