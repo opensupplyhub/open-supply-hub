@@ -24,7 +24,7 @@ export default theme => {
             ...typography.sectionTitle,
             marginTop: 0,
             marginBottom: 0,
-            marginRight: `2px`,
+            marginRight: '2px',
             fontWeight: 'bold',
         }),
         infoButton: Object.freeze({
