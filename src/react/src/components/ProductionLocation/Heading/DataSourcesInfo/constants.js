@@ -15,7 +15,7 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
         labelClassNameKey: 'labelClaimed',
         title: 'Claimed',
         subsectionText:
-            'General information & operational details submitted by production location',
+            'General information & operational details submitted by production location management',
         learnMoreUrl:
             'https://info.opensupplyhub.org/resources/claim-a-facility',
     }),
