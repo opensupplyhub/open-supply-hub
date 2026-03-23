@@ -33,7 +33,7 @@ function PartnerDataContainer({
     return (
         <>
             <Grid container className={classes.root}>
-                <Grid item xs={12}>
+                <Grid item xs={12} className={classes.titleRowContainer}>
                     <div className={classes.titleRow}>
                         {!fetching && (
                             <PartnershipIcon
@@ -88,7 +88,13 @@ function PartnerDataContainer({
                 </Grid>
                 {!fetching &&
                     partnerGroups.map(group => (
-                        <Grid item xs={12} key={group.uuid} id={group.uuid}>
+                        <Grid
+                            item
+                            xs={12}
+                            key={group.uuid}
+                            id={group.uuid}
+                            className={classes.partnerSectionItem}
+                        >
                             <PartnerSectionItem group={group} />
                         </Grid>
                     ))}

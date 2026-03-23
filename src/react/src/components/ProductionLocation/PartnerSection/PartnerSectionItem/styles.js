@@ -10,7 +10,6 @@ export default theme => {
             ...commonStyles(theme).container,
             border: `1px solid ${COLOURS.ACCENT_GREY}`,
             borderRadius: 0,
-            marginBottom: spacing * 2,
             overflow: 'hidden',
         }),
         header: Object.freeze({
