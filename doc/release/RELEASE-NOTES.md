@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.21.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Bugfix
+* [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page. The system now correctly identifies the canonical contributor by matching the displayed value (address text or coordinates) with extended field data, ensuring accurate provenance display even when multiple contributions exist.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.20.0
 
 ## Introduction

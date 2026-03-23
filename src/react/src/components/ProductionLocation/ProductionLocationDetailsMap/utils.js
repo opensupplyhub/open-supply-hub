@@ -1,4 +1,3 @@
-/* eslint no-unused-vars: 0 */
 import get from 'lodash/get';
 import head from 'lodash/head';
 import partition from 'lodash/partition';
