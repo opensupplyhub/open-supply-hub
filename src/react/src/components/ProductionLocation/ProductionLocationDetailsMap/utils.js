@@ -19,9 +19,9 @@ export const getContributorStatus = (
 
 const toDrawerContribution = (item, value) => ({
     value,
-    sourceName: item?.contributor_name || null,
-    date: item?.created_at || item?.updated_at || null,
-    userId: item?.contributor_id != null ? item.contributor_id : undefined,
+    sourceName: item.contributor_name || null,
+    date: item.created_at || item.updated_at || null,
+    userId: item.contributor_id != null ? item.contributor_id : undefined,
 });
 
 /**

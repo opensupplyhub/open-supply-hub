@@ -10,7 +10,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: *Provide release date*
 
 ### Bugfix
-* [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page. The system now correctly identifies the canonical contributor by matching the displayed value (address text or coordinates) with extended field data, ensuring accurate provenance display even when multiple contributions exist.
+* [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page:
+    * **Address** provenance uses `properties.extended_fields.address` (via formatted extended-field rows) against the displayed core address (`properties.address`).
+    * **Coordinates** provenance does not use extended fields: entries in `properties.other_locations` are matched to the map feature’s point in `geometry.coordinates` (lat/lng compared with a small tolerance), so the canonical contributor reflects the coordinate pair actually rendered on the map. This yields accurate provenance when multiple address submissions or alternate `other_locations` exist.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
