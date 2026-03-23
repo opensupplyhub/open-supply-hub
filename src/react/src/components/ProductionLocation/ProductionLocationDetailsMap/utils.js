@@ -1,3 +1,4 @@
+import moment from 'moment';
 import get from 'lodash/get';
 import head from 'lodash/head';
 import partition from 'lodash/partition';
@@ -37,32 +38,35 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 [],
             );
 
-            // Same-contributor same-address
-            // entries from different dates remain distinct.
+            const uniqueAddressCriterion = f => {
+                const value = get(f, 'value', '') || '';
+                const contributor = get(f, 'contributor_name', '') || '';
+
+                const createdAt = get(f, 'created_at', '') || '';
+                const day = createdAt
+                    ? moment(createdAt).format('YYYY-MM-DD')
+                    : '';
+
+                return value + day + contributor;
+            };
+
             const uniqueAddressFields = uniqBy(
                 addressFields,
-                f =>
-                    (get(f, 'value', '') || '') +
-                    (get(f, 'created_at', '') || '') +
-                    (get(f, 'contributor_name', '') || ''),
+                uniqueAddressCriterion,
             );
 
             const [canonicalFields, otherFields] = partition(
                 uniqueAddressFields,
                 f => f.value === address,
             );
-            // Do not fall back to an arbitrary entry when no field matches the
-            // canonical address: that would attribute provenance to a
-            // contributor who submitted a different address value entirely.
             const canonicalField = canonicalFields[0] || null;
-            // When there is no canonical match, surface every known submission
-            // in the drawer (no promoted contribution, all fields listed).
             const contributions = canonicalField
-                ? [...canonicalFields.slice(1), ...otherFields]
+                ? otherFields
                 : uniqueAddressFields;
 
             const contributorName =
                 get(canonicalField, 'contributor_name', '') || '';
+
             const userId = get(canonicalField, 'contributor_id', null);
             const date =
                 get(canonicalField, 'created_at', '') ||
