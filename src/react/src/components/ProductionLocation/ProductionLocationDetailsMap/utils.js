@@ -3,6 +3,8 @@ import head from 'lodash/head';
 import partition from 'lodash/partition';
 import uniqBy from 'lodash/uniqBy';
 
+import { formatExtendedField } from '../../../util/util';
+
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
 import { FIELD_CONFIG } from '../constants';
 
@@ -14,6 +16,13 @@ export const getContributorStatus = (
     if (!contributorName && !hasData) return null;
     return isFromClaim ? STATUS_CLAIMED : STATUS_CROWDSOURCED;
 };
+
+const toDrawerContribution = (item, value) => ({
+    value,
+    sourceName: item.contributor_name || null,
+    date: item.created_at || item.updated_at || null,
+    userId: item.contributor_id != null ? item.contributor_id : undefined,
+});
 
 /**
  * @param {Object} singleFacilityData
@@ -37,66 +46,63 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 [],
             );
 
-            // Same-contributor same-address
-            // entries from different dates remain distinct.
-            const uniqueAddressFields = uniqBy(
-                addressFields,
-                f =>
-                    (get(f, 'value', '') || '') +
-                    (get(f, 'created_at', '') || '') +
-                    (get(f, 'contributor_name', '') || ''),
+            const uniqueAddresses = uniqBy(
+                addressFields.map(formatExtendedField),
+                item => item.primary + item.secondary,
             );
 
-            const [canonicalFields, otherFields] = partition(
-                uniqueAddressFields,
-                f => f.value === address,
+            const [canonicalFormattedList, otherFormatted] = partition(
+                uniqueAddresses,
+                field => field.primary === address,
             );
-            // Do not fall back to an arbitrary entry when no field matches the
-            // canonical address: that would attribute provenance to a
-            // contributor who submitted a different address value entirely.
-            const canonicalField = canonicalFields[0] || null;
-            // When there is no canonical match, surface every known submission
-            // in the drawer (no promoted contribution, all fields listed).
-            const contributions = canonicalField
-                ? [...canonicalFields.slice(1), ...otherFields]
-                : uniqueAddressFields;
+            const canonicalFormatted = canonicalFormattedList[0] || null;
+            const contributionsFormatted = canonicalFormatted
+                ? otherFormatted
+                : uniqueAddresses;
+
+            const findRawForFormatted = formatted =>
+                addressFields.find(raw => {
+                    const f = formatExtendedField(raw);
+                    return (
+                        f.primary === formatted.primary &&
+                        f.secondary === formatted.secondary
+                    );
+                });
+
+            const canonicalRaw = canonicalFormatted
+                ? addressFields.find(
+                      raw =>
+                          formatExtendedField(raw).primary ===
+                          canonicalFormatted.primary,
+                  )
+                : null;
 
             const contributorName =
-                get(canonicalField, 'contributor_name', '') || '';
-            const userId = get(canonicalField, 'contributor_id', null);
+                get(canonicalRaw, 'contributor_name', '') || '';
+
+            const userId = get(canonicalRaw, 'contributor_id', null);
             const date =
-                get(canonicalField, 'created_at', '') ||
-                get(canonicalField, 'updated_at', '') ||
+                get(canonicalRaw, 'created_at', '') ||
+                get(canonicalRaw, 'updated_at', '') ||
                 '';
             const status = getContributorStatus(
                 contributorName,
-                get(canonicalField, 'is_from_claim', false),
-                uniqueAddressFields.length > 0,
+                get(canonicalRaw, 'is_from_claim', false),
+                uniqueAddresses.length > 0,
             );
 
-            const promotedContribution = canonicalField
-                ? {
-                      value: get(canonicalField, 'value', '') || '',
-                      sourceName: contributorName,
-                      date:
-                          get(canonicalField, 'created_at', '') ||
-                          get(canonicalField, 'updated_at', '') ||
-                          '',
-                      userId,
-                  }
+            const promotedContribution = canonicalRaw
+                ? toDrawerContribution(canonicalRaw, canonicalFormatted.primary)
                 : null;
 
             const drawerData = {
                 promotedContribution,
-                contributions: contributions.map(field => ({
-                    value: get(field, 'value', '') || '',
-                    sourceName: get(field, 'contributor_name', '') || '',
-                    date:
-                        get(field, 'created_at', '') ||
-                        get(field, 'updated_at', '') ||
-                        '',
-                    userId: get(field, 'contributor_id', null),
-                })),
+                contributions: contributionsFormatted.map(formatted =>
+                    toDrawerContribution(
+                        findRawForFormatted(formatted) || {},
+                        formatted.primary,
+                    ),
+                ),
             };
 
             return {
@@ -177,12 +183,12 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ? `${canonicalLocation.lat}, ${canonicalLocation.lng}`
                 : primaryCoordValue;
 
-            const promotedContribution = {
-                value: promotedValue,
-                sourceName: contributorName,
-                date,
-                userId,
-            };
+            const promotedContribution = canonicalLocation
+                ? toDrawerContribution(canonicalLocation, promotedValue)
+                : toDrawerContribution(
+                      { contributor_name: contributorName },
+                      promotedValue,
+                  );
 
             // Include remaining canonical locations (slice(1)) so that
             // additional claims/corrections are not silently discarded.
@@ -197,12 +203,9 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ...nonCanonicalLocations.filter(
                     item => !item.has_invalid_location && hasValidCoords(item),
                 ),
-            ].map(item => ({
-                value: `${item.lat}, ${item.lng}`,
-                sourceName: get(item, 'contributor_name', '') || '',
-                date: '',
-                userId: get(item, 'contributor_id', null),
-            }));
+            ].map(item =>
+                toDrawerContribution(item, `${item.lat}, ${item.lng}`),
+            );
 
             const drawerData = { promotedContribution, contributions };
 

@@ -205,10 +205,10 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         expect(result.drawerData.contributions).toHaveLength(2);
     });
 
-    it('includes extra canonical entries (same address) in contributions', () => {
-        // Two different contributors both report the canonical address.
-        // Only the first becomes the promoted entry; the second must appear
-        // in contributions rather than being silently discarded.
+    it('does not list extra canonical rows in contributions (FacilityDetailsLocationFields parity)', () => {
+        // Two contributors both report the canonical address. Legacy puts only
+        // the first in the main line; the second is not in additionalContent
+        // (same as primary === core partition). Drawer lists only otherFields.
         const data = {
             properties: {
                 address: '123 Main St',
@@ -246,11 +246,8 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         const result = getFieldContributorInfo(data, ADDR);
 
         expect(result.contributorName).toBe('Org A');
-        // Org B (second canonical) + Org C (non-canonical) = 2 contributions
-        expect(result.drawerData.contributions).toHaveLength(2);
-        expect(
-            result.drawerData.contributions.map(c => c.sourceName),
-        ).toEqual(['Org B', 'Org C']);
+        expect(result.drawerData.contributions).toHaveLength(1);
+        expect(result.drawerData.contributions[0].sourceName).toBe('Org C');
     });
 
     it('sets STATUS_CLAIMED when the canonical field is_from_claim is true', () => {
