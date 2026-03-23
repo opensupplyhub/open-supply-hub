@@ -184,12 +184,12 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ? `${canonicalLocation.lat}, ${canonicalLocation.lng}`
                 : primaryCoordValue;
 
-            const promotedContribution = {
-                value: promotedValue,
-                sourceName: contributorName,
-                date,
-                userId,
-            };
+            const promotedContribution = canonicalLocation
+                ? toDrawerContribution(canonicalLocation, promotedValue)
+                : toDrawerContribution(
+                      { contributor_name: contributorName },
+                      promotedValue,
+                  );
 
             // Include remaining canonical locations (slice(1)) so that
             // additional claims/corrections are not silently discarded.
@@ -204,12 +204,9 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ...nonCanonicalLocations.filter(
                     item => !item.has_invalid_location && hasValidCoords(item),
                 ),
-            ].map(item => ({
-                value: `${item.lat}, ${item.lng}`,
-                sourceName: get(item, 'contributor_name', '') || '',
-                date: '',
-                userId: get(item, 'contributor_id', null),
-            }));
+            ].map(item =>
+                toDrawerContribution(item, `${item.lat}, ${item.lng}`),
+            );
 
             const drawerData = { promotedContribution, contributions };
 
