@@ -3,12 +3,11 @@ import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import ExpandLess from '@material-ui/icons/ExpandLess';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron.jsx';
 import { getIconURL } from '../../Sidebar/NavBar/utils.js';
 import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
 import parentSectionItemStyles from './styles.js';
@@ -117,17 +116,12 @@ const PartnerSectionItem = ({
                     <span className={classes.toggleLabel}>
                         {isOpen ? 'Close' : 'Open'}
                     </span>
-                    {isOpen ? (
-                        <ExpandLess
-                            className={classes.chevron}
-                            data-testid="partner-section-expand-less"
-                        />
-                    ) : (
-                        <ExpandMore
-                            className={classes.chevron}
-                            data-testid="partner-section-expand-more"
-                        />
-                    )}
+                    <ExpandToggleChevron
+                        isExpanded={isOpen}
+                        className={classes.chevron}
+                        expandLessTestId="partner-section-expand-less"
+                        expandMoreTestId="partner-section-expand-more"
+                    />
                 </div>
             </div>
             <Collapse in={isOpen} timeout={transitionDurationMs}>

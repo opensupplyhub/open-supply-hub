@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import ExpandLess from '@material-ui/icons/ExpandLess';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron';
 import DataSourceItem from './DataSourceItem';
 import {
     DATA_SOURCES_TOOLTIP_TEXT,
@@ -63,17 +62,12 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     >
                         {showSubsectionInfo ? 'Close' : 'Open'}
                     </Typography>
-                    {showSubsectionInfo ? (
-                        <ExpandLess
-                            className={classes.chevron}
-                            data-testid="data-sources-expand-less"
-                        />
-                    ) : (
-                        <ExpandMore
-                            className={classes.chevron}
-                            data-testid="data-sources-expand-more"
-                        />
-                    )}
+                    <ExpandToggleChevron
+                        isExpanded={showSubsectionInfo}
+                        className={classes.chevron}
+                        expandLessTestId="data-sources-expand-less"
+                        expandMoreTestId="data-sources-expand-more"
+                    />
                 </div>
             </div>
             <Grid container className={classes.descriptionList} spacing={16}>

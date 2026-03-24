@@ -4,14 +4,13 @@ import { object, bool, string, number, arrayOf, shape, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Collapse from '@material-ui/core/Collapse';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import ExpandLess from '@material-ui/icons/ExpandLess';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import DataPoint from '../../DataPoint/DataPoint';
 import { STATUS_CLAIMED } from '../../DataPoint/constants';
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron';
 import BadgeClaimed from '../../../BadgeClaimed';
 import {
     getClaimDisplayData,
@@ -106,17 +105,12 @@ const ClaimDataContainer = ({
                     <Typography className={classes.toggleLabel}>
                         {isOpen ? 'Close' : 'Open'}
                     </Typography>
-                    {isOpen ? (
-                        <ExpandLess
-                            className={classes.chevron}
-                            data-testid="claim-data-container-expand-less"
-                        />
-                    ) : (
-                        <ExpandMore
-                            className={classes.chevron}
-                            data-testid="claim-data-container-expand-more"
-                        />
-                    )}
+                    <ExpandToggleChevron
+                        isExpanded={isOpen}
+                        className={classes.chevron}
+                        expandLessTestId="claim-data-container-expand-less"
+                        expandMoreTestId="claim-data-container-expand-more"
+                    />
                 </div>
             </div>
             <Collapse in={isOpen} timeout={transitionDurationMs}>
