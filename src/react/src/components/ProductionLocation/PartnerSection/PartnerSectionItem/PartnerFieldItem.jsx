@@ -60,10 +60,18 @@ export default function PartnerFieldItem({
     if (useProductionLocationPage && values.length > 1) {
         const topItem = values[0];
         const topFormatted = formatField(topItem);
+        const promotedContribution = toContributionCard(
+            topItem,
+            formatField,
+            partnerConfigFields,
+        );
         const drawerData = {
-            contributions: values.map(item =>
-                toContributionCard(item, formatField, partnerConfigFields),
-            ),
+            promotedContribution,
+            contributions: values
+                .slice(1)
+                .map(item =>
+                    toContributionCard(item, formatField, partnerConfigFields),
+                ),
         };
 
         return (
@@ -84,6 +92,7 @@ export default function PartnerFieldItem({
                     open={isDrawerOpen}
                     onClose={closeDrawer}
                     fieldName={topFormatted.label ? topFormatted.label : label}
+                    promotedContribution={drawerData.promotedContribution}
                     contributions={drawerData.contributions}
                 />
             </>
