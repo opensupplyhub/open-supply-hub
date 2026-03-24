@@ -1153,9 +1153,14 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertEqual(result.moderation_event.request_type, 'UPDATE')
         self.assertEqual(result.moderation_event.os.id, existing_facility.id)
 
+    @patch('api.geocoding.requests.get')
     def test_patch_no_required_fields_backfills_and_records_backfilled_fields(
         self,
+        mock_get,
     ):
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
+        mock_get.return_value.json.return_value = geocoding_data
+
         existing_facility = self._create_existing_facility()
 
         input_data = {
