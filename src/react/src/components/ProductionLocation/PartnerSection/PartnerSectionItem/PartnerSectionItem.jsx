@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import ExpandLess from '@material-ui/icons/ExpandLess';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
@@ -112,16 +113,17 @@ const PartnerSectionItem = ({
                     </div>
                 </div>
                 <div className={classes.headerRight}>
-                    <Typography className={classes.toggleLabel}>
-                        {isOpen ? 'Close' : 'Open'}
-                    </Typography>
-                    <Switch
-                        color="primary"
-                        checked={isOpen}
-                        onChange={handleToggle}
-                        onClick={event => event.stopPropagation()}
-                        className={classes.switchWrapper}
-                    />
+                    {isOpen ? (
+                        <ExpandLess
+                            className={classes.chevron}
+                            data-testid="partner-section-expand-less"
+                        />
+                    ) : (
+                        <ExpandMore
+                            className={classes.chevron}
+                            data-testid="partner-section-expand-more"
+                        />
+                    )}
                 </div>
             </div>
             <Collapse in={isOpen} timeout={transitionDurationMs}>
