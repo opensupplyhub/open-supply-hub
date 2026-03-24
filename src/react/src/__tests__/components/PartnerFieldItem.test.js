@@ -1,4 +1,5 @@
 import React from 'react';
+import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import PartnerFieldItem from '../../components/ProductionLocation/PartnerSection/PartnerSectionItem/PartnerFieldItem';
 
@@ -10,7 +11,20 @@ describe('PartnerFieldItem component', () => {
         partnerConfigFields: null,
     };
 
-    const makeFacilityData = (values) => ({
+    const makeValue = (overrides = {}) => ({
+        value: 'Scope 1 emissions: 100',
+        created_at: '2025-06-01T00:00:00Z',
+        contributor_name: 'Climate TRACE',
+        contributor_id: 1,
+        is_from_claim: false,
+        is_verified: false,
+        field_name: 'climate_trace',
+        label: null,
+        source_by: null,
+        ...overrides,
+    });
+
+    const makeFacilityData = values => ({
         properties: {
             partner_fields: {
                 climate_trace: values,
@@ -39,22 +53,11 @@ describe('PartnerFieldItem component', () => {
     });
 
     test('renders the primary value and label', () => {
-        const facilityData = makeFacilityData([
-            {
-                value: 'Scope 1 emissions: 100',
-                created_at: '2025-06-01T00:00:00Z',
-                contributor_name: 'Climate TRACE',
-                contributor_id: 1,
-                is_from_claim: false,
-                is_verified: false,
-                field_name: 'climate_trace',
-                label: null,
-                source_by: null,
-            },
-        ]);
-
         const { getByText } = renderWithProviders(
-            <PartnerFieldItem field={defaultField} facilityData={facilityData} />,
+            <PartnerFieldItem
+                field={defaultField}
+                facilityData={makeFacilityData([makeValue()])}
+            />,
         );
 
         expect(getByText('Climate Data')).toBeInTheDocument();
@@ -62,24 +65,139 @@ describe('PartnerFieldItem component', () => {
     });
 
     test('uses label from top value when available', () => {
-        const facilityData = makeFacilityData([
-            {
-                value: 'CO2: 500t',
-                created_at: '2025-06-01T00:00:00Z',
-                contributor_name: 'Partner',
-                contributor_id: 2,
-                is_from_claim: false,
-                is_verified: false,
-                field_name: 'climate_trace',
-                label: 'Top Value Label',
-                source_by: null,
-            },
-        ]);
-
         const { getByText } = renderWithProviders(
-            <PartnerFieldItem field={defaultField} facilityData={facilityData} />,
+            <PartnerFieldItem
+                field={defaultField}
+                facilityData={makeFacilityData([
+                    makeValue({ value: 'CO2: 500t', label: 'Top Value Label' }),
+                ])}
+            />,
         );
 
         expect(getByText('Top Value Label')).toBeInTheDocument();
+    });
+
+    describe('when useProductionLocationPage is false', () => {
+        test('renders FacilityDetailsItem even for multiple contributions', () => {
+            const { queryByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage={false}
+                />,
+            );
+
+            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('when useProductionLocationPage is true', () => {
+        test('renders FacilityDetailsItem for a single contribution', () => {
+            const { queryByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([makeValue()])}
+                    useProductionLocationPage
+                />,
+            );
+
+            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+        });
+
+        test('renders DataPoint for multiple contributions', () => {
+            const { getByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage
+                />,
+            );
+
+            expect(getByTestId('data-point')).toBeInTheDocument();
+        });
+
+        test('renders the label and value in DataPoint', () => {
+            const { getByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage
+                />,
+            );
+
+            expect(getByTestId('data-point-label')).toHaveTextContent(
+                'Climate Data',
+            );
+            expect(getByTestId('data-point-value')).toHaveTextContent(
+                'Scope 1 emissions: 100',
+            );
+        });
+
+        test('uses label from top value when available in DataPoint', () => {
+            const { getByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue({ label: 'Custom Label' }),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage
+                />,
+            );
+
+            expect(getByTestId('data-point-label')).toHaveTextContent(
+                'Custom Label',
+            );
+        });
+
+        test('shows the sources button with correct label', () => {
+            const { getByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                        makeValue({ contributor_id: 3 }),
+                    ])}
+                    useProductionLocationPage
+                />,
+            );
+
+            const button = getByTestId('data-point-sources-button');
+            expect(button).toBeInTheDocument();
+            expect(button).toHaveTextContent('+2 data sources');
+        });
+
+        test('opens ContributionsDrawer when sources button is clicked', () => {
+            renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage
+                />,
+            );
+
+            expect(
+                screen.queryByTestId('contributions-drawer'),
+            ).not.toBeInTheDocument();
+
+            fireEvent.click(screen.getByTestId('data-point-sources-button'));
+
+            expect(
+                screen.getByTestId('contributions-drawer'),
+            ).toBeInTheDocument();
+        });
     });
 });
