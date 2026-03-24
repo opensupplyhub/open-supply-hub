@@ -10,6 +10,7 @@ import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
 import { getIconURL } from '../../Sidebar/NavBar/utils.js';
 import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
+import { shouldUseProductionLocationPage } from '../../../../util/util.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
 import {
@@ -26,6 +27,7 @@ const PartnerSectionItem = ({
     isOpen,
     scrollTargetId,
     dispatch,
+    useProductionLocationPage,
 }) => {
     const containerRef = useScrollToSection(
         scrollTargetId,
@@ -137,6 +139,9 @@ const PartnerSectionItem = ({
                                         <PartnerFieldItem
                                             field={field}
                                             facilityData={facilityData}
+                                            useProductionLocationPage={
+                                                useProductionLocationPage
+                                            }
                                         />
                                     </div>
                                 ))}
@@ -150,6 +155,9 @@ const PartnerSectionItem = ({
                                         <PartnerFieldItem
                                             field={field}
                                             facilityData={facilityData}
+                                            useProductionLocationPage={
+                                                useProductionLocationPage
+                                            }
                                         />
                                     </div>
                                 ))}
@@ -182,6 +190,9 @@ const mapStateToProps = (state, ownProps) => ({
     facilityData: state.facilities.singleFacility.data,
     scrollTargetId: state.sectionNavigation.scrollTargetId,
     isOpen: !!state.sectionNavigation.openSectionIds[ownProps.group.uuid],
+    useProductionLocationPage: shouldUseProductionLocationPage(
+        state.featureFlags,
+    ),
 });
 
 export default connect(mapStateToProps)(
