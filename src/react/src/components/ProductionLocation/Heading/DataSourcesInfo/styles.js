@@ -81,7 +81,7 @@ export default theme => {
             width: 20,
             height: 20,
             fontSize: 20,
-            color: COLOURS.TEAL_GREEN,
+            color: COLOURS.PURPLE,
         }),
         label: Object.freeze({
             ...typography.formLabelTight,
@@ -100,7 +100,7 @@ export default theme => {
         labelPartner: Object.freeze({
             ...typography.formLabelTight,
             fontSize: '1.125rem',
-            color: COLOURS.TEAL_GREEN,
+            color: COLOURS.PURPLE,
         }),
         subsectionText: Object.freeze({
             ...typography.bodyText,
