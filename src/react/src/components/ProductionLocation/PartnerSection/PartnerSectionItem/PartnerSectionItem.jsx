@@ -65,6 +65,7 @@ const PartnerSectionItem = ({
                 }`}
                 role="button"
                 tabIndex={0}
+                aria-expanded={isOpen}
                 onClick={handleToggle}
                 onKeyDown={handleKeyDown}
             >
