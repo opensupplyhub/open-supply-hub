@@ -32,16 +32,15 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
-        switchWrap: Object.freeze({
+        toggleWrap: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             marginLeft: 'auto',
         }),
-        switchLabel: Object.freeze({
-            ...typography.bodyText,
-            fontSize: '0.875rem',
+        chevron: Object.freeze({
+            fontSize: '2rem',
+            color: theme.palette.text.secondary,
         }),
-        switch: Object.freeze({}),
         descriptionList: Object.freeze({
             marginTop: 0,
             '& > *:nth-child(2)': {

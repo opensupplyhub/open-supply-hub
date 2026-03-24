@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
 import { withStyles } from '@material-ui/core/styles';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import ExpandLess from '@material-ui/icons/ExpandLess';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
@@ -33,6 +34,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                 className={classes.titleRow}
                 role="button"
                 tabIndex={0}
+                aria-expanded={showSubsectionInfo}
                 onClick={handleToggle}
                 onKeyDown={handleKeyDown}
             >
@@ -54,25 +56,18 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     className={classes.infoButton}
                     data-testid="data-sources-info-tooltip"
                 />
-                <div className={classes.switchWrap}>
-                    <Typography
-                        component="span"
-                        className={classes.switchLabel}
-                    >
-                        <b>{showSubsectionInfo ? 'Close' : 'Open'}</b>
-                    </Typography>
-                    <Switch
-                        checked={showSubsectionInfo}
-                        onChange={handleToggle}
-                        onClick={event => event.stopPropagation()}
-                        color="primary"
-                        size="small"
-                        className={classes.switch}
-                        inputProps={{
-                            'aria-label':
-                                'Show extra info under each data source',
-                        }}
-                    />
+                <div className={classes.toggleWrap}>
+                    {showSubsectionInfo ? (
+                        <ExpandLess
+                            className={classes.chevron}
+                            data-testid="data-sources-expand-less"
+                        />
+                    ) : (
+                        <ExpandMore
+                            className={classes.chevron}
+                            data-testid="data-sources-expand-more"
+                        />
+                    )}
                 </div>
             </div>
             <Grid container className={classes.descriptionList} spacing={16}>
