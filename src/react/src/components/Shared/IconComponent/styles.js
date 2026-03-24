@@ -9,7 +9,7 @@ export default theme =>
             display: 'inline-flex',
         }),
         tooltip: Object.freeze({
-            fontSize: '0.875rem',
+            fontSize: '1rem',
             backgroundColor: COLOURS.WHITE,
             color: COLOURS.BLACK,
             border: `1px solid ${COLOURS.GREY}`,
