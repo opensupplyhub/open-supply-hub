@@ -57,6 +57,12 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     data-testid="data-sources-info-tooltip"
                 />
                 <div className={classes.toggleWrap}>
+                    <Typography
+                        component="span"
+                        className={classes.switchLabel}
+                    >
+                        {showSubsectionInfo ? 'Close' : 'Open'}
+                    </Typography>
                     {showSubsectionInfo ? (
                         <ExpandLess
                             className={classes.chevron}

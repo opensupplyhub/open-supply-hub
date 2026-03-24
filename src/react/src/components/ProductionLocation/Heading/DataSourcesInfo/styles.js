@@ -102,6 +102,10 @@ export default theme => {
             fontSize: '1.125rem',
             color: COLOURS.PURPLE,
         }),
+        switchLabel: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.875rem',
+        }),
         subsectionText: Object.freeze({
             ...typography.bodyText,
             fontSize: '0.875rem',

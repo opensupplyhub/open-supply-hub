@@ -114,6 +114,9 @@ const PartnerSectionItem = ({
                     </div>
                 </div>
                 <div className={classes.headerRight}>
+                    <span className={classes.toggleLabel}>
+                        {isOpen ? 'Close' : 'Open'}
+                    </span>
                     {isOpen ? (
                         <ExpandLess
                             className={classes.chevron}

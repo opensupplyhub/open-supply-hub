@@ -3,8 +3,9 @@ import { connect } from 'react-redux';
 import { object, bool, string, number, arrayOf, shape, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Switch from '@material-ui/core/Switch';
 import Collapse from '@material-ui/core/Collapse';
+import ExpandMore from '@material-ui/icons/ExpandMore';
+import ExpandLess from '@material-ui/icons/ExpandLess';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import DataPoint from '../../DataPoint/DataPoint';
@@ -105,17 +106,17 @@ const ClaimDataContainer = ({
                     <Typography className={classes.toggleLabel}>
                         {isOpen ? 'Close' : 'Open'}
                     </Typography>
-                    <Switch
-                        color="primary"
-                        checked={isOpen}
-                        onChange={handleToggle}
-                        onClick={event => event.stopPropagation()}
-                        className={classes.switchWrapper}
-                        inputProps={{
-                            'aria-label':
-                                'Show operational details submitted by management',
-                        }}
-                    />
+                    {isOpen ? (
+                        <ExpandLess
+                            className={classes.chevron}
+                            data-testid="claim-data-container-expand-less"
+                        />
+                    ) : (
+                        <ExpandMore
+                            className={classes.chevron}
+                            data-testid="claim-data-container-expand-more"
+                        />
+                    )}
                 </div>
             </div>
             <Collapse in={isOpen} timeout={transitionDurationMs}>
