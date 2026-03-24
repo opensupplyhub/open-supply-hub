@@ -14,6 +14,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **Address** provenance uses `properties.extended_fields.address` (via formatted extended-field rows) against the displayed core address (`properties.address`).
     * **Coordinates** provenance does not use extended fields: entries in `properties.other_locations` are matched to the map feature’s point in `geometry.coordinates` (lat/lng compared with a small tolerance), so the canonical contributor reflects the coordinate pair actually rendered on the map. This yields accurate provenance when multiple address submissions or alternate `other_locations` exist.
 
+### What's new
+* [OSDEV-2412](https://opensupplyhub.atlassian.net/browse/OSDEV-2412) - Partner fields on the Production Location page now use the `DataPoint` component with contributions drawer when multiple values exist, displaying the top contributor and allowing users to view all submissions in a drawer.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
