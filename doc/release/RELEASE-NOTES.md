@@ -7,7 +7,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: April 4, 2026
+
+### Database changes
+
+#### Migrations
+* 0204_add_backfilled_fields_to_moderation_event.py - Adds the `backfilled_fields` column (PostgreSQL array of text) to `api_moderationevent` to store which fields (name, address, country) were backfilled from existing production location data when an API user submits a PATCH api/v1/production-locations/{os_id}/ without them.
+
+### Code/API changes
+* [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled fields persistence and exposure for PATCH `api/v1/production-locations/{os_id}/`: when an API user sends a PATCH without name, address, and country, the system backfills those fields from the existing production location and now records which fields were backfilled. The backfilled field names are stored on the moderation event and are returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled data from data provided by the API user.
 
 ### What's new
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
@@ -21,6 +29,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `moderation-events` index after adding `backfilled_fields` to the index.
 
 
 ## Release 2.20.0

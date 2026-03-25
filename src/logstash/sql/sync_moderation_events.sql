@@ -13,7 +13,8 @@ SELECT
 	ame.status,
 	ame.status_change_date AS status_change_date_value,
 	ame.created_at,
-	ame.updated_at
+	ame.updated_at,
+	ame.backfilled_fields AS backfilled_fields_value
 FROM
 	api_moderationevent ame
 LEFT JOIN api_contributor AS ac

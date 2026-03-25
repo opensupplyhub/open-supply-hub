@@ -1153,6 +1153,39 @@ class TestLocationContributionStrategy(APITestCase):
         self.assertEqual(result.moderation_event.request_type, 'UPDATE')
         self.assertEqual(result.moderation_event.os.id, existing_facility.id)
 
+    @patch('api.geocoding.requests.get')
+    def test_patch_no_required_fields_backfills_and_records_backfilled_fields(
+        self,
+        mock_get,
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        existing_facility = self._create_existing_facility()
+
+        input_data = {
+            'source': 'API',
+            'sector': 'Apparel'
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility,
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto,
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+        self.assertEqual(
+            result.moderation_event.backfilled_fields,
+            ['name', 'address', 'country'],
+        )
+
     def test_moderation_event_creation_with_valid_partner_field(self):
         existing_location_user_email = 'test2@example.com'
         existing_location_user_password = '4567test'
