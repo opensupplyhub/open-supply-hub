@@ -1,7 +1,6 @@
 import React from 'react';
 import get from 'lodash/get';
 import { formatExtendedField } from '../../../../util/util.js';
-import FacilityDetailsItem from '../../../FacilityDetailsItem.jsx';
 import DataPoint from '../../DataPoint/DataPoint.jsx';
 import ContributionsDrawer from '../../ContributionsDrawer/ContributionsDrawer.jsx';
 import useDrawerState from '../../hooks.js';
@@ -34,7 +33,6 @@ const toContributionCard = (item, formatField, partnerConfigFields) => {
 export default function PartnerFieldItem({
     field: { fieldName, formatValue, label, partnerConfigFields },
     facilityData,
-    useProductionLocationPage,
 }) {
     const values = get(
         facilityData,
@@ -57,59 +55,45 @@ export default function PartnerFieldItem({
         };
     };
 
-    if (useProductionLocationPage && values.length > 1) {
-        const topItem = values[0];
-        const topFormatted = formatField(topItem);
-        const promotedContribution = toContributionCard(
-            topItem,
-            formatField,
-            partnerConfigFields,
-        );
-        const drawerData = {
-            promotedContribution,
-            contributions: values
-                .slice(1)
-                .map(item =>
-                    toContributionCard(item, formatField, partnerConfigFields),
-                ),
-        };
-
-        return (
-            <>
-                <DataPoint
-                    label={topFormatted.label ? topFormatted.label : label}
-                    value={renderPartnerFieldValue(
-                        topFormatted,
-                        partnerConfigFields,
-                    )}
-                    contributorName={topItem.contributor_name}
-                    date={topItem.created_at}
-                    drawerData={drawerData}
-                    onOpenDrawer={openDrawer}
-                    multiline
-                />
-                <ContributionsDrawer
-                    open={isDrawerOpen}
-                    onClose={closeDrawer}
-                    fieldName={topFormatted.label ? topFormatted.label : label}
-                    promotedContribution={drawerData.promotedContribution}
-                    contributions={drawerData.contributions}
-                />
-            </>
-        );
-    }
-
-    const topItem = Object.assign({}, values[0]);
-    const topValue = {
-        ...formatField(topItem),
+    const topItem = values[0];
+    const topFormatted = formatField(topItem);
+    const resolvedLabel = topFormatted.label || label;
+    const promotedContribution = toContributionCard(
+        topItem,
+        formatField,
+        partnerConfigFields,
+    );
+    const drawerData = {
+        promotedContribution,
+        contributions: values
+            .slice(1)
+            .map(item =>
+                toContributionCard(item, formatField, partnerConfigFields),
+            ),
     };
 
     return (
-        <FacilityDetailsItem
-            {...topValue}
-            label={topValue.label ? topValue.label : label}
-            additionalContent={values.slice(1).map(formatField)}
-            partnerConfigFields={partnerConfigFields}
-        />
+        <>
+            <DataPoint
+                label={resolvedLabel}
+                value={renderPartnerFieldValue(
+                    topFormatted,
+                    partnerConfigFields,
+                )}
+                contributorName={topItem.contributor_name}
+                userId={topItem.contributor_id}
+                date={topItem.created_at}
+                drawerData={drawerData}
+                onOpenDrawer={openDrawer}
+                multiline
+            />
+            <ContributionsDrawer
+                open={isDrawerOpen}
+                onClose={closeDrawer}
+                fieldName={resolvedLabel}
+                promotedContribution={drawerData.promotedContribution}
+                contributions={drawerData.contributions}
+            />
+        </>
     );
 }

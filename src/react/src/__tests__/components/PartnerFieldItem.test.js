@@ -33,6 +33,13 @@ describe('PartnerFieldItem component', () => {
         },
     });
 
+    const renderItem = (props = {}) =>
+        renderWithProviders(
+            <MemoryRouter>
+                <PartnerFieldItem field={defaultField} {...props} />
+            </MemoryRouter>,
+        );
+
     test('renders nothing when values array is empty', () => {
         const { container } = renderWithProviders(
             <PartnerFieldItem
@@ -53,154 +60,84 @@ describe('PartnerFieldItem component', () => {
         expect(container.firstChild).toBeNull();
     });
 
-    test('renders the primary value and label', () => {
-        const { getByText } = renderWithProviders(
-            <PartnerFieldItem
-                field={defaultField}
-                facilityData={makeFacilityData([makeValue()])}
-            />,
-        );
+    test('renders DataPoint for a single contribution', () => {
+        const { getByTestId } = renderItem({
+            facilityData: makeFacilityData([makeValue()]),
+        });
 
-        expect(getByText('Climate Data')).toBeInTheDocument();
-        expect(getByText('Scope 1 emissions: 100')).toBeInTheDocument();
+        expect(getByTestId('data-point')).toBeInTheDocument();
+    });
+
+    test('does not show sources button for a single contribution', () => {
+        const { queryByTestId } = renderItem({
+            facilityData: makeFacilityData([makeValue()]),
+        });
+
+        expect(queryByTestId('data-point-sources-button')).not.toBeInTheDocument();
+    });
+
+    test('renders the label and value in DataPoint', () => {
+        const { getByTestId } = renderItem({
+            facilityData: makeFacilityData([makeValue()]),
+        });
+
+        expect(getByTestId('data-point-label')).toHaveTextContent('Climate Data');
+        expect(getByTestId('data-point-value')).toHaveTextContent(
+            'Scope 1 emissions: 100',
+        );
     });
 
     test('uses label from top value when available', () => {
-        const { getByText } = renderWithProviders(
-            <PartnerFieldItem
-                field={defaultField}
-                facilityData={makeFacilityData([
-                    makeValue({ value: 'CO2: 500t', label: 'Top Value Label' }),
-                ])}
-            />,
-        );
+        const { getByTestId } = renderItem({
+            facilityData: makeFacilityData([
+                makeValue({ label: 'Custom Label' }),
+            ]),
+        });
 
-        expect(getByText('Top Value Label')).toBeInTheDocument();
+        expect(getByTestId('data-point-label')).toHaveTextContent('Custom Label');
     });
 
-    describe('when useProductionLocationPage is false', () => {
-        test('renders FacilityDetailsItem even for multiple contributions', () => {
-            const { queryByTestId } = renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([
-                        makeValue(),
-                        makeValue({ contributor_id: 2 }),
-                    ])}
-                    useProductionLocationPage={false}
-                />,
-            );
-
-            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+    test('renders top contributor name as a profile link', () => {
+        const { getByTestId } = renderItem({
+            facilityData: makeFacilityData([makeValue({ contributor_id: 42 })]),
         });
+
+        const contributor = getByTestId('data-point-contributor');
+        expect(
+            contributor.querySelector('a[href="/profile/42"]'),
+        ).toBeInTheDocument();
     });
 
-    describe('when useProductionLocationPage is true', () => {
-        test('renders FacilityDetailsItem for a single contribution', () => {
-            const { queryByTestId } = renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([makeValue()])}
-                    useProductionLocationPage
-                />,
-            );
-
-            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+    test('shows the sources button with correct count for multiple contributions', () => {
+        const { getByTestId } = renderItem({
+            facilityData: makeFacilityData([
+                makeValue(),
+                makeValue({ contributor_id: 2 }),
+                makeValue({ contributor_id: 3 }),
+            ]),
         });
 
-        test('renders DataPoint for multiple contributions', () => {
-            const { getByTestId } = renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([
-                        makeValue(),
-                        makeValue({ contributor_id: 2 }),
-                    ])}
-                    useProductionLocationPage
-                />,
-            );
+        const button = getByTestId('data-point-sources-button');
+        expect(button).toBeInTheDocument();
+        expect(button).toHaveTextContent('+2 data sources');
+    });
 
-            expect(getByTestId('data-point')).toBeInTheDocument();
+    test('opens ContributionsDrawer when sources button is clicked', () => {
+        renderItem({
+            facilityData: makeFacilityData([
+                makeValue(),
+                makeValue({ contributor_id: 2 }),
+            ]),
         });
 
-        test('renders the label and value in DataPoint', () => {
-            const { getByTestId } = renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([
-                        makeValue(),
-                        makeValue({ contributor_id: 2 }),
-                    ])}
-                    useProductionLocationPage
-                />,
-            );
+        expect(
+            screen.queryByTestId('contributions-drawer'),
+        ).not.toBeInTheDocument();
 
-            expect(getByTestId('data-point-label')).toHaveTextContent(
-                'Climate Data',
-            );
-            expect(getByTestId('data-point-value')).toHaveTextContent(
-                'Scope 1 emissions: 100',
-            );
-        });
+        fireEvent.click(screen.getByTestId('data-point-sources-button'));
 
-        test('uses label from top value when available in DataPoint', () => {
-            const { getByTestId } = renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([
-                        makeValue({ label: 'Custom Label' }),
-                        makeValue({ contributor_id: 2 }),
-                    ])}
-                    useProductionLocationPage
-                />,
-            );
-
-            expect(getByTestId('data-point-label')).toHaveTextContent(
-                'Custom Label',
-            );
-        });
-
-        test('shows the sources button with correct label', () => {
-            const { getByTestId } = renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([
-                        makeValue(),
-                        makeValue({ contributor_id: 2 }),
-                        makeValue({ contributor_id: 3 }),
-                    ])}
-                    useProductionLocationPage
-                />,
-            );
-
-            const button = getByTestId('data-point-sources-button');
-            expect(button).toBeInTheDocument();
-            expect(button).toHaveTextContent('+2 data sources');
-        });
-
-        test('opens ContributionsDrawer when sources button is clicked', () => {
-            renderWithProviders(
-                <MemoryRouter>
-                    <PartnerFieldItem
-                        field={defaultField}
-                        facilityData={makeFacilityData([
-                            makeValue(),
-                            makeValue({ contributor_id: 2 }),
-                        ])}
-                        useProductionLocationPage
-                    />
-                </MemoryRouter>,
-            );
-
-            expect(
-                screen.queryByTestId('contributions-drawer'),
-            ).not.toBeInTheDocument();
-
-            fireEvent.click(screen.getByTestId('data-point-sources-button'));
-
-            expect(
-                screen.getByTestId('contributions-drawer'),
-            ).toBeInTheDocument();
-        });
+        expect(
+            screen.getByTestId('contributions-drawer'),
+        ).toBeInTheDocument();
     });
 });
