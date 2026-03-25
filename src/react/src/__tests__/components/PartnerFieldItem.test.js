@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import PartnerFieldItem from '../../components/ProductionLocation/PartnerSection/PartnerSectionItem/PartnerFieldItem';
 
@@ -179,14 +180,16 @@ describe('PartnerFieldItem component', () => {
 
         test('opens ContributionsDrawer when sources button is clicked', () => {
             renderWithProviders(
-                <PartnerFieldItem
-                    field={defaultField}
-                    facilityData={makeFacilityData([
-                        makeValue(),
-                        makeValue({ contributor_id: 2 }),
-                    ])}
-                    useProductionLocationPage
-                />,
+                <MemoryRouter>
+                    <PartnerFieldItem
+                        field={defaultField}
+                        facilityData={makeFacilityData([
+                            makeValue(),
+                            makeValue({ contributor_id: 2 }),
+                        ])}
+                        useProductionLocationPage
+                    />
+                </MemoryRouter>,
             );
 
             expect(
