@@ -182,6 +182,7 @@ class EventApprovalTemplate(ABC):
             clean_address=data["clean_address"],
             country_code=data["country_code"],
             sector=data["sector"],
+            moderation_event=self.__event,
             status=status,
             processing_results=[
                 {

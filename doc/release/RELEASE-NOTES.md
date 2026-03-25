@@ -13,9 +13,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0204_add_backfilled_fields_to_moderation_event.py - Adds the `backfilled_fields` column (PostgreSQL array of text) to `api_moderationevent` to store which fields (name, address, country) were backfilled from existing production location data when an API user submits a PATCH api/v1/production-locations/{os_id}/ without them.
+* 0205_add_facilitylistitem_moderation_event.py - Adds nullable `moderation_event_id` on `api_facilitylistitem` as a one-to-one toward `api_moderationevent` (unique when set), so at most one list item can reference a given moderation event.
 
 ### Code/API changes
-* [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled fields persistence and exposure for PATCH `api/v1/production-locations/{os_id}/`: when an API user sends a PATCH without name, address, and country, the system backfills those fields from the existing production location and now records which fields were backfilled. The backfilled field names are stored on the moderation event and are returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled data from data provided by the API user.
+* [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled-field tracking on production location moderation and linked approval-created `FacilityListItem` rows to their moderation event.
+    * **Backfilled fields on PATCH** — For `PATCH api/v1/production-locations/{os_id}/`, when an API user omits name, address, and country, the system backfills them from the existing production location and records which fields were backfilled. Those names are stored on the moderation event and returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled values from values supplied by the API user.
+    * **`FacilityListItem` ↔ moderation event** — When approval creates a `FacilityListItem`, it is linked to the moderation event (`FacilityListItem.moderation_event`). That linkage is necessary so we can tell which data contributions shown on the location profile were backfilled (via the list item, moderation event, and recorded backfilled fields).
 
 ### What's new
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
