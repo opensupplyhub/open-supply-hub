@@ -49,6 +49,32 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         expect(result.drawerData.contributions).toEqual([]);
     });
 
+    it('uses created_from when only core properties.address is set (no extended_fields.address)', () => {
+        const data = {
+            properties: {
+                address: '13736 Victory Blvd, Van Nuys, CA, 91401-2324',
+                extended_fields: { address: [] },
+                created_from: {
+                    contributor: 'List / geocode source',
+                    created_at: '2020-05-01T12:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.status).toBe(STATUS_CROWDSOURCED);
+        expect(result.contributorName).toBe('List / geocode source');
+        expect(result.date).toBe('2020-05-01T12:00:00Z');
+        expect(result.drawerData.contributions).toEqual([]);
+        expect(result.drawerData.promotedContribution.value).toBe(
+            '13736 Victory Blvd, Van Nuys, CA, 91401-2324',
+        );
+        expect(result.drawerData.promotedContribution.sourceName).toBe(
+            'List / geocode source',
+        );
+    });
+
     it('uses the field matching properties.address as the canonical contributor', () => {
         const data = {
             properties: {
@@ -272,6 +298,42 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         const result = getFieldContributorInfo(data, ADDR);
 
         expect(result.status).toBe(STATUS_CLAIMED);
+    });
+});
+
+describe('getFieldContributorInfo — ADDRESS regression contract', () => {
+    it('does not use created_from for main contributor when extended rows exist but none match core address', () => {
+        const data = {
+            properties: {
+                address: 'Core Address On Profile',
+                created_from: {
+                    contributor: 'Must Not Appear As Main Contributor',
+                    created_at: '2020-01-01T00:00:00Z',
+                },
+                extended_fields: {
+                    address: [
+                        {
+                            value: 'Different St Only In Extended',
+                            contributor_name: 'Submitter A',
+                            contributor_id: 1,
+                            created_at: '2023-01-01T00:00:00Z',
+                            updated_at: '2023-01-01T00:00:00Z',
+                            is_from_claim: false,
+                        },
+                    ],
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.contributorName).toBe('');
+        expect(result.contributorName).not.toBe(
+            'Must Not Appear As Main Contributor',
+        );
+        expect(result.drawerData.promotedContribution).toBeNull();
+        expect(result.drawerData.contributions).toHaveLength(1);
+        expect(result.status).toBe(STATUS_CROWDSOURCED);
     });
 });
 

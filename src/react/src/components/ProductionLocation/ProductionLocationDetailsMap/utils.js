@@ -1,6 +1,7 @@
 import get from 'lodash/get';
 import head from 'lodash/head';
 import partition from 'lodash/partition';
+import trim from 'lodash/trim';
 import uniqBy from 'lodash/uniqBy';
 
 import { formatExtendedField } from '../../../util/util';
@@ -77,23 +78,71 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                   )
                 : null;
 
-            const contributorName =
-                get(canonicalRaw, 'contributor_name', '') || '';
+            const hasExtendedAddressData = uniqueAddresses.length > 0;
 
-            const userId = get(canonicalRaw, 'contributor_id', null);
-            const date =
-                get(canonicalRaw, 'created_at', '') ||
-                get(canonicalRaw, 'updated_at', '') ||
-                '';
+            // When extended history exists but nothing matches core address, do not
+            // attribute to created_from (see tests — "No Match"). Only fall back to
+            // created_from when there are no extended_field address rows (same idea
+            // as nameConfig synthetic topRaw / coordinates + created_from).
+            let contributorName = '';
+            let userId = null;
+            let date = '';
+            if (canonicalRaw) {
+                contributorName =
+                    get(canonicalRaw, 'contributor_name', '') || '';
+                userId = get(canonicalRaw, 'contributor_id', null);
+                date =
+                    get(canonicalRaw, 'created_at', '') ||
+                    get(canonicalRaw, 'updated_at', '') ||
+                    '';
+            } else if (!hasExtendedAddressData && trim(address)) {
+                contributorName =
+                    get(
+                        singleFacilityData,
+                        'properties.created_from.contributor',
+                        '',
+                    ) || '';
+                date =
+                    get(
+                        singleFacilityData,
+                        'properties.created_from.created_at',
+                        '',
+                    ) || '';
+            }
+
+            // Badge: extended-field rows and/or non-empty core address (geocoded/list
+            // core value without extended history should still show Crowdsourced).
+            const hasDataForStatusBadge =
+                hasExtendedAddressData || Boolean(trim(address));
             const status = getContributorStatus(
                 contributorName,
                 get(canonicalRaw, 'is_from_claim', false),
-                uniqueAddresses.length > 0,
+                hasDataForStatusBadge,
             );
 
-            const promotedContribution = canonicalRaw
-                ? toDrawerContribution(canonicalRaw, canonicalFormatted.primary)
-                : null;
+            let promotedContribution = null;
+            if (canonicalRaw) {
+                promotedContribution = toDrawerContribution(
+                    canonicalRaw,
+                    canonicalFormatted.primary,
+                );
+            } else if (!hasExtendedAddressData && trim(address)) {
+                promotedContribution = toDrawerContribution(
+                    {
+                        contributor_name: get(
+                            singleFacilityData,
+                            'properties.created_from.contributor',
+                            '',
+                        ),
+                        created_at: get(
+                            singleFacilityData,
+                            'properties.created_from.created_at',
+                            '',
+                        ),
+                    },
+                    address,
+                );
+            }
 
             const drawerData = {
                 promotedContribution,
