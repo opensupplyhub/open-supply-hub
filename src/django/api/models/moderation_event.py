@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django_bleach.models import BleachField
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
@@ -156,6 +157,17 @@ class ModerationEvent(models.Model):
     action_reason_text_raw = BleachField(
         blank=True,
         help_text='Raw version of the action reason text.'
+    )
+
+    backfilled_fields = ArrayField(
+        models.CharField(max_length=50),
+        default=list,
+        blank=True,
+        help_text=(
+            'List of field names (e.g. name, address, country) that were '
+            'backfilled from existing production location data when the API '
+            'user did not provide them in a PATCH request.'
+        )
     )
 
     def __str__(self):
