@@ -90,16 +90,16 @@ export const getLocationFieldsConfig = (location, contact, office) => [
                 ? renderUniqueListItems(orderBy(location.sector, identity))
                 : null,
     },
-    // Facility type.
+    // Location type (API field: facility_type).
     {
         key: 'facility_type',
-        label: 'Facility Type',
+        label: 'Location Type',
         getValue: () => location.facility_type || null,
     },
-    // Other facility type.
+    // Other location type (API field: other_facility_type).
     {
         key: 'other_facility_type',
-        label: 'Other Facility Type',
+        label: 'Other Location Type',
         getValue: () => location.other_facility_type || null,
     },
     // Product types.

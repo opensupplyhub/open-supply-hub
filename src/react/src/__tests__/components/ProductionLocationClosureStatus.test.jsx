@@ -33,7 +33,7 @@ describe('ProductionLocation ClosureStatus', () => {
 
         expect(screen.queryByText('Status pending')).not.toBeInTheDocument();
         expect(
-            screen.queryByText(/This facility may be/),
+            screen.queryByText(/This production location may be/),
         ).not.toBeInTheDocument();
     });
 
@@ -53,7 +53,7 @@ describe('ProductionLocation ClosureStatus', () => {
 
         expect(screen.queryByText('Status pending')).not.toBeInTheDocument();
         expect(
-            screen.queryByText(/This facility is closed/),
+            screen.queryByText(/This production location is closed/),
         ).not.toBeInTheDocument();
     });
 
@@ -74,12 +74,12 @@ describe('ProductionLocation ClosureStatus', () => {
         );
 
         expect(
-            screen.getByText(/This facility may be closed\./),
+            screen.getByText(/This production location may be closed\./),
         ).toBeInTheDocument();
         expect(screen.getByText('Status pending')).toBeInTheDocument();
     });
 
-    test('renders closed message when facility is closed and no new OS ID', () => {
+    test('renders closed message when production location is closed and no new OS ID', () => {
         const data = {
             properties: {
                 activity_reports: [{ status: 'RESOLVED' }],
@@ -94,7 +94,7 @@ describe('ProductionLocation ClosureStatus', () => {
         );
 
         expect(
-            screen.getByText(/This facility is closed\./),
+            screen.getByText(/This production location is closed\./),
         ).toBeInTheDocument();
     });
 
@@ -116,7 +116,7 @@ describe('ProductionLocation ClosureStatus', () => {
         const link = screen.getByRole('link', { name: 'US2025123456ABCD' });
         expect(link).toBeInTheDocument();
         expect(
-            screen.getByText(/This facility has moved to/),
+            screen.getByText(/This production location has moved to/),
         ).toBeInTheDocument();
     });
 });
