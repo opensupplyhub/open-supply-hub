@@ -105,7 +105,8 @@ export default theme => {
         }),
         subsectionText: Object.freeze({
             ...typography.bodyText,
-            fontSize: '0.875rem',
+            color: theme.palette.primary,
+            fontSize: '1rem',
             marginTop: 0,
             marginBottom: 0,
         }),
