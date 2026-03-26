@@ -148,7 +148,7 @@ describe('ClaimDataContainer — field labels and values', () => {
             'Closing Date',
             'Estimated Annual Throughput',
             'Sector',
-            'Facility Type',
+            'Location Type',
             'Product Types',
             'Production Types',
             'Parent Company',
