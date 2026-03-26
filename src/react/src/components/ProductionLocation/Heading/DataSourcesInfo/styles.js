@@ -32,16 +32,15 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
-        switchWrap: Object.freeze({
+        toggleWrap: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             marginLeft: 'auto',
         }),
-        switchLabel: Object.freeze({
-            ...typography.bodyText,
-            fontSize: '0.875rem',
+        chevron: Object.freeze({
+            fontSize: '2rem',
+            color: theme.palette.text.secondary,
         }),
-        switch: Object.freeze({}),
         descriptionList: Object.freeze({
             marginTop: 0,
             '& > *:nth-child(2)': {
@@ -82,7 +81,7 @@ export default theme => {
             width: 20,
             height: 20,
             fontSize: 20,
-            color: COLOURS.TEAL_GREEN,
+            color: COLOURS.PURPLE,
         }),
         label: Object.freeze({
             ...typography.formLabelTight,
@@ -101,7 +100,11 @@ export default theme => {
         labelPartner: Object.freeze({
             ...typography.formLabelTight,
             fontSize: '1.125rem',
-            color: COLOURS.TEAL_GREEN,
+            color: COLOURS.PURPLE,
+        }),
+        switchLabel: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.875rem',
         }),
         subsectionText: Object.freeze({
             ...typography.bodyText,

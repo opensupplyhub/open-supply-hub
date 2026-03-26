@@ -21,6 +21,11 @@ export default theme => {
             '&:focus': {
                 outline: 'none',
             },
+            height: '48px',
+        }),
+        chevron: Object.freeze({
+            fontSize: '2rem',
+            color: theme.palette.text.secondary,
         }),
         headerOpen: Object.freeze({
             borderBottom: `1px solid ${COLOURS.ACCENT_GREY}`,
@@ -33,7 +38,7 @@ export default theme => {
         headerRight: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: `${spacing * 0.5}px`,
+            gap: '4px',
         }),
         titleIcon: Object.freeze({
             flexShrink: 0,
@@ -53,9 +58,6 @@ export default theme => {
         toggleLabel: Object.freeze({
             ...typography.bodyText,
             fontSize: '0.875rem',
-        }),
-        switchWrapper: Object.freeze({
-            zIndex: 1,
         }),
         dataPointsList: Object.freeze({
             padding: '20px',

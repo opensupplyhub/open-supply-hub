@@ -1,7 +1,6 @@
 import React from 'react';
 import Typography from '@material-ui/core/Typography';
 import ListIcon from '@material-ui/icons/List';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -21,10 +20,6 @@ const PublicContributorsSection = ({ classes, publicContributors }) => (
                         rel="noopener noreferrer"
                     >
                         {contributor.contributor_name}
-                        <OpenInNewIcon
-                            className={classes.contributorNameIcon}
-                            aria-hidden
-                        />
                     </Link>
                     {contributor.contributor_type && (
                         <Typography
