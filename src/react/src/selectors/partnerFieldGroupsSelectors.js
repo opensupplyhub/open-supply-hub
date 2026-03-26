@@ -2,7 +2,10 @@ import { createSelector } from '@reduxjs/toolkit';
 import get from 'lodash/get';
 import { preparePartnerFields } from '../components/PartnerFields/PartnerFieldsSection/utils.jsx';
 
-const getGroups = state => state.partnerFieldGroups.data?.results || [];
+const EMPTY_GROUPS = [];
+
+const getGroups = state =>
+    state.partnerFieldGroups.data?.results || EMPTY_GROUPS;
 
 const getFacilityData = state => state.facilities.singleFacility.data;
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import PartnerDataContainer from '../../components/ProductionLocation/PartnerSection/PartnerDataContainer/PartnerDataContainer';
 
@@ -92,7 +93,9 @@ describe('PartnerDataContainer component', () => {
         };
         const state = buildState(facilityData, [makeGroup(['climate_trace'])]);
         const { getByText } = renderWithProviders(
-            <PartnerDataContainer />,
+            <MemoryRouter>
+                <PartnerDataContainer />
+            </MemoryRouter>,
             { preloadedState: state },
         );
         expect(getByText('Partner Data')).toBeInTheDocument();

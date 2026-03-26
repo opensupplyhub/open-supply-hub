@@ -8,6 +8,7 @@ import Divider from '@material-ui/core/Divider';
 import FacilityDetailsDetail from './FacilityDetailsDetail';
 import TitledDrawer from './TitledDrawer';
 import ShowOnly from './ShowOnly';
+import ContributionsDrawer from './ProductionLocation/ContributionsDrawer/ContributionsDrawer';
 
 const detailsStyles = theme =>
     Object.freeze({
@@ -51,6 +52,10 @@ const FacilityDetailsItem = ({
     additionalContentTextPlural = 'entries',
     partnerConfigFields,
     showDivider,
+    customDrawer,
+    drawerFieldName,
+    drawerPromotedContribution,
+    drawerContributions,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
@@ -89,47 +94,59 @@ const FacilityDetailsItem = ({
                         : additionalContentTextPlural}
                 </Button>
             </ShowOnly>
-            <TitledDrawer
-                open={isOpen}
-                anchor="right"
-                onClose={() => setIsOpen(false)}
-                title={label}
-                locationLabeled={locationLabeled}
-                subtitle={`${
-                    additionalContentCount + 1
-                } ${additionalContentTextPlural}`}
-            >
-                <div className={classes.drawer}>
-                    <div className={classes.itemWrapper}>
-                        <FacilityDetailsDetail
-                            primary={primary || `${lat}, ${lng}` || null}
-                            secondary={!embed ? secondary : null}
-                            sourceBy={!embed ? sourceBy : null}
-                            unit={!embed ? unit : null}
-                            jsonSchema={!embed ? jsonSchema : null}
-                            isVerified={isVerified}
-                            isFromClaim={isFromClaim}
-                            partnerConfigFields={partnerConfigFields}
-                        />
+            {customDrawer && hasAdditionalContent ? (
+                <ContributionsDrawer
+                    open={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    fieldName={drawerFieldName || label}
+                    promotedContribution={drawerPromotedContribution}
+                    contributions={drawerContributions}
+                />
+            ) : (
+                <TitledDrawer
+                    open={isOpen}
+                    anchor="right"
+                    onClose={() => setIsOpen(false)}
+                    title={label}
+                    locationLabeled={locationLabeled}
+                    subtitle={`${
+                        additionalContentCount + 1
+                    } ${additionalContentTextPlural}`}
+                >
+                    <div className={classes.drawer}>
+                        <div className={classes.itemWrapper}>
+                            <FacilityDetailsDetail
+                                primary={primary || `${lat}, ${lng}` || null}
+                                secondary={!embed ? secondary : null}
+                                sourceBy={!embed ? sourceBy : null}
+                                unit={!embed ? unit : null}
+                                jsonSchema={!embed ? jsonSchema : null}
+                                isVerified={isVerified}
+                                isFromClaim={isFromClaim}
+                                partnerConfigFields={partnerConfigFields}
+                            />
+                        </div>
+                        {isOpen &&
+                            additionalContent.map((item, index) => (
+                                <React.Fragment
+                                    key={item.key || `${label}-${index}`}
+                                >
+                                    {index > 0 && showDivider ? (
+                                        <Divider />
+                                    ) : null}
+                                    <div className={classes.itemWrapper}>
+                                        <FacilityDetailsDetail
+                                            {...item}
+                                            partnerConfigFields={
+                                                partnerConfigFields
+                                            }
+                                        />
+                                    </div>
+                                </React.Fragment>
+                            ))}
                     </div>
-                    {isOpen &&
-                        additionalContent.map((item, index) => (
-                            <React.Fragment
-                                key={item.key || `${label}-${index}`}
-                            >
-                                {index > 0 && showDivider ? <Divider /> : null}
-                                <div className={classes.itemWrapper}>
-                                    <FacilityDetailsDetail
-                                        {...item}
-                                        partnerConfigFields={
-                                            partnerConfigFields
-                                        }
-                                    />
-                                </div>
-                            </React.Fragment>
-                        ))}
-                </div>
-            </TitledDrawer>
+                </TitledDrawer>
+            )}
         </div>
     );
 };
@@ -164,6 +181,10 @@ FacilityDetailsItem.propTypes = {
         displayText: PropTypes.string,
     }),
     showDivider: PropTypes.bool,
+    customDrawer: PropTypes.bool,
+    drawerFieldName: PropTypes.string,
+    drawerPromotedContribution: PropTypes.object,
+    drawerContributions: PropTypes.arrayOf(PropTypes.object),
 };
 
 FacilityDetailsItem.defaultProps = {
@@ -184,6 +205,10 @@ FacilityDetailsItem.defaultProps = {
     additionalContentTextPlural: 'entries',
     partnerConfigFields: null,
     showDivider: false,
+    customDrawer: false,
+    drawerFieldName: null,
+    drawerPromotedContribution: null,
+    drawerContributions: [],
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsItem);

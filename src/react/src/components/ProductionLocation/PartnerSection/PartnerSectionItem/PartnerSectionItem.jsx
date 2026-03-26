@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -176,6 +177,45 @@ const PartnerSectionItem = ({
             </Collapse>
         </div>
     );
+};
+
+const partnerConfigFieldsPropType = PropTypes.oneOfType([
+    PropTypes.shape({
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
+    }),
+    PropTypes.oneOf([null]),
+]);
+
+const partnerFieldForGroupPropType = PropTypes.shape({
+    fieldName: PropTypes.string.isRequired,
+    formatValue: PropTypes.func,
+    label: PropTypes.string.isRequired,
+    partnerConfigFields: partnerConfigFieldsPropType,
+});
+
+PartnerSectionItem.propTypes = {
+    classes: PropTypes.object.isRequired,
+    group: PropTypes.shape({
+        uuid: PropTypes.string.isRequired,
+        name: PropTypes.string.isRequired,
+        icon_file: PropTypes.string,
+        helper_text: PropTypes.string,
+        description: PropTypes.string,
+        partnerFields: PropTypes.arrayOf(partnerFieldForGroupPropType),
+    }).isRequired,
+    facilityData: PropTypes.object,
+    isOpen: PropTypes.bool.isRequired,
+    scrollTargetId: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.oneOf([null]),
+    ]),
+    dispatch: PropTypes.func.isRequired,
+};
+
+PartnerSectionItem.defaultProps = {
+    facilityData: null,
+    scrollTargetId: null,
 };
 
 const mapStateToProps = (state, ownProps) => ({

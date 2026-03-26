@@ -1,4 +1,6 @@
 import React from 'react';
+import { fireEvent, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import PartnerFieldItem from '../../components/ProductionLocation/PartnerSection/PartnerSectionItem/PartnerFieldItem';
 
@@ -10,7 +12,20 @@ describe('PartnerFieldItem component', () => {
         partnerConfigFields: null,
     };
 
-    const makeFacilityData = (values) => ({
+    const makeValue = (overrides = {}) => ({
+        value: 'Scope 1 emissions: 100',
+        created_at: '2025-06-01T00:00:00Z',
+        contributor_name: 'Climate TRACE',
+        contributor_id: 1,
+        is_from_claim: false,
+        is_verified: false,
+        field_name: 'climate_trace',
+        label: null,
+        source_by: null,
+        ...overrides,
+    });
+
+    const makeFacilityData = values => ({
         properties: {
             partner_fields: {
                 climate_trace: values,
@@ -39,22 +54,11 @@ describe('PartnerFieldItem component', () => {
     });
 
     test('renders the primary value and label', () => {
-        const facilityData = makeFacilityData([
-            {
-                value: 'Scope 1 emissions: 100',
-                created_at: '2025-06-01T00:00:00Z',
-                contributor_name: 'Climate TRACE',
-                contributor_id: 1,
-                is_from_claim: false,
-                is_verified: false,
-                field_name: 'climate_trace',
-                label: null,
-                source_by: null,
-            },
-        ]);
-
         const { getByText } = renderWithProviders(
-            <PartnerFieldItem field={defaultField} facilityData={facilityData} />,
+            <PartnerFieldItem
+                field={defaultField}
+                facilityData={makeFacilityData([makeValue()])}
+            />,
         );
 
         expect(getByText('Climate Data')).toBeInTheDocument();
@@ -62,24 +66,94 @@ describe('PartnerFieldItem component', () => {
     });
 
     test('uses label from top value when available', () => {
-        const facilityData = makeFacilityData([
-            {
-                value: 'CO2: 500t',
-                created_at: '2025-06-01T00:00:00Z',
-                contributor_name: 'Partner',
-                contributor_id: 2,
-                is_from_claim: false,
-                is_verified: false,
-                field_name: 'climate_trace',
-                label: 'Top Value Label',
-                source_by: null,
-            },
-        ]);
-
         const { getByText } = renderWithProviders(
-            <PartnerFieldItem field={defaultField} facilityData={facilityData} />,
+            <PartnerFieldItem
+                field={defaultField}
+                facilityData={makeFacilityData([
+                    makeValue({ value: 'CO2: 500t', label: 'Top Value Label' }),
+                ])}
+            />,
         );
 
         expect(getByText('Top Value Label')).toBeInTheDocument();
+    });
+
+    describe('when useProductionLocationPage is false', () => {
+        test('renders FacilityDetailsItem even for multiple contributions', () => {
+            const { queryByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage={false}
+                />,
+            );
+
+            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+            expect(
+                queryByTestId('contributions-drawer'),
+            ).not.toBeInTheDocument();
+        });
+    });
+
+    describe('when useProductionLocationPage is true', () => {
+        const renderNewPage = (props = {}) =>
+            renderWithProviders(
+                <MemoryRouter>
+                    <PartnerFieldItem
+                        field={defaultField}
+                        useProductionLocationPage
+                        {...props}
+                    />
+                </MemoryRouter>,
+            );
+
+        test('renders FacilityDetailsItem for a single contribution', () => {
+            const { queryByTestId } = renderNewPage({
+                facilityData: makeFacilityData([makeValue()]),
+            });
+
+            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+            expect(
+                queryByTestId('facility-details-detail'),
+            ).toBeInTheDocument();
+        });
+
+        test('opens ContributionsDrawer when the more-entries button is clicked', () => {
+            renderNewPage({
+                facilityData: makeFacilityData([
+                    makeValue(),
+                    makeValue({ contributor_id: 2 }),
+                ]),
+            });
+
+            expect(
+                screen.queryByTestId('contributions-drawer'),
+            ).not.toBeInTheDocument();
+
+            fireEvent.click(
+                screen.getByRole('button', { name: /1 more entry/i }),
+            );
+
+            expect(
+                screen.getByTestId('contributions-drawer'),
+            ).toBeInTheDocument();
+        });
+
+        test('shows the correct count on the more-entries button', () => {
+            renderNewPage({
+                facilityData: makeFacilityData([
+                    makeValue(),
+                    makeValue({ contributor_id: 2 }),
+                    makeValue({ contributor_id: 3 }),
+                ]),
+            });
+
+            expect(
+                screen.getByRole('button', { name: /2 more entries/i }),
+            ).toBeInTheDocument();
+        });
     });
 });
