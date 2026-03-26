@@ -53,14 +53,6 @@ export default () =>
         contributionSourceLinkPromoted: Object.freeze({
             fontSize: '1.1rem',
         }),
-        contributionSourceIcon: Object.freeze({
-            fontSize: '0.875rem',
-            color: COLOURS.PURPLE,
-            marginLeft: '4px',
-        }),
-        contributionSourceIconPromoted: Object.freeze({
-            fontSize: '1rem',
-        }),
         contributionMetaContainer: Object.freeze({
             display: 'flex',
             alignItems: 'center',

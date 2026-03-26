@@ -29,11 +29,6 @@ export default () =>
                 textDecoration: 'underline',
             }),
         }),
-        contributorNameIcon: Object.freeze({
-            fontSize: '0.875rem',
-            color: 'inherit',
-            marginTop: '5px',
-        }),
         contributorType: Object.freeze({
             fontSize: '1rem',
             color: COLOURS.DARK_GREY,
