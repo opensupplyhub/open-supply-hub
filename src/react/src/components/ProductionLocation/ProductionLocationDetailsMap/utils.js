@@ -84,31 +84,30 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             // attribute to created_from (see tests — "No Match"). Only fall back to
             // created_from when there are no extended_field address rows (same idea
             // as nameConfig synthetic topRaw / coordinates + created_from).
-            let contributorName = '';
-            let userId = null;
-            let date = '';
-            if (canonicalRaw) {
-                contributorName =
-                    get(canonicalRaw, 'contributor_name', '') || '';
-                userId = get(canonicalRaw, 'contributor_id', null);
-                date =
-                    get(canonicalRaw, 'created_at', '') ||
-                    get(canonicalRaw, 'updated_at', '') ||
-                    '';
-            } else if (!hasExtendedAddressData && trim(address)) {
-                contributorName =
-                    get(
-                        singleFacilityData,
-                        'properties.created_from.contributor',
-                        '',
-                    ) || '';
-                date =
-                    get(
-                        singleFacilityData,
-                        'properties.created_from.created_at',
-                        '',
-                    ) || '';
-            }
+            const useCreatedFrom = !hasExtendedAddressData && trim(address);
+            const attributionSource = canonicalRaw || (useCreatedFrom
+                ? {
+                      contributor_name: get(
+                          singleFacilityData,
+                          'properties.created_from.contributor',
+                          '',
+                      ),
+                      created_at: get(
+                          singleFacilityData,
+                          'properties.created_from.created_at',
+                          '',
+                      ),
+                      is_from_claim: false,
+                  }
+                : null);
+
+            const contributorName =
+                get(attributionSource, 'contributor_name', '') || '';
+            const date = attributionSource
+                ? get(attributionSource, 'created_at', '') ||
+                  get(attributionSource, 'updated_at', '') ||
+                  ''
+                : '';
 
             // Badge: extended-field rows and/or non-empty core address (geocoded/list
             // core value without extended history should still show Crowdsourced).
@@ -116,33 +115,16 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 hasExtendedAddressData || Boolean(trim(address));
             const status = getContributorStatus(
                 contributorName,
-                get(canonicalRaw, 'is_from_claim', false),
+                get(attributionSource, 'is_from_claim', false),
                 hasDataForStatusBadge,
             );
 
-            let promotedContribution = null;
-            if (canonicalRaw) {
-                promotedContribution = toDrawerContribution(
-                    canonicalRaw,
-                    canonicalFormatted.primary,
-                );
-            } else if (!hasExtendedAddressData && trim(address)) {
-                promotedContribution = toDrawerContribution(
-                    {
-                        contributor_name: get(
-                            singleFacilityData,
-                            'properties.created_from.contributor',
-                            '',
-                        ),
-                        created_at: get(
-                            singleFacilityData,
-                            'properties.created_from.created_at',
-                            '',
-                        ),
-                    },
-                    address,
-                );
-            }
+            const promotedContribution = attributionSource
+                ? toDrawerContribution(
+                      attributionSource,
+                      canonicalRaw ? canonicalFormatted.primary : address,
+                  )
+                : null;
 
             const drawerData = {
                 promotedContribution,
@@ -159,7 +141,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 label: FIELD_CONFIG.address.label,
                 tooltipText: FIELD_CONFIG.address.tooltipText,
                 contributorName,
-                userId,
+                userId, // TODO: we don't have user id here.
                 date,
                 status,
                 drawerData,
