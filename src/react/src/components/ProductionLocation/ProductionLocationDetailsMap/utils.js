@@ -1,6 +1,7 @@
 import get from 'lodash/get';
 import head from 'lodash/head';
 import partition from 'lodash/partition';
+import trim from 'lodash/trim';
 import uniqBy from 'lodash/uniqBy';
 
 import { formatExtendedField } from '../../../util/util';
@@ -77,22 +78,52 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                   )
                 : null;
 
-            const contributorName =
-                get(canonicalRaw, 'contributor_name', '') || '';
-
             const userId = get(canonicalRaw, 'contributor_id', null);
-            const date =
-                get(canonicalRaw, 'created_at', '') ||
-                get(canonicalRaw, 'updated_at', '') ||
-                '';
+            const hasExtendedAddressData = uniqueAddresses.length > 0;
+
+            // Fall back to created_from whenever no extended row matches the core address
+            // (mirrors legacy FacilityDetailsLocationFields behaviour: use created_from
+            // when !defaultAddressField.length && !!coreAddress).
+            const useCreatedFrom = !canonicalRaw && trim(address);
+            const attributionSource =
+                canonicalRaw ||
+                (useCreatedFrom
+                    ? {
+                          contributor_name: get(
+                              singleFacilityData,
+                              'properties.created_from.contributor',
+                              '',
+                          ),
+                          created_at: get(
+                              singleFacilityData,
+                              'properties.created_from.created_at',
+                              '',
+                          ),
+                          is_from_claim: false,
+                      }
+                    : null);
+
+            const contributorName =
+                get(attributionSource, 'contributor_name', '') || '';
+            const date = attributionSource
+                ? get(attributionSource, 'created_at', '') ||
+                  get(attributionSource, 'updated_at', '') ||
+                  ''
+                : '';
+
+            const hasDataForStatusBadge =
+                hasExtendedAddressData || Boolean(trim(address));
             const status = getContributorStatus(
                 contributorName,
-                get(canonicalRaw, 'is_from_claim', false),
-                uniqueAddresses.length > 0,
+                get(attributionSource, 'is_from_claim', false),
+                hasDataForStatusBadge,
             );
 
-            const promotedContribution = canonicalRaw
-                ? toDrawerContribution(canonicalRaw, canonicalFormatted.primary)
+            const promotedValue = canonicalRaw
+                ? canonicalFormatted.primary
+                : address;
+            const promotedContribution = attributionSource
+                ? toDrawerContribution(attributionSource, promotedValue)
                 : null;
 
             const drawerData = {
