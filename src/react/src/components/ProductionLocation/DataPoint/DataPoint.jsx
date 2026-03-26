@@ -31,6 +31,7 @@ const DataPoint = ({
     tooltipText,
     statusLabel,
     contributorName,
+    noteText,
     userId,
     date,
     drawerData,
@@ -70,6 +71,17 @@ const DataPoint = ({
             />
         </Grid>
     );
+    const noteTextItem = noteText && (
+        <Grid item>
+            <Typography
+                className={classes.label}
+                variant="body2"
+                data-testid="data-point-label"
+            >
+                {noteText}
+            </Typography>
+        </Grid>
+    );
     const dateItem = date && (
         <Grid
             item
@@ -104,6 +116,7 @@ const DataPoint = ({
             >
                 {statusItem}
                 {contributorItem}
+                {noteTextItem}
             </Grid>
             {(date || showSourcesButton) && (
                 <Grid
@@ -125,6 +138,9 @@ const DataPoint = ({
             {sourcesItem}
         </Grid>
     );
+
+    console.log(label);
+    console.log(noteText);
 
     return (
         <Grid container className={classes.root} data-testid="data-point">
@@ -173,6 +189,7 @@ DataPoint.propTypes = {
     tooltipText: oneOfType([string, node]),
     statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
     contributorName: string,
+    noteText: string,
     userId: oneOfType([string, number]),
     date: oneOfType([string, instanceOf(Date)]),
     drawerData: object,
@@ -184,6 +201,7 @@ DataPoint.defaultProps = {
     tooltipText: null,
     statusLabel: null,
     contributorName: null,
+    noteText: null,
     userId: null,
     date: null,
     drawerData: null,

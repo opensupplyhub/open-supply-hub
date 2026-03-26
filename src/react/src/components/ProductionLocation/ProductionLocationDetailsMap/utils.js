@@ -4,6 +4,7 @@ import partition from 'lodash/partition';
 import trim from 'lodash/trim';
 import uniqBy from 'lodash/uniqBy';
 
+import { facilityDetailsActions } from '../../../util/constants';
 import { formatExtendedField } from '../../../util/util';
 
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
@@ -185,6 +186,24 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             );
             const canonicalLocation = head(canonicalLocations);
 
+            const hasInexactCoordinates =
+                singleFacilityData?.properties?.has_inexact_coordinates;
+
+            const hasInvalidClaimCoordinates = singleFacilityData?.properties?.other_locations.some(
+                item => item.has_invalid_location,
+            );
+            const noteText = () => {
+                if (hasInexactCoordinates) {
+                    return `Unable to locate exact GPS coordinates for this facility. If you
+                        have access to accurate coordinates for this facility, please report
+                        them using the "${facilityDetailsActions.SUGGEST_AN_EDIT}" link below.`;
+                }
+                if (hasInvalidClaimCoordinates) {
+                    return "The address provided by the claimant could not be geolocated. An alternate address' GPS is displayed.";
+                }
+                return null;
+            };
+
             // Prefer the contributor from the canonical other_location entry
             // (covers claims and admin location corrections). Fall back to
             // created_from.contributor for the common case where the primary
@@ -245,6 +264,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 label: FIELD_CONFIG.coordinates.label,
                 tooltipText: FIELD_CONFIG.coordinates.tooltipText,
                 contributorName,
+                noteText: noteText(),
                 userId,
                 date,
                 status,
