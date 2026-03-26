@@ -38,7 +38,7 @@ export default theme => {
         headerRight: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: `4px`,
+            gap: '4px',
         }),
         titleIcon: Object.freeze({
             flexShrink: 0,
