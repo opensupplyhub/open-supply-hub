@@ -12,7 +12,6 @@ import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import ScheduleIcon from '@material-ui/icons/Schedule';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 
 import { makeProfileRouteLink, formatDate } from '../../../../util/util';
 import { DATE_FORMATS } from '../../../../util/constants';
@@ -60,14 +59,6 @@ const ContributionCard = ({
                             rel="noopener noreferrer"
                         >
                             {sourceName}
-                            <OpenInNewIcon
-                                className={
-                                    promoted
-                                        ? `${classes.contributionSourceIcon} ${classes.contributionSourceIconPromoted}`
-                                        : classes.contributionSourceIcon
-                                }
-                                aria-hidden
-                            />
                         </Link>
                     ) : (
                         <Typography

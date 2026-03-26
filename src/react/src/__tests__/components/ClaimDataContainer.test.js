@@ -109,11 +109,9 @@ describe('ClaimDataContainer — section header', () => {
     });
 
     it('renders the toggle switch', () => {
-        const { getByRole } = renderComponent();
+        const { getByTestId } = renderComponent();
         expect(
-            getByRole('checkbox', {
-                name: /show operational details submitted by management/i,
-            }),
+            getByTestId('claim-data-container-expand-more'),
         ).toBeInTheDocument();
     });
 

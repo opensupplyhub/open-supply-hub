@@ -4,11 +4,11 @@ import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import Tab from '@material-ui/icons/Tab';
 import IconComponent from '../../../Shared/IconComponent/IconComponent.jsx';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron.jsx';
 import { getIconURL } from '../../Sidebar/NavBar/utils.js';
 import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
 import parentSectionItemStyles from './styles.js';
@@ -65,6 +65,7 @@ const PartnerSectionItem = ({
                 }`}
                 role="button"
                 tabIndex={0}
+                aria-expanded={isOpen}
                 onClick={handleToggle}
                 onKeyDown={handleKeyDown}
             >
@@ -113,15 +114,14 @@ const PartnerSectionItem = ({
                     </div>
                 </div>
                 <div className={classes.headerRight}>
-                    <Typography className={classes.toggleLabel}>
+                    <span className={classes.toggleLabel}>
                         {isOpen ? 'Close' : 'Open'}
-                    </Typography>
-                    <Switch
-                        color="primary"
-                        checked={isOpen}
-                        onChange={handleToggle}
-                        onClick={event => event.stopPropagation()}
-                        className={classes.switchWrapper}
+                    </span>
+                    <ExpandToggleChevron
+                        isExpanded={isOpen}
+                        className={classes.chevron}
+                        expandLessTestId="partner-section-expand-less"
+                        expandMoreTestId="partner-section-expand-more"
                     />
                 </div>
             </div>

@@ -10,7 +10,6 @@ export default theme => {
             ...commonStyles(theme).container,
             border: `1px solid ${COLOURS.ACCENT_GREY}`,
             borderRadius: 0,
-            marginBottom: spacing * 2,
             overflow: 'hidden',
         }),
         header: Object.freeze({
@@ -22,6 +21,7 @@ export default theme => {
             '&:focus': {
                 outline: 'none',
             },
+            height: '48px',
         }),
         headerOpen: Object.freeze({
             borderBottom: `1px solid ${COLOURS.ACCENT_GREY}`,
@@ -54,8 +54,9 @@ export default theme => {
             ...typography.bodyText,
             fontSize: '0.875rem',
         }),
-        switchWrapper: Object.freeze({
-            zIndex: 1,
+        chevron: Object.freeze({
+            fontSize: '2rem',
+            color: theme.palette.text.secondary,
         }),
         contentArea: Object.freeze({
             padding: `0 20px 20px`,

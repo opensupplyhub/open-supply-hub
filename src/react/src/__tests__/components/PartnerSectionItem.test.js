@@ -39,13 +39,16 @@ describe('PartnerSectionItem component', () => {
         expect(getByText('Test Group')).toBeInTheDocument();
     });
 
-    test('shows "Open" label when section is closed', () => {
-        const { getByText } = renderComponent();
-        expect(getByText('Open')).toBeInTheDocument();
+    test('shows ExpandMore icon when section is closed', () => {
+        const { getByTestId, queryByTestId } = renderComponent();
+        expect(getByTestId('partner-section-expand-more')).toBeInTheDocument();
+        expect(
+            queryByTestId('partner-section-expand-less'),
+        ).not.toBeInTheDocument();
     });
 
-    test('shows "Close" label when section is open', () => {
-        const { getByText } = renderComponent(
+    test('shows ExpandLess icon when section is open', () => {
+        const { getByTestId, queryByTestId } = renderComponent(
             { group: makeGroup({ uuid: 'open-1' }) },
             {
                 sectionNavigation: {
@@ -54,15 +57,24 @@ describe('PartnerSectionItem component', () => {
                 },
             },
         );
-        expect(getByText('Close')).toBeInTheDocument();
+        expect(getByTestId('partner-section-expand-less')).toBeInTheDocument();
+        expect(
+            queryByTestId('partner-section-expand-more'),
+        ).not.toBeInTheDocument();
     });
 
     test('toggles section when header is clicked', () => {
-        const { getByRole, getByText } = renderComponent();
+        const { getByRole, getByTestId, queryByTestId } = renderComponent();
 
-        expect(getByText('Open')).toBeInTheDocument();
+        expect(getByTestId('partner-section-expand-more')).toBeInTheDocument();
+        expect(
+            queryByTestId('partner-section-expand-less'),
+        ).not.toBeInTheDocument();
         fireEvent.click(getByRole('button'));
-        expect(getByText('Close')).toBeInTheDocument();
+        expect(getByTestId('partner-section-expand-less')).toBeInTheDocument();
+        expect(
+            queryByTestId('partner-section-expand-more'),
+        ).not.toBeInTheDocument();
     });
 
     test('renders description when provided', () => {
