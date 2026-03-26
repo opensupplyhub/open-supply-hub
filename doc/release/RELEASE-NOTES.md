@@ -30,7 +30,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
 * [OSDEV-2412](https://opensupplyhub.atlassian.net/browse/OSDEV-2412) - Render `ContributionsDrawer` inside the legacy `FacilityDetailsItem` component for Partner fields on the new Production Location page when additional contributions are present.
-* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Production Location UI polish:
     * Switches → chevrons with `aria-expanded` (Understanding Data Sources, Partner Data).
     * Purple top border and spacing between Partner Data groups.
