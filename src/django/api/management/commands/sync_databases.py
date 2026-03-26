@@ -134,6 +134,7 @@ class DatabaseSynchronizer:
             },
             'excluded_fields': [
                 'facility',
+                'moderation_event',
                 'created_at',
                 'updated_at'
             ]
