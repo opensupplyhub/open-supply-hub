@@ -80,7 +80,7 @@ const ReportFacilityStatusDialog = ({
             }}
         >
             <DialogTitle id="status-dialog-title">
-                {`Report facility ${
+                {`Report production location ${
                     data.properties.is_closed ? 'reopened' : 'closed'
                 }`}
                 <span data-testid="report-facility-status-dialog-facility-name">
@@ -96,7 +96,7 @@ const ReportFacilityStatusDialog = ({
                         id="status-dialog-description"
                         className={classes.description}
                     >
-                        {`You must be logged in to report this facility as ${
+                        {`You must be logged in to report this production location as ${
                             data.properties.is_closed ? 'reopened' : 'closed'
                         }`}
                     </DialogContentText>

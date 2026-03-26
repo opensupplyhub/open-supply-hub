@@ -255,7 +255,7 @@ const ProductionLocationDetailsMap = ({
                                         size="small"
                                         className={classes.mapControlButton}
                                         onClick={handleCenterOnLocation}
-                                        aria-label="Center map on facility location"
+                                        aria-label="Center map on production location"
                                     >
                                         <MyLocationIcon />
                                     </IconButton>
