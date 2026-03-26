@@ -118,11 +118,11 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 hasDataForStatusBadge,
             );
 
+            const promotedValue = canonicalRaw
+                ? canonicalFormatted.primary
+                : address;
             const promotedContribution = attributionSource
-                ? toDrawerContribution(
-                      attributionSource,
-                      canonicalRaw ? canonicalFormatted.primary : address,
-                  )
+                ? toDrawerContribution(attributionSource, promotedValue)
                 : null;
 
             const drawerData = {
