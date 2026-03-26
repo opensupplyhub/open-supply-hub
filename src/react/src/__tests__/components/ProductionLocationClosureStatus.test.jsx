@@ -76,7 +76,7 @@ describe('ProductionLocation ClosureStatus', () => {
         expect(
             screen.getByText(/This production location may be closed\./),
         ).toBeInTheDocument();
-        expect(screen.getByText('Status pending')).toBeInTheDocument();
+        expect(screen.getByText('Status pending.')).toBeInTheDocument();
     });
 
     test('renders closed message when production location is closed and no new OS ID', () => {
