@@ -53,7 +53,7 @@ const ProductionLocationDetailClosureStatus = ({
                                 className={`${classes.text} ${classes.statusPending}`}
                                 variant="body1"
                             >
-                                Status pending
+                                Status pending.
                             </Typography>
                         )}
                     </div>

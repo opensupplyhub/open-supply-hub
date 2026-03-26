@@ -147,9 +147,9 @@ describe('ClaimDataContainer — field labels and values', () => {
             'Opening Date',
             'Closing Date',
             'Estimated Annual Throughput',
-            'Sector',
-            'Facility Type',
-            'Product Types',
+            'Sectors',
+            'Location Type(s)',
+            'Product Type(s)',
             'Production Types',
             'Parent Company',
             'Number of Workers',
@@ -273,7 +273,7 @@ describe('ClaimDataContainer — field ordering', () => {
         expect(indexOf('Opening Date')).toBeLessThan(indexOf('Closing Date'));
 
         // Fields not in FIELD_ORDER appear after all explicitly ordered fields.
-        expect(indexOf('Closing Date')).toBeLessThan(indexOf('Sector'));
+        expect(indexOf('Closing Date')).toBeLessThan(indexOf('Sectors'));
     });
 });
 

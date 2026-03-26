@@ -84,28 +84,28 @@ export const getLocationFieldsConfig = (location, contact, office) => [
     // Sector.
     {
         key: 'sector',
-        label: 'Sector',
+        label: 'Sectors',
         getValue: () =>
             location.sector && location.sector.length
                 ? renderUniqueListItems(orderBy(location.sector, identity))
                 : null,
     },
-    // Facility type.
+    // Location type (API field: facility_type).
     {
         key: 'facility_type',
-        label: 'Facility Type',
+        label: 'Location Type(s)',
         getValue: () => location.facility_type || null,
     },
-    // Other facility type.
+    // Other location type (API field: other_facility_type).
     {
         key: 'other_facility_type',
-        label: 'Other Facility Type',
+        label: 'Other Location Type(s)',
         getValue: () => location.other_facility_type || null,
     },
     // Product types.
     {
         key: 'product_types',
-        label: 'Product Types',
+        label: 'Product Type(s)',
         getValue: () =>
             location.product_types && location.product_types.length
                 ? renderUniqueListItems(
