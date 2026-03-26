@@ -1,9 +1,9 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import { formatExtendedField } from '../../../../util/util.js';
-import DataPoint from '../../DataPoint/DataPoint.jsx';
-import ContributionsDrawer from '../../ContributionsDrawer/ContributionsDrawer.jsx';
-import useDrawerState from '../../hooks.js';
+import FacilityDetailsItem from '../../../FacilityDetailsItem.jsx';
 import PartnerFieldSchemaValue from '../../../PartnerFields/PartnerFieldSchemaValue/PartnerFieldSchemaValue.jsx';
 import ContributorLink from './ContributorLink';
 
@@ -40,8 +40,6 @@ export default function PartnerFieldItem({
         [],
     );
 
-    const [, isDrawerOpen, openDrawer, closeDrawer] = useDrawerState(null);
-
     if (!values.length || !values[0]) return null;
 
     const formatField = item => {
@@ -55,45 +53,65 @@ export default function PartnerFieldItem({
         };
     };
 
-    const topItem = values[0];
-    const topFormatted = formatField(topItem);
-    const resolvedLabel = topFormatted.label || label;
-    const promotedContribution = toContributionCard(
-        topItem,
-        formatField,
-        partnerConfigFields,
-    );
-    const drawerData = {
-        promotedContribution,
-        contributions: values
-            .slice(1)
-            .map(item =>
-                toContributionCard(item, formatField, partnerConfigFields),
-            ),
+    const topItem = cloneDeep(values[0]);
+    const topValue = {
+        ...formatField(topItem),
     };
+    const additionalContent = values.slice(1).map(formatField);
+    const resolvedLabel = topValue.label ? topValue.label : label;
 
     return (
-        <>
-            <DataPoint
-                label={resolvedLabel}
-                value={renderPartnerFieldValue(
-                    topFormatted,
-                    partnerConfigFields,
-                )}
-                contributorName={topItem.contributor_name}
-                userId={topItem.contributor_id}
-                date={topItem.created_at}
-                drawerData={drawerData}
-                onOpenDrawer={openDrawer}
-                multiline
-            />
-            <ContributionsDrawer
-                open={isDrawerOpen}
-                onClose={closeDrawer}
-                fieldName={resolvedLabel}
-                promotedContribution={drawerData.promotedContribution}
-                contributions={drawerData.contributions}
-            />
-        </>
+        <FacilityDetailsItem
+            {...topValue}
+            label={resolvedLabel}
+            additionalContent={additionalContent}
+            partnerConfigFields={partnerConfigFields}
+            customDrawer
+            drawerFieldName={resolvedLabel}
+            drawerPromotedContribution={
+                additionalContent.length > 0
+                    ? toContributionCard(
+                          topItem,
+                          formatField,
+                          partnerConfigFields,
+                      )
+                    : undefined
+            }
+            drawerContributions={
+                additionalContent.length > 0
+                    ? values
+                          .slice(1)
+                          .map(item =>
+                              toContributionCard(
+                                  item,
+                                  formatField,
+                                  partnerConfigFields,
+                              ),
+                          )
+                    : undefined
+            }
+        />
     );
 }
+
+const partnerConfigFieldsPropType = PropTypes.oneOfType([
+    PropTypes.shape({
+        baseUrl: PropTypes.string,
+        displayText: PropTypes.string,
+    }),
+    PropTypes.oneOf([null]),
+]);
+
+PartnerFieldItem.propTypes = {
+    field: PropTypes.shape({
+        fieldName: PropTypes.string.isRequired,
+        formatValue: PropTypes.func,
+        label: PropTypes.string.isRequired,
+        partnerConfigFields: partnerConfigFieldsPropType,
+    }).isRequired,
+    facilityData: PropTypes.object,
+};
+
+PartnerFieldItem.defaultProps = {
+    facilityData: null,
+};

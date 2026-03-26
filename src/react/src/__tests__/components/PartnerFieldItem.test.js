@@ -33,13 +33,6 @@ describe('PartnerFieldItem component', () => {
         },
     });
 
-    const renderItem = (props = {}) =>
-        renderWithProviders(
-            <MemoryRouter>
-                <PartnerFieldItem field={defaultField} {...props} />
-            </MemoryRouter>,
-        );
-
     test('renders nothing when values array is empty', () => {
         const { container } = renderWithProviders(
             <PartnerFieldItem
@@ -60,84 +53,107 @@ describe('PartnerFieldItem component', () => {
         expect(container.firstChild).toBeNull();
     });
 
-    test('renders DataPoint for a single contribution', () => {
-        const { getByTestId } = renderItem({
-            facilityData: makeFacilityData([makeValue()]),
-        });
-
-        expect(getByTestId('data-point')).toBeInTheDocument();
-    });
-
-    test('does not show sources button for a single contribution', () => {
-        const { queryByTestId } = renderItem({
-            facilityData: makeFacilityData([makeValue()]),
-        });
-
-        expect(queryByTestId('data-point-sources-button')).not.toBeInTheDocument();
-    });
-
-    test('renders the label and value in DataPoint', () => {
-        const { getByTestId } = renderItem({
-            facilityData: makeFacilityData([makeValue()]),
-        });
-
-        expect(getByTestId('data-point-label')).toHaveTextContent('Climate Data');
-        expect(getByTestId('data-point-value')).toHaveTextContent(
-            'Scope 1 emissions: 100',
+    test('renders the primary value and label', () => {
+        const { getByText } = renderWithProviders(
+            <PartnerFieldItem
+                field={defaultField}
+                facilityData={makeFacilityData([makeValue()])}
+            />,
         );
+
+        expect(getByText('Climate Data')).toBeInTheDocument();
+        expect(getByText('Scope 1 emissions: 100')).toBeInTheDocument();
     });
 
     test('uses label from top value when available', () => {
-        const { getByTestId } = renderItem({
-            facilityData: makeFacilityData([
-                makeValue({ label: 'Custom Label' }),
-            ]),
-        });
+        const { getByText } = renderWithProviders(
+            <PartnerFieldItem
+                field={defaultField}
+                facilityData={makeFacilityData([
+                    makeValue({ value: 'CO2: 500t', label: 'Top Value Label' }),
+                ])}
+            />,
+        );
 
-        expect(getByTestId('data-point-label')).toHaveTextContent('Custom Label');
+        expect(getByText('Top Value Label')).toBeInTheDocument();
     });
 
-    test('renders top contributor name as a profile link', () => {
-        const { getByTestId } = renderItem({
-            facilityData: makeFacilityData([makeValue({ contributor_id: 42 })]),
-        });
+    describe('when useProductionLocationPage is false', () => {
+        test('renders FacilityDetailsItem even for multiple contributions', () => {
+            const { queryByTestId } = renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([
+                        makeValue(),
+                        makeValue({ contributor_id: 2 }),
+                    ])}
+                    useProductionLocationPage={false}
+                />,
+            );
 
-        const contributor = getByTestId('data-point-contributor');
-        expect(
-            contributor.querySelector('a[href="/profile/42"]'),
-        ).toBeInTheDocument();
+            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+            expect(
+                queryByTestId('contributions-drawer'),
+            ).not.toBeInTheDocument();
+        });
     });
 
-    test('shows the sources button with correct count for multiple contributions', () => {
-        const { getByTestId } = renderItem({
-            facilityData: makeFacilityData([
-                makeValue(),
-                makeValue({ contributor_id: 2 }),
-                makeValue({ contributor_id: 3 }),
-            ]),
+    describe('when useProductionLocationPage is true', () => {
+        const renderNewPage = (props = {}) =>
+            renderWithProviders(
+                <MemoryRouter>
+                    <PartnerFieldItem
+                        field={defaultField}
+                        useProductionLocationPage
+                        {...props}
+                    />
+                </MemoryRouter>,
+            );
+
+        test('renders FacilityDetailsItem for a single contribution', () => {
+            const { queryByTestId } = renderNewPage({
+                facilityData: makeFacilityData([makeValue()]),
+            });
+
+            expect(queryByTestId('data-point')).not.toBeInTheDocument();
+            expect(
+                queryByTestId('facility-details-detail'),
+            ).toBeInTheDocument();
         });
 
-        const button = getByTestId('data-point-sources-button');
-        expect(button).toBeInTheDocument();
-        expect(button).toHaveTextContent('+2 data sources');
-    });
+        test('opens ContributionsDrawer when the more-entries button is clicked', () => {
+            renderNewPage({
+                facilityData: makeFacilityData([
+                    makeValue(),
+                    makeValue({ contributor_id: 2 }),
+                ]),
+            });
 
-    test('opens ContributionsDrawer when sources button is clicked', () => {
-        renderItem({
-            facilityData: makeFacilityData([
-                makeValue(),
-                makeValue({ contributor_id: 2 }),
-            ]),
+            expect(
+                screen.queryByTestId('contributions-drawer'),
+            ).not.toBeInTheDocument();
+
+            fireEvent.click(
+                screen.getByRole('button', { name: /1 more entry/i }),
+            );
+
+            expect(
+                screen.getByTestId('contributions-drawer'),
+            ).toBeInTheDocument();
         });
 
-        expect(
-            screen.queryByTestId('contributions-drawer'),
-        ).not.toBeInTheDocument();
+        test('shows the correct count on the more-entries button', () => {
+            renderNewPage({
+                facilityData: makeFacilityData([
+                    makeValue(),
+                    makeValue({ contributor_id: 2 }),
+                    makeValue({ contributor_id: 3 }),
+                ]),
+            });
 
-        fireEvent.click(screen.getByTestId('data-point-sources-button'));
-
-        expect(
-            screen.getByTestId('contributions-drawer'),
-        ).toBeInTheDocument();
+            expect(
+                screen.getByRole('button', { name: /2 more entries/i }),
+            ).toBeInTheDocument();
+        });
     });
 });
