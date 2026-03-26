@@ -22,6 +22,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Production Location UI polish:
+    * Switches → chevrons with `aria-expanded` (Understanding Data Sources, Partner Data).
+    * Purple top border and spacing between Partner Data groups.
+    * Dropped external-link icons on contributor links (contributions drawer, Supply Chain drawer).
+    * Changed data sources info and partner data section titles to use the theme primary color.
+    * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
 
 ### Bugfix
 * [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page:

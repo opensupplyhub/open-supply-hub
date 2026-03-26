@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { object, bool, string, number, arrayOf, shape, func } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Switch from '@material-ui/core/Switch';
 import Collapse from '@material-ui/core/Collapse';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
@@ -11,6 +10,7 @@ import DataPoint from '../../DataPoint/DataPoint';
 import { STATUS_CLAIMED } from '../../DataPoint/constants';
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron';
 import BadgeClaimed from '../../../BadgeClaimed';
 import {
     getClaimDisplayData,
@@ -105,16 +105,11 @@ const ClaimDataContainer = ({
                     <Typography className={classes.toggleLabel}>
                         {isOpen ? 'Close' : 'Open'}
                     </Typography>
-                    <Switch
-                        color="primary"
-                        checked={isOpen}
-                        onChange={handleToggle}
-                        onClick={event => event.stopPropagation()}
-                        className={classes.switchWrapper}
-                        inputProps={{
-                            'aria-label':
-                                'Show operational details submitted by management',
-                        }}
+                    <ExpandToggleChevron
+                        isExpanded={isOpen}
+                        className={classes.chevron}
+                        expandLessTestId="claim-data-container-expand-less"
+                        expandMoreTestId="claim-data-container-expand-more"
                     />
                 </div>
             </div>

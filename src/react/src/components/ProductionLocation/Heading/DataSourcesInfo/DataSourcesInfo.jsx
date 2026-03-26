@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
 import { withStyles } from '@material-ui/core/styles';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import IconComponent from '../../../Shared/IconComponent/IconComponent';
 import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron';
 import DataSourceItem from './DataSourceItem';
 import {
     DATA_SOURCES_TOOLTIP_TEXT,
@@ -33,6 +33,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                 className={classes.titleRow}
                 role="button"
                 tabIndex={0}
+                aria-expanded={showSubsectionInfo}
                 onClick={handleToggle}
                 onKeyDown={handleKeyDown}
             >
@@ -54,24 +55,18 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     className={classes.infoButton}
                     data-testid="data-sources-info-tooltip"
                 />
-                <div className={classes.switchWrap}>
+                <div className={classes.toggleWrap}>
                     <Typography
                         component="span"
                         className={classes.switchLabel}
                     >
-                        <b>{showSubsectionInfo ? 'Close' : 'Open'}</b>
+                        {showSubsectionInfo ? 'Close' : 'Open'}
                     </Typography>
-                    <Switch
-                        checked={showSubsectionInfo}
-                        onChange={handleToggle}
-                        onClick={event => event.stopPropagation()}
-                        color="primary"
-                        size="small"
-                        className={classes.switch}
-                        inputProps={{
-                            'aria-label':
-                                'Show extra info under each data source',
-                        }}
+                    <ExpandToggleChevron
+                        isExpanded={showSubsectionInfo}
+                        className={classes.chevron}
+                        expandLessTestId="data-sources-expand-less"
+                        expandMoreTestId="data-sources-expand-more"
                     />
                 </div>
             </div>
