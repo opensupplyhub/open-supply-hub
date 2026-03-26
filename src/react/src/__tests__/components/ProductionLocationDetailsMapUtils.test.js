@@ -144,14 +144,13 @@ describe('getFieldContributorInfo — ADDRESS', () => {
 
         const result = getFieldContributorInfo(data, ADDR);
 
-        // No canonical match → no specific contributor attribution, but
-        // Crowdsourced badge is still shown because address data exists.
         expect(result.contributorName).toBe('');
         expect(result.userId).toBeNull();
         expect(result.date).toBe('');
         expect(result.status).toBe(STATUS_CROWDSOURCED);
-        expect(result.drawerData.promotedContribution).toBeNull();
-        // All extended_fields appear in the drawer.
+        expect(result.drawerData.promotedContribution).not.toBeNull();
+        expect(result.drawerData.promotedContribution.value).toBe('No Match');
+        expect(result.drawerData.promotedContribution.sourceName).toBeNull();
         expect(result.drawerData.contributions).toHaveLength(2);
         expect(
             result.drawerData.contributions.map(c => c.sourceName),
@@ -179,9 +178,11 @@ describe('getFieldContributorInfo — ADDRESS', () => {
         const result = getFieldContributorInfo(data, ADDR);
 
         // 3 identical raw entries → deduped to 1. properties.address ('Other')
-        // doesn't match the entry's value ('123 Main St'), so no canonical
-        // field is promoted. The 1 deduplicated entry appears in contributions.
-        expect(result.drawerData.promotedContribution).toBeNull();
+        // doesn't match the entry's value ('123 Main St'), so fall back to
+        // created_from (absent → empty). Promoted row uses core address as value.
+        expect(result.drawerData.promotedContribution).not.toBeNull();
+        expect(result.drawerData.promotedContribution.value).toBe('Other');
+        expect(result.drawerData.promotedContribution.sourceName).toBeNull();
         expect(result.drawerData.contributions).toHaveLength(1);
     });
 
@@ -301,13 +302,13 @@ describe('getFieldContributorInfo — ADDRESS', () => {
     });
 });
 
-describe('getFieldContributorInfo — ADDRESS regression contract', () => {
-    it('does not use created_from for main contributor when extended rows exist but none match core address', () => {
+describe('getFieldContributorInfo — ADDRESS no-match fallback (legacy parity)', () => {
+    it('falls back to created_from when extended rows exist but none match core address', () => {
         const data = {
             properties: {
                 address: 'Core Address On Profile',
                 created_from: {
-                    contributor: 'Must Not Appear As Main Contributor',
+                    contributor: 'Origin Org',
                     created_at: '2020-01-01T00:00:00Z',
                 },
                 extended_fields: {
@@ -327,13 +328,19 @@ describe('getFieldContributorInfo — ADDRESS regression contract', () => {
 
         const result = getFieldContributorInfo(data, ADDR);
 
-        expect(result.contributorName).toBe('');
-        expect(result.contributorName).not.toBe(
-            'Must Not Appear As Main Contributor',
-        );
-        expect(result.drawerData.promotedContribution).toBeNull();
-        expect(result.drawerData.contributions).toHaveLength(1);
+        expect(result.contributorName).toBe('Origin Org');
+        expect(result.date).toBe('2020-01-01T00:00:00Z');
         expect(result.status).toBe(STATUS_CROWDSOURCED);
+        expect(result.drawerData.promotedContribution.value).toBe(
+            'Core Address On Profile',
+        );
+        expect(result.drawerData.promotedContribution.sourceName).toBe(
+            'Origin Org',
+        );
+        expect(result.drawerData.contributions).toHaveLength(1);
+        expect(result.drawerData.contributions[0].sourceName).toBe(
+            'Submitter A',
+        );
     });
 });
 

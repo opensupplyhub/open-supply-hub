@@ -81,9 +81,10 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const userId = get(canonicalRaw, 'contributor_id', null);
             const hasExtendedAddressData = uniqueAddresses.length > 0;
 
-            // When extended fields exist but nothing matches core address, do not attribute to created_from.
-            // Only fall back to created_from when there are no extended_field address rows.
-            const useCreatedFrom = !hasExtendedAddressData && trim(address);
+            // Fall back to created_from whenever no extended row matches the core address
+            // (mirrors legacy FacilityDetailsLocationFields behaviour: use created_from
+            // when !defaultAddressField.length && !!coreAddress).
+            const useCreatedFrom = !canonicalRaw && trim(address);
             const attributionSource =
                 canonicalRaw ||
                 (useCreatedFrom
