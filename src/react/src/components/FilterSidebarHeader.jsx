@@ -13,6 +13,25 @@ import { filterSidebarHeaderStyles } from '../util/styles';
 import { PRIVATE_INSTANCE } from '../util/constants';
 import { userPropType } from '../util/propTypes';
 
+const hasActiveFilters = filters =>
+    filters.facilityFreeTextQuery !== '' ||
+    filters.contributors.length > 0 ||
+    filters.contributorTypes.length > 0 ||
+    filters.countries.length > 0 ||
+    filters.claimStatuses.length > 0 ||
+    filters.sectors.length > 0 ||
+    filters.parentCompany.length > 0 ||
+    filters.facilityType.length > 0 ||
+    filters.processingType.length > 0 ||
+    filters.productType.length > 0 ||
+    filters.numberOfWorkers.length > 0 ||
+    filters.dataSources.length > 0 ||
+    filters.moderationStatuses.length > 0 ||
+    filters.nativeLanguageName !== '' ||
+    filters.combineContributors !== '' ||
+    filters.boundary !== null ||
+    filters.lists.length > 0;
+
 const FilterSidebarHeader = ({
     multiLine,
     facilitiesCount,
@@ -20,6 +39,7 @@ const FilterSidebarHeader = ({
     embed,
     user,
     isSameContributor,
+    filters,
 }) => (
     <div className={`${classes.header} results-height-subtract`}>
         <h1 className={classes.headerText}>
@@ -39,7 +59,8 @@ const FilterSidebarHeader = ({
             when={
                 !embed &&
                 !user.isAnon &&
-                facilitiesCount > user.allowed_records_number
+                facilitiesCount > user.allowed_records_number &&
+                hasActiveFilters(filters)
             }
         >
             <FeatureFlag
@@ -60,6 +81,7 @@ FilterSidebarHeader.propTypes = {
     classes: object.isRequired,
     user: userPropType.isRequired,
     isSameContributor: bool.isRequired,
+    filters: object.isRequired,
 };
 
 const mapStateToProps = ({
@@ -70,11 +92,13 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
+    filters,
 }) => ({
     embed,
     facilitiesCount: get(facilities, 'count', null),
     user,
     isSameContributor: get(facilities, 'is_same_contributor', false),
+    filters,
 });
 
 export default withStyles(filterSidebarHeaderStyles)(
