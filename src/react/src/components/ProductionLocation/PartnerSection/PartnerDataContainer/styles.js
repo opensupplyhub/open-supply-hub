@@ -36,11 +36,6 @@ export default theme => {
             marginBottom: spacing * 2,
             fontSize: '1.25rem',
         }),
-        partnerSectionItem: Object.freeze({
-            '&:not(:last-child)': {
-                marginBottom: '8px',
-            },
-        }),
         titleRowContainer: Object.freeze({
             paddingTop: '20px',
             borderTop: `2px solid ${COLOURS.PURPLE}`,
