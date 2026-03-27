@@ -36,6 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Dropped external-link icons on contributor links (contributions drawer, Supply Chain drawer).
     * Changed data sources info and partner data section titles to use the theme primary color.
     * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
+    * Removed the unnecessary spacing for the empty Partner Data groups.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
