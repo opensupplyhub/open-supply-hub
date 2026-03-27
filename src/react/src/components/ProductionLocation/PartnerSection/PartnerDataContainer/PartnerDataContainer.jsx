@@ -88,15 +88,7 @@ function PartnerDataContainer({
                 </Grid>
                 {!fetching &&
                     partnerGroups.map(group => (
-                        <Grid
-                            item
-                            xs={12}
-                            key={group.uuid}
-                            id={group.uuid}
-                            className={classes.partnerSectionItem}
-                        >
-                            <PartnerSectionItem group={group} />
-                        </Grid>
+                        <PartnerSectionItem group={group} key={group.uuid} />
                     ))}
             </Grid>
         </>

@@ -86,5 +86,10 @@ export default theme => {
                 color: theme.palette.primary.main,
             },
         }),
+        partnerSectionItem: Object.freeze({
+            '&:not(:last-child)': {
+                marginBottom: '8px',
+            },
+        }),
     });
 };
