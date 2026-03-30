@@ -1,5 +1,6 @@
 import get from 'lodash/get';
 import head from 'lodash/head';
+import find from 'lodash/find';
 import partition from 'lodash/partition';
 import trim from 'lodash/trim';
 import uniqBy from 'lodash/uniqBy';
@@ -24,6 +25,20 @@ const toDrawerContribution = (item, value) => ({
     date: item.created_at || item.updated_at || null,
     userId: item.contributor_id != null ? item.contributor_id : undefined,
 });
+
+// We don't have contributor id in properties.created_from,
+// so we try to find corresponding id from properties.contributors list.
+const getCorrespondingContributorId = data => {
+    const contributorsList = get(data, 'properties.contributors');
+    const correspondingContributor = find(
+        contributorsList,
+        contributor =>
+            contributor.contributor_name ===
+            get(data, 'properties.created_from.contributor'),
+    );
+
+    return get(correspondingContributor, 'id', null);
+};
 
 /**
  * @param {Object} singleFacilityData
@@ -78,7 +93,11 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                   )
                 : null;
 
-            const userId = get(canonicalRaw, 'contributor_id', null);
+            const userId = get(
+                canonicalRaw,
+                'contributor_id',
+                getCorrespondingContributorId(singleFacilityData),
+            );
             const hasExtendedAddressData = uniqueAddresses.length > 0;
 
             // Fall back to created_from whenever no extended row matches the core address
@@ -194,7 +213,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
 
             // IF this note text is not empty, it will be shown
             // instead of contributor name in the data point.
-            const noteText = () => {
+            const coordinatesErrorText = () => {
                 if (hasInexactCoordinates) {
                     return `Unable to locate exact GPS coordinates for this production location. If you
                         have access to accurate address for this production location, please report it using the "Suggest Correction" link.`;
@@ -219,7 +238,6 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                     '',
                 ) ||
                 '';
-            const userId = get(canonicalLocation, 'contributor_id', null);
             const date = '';
             const status = getContributorStatus(
                 contributorName,
@@ -258,6 +276,12 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 toDrawerContribution(item, `${item.lat}, ${item.lng}`),
             );
 
+            const userId = get(
+                canonicalLocation,
+                'contributor_id',
+                getCorrespondingContributorId(singleFacilityData),
+            );
+
             const drawerData = { promotedContribution, contributions };
 
             return {
@@ -265,7 +289,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 label: FIELD_CONFIG.coordinates.label,
                 tooltipText: FIELD_CONFIG.coordinates.tooltipText,
                 contributorName,
-                noteText: noteText(),
+                coordinatesErrorText: coordinatesErrorText(),
                 userId,
                 date,
                 status,

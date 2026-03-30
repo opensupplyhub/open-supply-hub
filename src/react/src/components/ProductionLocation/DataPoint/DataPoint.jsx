@@ -31,7 +31,7 @@ const DataPoint = ({
     tooltipText,
     statusLabel,
     contributorName,
-    noteText,
+    coordinatesErrorText,
     userId,
     date,
     drawerData,
@@ -71,14 +71,14 @@ const DataPoint = ({
             />
         </Grid>
     );
-    const noteTextItem = noteText && (
+    const coordinatesErrorTextItem = coordinatesErrorText && (
         <Grid item>
             <Typography
                 className={classes.label}
                 variant="body2"
                 data-testid="data-point-label"
             >
-                {noteText}
+                {coordinatesErrorText}
             </Typography>
         </Grid>
     );
@@ -115,7 +115,7 @@ const DataPoint = ({
                 data-testid="data-point-meta-line-1"
             >
                 {statusItem}
-                {noteTextItem || contributorItem}
+                {coordinatesErrorTextItem || contributorItem}
             </Grid>
             {(date || showSourcesButton) && (
                 <Grid
@@ -185,7 +185,7 @@ DataPoint.propTypes = {
     tooltipText: oneOfType([string, node]),
     statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
     contributorName: string,
-    noteText: string,
+    coordinatesErrorText: string,
     userId: oneOfType([string, number]),
     date: oneOfType([string, instanceOf(Date)]),
     drawerData: object,
@@ -197,7 +197,7 @@ DataPoint.defaultProps = {
     tooltipText: null,
     statusLabel: null,
     contributorName: null,
-    noteText: null,
+    coordinatesErrorText: null,
     userId: null,
     date: null,
     drawerData: null,

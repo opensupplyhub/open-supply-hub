@@ -361,7 +361,9 @@ const ProductionLocationDetailsMap = ({
                             contributorName={
                                 coordinatesInfo.contributorName || null
                             }
-                            noteText={coordinatesInfo.noteText}
+                            coordinatesErrorText={
+                                coordinatesInfo.coordinatesErrorText
+                            }
                             userId={coordinatesInfo.userId}
                             date={coordinatesInfo.date || null}
                             drawerData={coordinatesInfo.drawerData}

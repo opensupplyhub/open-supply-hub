@@ -636,6 +636,248 @@ describe('getFieldContributorInfo — COORDINATES', () => {
     });
 });
 
+describe('getFieldContributorInfo — getCorrespondingContributorId (userId fallback)', () => {
+    it('resolves userId from properties.contributors when created_from contributor name matches — address case', () => {
+        const data = {
+            properties: {
+                address: 'Core Address',
+                extended_fields: { address: [] },
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2020-01-01T00:00:00Z',
+                },
+                contributors: [
+                    { id: 42, contributor_name: 'Other Org' },
+                    { id: 99, contributor_name: 'Origin Org' },
+                ],
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.userId).toBe(99);
+    });
+
+    it('returns null userId when created_from contributor has no match in contributors list — address case', () => {
+        const data = {
+            properties: {
+                address: 'Core Address',
+                extended_fields: { address: [] },
+                created_from: {
+                    contributor: 'Unknown Org',
+                    created_at: '2020-01-01T00:00:00Z',
+                },
+                contributors: [{ id: 42, contributor_name: 'Some Other Org' }],
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.userId).toBeNull();
+    });
+
+    it('returns null userId when properties.contributors is absent — address case', () => {
+        const data = {
+            properties: {
+                address: 'Core Address',
+                extended_fields: { address: [] },
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2020-01-01T00:00:00Z',
+                },
+                // no contributors array
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.userId).toBeNull();
+    });
+
+    it('uses canonicalRaw.contributor_id directly and does not fall through to contributors lookup — address case', () => {
+        const data = {
+            properties: {
+                address: '123 Main St',
+                extended_fields: {
+                    address: [
+                        {
+                            value: '123 Main St',
+                            contributor_name: 'Canonical Org',
+                            contributor_id: 7,
+                            created_at: '2023-01-01T00:00:00Z',
+                            is_from_claim: false,
+                        },
+                    ],
+                },
+                contributors: [
+                    // id differs from contributor_id in the extended field
+                    { id: 99, contributor_name: 'Canonical Org' },
+                ],
+            },
+        };
+
+        const result = getFieldContributorInfo(data, ADDR);
+
+        expect(result.userId).toBe(7);
+    });
+
+    it('resolves userId from properties.contributors in coordinates case when no canonical location', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+                contributors: [{ id: 55, contributor_name: 'Origin Org' }],
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.userId).toBe(55);
+    });
+
+    it('uses canonicalLocation.contributor_id in coordinates case and does not fall through to contributors lookup', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                other_locations: [
+                    {
+                        lat: 40.7,
+                        lng: -73.8,
+                        contributor_name: 'Canonical Org',
+                        contributor_id: 10,
+                        is_from_claim: false,
+                        has_invalid_location: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+                contributors: [
+                    // id differs from the other_location entry's contributor_id
+                    { id: 99, contributor_name: 'Origin Org' },
+                ],
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.userId).toBe(10);
+    });
+});
+
+describe('getFieldContributorInfo — COORDINATES coordinatesErrorText', () => {
+    it('returns null when has_inexact_coordinates is false and no invalid-location entries exist', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                has_inexact_coordinates: false,
+                other_locations: [
+                    {
+                        lat: 51.0,
+                        lng: 0.0,
+                        contributor_name: 'Some Org',
+                        contributor_id: 1,
+                        is_from_claim: false,
+                        has_invalid_location: false,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.coordinatesErrorText).toBeNull();
+    });
+
+    it('returns the inexact-coordinates message when has_inexact_coordinates is true', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                has_inexact_coordinates: true,
+                other_locations: [],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.coordinatesErrorText).toContain(
+            'Unable to locate exact GPS coordinates',
+        );
+    });
+
+    it('returns the invalid-claim message when an other_location entry has has_invalid_location true', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                has_inexact_coordinates: false,
+                other_locations: [
+                    {
+                        lat: null,
+                        lng: null,
+                        contributor_name: 'Claimant Org',
+                        contributor_id: 1,
+                        is_from_claim: true,
+                        has_invalid_location: true,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.coordinatesErrorText).toContain(
+            'The address provided by the claimant could not be geolocated',
+        );
+    });
+
+    it('prioritises the inexact-coordinates message over the invalid-claim message when both conditions are true', () => {
+        const data = {
+            geometry: { coordinates: [-73.8, 40.7] },
+            properties: {
+                has_inexact_coordinates: true,
+                other_locations: [
+                    {
+                        lat: null,
+                        lng: null,
+                        contributor_name: 'Claimant Org',
+                        contributor_id: 1,
+                        is_from_claim: true,
+                        has_invalid_location: true,
+                    },
+                ],
+                created_from: {
+                    contributor: 'Origin Org',
+                    created_at: '2023-01-01T00:00:00Z',
+                },
+            },
+        };
+
+        const result = getFieldContributorInfo(data, COORDS);
+
+        expect(result.coordinatesErrorText).toContain(
+            'Unable to locate exact GPS coordinates',
+        );
+        expect(result.coordinatesErrorText).not.toContain('claimant');
+    });
+});
+
 describe('getFieldContributorInfo — default', () => {
     it('returns empty defaults for an unknown field type', () => {
         const result = getFieldContributorInfo({}, 'unknown_type');
