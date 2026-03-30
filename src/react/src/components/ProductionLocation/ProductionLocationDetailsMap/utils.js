@@ -211,8 +211,8 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 item => item.has_invalid_location,
             );
 
-            // IF this note text is not empty, it will be shown
-            // instead of contributor name in the data point.
+            // If the coordinates error text is not empty, it will be shown
+            // instead of contributor name (this logic implemented in the DataPoint component).
             const coordinatesErrorText = () => {
                 if (hasInexactCoordinates) {
                     return `Unable to locate exact GPS coordinates for this production location. If you
@@ -238,6 +238,11 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                     '',
                 ) ||
                 '';
+            const userId = get(
+                canonicalLocation,
+                'contributor_id',
+                getCorrespondingContributorId(singleFacilityData),
+            );
             const date = '';
             const status = getContributorStatus(
                 contributorName,
@@ -274,12 +279,6 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 ),
             ].map(item =>
                 toDrawerContribution(item, `${item.lat}, ${item.lng}`),
-            );
-
-            const userId = get(
-                canonicalLocation,
-                'contributor_id',
-                getCorrespondingContributorId(singleFacilityData),
             );
 
             const drawerData = { promotedContribution, contributions };
