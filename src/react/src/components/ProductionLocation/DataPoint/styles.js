@@ -63,6 +63,9 @@ export default theme =>
             fontSize: '1.125rem',
             fontWeight: 600,
             lineHeight: 1.4,
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            wordBreak: 'break-word',
         }),
         metaRowWrapper: Object.freeze({
             marginLeft: '-16px',

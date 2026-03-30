@@ -13,5 +13,8 @@ export default theme =>
         }),
         containerItemInner: Object.freeze({
             paddingBottom: `0px !important`,
+            [theme.breakpoints.down('sm')]: {
+                maxWidth: '100%',
+            },
         }),
     });
