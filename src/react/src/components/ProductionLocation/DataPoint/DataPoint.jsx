@@ -76,7 +76,7 @@ const DataPoint = ({
             <Typography
                 className={classes.label}
                 variant="body2"
-                data-testid="data-point-label"
+                data-testid="data-point-coordinates-error"
             >
                 {coordinatesErrorText}
             </Typography>
