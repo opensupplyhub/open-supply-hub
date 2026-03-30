@@ -4,7 +4,6 @@ import partition from 'lodash/partition';
 import trim from 'lodash/trim';
 import uniqBy from 'lodash/uniqBy';
 
-import { facilityDetailsActions } from '../../../util/constants';
 import { formatExtendedField } from '../../../util/util';
 
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
@@ -193,12 +192,12 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 item => item.has_invalid_location,
             );
 
-            // IF this note text is not empty, it will be shown instead of contributor name.
+            // IF this note text is not empty, it will be shown
+            // instead of contributor name in the data point.
             const noteText = () => {
                 if (hasInexactCoordinates) {
-                    return `Unable to locate exact GPS coordinates for this facility. If you
-                        have access to accurate coordinates for this facility, please report
-                        them using the "${facilityDetailsActions.SUGGEST_AN_EDIT}" link below.`;
+                    return `Unable to locate exact GPS coordinates for this production location. If you
+                        have access to accurate address for this production location, please report it using the "Suggest Correction" link.`;
                 }
                 if (hasInvalidClaimCoordinates) {
                     return "The address provided by the claimant could not be geolocated. An alternate address' GPS is displayed.";
