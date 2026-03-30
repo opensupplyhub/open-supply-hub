@@ -207,7 +207,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const hasInexactCoordinates =
                 singleFacilityData?.properties?.has_inexact_coordinates;
 
-            const hasInvalidClaimCoordinates = singleFacilityData?.properties?.other_locations.some(
+            const hasInvalidClaimCoordinates = otherLocations.some(
                 item => item.has_invalid_location,
             );
 
