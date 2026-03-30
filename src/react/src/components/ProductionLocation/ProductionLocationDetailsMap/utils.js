@@ -192,6 +192,8 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const hasInvalidClaimCoordinates = singleFacilityData?.properties?.other_locations.some(
                 item => item.has_invalid_location,
             );
+
+            // IF this note text is not empty, it will be shown instead of contributor name.
             const noteText = () => {
                 if (hasInexactCoordinates) {
                     return `Unable to locate exact GPS coordinates for this facility. If you

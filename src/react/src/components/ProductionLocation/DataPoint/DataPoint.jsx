@@ -115,8 +115,7 @@ const DataPoint = ({
                 data-testid="data-point-meta-line-1"
             >
                 {statusItem}
-                {contributorItem}
-                {noteTextItem}
+                {noteTextItem || contributorItem}
             </Grid>
             {(date || showSourcesButton) && (
                 <Grid
@@ -138,9 +137,6 @@ const DataPoint = ({
             {sourcesItem}
         </Grid>
     );
-
-    console.log(label);
-    console.log(noteText);
 
     return (
         <Grid container className={classes.root} data-testid="data-point">
