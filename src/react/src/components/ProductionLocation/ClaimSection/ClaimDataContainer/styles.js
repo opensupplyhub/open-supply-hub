@@ -21,7 +21,7 @@ export default theme => {
             '&:focus': {
                 outline: 'none',
             },
-            height: '48px',
+            minHeight: '48px',
         }),
         chevron: Object.freeze({
             fontSize: '2rem',
@@ -49,6 +49,17 @@ export default theme => {
             ...typography.sectionTitle,
             marginTop: 0,
             marginBottom: 0,
+        }),
+        titleShort: Object.freeze({
+            [theme.breakpoints.up(610)]: {
+                display: 'none',
+            },
+        }),
+        titleFull: Object.freeze({
+            display: 'none',
+            [theme.breakpoints.up(610)]: {
+                display: 'inline',
+            },
         }),
         infoIcon: Object.freeze({
             fontSize: '1.25rem',
