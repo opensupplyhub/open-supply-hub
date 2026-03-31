@@ -13,6 +13,10 @@ export default theme => {
             fontWeight: 700,
             marginTop: 0,
             marginBottom: spacing,
+            [theme.breakpoints.down('sm')]: {
+                fontSize: '2.5rem',
+                lineHeight: 1,
+            },
         }),
         titleAccent: Object.freeze({
             ...typography.bodyText,
