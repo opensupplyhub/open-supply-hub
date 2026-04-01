@@ -30,24 +30,24 @@ How to use typography across the application: which shared styles to use, how to
 
 ## 3. Style attributes (from `typographyStyles.js`)
 
-- **formLabel / formLabelRoot / formLabelTight**  
-  Base: `fontSize: '21px'`, `fontWeight: 600`.  
-  `formLabel` adds `margin: '24px 0 8px 0'`; `formLabelRoot` uses `marginTop: 0`, `marginBottom: '8px'`; `formLabelTight` has no extra margin.  
+- **formLabel / formLabelRoot / formLabelTight**
+  Base: `fontSize: '21px'`, `fontWeight: 600`.
+  `formLabel` adds `margin: '24px 0 8px 0'`; `formLabelRoot` uses `marginTop: 0`, `marginBottom: '8px'`; `formLabelTight` has no extra margin.
   Use for field labels and strong short labels.
 
-- **sectionTitle**  
-  `fontSize: '24px'`, `fontWeight: theme.typography.fontWeightSemiBold`, `marginTop: '25px'`.  
+- **sectionTitle**
+  `fontSize: '24px'`, `fontWeight: theme.typography.fontWeightSemiBold`, `marginTop: '25px'`.
   Use for h3-level section titles.
 
-- **sectionDescription**  
+- **sectionDescription**
   `fontSize: '1rem'`, `marginBottom: '10px'`.
   Use for the first paragraph or intro under a section.
 
-- **bodyText**  
+- **bodyText**
   `fontSize: '1rem'`, `color: theme.palette.text.secondary`.
   Use for regular body and secondary text.
 
-- **inlineHighlight**  
+- **inlineHighlight**
   `fontSize: '1rem'`, `fontWeight: 500`, `color: theme.palette.text.primary`, `display: 'inline'`.
   Use for emphasized inline pieces (e.g. facility name, date, OS ID value).
 
@@ -55,31 +55,31 @@ How to use typography across the application: which shared styles to use, how to
 
 ## 4. Headings
 
-- **h1 – Page title**  
-  One per page (e.g. facility/location name).  
+- **h1 – Page title**
+  One per page (e.g. facility/location name).
   Example: `component="h1"`, `variant="headline"`, `className` from styles that extend `formLabelTight` (e.g. 28px, 700 for prominence).
 
-- **h2 – Major section**  
-  Top-level sections (e.g. claim intro).  
+- **h2 – Major section**
+  Top-level sections (e.g. claim intro).
   `component="h2"`, `variant="title"`, plus custom class if needed.
 
-- **h3 – Section title**  
-  Subsections ("Understanding Data Sources", "Partner Data", "Interactive map", etc.).  
+- **h3 – Section title**
+  Subsections ("Understanding Data Sources", "Partner Data", "Interactive map", etc.).
   `component="h3"`, `variant="title"`, `className` with `...typography.sectionTitle` (and margin overrides as needed, e.g. `marginTop: 0`).
 
-- **h4 / h5 / h6**  
-  Use sparingly for sub-subsections (e.g. ClaimFlag uses `h4` for "CLAIMED PROFILE").  
+- **h4 / h5 / h6**
+  Use sparingly for sub-subsections (e.g. ClaimFlag uses `h4` for "CLAIMED PROFILE").
   Prefer a class that extends `formLabelTight` or `sectionTitle` so sizing stays consistent. Use MUI v3 variants such as `"title"` or `"subheading"` (not `"h4"`/`"h5"`/`"h6"`).
 
 ---
 
 ## 5. Regular text
 
-- **Paragraphs:**  
-  `component="p"`, `variant="body1"`, and a class that includes `...typography.bodyText` (and optionally `...typography.sectionDescription` for intro blocks).  
+- **Paragraphs:**
+  `component="p"`, `variant="body1"`, and a class that includes `...typography.bodyText` (and optionally `...typography.sectionDescription` for intro blocks).
   Body text uses `fontSize: '1rem'`. Override `fontSize` or `marginBottom` only when needed.
 
-- **Inline text / labels:**  
+- **Inline text / labels:**
   `component="span"`, `variant="body1"`, and either `formLabelTight` (labels) or `bodyText` (secondary inline).
 
 ---
@@ -87,8 +87,8 @@ How to use typography across the application: which shared styles to use, how to
 ## 6. Links
 
 - **Color:** `theme.palette.primary.main`.
-- **Implementation:**  
-  Use `<a href="..." className={classes.link}>` or `<Link to="..." className={classes.link}>` with a style like `link: { color: theme.palette.primary.main }`.  
+- **Implementation:**
+  Use `<a href="..." className={classes.link}>` or `<Link to="..." className={classes.link}>` with a style like `link: { color: theme.palette.primary.main }`.
   For "Learn more →" in tooltips, inline `style={{ color: 'white' }}` is used for contrast on dark tooltip background; elsewhere use the theme primary color.
 - **Optional:** Add `textDecoration: 'none'` and `'&:hover': { textDecoration: 'underline' }` for inline links (e.g. in DataSourcesInfo `learnMoreLink`).
 
@@ -96,11 +96,11 @@ How to use typography across the application: which shared styles to use, how to
 
 ## 7. Usage pattern
 
-1. In the component's `styles.js`:  
-   `import { getTypographyStyles } from '../../path/to/typographyStyles';`  
+1. In the component's `styles.js`:
+   `import { getTypographyStyles } from '../../path/to/typographyStyles';`
    then `const typography = getTypographyStyles(theme);` and use `...typography.sectionTitle`, etc., in your class objects.
 
-2. In the JSX:  
+2. In the JSX:
    Use MUI `Typography` with both:
    - **Semantic props:** `component` (e.g. `component="h3"`) for the HTML element and `variant` for MUI v3 styling (e.g. `variant="title"` or `variant="subheading"` — use only valid MUI v3 variants, not `"h1"`/`"h2"`/`"h3"`).
    - **Visual style:** `className={classes.yourClass}` where `yourClass` spreads the right typography token and any local overrides.

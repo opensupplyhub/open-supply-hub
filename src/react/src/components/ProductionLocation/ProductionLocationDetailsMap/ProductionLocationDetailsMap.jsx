@@ -336,7 +336,7 @@ const ProductionLocationDetailsMap = ({
                     <div data-testid="production-location-address-row">
                         <DataPoint
                             label="Address"
-                            value={address || '—'}
+                            value={addressInfo.displayValue || address || '—'}
                             statusLabel={addressInfo.status}
                             contributorName={
                                 addressInfo.contributorName || null
