@@ -288,7 +288,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 - [CLAUDE.md](/CLAUDE.md) - Claude Quick Start Guide
 - [.agent](/.agent) - Agent configuration and skills
     - [skills](/.agent/skills) - Agent skills
-- [.context](/context) - Personal context for the agents, it's being ignored by git
+- [.context](/.context) - Personal context for the agents, it's being ignored by git
 
 ## Running e2e (Playwright) and integration tests
 
