@@ -38,8 +38,8 @@ New entries go at the **top** of the file, directly after the header block (line
     - New user-facing features
     - Required post-deployment commands
 4. **Write the entry** following the format below.
-5. **Make then concise.** Each bullet should include only the most important information, avoiding unnecessary details.
-6. **Insert** the new entry after line 4 of `RELEASE-NOTES.md` (after the header), with a blank line before the next release.
+5. **Make them concise** - each bullet should include only the most important information, avoiding unnecessary details.
+6. **Update** the [RELEASE-NOTES.md](/doc/release/RELEASE-NOTES.md) file with the new entry.
 
 ## Entry Format
 
@@ -89,8 +89,8 @@ New entries go at the **top** of the file, directly after the header block (line
 1. **Omit empty sections.** Only include sections that have content. Hotfix releases often only have `Bugfix` and `Release instructions`.
 2. **Link Jira tickets** using `[OSDEV-XXXX](https://opensupplyhub.atlassian.net/browse/OSDEV-XXXX)` format.
 3. **Prefix tags** when applicable:
-    - `[Hotfix]` — for hotfix-specific items.
-    - `[Follow-up]` — for follow-up work from a previous release.
+    - `[Hotfix][OSDEV-XXXX]` — for hotfix-specific items.
+    - `[Follow-up][OSDEV-XXXX]` — for follow-up work from a previous release.
 4. **Migration entries** use the format: `* <filename>.py - <description>.`
 5. **Be detailed.** Each bullet should explain _what_ changed and _why_, including endpoint paths, model names, field names, and behavioral effects.
 6. **Release instructions** always include at minimum `migrate` and `reindex_database`. Add other commands (e.g. `reindex_locations_with_approved_claim`) only when the release requires them.
