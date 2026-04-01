@@ -37,13 +37,17 @@ def backfill_claim_types_from_extended_fields(apps, schema_editor):
         claim_update = claim_updates.setdefault(claim_id, {})
 
         if field_name == PROCESSING_TYPE_FIELD_NAME:
-            processing_types = _get_non_empty_matched_values(matched_values, 3)
+            processing_types = list(dict.fromkeys(
+                _get_non_empty_matched_values(matched_values, 3)
+            ))
             claim_update['facility_production_types'] = (
                 processing_types if processing_types else None
             )
 
         if field_name == FACILITY_TYPE_FIELD_NAME:
-            facility_types = _get_non_empty_matched_values(matched_values, 2)
+            facility_types = list(dict.fromkeys(
+                _get_non_empty_matched_values(matched_values, 2)
+            ))
             claim_update['facility_type'] = (
                 '|'.join(facility_types) if facility_types else None
             )
@@ -82,10 +86,6 @@ def backfill_claim_types_from_extended_fields(apps, schema_editor):
         )
 
 
-def noop_reverse(apps, schema_editor):
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -95,6 +95,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(
             backfill_claim_types_from_extended_fields,
-            noop_reverse,
+            migrations.RunPython.noop,
         ),
     ]

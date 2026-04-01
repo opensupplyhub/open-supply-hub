@@ -215,7 +215,8 @@ export const getLocationFieldsConfig = (location, contact, office) => [
         tooltipText:
             'Percentage of female employees out of the total workforce at this location.',
         getValue: () =>
-            location.female_workers_percentage != null
+            location.female_workers_percentage !== null &&
+            location.female_workers_percentage !== undefined
                 ? `${location.female_workers_percentage} %`
                 : null,
     },

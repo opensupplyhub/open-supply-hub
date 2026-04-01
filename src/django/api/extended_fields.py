@@ -323,15 +323,18 @@ def create_extendedfields_for_claim(claim):
                 matched_values = field_value.get('matched_values', [])
 
                 if extended_field == ExtendedField.PROCESSING_TYPE:
-                    claim_fields_to_update['facility_production_types'] = (
+                    processing_types = list(dict.fromkeys(
                         get_non_empty_matched_values(matched_values, 3)
+                    ))
+                    claim_fields_to_update['facility_production_types'] = (
+                        processing_types if processing_types else None
                     )
                 elif extended_field == ExtendedField.FACILITY_TYPE:
-                    facility_types = get_non_empty_matched_values(
-                        matched_values, 2
-                    )
+                    facility_types = list(dict.fromkeys(
+                        get_non_empty_matched_values(matched_values, 2)
+                    ))
                     claim_fields_to_update['facility_type'] = (
-                        '|'.join(facility_types)
+                        '|'.join(facility_types) if facility_types else None
                     )
             elif extended_field == ExtendedField.PRODUCT_TYPE:
                 field_value = get_product_type_extendedfield_value(field_value)
