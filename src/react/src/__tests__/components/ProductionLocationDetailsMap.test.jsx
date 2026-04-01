@@ -166,6 +166,31 @@ describe('ProductionLocationDetailsMap', () => {
             expect(addressRow).toHaveTextContent(FACILITY_ADDRESS);
         });
 
+        it('appends " - {country_name}" to the displayed address when country_name is present', () => {
+            const facility = makeFacility();
+            facility.properties.country_name = 'United States';
+            renderMap(facility);
+
+            const addressRow = screen.getByTestId(
+                'production-location-address-row',
+            );
+            expect(addressRow).toHaveTextContent(
+                `${FACILITY_ADDRESS} - United States`,
+            );
+        });
+
+        it('does not append a country suffix when country_name is absent', () => {
+            renderMap(makeFacility());
+
+            const addressRow = screen.getByTestId(
+                'production-location-address-row',
+            );
+            const valueSpan = addressRow.querySelector(
+                '[data-testid="data-point-value"]',
+            );
+            expect(valueSpan.textContent).toBe(FACILITY_ADDRESS);
+        });
+
         it('shows "—" when properties.address is empty', () => {
             const facility = makeFacility();
             facility.properties.address = '';
