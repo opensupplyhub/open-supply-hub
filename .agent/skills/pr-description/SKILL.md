@@ -14,7 +14,7 @@ A PR description is a public record of change. It must communicate:
 
 The description becomes a permanent part of version control history. Future developers will search for the PR based on its description. If all the important information is in the code and not the description, it will be much harder to locate. And even after finding it, they need to understand _why_ the change was made — code reveals what the software does, but not why it exists.
 
-THE DESCRIPTION SHOULD BE EASY TO READ AND CONCISE.
+IMPORTANT: THE DESCRIPTION SHOULD BE EASY TO READ AND CONCISE!!!
 
 ## Gathering Context
 
