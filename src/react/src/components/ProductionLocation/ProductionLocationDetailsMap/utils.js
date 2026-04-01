@@ -141,8 +141,16 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
             const promotedValue = canonicalRaw
                 ? canonicalFormatted.primary
                 : address;
+
+            const countryName =
+                get(singleFacilityData, 'properties.country_name', '') || '';
+            const displayValue =
+                trim(promotedValue) && trim(countryName)
+                    ? `${promotedValue} - ${countryName}`
+                    : promotedValue;
+
             const promotedContribution = attributionSource
-                ? toDrawerContribution(attributionSource, promotedValue)
+                ? toDrawerContribution(attributionSource, displayValue)
                 : null;
 
             const drawerData = {
@@ -159,6 +167,7 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 key: 'address',
                 label: FIELD_CONFIG.address.label,
                 tooltipText: FIELD_CONFIG.address.tooltipText,
+                displayValue,
                 contributorName,
                 userId,
                 date,
