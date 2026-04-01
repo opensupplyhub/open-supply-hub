@@ -81,31 +81,38 @@ export const hasDisplayableValue = value => {
  * - fullWidth: whether field should take full width (optional)
  */
 export const getLocationFieldsConfig = (location, contact, office) => [
-    // Sector.
     {
         key: 'sector',
-        label: 'Sectors',
+        label: 'Industry / Sectors',
+        tooltipText:
+            'The sector(s) that this location operates in. For example: Apparel, Electronics, Renewable Energy.',
         getValue: () =>
             location.sector && location.sector.length
                 ? renderUniqueListItems(orderBy(location.sector, identity))
                 : null,
     },
-    // Location type (API field: facility_type).
     {
         key: 'facility_type',
         label: 'Location Type(s)',
-        getValue: () => location.facility_type || null,
+        tooltipText:
+            'The type of location. For example: Final Product Assembly, Raw Materials Production or Processing.',
+        getValue: () => {
+            if (!location.facility_type || location.facility_type.length === 0)
+                return null;
+
+            const facilityTypes = location.facility_type
+                .split('|')
+                .map(value => value.trim())
+                .filter(Boolean);
+
+            return renderUniqueListItems(facilityTypes);
+        },
     },
-    // Other location type (API field: other_facility_type).
-    {
-        key: 'other_facility_type',
-        label: 'Other Location Type(s)',
-        getValue: () => location.other_facility_type || null,
-    },
-    // Product types.
     {
         key: 'product_types',
         label: 'Product Type(s)',
+        tooltipText:
+            'The type of products produced at this location. For example: Shirts, Laptops, Solar Panels.',
         getValue: () =>
             location.product_types && location.product_types.length
                 ? renderUniqueListItems(
@@ -113,10 +120,11 @@ export const getLocationFieldsConfig = (location, contact, office) => [
                   )
                 : null,
     },
-    // Production types.
     {
         key: 'production_types',
-        label: 'Production Types',
+        label: 'Processing Type(s)',
+        tooltipText:
+            'The type of processing activities that take place at this location. For example: Printing, Tooling, Assembly.',
         getValue: () =>
             location.production_types && location.production_types.length
                 ? renderUniqueListItems(
@@ -124,20 +132,28 @@ export const getLocationFieldsConfig = (location, contact, office) => [
                   )
                 : null,
     },
-    // Parent company.
+    {
+        key: 'name_native_language',
+        label: 'Name in Native Language',
+        tooltipText:
+            'The production location name in the local language if different from the English name.',
+        getValue: () => location.name_native_language || null,
+    },
     {
         key: 'parent_company',
         label: 'Parent Company',
+        tooltipText:
+            'The company or group that holds majority ownership for this production location.',
         getValue: () =>
             location.parent_company ? location.parent_company.name : null,
     },
-    // Number of workers.
     {
         key: 'workers_count',
         label: 'Number of Workers',
+        tooltipText:
+            'The number or range of people employed at this location. For example: 100, 100-150.',
         getValue: () => location.workers_count || null,
     },
-    // Location website.
     {
         key: 'website',
         label: 'Company Website',
@@ -154,7 +170,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
                 </a>
             ) : null,
     },
-    // Contact fields (only if contact exists).
     ...(contact
         ? [
               {
@@ -173,7 +188,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               },
           ]
         : []),
-    // Location fields.
     {
         key: 'phone_number',
         label: 'Company Phone',
@@ -200,7 +214,10 @@ export const getLocationFieldsConfig = (location, contact, office) => [
         label: 'Percentage of Female Workers',
         tooltipText:
             'Percentage of female employees out of the total workforce at this location.',
-        getValue: () => location.female_workers_percentage,
+        getValue: () =>
+            location.female_workers_percentage != null
+                ? `${location.female_workers_percentage} %`
+                : null,
     },
     {
         key: 'affiliations',
@@ -265,7 +282,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
             return formattedData ? renderUniqueListItems(formattedData) : null;
         },
     },
-    // Office fields (only if office exists).
     ...(office
         ? [
               {
@@ -290,7 +306,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
               },
           ]
         : []),
-    // Description (full width, last).
     {
         key: 'description',
         label: 'Description',

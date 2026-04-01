@@ -58,6 +58,31 @@ def get_facility_and_processing_type_extendfield_value(
     }
 
 
+def get_non_empty_matched_values(matched_values, match_value_index):
+    # matched_values entries are tuples:
+    # (field_type, match_type, facility_type, processing_type)
+    def is_valid_value(value):
+        return value and len(value) > match_value_index \
+            and value[match_value_index]
+
+    return [
+        value[match_value_index]
+        for value in matched_values
+        if is_valid_value(value)
+    ]
+
+
+def update_claim_fields(claim, claim_fields_to_update):
+    changed_claim_fields = []
+    for claim_field, claim_value in claim_fields_to_update.items():
+        if getattr(claim, claim_field) != claim_value:
+            setattr(claim, claim_field, claim_value)
+            changed_claim_fields.append(claim_field)
+
+    if changed_claim_fields:
+        claim.save(update_fields=changed_claim_fields + ['updated_at'])
+
+
 def get_isic_4_extendedfield_value(field_value):
     if field_value is None:
         return {'raw_value': []}
@@ -270,6 +295,8 @@ def create_extendedfields_for_claim(claim):
     c = claim.contributor
     f = claim.facility
 
+    claim_fields_to_update = {}
+
     for claim_field, extended_field in CLAIM_FIELDS:
         if extended_field == ExtendedField.FACILITY_TYPE:
             # We have unified the facility type and processing type in the UI
@@ -293,6 +320,19 @@ def create_extendedfields_for_claim(claim):
                        field_value, claim.sector, True
                     )
                 )
+                matched_values = field_value.get('matched_values', [])
+
+                if extended_field == ExtendedField.PROCESSING_TYPE:
+                    claim_fields_to_update['facility_production_types'] = (
+                        get_non_empty_matched_values(matched_values, 3)
+                    )
+                elif extended_field == ExtendedField.FACILITY_TYPE:
+                    facility_types = get_non_empty_matched_values(
+                        matched_values, 2
+                    )
+                    claim_fields_to_update['facility_type'] = (
+                        '|'.join(facility_types)
+                    )
             elif extended_field == ExtendedField.PRODUCT_TYPE:
                 field_value = get_product_type_extendedfield_value(field_value)
 
@@ -310,6 +350,10 @@ def create_extendedfields_for_claim(claim):
         else:
             ExtendedField.objects.filter(facility_claim=claim,
                                          field_name=extended_field).delete()
+
+    # Sync claim fields with normalized values resolved for
+    # facility/processing type extended fields.
+    update_claim_fields(claim, claim_fields_to_update)
 
 
 def get_product_types():
