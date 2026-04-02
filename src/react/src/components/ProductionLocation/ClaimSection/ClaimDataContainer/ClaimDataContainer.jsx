@@ -80,7 +80,12 @@ const ClaimDataContainer = ({
                         className={classes.title}
                         component="h3"
                     >
-                        Operational Details Submitted by Management
+                        <span className={classes.titleShort}>
+                            Operational Details
+                        </span>
+                        <span className={classes.titleFull}>
+                            Operational Details Submitted by Management
+                        </span>
                     </Typography>
                     <div
                         onClick={event => event.stopPropagation()}
