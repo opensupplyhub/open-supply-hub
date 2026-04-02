@@ -47,9 +47,7 @@ function PartnerDataContainer({
                             className={classes.title}
                             component="h3"
                         >
-                            {!fetching
-                                ? 'Spotlight'
-                                : 'Loading Partner Data...'}
+                            {!fetching ? 'Spotlight' : 'Loading Spotlight...'}
                         </Typography>
                         {!fetching && (
                             <IconComponent
