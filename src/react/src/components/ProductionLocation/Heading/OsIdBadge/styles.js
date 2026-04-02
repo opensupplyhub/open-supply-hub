@@ -74,6 +74,7 @@ export default theme => {
             [theme.breakpoints.down(450)]: {
                 flex: 1,
                 width: '100%',
+                borderRight: '0px',
             },
         },
         buttonText: Object.freeze({
