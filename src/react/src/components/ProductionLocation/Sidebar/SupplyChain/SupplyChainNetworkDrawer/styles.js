@@ -1,4 +1,4 @@
-export default () =>
+export default theme =>
     Object.freeze({
         drawerContent: Object.freeze({
             padding: '24px',
@@ -6,6 +6,10 @@ export default () =>
             height: '100%',
             width: '390px',
             boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
+            [theme.breakpoints.down(450)]: {
+                width: '100vw',
+                boxSizing: 'border-box',
+            },
         }),
         divider: Object.freeze({
             height: '1px',

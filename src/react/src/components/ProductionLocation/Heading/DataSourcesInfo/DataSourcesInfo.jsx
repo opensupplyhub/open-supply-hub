@@ -42,7 +42,10 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     className={classes.sectionTitle}
                     variant="title"
                 >
-                    Understanding Data Sources
+                    <span className={classes.titleShort}>Data Sources</span>
+                    <span className={classes.titleFull}>
+                        Understanding Data Sources
+                    </span>
                 </Typography>
                 <IconComponent
                     title={
