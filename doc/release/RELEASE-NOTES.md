@@ -52,6 +52,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Changed data sources info and partner data section titles to use the theme primary color.
     * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
     * Removed the unnecessary spacing for the empty Partner Data groups.
+* [OSDEV-2451](https://opensupplyhub.atlassian.net/browse/OSDEV-2451) - Updated `Partner Data` under `Understanding data sources` to `Spotlight Partners`; updated the title of the `Partner Data` section to `Spotlight`.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
