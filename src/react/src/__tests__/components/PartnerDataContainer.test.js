@@ -98,6 +98,6 @@ describe('PartnerDataContainer component', () => {
             </MemoryRouter>,
             { preloadedState: state },
         );
-        expect(getByText('Partner Data')).toBeInTheDocument();
+        expect(getByText('Spotlight')).toBeInTheDocument();
     });
 });

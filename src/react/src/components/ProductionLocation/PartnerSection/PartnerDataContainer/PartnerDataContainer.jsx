@@ -48,7 +48,7 @@ function PartnerDataContainer({
                             component="h3"
                         >
                             {!fetching
-                                ? 'Partner Data'
+                                ? 'Spotlight'
                                 : 'Loading Partner Data...'}
                         </Typography>
                         {!fetching && (
