@@ -1,12 +1,16 @@
 import COLOURS from '../../../util/COLOURS';
 
-export default () =>
+export default theme =>
     Object.freeze({
         drawerContent: Object.freeze({
             padding: '24px',
             width: '390px',
             overflowY: 'auto',
             height: '100%',
+            [theme.breakpoints.down(450)]: {
+                width: '100vw',
+                boxSizing: 'border-box',
+            },
         }),
         header: Object.freeze({
             display: 'flex',

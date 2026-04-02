@@ -1,3 +1,5 @@
+import COLOURS from '../../../util/COLOURS';
+
 export default theme =>
     Object.freeze({
         root: Object.freeze({
@@ -9,6 +11,8 @@ export default theme =>
             },
             [theme.breakpoints.down('sm')]: {
                 flexWrap: 'wrap',
+                display: 'flex',
+                flexDirection: 'column-reverse',
             },
         }),
         loadingRoot: Object.freeze({
@@ -28,6 +32,11 @@ export default theme =>
         }),
         sidebarContainer: {
             minWidth: '267px',
+            [theme.breakpoints.down('sm')]: {
+                borderTop: `2px solid ${COLOURS.PURPLE}`,
+                paddingTop: '20px',
+                marginTop: '20px',
+            },
         },
         sidebar: {
             [theme.breakpoints.up('md')]: {
@@ -37,6 +46,17 @@ export default theme =>
             },
             [theme.breakpoints.up('lg')]: {
                 top: '120px',
+            },
+        },
+        backToSearch: {
+            display: 'none',
+            [theme.breakpoints.up('md')]: {
+                display: 'block',
+            },
+        },
+        navBar: {
+            [theme.breakpoints.down('sm')]: {
+                display: 'none',
             },
         },
     });

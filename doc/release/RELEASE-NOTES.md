@@ -20,6 +20,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled-field tracking on production location moderation and linked approval-created `FacilityListItem` rows to their moderation event.
     * **Backfilled fields on PATCH** — For `PATCH api/v1/production-locations/{os_id}/`, when an API user omits name, address, and country, the system backfills them from the existing production location and records which fields were backfilled. Those names are stored on the moderation event and returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled values from values supplied by the API user.
     * **`FacilityListItem` ↔ moderation event** — When approval creates a `FacilityListItem`, it is linked to the moderation event (`FacilityListItem.moderation_event`). That linkage is necessary so we can tell which data contributions shown on the location profile were backfilled (via the list item, moderation event, and recorded backfilled fields).
+* [OSDEV-2430](https://opensupplyhub.atlassian.net/browse/OSDEV-2430) - Fixed mobile responsiveness issues on the Production Location page:
+    * **Layout reorder** — On small screens the main content now appears above the sidebar (`column-reverse`), the `BackToSearch` link and `NavBar` are hidden, and a purple top border separates the sidebar from the content area.
+    * **OsIdBadge** — Reduced padding and font size on narrow viewports (<450 px); OS ID value uses `word-break: break-all`; action buttons stack full-width below the ID.
+    * **LocationTitle** — Scaled down font size and line height on small screens for better readability.
+    * **Section titles** — `Understanding Data Sources` and `Operational Details Submitted by Management` display shortened versions ("Data Sources" / "Operational Details") on mobile.
+    * **DataPoint** — Label width adapts to content on extra-small screens; tooltip icons are always visible (opacity 1) instead of hover-only.
+    * **Map & info grid** — Adjusted divider spacing and section padding so the map area uses full width on mobile.
+    * **IconComponent** — Increased tooltip icon font size on extra-small screens.
 
 ### Bugfix
 * [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page:

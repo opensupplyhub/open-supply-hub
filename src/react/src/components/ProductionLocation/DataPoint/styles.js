@@ -33,20 +33,33 @@ export default theme =>
         }),
         labelItem: Object.freeze({
             width: '80%',
+            [theme.breakpoints.down('xs')]: {
+                width: 'auto',
+                marginRight: '5px',
+            },
         }),
         label: Object.freeze({
             fontSize: '1.125rem',
             lineHeight: 1.7,
             color: COLOURS.DARK_GREY,
             wordWrap: 'break-word',
+            [theme.breakpoints.down('xs')]: {
+                fontSize: '1.25rem',
+            },
         }),
         tooltipIconItem: Object.freeze({
             display: 'flex',
             alignItems: 'flex-start',
             width: '20%',
+            [theme.breakpoints.down('xs')]: {
+                alignItems: 'center',
+            },
         }),
         tooltipIcon: Object.freeze({
             opacity: 0,
+            [theme.breakpoints.down('xs')]: {
+                opacity: 1,
+            },
         }),
         valueColumn: Object.freeze({
             minWidth: 0,
@@ -63,6 +76,9 @@ export default theme =>
             fontSize: '1.125rem',
             fontWeight: 600,
             lineHeight: 1.4,
+            whiteSpace: 'normal',
+            wordWrap: 'break-word',
+            wordBreak: 'break-word',
         }),
         metaRowWrapper: Object.freeze({
             marginLeft: '-16px',
