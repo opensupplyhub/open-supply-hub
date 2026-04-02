@@ -188,7 +188,9 @@ class FacilitiesViewSet(ListModelMixin,
                                     "name": "contributor_list_name",
                                     "is_verified": false,
                                     "contributor_name": "contributor_name",
-                                    "list_name": "list_name"
+                                    "list_name": "list_name",
+                                    "contributor_type": "contributor_type",
+                                    "count": 1
                                 }
                             ],
                             "has_approved_claim": false,
@@ -326,7 +328,9 @@ class FacilitiesViewSet(ListModelMixin,
                         {
                             "id": 1,
                             "name": "Brand A (2019 Q1 List)",
-                            "is_verified": true
+                            "is_verified": true,
+                            "contributor_type": "Brand/Retailer",
+                            "count": 1
                         }
                     ]
                 }

@@ -67,6 +67,66 @@ variable "api_production_locations_cache_max_ttl" {
   default     = 120
 }
 
+variable "api_partner_field_groups_cache_default_ttl" {
+  description = "Default TTL (seconds) for partner field groups endpoint"
+  type        = number
+  default     = 120
+}
+
+variable "api_partner_field_groups_cache_max_ttl" {
+  description = "Max TTL (seconds) for partner field groups endpoint"
+  type        = number
+  default     = 300
+}
+
+variable "api_partner_fields_cache_default_ttl" {
+  description = "Default TTL (seconds) for partner fields endpoint"
+  type        = number
+  default     = 120
+}
+
+variable "api_partner_fields_cache_max_ttl" {
+  description = "Max TTL (seconds) for partner fields endpoint"
+  type        = number
+  default     = 300
+}
+
+variable "api_contributors_cache_default_ttl" {
+  description = "Default TTL (seconds) for API contributors endpoints"
+  type        = number
+  default     = 120
+}
+
+variable "api_contributors_cache_max_ttl" {
+  description = "Max TTL (seconds) for API contributors endpoints"
+  type        = number
+  default     = 300
+}
+
+variable "api_contributor_lists_sorted_cache_default_ttl" {
+  description = "Default TTL (seconds) for API contributor lists sorted endpoints"
+  type        = number
+  default     = 120
+}
+
+variable "api_contributor_lists_sorted_cache_max_ttl" {
+  description = "Max TTL (seconds) for API contributor lists sorted endpoints"
+  type        = number
+  default     = 300
+}
+
+variable "api_parent_companies_cache_default_ttl" {
+  description = "Default TTL (seconds) for API parent companies endpoints"
+  type        = number
+  default     = 120
+}
+
+variable "api_parent_companies_cache_max_ttl" {
+  description = "Max TTL (seconds) for API parent companies endpoints"
+  type        = number
+  default     = 300
+}
+
 variable "vpc_cidr_block" {
   default = "10.0.0.0/16"
 }

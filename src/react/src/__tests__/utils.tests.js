@@ -86,7 +86,10 @@ const {
     slcValidationSchema,
     formatExtendedField,
     processDromoResults,
-    formatPartnerFieldValue
+    formatPartnerFieldValue,
+    shouldUseProductionLocationPage,
+    getFilteredSearchForEmbed,
+    makeFacilityDetailLinkOnRedirect,
 } = require('../util/util');
 
 const {
@@ -2857,5 +2860,45 @@ describe('formatPartnerFieldValue', () => {
             url: 'https://example.com/report',
             url_text: 'View Report',
         });
+    });
+});
+
+describe('shouldUseProductionLocationPage', () => {
+    it('returns true when switch is active', () => {
+        const featureFlags = { flags: { enable_production_location_page: true } };
+        expect(shouldUseProductionLocationPage(featureFlags)).toBe(true);
+    });
+
+    it('returns false when switch is missing or inactive', () => {
+        expect(shouldUseProductionLocationPage({ flags: {} })).toBe(false);
+        expect(shouldUseProductionLocationPage({})).toBe(false);
+    });
+});
+
+describe('getFilteredSearchForEmbed', () => {
+    it('keeps only embed and contributor params', () => {
+        const search = '?embed=1&contributor=abc&sort_by=contributors_desc';
+        expect(getFilteredSearchForEmbed(search)).toBe('?embed=1&contributor=abc');
+    });
+
+    it('returns empty string when embed is absent or search is empty', () => {
+        expect(getFilteredSearchForEmbed('?sort_by=contributors_desc')).toBe('');
+        expect(getFilteredSearchForEmbed('')).toBe('');
+    });
+});
+
+describe('makeFacilityDetailLinkOnRedirect', () => {
+    it('builds facility link without embed mode', () => {
+        const url = makeFacilityDetailLinkOnRedirect('CN2026030PXM73F', '?foo=bar', false);
+        expect(url).toBe('/facilities/CN2026030PXM73F');
+    });
+
+    it('builds production location link with embed params only', () => {
+        const url = makeFacilityDetailLinkOnRedirect(
+            'CN2026030PXM73F',
+            '?embed=1&contributor=abc&sort_by=contributors_desc',
+            true,
+        );
+        expect(url).toBe('/production-locations/CN2026030PXM73F?embed=1&contributor=abc');
     });
 });

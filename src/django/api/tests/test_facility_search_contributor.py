@@ -165,6 +165,8 @@ class FacilitySearchContributorTest(FacilityAPITestCaseBase):
         contributors = self.fetch_facility_contributors(self.facility)
         self.assertEqual(1, len(contributors))
         self.assertEqual("2 Others", contributors[0].get("name"))
+        self.assertEqual(contributors[0]["contributor_type"], "Other")
+        self.assertEqual(contributors[0]["count"], 2)
 
     def test_private_user(self):
         self.client.login(
@@ -208,3 +210,19 @@ class FacilitySearchContributorTest(FacilityAPITestCaseBase):
         self.source.is_active = False
         self.source.save()
         self.assertEqual(0, get_facility_count())
+
+    def test_public_contributor_has_count_and_contributor_type(self):
+        self.contributor.contrib_type = "Brand / Retailer"
+        self.contributor.name = "Public Contributor"
+        self.contributor.save()
+        contributors = self.fetch_facility_contributors(self.facility)
+        self.assertEqual(1, len(contributors))
+        self.assertEqual(
+            contributors[0]["contributor_type"],
+            "Brand / Retailer",
+        )
+        self.assertEqual(
+            contributors[0]["contributor_name"],
+            "Public Contributor",
+        )
+        self.assertEqual(contributors[0]["count"], 1)

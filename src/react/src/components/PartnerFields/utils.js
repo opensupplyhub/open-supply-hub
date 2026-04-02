@@ -5,14 +5,31 @@ export const getTitleFromSchema = (propertyKey, schemaProperties) => {
     return propertySchema.title || null;
 };
 
-export const getLinkTextFromSchema = (propertyKey, value, schemaProperties) => {
+export const getLinkTextFromSchema = (
+    propertyKey,
+    value,
+    schemaProperties,
+    defaultValue,
+) => {
     const textKey = `${propertyKey}_text`;
     const textPropertyDefined =
         schemaProperties && Boolean(schemaProperties[textKey]);
+
     if (textPropertyDefined && textKey in value) {
         return value[textKey];
     }
-    return value[propertyKey];
+
+    if (!schemaProperties) {
+        return defaultValue;
+    }
+
+    const schemaProperty = schemaProperties[propertyKey] || {};
+
+    if (schemaProperty.text) {
+        return schemaProperty.text;
+    }
+
+    return defaultValue;
 };
 
 export const getFormattedDateValue = (propertyKey, value, format = 'LL') => {

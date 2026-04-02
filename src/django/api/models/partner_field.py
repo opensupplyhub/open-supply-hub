@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django_ckeditor_5.fields import CKEditor5Field
 
 from api.constants import PARTNER_FIELD_LIST_KEY, PARTNER_FIELD_NAMES_KEY
+from api.fields import JSONTextField
 from api.models.partner_field_manager import PartnerFieldManager
 
 logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class PartnerField(models.Model):
             "Rich text field describing the source of this partner field."
         ),
     )
-    json_schema = models.JSONField(
+    json_schema = JSONTextField(
         blank=True,
         null=True,
         help_text=(
@@ -97,6 +98,14 @@ class PartnerField(models.Model):
             "Indicates if this is a system field. "
             "System fields cannot be deleted and have restricted editing."
         ),
+    )
+    group = models.ForeignKey(
+        'PartnerFieldGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='partner_fields',
+        help_text="The group this partner field belongs to.",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

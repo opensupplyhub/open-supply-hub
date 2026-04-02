@@ -43,10 +43,10 @@ export default function withQueryStringSync(WrappedComponent) {
             if (vectorTileFeatureIsActive || search) {
                 hydrateFiltersFromQueryString(search);
 
-                // This check returns null when the component mounts on the facility details route
-                // with a path like /facilities/hello-world?name=facility to stop all facilities
-                // from loading in the background and superseding single facility for the details
-                // page.
+                // This check returns null when the component mounts on the facility details
+                // route with a path like /facilities/hello-world?name=facility (or the
+                // production locations equivalent) to stop all facilities from loading in the
+                // background and superseding single facility for the details page.
                 //
                 // In that case, `path` will be `/facilities` and `pathname` will be
                 // `/facilities/hello-world`. In other cases -- `/` and `/facilities` -- these paths

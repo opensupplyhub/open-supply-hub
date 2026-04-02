@@ -1,0 +1,90 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import get from 'lodash/get';
+import Typography from '@material-ui/core/Typography';
+import { withStyles } from '@material-ui/core/styles';
+
+import FeatureFlag from '../../../FeatureFlag';
+import { REPORT_A_FACILITY } from '../../../../util/constants';
+
+import PrimaryText from './PrimaryText';
+import productionLocationDetailClosureStatusStyles from './styles';
+
+const ProductionLocationDetailClosureStatus = ({
+    data,
+    clearFacility,
+    classes,
+    useProductionLocationPage = false,
+    search = '',
+}) => {
+    const report = get(data, 'properties.activity_reports[0]');
+    const newOsId = get(data, 'properties.new_os_id');
+    const isClosed = get(data, 'properties.is_closed');
+    const isPending = report?.status === 'PENDING';
+
+    if (!report) return null;
+
+    if (!isPending && !isClosed) return null;
+
+    return (
+        <FeatureFlag flag={REPORT_A_FACILITY}>
+            <div className={classes.status}>
+                <div className={classes.contentContainer}>
+                    <div className={classes.iconColumn}>
+                        <i
+                            className={`${classes.text} ${classes.icon} far fa-fw fa-store-slash`}
+                        />
+                    </div>
+                    <div className={classes.textBox}>
+                        <PrimaryText
+                            report={report}
+                            isPending={isPending}
+                            isClosed={isClosed}
+                            newOsId={newOsId}
+                            classes={classes}
+                            useProductionLocationPage={
+                                useProductionLocationPage
+                            }
+                            search={search}
+                            clearFacility={clearFacility}
+                        />
+                        {isPending && (
+                            <Typography
+                                className={`${classes.text} ${classes.statusPending}`}
+                                variant="body1"
+                            >
+                                Status pending.
+                            </Typography>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </FeatureFlag>
+    );
+};
+
+ProductionLocationDetailClosureStatus.propTypes = {
+    data: PropTypes.object,
+    clearFacility: PropTypes.func.isRequired,
+    classes: PropTypes.shape({
+        status: PropTypes.string,
+        contentContainer: PropTypes.string,
+        iconColumn: PropTypes.string,
+        icon: PropTypes.string,
+        textBox: PropTypes.string,
+        text: PropTypes.string,
+        statusPending: PropTypes.string,
+    }).isRequired,
+    useProductionLocationPage: PropTypes.bool,
+    search: PropTypes.string,
+};
+
+ProductionLocationDetailClosureStatus.defaultProps = {
+    data: null,
+    useProductionLocationPage: false,
+    search: '',
+};
+
+export default withStyles(productionLocationDetailClosureStatusStyles)(
+    ProductionLocationDetailClosureStatus,
+);

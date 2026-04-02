@@ -10,6 +10,31 @@ locals {
       path_pattern = "api/v1/production-locations*"
       default_ttl  = var.api_production_locations_cache_default_ttl
       max_ttl      = var.api_production_locations_cache_max_ttl
+    },
+    {
+      path_pattern = "api/partner-field-groups/*"
+      default_ttl  = var.api_partner_field_groups_cache_default_ttl
+      max_ttl      = var.api_partner_field_groups_cache_max_ttl
+    },
+    {
+      path_pattern = "api/partner-fields/*"
+      default_ttl  = var.api_partner_fields_cache_default_ttl
+      max_ttl      = var.api_partner_fields_cache_max_ttl
+    },
+    {
+      path_pattern = "api/contributors/"
+      default_ttl  = var.api_contributors_cache_default_ttl
+      max_ttl      = var.api_contributors_cache_max_ttl
+    },
+    {
+      path_pattern = "api/contributor-lists-sorted/*"
+      default_ttl  = var.api_contributor_lists_sorted_cache_default_ttl
+      max_ttl      = var.api_contributor_lists_sorted_cache_max_ttl
+    },
+    {
+      path_pattern = "api/parent-companies/*"
+      default_ttl  = var.api_parent_companies_cache_default_ttl
+      max_ttl      = var.api_parent_companies_cache_max_ttl
     }
   ]
 }
@@ -213,7 +238,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       forwarded_values {
         query_string = true
-        headers      = [
+        headers = [
           "Host",
           "Authorization",
           "X-OAR-CLIENT-KEY",
@@ -390,50 +415,6 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   ordered_cache_behavior {
     path_pattern     = "/rest-auth/*"
-    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = "originAlb"
-
-    forwarded_values {
-      query_string = true
-      headers      = ["*"]
-
-      cookies {
-        forward = "all"
-      }
-    }
-
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 300
-  }
-
-  ordered_cache_behavior {
-    path_pattern     = "/accounts/*"
-    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = "originAlb"
-
-    forwarded_values {
-      query_string = true
-      headers      = ["*"]
-
-      cookies {
-        forward = "all"
-      }
-    }
-
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 300
-  }
-
-  ordered_cache_behavior {
-    path_pattern     = "/ckeditor5/*"
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
     target_origin_id = "originAlb"
@@ -741,7 +722,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   ordered_cache_behavior {
-    path_pattern     = "/static/ckeditor/*"
+    path_pattern     = "/static/django_ckeditor_5/*"
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
     target_origin_id = "originAlb"

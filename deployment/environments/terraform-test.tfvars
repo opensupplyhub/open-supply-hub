@@ -21,7 +21,7 @@ bastion_instance_type = "t3.nano"
 rds_allocated_storage = "256"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
-rds_instance_type = "db.t3.2xlarge"
+rds_instance_type = "db.m6in.4xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
@@ -32,7 +32,7 @@ anonymized_database_identifier = "database-anonymizer"
 anonymized_database_schedule_expression = "cron(0 5 ? * SAT *)"
 anonymized_database_dump_enabled = true
 
-app_ecs_desired_count = "2"
+app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
 app_fargate_cpu = "2048"
@@ -40,13 +40,13 @@ app_fargate_memory = "4096"
 
 app_ecs_max_cpu_threshold         = 85
 app_ecs_min_cpu_threshold         = 15
-app_ecs_scale_target_max_capacity = 2
-app_ecs_scale_target_min_capacity = 1
+app_ecs_scale_target_max_capacity = 10
+app_ecs_scale_target_min_capacity = 5
 app_ecs_cooldown_scale_down       = 300
 app_ecs_cooldown_scale_up         = 180
 
-app_dd_fargate_cpu = "4096"
-app_dd_fargate_memory = "8192"
+app_dd_fargate_cpu = "8192"
+app_dd_fargate_memory = "40960"
 app_dd_ecs_desired_count = "1"
 
 cli_fargate_cpu = "2048"
@@ -72,7 +72,7 @@ dedupe_hub_live = true
 dedupe_hub_name = "deduplicate"
 dedupe_hub_version = 1
 
-opensearch_instance_type = "t3.small.search"
+opensearch_instance_type = "m6g.large.search"
 
 app_logstash_fargate_cpu = 256
 app_logstash_fargate_memory = 2048
