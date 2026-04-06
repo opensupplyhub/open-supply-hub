@@ -20,6 +20,8 @@ import {
     facilitiesRoute,
 } from '../util/constants';
 
+import { trackAccountConfirmation } from '../util/util.ga';
+
 const confirmRegistrationStyles = Object.freeze({
     loadingStyles: Object.freeze({}),
     errorStyles: Object.freeze({
@@ -34,6 +36,13 @@ const confirmRegistrationStyles = Object.freeze({
 class ConfirmRegistration extends Component {
     componentDidMount() {
         return this.props.confirmRegistration();
+    }
+
+    componentDidUpdate(prevProps) {
+        // Track successful account confirmation when there are no errors and fetching is complete
+        if (prevProps.fetching && !this.props.fetching && !this.props.error) {
+            trackAccountConfirmation();
+        }
     }
 
     componentWillUnmount() {
