@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Code/API changes
+* [OSDEV-2423](https://opensupplyhub.atlassian.net/browse/OSDEV-2423) - Updated Swagger/OpenAPI documentation for `GET api/facilities/{os_id}/` to describe the `partner_fields` response property. Added `PartnerFieldEntrySerializer` for the schema, annotated the serializer method with `@swagger_serializer_method`, declared an explicit `200` response type, and included a `partner_fields` sample in the docstring.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.21.0
 
 ## Introduction
