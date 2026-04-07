@@ -319,7 +319,7 @@ class FacilitiesViewSet(ListModelMixin,
                 },
                 "properties": {
                     "name": "facility_name",
-                    "address" "facility address",
+                    "address": "facility address",
                     "country_code": "US",
                     "country_name": "United States",
                     "os_id": "OSHUB_ID",
@@ -333,25 +333,25 @@ class FacilitiesViewSet(ListModelMixin,
                             "contributor_type": "Brand/Retailer",
                             "count": 1
                         }
-                    ]
-                },
-                "partner_fields": {
-                    "some_partner_field": [
-                        {
-                            "value": {
-                                "raw_values": {
-                                    "some_partner_field_key": "some_partner_field_value"
+                    ],
+                    "partner_fields": {
+                        "some_partner_field": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "some_partner_field_key": "some_partner_field_value"
+                                    }
                                 }
                             }
-                        }
-                    ],
-                    "some_other_partner_field": [
-                        {
-                            "value": {
-                                "raw_values": "some_other_partner_field_value"
+                        ],
+                        "some_other_partner_field": [
+                            {
+                                "value": {
+                                    "raw_values": "some_other_partner_field_value"
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
         """
