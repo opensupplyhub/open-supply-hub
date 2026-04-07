@@ -303,10 +303,11 @@ class FacilitiesViewSet(ListModelMixin,
         response['params'] = params.validated_data
         return Response(response)
 
-    @swagger_auto_schema(manual_parameters=facility_parameters)
+    @swagger_auto_schema(manual_parameters=facility_parameters,
+                         responses={200: FacilityIndexDetailsSerializer})
     def retrieve(self, request, pk=None):
         """
-        Returns the facility specified by a given OS ID in GeoJSON format.
+        Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
 
         ### Sample Response
             {
@@ -331,6 +332,24 @@ class FacilitiesViewSet(ListModelMixin,
                             "is_verified": true,
                             "contributor_type": "Brand/Retailer",
                             "count": 1
+                        }
+                    ]
+                },
+                "partner_fields": {
+                    "some_partner_field": [
+                        {
+                            "value": {
+                                "raw_values": {
+                                    "some_partner_field_key": "some_partner_field_value"
+                                }
+                            }
+                        }
+                    ],
+                    "some_other_partner_field": [
+                        {
+                            "value": {
+                                "raw_values": "some_other_partner_field_value"
+                            }
                         }
                     ]
                 }
