@@ -46,9 +46,7 @@ class FacilitiesDownloadViewSet(
 
         base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
-        page = int(request.query_params.get(
-            'page', 1
-        ) or 1)
+        page = int(request.query_params.get('page', 1) or 1)
         page_size = int(request.query_params.get(
             'pageSize', PaginationConfig.MAX_PAGE_SIZE
         ) or PaginationConfig.MAX_PAGE_SIZE)

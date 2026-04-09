@@ -86,6 +86,7 @@ def format_download_extended_fields(fields, extended_fields):
 
     return extended_fields
 
+
 CLAIMED_DOWNLOAD_FIELDS = [
     'created_at',
     'contact_person',
@@ -118,7 +119,6 @@ CLAIMED_DOWNLOAD_FIELDS = [
 
 
 class _ClaimVisibilityProxy:
-    """Thin wrapper so FacilityClaim.change_conditions lambdas work on a dict."""
     def __init__(self, claim):
         self._claim = claim
 

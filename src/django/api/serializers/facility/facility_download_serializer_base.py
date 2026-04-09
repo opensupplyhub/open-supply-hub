@@ -112,7 +112,10 @@ class FacilityDownloadSerializerBase(Serializer):
 
         return list(map("|".join, extended_fields))
 
-    def get_claimed_fields(self, facility: FacilityIndexNewManager) -> List[str]:
+    def get_claimed_fields(
+            self,
+            facility: FacilityIndexNewManager
+    ) -> List[str]:
         output = [''] * len(CLAIMED_DOWNLOAD_FIELDS)
         claim = facility.approved_claim
         if claim:
