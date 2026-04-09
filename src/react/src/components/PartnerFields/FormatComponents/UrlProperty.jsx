@@ -4,8 +4,15 @@ import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema, getLinkTextFromSchema } from '../utils';
 import { commonPropertyStyles } from '../styles';
 import PartnerFieldLabel from '../PartnerFieldLabel/PartnerFieldLabel';
+import { sendLocationPartnerExternalLinkClick } from '../../../util/analytics/gaCustomEvents';
 
-const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
+const UrlProperty = ({
+    propertyKey,
+    value,
+    schemaProperties,
+    classes,
+    gaSpotlightAnalytics,
+}) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
     const schemaProperty = schemaProperties[propertyKey] || {};
     const propertyValue = value[propertyKey] || schemaProperty.default;
@@ -21,6 +28,21 @@ const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
         propertyValue,
     );
 
+    const handleExternalClick = () => {
+        if (!gaSpotlightAnalytics) {
+            return;
+        }
+        sendLocationPartnerExternalLinkClick({
+            contributorName: gaSpotlightAnalytics.contributor_name,
+            partnerGroup: gaSpotlightAnalytics.partner_group,
+            linkPlacement: gaSpotlightAnalytics.link_placement,
+            destinationUrl: propertyValue,
+            osId: gaSpotlightAnalytics.os_id,
+            partnerFieldName: gaSpotlightAnalytics.partner_field_name,
+            userId: gaSpotlightAnalytics.user_id,
+        });
+    };
+
     return (
         <div className={classes.container}>
             {title && <PartnerFieldLabel title={title} />}
@@ -30,6 +52,7 @@ const UrlProperty = ({ propertyKey, value, schemaProperties, classes }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={classes.link}
+                onClick={handleExternalClick}
             >
                 <span>{linkText}</span>
             </a>
@@ -42,6 +65,11 @@ UrlProperty.propTypes = {
     value: object.isRequired,
     schemaProperties: object.isRequired,
     classes: object.isRequired,
+    gaSpotlightAnalytics: object,
+};
+
+UrlProperty.defaultProps = {
+    gaSpotlightAnalytics: null,
 };
 
 export default withStyles(commonPropertyStyles)(UrlProperty);

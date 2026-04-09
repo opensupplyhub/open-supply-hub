@@ -16,6 +16,7 @@ import {
 } from '../util/constants';
 
 import { addProtocolToWebsiteURLIfMissing } from '../util/util';
+import { sendContributorExternalWebsiteLinkClick } from '../util/analytics/gaCustomEvents';
 
 const userProfileFieldStyles = Object.freeze({
     viewOnlyStyles: Object.freeze({
@@ -51,6 +52,7 @@ export default function UserProfileField({
     submitFormOnEnterKeyPress,
     autoFocus,
     header,
+    gaContributorWebsiteContext,
 }) {
     if (isHidden) {
         return null;
@@ -78,6 +80,20 @@ export default function UserProfileField({
                                 href={addProtocolToWebsiteURLIfMissing(value)}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={() => {
+                                    if (!gaContributorWebsiteContext) {
+                                        return;
+                                    }
+                                    sendContributorExternalWebsiteLinkClick({
+                                        contributorName:
+                                            gaContributorWebsiteContext.contributor_name,
+                                        destinationUrl: addProtocolToWebsiteURLIfMissing(
+                                            value,
+                                        ),
+                                        userId:
+                                            gaContributorWebsiteContext.user_id,
+                                    });
+                                }}
                             >
                                 {value}
                             </a>
@@ -185,6 +201,7 @@ UserProfileField.defaultProps = {
     hideOnViewOnlyProfile: false,
     autoFocus: false,
     header: null,
+    gaContributorWebsiteContext: null,
 };
 
 UserProfileField.propTypes = {
@@ -202,4 +219,5 @@ UserProfileField.propTypes = {
     hideOnViewOnlyProfile: bool,
     submitFormOnEnterKeyPress: func.isRequired,
     autoFocus: bool,
+    gaContributorWebsiteContext: PropTypes.object,
 };

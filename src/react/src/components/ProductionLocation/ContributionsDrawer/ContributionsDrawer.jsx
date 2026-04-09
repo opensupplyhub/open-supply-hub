@@ -34,6 +34,7 @@ const ContributionsDrawer = ({
     fieldName,
     promotedContribution,
     contributions,
+    spotlightGaProfileBase,
 }) => {
     const contributionsCount = useMemo(
         () => getContributionsCount(contributions),
@@ -98,6 +99,7 @@ const ContributionsDrawer = ({
                             promoted
                             userId={promotedContribution.userId}
                             data-testid="contribution-card-promoted"
+                            spotlightGaProfileBase={spotlightGaProfileBase}
                         />
                     </>
                 ) : null}
@@ -130,6 +132,7 @@ const ContributionsDrawer = ({
                                 date={item.date}
                                 userId={item.userId}
                                 data-testid="contribution-card"
+                                spotlightGaProfileBase={spotlightGaProfileBase}
                             />
                         ))}
                     </div>
@@ -146,12 +149,14 @@ ContributionsDrawer.propTypes = {
     fieldName: string,
     promotedContribution: object,
     contributions: array,
+    spotlightGaProfileBase: object,
 };
 
 ContributionsDrawer.defaultProps = {
     fieldName: null,
     promotedContribution: null,
     contributions: [],
+    spotlightGaProfileBase: null,
 };
 
 export default withStyles(contributionsDrawerStyles)(ContributionsDrawer);

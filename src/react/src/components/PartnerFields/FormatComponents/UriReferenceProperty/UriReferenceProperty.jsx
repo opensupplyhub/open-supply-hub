@@ -5,6 +5,7 @@ import Typography from '@material-ui/core/Typography';
 import { getDescription, getAbsoluteUri, getDisplayLinkText } from './utils';
 import { getLinkTextFromSchema } from '../../utils';
 import { commonPropertyStyles } from '../../styles';
+import { sendLocationPartnerExternalLinkClick } from '../../../../util/analytics/gaCustomEvents';
 
 const UriReferenceProperty = ({
     propertyKey,
@@ -12,6 +13,7 @@ const UriReferenceProperty = ({
     schemaProperties: incomingSchemaProperties,
     partnerConfigFields: incomingPartnerConfigFields,
     classes,
+    gaSpotlightAnalytics,
 }) => {
     const propertyValue = value[propertyKey];
 
@@ -41,6 +43,21 @@ const UriReferenceProperty = ({
         propertyKey,
     );
 
+    const handleExternalClick = () => {
+        if (!gaSpotlightAnalytics) {
+            return;
+        }
+        sendLocationPartnerExternalLinkClick({
+            contributorName: gaSpotlightAnalytics.contributor_name,
+            partnerGroup: gaSpotlightAnalytics.partner_group,
+            linkPlacement: gaSpotlightAnalytics.link_placement,
+            destinationUrl: absoluteUri,
+            osId: gaSpotlightAnalytics.os_id,
+            partnerFieldName: gaSpotlightAnalytics.partner_field_name,
+            userId: gaSpotlightAnalytics.user_id,
+        });
+    };
+
     return (
         <div className={classes.container}>
             {description ? (
@@ -54,6 +71,7 @@ const UriReferenceProperty = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className={classes.link}
+                onClick={handleExternalClick}
             >
                 <span>{displayLinkText}</span>
             </a>
@@ -70,11 +88,13 @@ UriReferenceProperty.propTypes = {
         displayText: string,
     }),
     classes: object.isRequired,
+    gaSpotlightAnalytics: object,
 };
 
 UriReferenceProperty.defaultProps = {
     schemaProperties: {},
     partnerConfigFields: null,
+    gaSpotlightAnalytics: null,
 };
 
 export default withStyles(commonPropertyStyles)(UriReferenceProperty);
