@@ -54,6 +54,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                   -backend-config="key=terraform/state"
                 echo "Terraform plan"
                 terraform plan \
+                          -no-color \
                           -var="image_tag=${GIT_COMMIT}" \
                           -var="batch_default_ce_desired_vcpus=${DEFAULT_BATCH_CE_DESIRED_CPU:-0}" \
                           -var-file="${SETTINGS_BUCKET}.tfvars" \
