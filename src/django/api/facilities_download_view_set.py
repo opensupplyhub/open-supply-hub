@@ -31,6 +31,7 @@ class FacilitiesDownloadViewSet(
             contributor_id = get_embed_contributor_id_from_query_params(
                 self.request.query_params
             )
+            # TODO: Check embed mode
             return FacilityDownloadSerializerEmbedMode(
                 objs,
                 many=True,
@@ -45,7 +46,9 @@ class FacilitiesDownloadViewSet(
 
         base_qs = FacilitiesDownloadService.get_filtered_queryset(request)
 
-        page = int(request.query_params.get('page', 1) or 1)
+        page = int(request.query_params.get(
+            'page', 1
+        ) or 1)
         page_size = int(request.query_params.get(
             'pageSize', PaginationConfig.MAX_PAGE_SIZE
         ) or PaginationConfig.MAX_PAGE_SIZE)
@@ -82,6 +85,22 @@ class FacilitiesDownloadViewSet(
         list_serializer = self.get_serializer(items)
         rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
+
+        claim_indices = [
+            i for i, h in enumerate(headers) if h.startswith('claim_')
+        ]
+        if rows and claim_indices:
+            empty_claim_indices = {
+                i for i in claim_indices
+                if all(row[i] == '' for row in rows)
+            }
+            if empty_claim_indices:
+                keep = [
+                    i for i in range(len(headers))
+                    if i not in empty_claim_indices
+                ]
+                headers = [headers[i] for i in keep]
+                rows = [[row[i] for i in keep] for row in rows]
 
         data = {
             'rows': rows,

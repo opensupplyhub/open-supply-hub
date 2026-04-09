@@ -1,6 +1,6 @@
 from api.models import ExtendedField
-
-from api.helpers.helpers import prefix_a_an
+from api.models.facility.facility_claim import FacilityClaim
+from api.helpers.helpers import prefix_a_an, parse_download_date
 
 
 def format_download_date(date):
@@ -85,6 +85,72 @@ def format_download_extended_fields(fields, extended_fields):
             extended_fields[5].extend(result)
 
     return extended_fields
+
+CLAIMED_DOWNLOAD_FIELDS = [
+    'created_at',
+    'contact_person',
+    'job_title',
+    'company_name',
+    'facility_name_native_language',
+    'facility_website',
+    'website',
+    'facility_phone_number',
+    'point_of_contact_person_name',
+    'linkedin_profile',
+    'office_official_name',
+    'office_address',
+    'office_country_code',
+    'office_phone_number',
+    'facility_description',
+    'facility_certifications',
+    'facility_affiliations',
+    'facility_minimum_order_quantity',
+    'facility_average_lead_time',
+    'facility_female_workers_percentage',
+    'sector',
+    'facility_type',
+    'other_facility_type',
+    'facility_product_types',
+    'facility_production_types',
+    'parent_company_name',
+    'facility_workers_count',
+]
+
+
+class _ClaimVisibilityProxy:
+    """Thin wrapper so FacilityClaim.change_conditions lambdas work on a dict."""
+    def __init__(self, claim):
+        self._claim = claim
+
+    def __getattr__(self, name):
+        return self._claim.get(name)
+
+
+def format_download_claimed_fields(claim, output):
+    proxy = _ClaimVisibilityProxy(claim)
+    serializers = FacilityClaim.change_value_serializers
+
+    for i, field in enumerate(CLAIMED_DOWNLOAD_FIELDS):
+        if field == 'created_at':
+            raw = claim.get('created_at')
+            output[i] = parse_download_date(raw) if raw else ''
+            continue
+
+        if not FacilityClaim.change_conditions[field](proxy):
+            output[i] = ''
+            continue
+
+        raw = claim.get(field)
+        if raw is None:
+            output[i] = ''
+            continue
+
+        formatted = serializers[field](raw)
+        if isinstance(formatted, list):
+            formatted = ', '.join(str(v) for v in formatted)
+        output[i] = str(formatted) if formatted is not None else ''
+
+    return output
 
 
 def value_to_set(value):
