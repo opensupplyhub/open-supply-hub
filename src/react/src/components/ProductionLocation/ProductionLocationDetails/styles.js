@@ -1,6 +1,8 @@
+import COLOURS from '../../../util/COLOURS';
+
 export default theme => ({
     container: {
-        backgroundColor: '#F9F7F7',
+        backgroundColor: COLOURS.LIGHT_GREY,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',

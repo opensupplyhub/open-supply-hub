@@ -3,25 +3,95 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.21.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 4, 2026
+
+### Database changes
+
+#### Migrations
+* 0204_add_backfilled_fields_to_moderation_event.py - Adds the `backfilled_fields` column (PostgreSQL array of text) to `api_moderationevent` to store which fields (name, address, country) were backfilled from existing production location data when an API user submits a PATCH api/v1/production-locations/{os_id}/ without them.
+* 0205_add_facilitylistitem_moderation_event.py - Adds nullable `moderation_event_id` on `api_facilitylistitem` as a one-to-one toward `api_moderationevent` (unique when set), so at most one list item can reference a given moderation event.
+* 0206_backfill_claim_types_from_extended_fields.py - Backfills `FacilityClaim.facility_type` and `FacilityClaim.facility_production_types` from related `ExtendedField` matched values (`facility_type` and `processing_type`) so values displayed in the General Information and Operation Details Submitted by Management sections match; updates only changed claim rows using batched updates for better migration performance.
+
+### Code/API changes
+* [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled-field tracking on production location moderation and linked approval-created `FacilityListItem` rows to their moderation event.
+    * **Backfilled fields on PATCH** — For `PATCH api/v1/production-locations/{os_id}/`, when an API user omits name, address, and country, the system backfills them from the existing production location and records which fields were backfilled. Those names are stored on the moderation event and returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled values from values supplied by the API user.
+    * **`FacilityListItem` ↔ moderation event** — When approval creates a `FacilityListItem`, it is linked to the moderation event (`FacilityListItem.moderation_event`). That linkage is necessary so we can tell which data contributions shown on the location profile were backfilled (via the list item, moderation event, and recorded backfilled fields).
+* [OSDEV-2430](https://opensupplyhub.atlassian.net/browse/OSDEV-2430) - Fixed mobile responsiveness issues on the Production Location page:
+    * **Layout reorder** — On small screens the main content now appears above the sidebar (`column-reverse`), the `BackToSearch` link and `NavBar` are hidden, and a purple top border separates the sidebar from the content area.
+    * **OsIdBadge** — Reduced padding and font size on narrow viewports (<450 px); OS ID value uses `word-break: break-all`; action buttons stack full-width below the ID.
+    * **LocationTitle** — Scaled down font size and line height on small screens for better readability.
+    * **Section titles** — `Understanding Data Sources` and `Operational Details Submitted by Management` display shortened versions ("Data Sources" / "Operational Details") on mobile.
+    * **DataPoint** — Label width adapts to content on extra-small screens; tooltip icons are always visible (opacity 1) instead of hover-only.
+    * **Map & info grid** — Adjusted divider spacing and section padding so the map area uses full width on mobile.
+    * **IconComponent** — Increased tooltip icon font size on extra-small screens.
+
+### Bugfix
+* [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page:
+    * **Address** provenance uses `properties.extended_fields.address` (via formatted extended-field rows) against the displayed core address (`properties.address`).
+    * **Coordinates** provenance does not use extended fields: entries in `properties.other_locations` are matched to the map feature’s point in `geometry.coordinates` (lat/lng compared with a small tolerance), so the canonical contributor reflects the coordinate pair actually rendered on the map. This yields accurate provenance when multiple address submissions or alternate `other_locations` exist.
+* [OSDEV-2420](https://opensupplyhub.atlassian.net/browse/OSDEV-2420) - Made sure that all fields that can be updated through the post-claim form, as well as those that can be updated through the initial claim form - excluding the ones that cannot be updated through the post-claim form - are displayed in the **Operational Details Submitted by Management** section. This fix includes:
+    * updated the claim extended-field sync logic so that approving or updating claim extended fields keeps normalized `facility_type` and `facility_production_types` on `FacilityClaim` in sync
+    * fixed the Claimed Facility Details form value mapping for **Facility / Processing Types** so that saved labels correctly resolve to selectable option values and render properly in the multiselect input
+    * fixed the ordering and display in **Operational Details Submitted by Management** to include **Name in Native Language** and to parse pipe-delimited claim `facility_type` values into clean list items for **Location Type(s)**
+    * backfilled existing `FacilityClaim.facility_type` and `FacilityClaim.facility_production_types` from claim-related `ExtendedField` matched values, so the values shown in the **General Information** and **Operational Details Submitted by Management** sections are aligned
+* [Follow-up] [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Geographic Information section: show `Crowdsourced` badge, date of contribution and contributor name near the `Address` field if `extended_fields` contains only empty records.
+* [OSDEV-2418](https://opensupplyhub.atlassian.net/browse/OSDEV-2418) - Aligned Production Location page copy with "production location" wording: closure banners (pending, moved, closed), the report closure/reopen dialog, the map control’s accessible label for centering on the location, and operational-details labels for location type fields in the claim section.
+* [OSDEV-2422](https://opensupplyhub.atlassian.net/browse/OSDEV-2422) - Geographic Information section: added error text labels for invalid coordinates contributions; introduced additional user id fallback based on `contributors` list and `created_from` properties from GET `api/facilities/{os_id}/` response. This is needed to create a link to the user profile page when we take values from `created_from`.
+
+### What's new
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
+* [OSDEV-2412](https://opensupplyhub.atlassian.net/browse/OSDEV-2412) - Render `ContributionsDrawer` inside the legacy `FacilityDetailsItem` component for Partner fields on the new Production Location page when additional contributions are present.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Production Location UI polish:
+    * Switches → chevrons with `aria-expanded` (Understanding Data Sources, Partner Data).
+    * Purple top border and spacing between Partner Data groups.
+    * Dropped external-link icons on contributor links (contributions drawer, Supply Chain drawer).
+    * Changed data sources info and partner data section titles to use the theme primary color.
+    * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
+    * Removed the unnecessary spacing for the empty Partner Data groups.
+* [OSDEV-2451](https://opensupplyhub.atlassian.net/browse/OSDEV-2451) - Updated `Partner Data` under `Understanding data sources` to `Spotlight Partners`; updated the title of the `Partner Data` section to `Spotlight`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `moderation-events` index after adding `backfilled_fields` to the index.
+
+
 ## Release 2.20.0
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: March 21, 2026
 
 ### Database changes
 
 #### Migrations
 * 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
 * 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
+* 0202_add_alter_partnerfield_to_use_json.py - Alters `PartnerField.json_schema` from `jsonb` to PostgreSQL `json` type (via the new `JSONTextField`) to preserve the key order defined in partner field schemas, ensuring consistent field rendering on the frontend.
+* 0203_add_user_id_to_index_claim_info.py - Updates the `index_claim_info` function to include `user_id` (contributor admin id) in the contributor object of the `claim_info` JSON in `api_facilityindex`, enabling the contributor name to be rendered as a profile link in the Operational Details Submitted by Management section.
 
 ### Code/API changes
 * [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
     * Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
     * Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
+* [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - Moved single-facility data loading and redirect logic into the Production Location details container so the sidebar (including the "Contribute to this profile" section) and main content render with consistent facility data.
+* [OSDEV-2370](https://opensupplyhub.atlassian.net/browse/OSDEV-2370) - Created reusable data point and drawer components for the Production Location page redesign:
+    * Introduced shared `IconComponent` (interactive tooltip with icon) and `LearnMoreLink`; refactored OS ID badge, Data Sources, and Claim status to use them.
+    * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
+    * Claim form profile step and related tooltips now use `IconComponent`.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Extracted section navigation state (`scrollTargetId`, `openSectionIds`) from `PartnerFieldGroupsReducer` into a dedicated `SectionNavigationReducer`. Added memoized claim data selectors (`claimDataSelectors.js`) so both `ClaimDataContainer` and `NavBar` derive claimed status from the store.
 
 ### Architecture/Environment changes
 * Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
+
+### Bugfix
+* [OSDEV-2381](https://opensupplyhub.atlassian.net/browse/OSDEV-2381) - Updated the `Kafka 3.8.0` download URL to use the Apache archive repository instead of the primary distribution server.
 
 ### What's new
 * [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
@@ -31,6 +101,40 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
     * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
 * [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Production Location page redesign.
+* [OSDEV-2374](https://opensupplyhub.atlassian.net/browse/OSDEV-2374) - Created UI for Claim and Closure status banners.
+* [OSDEV-2356](https://opensupplyhub.atlassian.net/browse/OSDEV-2356) - Added `GET api/partner-field-groups/` endpoint to retrieve partner field groups with pagination support and CDN caching for the endpoint (and additional endpoints for partner fields and contributors).
+* [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
+* [OSDEV-2375](https://opensupplyhub.atlassian.net/browse/OSDEV-2375) - Created UI for the location name, OS ID, and "Understanding Data Sources" sections. Introduced `doc/frontend.md` with UI development considerations.
+* [OSDEV-2366](https://opensupplyhub.atlassian.net/browse/OSDEV-2366) - Added "Jump to" section to the sidebar with links to the different sections of the Production Location page.
+* [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Implemented the Geographical Information section on the Production Location page, displaying an interactive satellite map with zoom controls, location centering, and "Open in Google Maps" link. Added Address and Coordinates data points below the map, each with contributor metadata and a drawer showing all contributions for that field.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Integrated the Partner Data section into the Production Location page:
+    * Added `PartnerDataContainer` that fetches partner field groups from the API and renders them when partner data is available for a production location.
+    * Each partner group is displayed as a collapsible `PartnerSectionItem` with a toggle switch, partner icon, helper text tooltip, and a two-column layout of partner fields.
+    * Sidebar "Jump to" navigation links to individual partner groups; clicking a link opens the corresponding section and smoothly scrolls it into view.
+    * Added `UrlProperty` format component and `url` format type support for partner field JSON schemas, enabling clickable links with customizable link text.
+    * Includes loading state with a spinner while partner field groups are being fetched.
+    * Makes the partner field contributor link clickable and opens the contributor profile in a new tab.
+* [OSDEV-2372](https://opensupplyhub.atlassian.net/browse/OSDEV-2372) - Implemented the Operational Details section on the Production Location page:
+    * Added `ClaimDataContainer` component that displays operational details submitted by management through the claim process for claimed production locations.
+    * The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
+    * Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
+        * The contributor name is a link to the contributor’s profile when a user ID is available.
+    * The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
+* [OSDEV-2371](https://opensupplyhub.atlassian.net/browse/OSDEV-2371) - Implemented the General Information section on the new Production Location page:
+    * Displays core identifying fields (name, sector, parent company, processing type, facility type (shown as location type on this page), product type, number of workers, optional identifiers, ISIC 4, closure status) as data points with status, contributor, and date.
+    * Each field can open a "Data sources" drawer showing the promoted contribution and all other contributions for that field.
+    * Section includes an informational tooltip with a "Learn more about each data point" link. Additional identifiers (DUNS, LEI, RBA ID) are shown when the feature flag is enabled.
+* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Enhanced partner field property components:
+    * Extracted a reusable `PartnerFieldLabel` component with bold, dark-slate-grey styling, replacing inline title rendering across all property components (`DateProperty`, `DateTimeProperty`, `UriProperty`, `UrlProperty`, `DefaultProperty`, `IntegerProperty`).
+    * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
+    * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
+    * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
+* [OSDEV-2367](https://opensupplyhub.atlassian.net/browse/OSDEV-2367) - Implemented the Supply Chain Network section on the new Production Location page sidebar:
+    * Displays a breakdown of contributing organizations by type with counts (e.g. "3 Brands", "1 Auditor") and pluralized type labels; public contributors are listed as named links sorted by type.
+    * "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
+        * An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
+* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Updated section icon colors, improved responsive layout and breakpoints across General Information, Geographical Information, Partner Data, and DataPoint components, updated the Partner Data tooltip with a data-integrations "Learn More" link, and capped the Supply Chain sidebar to 7 visible contributors.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

@@ -21,7 +21,7 @@ const PrimaryText = ({
         const closureState = (report.closure_state || 'unknown').toLowerCase();
         return (
             <Typography className={classes.text} variant="subheading">
-                This facility may be {closureState}
+                This production location may be {closureState}.
             </Typography>
         );
     }
@@ -36,7 +36,7 @@ const PrimaryText = ({
             : makeFacilityDetailLink(newOsId);
         return (
             <Typography className={classes.text} variant="subheading">
-                This facility has moved to{' '}
+                This production location has moved to{' '}
                 <Link
                     to={{
                         pathname: movedToPathname,
@@ -56,7 +56,7 @@ const PrimaryText = ({
     if (isClosed) {
         return (
             <Typography className={classes.text} variant="subheading">
-                This facility is closed
+                This production location is closed.
             </Typography>
         );
     }

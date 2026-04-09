@@ -1,13 +1,16 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import get from 'lodash/get';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+
+import StoreMallDirectory from '@material-ui/icons/StoreMallDirectory';
 
 import FeatureFlag from '../../../FeatureFlag';
 import { REPORT_A_FACILITY } from '../../../../util/constants';
 
 import PrimaryText from './PrimaryText';
-import styles from './styles';
+import productionLocationDetailClosureStatusStyles from './styles';
 
 const ProductionLocationDetailClosureStatus = ({
     data,
@@ -29,9 +32,11 @@ const ProductionLocationDetailClosureStatus = ({
         <FeatureFlag flag={REPORT_A_FACILITY}>
             <div className={classes.status}>
                 <div className={classes.contentContainer}>
-                    <i
-                        className={`${classes.text} ${classes.icon} far fa-fw fa-store-slash`}
-                    />
+                    <div className={classes.iconColumn}>
+                        <span className={classes.iconSlash}>
+                            <StoreMallDirectory className={classes.icon} />
+                        </span>
+                    </div>
                     <div className={classes.textBox}>
                         <PrimaryText
                             report={report}
@@ -47,10 +52,10 @@ const ProductionLocationDetailClosureStatus = ({
                         />
                         {isPending && (
                             <Typography
-                                className={classes.text}
+                                className={`${classes.text} ${classes.statusPending}`}
                                 variant="body1"
                             >
-                                Status pending
+                                Status pending.
                             </Typography>
                         )}
                     </div>
@@ -60,4 +65,29 @@ const ProductionLocationDetailClosureStatus = ({
     );
 };
 
-export default withStyles(styles)(ProductionLocationDetailClosureStatus);
+ProductionLocationDetailClosureStatus.propTypes = {
+    data: PropTypes.object,
+    clearFacility: PropTypes.func.isRequired,
+    classes: PropTypes.shape({
+        status: PropTypes.string,
+        contentContainer: PropTypes.string,
+        iconColumn: PropTypes.string,
+        icon: PropTypes.string,
+        iconSlash: PropTypes.string,
+        textBox: PropTypes.string,
+        text: PropTypes.string,
+        statusPending: PropTypes.string,
+    }).isRequired,
+    useProductionLocationPage: PropTypes.bool,
+    search: PropTypes.string,
+};
+
+ProductionLocationDetailClosureStatus.defaultProps = {
+    data: null,
+    useProductionLocationPage: false,
+    search: '',
+};
+
+export default withStyles(productionLocationDetailClosureStatusStyles)(
+    ProductionLocationDetailClosureStatus,
+);

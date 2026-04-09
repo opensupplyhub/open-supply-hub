@@ -4,43 +4,45 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
 
 - [Requirements](#requirements)
 - [Setup](#setup)
-  - [Google Maps Platform](#google-maps-platform)
+    - [Google Maps Platform](#google-maps-platform)
 - [Development](#development)
-  - [Kick-off & start local development](#kick-off--start-local-development)
-  - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
-  - [US County Tigerline Data Setup](#us-county-tigerline-data-setup)
-  - [Running ECS Management Commands](#running-ecs-management-commands)
-  - [Creation of Superusers](#creation-of-superusers)
-  - [Upload a list and process it](#upload-a-list-and-process-it)
-  - [Hot Reloading 🔥](#hot-reloading-🔥)
-  - [Debugging Django](#debugging-django)
-  - [Embedded Maps](#embedded-maps)
-  - [Ports](#ports)
+    - [Kick-off & start local development](#kick-off--start-local-development)
+    - [Restore the DB dump in the local Docker DB container](#restore-the-db-dump-in-the-local-docker-db-container)
+    - [US County Tigerline Data Setup](#us-county-tigerline-data-setup)
+    - [Running ECS Management Commands](#running-ecs-management-commands)
+    - [Creation of Superusers](#creation-of-superusers)
+    - [Upload a list and process it](#upload-a-list-and-process-it)
+    - [Hot Reloading 🔥](#hot-reloading-🔥)
+    - [Debugging Django](#debugging-django)
+    - [Embedded Maps](#embedded-maps)
+    - [Ports](#ports)
 - [Scripts 🧰](#scripts-🧰)
 - [Tools ⚒️](#tools-⚒️)
-
 
 ## Requirements
 
 - [Docker](https://docs.docker.com/desktop/install/mac-install/)
 - [Git](https://git-scm.com/downloads)
 - [Shellcheck](https://www.shellcheck.net)
-  - `brew install shellcheck`
-
+    - `brew install shellcheck`
 
 ## Setup
 
 - Clone repo
+
 ```
 git clone git@github.com:opensupplyhub/open-supply-hub.git
 cd open-supply-hub
 ```
+
 - You will need to create an .env file from the provided .env.sample file.
+
 ```
 cp .env.sample .env
 ```
+
 - Edit that file and add the google maps API key to GOOGLE_SERVER_SIDE_API_KEY=
-Reach team member for actual values.
+  Reach team member for actual values.
 
 ### Google Maps Platform
 
@@ -56,19 +58,22 @@ See [Getting Started with Google Maps Platform](https://developers.google.com/ma
 +GOOGLE_SERVER_SIDE_API_KEY=YOUR_API_KEY
 +REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY=YOUR_API_KEY
  REACT_APP_GOOGLE_ANALYTICS_KEY=
- ```
+```
 
- _Note: Google Maps Platfom requires creation of a billing account, but [they offer](https://cloud.google.com/maps-platform/pricing/) $200 of free monthly usage, which is enough to support development._
-
+_Note: Google Maps Platfom requires creation of a billing account, but [they offer](https://cloud.google.com/maps-platform/pricing/) $200 of free monthly usage, which is enough to support development._
 
 ## Development
 
 ### Kick-off & start local development
+
 - Start up the local development environment with seeded data in the database.
+
 ```
 ./scripts/start_local_dev
 ```
+
 - Now you are ready for quick start the app
+
 ```
 open http://localhost:6543
 ```
@@ -80,16 +85,21 @@ open http://localhost:6543
 3. Place it in the `./dumps/` folder.
 4. Destroy the Logstash and OpenSearch Docker containers along with their Docker images. It is necessary to refill OpenSearch with new data from the DB dump after it has been restored.
 5. Connect to the local DB instance, delete all the tables, and recreate an empty DB schema to avoid conflicts during the restore using the SQL below:
+
 ```
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO public;
 ```
+
 5. Then run the following command in the terminal of your machine to apply the production database dump:
+
 ```
 docker compose exec -T database pg_restore --verbose --clean --if-exists --no-acl --no-owner -d opensupplyhub -U opensupplyhub < ./dumps/[dump_name].dump
 ```
+
 6. After successfully completing the DB restoration, start Logstash. It will automatically start OpenSearch, as it depends on it:
+
 ```
 docker compose up logstash
 ```
@@ -103,16 +113,17 @@ The platform uses US County Tigerline geometry data (2021 version) for MIT Livin
 For local development, there are two options:
 
 1. **Using CSV file (recommended for full dataset)**:
-   - Download the CSV file from `s3://opensupplyhub-development-files-eu-west-1/data/us_county_tigerline_2021.csv`
-   - Place `us_county_tigerline_2021.csv` in the `src/django/` directory
-   - The migration will download it from MinIO and populate the database
+    - Download the CSV file from `s3://opensupplyhub-development-files-eu-west-1/data/us_county_tigerline_2021.csv`
+    - Place `us_county_tigerline_2021.csv` in the `src/django/` directory
+    - The migration will download it from MinIO and populate the database
 
 2. **Using fixture data (default for quick setup)**:
-   - If the CSV file is not found, the migration will skip data population gracefully
-   - Fixture data is automatically loaded via the `load_fixtures` management command
-   - The fixture file `src/django/api/fixtures/us_county_tigerline.json` contains sample county data for testing
+    - If the CSV file is not found, the migration will skip data population gracefully
+    - Fixture data is automatically loaded via the `load_fixtures` management command
+    - The fixture file `src/django/api/fixtures/us_county_tigerline.json` contains sample county data for testing
 
 The fixture data is included in the `load_fixtures` command and will be loaded when running:
+
 ```
 ./scripts/manage load_fixtures
 ```
@@ -147,10 +158,13 @@ Example:
 ### Creation of Superusers
 
 For local development we could create a superuser by Django Shell:
+
 - Then, inside the container, execute
+
 ```
 ./scripts/manage createsuperuser
 ```
+
 And add username (email) and a password.
 
 In staging and production we do not have access to the Django Shell so granting
@@ -174,11 +188,14 @@ WHERE email ilike '{the user's email address}';
 
 With no AWS batch service being available unless configured, list processing must be triggered manually.
 This requires a list to be uploaded, in this example, the list number was 16. You can get the list number by navigating, via the dashboard (http://localhost/dashboard), selecting “View Contributor Lists”, then choosing the one you uploaded, then checking the address bar field (possibly clicking on it to reveal the details), which should read http://localhost/lists/16 for a fresh installation.
+
 ```
 ./scripts/manage batch_process -a parse -l 16
 ```
+
 Then the list needs to be approved (in the web browser).
 Continue by accepting the list in the web browser dashboard. Then, in the django container command line, execute geocoding and matching.
+
 ```
 ./scripts/manage batch_process -a geocode -l 16
 ./scripts/manage batch_process -a match -l 16
@@ -240,39 +257,45 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 ### Ports
 
 | Service                  | Port                            |
-|--------------------------|---------------------------------|
+| ------------------------ | ------------------------------- |
 | React development server | [`6543`](http://localhost:6543) |
 | Gunicorn for Django app  | [`8081`](http://localhost:8081) |
 
-
 ## Scripts 🧰
 
-| Name | Description |
-| --- | --- |
-| `infra` | Plan and apply remote infrastructure changes.|
-| `start_local_dev` | This script starts up the local development environment with seeded data in the database. |
-| `reset_database` | Clear development database & load fixture data including users, facility lists, matches, and facilities.|
-| `server` | Run `docker-compose.yml` services. |
-| `update` | Build container images and execute database migrations. |
-| `run_be_code_quality` | This script runs a linting check, tests, and also generates the unittest code coverage report for the Django app. The script performs the same code quality checks for the backend as those conducted during the CI pipeline, excluding code coverage comparison. |
-| `run_fe_code_quality` | This script performs linting and formatting checks, runs tests, and also generates the Jest code coverage report for the React app. The script performs the same code quality checks for the front-end as those conducted during the CI pipeline, excluding code coverage comparison. |
-| `run_bash_script_linter`| This script runs the shellcheck linter for files in the ./scripts folder. It requires the installation of the [shellcheck](https://www.shellcheck.net/) package. |
-
+| Name                     | Description                                                                                                                                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infra`                  | Plan and apply remote infrastructure changes.                                                                                                                                                                                                                                         |
+| `start_local_dev`        | This script starts up the local development environment with seeded data in the database.                                                                                                                                                                                             |
+| `reset_database`         | Clear development database & load fixture data including users, facility lists, matches, and facilities.                                                                                                                                                                              |
+| `server`                 | Run `docker-compose.yml` services.                                                                                                                                                                                                                                                    |
+| `update`                 | Build container images and execute database migrations.                                                                                                                                                                                                                               |
+| `run_be_code_quality`    | This script runs a linting check, tests, and also generates the unittest code coverage report for the Django app. The script performs the same code quality checks for the backend as those conducted during the CI pipeline, excluding code coverage comparison.                     |
+| `run_fe_code_quality`    | This script performs linting and formatting checks, runs tests, and also generates the Jest code coverage report for the React app. The script performs the same code quality checks for the front-end as those conducted during the CI pipeline, excluding code coverage comparison. |
+| `run_bash_script_linter` | This script runs the shellcheck linter for files in the ./scripts folder. It requires the installation of the [shellcheck](https://www.shellcheck.net/) package.                                                                                                                      |
 
 ## Tools ⚒️
 
 | Name                   | Description                                                                                            |
-|------------------------|--------------------------------------------------------------------------------------------------------|
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `batch_process`        | Given a list id argument run parse, geocode, and match via the batch_process Django management command |
 | `devhealthcheck.sh`    | Simulate application load balancer health checks in development                                        |
 | `postfacilitiescsv.py` | POST the rows of a CSV containing facility information to the facilities API                           |
 
+## Agents
+
+- [AGENTS.md](/AGENTS.md) - Agents Quick Start Guide
+- [CLAUDE.md](/CLAUDE.md) - Claude Quick Start Guide
+- [.agent](/.agent) - Agent configuration and skills
+    - [skills](/.agent/skills) - Agent skills
+- [.context](/.context) - Personal context for the agents, it's being ignored by git
 
 ## Running e2e (Playwright) and integration tests
 
 ### Playwright Tests
 
 To run the Playwright tests, use the following command:
+
 ```
 docker compose -f docker-compose.tests.yml run --rm --build --entrypoint "npx playwright test -c playwright.config.ts" playwright-test
 ```

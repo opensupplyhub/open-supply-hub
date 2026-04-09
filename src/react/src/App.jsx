@@ -71,6 +71,7 @@ function App({
                     },
                     background: {
                         grey: COLOURS.LIGHT_GREY,
+                        white: COLOURS.WHITE,
                     },
                 },
             }),

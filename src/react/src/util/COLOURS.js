@@ -6,11 +6,13 @@ export default {
     LIGHT_MATERIAL_BLUE: '#1565c0',
     EXTRA_LIGHT_BLUE: '#e3f2fd',
     LIGHT_BLUE_BORDER: '#90caf9',
+    LIGHT_SKY_BLUE: '#C0DBFE',
     DARK_BLUE: '#0d47a1',
 
     // Greens
     GREEN: '#E0F5E3',
     DARK_GREEN: '#4A9957',
+    CLAIMED_CHIP_BG: '#F0FDF480',
     MINT_GREEN: '#C0EBC7',
     OLIVA_GREEN: '#799679',
     MATERIAL_GREEN: '#388e3c',
@@ -19,6 +21,7 @@ export default {
     NOTE_GREEN: '#c8e6c9',
     GREEN_TEXT: '#2e7d32',
     DARK_MATERIAL_GREEN: '#1b5e20',
+    TEAL_GREEN: '#318178',
 
     // Reds
     LIGHT_RED: '#FFEAEA',
@@ -33,12 +36,16 @@ export default {
     PURPLE_TEXT: '#6a1b9a',
     LIGHT_PURPLE_BG: '#f3e5f5',
     LIGHT_PURPLE_BORDER: '#ce93d8',
+    LIGHT_LAVENDER: '#F8F5FB',
+    LIGHT_LAVENDER_BORDER: '#E2D1F0',
 
     // Oranges/Ambers
     AMBER: '#ffc107',
     DARK_AMBER: '#ffa000',
     DEEP_ORANGE: '#e65100',
     ORANGE: '#f57c00',
+    CROWDSOURCED_CHIP_BG: '#FFF7ED80',
+    CROWDSOURCED_CHIP_TEXT: '#C2410C',
     AMBER_YELLOW: '#fbc02d',
     LIGHT_AMBER: '#fff8e1',
     AMBER_50: '#fffbeb',

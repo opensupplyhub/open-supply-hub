@@ -10,6 +10,31 @@ locals {
       path_pattern = "api/v1/production-locations*"
       default_ttl  = var.api_production_locations_cache_default_ttl
       max_ttl      = var.api_production_locations_cache_max_ttl
+    },
+    {
+      path_pattern = "api/partner-field-groups/*"
+      default_ttl  = var.api_partner_field_groups_cache_default_ttl
+      max_ttl      = var.api_partner_field_groups_cache_max_ttl
+    },
+    {
+      path_pattern = "api/partner-fields/*"
+      default_ttl  = var.api_partner_fields_cache_default_ttl
+      max_ttl      = var.api_partner_fields_cache_max_ttl
+    },
+    {
+      path_pattern = "api/contributors/"
+      default_ttl  = var.api_contributors_cache_default_ttl
+      max_ttl      = var.api_contributors_cache_max_ttl
+    },
+    {
+      path_pattern = "api/contributor-lists-sorted/*"
+      default_ttl  = var.api_contributor_lists_sorted_cache_default_ttl
+      max_ttl      = var.api_contributor_lists_sorted_cache_max_ttl
+    },
+    {
+      path_pattern = "api/parent-companies/*"
+      default_ttl  = var.api_parent_companies_cache_default_ttl
+      max_ttl      = var.api_parent_companies_cache_max_ttl
     }
   ]
 }
@@ -213,7 +238,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       forwarded_values {
         query_string = true
-        headers      = [
+        headers = [
           "Host",
           "Authorization",
           "X-OAR-CLIENT-KEY",

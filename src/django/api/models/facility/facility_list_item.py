@@ -157,6 +157,17 @@ class FacilityListItem(models.Model):
         help_text=('The facility created from this list item or the '
                    'previously existing facility to which this list '
                    'item was matched.'))
+    moderation_event = models.OneToOneField(
+        'ModerationEvent',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text=(
+            'The moderation event whose approval flow created this list item, '
+            'when applicable (e.g. production location moderation pipeline). '
+            'At most one list item per moderation event.'
+        ),
+    )
     clean_name = models.CharField(
         max_length=2000,
         null=False,

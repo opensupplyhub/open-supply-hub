@@ -41,6 +41,7 @@ variable "cloudfront_price_class" {
 }
 
 variable "cloudfront_auth_token" {
+  sensitive = true
 }
 
 variable "api_facilities_cache_default_ttl" {
@@ -65,6 +66,66 @@ variable "api_production_locations_cache_max_ttl" {
   description = "Max TTL (seconds) for production-locations OS ID detail endpoint"
   type        = number
   default     = 120
+}
+
+variable "api_partner_field_groups_cache_default_ttl" {
+  description = "Default TTL (seconds) for partner field groups endpoint"
+  type        = number
+  default     = 120
+}
+
+variable "api_partner_field_groups_cache_max_ttl" {
+  description = "Max TTL (seconds) for partner field groups endpoint"
+  type        = number
+  default     = 300
+}
+
+variable "api_partner_fields_cache_default_ttl" {
+  description = "Default TTL (seconds) for partner fields endpoint"
+  type        = number
+  default     = 120
+}
+
+variable "api_partner_fields_cache_max_ttl" {
+  description = "Max TTL (seconds) for partner fields endpoint"
+  type        = number
+  default     = 300
+}
+
+variable "api_contributors_cache_default_ttl" {
+  description = "Default TTL (seconds) for API contributors endpoints"
+  type        = number
+  default     = 120
+}
+
+variable "api_contributors_cache_max_ttl" {
+  description = "Max TTL (seconds) for API contributors endpoints"
+  type        = number
+  default     = 300
+}
+
+variable "api_contributor_lists_sorted_cache_default_ttl" {
+  description = "Default TTL (seconds) for API contributor lists sorted endpoints"
+  type        = number
+  default     = 120
+}
+
+variable "api_contributor_lists_sorted_cache_max_ttl" {
+  description = "Max TTL (seconds) for API contributor lists sorted endpoints"
+  type        = number
+  default     = 300
+}
+
+variable "api_parent_companies_cache_default_ttl" {
+  description = "Default TTL (seconds) for API parent companies endpoints"
+  type        = number
+  default     = 120
+}
+
+variable "api_parent_companies_cache_max_ttl" {
+  description = "Max TTL (seconds) for API parent companies endpoints"
+  type        = number
+  default     = 300
 }
 
 variable "vpc_cidr_block" {
@@ -113,9 +174,11 @@ variable "rds_database_identifier" {
 }
 
 variable "rds_database_name" {
+  sensitive = true
 }
 
 variable "rds_database_username" {
+  sensitive = true
 }
 
 variable "rds_database_password" {
@@ -332,12 +395,15 @@ variable "django_secret_key" {
 }
 
 variable "default_from_email" {
+  sensitive = true
 }
 
 variable "data_from_email" {
+  sensitive = true
 }
 
 variable "notification_email_to" {
+  sensitive = true
 }
 
 variable "hubspot_api_key" {
@@ -347,6 +413,7 @@ variable "hubspot_api_key" {
 
 variable "hubspot_subscription_id" {
   default = ""
+  sensitive = true
 }
 
 variable "batch_default_ce_spot_fleet_bid_percentage" {
@@ -636,6 +703,7 @@ variable "anonymizer_schedule_expression" {
 variable "anonymizer_kms_key_admin_users" {
   type    = list(any)
   default = []
+  sensitive = true
 }
 
 variable "database_anonymizer_enabled" {
@@ -651,6 +719,7 @@ variable "anonymized_database_dump_enabled" {
 variable "anonymized_database_kms_key_id" {
   type    = string
   default = ""
+  sensitive = true
 }
 
 variable "anonymized_database_instance_type" {
@@ -671,11 +740,13 @@ variable "anonymized_database_schedule_expression" {
 variable "anonymized_database_name" {
   type    = string
   default = ""
+  sensitive = true
 }
 
 variable "anonymized_database_username" {
   type    = string
   default = ""
+  sensitive = true
 }
 
 variable "anonymized_database_password" {
@@ -784,12 +855,14 @@ variable "ip_whitelist" {
   type        = list(string)
   default     = []
   description = "List of IP addresses to allow through the AWS WAF"
+  sensitive   = true
 }
 
 variable "ip_denylist" {
   type        = list(string)
   default     = []
   description = "List of IP addresses to block through the AWS WAF"
+  sensitive   = true
 }
 
 variable "waf_enabled" {
@@ -803,6 +876,7 @@ variable "waf_enabled" {
 variable "direct_data_load_sheet_id" {
   type        = string
   description = "Google Sheet ID for direct data load"
+  sensitive   = true
 }
 
 variable "direct_data_load_contributor_name" {
@@ -813,6 +887,7 @@ variable "direct_data_load_contributor_name" {
 variable "direct_data_load_contributor_email" {
   type        = string
   description = "Contributor email for direct data load"
+  sensitive   = true
 }
 
 variable "direct_data_load_user_id" {
@@ -847,6 +922,7 @@ variable "stripe_webhook_secret" {
 variable "stripe_price_id" {
   type        = string
   description = "Stripe price ID for subscription plans"
+  sensitive   = true
 }
 
 # Dark visitors variables
@@ -854,6 +930,7 @@ variable "stripe_price_id" {
 variable "dark_visitors_project_key" {
   type        = string
   description = "Dark Visitors project key"
+  sensitive   = true
 }
 
 variable "dark_visitors_token" {
@@ -893,12 +970,14 @@ variable "source_db_name" {
   description = "Source database name"
   type        = string
   default     = ""
+  sensitive   = true
 }
 
 variable "source_db_user" {
   description = "Source database user"
   type        = string
   default     = ""
+  sensitive   = true
 }
 
 variable "source_db_password" {

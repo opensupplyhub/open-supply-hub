@@ -5,12 +5,14 @@ import DateTimeProperty from '../FormatComponents/DateTimeProperty';
 import IntegerProperty from '../TypeComponents/IntegerProperty';
 import NestedObjectProperty from '../TypeComponents/NestedObjectProperty/NestedObjectProperty';
 import DefaultProperty from '../TypeComponents/DefaultProperty/DefaultProperty';
+import UrlProperty from '../FormatComponents/UrlProperty';
 
 export const FORMAT_TYPES = {
     URI: 'uri',
     URI_REFERENCE: 'uri-reference',
     DATE: 'date',
     DATE_TIME: 'date-time',
+    URL: 'url',
 };
 
 export const FORMAT_COMPONENTS = {
@@ -18,6 +20,7 @@ export const FORMAT_COMPONENTS = {
     [FORMAT_TYPES.URI_REFERENCE]: UriReferenceProperty,
     [FORMAT_TYPES.DATE]: DateProperty,
     [FORMAT_TYPES.DATE_TIME]: DateTimeProperty,
+    [FORMAT_TYPES.URL]: UrlProperty,
 };
 
 export const TYPE_COMPONENTS = {
