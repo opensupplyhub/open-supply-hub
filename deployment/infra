@@ -40,7 +40,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         case "${1}" in
             plan)
-                echo "DEFAULT_BATCH_CE_DESIRED_CPU"
                 # DEFAULT_BATCH_CE_DESIRED_CPU=$(aws batch describe-compute-environments --output text --compute-environments "batch${OAR_DEPLOYMENT_ENVIRONMENT^}DefaultComputeEnvironment" --query "computeEnvironments[].computeResources.desiredvCpus")
 
                 # # Build Lambda function archives
@@ -58,7 +57,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                           -var="image_tag=${GIT_COMMIT}" \
                           -var="batch_default_ce_desired_vcpus=${DEFAULT_BATCH_CE_DESIRED_CPU:-0}" \
                           -var-file="${SETTINGS_BUCKET}.tfvars" \
-                          -out="${SETTINGS_BUCKET}.tfplan"
+                          -out="${SETTINGS_BUCKET}.tfplan" \
+                          > "${SETTINGS_BUCKET}.tfplan.log.txt" 2>&1
                 ;;
             apply)
                 echo "Terraform init"
@@ -69,15 +69,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 echo "Terraform apply"
                 ls -la
                 terraform apply "${SETTINGS_BUCKET}.tfplan"
-
-                # # Notify Rollbar of the deploy when running on Jenkins
-                # if [[ -n "${OAR_ROLLBAR_ACCESS_TOKEN}" && -n "${OAR_DEPLOYMENT_ENVIRONMENT}" ]]; then
-                #     curl -s https://api.rollbar.com/api/1/deploy/ \
-                #         -F "access_token=${OAR_ROLLBAR_ACCESS_TOKEN}" \
-                #         -F "environment=${OAR_DEPLOYMENT_ENVIRONMENT}" \
-                #         -F "revision=${GIT_COMMIT}" \
-                #         -F "local_username=jenkins"
-                # fi
                 ;;
             destroy)
                 terraform init \
