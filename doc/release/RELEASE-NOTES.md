@@ -3,6 +3,49 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 25, 2026
+
+### What's new
+* [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
+  * `claim_created_at` — date the claim was approved.
+  * `claim_contact_person` — contact person as entered during the claim process (not shown on the public location page; visible in Django Admin only).
+  * `claim_job_title` — job title of the claimant (not shown on the public location page; visible in Django Admin only).
+  * `claim_company_name` — company name of the claimant (not shown on the public location page; visible in Django Admin only).
+  * `claim_name_in_native_language` — **Name in Native Language** on the location page.
+  * `claim_company_website` — facility's own website URL; only included when the **Facility website publicly visible** flag is enabled in Django Admin.
+  * `claim_website` — **Company Website** on the location page (business/corporate website URL).
+  * `claim_company_phone` — **Company Phone** on the location page; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.
+  * `claim_point_of_contact` — **Contact Person** on the location page; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+  * `claim_point_of_contact_email` — **Contact Email** on the location page; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+  * `claim_linkedin_profile` — LinkedIn profile URL of the claimant.
+  * `claim_office_name` — **Office Name** on the location page; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+  * `claim_office_address` — **Office Address** on the location page; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+  * `claim_office_country_code` — country code for the office address; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+  * `claim_office_phone_number` — **Office Phone Number** on the location page; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+  * `claim_description` — **Description** on the location page.
+  * `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** on the location page.
+  * `claim_affiliations` — **Affiliations** on the location page.
+  * `claim_minimum_order_quantity` — **Minimum Order Quantity** on the location page.
+  * `claim_average_lead_time` — **Average Lead Time** on the location page.
+  * `claim_female_workers_percentage` — **Percentage of Female Workers** on the location page.
+  * `claim_industry_sectors` — **Industry / Sectors** on the location page.
+  * `claim_location_types` — **Location Type(s)** on the location page.
+  * `claim_other_location_type` — free-text other location type when a non-standard type is specified alongside standard types.
+  * `claim_product_types` — **Product Type(s)** on the location page.
+  * `claim_processing_types` — **Processing Type(s)** on the location page.
+  * `claim_parent_company` — **Parent Company** on the location page.
+  * `claim_number_of_workers` — **Number of Workers** on the location page.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.21.0
 
 ## Introduction
