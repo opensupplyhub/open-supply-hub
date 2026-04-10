@@ -4,13 +4,16 @@ import {
     sendLocationPartnerProfileLinkClick,
 } from '../../util/analytics/gaCustomEvents';
 
-const handleSourceByHtmlLinkClick = (event, gaSpotlightAnalytics) => {
+const handleSourceByHtmlLinkClick = (clickEvent, gaSpotlightAnalytics) => {
     if (!gaSpotlightAnalytics) {
         return;
     }
-    const raw = event.target;
-    const el = raw instanceof Element ? raw : raw?.parentElement || null;
-    const anchor = el?.closest?.('a');
+    const eventTarget = clickEvent.target;
+    const element =
+        eventTarget instanceof Element
+            ? eventTarget
+            : eventTarget?.parentElement || null;
+    const anchor = element?.closest?.('a');
     if (!anchor) {
         return;
     }

@@ -4,7 +4,8 @@ import handleSourceByHtmlLinkClick from './utils';
 
 const useSourceByHtmlAnalytics = gaSpotlightAnalytics =>
     useCallback(
-        event => handleSourceByHtmlLinkClick(event, gaSpotlightAnalytics),
+        clickEvent =>
+            handleSourceByHtmlLinkClick(clickEvent, gaSpotlightAnalytics),
         [gaSpotlightAnalytics],
     );
 

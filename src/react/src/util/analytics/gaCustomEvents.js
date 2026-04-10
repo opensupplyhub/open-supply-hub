@@ -66,46 +66,46 @@ const sendGaEvent = (eventName, params) => {
     window.gtag('event', eventName, payload);
 };
 
-export const sendLocationPartnerProfileLinkClick = p => {
+export const sendLocationPartnerProfileLinkClick = profileLinkPayload => {
     const { destinationUrl, destinationDomain } = getDestinationParts(
-        p.destinationUrl,
+        profileLinkPayload.destinationUrl,
     );
     sendGaEvent(GA_EVENTS.LOCATION_PARTNER_PROFILE_LINK_CLICK, {
-        contributor_name: p.contributorName,
-        partner_group: p.partnerGroup,
-        link_placement: p.linkPlacement,
+        contributor_name: profileLinkPayload.contributorName,
+        partner_group: profileLinkPayload.partnerGroup,
+        link_placement: profileLinkPayload.linkPlacement,
         destination_url: destinationUrl,
         destination_domain: destinationDomain,
-        os_id: p.osId,
-        partner_field_name: p.partnerFieldName.toUpperCase(),
-        user_id: p.userId,
+        os_id: profileLinkPayload.osId,
+        partner_field_name: profileLinkPayload.partnerFieldName.toUpperCase(),
+        user_id: profileLinkPayload.userId,
     });
 };
 
-export const sendLocationPartnerExternalLinkClick = p => {
+export const sendLocationPartnerExternalLinkClick = externalLinkPayload => {
     const { destinationUrl, destinationDomain } = getDestinationParts(
-        p.destinationUrl,
+        externalLinkPayload.destinationUrl,
     );
     sendGaEvent(GA_EVENTS.LOCATION_PARTNER_EXTERNAL_LINK_CLICK, {
-        contributor_name: p.contributorName,
-        partner_group: p.partnerGroup,
-        link_placement: p.linkPlacement,
+        contributor_name: externalLinkPayload.contributorName,
+        partner_group: externalLinkPayload.partnerGroup,
+        link_placement: externalLinkPayload.linkPlacement,
         destination_url: destinationUrl,
         destination_domain: destinationDomain,
-        os_id: p.osId,
-        partner_field_name: p.partnerFieldName.toUpperCase(),
-        user_id: p.userId,
+        os_id: externalLinkPayload.osId,
+        partner_field_name: externalLinkPayload.partnerFieldName.toUpperCase(),
+        user_id: externalLinkPayload.userId,
     });
 };
 
-export const sendContributorExternalWebsiteLinkClick = p => {
+export const sendContributorExternalWebsiteLinkClick = contributorWebsitePayload => {
     const { destinationUrl, destinationDomain } = getDestinationParts(
-        p.destinationUrl,
+        contributorWebsitePayload.destinationUrl,
     );
     sendGaEvent(GA_EVENTS.CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK, {
-        contributor_name: p.contributorName,
+        contributor_name: contributorWebsitePayload.contributorName,
         destination_url: destinationUrl,
         destination_domain: destinationDomain,
-        user_id: p.userId,
+        user_id: contributorWebsitePayload.userId,
     });
 };
