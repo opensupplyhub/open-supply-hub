@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 25, 2026
+
+### What's new
+* [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
+    * **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
+    * **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
+    * **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
+    * Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `user_id` where applicable); `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.21.0
 
 ## Introduction
