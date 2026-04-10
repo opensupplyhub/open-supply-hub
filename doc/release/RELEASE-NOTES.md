@@ -53,6 +53,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
     * Removed the unnecessary spacing for the empty Partner Data groups.
 * [OSDEV-2451](https://opensupplyhub.atlassian.net/browse/OSDEV-2451) - Updated `Partner Data` under `Understanding data sources` to `Spotlight Partners`; updated the title of the `Partner Data` section to `Spotlight`.
+* [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -94,7 +95,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2381](https://opensupplyhub.atlassian.net/browse/OSDEV-2381) - Updated the `Kafka 3.8.0` download URL to use the Apache archive repository instead of the primary distribution server.
 
 ### What's new
-* [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
 * [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
     * Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
     * If `embed=1` is present, redirect to the `/facilities/:osID?sort_by=contributors_desc&embed=1` (with preserving other URL parameters) regardless of active `enable_production_location_page` flag.
