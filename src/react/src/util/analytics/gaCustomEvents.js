@@ -55,16 +55,12 @@ export const classifySpotlightSourceByLinkHref = (href, baseUrl) => {
 };
 
 const sendGaEvent = (eventName, params) => {
-    console.log('userHasAcceptedGATracking', userHasAcceptedGATracking());
     if (!userHasAcceptedGATracking()) {
         return;
     }
     if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
-        console.log('window is undefined or gtag is not a function');
         return;
     }
-    console.log('eventName', eventName);
-    console.log('event is sent', params);
     const payload = { ...params };
     delete payload.page_location;
     window.gtag('event', eventName, payload);
@@ -81,7 +77,7 @@ export const sendLocationPartnerProfileLinkClick = p => {
         destination_url: destinationUrl,
         destination_domain: destinationDomain,
         os_id: p.osId,
-        partner_field_name: p.partnerFieldName,
+        partner_field_name: p.partnerFieldName.toUpperCase(),
         user_id: p.userId,
     });
 };
@@ -97,7 +93,7 @@ export const sendLocationPartnerExternalLinkClick = p => {
         destination_url: destinationUrl,
         destination_domain: destinationDomain,
         os_id: p.osId,
-        partner_field_name: p.partnerFieldName,
+        partner_field_name: p.partnerFieldName.toUpperCase(),
         user_id: p.userId,
     });
 };
