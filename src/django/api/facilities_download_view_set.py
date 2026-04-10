@@ -84,22 +84,6 @@ class FacilitiesDownloadViewSet(
         rows = [facility_data['row'] for facility_data in list_serializer.data]
         headers = list_serializer.child.get_headers()
 
-        claim_indices = [
-            i for i, h in enumerate(headers) if h.startswith('claim_')
-        ]
-        if rows and claim_indices:
-            empty_claim_indices = {
-                i for i in claim_indices
-                if all(row[i] == '' for row in rows)
-            }
-            if empty_claim_indices:
-                keep = [
-                    i for i in range(len(headers))
-                    if i not in empty_claim_indices
-                ]
-                headers = [headers[i] for i in keep]
-                rows = [[row[i] for i in keep] for row in rows]
-
         data = {
             'rows': rows,
             'headers': headers,

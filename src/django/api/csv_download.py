@@ -1,6 +1,7 @@
 from api.models import ExtendedField
 from api.models.facility.facility_claim import FacilityClaim
 from api.helpers.helpers import prefix_a_an, parse_download_date
+from api.constants import CLAIMED_DOWNLOAD_FIELDS
 
 
 def format_download_date(date):
@@ -85,37 +86,6 @@ def format_download_extended_fields(fields, extended_fields):
             extended_fields[5].extend(result)
 
     return extended_fields
-
-
-CLAIMED_DOWNLOAD_FIELDS = [
-    'created_at',
-    'contact_person',
-    'job_title',
-    'company_name',
-    'facility_name_native_language',
-    'facility_website',
-    'website',
-    'facility_phone_number',
-    'point_of_contact_person_name',
-    'linkedin_profile',
-    'office_official_name',
-    'office_address',
-    'office_country_code',
-    'office_phone_number',
-    'facility_description',
-    'facility_certifications',
-    'facility_affiliations',
-    'facility_minimum_order_quantity',
-    'facility_average_lead_time',
-    'facility_female_workers_percentage',
-    'sector',
-    'facility_type',
-    'other_facility_type',
-    'facility_product_types',
-    'facility_production_types',
-    'parent_company_name',
-    'facility_workers_count',
-]
 
 
 class _ClaimVisibilityProxy:
