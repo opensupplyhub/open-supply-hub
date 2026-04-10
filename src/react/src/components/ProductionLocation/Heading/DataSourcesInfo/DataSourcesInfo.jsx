@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
 import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
 import { withStyles } from '@material-ui/core/styles';
-import InfoIcon from '@material-ui/icons/Info';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
-import DialogTooltip from '../../../Contribute/DialogTooltip';
+import IconComponent from '../../../Shared/IconComponent/IconComponent';
+import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
+import ExpandToggleChevron from '../../../Shared/ExpandToggleChevron/ExpandToggleChevron';
 import DataSourceItem from './DataSourceItem';
 import {
     DATA_SOURCES_TOOLTIP_TEXT,
@@ -18,63 +18,62 @@ import productionLocationDetailsDataSourcesInfoStyles from './styles';
 const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
     const [showSubsectionInfo, setShowSubsectionInfo] = useState(false);
 
+    const handleToggle = () => setShowSubsectionInfo(prev => !prev);
+
+    const handleKeyDown = event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleToggle();
+        }
+    };
+
     return (
         <div className={`${classes.container} ${className || ''}`}>
-            <div className={classes.titleRow}>
+            <div
+                className={classes.titleRow}
+                role="button"
+                tabIndex={0}
+                aria-expanded={showSubsectionInfo}
+                onClick={handleToggle}
+                onKeyDown={handleKeyDown}
+            >
                 <Typography
                     component="h3"
                     className={classes.sectionTitle}
                     variant="title"
                 >
-                    Understanding Data Sources
+                    <span className={classes.titleShort}>Data Sources</span>
+                    <span className={classes.titleFull}>
+                        Understanding Data Sources
+                    </span>
                 </Typography>
-                <DialogTooltip
-                    text={DATA_SOURCES_TOOLTIP_TEXT}
-                    textHref={
-                        <p style={{ marginTop: 8, marginBottom: 0 }}>
-                            <a
-                                href={DATA_SOURCES_LEARN_MORE_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: 'white' }}
-                            >
-                                Learn more →
-                            </a>
-                        </p>
+                <IconComponent
+                    title={
+                        <>
+                            {DATA_SOURCES_TOOLTIP_TEXT}
+                            <LearnMoreLink href={DATA_SOURCES_LEARN_MORE_URL} />
+                        </>
                     }
-                    interactive
-                    childComponent={
-                        <IconButton
-                            className={classes.infoButton}
-                            size="small"
-                            aria-label="More information about data sources"
-                            disableRipple
-                        >
-                            <InfoIcon style={{ width: 16, height: 16 }} />
-                        </IconButton>
-                    }
+                    icon={InfoOutlined}
+                    className={classes.infoButton}
+                    data-testid="data-sources-info-tooltip"
                 />
-                <div className={classes.switchWrap}>
+                <div className={classes.toggleWrap}>
                     <Typography
                         component="span"
                         className={classes.switchLabel}
                     >
-                        <b>{showSubsectionInfo ? 'Close' : 'Open'}</b>
+                        {showSubsectionInfo ? 'Close' : 'Open'}
                     </Typography>
-                    <Switch
-                        checked={showSubsectionInfo}
-                        onChange={e => setShowSubsectionInfo(e.target.checked)}
-                        color="primary"
-                        size="small"
-                        className={classes.switch}
-                        inputProps={{
-                            'aria-label':
-                                'Show extra info under each data source',
-                        }}
+                    <ExpandToggleChevron
+                        isExpanded={showSubsectionInfo}
+                        className={classes.chevron}
+                        expandLessTestId="data-sources-expand-less"
+                        expandMoreTestId="data-sources-expand-more"
                     />
                 </div>
             </div>
-            <Grid container className={classes.descriptionList} spacing={2}>
+            <Grid container className={classes.descriptionList} spacing={16}>
                 {DATA_SOURCES_ITEMS.map(item => (
                     <DataSourceItem
                         key={item.title}

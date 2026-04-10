@@ -1,0 +1,135 @@
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent } from '@testing-library/react';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
+import NavBar from '../../components/ProductionLocation/Sidebar/NavBar/NavBar';
+
+const mockGroups = [
+    {
+        uuid: 'group-1',
+        name: 'Certifications',
+        icon_file: 'https://example.com/icons/cert.png',
+        partner_fields: ['certifications'],
+    },
+    {
+        uuid: 'group-2',
+        name: 'Supply Chain',
+        icon_file: 'https://example.com/icons/chain.png',
+        partner_fields: ['supply_chain'],
+    },
+];
+
+const mockFacilityData = {
+    properties: {
+        partner_fields: {
+            certifications: [
+                { value: 'ISO 9001', field_name: 'certifications' },
+            ],
+            supply_chain: [
+                { value: 'Tier 1', field_name: 'supply_chain' },
+            ],
+        },
+    },
+};
+
+const renderNavBar = (preloadedState = {}) =>
+    renderWithProviders(
+        <MemoryRouter>
+            <NavBar />
+        </MemoryRouter>,
+        { preloadedState },
+    );
+
+describe('NavBar', () => {
+    test('renders the "Jump to" heading', () => {
+        renderNavBar();
+
+        expect(screen.getByText('Jump to')).toBeInTheDocument();
+    });
+
+    test('renders default navigation items when no groups are loaded', () => {
+        renderNavBar();
+
+        expect(screen.getByText('Overview')).toBeInTheDocument();
+        expect(screen.getByText('General Information')).toBeInTheDocument();
+    });
+
+    test('renders partner field group items alongside defaults', () => {
+        renderNavBar({
+            partnerFieldGroups: {
+                fetching: false,
+                data: { results: mockGroups },
+                error: null,
+            },
+            facilities: {
+                singleFacility: { data: mockFacilityData },
+            },
+        });
+
+        expect(screen.getByText('Overview')).toBeInTheDocument();
+        expect(screen.getByText('General Information')).toBeInTheDocument();
+
+        expect(screen.getByText('Certifications')).toBeInTheDocument();
+        expect(screen.getByText('Supply Chain')).toBeInTheDocument();
+    });
+
+    test('renders group icons with correct src and alt', () => {
+        renderNavBar({
+            partnerFieldGroups: {
+                fetching: false,
+                data: { results: mockGroups },
+                error: null,
+            },
+            facilities: {
+                singleFacility: { data: mockFacilityData },
+            },
+        });
+
+        const certImg = screen.getByAltText('Certifications');
+        expect(certImg).toHaveAttribute(
+            'src',
+            'https://example.com/icons/cert.png',
+        );
+
+        const chainImg = screen.getByAltText('Supply Chain');
+        expect(chainImg).toHaveAttribute(
+            'src',
+            'https://example.com/icons/chain.png',
+        );
+    });
+
+    test('renders only default items when data is null', () => {
+        renderNavBar({
+            partnerFieldGroups: {
+                fetching: false,
+                data: null,
+                error: null,
+            },
+        });
+
+        expect(screen.getAllByRole('menuitem')).toHaveLength(2);
+    });
+
+    test('clicking a link scrolls to the matching section', () => {
+        renderNavBar();
+
+        window.scrollTo = jest.fn();
+        const target = document.createElement('div');
+        target.id = 'overview';
+        document.body.appendChild(target);
+
+        fireEvent.click(screen.getByText('Overview'));
+
+        expect(window.scrollTo).toHaveBeenCalled();
+
+        document.body.removeChild(target);
+    });
+
+    test('clicking a link does nothing when the target element is missing', () => {
+        renderNavBar();
+
+        expect(() => {
+            fireEvent.click(screen.getByText('General Information'));
+        }).not.toThrow();
+    });
+});

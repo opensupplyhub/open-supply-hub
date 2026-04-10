@@ -14,6 +14,7 @@ const UriReferenceProperty = ({
     classes,
 }) => {
     const propertyValue = value[propertyKey];
+
     if (!propertyValue) {
         return null;
     }
@@ -25,6 +26,7 @@ const UriReferenceProperty = ({
         propertyKey,
         value,
         schemaProperties,
+        propertyValue,
     );
 
     const { baseUrl, displayText } = partnerConfigFields;
@@ -51,8 +53,9 @@ const UriReferenceProperty = ({
                 href={absoluteUri}
                 target="_blank"
                 rel="noopener noreferrer"
+                className={classes.link}
             >
-                {displayLinkText}
+                <span>{displayLinkText}</span>
             </a>
         </div>
     );

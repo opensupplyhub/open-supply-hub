@@ -7,6 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import isEmpty from 'lodash/isEmpty';
 import isArray from 'lodash/isArray';
+import noop from 'lodash/noop';
 
 import BackToSearch from '../Sidebar/BackToSearch/BackToSearch';
 import NavBar from '../Sidebar/NavBar/NavBar';
@@ -21,8 +22,15 @@ import {
 } from '../../../util/util';
 import {
     fetchSingleFacility,
+    fetchFacilities,
     resetSingleFacility,
 } from '../../../actions/facilities';
+import { fetchPartnerFieldGroups } from '../../../actions/partnerFieldGroups';
+import {
+    setFiltersFromQueryString,
+    resetAllFilters,
+} from '../../../actions/filters';
+import { resetSectionNavigation } from '../../../actions/sectionNavigation';
 
 import productionLocationDetailsContainerStyles from './styles';
 
@@ -39,21 +47,57 @@ function ProductionLocationDetailsContainer({
     embed,
     fetchFacility,
     clearFacility,
+    getPartnerFieldGroups,
+    partnerFieldGroupsData,
+    hydrateFiltersFromQueryString,
+    resetFilters,
+    fetchFacilitiesForMap,
+    resetNavigation,
 }) {
     const normalizedOsID =
         getLastPathParameter(location?.pathname || '') ||
         getLastPathParameter(osID) ||
         osID;
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
-    }, [normalizedOsID, contributors, fetchFacility]);
+    }, [normalizedOsID]);
 
-    // Run cleanup only on unmount.
+    useEffect(() => {
+        if (!partnerFieldGroupsData) {
+            getPartnerFieldGroups();
+        }
+    }, [partnerFieldGroupsData, getPartnerFieldGroups]);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => () => clearFacility(), []);
+    useEffect(() => {
+        const search = location?.search || '';
+        if (search) {
+            hydrateFiltersFromQueryString(search);
+        } else {
+            resetFilters();
+        }
+        fetchFacilitiesForMap();
+    }, [location?.search]);
 
-    if (fetching) {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(
+        () => () => {
+            clearFacility();
+            resetNavigation();
+        },
+        [],
+    );
+
+    const requestedId = normalizedOsID || '';
+    const loadedId = data?.id || '';
+    const isStaleData =
+        requestedId &&
+        loadedId &&
+        requestedId.toLowerCase() !== loadedId.toLowerCase();
+
+    if (fetching || (isStaleData && !error?.length)) {
         return (
             <div className={classes.loadingRoot}>
                 <CircularProgress />
@@ -75,7 +119,9 @@ function ProductionLocationDetailsContainer({
         );
     }
 
-    if (data?.id && data?.id !== osID) {
+    const isSameFacility = requestedId.toLowerCase() === loadedId.toLowerCase();
+    const needsCanonicalRedirect = isSameFacility && requestedId !== loadedId;
+    if (data?.id && needsCanonicalRedirect) {
         return (
             <Redirect
                 to={makeFacilityDetailLinkOnRedirect(
@@ -88,12 +134,18 @@ function ProductionLocationDetailsContainer({
     }
 
     return (
-        <Grid container className={classes.root} spacing={8}>
-            <Grid item xs={12} md={2}>
-                <BackToSearch history={history} />
-                <NavBar />
-                <ContributeFields osId={osID} />
-                <SupplyChain />
+        <Grid container className={classes.root}>
+            <Grid item xs={12} md={2} className={classes.sidebarContainer}>
+                <div className={classes.backToSearch}>
+                    <BackToSearch history={history} />
+                </div>
+                <Grid className={classes.sidebar}>
+                    <div className={classes.navBar}>
+                        <NavBar />
+                    </div>
+                    <ContributeFields osId={osID} />
+                    <SupplyChain />
+                </Grid>
             </Grid>
             <Grid item xs={12} md={10}>
                 <ProductionLocationDetailsContent
@@ -115,6 +167,7 @@ const mapStateToProps = ({
     filters: { contributors },
     featureFlags,
     embeddedMap: { embed },
+    partnerFieldGroups: { data: partnerFieldGroupsData },
 }) => ({
     data,
     fetching,
@@ -122,6 +175,7 @@ const mapStateToProps = ({
     contributors: contributors || [],
     useProductionLocationPage: shouldUseProductionLocationPage(featureFlags),
     embed,
+    partnerFieldGroupsData,
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -132,6 +186,18 @@ const mapDispatchToProps = dispatch => ({
         return dispatch(fetchSingleFacility(id, 0, contributors, true));
     },
     clearFacility: () => dispatch(resetSingleFacility()),
+    resetNavigation: () => dispatch(resetSectionNavigation()),
+    getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
+    hydrateFiltersFromQueryString: qs =>
+        dispatch(setFiltersFromQueryString(qs)),
+    resetFilters: () => dispatch(resetAllFilters()),
+    fetchFacilitiesForMap: () =>
+        dispatch(
+            fetchFacilities({
+                pushNewRoute: noop,
+                activateFacilitiesTab: false,
+            }),
+        ),
 });
 
 export default withRouter(

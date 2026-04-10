@@ -7,8 +7,7 @@ export default theme => {
     return Object.freeze({
         ...typography,
         root: {
-            marginTop: spacing * 3,
-            marginBottom: spacing * 3,
+            marginBottom: spacing * 2,
             flexDirection: 'column',
             padding: 0,
             marginLeft: 0,

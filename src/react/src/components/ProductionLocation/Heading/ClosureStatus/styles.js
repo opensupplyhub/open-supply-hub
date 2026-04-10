@@ -1,11 +1,13 @@
+import COLOURS from '../../../../util/COLOURS';
+
 export default theme =>
     Object.freeze({
         status: {
-            backgroundColor: 'rgb(40, 39, 39)',
+            backgroundColor: COLOURS.BLACK,
             borderRadius: 0,
             display: 'flex',
             justifyContent: 'flex-start',
-            marginBottom: theme.spacing.unit * 3,
+            marginBottom: theme.spacing.unit * 2,
         },
         contentContainer: {
             width: '100%',
@@ -13,8 +15,7 @@ export default theme =>
             display: 'flex',
             alignItems: 'center',
             flexWrap: 'wrap',
-            padding: theme.spacing.unit,
-            paddingLeft: 0,
+            padding: theme.spacing.unit * 2,
         },
         iconColumn: {
             flex: '0 0 36px',
@@ -32,8 +33,28 @@ export default theme =>
             justifyContent: 'center',
         },
         icon: {
+            color: COLOURS.WHITE,
             fontSize: '24px',
             fontWeight: 'normal',
+            position: 'relative',
+            [theme.breakpoints.down(450)]: {
+                display: 'none',
+            },
+        },
+        iconSlash: {
+            position: 'relative',
+            display: 'inline-flex',
+            '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: '10%',
+                left: '50%',
+                width: '2px',
+                height: '80%',
+                backgroundColor: COLOURS.WHITE,
+                transform: 'translateX(-50%) rotate(-45deg)',
+                transformOrigin: 'center',
+            },
         },
         textBox: {
             display: 'flex',
@@ -43,7 +64,7 @@ export default theme =>
             textAlign: 'left',
         },
         text: {
-            color: 'rgb(255, 255, 255)',
+            color: COLOURS.WHITE,
             fontSize: '1rem',
             textAlign: 'left',
         },
