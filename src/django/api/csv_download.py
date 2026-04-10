@@ -88,16 +88,7 @@ def format_download_extended_fields(fields, extended_fields):
     return extended_fields
 
 
-class _ClaimVisibilityProxy:
-    def __init__(self, claim):
-        self._claim = claim
-
-    def __getattr__(self, name):
-        return self._claim.get(name)
-
-
 def format_download_claimed_fields(claim, output):
-    proxy = _ClaimVisibilityProxy(claim)
     serializers = FacilityClaim.change_value_serializers
 
     for i, field in enumerate(CLAIMED_DOWNLOAD_FIELDS):
@@ -106,7 +97,7 @@ def format_download_claimed_fields(claim, output):
             output[i] = parse_download_date(raw) if raw else ''
             continue
 
-        if not FacilityClaim.change_conditions[field](proxy):
+        if not FacilityClaim.is_field_visible(field, claim):
             output[i] = ''
             continue
 
