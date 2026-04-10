@@ -91,11 +91,11 @@ class FacilityDownloadSerializerBase(Serializer):
             self,
             facility: FacilityIndexNewManager
     ) -> List[str]:
-        output = [''] * len(CLAIMED_DOWNLOAD_FIELDS)
+        claimed_fields = [''] * len(CLAIMED_DOWNLOAD_FIELDS)
         claim = facility.approved_claim
         if claim:
-            format_download_claimed_fields(claim, output)
-        return output
+            format_download_claimed_fields(claim, claimed_fields)
+        return claimed_fields
 
     @staticmethod
     def get_is_closed(facility: FacilityIndexNewManager) -> str:

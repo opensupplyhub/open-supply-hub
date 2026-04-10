@@ -88,30 +88,35 @@ def format_download_extended_fields(fields, extended_fields):
     return extended_fields
 
 
-def format_download_claimed_fields(claim, output):
-    serializers = FacilityClaim.change_value_serializers
+def get_claim_created_at_value(claim: dict) -> str:
+    raw = claim.get('created_at')
+    return parse_download_date(raw) if raw else ''
 
+
+def get_claim_field_value(field: str, claim: dict) -> str:
+    if not FacilityClaim.is_field_visible(field, claim):
+        return ''
+
+    raw = claim.get(field)
+    if raw is None:
+        return ''
+
+    formatted = FacilityClaim.change_value_serializers[field](raw)
+    if isinstance(formatted, list):
+        formatted = ', '.join(str(value) for value in formatted)
+    return str(formatted) if formatted is not None else ''
+
+
+def format_download_claimed_fields(
+    claim: dict,
+    claimed_fields: list,
+) -> list:
     for i, field in enumerate(CLAIMED_DOWNLOAD_FIELDS):
         if field == 'created_at':
-            raw = claim.get('created_at')
-            output[i] = parse_download_date(raw) if raw else ''
-            continue
-
-        if not FacilityClaim.is_field_visible(field, claim):
-            output[i] = ''
-            continue
-
-        raw = claim.get(field)
-        if raw is None:
-            output[i] = ''
-            continue
-
-        formatted = serializers[field](raw)
-        if isinstance(formatted, list):
-            formatted = ', '.join(str(v) for v in formatted)
-        output[i] = str(formatted) if formatted is not None else ''
-
-    return output
+            claimed_fields[i] = get_claim_created_at_value(claim)
+        else:
+            claimed_fields[i] = get_claim_field_value(field, claim)
+    return claimed_fields
 
 
 def value_to_set(value):
