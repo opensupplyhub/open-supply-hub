@@ -96,6 +96,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
     * Removed the unnecessary spacing for the empty Partner Data groups.
 * [OSDEV-2451](https://opensupplyhub.atlassian.net/browse/OSDEV-2451) - Updated `Partner Data` under `Understanding data sources` to `Spotlight Partners`; updated the title of the `Partner Data` section to `Spotlight`.
+* [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
