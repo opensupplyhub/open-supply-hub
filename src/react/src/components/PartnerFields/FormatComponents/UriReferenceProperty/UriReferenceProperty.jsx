@@ -6,6 +6,7 @@ import { getDescription, getAbsoluteUri, getDisplayLinkText } from './utils';
 import { getLinkTextFromSchema } from '../../utils';
 import { commonPropertyStyles } from '../../styles';
 import { sendLocationPartnerExternalLinkClick } from '../../../../util/analytics/gaCustomEvents';
+import useViewerUserIdForAnalytics from '../../../../util/analytics/hooks';
 
 const UriReferenceProperty = ({
     propertyKey,
@@ -15,6 +16,7 @@ const UriReferenceProperty = ({
     classes,
     gaSpotlightAnalytics,
 }) => {
+    const viewerUserId = useViewerUserIdForAnalytics();
     const propertyValue = value[propertyKey];
 
     if (!propertyValue) {
@@ -55,6 +57,7 @@ const UriReferenceProperty = ({
             osId: gaSpotlightAnalytics.os_id,
             partnerFieldName: gaSpotlightAnalytics.partner_field_name,
             userId: gaSpotlightAnalytics.user_id,
+            viewerUserId,
         });
     };
 

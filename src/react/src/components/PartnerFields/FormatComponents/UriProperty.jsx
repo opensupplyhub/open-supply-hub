@@ -5,6 +5,7 @@ import { getTitleFromSchema, getLinkTextFromSchema } from '../utils';
 import { commonPropertyStyles } from '../styles';
 import PartnerFieldLabel from '../PartnerFieldLabel/PartnerFieldLabel';
 import { sendLocationPartnerExternalLinkClick } from '../../../util/analytics/gaCustomEvents';
+import useViewerUserIdForAnalytics from '../../../util/analytics/hooks';
 
 const UriProperty = ({
     propertyKey,
@@ -13,6 +14,7 @@ const UriProperty = ({
     classes,
     gaSpotlightAnalytics,
 }) => {
+    const viewerUserId = useViewerUserIdForAnalytics();
     const title = getTitleFromSchema(propertyKey, schemaProperties);
     const schemaProperty = schemaProperties[propertyKey] || {};
     const propertyValue = value[propertyKey] || schemaProperty.default;
@@ -40,6 +42,7 @@ const UriProperty = ({
             osId: gaSpotlightAnalytics.os_id,
             partnerFieldName: gaSpotlightAnalytics.partner_field_name,
             userId: gaSpotlightAnalytics.user_id,
+            viewerUserId,
         });
     };
 

@@ -78,7 +78,8 @@ export const sendLocationPartnerProfileLinkClick = profileLinkPayload => {
         destination_domain: destinationDomain,
         os_id: profileLinkPayload.osId,
         partner_field_name: profileLinkPayload.partnerFieldName.toUpperCase(),
-        user_id: profileLinkPayload.userId,
+        contributor_user_id: profileLinkPayload.userId,
+        viewer_user_id: profileLinkPayload.viewerUserId,
     });
 };
 
@@ -94,7 +95,8 @@ export const sendLocationPartnerExternalLinkClick = externalLinkPayload => {
         destination_domain: destinationDomain,
         os_id: externalLinkPayload.osId,
         partner_field_name: externalLinkPayload.partnerFieldName.toUpperCase(),
-        user_id: externalLinkPayload.userId,
+        contributor_user_id: externalLinkPayload.userId,
+        viewer_user_id: externalLinkPayload.viewerUserId,
     });
 };
 
@@ -106,6 +108,7 @@ export const sendContributorExternalWebsiteLinkClick = contributorWebsitePayload
         contributor_name: contributorWebsitePayload.contributorName,
         destination_url: destinationUrl,
         destination_domain: destinationDomain,
-        user_id: contributorWebsitePayload.userId,
+        contributor_user_id: contributorWebsitePayload.userId,
+        viewer_user_id: contributorWebsitePayload.viewerUserId,
     });
 };

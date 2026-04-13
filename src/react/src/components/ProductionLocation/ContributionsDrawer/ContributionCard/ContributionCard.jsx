@@ -19,6 +19,7 @@ import {
     GA_LINK_PLACEMENT,
     sendLocationPartnerProfileLinkClick,
 } from '../../../../util/analytics/gaCustomEvents';
+import useViewerUserIdForAnalytics from '../../../../util/analytics/hooks';
 import contributionCardStyles from './styles';
 
 const ContributionCard = ({
@@ -31,6 +32,7 @@ const ContributionCard = ({
     spotlightGaProfileBase,
     'data-testid': dataTestId,
 }) => {
+    const viewerUserId = useViewerUserIdForAnalytics();
     const profilePath = makeProfileRouteLink(userId);
 
     const handleProfileClick = () => {
@@ -49,6 +51,7 @@ const ContributionCard = ({
             osId: spotlightGaProfileBase.os_id,
             partnerFieldName: spotlightGaProfileBase.partner_field_name,
             userId: String(userId),
+            viewerUserId,
         });
     };
 

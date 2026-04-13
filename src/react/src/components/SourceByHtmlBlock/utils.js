@@ -4,7 +4,11 @@ import {
     sendLocationPartnerProfileLinkClick,
 } from '../../util/analytics/gaCustomEvents';
 
-const handleSourceByHtmlLinkClick = (clickEvent, gaSpotlightAnalytics) => {
+const handleSourceByHtmlLinkClick = (
+    clickEvent,
+    gaSpotlightAnalytics,
+    viewerUserId,
+) => {
     if (!gaSpotlightAnalytics) {
         return;
     }
@@ -40,11 +44,13 @@ const handleSourceByHtmlLinkClick = (clickEvent, gaSpotlightAnalytics) => {
         sendLocationPartnerProfileLinkClick({
             ...common,
             userId: classified.profileUserId,
+            viewerUserId,
         });
     } else {
         sendLocationPartnerExternalLinkClick({
             ...common,
             userId: gaSpotlightAnalytics.user_id,
+            viewerUserId,
         });
     }
 };

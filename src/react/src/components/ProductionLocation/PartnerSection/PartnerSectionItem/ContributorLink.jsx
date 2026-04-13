@@ -6,9 +6,11 @@ import {
     GA_LINK_PLACEMENT,
     sendLocationPartnerProfileLinkClick,
 } from '../../../../util/analytics/gaCustomEvents';
+import useViewerUserIdForAnalytics from '../../../../util/analytics/hooks';
 import styles from './styles';
 
 const ContributorLink = ({ classes, gaSpotlightContext, ...props }) => {
+    const viewerUserId = useViewerUserIdForAnalytics();
     const profilePath = `/profile/${props.contributor_id}`;
 
     const handleProfileClick = () => {
@@ -30,6 +32,7 @@ const ContributorLink = ({ classes, gaSpotlightContext, ...props }) => {
                 props.contributor_id != null
                     ? String(props.contributor_id)
                     : '',
+            viewerUserId,
         });
     };
 

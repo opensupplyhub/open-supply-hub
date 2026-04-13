@@ -17,6 +17,7 @@ import {
 
 import { addProtocolToWebsiteURLIfMissing } from '../util/util';
 import { sendContributorExternalWebsiteLinkClick } from '../util/analytics/gaCustomEvents';
+import useViewerUserIdForAnalytics from '../util/analytics/hooks';
 
 const userProfileFieldStyles = Object.freeze({
     viewOnlyStyles: Object.freeze({
@@ -54,6 +55,7 @@ export default function UserProfileField({
     header,
     gaContributorWebsiteContext,
 }) {
+    const viewerUserId = useViewerUserIdForAnalytics();
     if (isHidden) {
         return null;
     }
@@ -92,6 +94,7 @@ export default function UserProfileField({
                                         ),
                                         userId:
                                             gaContributorWebsiteContext.user_id,
+                                        viewerUserId,
                                     });
                                 }}
                             >

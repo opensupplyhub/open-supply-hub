@@ -149,6 +149,7 @@ describe('sendLocationPartnerProfileLinkClick', () => {
             osId: 'os-42',
             partnerFieldName: 'source_url',
             userId: '99',
+            viewerUserId: '500',
         });
 
         expect(global.window.gtag).toHaveBeenCalledTimes(1);
@@ -163,7 +164,8 @@ describe('sendLocationPartnerProfileLinkClick', () => {
                 destination_domain: 'partner.example',
                 os_id: 'os-42',
                 partner_field_name: 'SOURCE_URL',
-                user_id: '99',
+                contributor_user_id: '99',
+                viewer_user_id: '500',
             },
         );
     });
@@ -185,6 +187,7 @@ describe('sendLocationPartnerExternalLinkClick', () => {
             osId: 'os-1',
             partnerFieldName: 'doc',
             userId: '1',
+            viewerUserId: '500',
         });
 
         expect(global.window.gtag).toHaveBeenCalledWith(
@@ -198,7 +201,8 @@ describe('sendLocationPartnerExternalLinkClick', () => {
                 destination_domain: 'ext.example',
                 os_id: 'os-1',
                 partner_field_name: 'DOC',
-                user_id: '1',
+                contributor_user_id: '1',
+                viewer_user_id: '500',
             },
         );
     });
@@ -216,6 +220,7 @@ describe('sendContributorExternalWebsiteLinkClick', () => {
             contributorName: 'Name',
             destinationUrl: 'https://site.example',
             userId: '7',
+            viewerUserId: '500',
         });
 
         expect(global.window.gtag).toHaveBeenCalledWith(
@@ -225,7 +230,8 @@ describe('sendContributorExternalWebsiteLinkClick', () => {
                 contributor_name: 'Name',
                 destination_url: 'https://site.example/',
                 destination_domain: 'site.example',
-                user_id: '7',
+                contributor_user_id: '7',
+                viewer_user_id: '500',
             },
         );
     });
