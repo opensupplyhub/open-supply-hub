@@ -36,6 +36,7 @@ from .utils import (
     is_created_at_main_date
 )
 
+
 class PartnerFieldEntrySerializer(serializers.Serializer):
     """Schema for a single partner field entry as produced by
     FacilityIndexExtendedFieldListSerializer."""
