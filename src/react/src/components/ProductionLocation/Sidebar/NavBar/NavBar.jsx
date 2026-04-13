@@ -67,7 +67,7 @@ const NavBar = ({
                           label: 'Operational Details',
                           Icon: OperationalDetailsIcon,
                           handler: handleOperationalDetailsClick,
-                          testId: 'jump-to-general-operational-details',
+                          testId: 'jump-to-operational-details-link',
                       },
                   ]
                 : []),
@@ -75,7 +75,7 @@ const NavBar = ({
                 to: `#${group.uuid}`,
                 label: group.name,
                 handler: handleGroupClick(group.uuid),
-                testId: 'partner-group',
+                testId: `partner-group-${group.uuid}`,
                 Image: group.icon_file
                     ? () => (
                           <img
