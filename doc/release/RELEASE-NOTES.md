@@ -9,36 +9,42 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: April 25, 2026
 
+### Database changes
+
+#### Migrations
+* **0207_add_point_of_contact_email_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email` in the approved claim JSON structure. This enables the facility download to surface the claim point of contact email in the `claim_point_of_contact_email` column.
+
 ### What's new
 * [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
-  * `claim_created_at` — date the claim was approved.
-  * `claim_contact_person` — contact person as entered during the claim process (not shown on the public location page; visible in Django Admin only).
-  * `claim_job_title` — job title of the claimant (not shown on the public location page; visible in Django Admin only).
-  * `claim_company_name` — company name of the claimant (not shown on the public location page; visible in Django Admin only).
-  * `claim_name_in_native_language` — **Name in Native Language** on the location page.
-  * `claim_company_website` — facility's own website URL; only included when the **Facility website publicly visible** flag is enabled in Django Admin.
-  * `claim_website` — **Company Website** on the location page (business/corporate website URL).
-  * `claim_company_phone` — **Company Phone** on the location page; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.
-  * `claim_point_of_contact` — **Contact Person** on the location page; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
-  * `claim_point_of_contact_email` — **Contact Email** on the location page; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
-  * `claim_linkedin_profile` — LinkedIn profile URL of the claimant.
-  * `claim_office_name` — **Office Name** on the location page; only included when the **Office info publicly visible** flag is enabled in Django Admin.
-  * `claim_office_address` — **Office Address** on the location page; only included when the **Office info publicly visible** flag is enabled in Django Admin.
-  * `claim_office_country_code` — country code for the office address; only included when the **Office info publicly visible** flag is enabled in Django Admin.
-  * `claim_office_phone_number` — **Office Phone Number** on the location page; only included when the **Office info publicly visible** flag is enabled in Django Admin.
-  * `claim_description` — **Description** on the location page.
-  * `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** on the location page.
-  * `claim_affiliations` — **Affiliations** on the location page.
-  * `claim_minimum_order_quantity` — **Minimum Order Quantity** on the location page.
-  * `claim_average_lead_time` — **Average Lead Time** on the location page.
-  * `claim_female_workers_percentage` — **Percentage of Female Workers** on the location page.
-  * `claim_industry_sectors` — **Industry / Sectors** on the location page.
-  * `claim_location_types` — **Location Type(s)** on the location page.
-  * `claim_other_location_type` — free-text other location type when a non-standard type is specified alongside standard types.
-  * `claim_product_types` — **Product Type(s)** on the location page.
-  * `claim_processing_types` — **Processing Type(s)** on the location page.
-  * `claim_parent_company` — **Parent Company** on the location page.
-  * `claim_number_of_workers` — **Number of Workers** on the location page.
+  * `claim_created_at` — date the claim was approved (auto-calculated, not entered by the claimant).
+  * **Claim step 2 - Contact Information**
+    * `claim_contact_person` — **Your Name** field (claimant's name; not shown on the public location page; visible in Django Admin only).
+    * `claim_job_title` — **Your Job Title** field (claimant's job title; not shown on the public location page; visible in Django Admin only).
+    * `claim_point_of_contact` — **Contact Name** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+    * `claim_point_of_contact_email` — **Contact Email** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+  * **Claim step 3 - Business Information**
+    * `claim_company_name` — **Company Name** field (pre-populated from the production location's name on OS Hub; read-only for the claimant; not shown on the public location page; visible in Django Admin only).
+  * **Claim step 4 - Profile information**
+    * `claim_name_in_native_language` — **Production Location Name in Native Language** field.
+    * `claim_company_phone` — **Company Phone** field; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.
+    * `claim_company_website` — **Company Website** field; only included when the **Facility website publicly visible** flag is enabled in Django Admin.
+    * `claim_description` — **Production Location Description** field.
+    * `claim_parent_company` — **Parent Company Name / Supplier Group** field.
+    * `claim_office_name` — **Office Name** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    * `claim_office_address` — **Office Address** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    * `claim_office_country_code` — **Office Country** field (country code); only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    * `claim_office_phone_number` — office phone number; only included when the **Office info publicly visible** flag is enabled in Django Admin. Not collected via the current claim form; settable in Django Admin only.
+    * `claim_industry_sectors` — **Industry / Sectors** field.
+    * `claim_location_types` — **Location Type(s)** field.
+    * `claim_other_location_type` — free-text other location type when a non-standard value is entered in the **Location Type(s)** field.
+    * `claim_product_types` — **Product Types** field.
+    * `claim_processing_types` — **Processing Type(s)** field.
+    * `claim_number_of_workers` — **Number of Workers** field.
+    * `claim_female_workers_percentage` — **Percentage of Female Workers** field.
+    * `claim_minimum_order_quantity` — **Minimum Order Quantity** field.
+    * `claim_average_lead_time` — **Average Lead Time** field.
+    * `claim_affiliations` — **Affiliations** field.
+    * `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** field.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
