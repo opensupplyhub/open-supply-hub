@@ -335,19 +335,151 @@ class FacilitiesViewSet(ListModelMixin,
                         }
                     ],
                     "partner_fields": {
-                        "some_partner_field": [
+                        "wage_indicator": [
                             {
                                 "value": {
                                     "raw_values": {
-                                        "some_partner_field_key": "some_partner_field_value"
+                                        "living_wage_link_national": "https://paywizard.org/salary/living-wages",
+                                        "living_wage_link_national_text": "View Living Wages in national language",
+                                        "minimum_wage_link_english": "https://wageindicator.org/salary/minimum-wage/united-states-of-america",
+                                        "minimum_wage_link_english_text": "View Minimum Wage in English",
+                                        "minimum_wage_link_national": "https://paywizard.org/salary/minimum-wage",
+                                        "minimum_wage_link_national_text": "View Minimum Wage in national language"
                                     }
                                 }
                             }
                         ],
-                        "some_other_partner_field": [
+                        "amfori_compliance_status": [
                             {
                                 "value": {
-                                    "raw_values": "some_other_partner_field_value"
+                                    "raw_values": {
+                                        "bepi_audit": {
+                                            "expiration_date": "2025-10-30",
+                                            "submission_date": "2023-10-28"
+                                        },
+                                        "bsci_audit": {
+                                            "expiration_date": "2025-10-28",
+                                            "submission_date": "2023-10-28"
+                                        },
+                                        "environmental_risk_assessment": {
+                                            "completion_date": "2025-10-28",
+                                            "expiration_date": "2025-10-30"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "estimated_annual_activity": [
+                            {
+                                "value": {
+                                    "raw_value": 450000
+                                }
+                            }
+                        ],
+                        "estimated_emissions": [
+                            {
+                                "value": {
+                                    "raw_value": 32833
+                                }
+                            }
+                        ],
+                        "slcp_assessment": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "most_recent_assessment_status": "Assessment Completed",
+                                        "most_recent_assessment_date": "2025-01-29",
+                                        "assessment_platform": "...",
+                                        "verifier_body": "..."
+                                    }
+                                }
+                            }
+                        ],
+                        "mit_living_wage": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "county_id": "24033"
+                                    }
+                                }
+                            }
+                        ],
+                        "worldly_assessment_data": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "fem_assessment": {
+                                            "last_date": "2026-03-09T13:52:43Z",
+                                            "assessment_url": "https://assessments.worldly.io/fem/v1/report-44102",
+                                            "reporting_year": 2025,
+                                            "verification_status": "pending"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "ulula_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "start_date": "2026-01-29",
+                                        "end_date": "2026-01-29"
+                                    }
+                                }
+                            }
+                        ],
+                        "labor_solutions_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "wovo_active": "active",
+                                        "wovo_established_date": "2022-06-01",
+                                        "attributes": "..."
+                                    }
+                                }
+                            }
+                        ],
+                        "wrap_certification": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "certification_status": "active",
+                                        "issue_date": "2022-06-01",
+                                        "expiration_date": "2022-12-01"
+                                    }
+                                }
+                            }
+                        ],
+                        "accord_inspections_and_remediation_program": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "rsc_presence": "Yes",
+                                        "first_inspection_date": "2022-06-01"
+                                    }
+                                }
+                            }
+                        ],
+                        "labor_solutions_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "established_date": "2022-06-01"
+                                    }
+                                }
+                            }
+                        ],
+                        "rsc_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "active_since": "2022-06-01",
+                                        "end_date": "2022-06-01",
+                                        "attributes": "..."
+                                    }
                                 }
                             }
                         ]
