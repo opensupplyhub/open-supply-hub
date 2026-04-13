@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.0
+
+## Introduction
+
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### What's new
+
+* [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
+
+
 ## Release 2.21.0
 
 ## Introduction
