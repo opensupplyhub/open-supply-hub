@@ -31,7 +31,6 @@ class FacilitiesDownloadViewSet(
             contributor_id = get_embed_contributor_id_from_query_params(
                 self.request.query_params
             )
-            # TODO: Check embed mode
             return FacilityDownloadSerializerEmbedMode(
                 objs,
                 many=True,
