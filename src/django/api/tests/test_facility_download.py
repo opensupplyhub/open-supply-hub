@@ -171,9 +171,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
 
         self.claim_headers = [
             "claim_created_at",
-            "claim_contact_person",
-            "claim_job_title",
-            "claim_company_name",
             "claim_name_in_native_language",
             "claim_company_website",
             "claim_company_phone",
@@ -657,9 +654,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "Biological Recycling",
             "Shirts",
             self.date,
-            "your_name",
-            "your_title",
-            "",
             "native_language",
             "https://opensupplyhub.org",
             "1234567",

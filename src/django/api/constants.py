@@ -305,9 +305,6 @@ PARTNER_FIELD_NAMES_KEY = 'partner_field_names'
 
 CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_created_at', 'created_at'),
-    ('claim_contact_person', 'contact_person'),
-    ('claim_job_title', 'job_title'),
-    ('claim_company_name', 'company_name'),
     ('claim_name_in_native_language', 'facility_name_native_language'),
     ('claim_company_website', 'facility_website'),
     ('claim_company_phone', 'facility_phone_number'),

@@ -18,12 +18,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
   * `claim_created_at` — date the claim was approved (auto-calculated, not entered by the claimant).
   * **Claim step 2 - Contact Information**
-    * `claim_contact_person` — **Your Name** field (claimant's name; not shown on the public location page; visible in Django Admin only).
-    * `claim_job_title` — **Your Job Title** field (claimant's job title; not shown on the public location page; visible in Django Admin only).
     * `claim_point_of_contact` — **Contact Name** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
     * `claim_point_of_contact_email` — **Contact Email** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
-  * **Claim step 3 - Business Information**
-    * `claim_company_name` — **Company Name** field (pre-populated from the production location's name on OS Hub; read-only for the claimant; not shown on the public location page; visible in Django Admin only).
   * **Claim step 4 - Profile information**
     * `claim_name_in_native_language` — **Production Location Name in Native Language** field.
     * `claim_company_phone` — **Company Phone** field; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.

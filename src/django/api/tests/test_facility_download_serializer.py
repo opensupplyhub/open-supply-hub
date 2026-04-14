@@ -7,9 +7,6 @@ from api.serializers.facility.facility_download_serializer import (
 
 CLAIM_HEADERS = [
     "claim_created_at",
-    "claim_contact_person",
-    "claim_job_title",
-    "claim_company_name",
     "claim_name_in_native_language",
     "claim_company_website",
     "claim_company_phone",
