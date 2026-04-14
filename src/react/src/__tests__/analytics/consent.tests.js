@@ -11,7 +11,7 @@ import {
     acceptGATrackingAndStartTracking,
     clearGATrackingDecision,
     createGADisableKey,
-} from '../util/util.ga.js';
+} from '../../util/analytics/consent';
 
 beforeEach(() => {
     const window = {};
