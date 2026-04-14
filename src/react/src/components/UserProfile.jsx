@@ -25,6 +25,7 @@ import {
     facilitiesRoute,
     profileFieldsEnum,
     profileFormFields,
+    registrationFieldsEnum,
     OTHER,
     USER_DEFAULT_STATE,
 } from '../util/constants';
@@ -183,6 +184,14 @@ class UserProfile extends Component {
                     hideOnViewOnlyProfile={field.hideOnViewOnlyProfile}
                     isEditableProfile={isEditableProfile}
                     submitFormOnEnterKeyPress={submitFormOnEnterKeyPress}
+                    gaContributorWebsiteContext={
+                        field.id === registrationFieldsEnum.website
+                            ? {
+                                  contributor_name: profile.name,
+                                  user_id: String(profile.id),
+                              }
+                            : undefined
+                    }
                 />
             ));
 

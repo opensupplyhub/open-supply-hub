@@ -1,12 +1,14 @@
 import moment from 'moment';
-import env from './env';
+import env from '../env';
 
-const REACT_APP_GOOGLE_ANALYTICS_KEY = 'REACT_APP_GOOGLE_ANALYTICS_KEY';
-
-export const GA_TRACKING = 'GA_TRACKING';
-export const GA_TRACKING_DECISION_DATE = 'GA_TRACKING_DECISON_DATE';
-export const HAS_ACCEPTED_GA_TRACKING = 'HAS_ACCEPTED_GA_TRACKING';
-export const HAS_REJECTED_GA_TRACKING = 'HAS_REJECTED_GA_TRACKING';
+import {
+    REACT_APP_GOOGLE_ANALYTICS_KEY,
+    GA_TRACKING,
+    GA_TRACKING_DECISION_DATE,
+    HAS_ACCEPTED_GA_TRACKING,
+    HAS_REJECTED_GA_TRACKING,
+    GA_EVENTS,
+} from './constants';
 
 const getCurrentTimestamp = () => moment().toISOString();
 
@@ -130,27 +132,31 @@ export const startGATrackingIfUserHasAcceptedNotification = () => {
         delete window[gaDisableKey];
 
         /* eslint-disable */
-        // This is the standard Google Analytics gtag.js code snippet
+        // Standard gtag.js stub: must assign window.gtag so other modules (e.g.
+        // gaCustomEvents) can call it; a function-local `gtag` would not be global.
         window.dataLayer = window.dataLayer || [];
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag('js', new Date());
+        window.gtag = function gtag() {
+            window.dataLayer.push(arguments);
+        };
+        window.gtag('js', new Date());
 
-        gtag('config', window.ENVIRONMENT.REACT_APP_GOOGLE_ANALYTICS_KEY, {
-            anonymize_ip: true,
-        });
+        window.gtag(
+            'config',
+            window.ENVIRONMENT.REACT_APP_GOOGLE_ANALYTICS_KEY,
+            {
+                anonymize_ip: true,
+            },
+        );
         /* eslint-enable */
 
-        gtag('event', 'TRACKING_CONSENT', {
+        window.gtag('event', GA_EVENTS.TRACKING_CONSENT, {
             hitType: 'event',
-            eventAction: 'TRACKING_CONSENT',
-            eventCategory: 'TRACKING_CONSENT',
+            eventAction: GA_EVENTS.TRACKING_CONSENT,
+            eventCategory: GA_EVENTS.TRACKING_CONSENT,
             eventLabel: `User consented to GA tracking on ${window.localStorage.getItem(
                 GA_TRACKING_DECISION_DATE,
             )}`, // eslint-disable-line
             nonInteraction: true,
-            anonymizeIp: true,
         });
 
         return 'User clicked Accept on the notification dialog. Google Analytics tracking was started';
