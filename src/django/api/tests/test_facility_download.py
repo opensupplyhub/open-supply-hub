@@ -193,6 +193,18 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "claim_processing_types",
             "claim_parent_company",
             "claim_number_of_workers",
+            "claim_opening_date",
+            "claim_closing_date",
+            "claim_estimated_annual_throughput_kg_year",
+            "claim_energy_coal_j",
+            "claim_energy_natural_gas_j",
+            "claim_energy_diesel_j",
+            "claim_energy_kerosene_j",
+            "claim_energy_biomass_j",
+            "claim_energy_charcoal_j",
+            "claim_energy_animal_waste_j",
+            "claim_energy_electricity_mwh",
+            "claim_energy_other_j",
         ]
         self.empty_claim_values = [""] * len(self.claim_headers)
 
@@ -676,6 +688,18 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "20",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             "False",
         ]
         self.assertEquals(rows[0], row)

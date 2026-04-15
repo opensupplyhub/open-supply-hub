@@ -9,8 +9,10 @@ helper = MigrationHelper(connection)
 def update_indexing_function(apps, schema_editor):
     """
     Replace index_approved_claim with a version that includes
-    point_of_contact_email in the approved claim JSON, so the facility
-    download can surface it in the claim_point_of_contact_email column.
+    point_of_contact_email, opening_date, closing_date,
+    estimated_annual_throughput, and all energy consumption fields
+    in the approved claim JSON, so the facility download can surface
+    them as dedicated columns.
     """
     helper.run_sql_files(['0207_index_approved_claim.sql'])
 

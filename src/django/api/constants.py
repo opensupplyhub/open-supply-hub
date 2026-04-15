@@ -333,6 +333,18 @@ CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_processing_types', 'facility_production_types'),
     ('claim_parent_company', 'parent_company_name'),
     ('claim_number_of_workers', 'facility_workers_count'),
+    ('claim_opening_date', 'opening_date'),
+    ('claim_closing_date', 'closing_date'),
+    ('claim_estimated_annual_throughput_kg_year', 'estimated_annual_throughput'),
+    ('claim_energy_coal_j', 'energy_coal'),
+    ('claim_energy_natural_gas_j', 'energy_natural_gas'),
+    ('claim_energy_diesel_j', 'energy_diesel'),
+    ('claim_energy_kerosene_j', 'energy_kerosene'),
+    ('claim_energy_biomass_j', 'energy_biomass'),
+    ('claim_energy_charcoal_j', 'energy_charcoal'),
+    ('claim_energy_animal_waste_j', 'energy_animal_waste'),
+    ('claim_energy_electricity_mwh', 'energy_electricity'),
+    ('claim_energy_other_j', 'energy_other'),
 ]
 
 CLAIMED_DOWNLOAD_FIELDS = [

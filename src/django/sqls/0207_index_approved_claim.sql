@@ -6,7 +6,7 @@ AS $Body$
 BEGIN
 	RETURN QUERY
 SELECT
-	json_build_object(
+	(json_build_object(
 	'id',
 	afc.id, 
 	'contact_person',
@@ -111,7 +111,34 @@ SELECT
 	),
 	'facility_workers_count',
 	afc.facility_workers_count
-	)
+	) :: jsonb ||
+	json_build_object(
+	'opening_date',
+	afc.opening_date,
+	'closing_date',
+	afc.closing_date,
+	'estimated_annual_throughput',
+	afc.estimated_annual_throughput,
+	'energy_coal',
+	afc.energy_coal,
+	'energy_natural_gas',
+	afc.energy_natural_gas,
+	'energy_diesel',
+	afc.energy_diesel,
+	'energy_kerosene',
+	afc.energy_kerosene,
+	'energy_biomass',
+	afc.energy_biomass,
+	'energy_charcoal',
+	afc.energy_charcoal,
+	'energy_animal_waste',
+	afc.energy_animal_waste,
+	'energy_electricity',
+	afc.energy_electricity,
+	'energy_other',
+	afc.energy_other
+	) :: jsonb
+	) :: json
 FROM
 	api_facilityclaim afc
 LEFT JOIN api_contributor ac ON

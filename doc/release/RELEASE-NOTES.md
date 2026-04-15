@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* **0207_add_point_of_contact_email_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email` in the approved claim JSON structure. This enables the facility download to surface the claim point of contact email in the `claim_point_of_contact_email` column.
+* **0207_add_energy_and_throughput_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields (`energy_coal`, `energy_natural_gas`, `energy_diesel`, `energy_kerosene`, `energy_biomass`, `energy_charcoal`, `energy_animal_waste`, `energy_electricity`, `energy_other`) in the approved claim JSON, enabling their exposure as dedicated download columns.
 
 ### What's new
 * [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
@@ -41,6 +41,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `claim_average_lead_time` — **Average Lead Time** field.
     * `claim_affiliations` — **Affiliations** field.
     * `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** field.
+  * **Actual Annual Energy Consumption (Django Admin only)**
+    * `claim_opening_date` — facility opening date.
+    * `claim_closing_date` — facility closing date.
+    * `claim_estimated_annual_throughput_kg_year` — estimated annual throughput (unit: kg/year).
+    * `claim_energy_coal_j` — annual coal energy consumption (unit: Joules).
+    * `claim_energy_natural_gas_j` — annual natural gas energy consumption (unit: Joules).
+    * `claim_energy_diesel_j` — annual diesel energy consumption (unit: Joules).
+    * `claim_energy_kerosene_j` — annual kerosene energy consumption (unit: Joules).
+    * `claim_energy_biomass_j` — annual biomass energy consumption (unit: Joules).
+    * `claim_energy_charcoal_j` — annual charcoal energy consumption (unit: Joules).
+    * `claim_energy_animal_waste_j` — annual animal waste energy consumption (unit: Joules).
+    * `claim_energy_electricity_mwh` — annual electricity consumption (unit: MWh).
+    * `claim_energy_other_j` — annual other energy source consumption (unit: Joules).
 * [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
     * **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
     * **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
