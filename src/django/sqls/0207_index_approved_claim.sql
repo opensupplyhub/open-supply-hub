@@ -99,7 +99,12 @@ SELECT
 	'sector',
 	afc.sector,
 	'parent_company_name',
-	afc.parent_company_name,
+	CASE
+		WHEN afc.parent_company_id IS NOT NULL THEN (
+			SELECT ac.name FROM api_contributor ac WHERE ac.id = afc.parent_company_id
+		)
+		ELSE afc.parent_company_name
+	END,
 	'facility_location',
 	afc.facility_location,
 	'facility_location_info',
@@ -114,9 +119,15 @@ SELECT
 	) :: jsonb ||
 	json_build_object(
 	'opening_date',
-	afc.opening_date,
+	CASE
+		WHEN afc.opening_date IS NOT NULL THEN to_char(afc.opening_date, 'YYYY')
+		ELSE NULL
+	END,
 	'closing_date',
-	afc.closing_date,
+	CASE
+		WHEN afc.closing_date IS NOT NULL THEN to_char(afc.closing_date, 'YYYY-MM')
+		ELSE NULL
+	END,
 	'estimated_annual_throughput',
 	afc.estimated_annual_throughput,
 	'energy_coal',

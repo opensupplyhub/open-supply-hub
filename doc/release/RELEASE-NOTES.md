@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* **0207_add_energy_and_throughput_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields (`energy_coal`, `energy_natural_gas`, `energy_diesel`, `energy_kerosene`, `energy_biomass`, `energy_charcoal`, `energy_animal_waste`, `energy_electricity`, `energy_other`) in the approved claim JSON, enabling their exposure as dedicated download columns.
+* **0207_add_energy_and_throughput_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
 
 ### What's new
 * [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
