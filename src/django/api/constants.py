@@ -335,7 +335,10 @@ CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_number_of_workers', 'facility_workers_count'),
     ('claim_opening_date', 'opening_date'),
     ('claim_closing_date', 'closing_date'),
-    ('claim_estimated_annual_throughput_kg_year', 'estimated_annual_throughput'),
+    (
+        'claim_estimated_annual_throughput_kg_year',
+        'estimated_annual_throughput',
+    ),
     ('claim_energy_coal_j', 'energy_coal'),
     ('claim_energy_natural_gas_j', 'energy_natural_gas'),
     ('claim_energy_diesel_j', 'energy_diesel'),
