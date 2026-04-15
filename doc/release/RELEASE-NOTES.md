@@ -7,10 +7,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: April 25, 2026
 
-### Code/API changes
-* [OSDEV-2423](https://opensupplyhub.atlassian.net/browse/OSDEV-2423) - Updated Swagger/OpenAPI documentation for `GET api/facilities/{os_id}/` to describe the `partner_fields` response property. Added `PartnerFieldEntrySerializer` for the schema, annotated the serializer method with `@swagger_serializer_method`, declared an explicit `200` response type, and included a `partner_fields` sample in the docstring.
+### What's new
+* [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
+    * **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
+    * **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
+    * **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
+    * Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `contributor_user_id`, `viewer_user_id` where applicable). The user id is sent as `contributor_user_id` (not `user_id`) so it does not collide with GA4’s reserved User-ID field; `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
