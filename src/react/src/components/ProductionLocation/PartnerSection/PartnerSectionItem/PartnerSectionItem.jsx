@@ -145,6 +145,7 @@ const PartnerSectionItem = ({
                                             <PartnerFieldItem
                                                 field={field}
                                                 facilityData={facilityData}
+                                                partnerGroupName={group.name}
                                             />
                                         </div>
                                     ))}
@@ -158,6 +159,7 @@ const PartnerSectionItem = ({
                                             <PartnerFieldItem
                                                 field={field}
                                                 facilityData={facilityData}
+                                                partnerGroupName={group.name}
                                             />
                                         </div>
                                     ))}

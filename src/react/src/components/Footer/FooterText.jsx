@@ -11,6 +11,11 @@ export default function FooterText() {
                 This site was designed for low energy usage and is hosted on
                 data centers using 100% renewable energy.
             </p>
+            <br />
+            <p>
+                Open Supply Hub (OS Hub)&reg; is a registered trademark of Open
+                Supply Hub, Inc.
+            </p>
         </div>
     );
 }
