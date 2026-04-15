@@ -169,6 +169,45 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.contrib_api_list_item.facility = self.contrib_facility_two
         self.contrib_api_list_item.save()
 
+        self.claim_headers = [
+            "claim_created_at",
+            "claim_name_in_native_language",
+            "claim_company_website",
+            "claim_company_phone",
+            "claim_point_of_contact",
+            "claim_point_of_contact_email",
+            "claim_office_name",
+            "claim_office_address",
+            "claim_office_country_code",
+            "claim_office_phone_number",
+            "claim_description",
+            "claim_certifications_standards_regulations",
+            "claim_affiliations",
+            "claim_minimum_order_quantity",
+            "claim_average_lead_time",
+            "claim_female_workers_percentage",
+            "claim_industry_sectors",
+            "claim_location_types",
+            "claim_other_location_type",
+            "claim_product_types",
+            "claim_processing_types",
+            "claim_parent_company",
+            "claim_number_of_workers",
+            "claim_opening_date",
+            "claim_closing_date",
+            "claim_estimated_annual_throughput_kg_year",
+            "claim_energy_coal_j",
+            "claim_energy_natural_gas_j",
+            "claim_energy_diesel_j",
+            "claim_energy_kerosene_j",
+            "claim_energy_biomass_j",
+            "claim_energy_charcoal_j",
+            "claim_energy_animal_waste_j",
+            "claim_energy_electricity_mwh",
+            "claim_energy_other_j",
+        ]
+        self.empty_claim_values = [""] * len(self.claim_headers)
+
         self.default_headers = [
             "os_id",
             "contribution_date",
@@ -186,6 +225,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "facility_type",
             "processing_type",
             "product_type",
+            *self.claim_headers,
             "is_closed",
         ]
         self.contrib_facility_base_row = [
@@ -205,6 +245,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
+            *self.empty_claim_values,
             "False",
         ]
 
@@ -479,6 +520,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
+            *self.empty_claim_values,
             "False",
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
@@ -595,6 +637,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "Raw Material Processing or Production",
             "Biological Recycling",
             "Shirts",
+            *self.empty_claim_values,
             "False",
         ]
         self.assertEqual(len(base_row), len(row))
@@ -622,6 +665,41 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "Raw Material Processing or Production",
             "Biological Recycling",
             "Shirts",
+            self.date,
+            "native_language",
+            "https://opensupplyhub.org",
+            "1234567",
+            "point_of_contact_person_name",
+            "point_of_contact_email",
+            "office_official_name",
+            "office_address",
+            "US",
+            "2345678",
+            "facility_description",
+            "",
+            "",
+            "10",
+            "2 months",
+            "50",
+            "",
+            "Cut and Sew / RMG",
+            "",
+            "",
+            "",
+            "",
+            "20",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             "False",
         ]
         self.assertEquals(rows[0], row)
@@ -656,6 +734,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
+            *self.empty_claim_values,
             "False",
         ]
         self.assertEqual(row, rows[0])
@@ -721,6 +800,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
+            *self.empty_claim_values,
             "False",
         ]
         self.assertEquals(rows[0], row)
@@ -751,6 +831,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
+            *self.empty_claim_values,
             "False",
         ]
         self.assertEquals(rows[0], row)
