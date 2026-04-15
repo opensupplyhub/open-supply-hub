@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: April 25, 2026
 
 ### What's new
+* [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
 * [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
     * **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
     * **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
