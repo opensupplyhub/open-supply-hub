@@ -29,3 +29,8 @@ const customJestEnvironment = async () => {
 };
 
 customJestEnvironment();
+
+jest.mock('./util/analytics/hooks', () => ({
+    __esModule: true,
+    default: () => null,
+}));

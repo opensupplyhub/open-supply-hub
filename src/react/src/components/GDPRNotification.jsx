@@ -15,7 +15,7 @@ import {
     rejectGATracking,
     startGATrackingIfUserHasAcceptedNotification,
     clearGATrackingDecision,
-} from '../util/util.ga';
+} from '../util/analytics/consent';
 
 class GDPRNotification extends Component {
     componentDidMount() {
