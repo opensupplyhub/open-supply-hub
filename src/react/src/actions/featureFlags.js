@@ -32,3 +32,11 @@ export function fetchFeatureFlags() {
             );
     };
 }
+
+export function refreshFeatureFlags() {
+    return dispatch =>
+        apiRequest
+            .get(makeGetAPIFeatureFlagsURL())
+            .then(({ data }) => dispatch(completeFetchFeatureFlags(data)))
+            .catch(() => {});
+}
