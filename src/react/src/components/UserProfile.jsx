@@ -65,6 +65,7 @@ const profileStyles = Object.freeze({
         justifyContent: 'space-between',
         marginBottom: '100px',
         backgroundColor: '#fff',
+        padding: '24px',
     }),
     submitButton: Object.freeze({
         display: 'flex',

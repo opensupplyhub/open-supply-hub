@@ -73,7 +73,7 @@ class UserProfileSerializer(ModelSerializer):
                     source__is_active=True,
                     source__is_public=True,
                     status=FacilityList.APPROVED,
-                ).order_by('-created_at'),
+                ).order_by('-created_at')[:100],
                 many=True,
             ).data
         except Contributor.DoesNotExist:
