@@ -1,6 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { bool } from 'prop-types';
+import { bool, object } from 'prop-types';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -60,7 +59,7 @@ function MaintenanceBanner({ isActive, classes }) {
 
 MaintenanceBanner.propTypes = {
     isActive: bool.isRequired,
-    classes: PropTypes.object.isRequired,
+    classes: object.isRequired,
 };
 
 function mapStateToProps({ featureFlags: { flags } }) {

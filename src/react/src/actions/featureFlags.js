@@ -1,3 +1,4 @@
+import debounce from 'lodash/debounce';
 import { createAction } from 'redux-act';
 
 import apiRequest from '../util/apiRequest';
@@ -33,10 +34,13 @@ export function fetchFeatureFlags() {
     };
 }
 
+const debouncedRefresh = debounce(dispatch => {
+    apiRequest
+        .get(makeGetAPIFeatureFlagsURL())
+        .then(({ data }) => dispatch(completeFetchFeatureFlags(data)))
+        .catch(() => {});
+}, 300);
+
 export function refreshFeatureFlags() {
-    return dispatch =>
-        apiRequest
-            .get(makeGetAPIFeatureFlagsURL())
-            .then(({ data }) => dispatch(completeFetchFeatureFlags(data)))
-            .catch(() => {});
+    return dispatch => debouncedRefresh(dispatch);
 }
