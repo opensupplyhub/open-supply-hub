@@ -46,7 +46,7 @@ describe('MaintenanceBanner', () => {
         expect(screen.queryByText(BODY_LINE_2)).not.toBeInTheDocument();
     });
 
-    test('renders headline as bold (strong font weight)', () => {
+    test('renders headline as a paragraph element', () => {
         renderBanner(true);
 
         const headline = screen.getByText(HEADLINE_TEXT);

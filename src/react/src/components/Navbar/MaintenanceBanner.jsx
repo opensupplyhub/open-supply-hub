@@ -6,35 +6,38 @@ import { withStyles } from '@material-ui/core/styles';
 
 import COLOURS from '../../util/COLOURS';
 import { DISABLE_LIST_UPLOADING } from '../../util/constants';
+import getTypographyStyles from '../../util/typographyStyles';
 
-const styles = theme => ({
-    banner: {
-        width: '100%',
-        boxSizing: 'border-box',
-        backgroundColor: COLOURS.NAVIGATION,
-        color: COLOURS.JET_BLACK,
-        textAlign: 'center',
-        padding: '12px 16px',
-        [theme.breakpoints.down('sm')]: {
-            padding: '8px 12px',
+const styles = theme => {
+    const typography = getTypographyStyles(theme);
+    return {
+        banner: {
+            width: '100%',
+            boxSizing: 'border-box',
+            backgroundColor: COLOURS.NAVIGATION,
+            textAlign: 'center',
+            padding: '12px 16px',
+            [theme.breakpoints.down('sm')]: {
+                padding: '8px 12px',
+            },
         },
-    },
-    headline: {
-        fontSize: '21px',
-        fontWeight: 600,
-        lineHeight: 1.3,
-        [theme.breakpoints.down('sm')]: {
-            fontSize: '17px',
+        headline: {
+            ...typography.formLabelTight,
+            color: COLOURS.PURPLE,
+            marginBottom: '15px',
+            [theme.breakpoints.down('sm')]: {
+                fontSize: typography.bodyText.fontSize,
+                marginBottom: 0,
+            },
         },
-    },
-    body: {
-        fontSize: '1rem',
-        lineHeight: 1.4,
-        [theme.breakpoints.down('sm')]: {
-            fontSize: '0.875rem',
+        body: {
+            ...typography.sectionDescription,
+            color: COLOURS.JET_BLACK,
+            fontWeight: theme.typography.fontWeightBold,
+            marginBottom: 0,
         },
-    },
-});
+    };
+};
 
 function MaintenanceBanner({ isActive, classes }) {
     if (!isActive) {
@@ -43,14 +46,18 @@ function MaintenanceBanner({ isActive, classes }) {
 
     return (
         <div className={classes.banner}>
-            <Typography className={classes.headline} component="p">
+            <Typography
+                component="p"
+                variant="headline"
+                className={classes.headline}
+            >
                 Open Supply Hub is currently undergoing planned maintenance.
             </Typography>
-            <Typography className={classes.body} component="p">
+            <Typography component="p" variant="body1" className={classes.body}>
                 You can still search and browse, but data uploads are
                 temporarily unavailable.
             </Typography>
-            <Typography className={classes.body} component="p">
+            <Typography component="p" variant="body1" className={classes.body}>
                 Full service will resume shortly. Thank you for your patience.
             </Typography>
         </div>
