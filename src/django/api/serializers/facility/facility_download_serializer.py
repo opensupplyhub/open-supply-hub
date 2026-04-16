@@ -13,6 +13,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.COMMON_HEADERS,
             "contributor (list)",
             *self.EXTENDED_FIELDS_HEADERS,
+            *self.CLAIMED_FIELDS_HEADERS,
             self.IS_CLOSED_HEADER,
         ]
 
@@ -21,6 +22,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.get_common_row(facility),
             self.get_contributors(facility),
             *self.get_extended_fields(self.get_extended_fields_raw(facility)),
+            *self.get_claimed_fields(facility),
             self.get_is_closed(facility),
         ]
 

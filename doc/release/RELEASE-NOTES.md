@@ -9,17 +9,63 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: April 25, 2026
 
+### Database changes
+
+#### Migrations
+* **0207_add_energy_and_throughput_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
+
 ### What's new
+* [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
+  * `claim_created_at` — date the claim was created (auto-calculated, not entered by the claimant).
+  * **Claim step 2 - Contact Information**
+    * `claim_point_of_contact` — **Contact Name** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+    * `claim_point_of_contact_email` — **Contact Email** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+  * **Claim step 4 - Profile information**
+    * `claim_name_in_native_language` — **Production Location Name in Native Language** field.
+    * `claim_company_phone` — **Company Phone** field; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.
+    * `claim_company_website` — **Company Website** field; only included when the **Facility website publicly visible** flag is enabled in Django Admin.
+    * `claim_description` — **Production Location Description** field.
+    * `claim_parent_company` — **Parent Company Name / Supplier Group** field.
+    * `claim_office_name` — **Office Name** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    * `claim_office_address` — **Office Address** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    * `claim_office_country_code` — **Office Country** field (country code); only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    * `claim_office_phone_number` — office phone number; only included when the **Office info publicly visible** flag is enabled in Django Admin. Not collected via the current claim form; settable in Django Admin only.
+    * `claim_industry_sectors` — **Industry / Sectors** field.
+    * `claim_location_types` — **Location Type(s)** field.
+    * `claim_other_location_type` — free-text other location type when a non-standard value is entered in the **Location Type(s)** field.
+    * `claim_product_types` — **Product Types** field.
+    * `claim_processing_types` — **Processing Type(s)** field.
+    * `claim_number_of_workers` — **Number of Workers** field.
+    * `claim_female_workers_percentage` — **Percentage of Female Workers** field.
+    * `claim_minimum_order_quantity` — **Minimum Order Quantity** field.
+    * `claim_average_lead_time` — **Average Lead Time** field.
+    * `claim_affiliations` — **Affiliations** field.
+    * `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** field.
+  * **Actual Annual Energy Consumption (Django Admin only)**
+    * `claim_opening_date` — facility opening date.
+    * `claim_closing_date` — facility closing date.
+    * `claim_estimated_annual_throughput_kg_year` — estimated annual throughput (unit: kg/year).
+    * `claim_energy_coal_j` — annual coal energy consumption (unit: Joules).
+    * `claim_energy_natural_gas_j` — annual natural gas energy consumption (unit: Joules).
+    * `claim_energy_diesel_j` — annual diesel energy consumption (unit: Joules).
+    * `claim_energy_kerosene_j` — annual kerosene energy consumption (unit: Joules).
+    * `claim_energy_biomass_j` — annual biomass energy consumption (unit: Joules).
+    * `claim_energy_charcoal_j` — annual charcoal energy consumption (unit: Joules).
+    * `claim_energy_animal_waste_j` — annual animal waste energy consumption (unit: Joules).
+    * `claim_energy_electricity_mwh` — annual electricity consumption (unit: MWh).
+    * `claim_energy_other_j` — annual other energy source consumption (unit: Joules).
 * [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
     * **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
     * **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
     * **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
     * Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `contributor_user_id`, `viewer_user_id` where applicable). The user id is sent as `contributor_user_id` (not `user_id`) so it does not collide with GA4’s reserved User-ID field; `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
+* [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `reindex_locations_with_approved_claim`
 
 
 ## Release 2.21.0
