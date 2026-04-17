@@ -518,8 +518,8 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     compress               = true
     viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 60
-    default_ttl            = 120
+    min_ttl                = 120
+    default_ttl            = 240
     max_ttl                = 300
   }
 
