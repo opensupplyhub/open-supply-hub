@@ -51,6 +51,7 @@ from .tile.get_tile import get_tile
 
 from .user.add_user_to_mailing_list import add_user_to_mailing_list
 from .user.user_profile import UserProfile
+from .user.user_profile_facility_lists import UserProfileFacilityLists
 from .user.submit_new_user_form import SubmitNewUserForm
 
 from .moderation_events.moderation_events_view_set import ModerationEventsViewSet

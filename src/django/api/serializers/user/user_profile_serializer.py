@@ -74,20 +74,9 @@ class UserProfileSerializer(ModelSerializer):
         except Contributor.DoesNotExist:
             return None
 
-    def get_facility_lists(self, user):
-        try:
-            contributor = user.contributor
-            return FacilityListSummarySerializer(
-                FacilityList.objects.filter(
-                    source__contributor=contributor,
-                    source__is_active=True,
-                    source__is_public=True,
-                    status=FacilityList.APPROVED,
-                ).order_by("-created_at")[:10],
-                many=True,
-            ).data
-        except Contributor.DoesNotExist:
-            return []
+    # TODO: Deprecated. Returns a stub to avoid breaking changes.
+    def get_facility_lists(self, _):
+        return []
 
     def get_is_verified(self, user):
         try:
