@@ -62,9 +62,9 @@ const profileStyles = Object.freeze({
     }),
     appGridContainer: Object.freeze({
         justifyContent: 'space-between',
-        marginBottom: '100px',
+        marginBottom: '50px',
         backgroundColor: '#fff',
-        padding: '24px',
+        padding: '0 24px 24px 24px',
     }),
     submitButton: Object.freeze({
         display: 'flex',
