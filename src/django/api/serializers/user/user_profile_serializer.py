@@ -5,7 +5,7 @@ from rest_framework.serializers import (
 from ...models import Contributor, FacilityList, User
 from ..embed_config import EmbedConfigSerializer
 from ..facility.facility_list_summary_serializer import (
-    FacilityListSummarySerializer
+    FacilityListSummarySerializer,
 )
 
 
@@ -23,10 +23,20 @@ class UserProfileSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'description', 'website', 'contributor_type',
-                  'other_contributor_type', 'facility_lists', 'is_verified',
-                  'is_moderation_mode', 'embed_config', 'contributor_id')
-        read_only_fields = ('contributor_id',)
+        fields = (
+            "id",
+            "name",
+            "description",
+            "website",
+            "contributor_type",
+            "other_contributor_type",
+            "facility_lists",
+            "is_verified",
+            "is_moderation_mode",
+            "embed_config",
+            "contributor_id",
+        )
+        read_only_fields = ("contributor_id",)
 
     def get_name(self, user):
         try:
@@ -73,7 +83,7 @@ class UserProfileSerializer(ModelSerializer):
                     source__is_active=True,
                     source__is_public=True,
                     status=FacilityList.APPROVED,
-                ).order_by('-created_at')[:100],
+                ).order_by("-created_at")[:10],
                 many=True,
             ).data
         except Contributor.DoesNotExist:

@@ -85,6 +85,13 @@ const profileStyles = Object.freeze({
     badgeVerifiedStyles: Object.freeze({
         padding: '10px',
     }),
+    sectionLabelStyles: Object.freeze({
+        fontWeight: '900',
+        fontSize: '14px',
+        letterSpacing: '0.5px',
+        lineHeight: '14px',
+        textTransform: 'uppercase',
+    }),
 });
 
 class UserProfile extends Component {
@@ -198,17 +205,7 @@ class UserProfile extends Component {
 
         const title = (
             <div>
-                <h3
-                    style={{
-                        fontWeight: '900',
-                        fontSize: '14px',
-                        letterSpacing: '0.5px',
-                        lineHeight: '14px',
-                        textTransform: 'uppercase',
-                    }}
-                >
-                    Organization
-                </h3>
+                <h3 style={profileStyles.sectionLabelStyles}>Organization</h3>
                 <h2 style={profileStyles.titleStyles}>
                     {!isEditableProfile && profile.name}
                 </h2>
@@ -297,15 +294,7 @@ class UserProfile extends Component {
         const facilityLists =
             !isEditableProfile && profile.facilityLists.length > 0 ? (
                 <React.Fragment>
-                    <h3
-                        style={{
-                            fontWeight: '900',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            lineHeight: '14px',
-                            textTransform: 'uppercase',
-                        }}
-                    >
+                    <h3 style={profileStyles.sectionLabelStyles}>
                         Facility Lists
                     </h3>
                     <p color="#191919">
