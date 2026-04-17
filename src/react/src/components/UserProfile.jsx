@@ -92,6 +92,33 @@ const profileStyles = Object.freeze({
         lineHeight: '14px',
         textTransform: 'uppercase',
     }),
+    titleBar: Object.freeze({
+        display: 'flex',
+        justifyContent: 'space-between',
+    }),
+    facilityMapLink: Object.freeze({
+        backgroundColor: '#FFCF3F',
+        color: '#000',
+        fontSize: '18px',
+        fontWeight: '900',
+        lineHeight: '20px',
+        textDecoration: 'none',
+        padding: '16px',
+        gap: '8px',
+        display: 'flex',
+    }),
+    backgroundWrapper: Object.freeze({
+        backgroundColor: '#F9F7F7',
+    }),
+    backButton: Object.freeze({
+        backgroundColor: 'transparent',
+        color: '#8428FA',
+        fontSize: '18px',
+        fontWeight: '700',
+        lineHeight: '18px',
+        letterSpacing: '0.5px',
+        textTransform: 'none',
+    }),
 });
 
 class UserProfile extends Component {
@@ -223,10 +250,7 @@ class UserProfile extends Component {
         const titleBar = (
             <div
                 className="user-profile-title-bar"
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                }}
+                style={profileStyles.titleBar}
             >
                 {title}
                 <ShowOnly when={!isEditableProfile}>
@@ -234,17 +258,7 @@ class UserProfile extends Component {
                         <a
                             href={`/facilities?contributors=${profile.contributorId}`}
                             rel="noopener noreferrer"
-                            style={{
-                                backgroundColor: '#FFCF3F',
-                                color: '#000',
-                                fontSize: '18px',
-                                fontWeight: '900',
-                                lineHeight: '20px',
-                                textDecoration: 'none',
-                                padding: '16px',
-                                gap: '8px',
-                                display: 'flex',
-                            }}
+                            style={profileStyles.facilityMapLink}
                         >
                             <MapIcon />
                             View map of facilities
@@ -317,18 +331,10 @@ class UserProfile extends Component {
 
         return (
             <AppOverflow>
-                <div style={{ backgroundColor: '#F9F7F7' }}>
+                <div style={profileStyles.backgroundWrapper}>
                     <ShowOnly when={!isEditableProfile}>
                         <Button
-                            style={{
-                                backgroundColor: 'transparent',
-                                color: '#8428FA',
-                                fontSize: '18px',
-                                fontWeight: '700',
-                                lineHeight: '18px',
-                                letterSpacing: '0.5px',
-                                textTransform: 'none',
-                            }}
+                            style={profileStyles.backButton}
                             Icon={ArrowBack}
                             text="Back to search results"
                             onClick={() => {
