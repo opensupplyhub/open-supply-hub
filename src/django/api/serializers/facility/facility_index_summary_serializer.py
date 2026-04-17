@@ -4,14 +4,16 @@ from ...models.facility.facility_index import FacilityIndex
 
 
 class FacilityIndexSummarySerializer(GeoFeatureModelSerializer):
+    """Compact GeoJSON serializer exposing core FacilityIndex fields."""
+
     class Meta:
         model = FacilityIndex
         fields = (
-            'id',
-            'name',
-            'address',
-            'location',
-            'country_code',
-            'contributors_id',
+            "id",
+            "name",
+            "address",
+            "location",
+            "country_code",
+            "contributors_id",
         )
-        geo_field = 'location'
+        geo_field = "location"
