@@ -230,6 +230,15 @@ export default createReducer(
                     otherContributorType: {
                         $set: payload.other_contributor_type || '',
                     },
+                    isVerified: { $set: payload.is_verified || false },
+                    facilityLists: {
+                        $set:
+                            payload.facility_lists ||
+                            initialState[
+                                profileSummaryFieldsEnum.facilityLists
+                            ],
+                    },
+                    contributorId: { $set: payload.contributor_id || null },
                 },
                 fetching: { $set: false },
                 error: { $set: null },

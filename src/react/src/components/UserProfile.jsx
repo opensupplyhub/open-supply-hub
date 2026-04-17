@@ -65,6 +65,7 @@ const profileStyles = Object.freeze({
         justifyContent: 'space-between',
         marginBottom: '100px',
         backgroundColor: '#fff',
+        padding: '24px',
     }),
     submitButton: Object.freeze({
         display: 'flex',
@@ -83,6 +84,40 @@ const profileStyles = Object.freeze({
     }),
     badgeVerifiedStyles: Object.freeze({
         padding: '10px',
+    }),
+    sectionLabelStyles: Object.freeze({
+        fontWeight: '900',
+        fontSize: '14px',
+        letterSpacing: '0.5px',
+        lineHeight: '14px',
+        textTransform: 'uppercase',
+    }),
+    titleBar: Object.freeze({
+        display: 'flex',
+        justifyContent: 'space-between',
+    }),
+    facilityMapLink: Object.freeze({
+        backgroundColor: '#FFCF3F',
+        color: '#000',
+        fontSize: '18px',
+        fontWeight: '900',
+        lineHeight: '20px',
+        textDecoration: 'none',
+        padding: '16px',
+        gap: '8px',
+        display: 'flex',
+    }),
+    backgroundWrapper: Object.freeze({
+        backgroundColor: '#F9F7F7',
+    }),
+    backButton: Object.freeze({
+        backgroundColor: 'transparent',
+        color: '#8428FA',
+        fontSize: '18px',
+        fontWeight: '700',
+        lineHeight: '18px',
+        letterSpacing: '0.5px',
+        textTransform: 'none',
     }),
 });
 
@@ -197,17 +232,7 @@ class UserProfile extends Component {
 
         const title = (
             <div>
-                <h3
-                    style={{
-                        fontWeight: '900',
-                        fontSize: '14px',
-                        letterSpacing: '0.5px',
-                        lineHeight: '14px',
-                        textTransform: 'uppercase',
-                    }}
-                >
-                    Organization
-                </h3>
+                <h3 style={profileStyles.sectionLabelStyles}>Organization</h3>
                 <h2 style={profileStyles.titleStyles}>
                     {!isEditableProfile && profile.name}
                 </h2>
@@ -225,10 +250,7 @@ class UserProfile extends Component {
         const titleBar = (
             <div
                 className="user-profile-title-bar"
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                }}
+                style={profileStyles.titleBar}
             >
                 {title}
                 <ShowOnly when={!isEditableProfile}>
@@ -236,17 +258,7 @@ class UserProfile extends Component {
                         <a
                             href={`/facilities?contributors=${profile.contributorId}`}
                             rel="noopener noreferrer"
-                            style={{
-                                backgroundColor: '#FFCF3F',
-                                color: '#000',
-                                fontSize: '18px',
-                                fontWeight: '900',
-                                lineHeight: '20px',
-                                textDecoration: 'none',
-                                padding: '16px',
-                                gap: '8px',
-                                display: 'flex',
-                            }}
+                            style={profileStyles.facilityMapLink}
                         >
                             <MapIcon />
                             View map of facilities
@@ -296,15 +308,7 @@ class UserProfile extends Component {
         const facilityLists =
             !isEditableProfile && profile.facilityLists.length > 0 ? (
                 <React.Fragment>
-                    <h3
-                        style={{
-                            fontWeight: '900',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            lineHeight: '14px',
-                            textTransform: 'uppercase',
-                        }}
-                    >
+                    <h3 style={profileStyles.sectionLabelStyles}>
                         Facility Lists
                     </h3>
                     <p color="#191919">
@@ -327,18 +331,10 @@ class UserProfile extends Component {
 
         return (
             <AppOverflow>
-                <div style={{ backgroundColor: '#F9F7F7' }}>
+                <div style={profileStyles.backgroundWrapper}>
                     <ShowOnly when={!isEditableProfile}>
                         <Button
-                            style={{
-                                backgroundColor: 'transparent',
-                                color: '#8428FA',
-                                fontSize: '18px',
-                                fontWeight: '700',
-                                lineHeight: '18px',
-                                letterSpacing: '0.5px',
-                                textTransform: 'none',
-                            }}
+                            style={profileStyles.backButton}
                             Icon={ArrowBack}
                             text="Back to search results"
                             onClick={() => {
