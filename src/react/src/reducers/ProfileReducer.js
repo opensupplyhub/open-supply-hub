@@ -31,11 +31,7 @@ import {
     completeSubmitLogOut,
 } from '../actions/auth';
 
-import {
-    registrationFieldsEnum,
-    profileFieldsEnum,
-    profileSummaryFieldsEnum,
-} from '../util/constants';
+import { registrationFieldsEnum, profileFieldsEnum } from '../util/constants';
 
 const initialState = Object.freeze({
     profile: Object.freeze({
@@ -50,7 +46,6 @@ const initialState = Object.freeze({
         [profileFieldsEnum.currentPassword]: '',
         [profileFieldsEnum.newPassword]: '',
         [profileFieldsEnum.confirmNewPassword]: '',
-        [profileSummaryFieldsEnum.facilityLists]: [],
     }),
     formSubmission: {
         fetching: false,
@@ -203,13 +198,6 @@ export default createReducer(
                     newPassword: { $set: '' },
                     confirmNewPassword: { $set: '' },
                     isVerified: { $set: payload.is_verified || false },
-                    facilityLists: {
-                        $set:
-                            payload.facility_lists ||
-                            initialState[
-                                profileSummaryFieldsEnum.facilityLists
-                            ],
-                    },
                     contributorId: { $set: payload.contributor_id || null },
                 },
                 fetching: { $set: false },
@@ -231,13 +219,6 @@ export default createReducer(
                         $set: payload.other_contributor_type || '',
                     },
                     isVerified: { $set: payload.is_verified || false },
-                    facilityLists: {
-                        $set:
-                            payload.facility_lists ||
-                            initialState[
-                                profileSummaryFieldsEnum.facilityLists
-                            ],
-                    },
                     contributorId: { $set: payload.contributor_id || null },
                 },
                 fetching: { $set: false },

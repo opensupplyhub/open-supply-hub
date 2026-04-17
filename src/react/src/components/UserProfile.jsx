@@ -10,7 +10,6 @@ import { toast } from 'react-toastify';
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import Button from './Button';
-import FacilityListSummary from './FacilityListSummary';
 import UserProfileField from './UserProfileField';
 import UserCookiePreferences from './UserCookiePreferences';
 import BadgeVerified from './BadgeVerified';
@@ -305,26 +304,6 @@ class UserProfile extends Component {
             </div>
         ) : null;
 
-        const facilityLists =
-            !isEditableProfile && profile.facilityLists.length > 0 ? (
-                <React.Fragment>
-                    <h3 style={profileStyles.sectionLabelStyles}>
-                        Facility Lists
-                    </h3>
-                    <p color="#191919">
-                        The following lists have been provided by this
-                        contributor:
-                    </p>
-                    {profile.facilityLists.map(list => (
-                        <FacilityListSummary
-                            key={list.id}
-                            contributor={list.contributor_id}
-                            {...list}
-                        />
-                    ))}
-                </React.Fragment>
-            ) : null;
-
         const cookiePreferences = isEditableProfile ? (
             <UserCookiePreferences />
         ) : null;
@@ -349,7 +328,6 @@ class UserProfile extends Component {
                         <Grid item xs={12}>
                             {toolbar}
                             {profileInputs}
-                            {facilityLists}
                             {errorMessages}
                             {submitButton}
                             {cookiePreferences}
