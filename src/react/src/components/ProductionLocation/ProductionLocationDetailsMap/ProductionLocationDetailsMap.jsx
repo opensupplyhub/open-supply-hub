@@ -191,7 +191,10 @@ const ProductionLocationDetailsMap = ({
     }, []);
 
     return (
-        <div className={classes.container}>
+        <div
+            className={classes.container}
+            data-testid="geographic-information-section"
+        >
             <div className={classes.sectionTitleRow}>
                 <MapPointer
                     width={20}
