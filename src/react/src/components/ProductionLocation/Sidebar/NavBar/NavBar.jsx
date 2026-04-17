@@ -50,14 +50,14 @@ const NavBar = ({
                     label: 'Overview',
                     Icon: OverviewIcon,
                     handler: handleDefaultSectionClick('overview'),
-                    testId: 'jump-to-overview-link',
+                    id: 'jump-to-overview-link',
                 },
                 {
                     to: '#general-information',
                     label: 'General Information',
                     Icon: GeneralInformationIcon,
                     handler: handleDefaultSectionClick('general-information'),
-                    testId: 'jump-to-general-information-link',
+                    id: 'jump-to-general-information-link',
                 },
             ],
             ...(hasOperationalDetails
@@ -67,7 +67,7 @@ const NavBar = ({
                           label: 'Operational Details',
                           Icon: OperationalDetailsIcon,
                           handler: handleOperationalDetailsClick,
-                          testId: 'jump-to-general-operational-details',
+                          id: 'jump-to-general-operational-details-link',
                       },
                   ]
                 : []),
@@ -75,7 +75,9 @@ const NavBar = ({
                 to: `#${group.uuid}`,
                 label: group.name,
                 handler: handleGroupClick(group.uuid),
-                testId: 'partner-group',
+                id: `jump-to-${group.name
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')}-link`,
                 Image: group.icon_file
                     ? () => (
                           <img
@@ -104,7 +106,7 @@ const NavBar = ({
             </Typography>
             <MenuList className={classes.menuList}>
                 {navItems.map(
-                    ({ to, label, Icon, Image, active, handler, testId }) => (
+                    ({ to, label, Icon, Image, active, handler, id }) => (
                         <MenuItem
                             key={to}
                             className={`${classes.menuItem} ${
@@ -112,7 +114,7 @@ const NavBar = ({
                             }`}
                             disableGutters
                             onClick={handler}
-                            data-testid={testId}
+                            id={id}
                         >
                             {Image ? (
                                 <Image
