@@ -2,11 +2,8 @@ from rest_framework.serializers import (
     ModelSerializer,
     SerializerMethodField,
 )
-from ...models import Contributor, FacilityList, User
+from ...models import Contributor, User
 from ..embed_config import EmbedConfigSerializer
-from ..facility.facility_list_summary_serializer import (
-    FacilityListSummarySerializer,
-)
 
 
 class UserProfileSerializer(ModelSerializer):
