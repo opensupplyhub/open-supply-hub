@@ -7,6 +7,7 @@ import {
     makeAPITokenURL,
     makeUserAPIInfoURL,
     makeUserProfileURL,
+    makeUserProfileProductionLocationsURL,
     logErrorAndDispatchFailure,
     createProfileUpdateErrorMessages,
     createProfileUpdateRequestData,
@@ -134,6 +135,81 @@ export function createAPIToken() {
                     ),
                 )
         );
+    };
+}
+
+export const startFetchProductionLocations = createAction(
+    'START_FETCH_USER_PROFILE_PRODUCTION_LOCATIONS',
+);
+export const failFetchProductionLocations = createAction(
+    'FAIL_FETCH_USER_PROFILE_PRODUCTION_LOCATIONS',
+);
+export const completeFetchProductionLocations = createAction(
+    'COMPLETE_FETCH_USER_PROFILE_PRODUCTION_LOCATIONS',
+);
+export const startFetchMoreProductionLocations = createAction(
+    'START_FETCH_MORE_USER_PROFILE_PRODUCTION_LOCATIONS',
+);
+export const failFetchMoreProductionLocations = createAction(
+    'FAIL_FETCH_MORE_USER_PROFILE_PRODUCTION_LOCATIONS',
+);
+export const completeFetchMoreProductionLocations = createAction(
+    'COMPLETE_FETCH_MORE_USER_PROFILE_PRODUCTION_LOCATIONS',
+);
+
+function parseProductionLocationsResponse(data) {
+    const features = data?.results?.features || data?.features || [];
+    const nextPageUrl = data?.next || null;
+    return { features, nextPageUrl };
+}
+
+export function fetchProductionLocations(userID) {
+    return dispatch => {
+        dispatch(startFetchProductionLocations());
+
+        return apiRequest
+            .get(makeUserProfileProductionLocationsURL(userID))
+            .then(({ data }) => {
+                dispatch(
+                    completeFetchProductionLocations(
+                        parseProductionLocationsResponse(data),
+                    ),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching production locations',
+                        failFetchProductionLocations,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchMoreProductionLocations(nextPageUrl) {
+    return dispatch => {
+        dispatch(startFetchMoreProductionLocations());
+
+        return apiRequest
+            .get(nextPageUrl)
+            .then(({ data }) => {
+                dispatch(
+                    completeFetchMoreProductionLocations(
+                        parseProductionLocationsResponse(data),
+                    ),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching more production locations',
+                        failFetchMoreProductionLocations,
+                    ),
+                ),
+            );
     };
 }
 

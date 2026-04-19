@@ -17,8 +17,7 @@ import MapIcon from './MapIcon';
 import ShowOnly from './ShowOnly';
 import RouteNotFound from './RouteNotFound';
 import COLOURS from '../util/COLOURS';
-import UserProfileFacilityLists from './UserProfileFacilityLists';
-import UserProfileFacilities from './UserProfileFacilities';
+import UserProfileProductionLocations from './UserProfileProductionLocations';
 
 import '../styles/css/specialStates.css';
 
@@ -47,6 +46,7 @@ import {
     fetchUserProfile,
     resetUserProfile,
     updateUserProfile,
+    fetchProductionLocations,
 } from '../actions/profile';
 
 const profileStyles = Object.freeze({
@@ -64,8 +64,8 @@ const profileStyles = Object.freeze({
     }),
     appGridContainer: Object.freeze({
         justifyContent: 'space-between',
-        marginBottom: '50px',
-        backgroundColor: '#fff',
+        marginBottom: '10px',
+        backgroundColor: COLOURS.WHITE,
         padding: '0 24px 24px 24px',
     }),
     submitButton: Object.freeze({
@@ -134,6 +134,8 @@ class UserProfile extends Component {
             resetProfile,
             updatingProfile,
             errorsUpdatingProfile,
+            profile,
+            fetchLocations,
         } = this.props;
 
         if (prevProps.id !== id) {
@@ -147,6 +149,10 @@ class UserProfile extends Component {
 
         if (!updatingProfile && prevProps.updatingProfile) {
             return toast('Updated profile!');
+        }
+
+        if (profile.id && profile.id !== prevProps.profile.id) {
+            fetchLocations(profile.id);
         }
 
         return null;
@@ -330,17 +336,12 @@ class UserProfile extends Component {
                         <Grid item xs={12}>
                             {toolbar}
                             {profileInputs}
-                            {!isEditableProfile && (
-                                <>
-                                    <UserProfileFacilityLists />
-                                    <UserProfileFacilities />
-                                </>
-                            )}
                             {errorMessages}
                             {submitButton}
                             {cookiePreferences}
                         </Grid>
                     </AppGrid>
+                    {!isEditableProfile && <UserProfileProductionLocations />}
                 </div>
             </AppOverflow>
         );
@@ -366,6 +367,7 @@ UserProfile.propTypes = {
     errorsUpdatingProfile: arrayOf(string),
     submitFormOnEnterKeyPress: func.isRequired,
     errorFetchingProfile: arrayOf(string),
+    fetchLocations: func.isRequired,
 };
 
 function mapStateToProps({
@@ -420,6 +422,8 @@ const mapDispatchToProps = (dispatch, { id: profileID }) => {
         fetchProfile: () => dispatch(fetchUserProfile(Number(profileID))),
         resetProfile: () => dispatch(resetUserProfile()),
         updateProfile: () => dispatch(updateUserProfile(Number(profileID))),
+        fetchLocations: profileId =>
+            dispatch(fetchProductionLocations(profileId)),
         submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
             dispatch(updateUserProfile(Number(profileID))),
         ),

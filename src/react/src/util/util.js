@@ -1081,6 +1081,9 @@ export const makeResetPasswordConfirmURL = () =>
 
 export const makeUserProfileURL = userID => `/user-profile/${userID}/`;
 
+export const makeUserProfileProductionLocationsURL = userID =>
+    `/user-profile/${userID}/facilities/`;
+
 export const escapeCSVValue = value =>
     replace(replace(value, /"/g, '""'), /\n/g, ' ');
 

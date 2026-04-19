@@ -23,6 +23,12 @@ import {
     startFetchUserApiInfo,
     failFetchUserApiInfo,
     completeFetchUserApiInfo,
+    startFetchProductionLocations,
+    failFetchProductionLocations,
+    completeFetchProductionLocations,
+    startFetchMoreProductionLocations,
+    failFetchMoreProductionLocations,
+    completeFetchMoreProductionLocations,
 } from '../actions/profile';
 
 import {
@@ -63,6 +69,13 @@ const initialState = Object.freeze({
             renewalPeriod: 'Is not set',
         }),
         fetching: false,
+        error: null,
+    }),
+    productionLocations: Object.freeze({
+        data: Object.freeze([]),
+        fetching: false,
+        fetchingMore: false,
+        nextPageUrl: null,
         error: null,
     }),
     fetching: false,
@@ -268,6 +281,52 @@ export default createReducer(
                     [profileFieldsEnum.confirmNewPassword]: {
                         $set: initialState.profile.confirmNewPassword,
                     },
+                },
+            }),
+        [startFetchProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    data: { $set: payload.features },
+                    fetching: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
+                },
+            }),
+        [startFetchMoreProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    fetchingMore: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchMoreProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetchingMore: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchMoreProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    data: { $push: payload.features },
+                    fetchingMore: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
                 },
             }),
         [resetUserProfile]: () => initialState,
