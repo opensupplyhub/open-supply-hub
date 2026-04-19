@@ -1,8 +1,9 @@
-from typing import Any, List
+from typing import Any, Dict, Iterable, List, Tuple
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
 )
+from api.models.partner_field import PartnerField
 from countries.lib.countries import COUNTRY_NAMES
 from api.csv_download import (
     format_download_extended_fields,
@@ -11,6 +12,12 @@ from api.csv_download import (
 )
 from api.constants import CLAIMED_DOWNLOAD_FIELDS_MAPPING
 from api.helpers.helpers import parse_download_date
+from api.serializers.facility.partner_field_helper import (
+    group_extended_fields_by_name,
+    is_empty_partner_value,
+    partner_field_property_paths,
+    resolve_nested_value,
+)
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 
@@ -45,6 +52,9 @@ class FacilityDownloadSerializerBase(Serializer):
     CLAIMED_FIELDS_HEADERS = [
         header for header, _ in CLAIMED_DOWNLOAD_FIELDS_MAPPING
     ]
+
+    PARTNER_FIELD_HEADER_SEPARATOR = "."
+    PARTNER_FIELD_VALUE_SEPARATOR = "|"
 
     def get_common_row(self, facility: FacilityIndexNewManager):
         return [
@@ -106,3 +116,88 @@ class FacilityDownloadSerializerBase(Serializer):
     @staticmethod
     def join(arr: List[Any]) -> str:
         return "|".join([item.title() for item in arr])
+
+    @classmethod
+    def get_partner_fields_headers(
+        cls, partner_fields: Iterable[PartnerField]
+    ) -> List[str]:
+        '''
+        Build CSV headers for the provided active partner fields.
+
+        - Object-typed partner fields with a JSON Schema expand into one
+          column per leaf property, joining the path with ".". Nested
+          objects are walked recursively until a non-object leaf is
+          reached (e.g. "amfori.bsci_audit.submission_date").
+        - Any other partner field (or missing schema) emits a single
+          column named after the partner field itself.
+        '''
+        headers: List[str] = []
+        for partner_field in partner_fields:
+            paths = partner_field_property_paths(partner_field)
+            if paths:
+                for path in paths:
+                    headers.append(
+                        cls.PARTNER_FIELD_HEADER_SEPARATOR.join(
+                            (partner_field.name, *path)
+                        )
+                    )
+            else:
+                headers.append(partner_field.name)
+        return headers
+
+    @classmethod
+    def get_partner_fields_row(
+        cls,
+        extended_fields: List[Dict[str, Any]],
+        partner_fields: Iterable[PartnerField],
+    ) -> List[str]:
+        '''
+        Build CSV row cells for the provided active partner fields by
+        matching each partner field's `name` against entries in the
+        facility's `extended_fields`.
+
+        For object-typed partner fields with a JSON Schema each stored
+        `raw_values` dict is walked following the schema leaf paths so
+        the output columns stay aligned with `get_partner_fields_headers`.
+        Multiple contributions for the same partner field on one facility
+        are joined with "|" per leaf column (consistent with the existing
+        extended-field behavior).
+        '''
+        grouped = group_extended_fields_by_name(extended_fields)
+        row: List[str] = []
+
+        for partner_field in partner_fields:
+            entries = grouped.get(partner_field.name, [])
+            paths = partner_field_property_paths(partner_field)
+
+            if paths:
+                collected: Dict[Tuple[str, ...], List[str]] = {
+                    path: [] for path in paths
+                }
+                for entry in entries:
+                    raw_values = (entry.get("value") or {}).get("raw_values")
+                    if not isinstance(raw_values, dict):
+                        continue
+                    for path in paths:
+                        value = resolve_nested_value(raw_values, path)
+                        if is_empty_partner_value(value):
+                            continue
+                        collected[path].append(str(value))
+                for path in paths:
+                    row.append(
+                        cls.PARTNER_FIELD_VALUE_SEPARATOR.join(
+                            collected[path]
+                        )
+                    )
+            else:
+                values: List[str] = []
+                for entry in entries:
+                    raw_value = (entry.get("value") or {}).get("raw_value")
+                    if is_empty_partner_value(raw_value):
+                        continue
+                    values.append(str(raw_value))
+                row.append(
+                    cls.PARTNER_FIELD_VALUE_SEPARATOR.join(values)
+                )
+
+        return row

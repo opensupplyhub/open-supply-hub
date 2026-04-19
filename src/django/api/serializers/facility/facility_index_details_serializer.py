@@ -6,7 +6,11 @@ from rest_framework.serializers import (
 from waffle import switch_is_active
 from django.core.cache import cache
 
-from api.constants import FacilityClaimStatuses, PARTNER_FIELD_LIST_KEY
+from api.constants import (
+    FacilityClaimStatuses,
+    PARTNER_FIELD_LIST_CACHE_TTL_SECONDS,
+    PARTNER_FIELD_LIST_KEY,
+)
 from api.partner_fields.registry import system_partner_field_registry
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
@@ -489,6 +493,10 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             PartnerField.objects.all()
         )
 
-        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
+        cache.set(
+            PARTNER_FIELD_LIST_KEY,
+            partner_fields,
+            PARTNER_FIELD_LIST_CACHE_TTL_SECONDS,
+        )
 
         return partner_fields

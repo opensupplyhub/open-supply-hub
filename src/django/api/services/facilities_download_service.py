@@ -2,6 +2,7 @@ import logging
 import stripe
 
 from django.conf import settings
+from django.core.cache import cache
 from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
 from datetime import datetime
@@ -10,10 +11,15 @@ from urllib.parse import urlencode
 
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
+from api.models.partner_field import PartnerField
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.exceptions import ServiceUnavailableException
-from api.constants import APIErrorMessages
+from api.constants import (
+    APIErrorMessages,
+    PARTNER_FIELD_LIST_CACHE_TTL_SECONDS,
+    PARTNER_FIELD_LIST_KEY,
+)
 
 from api.mail import (
     send_ddl_near_annual_limit_email,
@@ -38,6 +44,35 @@ logger = logging.getLogger(__name__)
 
 
 class FacilitiesDownloadService:
+    @staticmethod
+    def get_active_partner_fields():
+        '''
+        Return the active PartnerField instances used to build download
+        columns, cached in Django's cache under `PARTNER_FIELD_LIST_KEY`.
+
+        Caching here avoids one query per paginated page during a single
+        download session (the client walks all pages back-to-back) and is
+        shared across concurrent downloads. The cache is invalidated by
+        `PartnerField.save`/`delete` hooks, so new partners show up in
+        exports once their records are persisted.
+
+        The cached list is always sorted by name so column ordering is
+        deterministic regardless of whoever populated the cache.
+        '''
+        cached = cache.get(PARTNER_FIELD_LIST_KEY)
+        if cached is not None:
+            return sorted(cached, key=lambda pf: pf.name)
+
+        partner_fields = list(
+            PartnerField.objects.filter(active=True).order_by('name')
+        )
+        cache.set(
+            PARTNER_FIELD_LIST_KEY,
+            partner_fields,
+            PARTNER_FIELD_LIST_CACHE_TTL_SECONDS,
+        )
+        return partner_fields
+
     @staticmethod
     def check_if_downloads_are_blocked():
         if switch_is_active('block_location_downloads'):
