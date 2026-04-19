@@ -17,6 +17,8 @@ import MapIcon from './MapIcon';
 import ShowOnly from './ShowOnly';
 import RouteNotFound from './RouteNotFound';
 import COLOURS from '../util/COLOURS';
+import UserProfileFacilityLists from './UserProfileFacilityLists';
+import UserProfileFacilities from './UserProfileFacilities';
 
 import '../styles/css/specialStates.css';
 
@@ -328,6 +330,12 @@ class UserProfile extends Component {
                         <Grid item xs={12}>
                             {toolbar}
                             {profileInputs}
+                            {!isEditableProfile && (
+                                <>
+                                    <UserProfileFacilityLists />
+                                    <UserProfileFacilities />
+                                </>
+                            )}
                             {errorMessages}
                             {submitButton}
                             {cookiePreferences}
