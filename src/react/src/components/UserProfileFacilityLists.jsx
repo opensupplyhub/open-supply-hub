@@ -31,99 +31,155 @@ const cell = theme =>
         fontWeight: '500',
     });
 
-const muiStyles = theme =>
-    Object.freeze({
-        appGridContainer: Object.freeze({
-            justifyContent: 'space-between',
-            marginBottom: '30px',
-            backgroundColor: COLOURS.WHITE,
-            padding: '0 24px',
-        }),
-        container: Object.freeze({
-            padding: '10px 0',
-            width: '100%',
-        }),
-        heading: Object.freeze({
-            fontWeight: '900',
-            fontSize: '28px',
-            lineHeight: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-        }),
-        panelSummary: Object.freeze({
-            paddingLeft: 0,
-            paddingRight: 0,
-        }),
-        expandIcon: Object.freeze({
-            padding: 0,
-        }),
-        panelDetails: Object.freeze({
-            padding: 0,
-        }),
-        detailsContent: Object.freeze({
-            display: 'flex',
+const muiStyles = theme => ({
+    appGridContainer: {
+        justifyContent: 'space-between',
+        marginBottom: '30px',
+        backgroundColor: COLOURS.WHITE,
+        padding: '0 24px',
+        [theme.breakpoints.down('sm')]: {
+            padding: '0 12px',
+        },
+    },
+    container: {
+        padding: '10px 0',
+        width: '100%',
+    },
+    heading: {
+        fontWeight: '900',
+        fontSize: '28px',
+        lineHeight: '28px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        [theme.breakpoints.down('sm')]: {
+            fontSize: '22px',
+            lineHeight: '24px',
+        },
+    },
+    panelSummary: {
+        paddingLeft: 0,
+        paddingRight: 0,
+    },
+    expandIcon: {
+        padding: 0,
+    },
+    panelDetails: {
+        padding: 0,
+    },
+    detailsContent: {
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+    },
+    headerRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: `${theme.spacing.unit}px 0`,
+        [theme.breakpoints.down('sm')]: {
+            display: 'none',
+        },
+    },
+    headerDivider: {
+        [theme.breakpoints.down('sm')]: {
+            display: 'none',
+        },
+    },
+    nameHeader: {
+        ...cellHeader(theme),
+        flex: 2,
+    },
+    descriptionHeader: {
+        ...cellHeader(theme),
+        flex: 5,
+    },
+    actionHeader: {
+        ...cellHeader(theme),
+        flex: '0 0 80px',
+        textAlign: 'right',
+        paddingRight: '17px',
+    },
+    facilityRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: `${theme.spacing.unit}px 0`,
+        [theme.breakpoints.down('sm')]: {
             flexDirection: 'column',
-            width: '100%',
-        }),
-        nameHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: 2,
-        }),
-        descriptionHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: 5,
-        }),
-        actionHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: '0 0 80px',
+            alignItems: 'flex-start',
+            gap: '4px',
+            padding: `${theme.spacing.unit * 1.5}px 0`,
+        },
+    },
+    nameCell: {
+        flex: 2,
+        ...cell(theme),
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        [theme.breakpoints.down('sm')]: {
+            flex: '1 1 100%',
+            overflow: 'visible',
+            textOverflow: 'clip',
+            whiteSpace: 'normal',
+            padding: 0,
+            fontSize: '16px',
+        },
+    },
+    descriptionCell: {
+        flex: 5,
+        ...cell(theme),
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        [theme.breakpoints.down('sm')]: {
+            flex: '1 1 100%',
+            overflow: 'visible',
+            textOverflow: 'clip',
+            whiteSpace: 'normal',
+            padding: 0,
+            fontSize: '16px',
+        },
+    },
+    actionCell: {
+        flex: '0 0 80px',
+        textAlign: 'right',
+        ...cell(theme),
+        [theme.breakpoints.down('sm')]: {
+            flex: '0 0 auto',
+            alignSelf: 'flex-end',
             textAlign: 'right',
-            paddingRight: '17px',
-        }),
-        facilityRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: `${theme.spacing.unit}px 0`,
-        }),
-        nameCell: Object.freeze({
-            flex: 2,
-            ...cell(theme),
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-        }),
-        descriptionCell: Object.freeze({
-            flex: 5,
-            ...cell(theme),
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-        }),
-        actionCell: Object.freeze({
-            flex: '0 0 80px',
-            textAlign: 'right',
-            ...cell(theme),
-        }),
-        centeredGrid: Object.freeze({
-            marginLeft: 'auto',
-            marginRight: 'auto',
-        }),
-        loadMoreContainer: Object.freeze({
-            display: 'flex',
-            justifyContent: 'center',
-            padding: `${theme.spacing.unit * 2}px 0`,
-        }),
-        loadMoreButton: Object.freeze({
-            minWidth: '100px',
-        }),
-        loaderContainer: Object.freeze({
-            minHeight: '60px',
-        }),
-        viewButton: Object.freeze({
-            fontSize: '14px',
-        }),
-    });
+            padding: `${theme.spacing.unit}px 0 0 0`,
+        },
+    },
+    mobileLabel: {
+        display: 'none',
+        [theme.breakpoints.down('sm')]: {
+            display: 'inline',
+            fontWeight: '700',
+            marginRight: '4px',
+        },
+    },
+    centeredGrid: {
+        marginLeft: 'auto',
+        marginRight: 'auto',
+    },
+    loadMoreContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        padding: `${theme.spacing.unit * 2}px 0`,
+    },
+    loadMoreButton: {
+        minWidth: '100px',
+    },
+    loaderContainer: {
+        minHeight: '60px',
+    },
+    viewButton: {
+        fontSize: '14px',
+    },
+});
 
 function UserProfileFacilityLists({
     facilityLists,
@@ -137,7 +193,7 @@ function UserProfileFacilityLists({
     function renderContent() {
         return (
             <div className={classes.detailsContent}>
-                <div className={classes.facilityRow}>
+                <div className={classes.headerRow}>
                     <Typography className={classes.nameHeader}>Name</Typography>
                     <Typography className={classes.descriptionHeader}>
                         Description
@@ -146,14 +202,20 @@ function UserProfileFacilityLists({
                         Action
                     </Typography>
                 </div>
-                <Divider />
+                <Divider className={classes.headerDivider} />
                 {facilityLists.map((facilityList, index) => (
                     <React.Fragment key={facilityList.id}>
                         <div className={classes.facilityRow}>
                             <Typography className={classes.nameCell}>
+                                <span className={classes.mobileLabel}>
+                                    Name:{' '}
+                                </span>
                                 {facilityList.name}
                             </Typography>
                             <Typography className={classes.descriptionCell}>
+                                <span className={classes.mobileLabel}>
+                                    Description:{' '}
+                                </span>
                                 {facilityList.description || '...'}
                             </Typography>
                             <div className={classes.actionCell}>
