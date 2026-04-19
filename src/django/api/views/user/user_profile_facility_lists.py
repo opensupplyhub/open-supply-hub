@@ -1,6 +1,8 @@
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import CursorPagination
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from ...models import Contributor, FacilityList, User
 from ...serializers.facility.facility_list_summary_serializer import (
@@ -17,6 +19,7 @@ class FacilityListCursorPagination(CursorPagination):
     max_page_size = 100
 
 
+@method_decorator(cache_page(60 * 5, cache="view_cache"), name="dispatch")
 class UserProfileFacilityLists(ListAPIView):
     """List a user's approved, public facility lists."""
 
