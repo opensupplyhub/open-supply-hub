@@ -273,6 +273,7 @@ function UserProfileProductionLocations({
                             onClick={() => fetchMore(nextPageUrl)}
                             disabled={fetchingMore}
                             className={classes.loadMoreButton}
+                            data-testid="production-locations-load-more"
                         >
                             {fetchingMore ? (
                                 <CircularProgress size={24} />

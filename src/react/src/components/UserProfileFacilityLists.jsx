@@ -243,6 +243,7 @@ function UserProfileFacilityLists({
                             onClick={() => fetchMore(nextPageUrl)}
                             disabled={fetchingMore}
                             className={classes.loadMoreButton}
+                            data-testid="facility-lists-load-more"
                         >
                             {fetchingMore ? (
                                 <CircularProgress size={24} />
