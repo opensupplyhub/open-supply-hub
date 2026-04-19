@@ -10,6 +10,8 @@ from ...serializers.facility.facility_index_summary_serializer import (
 
 
 class FacilityIndexCursorPagination(CursorPagination):
+    """Cursor-based pagination for facility index listings."""
+
     page_size = 10
     ordering = "-updated_at"
     page_size_query_param = "limit"
@@ -17,10 +19,12 @@ class FacilityIndexCursorPagination(CursorPagination):
 
 
 class UserProfileFacilities(ListAPIView):
+    """List facilities associated with a user's contributor profile."""
     serializer_class = FacilityIndexSummarySerializer
     pagination_class = FacilityIndexCursorPagination
 
     def get_queryset(self):
+        """Return facility indexes where the user is a contributor."""
         try:
             user = User.objects.get(pk=self.kwargs["pk"])
             contributor = user.contributor
