@@ -34,110 +34,171 @@ const cell = theme =>
         fontWeight: '500',
     });
 
-const muiStyles = theme =>
-    Object.freeze({
-        appGridContainer: Object.freeze({
-            justifyContent: 'space-between',
-            marginBottom: '30px',
-            backgroundColor: COLOURS.WHITE,
-            padding: '0 24px',
-        }),
-        container: Object.freeze({
-            padding: '10px 0',
-            width: '100%',
-        }),
-        heading: Object.freeze({
-            fontWeight: '900',
-            fontSize: '28px',
-            lineHeight: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-        }),
-        panelSummary: Object.freeze({
-            paddingLeft: 0,
-            paddingRight: 0,
-        }),
-        expandIcon: Object.freeze({
-            padding: 0,
-        }),
-        panelDetails: Object.freeze({
-            padding: 0,
-        }),
-        detailsContent: Object.freeze({
-            display: 'flex',
+const muiStyles = theme => ({
+    appGridContainer: {
+        justifyContent: 'space-between',
+        marginBottom: '30px',
+        backgroundColor: COLOURS.WHITE,
+        padding: '0 24px',
+    },
+    container: {
+        padding: '10px 0',
+        width: '100%',
+    },
+    heading: {
+        fontWeight: '900',
+        fontSize: '28px',
+        lineHeight: '28px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        [theme.breakpoints.down('sm')]: {
+            fontSize: '22px',
+            lineHeight: '24px',
+        },
+    },
+    panelSummary: {
+        paddingLeft: 0,
+        paddingRight: 0,
+    },
+    expandIcon: {
+        padding: 0,
+    },
+    panelDetails: {
+        padding: 0,
+    },
+    detailsContent: {
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+    },
+    headerRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: `${theme.spacing.unit}px 0`,
+        [theme.breakpoints.down('sm')]: {
+            display: 'none',
+        },
+    },
+    headerDivider: {
+        [theme.breakpoints.down('sm')]: {
+            display: 'none',
+        },
+    },
+    osIdHeader: {
+        ...cellHeader(theme),
+        flex: '0 0 160px',
+    },
+    nameHeader: {
+        ...cellHeader(theme),
+        flex: 2,
+    },
+    addressHeader: {
+        ...cellHeader(theme),
+        flex: 3,
+    },
+    actionHeader: {
+        ...cellHeader(theme),
+        flex: '0 0 80px',
+        textAlign: 'right',
+        paddingRight: '17px',
+    },
+    facilityRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: `${theme.spacing.unit}px 0`,
+        [theme.breakpoints.down('sm')]: {
             flexDirection: 'column',
-            width: '100%',
-        }),
-        osIdHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: '0 0 160px',
-        }),
-        nameHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: 2,
-        }),
-        addressHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: 3,
-        }),
-        actionHeader: Object.freeze({
-            ...cellHeader(theme),
-            flex: '0 0 80px',
+            alignItems: 'flex-start',
+            gap: '4px',
+            padding: `${theme.spacing.unit * 1.5}px 0`,
+        },
+    },
+    osIdCell: {
+        flex: '0 0 160px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        ...cell(theme),
+        fontWeight: '600',
+        [theme.breakpoints.down('sm')]: {
+            flex: '1 1 100%',
+            overflow: 'visible',
+            textOverflow: 'clip',
+            whiteSpace: 'normal',
+            padding: 0,
+            fontSize: '16px',
+        },
+    },
+    nameCell: {
+        flex: 2,
+        ...cell(theme),
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        [theme.breakpoints.down('sm')]: {
+            flex: '1 1 100%',
+            overflow: 'visible',
+            textOverflow: 'clip',
+            whiteSpace: 'normal',
+            padding: 0,
+            fontSize: '16px',
+        },
+    },
+    addressCell: {
+        flex: 3,
+        ...cell(theme),
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        [theme.breakpoints.down('sm')]: {
+            flex: '1 1 100%',
+            overflow: 'visible',
+            textOverflow: 'clip',
+            whiteSpace: 'normal',
+            padding: 0,
+            fontSize: '16px',
+        },
+    },
+    actionCell: {
+        flex: '0 0 80px',
+        textAlign: 'right',
+        ...cell(theme),
+        [theme.breakpoints.down('sm')]: {
+            flex: '0 0 auto',
+            alignSelf: 'flex-end',
             textAlign: 'right',
-            paddingRight: '17px',
-        }),
-        facilityRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: `${theme.spacing.unit}px 0`,
-        }),
-        osIdCell: Object.freeze({
-            flex: '0 0 160px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            ...cell(theme),
-            fontWeight: '600',
-        }),
-        nameCell: Object.freeze({
-            flex: 2,
-            ...cell(theme),
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-        }),
-        addressCell: Object.freeze({
-            flex: 3,
-            ...cell(theme),
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-        }),
-        actionCell: Object.freeze({
-            flex: '0 0 80px',
-            textAlign: 'right',
-            ...cell(theme),
-        }),
-        centeredGrid: Object.freeze({
-            marginLeft: 'auto',
-            marginRight: 'auto',
-        }),
-        loadMoreContainer: Object.freeze({
-            display: 'flex',
-            justifyContent: 'center',
-            padding: `${theme.spacing.unit * 2}px 0`,
-        }),
-        loadMoreButton: Object.freeze({
-            minWidth: '100px',
-        }),
-        loaderContainer: Object.freeze({
-            minHeight: '60px',
-        }),
-        viewButton: Object.freeze({
-            fontSize: '14px',
-        }),
-    });
+            padding: `${theme.spacing.unit}px 0 0 0`,
+        },
+    },
+    mobileLabel: {
+        display: 'none',
+        [theme.breakpoints.down('sm')]: {
+            display: 'inline',
+            fontWeight: '700',
+            marginRight: '4px',
+        },
+    },
+    centeredGrid: {
+        marginLeft: 'auto',
+        marginRight: 'auto',
+    },
+    loadMoreContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        padding: `${theme.spacing.unit * 2}px 0`,
+    },
+    loadMoreButton: {
+        minWidth: '100px',
+    },
+    loaderContainer: {
+        minHeight: '60px',
+    },
+    viewButton: {
+        fontSize: '14px',
+    },
+});
 
 function UserProfileProductionLocations({
     facilities,
@@ -151,7 +212,7 @@ function UserProfileProductionLocations({
     function renderContent() {
         return (
             <div className={classes.detailsContent}>
-                <div className={classes.facilityRow}>
+                <div className={classes.headerRow}>
                     <Typography className={classes.osIdHeader}>
                         OS ID
                     </Typography>
@@ -163,17 +224,26 @@ function UserProfileProductionLocations({
                         Action
                     </Typography>
                 </div>
-                <Divider />
+                <Divider className={classes.headerDivider} />
                 {facilities.map((facility, index) => (
                     <React.Fragment key={facility.id}>
                         <div className={classes.facilityRow}>
                             <Typography className={classes.osIdCell}>
+                                <span className={classes.mobileLabel}>
+                                    OS ID:{' '}
+                                </span>
                                 {facility.id}
                             </Typography>
                             <Typography className={classes.nameCell}>
+                                <span className={classes.mobileLabel}>
+                                    Name:{' '}
+                                </span>
                                 {facility.properties.name}
                             </Typography>
                             <Typography className={classes.addressCell}>
+                                <span className={classes.mobileLabel}>
+                                    Address:{' '}
+                                </span>
                                 {facility.properties.country_code &&
                                     `${facility.properties.country_code}, `}
                                 {facility.properties.address}
