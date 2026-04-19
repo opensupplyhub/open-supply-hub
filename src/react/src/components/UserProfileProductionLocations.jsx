@@ -11,20 +11,25 @@ import Divider from '@material-ui/core/Divider';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { fetchMoreProductionLocations } from '../actions/profile';
 import { makeFacilityDetailLink } from '../util/util';
+import PartnershipIcon from './Icons/Partnership';
+import IconComponent from './Shared/IconComponent/IconComponent';
+import LearnMoreLink from './ProductionLocation/Shared/LearnMoreLink/LearnMoreLink';
 import COLOURS from '../util/COLOURS';
 
 const cellHeader = theme =>
     Object.freeze({
         fontWeight: '700',
         padding: `0 ${theme.spacing.unit}px`,
+        fontSize: '18px',
     });
 
 const cell = theme =>
     Object.freeze({
-        fontSize: '16px',
+        fontSize: '18px',
         padding: `0 ${theme.spacing.unit}px`,
         fontWeight: '500',
     });
@@ -43,8 +48,11 @@ const muiStyles = theme =>
         }),
         heading: Object.freeze({
             fontWeight: '900',
-            fontSize: '24px',
+            fontSize: '28px',
             lineHeight: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
         }),
         panelSummary: Object.freeze({
             paddingLeft: 0,
@@ -77,7 +85,7 @@ const muiStyles = theme =>
             ...cellHeader(theme),
             flex: '0 0 80px',
             textAlign: 'right',
-            marginRight: '14px',
+            paddingRight: '17px',
         }),
         facilityRow: Object.freeze({
             display: 'flex',
@@ -125,6 +133,9 @@ const muiStyles = theme =>
         }),
         loaderContainer: Object.freeze({
             minHeight: '60px',
+        }),
+        viewButton: Object.freeze({
+            fontSize: '14px',
         }),
     });
 
@@ -175,6 +186,7 @@ function UserProfileProductionLocations({
                                     to={makeFacilityDetailLink(facility.id)}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    className={classes.viewButton}
                                 >
                                     View
                                 </Button>
@@ -242,7 +254,26 @@ function UserProfileProductionLocations({
                                 className={classes.panelSummary}
                             >
                                 <Typography className={classes.heading}>
-                                    Production Locations
+                                    <PartnershipIcon
+                                        className={classes.icon}
+                                        color="#8428FA"
+                                    />
+                                    Spotlight Locations
+                                    <IconComponent
+                                        title={
+                                            <>
+                                                Are you a data provider and want
+                                                your data listed here? Looking
+                                                to access this data for
+                                                compliance reporting, risk
+                                                analysis, or supplier
+                                                monitoring?
+                                                <LearnMoreLink href="https://info.opensupplyhub.org/data-integrations" />
+                                            </>
+                                        }
+                                        icon={InfoOutlined}
+                                        className={classes.infoButton}
+                                    />
                                 </Typography>
                             </ExpansionPanelSummary>
                             <ExpansionPanelDetails
