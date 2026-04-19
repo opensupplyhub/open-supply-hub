@@ -10,6 +10,7 @@ from ...models import Contributor, User
 from ...models.extended_field import ExtendedField
 from ...models.facility.facility_index import FacilityIndex
 from ...models.partner_field import PartnerField
+from ...models.wage_indicator_country_data import WageIndicatorCountryData
 from ...serializers.facility.facility_index_summary_serializer import (
     FacilityIndexSummarySerializer,
 )
@@ -34,6 +35,16 @@ class UserProfileFacilities(ListAPIView):
     serializer_class = FacilityIndexSummarySerializer
     pagination_class = FacilityIndexCursorPagination
 
+    def __base_queryset(self):
+        return FacilityIndex.objects.only(
+            "id",
+            "name",
+            "address",
+            "country_code",
+            "contributors_id",
+            "updated_at",
+        ).order_by("-updated_at")
+
     def get_queryset(self):
         """
         Return facility indexes where the user is a contributor.
@@ -54,19 +65,10 @@ class UserProfileFacilities(ListAPIView):
         except Contributor.DoesNotExist as exc:
             raise NotFound() from exc
 
-        queryset = (
-            FacilityIndex.objects.only(
-                "id",
-                "name",
-                "address",
-                "country_code",
-                "contributors_id",
-                "updated_at",
-            )
-            .filter(
-                contributors_id__contains=[contributor.id],
-            )
-            .order_by("-updated_at")
+        queryset = self.__base_queryset().filter(
+            contributors_id__contains=[
+                contributor.id,
+            ],
         )
 
         if not params.validated_data["spotlight"]:
@@ -81,7 +83,22 @@ class UserProfileFacilities(ListAPIView):
         if not partner_fields:
             return queryset
 
-        queryset = queryset.filter(
+        if "wage_indicator" in partner_fields:
+            country_codes = list(
+                WageIndicatorCountryData.objects.values_list(
+                    "country_code", flat=True
+                )
+            )
+            return self.__base_queryset().filter(
+                country_code__in=country_codes,
+            )
+
+        if "mit_living_wage" in partner_fields:
+            return self.__base_queryset().filter(
+                country_code__in=["US"],
+            )
+
+        return queryset.filter(
             Exists(
                 ExtendedField.objects.filter(
                     facility_id=OuterRef("id"),
@@ -90,5 +107,3 @@ class UserProfileFacilities(ListAPIView):
                 )
             )
         )
-
-        return queryset
