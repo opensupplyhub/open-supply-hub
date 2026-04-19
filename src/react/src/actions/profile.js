@@ -8,6 +8,7 @@ import {
     makeUserAPIInfoURL,
     makeUserProfileURL,
     makeUserProfileProductionLocationsURL,
+    makeUserProfileFacilityListsURL,
     logErrorAndDispatchFailure,
     createProfileUpdateErrorMessages,
     createProfileUpdateRequestData,
@@ -207,6 +208,81 @@ export function fetchMoreProductionLocations(nextPageUrl) {
                         err,
                         'An error prevented fetching more production locations',
                         failFetchMoreProductionLocations,
+                    ),
+                ),
+            );
+    };
+}
+
+export const startFetchFacilityLists = createAction(
+    'START_FETCH_USER_PROFILE_FACILITY_LISTS',
+);
+export const failFetchFacilityLists = createAction(
+    'FAIL_FETCH_USER_PROFILE_FACILITY_LISTS',
+);
+export const completeFetchFacilityLists = createAction(
+    'COMPLETE_FETCH_USER_PROFILE_FACILITY_LISTS',
+);
+export const startFetchMoreFacilityLists = createAction(
+    'START_FETCH_MORE_USER_PROFILE_FACILITY_LISTS',
+);
+export const failFetchMoreFacilityLists = createAction(
+    'FAIL_FETCH_MORE_USER_PROFILE_FACILITY_LISTS',
+);
+export const completeFetchMoreFacilityLists = createAction(
+    'COMPLETE_FETCH_MORE_USER_PROFILE_FACILITY_LISTS',
+);
+
+function parseFacilityListsResponse(data) {
+    const results = data?.results || [];
+    const nextPageUrl = data?.next || null;
+    return { results, nextPageUrl };
+}
+
+export function fetchFacilityLists(userID) {
+    return dispatch => {
+        dispatch(startFetchFacilityLists());
+
+        return apiRequest
+            .get(makeUserProfileFacilityListsURL(userID))
+            .then(({ data }) => {
+                dispatch(
+                    completeFetchFacilityLists(
+                        parseFacilityListsResponse(data),
+                    ),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching facility lists',
+                        failFetchFacilityLists,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchMoreFacilityLists(nextPageUrl) {
+    return dispatch => {
+        dispatch(startFetchMoreFacilityLists());
+
+        return apiRequest
+            .get(nextPageUrl)
+            .then(({ data }) => {
+                dispatch(
+                    completeFetchMoreFacilityLists(
+                        parseFacilityListsResponse(data),
+                    ),
+                );
+            })
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching more facility lists',
+                        failFetchMoreFacilityLists,
                     ),
                 ),
             );

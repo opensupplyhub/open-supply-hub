@@ -29,6 +29,12 @@ import {
     startFetchMoreProductionLocations,
     failFetchMoreProductionLocations,
     completeFetchMoreProductionLocations,
+    startFetchFacilityLists,
+    failFetchFacilityLists,
+    completeFetchFacilityLists,
+    startFetchMoreFacilityLists,
+    failFetchMoreFacilityLists,
+    completeFetchMoreFacilityLists,
 } from '../actions/profile';
 
 import {
@@ -72,6 +78,13 @@ const initialState = Object.freeze({
         error: null,
     }),
     productionLocations: Object.freeze({
+        data: Object.freeze([]),
+        fetching: false,
+        fetchingMore: false,
+        nextPageUrl: null,
+        error: null,
+    }),
+    facilityLists: Object.freeze({
         data: Object.freeze([]),
         fetching: false,
         fetchingMore: false,
@@ -324,6 +337,52 @@ export default createReducer(
             update(state, {
                 productionLocations: {
                     data: { $push: payload.features },
+                    fetchingMore: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
+                },
+            }),
+        [startFetchFacilityLists]: state =>
+            update(state, {
+                facilityLists: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    data: { $set: payload.results },
+                    fetching: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
+                },
+            }),
+        [startFetchMoreFacilityLists]: state =>
+            update(state, {
+                facilityLists: {
+                    fetchingMore: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchMoreFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    fetchingMore: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchMoreFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    data: { $push: payload.results },
                     fetchingMore: { $set: false },
                     nextPageUrl: { $set: payload.nextPageUrl },
                     error: { $set: null },

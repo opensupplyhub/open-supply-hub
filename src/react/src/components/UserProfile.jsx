@@ -18,6 +18,7 @@ import ShowOnly from './ShowOnly';
 import RouteNotFound from './RouteNotFound';
 import COLOURS from '../util/COLOURS';
 import UserProfileProductionLocations from './UserProfileProductionLocations';
+import UserProfileFacilityLists from './UserProfileFacilityLists';
 
 import '../styles/css/specialStates.css';
 
@@ -47,6 +48,7 @@ import {
     resetUserProfile,
     updateUserProfile,
     fetchProductionLocations,
+    fetchFacilityLists,
 } from '../actions/profile';
 
 const profileStyles = Object.freeze({
@@ -64,7 +66,7 @@ const profileStyles = Object.freeze({
     }),
     appGridContainer: Object.freeze({
         justifyContent: 'space-between',
-        marginBottom: '10px',
+        marginBottom: '30px',
         backgroundColor: COLOURS.WHITE,
         padding: '0 24px 24px 24px',
     }),
@@ -123,6 +125,14 @@ const profileStyles = Object.freeze({
 });
 
 class UserProfile extends Component {
+    isEditableProfile() {
+        const { user, id, profile, allowEdits } = this.props;
+        const isCurrentUsersProfile =
+            !user.isAnon &&
+            [profile.id, Number(id)].every(val => val === user.id);
+        return allowEdits && isCurrentUsersProfile;
+    }
+
     componentDidMount() {
         return this.props.fetchProfile();
     }
@@ -136,6 +146,7 @@ class UserProfile extends Component {
             errorsUpdatingProfile,
             profile,
             fetchLocations,
+            fetchLists,
         } = this.props;
 
         if (prevProps.id !== id) {
@@ -152,7 +163,10 @@ class UserProfile extends Component {
         }
 
         if (profile.id && profile.id !== prevProps.profile.id) {
-            fetchLocations(profile.id);
+            if (!this.isEditableProfile()) {
+                fetchLocations(profile.id);
+                fetchLists(profile.id);
+            }
         }
 
         return null;
@@ -194,7 +208,7 @@ class UserProfile extends Component {
             !user.isAnon &&
             [profile.id, Number(id)].every(val => val === user.id);
 
-        const isEditableProfile = allowEdits && isCurrentUsersProfile;
+        const isEditableProfile = this.isEditableProfile();
 
         const moderationEnabled =
             user.is_staff === true && user.is_superuser === true;
@@ -342,6 +356,7 @@ class UserProfile extends Component {
                         </Grid>
                     </AppGrid>
                     {!isEditableProfile && <UserProfileProductionLocations />}
+                    {!isEditableProfile && <UserProfileFacilityLists />}
                 </div>
             </AppOverflow>
         );
@@ -368,6 +383,7 @@ UserProfile.propTypes = {
     submitFormOnEnterKeyPress: func.isRequired,
     errorFetchingProfile: arrayOf(string),
     fetchLocations: func.isRequired,
+    fetchLists: func.isRequired,
 };
 
 function mapStateToProps({
@@ -424,6 +440,7 @@ const mapDispatchToProps = (dispatch, { id: profileID }) => {
         updateProfile: () => dispatch(updateUserProfile(Number(profileID))),
         fetchLocations: profileId =>
             dispatch(fetchProductionLocations(profileId)),
+        fetchLists: profileId => dispatch(fetchFacilityLists(profileId)),
         submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
             dispatch(updateUserProfile(Number(profileID))),
         ),
