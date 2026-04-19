@@ -12,7 +12,6 @@ class FacilityIndexSummarySerializer(GeoFeatureModelSerializer):
             "id",
             "name",
             "address",
-            "location",
             "country_code",
             "contributors_id",
         )

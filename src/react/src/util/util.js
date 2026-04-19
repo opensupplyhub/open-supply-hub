@@ -1082,7 +1082,7 @@ export const makeResetPasswordConfirmURL = () =>
 export const makeUserProfileURL = userID => `/user-profile/${userID}/`;
 
 export const makeUserProfileProductionLocationsURL = userID =>
-    `/user-profile/${userID}/facilities/`;
+    `/user-profile/${userID}/facilities/?spotlight=true`;
 
 export const makeUserProfileFacilityListsURL = userID =>
     `/user-profile/${userID}/facility-lists/`;
