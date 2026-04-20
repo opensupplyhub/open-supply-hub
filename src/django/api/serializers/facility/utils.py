@@ -144,6 +144,13 @@ def get_contributor_id_from_facilityindex(
     return None
 
 
+def get_user_id_from_facilityindex(
+        contributor: dict, user_can_see_detail: bool) -> Union[None, int]:
+    if contributor.get('id') is not None and user_can_see_detail:
+        return contributor.get('user_id')
+    return None
+
+
 def get_efs_associated_with_contributor(
         contributor_id: int,
         fields: list) -> list:

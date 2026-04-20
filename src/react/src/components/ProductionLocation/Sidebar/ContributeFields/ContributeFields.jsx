@@ -46,10 +46,10 @@ const ProductionLocationDetailsContributeFields = ({
                 Contribute to this profile
             </Typography>
             <Typography variant="body1" className={classes.subtitle}>
-                Help improve supply chain transparency
+                Ways you can improve data on this page
             </Typography>
             <Grid container spacing={0} className={classes.actionsList}>
-                <Grid item className={classes.actionItemWrapper}>
+                <Grid item>
                     <Link
                         to={makeContributeProductionLocationUpdateURL(osId)}
                         target="_blank"
@@ -66,7 +66,7 @@ const ProductionLocationDetailsContributeFields = ({
                         </Typography>
                     </Link>
                 </Grid>
-                <Grid item className={classes.actionItemWrapper}>
+                <Grid item>
                     <a
                         href={makeReportADuplicateEmailLink(osId)}
                         className={classes.actionItem}
@@ -82,7 +82,7 @@ const ProductionLocationDetailsContributeFields = ({
                     </a>
                 </Grid>
                 <ShowOnly when={showDisputeClaim}>
-                    <Grid item className={classes.actionItemWrapper}>
+                    <Grid item>
                         <a
                             href={makeDisputeClaimEmailLink(osId)}
                             className={classes.actionItem}
@@ -98,7 +98,7 @@ const ProductionLocationDetailsContributeFields = ({
                         </a>
                     </Grid>
                 </ShowOnly>
-                <Grid item className={classes.actionItemWrapper}>
+                <Grid item>
                     <div
                         role="button"
                         tabIndex={0}
@@ -118,7 +118,9 @@ const ProductionLocationDetailsContributeFields = ({
                             variant="body1"
                             className={classes.actionLabel}
                         >
-                            {isClosed ? 'Report Reopened' : 'Report Closed'}
+                            {isClosed
+                                ? 'Report Reopened'
+                                : 'Report Closure / Move'}
                         </Typography>
                     </div>
                 </Grid>

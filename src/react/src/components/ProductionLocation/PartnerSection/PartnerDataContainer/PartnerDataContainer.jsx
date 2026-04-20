@@ -1,67 +1,125 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 
 import Typography from '@material-ui/core/Typography';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
-import ParentSectionItem from '../ParentSectionItem/ParentSectionItem';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
+import PartnershipIcon from '../../../Icons/Partnership';
+import IconComponent from '../../../Shared/IconComponent/IconComponent';
+import PartnerSectionItem from '../PartnerSectionItem/PartnerSectionItem';
 
+import { getEnrichedPartnerGroups } from '../../../../selectors/partnerFieldGroupsSelectors';
 import partnerDataContainerStyles from './styles';
+import LearnMoreLink from '../../Shared/LearnMoreLink/LearnMoreLink';
 
-function PartnerDataContainer({ classes }) {
+function PartnerDataContainer({
+    classes,
+    partnerGroups,
+    facilityData,
+    fetching,
+}) {
+    const hasPartnerData = useMemo(() => {
+        const fields = facilityData?.properties?.partner_fields;
+        if (!fields) return false;
+        return Object.values(fields).some(
+            values => Array.isArray(values) && values.length > 0 && values[0],
+        );
+    }, [facilityData]);
+
     return (
-        <Grid container className={classes.root}>
-            <Grid item md={12}>
-                <Typography
-                    variant="title"
-                    className={classes.title}
-                    component="h3"
-                >
-                    Partner Data
-                </Typography>
+        <>
+            <Grid container className={classes.root}>
+                <Grid item xs={12} className={classes.titleRowContainer}>
+                    <div className={classes.titleRow}>
+                        {!fetching && (
+                            <PartnershipIcon
+                                className={classes.icon}
+                                color="#8428FA"
+                            />
+                        )}
+                        {fetching && <CircularProgress size={24} />}
+                        <Typography
+                            variant="title"
+                            className={classes.title}
+                            component="h3"
+                        >
+                            {!fetching ? 'Spotlight' : 'Loading Spotlight...'}
+                        </Typography>
+                        {!fetching && (
+                            <IconComponent
+                                title={
+                                    <>
+                                        Are you a data provider and want your
+                                        data listed here? Looking to access this
+                                        data for compliance reporting, risk
+                                        analysis, or supplier monitoring?
+                                        <LearnMoreLink href="https://info.opensupplyhub.org/data-integrations" />
+                                    </>
+                                }
+                                icon={InfoOutlined}
+                                className={classes.infoButton}
+                            />
+                        )}
+                    </div>
+                    {!fetching && hasPartnerData && (
+                        <Typography
+                            variant="subheading"
+                            className={classes.description}
+                        >
+                            The following information is provided by third-party
+                            partners who host additional social or environmental
+                            data related to this production location, its
+                            context, and/or its operations.{' '}
+                            <a
+                                href="https://info.opensupplyhub.org/data-integrations"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Learn more.
+                            </a>
+                        </Typography>
+                    )}
+                    {!fetching && !hasPartnerData && (
+                        <Typography
+                            variant="subheading"
+                            className={classes.description}
+                        >
+                            Open Supply Hub works with third-party partners who
+                            provide additional social and environmental data
+                            related to production locations, their context,
+                            and/or their operations.{' '}
+                            <b>
+                                No partner data is currently available for this
+                                facility.
+                            </b>{' '}
+                            <a
+                                href="https://info.opensupplyhub.org/data-integrations"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Learn more about our data partnerships.
+                            </a>
+                        </Typography>
+                    )}
+                </Grid>
+                {!fetching &&
+                    hasPartnerData &&
+                    partnerGroups.map(group => (
+                        <PartnerSectionItem group={group} key={group.uuid} />
+                    ))}
             </Grid>
-            <Grid item md={12}>
-                <Typography variant="subheading" component="h3">
-                    Data provided by third-party integration partners. Use our
-                    API to access this data programmatically.
-                </Typography>
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Assessments and Audits"
-                    tooltipText="(from BE) Assessments provide standardized evaluations of production location practices, helping brands verify compliance and identify areas for improvement."
-                    disclaimer="Disclaimer (from BE): Assessment data is provided by third parties and may not reflect current conditions. Always verify critical information independently."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Certifications"
-                    tooltipText="(from BE) Certifications provide third-party verification that production locations meet recognized standards for quality, environmental, and social responsibility."
-                    disclaimer="Disclaimer (from BE): Certification status may change. Always verify validity dates and check directly with certifying bodies for the most current information."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Emissions"
-                    tooltipText="(from BE) Environmental metrics help brands assess and reduce the ecological footprint of their supply chains by tracking emissions, resource usage, and waste."
-                    disclaimer="Disclaimer (from BE): Environmental data is often self-reported or estimated. Methodologies may vary between sources and should be considered indicative rather than absolute."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Living Wage"
-                    tooltipText="(from BE) Living wage data helps assess whether workers earn enough to meet basic needs, supporting fair compensation practices across supply chains."
-                    disclaimer="Disclaimer (from BE): Wage benchmarks are estimates based on regional data and may not reflect actual wages paid at this facility."
-                />
-            </Grid>
-            <Grid item md={12}>
-                <ParentSectionItem
-                    title="Grievance Mechanism Placeholder Title"
-                    tooltipText="(from BE) Grievance mechanisms allow workers to report concerns anonymously. These integrations show which third-party platforms are active at this facility."
-                    disclaimer="Disclaimer (from BE): Open Supply Hub does not operate a grievance mechanism and cannot receive or investigate complaints. Information shown is based on partner-submitted sources and may not reflect all available mechanisms, including government or state-based processes. Open Supply Hub does not verify the effectiveness, accessibility, or outcomes of any listed mechanism."
-                />
-            </Grid>
-        </Grid>
+        </>
     );
 }
 
-export default withStyles(partnerDataContainerStyles)(PartnerDataContainer);
+const mapStateToProps = state => ({
+    partnerGroups: getEnrichedPartnerGroups(state),
+    facilityData: state.facilities.singleFacility.data,
+    fetching: state.partnerFieldGroups.fetching,
+});
+
+export default connect(mapStateToProps)(
+    withStyles(partnerDataContainerStyles)(PartnerDataContainer),
+);

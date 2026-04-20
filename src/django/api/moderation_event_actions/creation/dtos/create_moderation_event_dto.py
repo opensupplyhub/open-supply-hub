@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, List
 
 from rest_framework import status
 
@@ -20,3 +20,4 @@ class CreateModerationEventDTO:
     errors: Dict = field(default_factory=dict)
     status_code: int = status.HTTP_202_ACCEPTED
     moderation_event: ModerationEvent = None
+    backfilled_fields: List[str] = field(default_factory=list)

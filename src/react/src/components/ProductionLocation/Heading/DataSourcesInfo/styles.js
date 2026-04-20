@@ -8,19 +8,31 @@ export default theme => {
     return Object.freeze({
         container: Object.freeze({
             ...commonStyles(theme).container,
-            padding: '20px 20px 20px 36px',
+            padding: '10px 20px 20px 20px',
         }),
         titleRow: Object.freeze({
             display: 'flex',
             flexWrap: 'nowrap',
             alignItems: 'center',
             marginBottom: spacing * 2,
+            cursor: 'pointer',
         }),
         sectionTitle: Object.freeze({
             ...typography.sectionTitle,
             marginTop: 0,
             marginBottom: 0,
             marginRight: 0,
+        }),
+        titleShort: Object.freeze({
+            [theme.breakpoints.up('sm')]: {
+                display: 'none',
+            },
+        }),
+        titleFull: Object.freeze({
+            display: 'none',
+            [theme.breakpoints.up('sm')]: {
+                display: 'inline',
+            },
         }),
         infoButton: Object.freeze({
             marginLeft: spacing * 0.5,
@@ -31,16 +43,15 @@ export default theme => {
                 backgroundColor: theme.palette.action.hover,
             },
         }),
-        switchWrap: Object.freeze({
+        toggleWrap: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             marginLeft: 'auto',
         }),
-        switchLabel: Object.freeze({
-            ...typography.bodyText,
-            fontSize: '0.875rem',
+        chevron: Object.freeze({
+            fontSize: '2rem',
+            color: theme.palette.text.secondary,
         }),
-        switch: Object.freeze({}),
         descriptionList: Object.freeze({
             marginTop: 0,
             '& > *:nth-child(2)': {
@@ -81,7 +92,7 @@ export default theme => {
             width: 20,
             height: 20,
             fontSize: 20,
-            color: COLOURS.TEAL_GREEN,
+            color: COLOURS.PURPLE,
         }),
         label: Object.freeze({
             ...typography.formLabelTight,
@@ -100,11 +111,16 @@ export default theme => {
         labelPartner: Object.freeze({
             ...typography.formLabelTight,
             fontSize: '1.125rem',
-            color: COLOURS.TEAL_GREEN,
+            color: COLOURS.PURPLE,
+        }),
+        switchLabel: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.875rem',
         }),
         subsectionText: Object.freeze({
             ...typography.bodyText,
-            fontSize: '0.875rem',
+            color: theme.palette.primary,
+            fontSize: '1rem',
             marginTop: 0,
             marginBottom: 0,
         }),

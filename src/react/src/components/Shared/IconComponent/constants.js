@@ -1,0 +1,3 @@
+const LEAVE_TRIGGER_DELAY_MS = 150;
+
+export default LEAVE_TRIGGER_DELAY_MS;

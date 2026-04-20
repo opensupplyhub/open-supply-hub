@@ -11,24 +11,38 @@ import productionLocationDetailsBackToSearchStyles from './styles';
 function ProductionLocationDetailsBackToSearch({
     classes,
     clearFacility,
-    history: { push },
+    history,
 }) {
     const onClick = event => {
         event.preventDefault();
         clearFacility();
-        push(facilitiesRoute);
+
+        if (history.length > 1) {
+            history.goBack();
+        } else {
+            history.push(facilitiesRoute);
+        }
     };
 
     return (
         <div className={classes.buttonContainer}>
-            <a
-                href={facilitiesRoute}
+            <button
+                type="button"
                 className={classes.backLink}
                 onClick={onClick}
+                data-testid="back-to-search-button"
             >
-                <ArrowRightAlt style={{ transform: 'rotate(180deg)' }} />
-                <span className={classes.text}>Back to search results</span>
-            </a>
+                <ArrowRightAlt
+                    data-testid="back-to-search-arrow"
+                    style={{ transform: 'rotate(180deg)' }}
+                />
+                <span
+                    className={classes.text}
+                    data-testid="back-to-search-text"
+                >
+                    Back to search results
+                </span>
+            </button>
         </div>
     );
 }

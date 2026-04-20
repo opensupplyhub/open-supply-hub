@@ -10,6 +10,7 @@ const PartnerFieldSchemaValue = ({
     value,
     jsonSchema,
     partnerConfigFields,
+    gaSpotlightAnalytics,
 }) => {
     if (!isValidValue(value, jsonSchema)) {
         return null;
@@ -21,6 +22,7 @@ const PartnerFieldSchemaValue = ({
         value,
         schemaProperties,
         partnerConfigFields,
+        gaSpotlightAnalytics,
     );
 
     return <>{renderedItems}</>;
@@ -35,11 +37,13 @@ PartnerFieldSchemaValue.propTypes = {
         baseUrl: string,
         displayText: string,
     }),
+    gaSpotlightAnalytics: object,
 };
 
 PartnerFieldSchemaValue.defaultProps = {
     jsonSchema: null,
     partnerConfigFields: null,
+    gaSpotlightAnalytics: null,
 };
 
 export default PartnerFieldSchemaValue;

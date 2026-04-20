@@ -24,7 +24,7 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         expect(
-            screen.getByRole('heading', { name: 'Understanding Data Sources' }),
+            screen.getByRole('heading', { name: 'Data Sources' }),
         ).toBeInTheDocument();
     });
 
@@ -32,27 +32,32 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         expect(
-            screen.getByRole('heading', { level: 3, name: 'Understanding Data Sources' }),
+            screen.getByRole('heading', { level: 3, name: 'Data Sources' }),
         ).toBeInTheDocument();
     });
 
-    test('shows "Open" label when toggle is off', () => {
+    test('shows expand-more icon when subsection info is collapsed', () => {
         renderDataSourcesInfo();
 
-        expect(screen.getByText('Open')).toBeInTheDocument();
-        expect(screen.queryByText('Close')).not.toBeInTheDocument();
+        expect(
+            screen.getByTestId('data-sources-expand-more'),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByTestId('data-sources-expand-less'),
+        ).not.toBeInTheDocument();
     });
 
-    test('shows "Close" label when toggle is switched on', () => {
+    test('shows expand-less icon when subsection info is expanded', () => {
         renderDataSourcesInfo();
 
-        const switchControl = screen.getByRole('checkbox', {
-            name: /show extra info under each data source/i,
-        });
-        fireEvent.click(switchControl);
+        fireEvent.click(screen.getByTestId('data-sources-expand-more'));
 
-        expect(screen.getByText('Close')).toBeInTheDocument();
-        expect(screen.queryByText('Open')).not.toBeInTheDocument();
+        expect(
+            screen.getByTestId('data-sources-expand-less'),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByTestId('data-sources-expand-more'),
+        ).not.toBeInTheDocument();
     });
 
     test('renders all three data source items', () => {
@@ -60,20 +65,17 @@ describe('ProductionLocation DataSourcesInfo', () => {
 
         expect(screen.getByText('Claimed')).toBeInTheDocument();
         expect(screen.getByText('Crowdsourced')).toBeInTheDocument();
-        expect(screen.getByText('Partner Data')).toBeInTheDocument();
+        expect(screen.getByText('Spotlight Partners')).toBeInTheDocument();
     });
 
-    test('toggle switch shows subsection text when opened', () => {
+    test('expand control shows subsection text when opened', () => {
         renderDataSourcesInfo();
 
         expect(
             screen.queryByText(/General information & operational details submitted by production location/),
         ).not.toBeInTheDocument();
 
-        const switchControl = screen.getByRole('checkbox', {
-            name: /show extra info under each data source/i,
-        });
-        fireEvent.click(switchControl);
+        fireEvent.click(screen.getByTestId('data-sources-expand-more'));
 
         expect(
             screen.getByText(/General information & operational details submitted by production location/),
@@ -84,9 +86,7 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         expect(
-            screen.getByRole('button', {
-                name: /more information about data sources/i,
-            }),
+            screen.getByTestId('data-sources-info-tooltip'),
         ).toBeInTheDocument();
     });
 
