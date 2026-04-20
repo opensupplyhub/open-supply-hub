@@ -93,3 +93,53 @@ def group_extended_fields_by_name(
 def is_empty_partner_value(value: Any) -> bool:
     '''Treat None and empty strings as "no value" for CSV cells.'''
     return value is None or value == ""
+
+
+def build_object_field_cells(
+    entries: List[Dict[str, Any]],
+    paths: List[Tuple[str, ...]],
+    separator: str,
+) -> List[str]:
+    '''
+    Build one joined cell per leaf path for an object-typed partner
+    field, walking each contribution's `raw_values` in declaration
+    order and skipping empty values.
+    '''
+    collected: Dict[Tuple[str, ...], List[str]] = {
+        path: [] for path in paths
+    }
+    for entry in entries:
+        raw_values = (entry.get("value") or {}).get("raw_values")
+        if not isinstance(raw_values, dict):
+            continue
+        _collect_path_values(raw_values, paths, collected)
+    return [separator.join(collected[path]) for path in paths]
+
+
+def _collect_path_values(
+    raw_values: Dict[str, Any],
+    paths: List[Tuple[str, ...]],
+    collected: Dict[Tuple[str, ...], List[str]],
+) -> None:
+    for path in paths:
+        value = resolve_nested_value(raw_values, path)
+        if is_empty_partner_value(value):
+            continue
+        collected[path].append(str(value))
+
+
+def build_primitive_field_cell(
+    entries: List[Dict[str, Any]],
+    separator: str,
+) -> str:
+    '''
+    Build a single joined cell for a primitive partner field by
+    collecting each contribution's `raw_value` and skipping empties.
+    '''
+    values: List[str] = []
+    for entry in entries:
+        raw_value = (entry.get("value") or {}).get("raw_value")
+        if is_empty_partner_value(raw_value):
+            continue
+        values.append(str(raw_value))
+    return separator.join(values)

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
@@ -13,10 +13,10 @@ from api.csv_download import (
 from api.constants import CLAIMED_DOWNLOAD_FIELDS_MAPPING
 from api.helpers.helpers import parse_download_date
 from api.serializers.facility.partner_field_helper import (
+    build_object_field_cells,
+    build_primitive_field_cell,
     group_extended_fields_by_name,
-    is_empty_partner_value,
     partner_field_property_paths,
-    resolve_nested_value,
 )
 from rest_framework.serializers import Serializer, SerializerMethodField
 
@@ -164,6 +164,7 @@ class FacilityDownloadSerializerBase(Serializer):
         extended-field behavior).
         '''
         grouped = group_extended_fields_by_name(extended_fields)
+        separator = cls.PARTNER_FIELD_VALUE_SEPARATOR
         row: List[str] = []
 
         for partner_field in partner_fields:
@@ -171,33 +172,10 @@ class FacilityDownloadSerializerBase(Serializer):
             paths = partner_field_property_paths(partner_field)
 
             if paths:
-                collected: Dict[Tuple[str, ...], List[str]] = {
-                    path: [] for path in paths
-                }
-                for entry in entries:
-                    raw_values = (entry.get("value") or {}).get("raw_values")
-                    if not isinstance(raw_values, dict):
-                        continue
-                    for path in paths:
-                        value = resolve_nested_value(raw_values, path)
-                        if is_empty_partner_value(value):
-                            continue
-                        collected[path].append(str(value))
-                for path in paths:
-                    row.append(
-                        cls.PARTNER_FIELD_VALUE_SEPARATOR.join(
-                            collected[path]
-                        )
-                    )
-            else:
-                values: List[str] = []
-                for entry in entries:
-                    raw_value = (entry.get("value") or {}).get("raw_value")
-                    if is_empty_partner_value(raw_value):
-                        continue
-                    values.append(str(raw_value))
-                row.append(
-                    cls.PARTNER_FIELD_VALUE_SEPARATOR.join(values)
+                row.extend(
+                    build_object_field_cells(entries, paths, separator)
                 )
+            else:
+                row.append(build_primitive_field_cell(entries, separator))
 
         return row
