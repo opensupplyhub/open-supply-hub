@@ -69,8 +69,10 @@ class DuplicateThrottle(BaseThrottle):
                 detail="Request data too large. Maximum size is 1MB."
             )
 
+        pk = view.kwargs.get("pk")
+        id = f":{pk}" if pk else ""
         data_hash = hashlib.sha256(data_str.encode()).hexdigest()
-        cache_key = f"duplicate:{request.user.id}:{data_hash}"
+        cache_key = f"duplicate:{request.user.id}{id}:{data_hash}"
 
         if self.cache.get(cache_key):
             raise Throttled(
