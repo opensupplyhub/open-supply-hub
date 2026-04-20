@@ -48,17 +48,9 @@ CLAIM_HEADERS = [
 
 EMPTY_CLAIM_VALUES = [""] * len(CLAIM_HEADERS)
 
-PARTNER_FIELD_HEADERS = [
-    "mit_living_wage.county_id",
-    "wage_indicator.living_wage_link_national",
-    "wage_indicator.minimum_wage_link_english",
-    "wage_indicator.minimum_wage_link_national",
-    "wage_indicator.living_wage_link_national_text",
-    "wage_indicator.minimum_wage_link_english_text",
-    "wage_indicator.minimum_wage_link_national_text",
-]
+PARTNER_FIELD_HEADERS: list = []
 
-EMPTY_PARTNER_FIELD_VALUES = [""] * len(PARTNER_FIELD_HEADERS)
+EMPTY_PARTNER_FIELD_VALUES: list = []
 
 
 class FacilityDownloadSerializerTest(TestCase):

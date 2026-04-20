@@ -10,7 +10,40 @@ consistent with `get_extended_fields`, `get_claimed_fields`, etc.
 '''
 from typing import Any, Dict, List, Tuple
 
+from django.core.cache import cache
+
+from api.constants import (
+    PARTNER_FIELD_LIST_CACHE_TTL_SECONDS,
+    PARTNER_FIELD_LIST_KEY,
+)
 from api.models.partner_field import PartnerField
+
+
+def get_cached_all_partner_fields() -> List[PartnerField]:
+    '''
+    Return every `PartnerField` row (active + inactive, user + system)
+    from the shared `PARTNER_FIELD_LIST_KEY` cache, populating it with
+    `PartnerField.objects.all()` on a miss.
+
+    Callers that only want a subset (e.g. active, non-system fields for
+    downloads) must filter the returned list in memory. All consumers
+    must cache the same superset under this key so a warm cache written
+    by one caller stays correct for every other caller — mixing
+    pre-filtered lists under the same key causes silent data drift.
+    `PartnerField.save`/`delete` invalidate the entry so updates and
+    (in)activation flips are reflected in subsequent reads.
+    '''
+    cached = cache.get(PARTNER_FIELD_LIST_KEY)
+    if cached is not None:
+        return list(cached)
+
+    partner_fields = list(PartnerField.objects.all())
+    cache.set(
+        PARTNER_FIELD_LIST_KEY,
+        partner_fields,
+        PARTNER_FIELD_LIST_CACHE_TTL_SECONDS,
+    )
+    return partner_fields
 
 
 def partner_field_property_paths(
@@ -26,7 +59,9 @@ def partner_field_property_paths(
     '''
     if partner_field.type != PartnerField.OBJECT:
         return []
-    schema = partner_field.json_schema or {}
+    schema = partner_field.json_schema
+    if not isinstance(schema, dict):
+        return []
     return collect_leaf_paths(schema)
 
 
@@ -37,25 +72,36 @@ def collect_leaf_paths(
     '''
     Walk a JSON Schema and return every leaf path as a tuple of keys.
 
-    A property is considered a leaf when it is not an object type, or
-    when it is an object but declares no nested `properties`. Nested
-    object schemas are expanded recursively in declaration order.
+    A node is treated as a branch (and recursed into) when it is a dict
+    whose `properties` is a non-empty dict, regardless of whether the
+    node explicitly declares `type: "object"` — this is lenient about
+    hand-authored schemas that omit `type`. Any node that is not a
+    dict, or whose `properties` is missing/empty/not a dict, is treated
+    as a leaf, so a malformed `json_schema` gracefully falls back to a
+    single partner-field column instead of crashing the whole download.
     '''
-    properties = (schema or {}).get("properties") or {}
-    if not properties:
+    if not isinstance(schema, dict):
+        return [prefix] if prefix else []
+
+    properties = schema.get("properties")
+    if not isinstance(properties, dict) or not properties:
         return [prefix] if prefix else []
 
     paths: List[Tuple[str, ...]] = []
     for key, sub_schema in properties.items():
-        sub_schema = sub_schema or {}
         next_prefix = (*prefix, key)
-        is_object = sub_schema.get("type") == PartnerField.OBJECT
-        nested_props = sub_schema.get("properties") or {}
-        if is_object and nested_props:
+        if _has_nested_properties(sub_schema):
             paths.extend(collect_leaf_paths(sub_schema, next_prefix))
         else:
             paths.append(next_prefix)
     return paths
+
+
+def _has_nested_properties(sub_schema: Any) -> bool:
+    if not isinstance(sub_schema, dict):
+        return False
+    nested = sub_schema.get("properties")
+    return isinstance(nested, dict) and bool(nested)
 
 
 def resolve_nested_value(
@@ -81,9 +127,13 @@ def group_extended_fields_by_name(
     '''
     Bucket FacilityIndex.extended_fields entries by their `field_name`
     so partner fields can look up matching contributions in O(1).
+    Non-dict entries are skipped defensively so a malformed row in
+    `facility.extended_fields` cannot take down the whole download page.
     '''
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for entry in extended_fields or []:
+        if not isinstance(entry, dict):
+            continue
         name = entry.get("field_name")
         if name:
             grouped.setdefault(name, []).append(entry)
@@ -93,6 +143,20 @@ def group_extended_fields_by_name(
 def is_empty_partner_value(value: Any) -> bool:
     '''Treat None and empty strings as "no value" for CSV cells.'''
     return value is None or value == ""
+
+
+def _entry_value_dict(entry: Any) -> Dict[str, Any]:
+    '''
+    Return the `value` payload of an extended_fields entry as a dict,
+    or an empty dict if the entry or its `value` is not a dict. This
+    makes partner-field formatting tolerant of malformed rows (scalar
+    or list `value` payloads) so a single bad contribution never fails
+    the whole download page.
+    '''
+    if not isinstance(entry, dict):
+        return {}
+    value = entry.get("value")
+    return value if isinstance(value, dict) else {}
 
 
 def build_object_field_cells(
@@ -109,7 +173,7 @@ def build_object_field_cells(
         path: [] for path in paths
     }
     for entry in entries:
-        raw_values = (entry.get("value") or {}).get("raw_values")
+        raw_values = _entry_value_dict(entry).get("raw_values")
         if not isinstance(raw_values, dict):
             continue
         _collect_path_values(raw_values, paths, collected)
@@ -138,7 +202,7 @@ def build_primitive_field_cell(
     '''
     values: List[str] = []
     for entry in entries:
-        raw_value = (entry.get("value") or {}).get("raw_value")
+        raw_value = _entry_value_dict(entry).get("raw_value")
         if is_empty_partner_value(raw_value):
             continue
         values.append(str(raw_value))
