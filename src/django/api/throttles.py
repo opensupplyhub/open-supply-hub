@@ -70,9 +70,9 @@ class DuplicateThrottle(BaseThrottle):
             )
 
         pk = view.kwargs.get("pk")
-        id = f":{pk}" if pk else ""
+        pk_prefix = f":{pk}" if pk else ""
         data_hash = hashlib.sha256(data_str.encode()).hexdigest()
-        cache_key = f"duplicate:{request.user.id}{id}:{data_hash}"
+        cache_key = f"duplicate:{request.user.id}{pk_prefix}:{data_hash}"
 
         if self.cache.get(cache_key):
             raise Throttled(
