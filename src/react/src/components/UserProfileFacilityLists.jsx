@@ -15,6 +15,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import { fetchMoreFacilityLists } from '../actions/profile';
 import COLOURS from '../util/COLOURS';
+import { facilitiesRoute } from '../util/constants';
 import IconComponent from './Shared/IconComponent/IconComponent';
 
 const cellHeader = theme =>
@@ -223,7 +224,7 @@ function UserProfileFacilityLists({
                                     size="small"
                                     color="primary"
                                     component={Link}
-                                    to={`/?contributors=${facilityList.contributor_id}&lists=${facilityList.id}`}
+                                    to={`${facilitiesRoute}?contributors=${facilityList.contributor_id}&lists=${facilityList.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={classes.viewButton}
@@ -339,6 +340,30 @@ UserProfileFacilityLists.propTypes = {
     nextPageUrl: string,
     error: arrayOf(string),
     fetchMore: func.isRequired,
+    classes: shape({
+        detailsContent: string.isRequired,
+        headerRow: string.isRequired,
+        nameHeader: string.isRequired,
+        descriptionHeader: string.isRequired,
+        actionHeader: string.isRequired,
+        headerDivider: string.isRequired,
+        facilityRow: string.isRequired,
+        nameCell: string.isRequired,
+        mobileLabel: string.isRequired,
+        descriptionCell: string.isRequired,
+        actionCell: string.isRequired,
+        loadMoreContainer: string.isRequired,
+        loadMoreButton: string.isRequired,
+        viewButton: string.isRequired,
+        loaderContainer: string.isRequired,
+        centeredGrid: string.isRequired,
+        appGridContainer: string.isRequired,
+        container: string.isRequired,
+        expandIcon: string.isRequired,
+        panelSummary: string.isRequired,
+        heading: string.isRequired,
+        panelDetails: string.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({
