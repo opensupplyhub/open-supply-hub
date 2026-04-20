@@ -60,6 +60,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
     * Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `contributor_user_id`, `viewer_user_id` where applicable). The user id is sent as `contributor_user_id` (not `user_id`) so it does not collide with GA4’s reserved User-ID field; `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
 * [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
+* [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
