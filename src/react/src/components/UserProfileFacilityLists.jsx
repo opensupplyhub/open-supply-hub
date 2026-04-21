@@ -296,7 +296,7 @@ function UserProfileFacilityLists({
                                 className={classes.panelSummary}
                             >
                                 <Typography className={classes.heading}>
-                                    Facility Lists
+                                    Production Location Lists
                                     <IconComponent
                                         title={
                                             <>
