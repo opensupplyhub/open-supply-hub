@@ -28,7 +28,10 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
     };
 
     return (
-        <div className={`${classes.container} ${className || ''}`}>
+        <div
+            className={`${classes.container} ${className || ''}`}
+            data-testid="understanding-data-sources-section"
+        >
             <div
                 className={classes.titleRow}
                 role="button"
