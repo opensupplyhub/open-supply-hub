@@ -50,14 +50,14 @@ const NavBar = ({
                     label: 'Overview',
                     Icon: OverviewIcon,
                     handler: handleDefaultSectionClick('overview'),
-                    testid: 'jump-to-overview-link',
+                    testId: 'jump-to-overview-link',
                 },
                 {
                     to: '#general-information',
                     label: 'General Information',
                     Icon: GeneralInformationIcon,
                     handler: handleDefaultSectionClick('general-information'),
-                    testid: 'jump-to-general-information-link',
+                    testId: 'jump-to-general-information-link',
                 },
             ],
             ...(hasOperationalDetails
@@ -67,7 +67,7 @@ const NavBar = ({
                           label: 'Operational Details',
                           Icon: OperationalDetailsIcon,
                           handler: handleOperationalDetailsClick,
-                          testid: 'jump-to-general-operational-details-link',
+                          testId: 'jump-to-operational-details-link',
                       },
                   ]
                 : []),
@@ -106,7 +106,7 @@ const NavBar = ({
             </Typography>
             <MenuList className={classes.menuList}>
                 {navItems.map(
-                    ({ to, label, Icon, Image, active, handler, testid }) => (
+                    ({ to, label, Icon, Image, active, handler, testId }) => (
                         <MenuItem
                             key={to}
                             className={`${classes.menuItem} ${
@@ -114,7 +114,7 @@ const NavBar = ({
                             }`}
                             disableGutters
                             onClick={handler}
-                            data-testid={testid}
+                            data-testid={testId}
                         >
                             {Image ? (
                                 <Image
