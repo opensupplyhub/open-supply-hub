@@ -107,6 +107,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [Follow-up] [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Geographic Information section: show `Crowdsourced` badge, date of contribution and contributor name near the `Address` field if `extended_fields` contains only empty records.
 * [OSDEV-2418](https://opensupplyhub.atlassian.net/browse/OSDEV-2418) - Aligned Production Location page copy with "production location" wording: closure banners (pending, moved, closed), the report closure/reopen dialog, the map control’s accessible label for centering on the location, and operational-details labels for location type fields in the claim section.
 * [OSDEV-2422](https://opensupplyhub.atlassian.net/browse/OSDEV-2422) - Geographic Information section: added error text labels for invalid coordinates contributions; introduced additional user id fallback based on `contributors` list and `created_from` properties from GET `api/facilities/{os_id}/` response. This is needed to create a link to the user profile page when we take values from `created_from`.
+* [Hotfix][OSDEV-2529](https://opensupplyhub.atlassian.net/browse/OSDEV-2529) - Fixed duplicate throttle logic for production location creation and updates:
+    * Added `pk` to the duplicate throttle cache key to prevent collisions when the same user makes multiple requests for the same production location.
 
 ### What's new
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
