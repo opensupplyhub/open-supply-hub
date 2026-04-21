@@ -17,8 +17,8 @@ import MapIcon from './MapIcon';
 import ShowOnly from './ShowOnly';
 import RouteNotFound from './RouteNotFound';
 import COLOURS from '../util/COLOURS';
-import UserProfileProductionLocations from './UserProfileProductionLocations';
-import UserProfileFacilityLists from './UserProfileFacilityLists';
+import UserProfileProductionLocations from './UserProfileProductionLocations/UserProfileProductionLocations';
+import UserProfileFacilityLists from './UserProfileFacilityLists/UserProfileFacilityLists';
 
 import '../styles/css/specialStates.css';
 

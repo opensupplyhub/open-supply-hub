@@ -1,7 +1,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import UserProfileFacilityLists from '../../components/UserProfileFacilityLists';
+import UserProfileFacilityLists from '../../components/UserProfileFacilityLists/UserProfileFacilityLists';
 
 const makeFacilityListsState = (overrides = {}) => ({
     profile: {
