@@ -264,30 +264,28 @@ export function fetchFacilityLists(userID) {
     };
 }
 
-export function fetchMoreFacilityLists(nextPageUrl) {
-    return dispatch => {
-        dispatch(startFetchMoreFacilityLists());
+export const fetchMoreFacilityLists = nextPageUrl => dispatch => {
+    dispatch(startFetchMoreFacilityLists());
 
-        return apiRequest
-            .get(nextPageUrl)
-            .then(({ data }) => {
-                dispatch(
-                    completeFetchMoreFacilityLists(
-                        parseFacilityListsResponse(data),
-                    ),
-                );
-            })
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching more facility lists',
-                        failFetchMoreFacilityLists,
-                    ),
+    return apiRequest
+        .get(nextPageUrl)
+        .then(({ data }) => {
+            dispatch(
+                completeFetchMoreFacilityLists(
+                    parseFacilityListsResponse(data),
                 ),
             );
-    };
-}
+        })
+        .catch(err =>
+            dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented fetching more facility lists',
+                    failFetchMoreFacilityLists,
+                ),
+            ),
+        );
+};
 
 export function fetchUserProfile(userID) {
     return (dispatch, getState) => {
