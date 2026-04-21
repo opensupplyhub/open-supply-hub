@@ -39,7 +39,11 @@ const SupplyChain = ({ classes, contributors = [] }) => {
                 location.
             </Typography>
             {typeCounts.length > 0 && (
-                <Grid container className={classes.typeCounts}>
+                <Grid
+                    container
+                    className={classes.typeCounts}
+                    data-testid="supply-chain-type-counts"
+                >
                     {typeCounts.map(({ type, count }) => (
                         <Typography
                             key={type}
@@ -53,7 +57,11 @@ const SupplyChain = ({ classes, contributors = [] }) => {
                 </Grid>
             )}
             {sortedPublicContributors.length > 0 && (
-                <Grid container className={classes.contributorList}>
+                <Grid
+                    container
+                    className={classes.contributorList}
+                    data-testid="supply-chain-contributor-list"
+                >
                     {visiblePublicContributors.map(contributor => (
                         <Grid item key={contributor.id}>
                             <Link
