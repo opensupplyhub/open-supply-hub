@@ -37,7 +37,9 @@ def get_cached_all_partner_fields() -> List[PartnerField]:
     if cached is not None:
         return list(cached)
 
-    partner_fields = list(PartnerField.objects.all())
+    partner_fields = list(
+        PartnerField.objects.get_all_including_inactive()
+    )
     cache.set(
         PARTNER_FIELD_LIST_KEY,
         partner_fields,
