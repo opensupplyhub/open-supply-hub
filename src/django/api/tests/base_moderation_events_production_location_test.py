@@ -186,6 +186,10 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         facility_list_item = FacilityListItem.objects.get(
             facility_id=response.data["os_id"]
         )
+        self.assertEqual(
+            str(facility_list_item.moderation_event_id),
+            self.moderation_event_id,
+        )
         self.assertEqual(facility_list_item.geocoded_point.x, self.longitude)
         self.assertEqual(facility_list_item.geocoded_point.y, self.latitude)
         self.assertIsNone(facility_list_item.geocoded_address)
@@ -233,6 +237,10 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
         self.assertEqual(
             facility_list_item.country_code,
             self.moderation_event.cleaned_data["country_code"],
+        )
+        self.assertEqual(
+            str(facility_list_item.moderation_event_id),
+            self.moderation_event_id,
         )
         self.assertEqual(
             facility_list_item.clean_name,

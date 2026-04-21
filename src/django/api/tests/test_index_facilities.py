@@ -127,7 +127,35 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
         facility_production_types_processed = (
             facility_index.approved_claim["facility_production_types"]
         )
+        expected_production_types = [
+            value.capitalize() for value in facility_production_types_mocked
+        ]
         self.assertListEqual(
-            facility_production_types_mocked,
+            expected_production_types,
             facility_production_types_processed
+        )
+
+    def test_create_extendedfields_for_claim_syncs_claim_type_fields(self):
+        claim = FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            status=FacilityClaimStatuses.APPROVED,
+            contact_person="Name",
+            company_name="Test",
+            website="http://example.com",
+            facility_description="description",
+            sector=["Apparel"],
+            facility_production_types=["cutting", "dyeing"],
+        )
+
+        create_extendedfields_for_claim(claim)
+        claim.refresh_from_db()
+
+        self.assertListEqual(
+            claim.facility_production_types,
+            ["Cutting", "Dyeing"],
+        )
+        self.assertEqual(
+            claim.facility_type,
+            "Final Product Assembly|Printing, Product Dyeing and Laundering",
         )

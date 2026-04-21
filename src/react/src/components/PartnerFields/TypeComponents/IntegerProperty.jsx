@@ -3,14 +3,16 @@ import { string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import { getTitleFromSchema } from '../utils';
 import { commonPropertyStyles } from '../styles';
+import PartnerFieldLabel from '../PartnerFieldLabel/PartnerFieldLabel';
 
 const IntegerProperty = ({ propertyKey, value, schemaProperties, classes }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
-    const propertyValue = value[propertyKey];
+    const schemaProperty = schemaProperties[propertyKey] || {};
+    const propertyValue = value[propertyKey] || schemaProperty.default;
 
     return (
         <div className={classes.container}>
-            {title && `${title}: `}
+            {title && <PartnerFieldLabel title={title} />}
             {propertyValue}
         </div>
     );

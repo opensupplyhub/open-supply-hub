@@ -10,6 +10,9 @@ export default theme => ({
         display: 'flex',
         alignItems: 'center',
         textDecoration: 'none',
+        border: 'none',
+        backgroundColor: 'transparent',
+        cursor: 'pointer',
     },
     icon: {
         transform: 'rotate(180deg)',

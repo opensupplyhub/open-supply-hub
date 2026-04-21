@@ -106,7 +106,12 @@ class FacilityListAdmin(admin.ModelAdmin):
 
 class FacilityListItemAdmin(admin.ModelAdmin):
     exclude = ('processing_results',)
-    readonly_fields = ('facility', 'pretty_processing_results', 'source')
+    readonly_fields = (
+        'facility',
+        'moderation_event',
+        'pretty_processing_results',
+        'source',
+    )
 
     def pretty_processing_results(self, instance):
         # The processing_results field is populated exclusively from processing

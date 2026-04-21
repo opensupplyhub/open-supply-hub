@@ -26,7 +26,8 @@ class ModerationEventCreator:
             cleaned_data=processed_event.cleaned_data,
             geocode_result=processed_event.geocode_result,
             source=processed_event.source,
-            os=processed_event.os
+            os=processed_event.os,
+            backfilled_fields=processed_event.backfilled_fields,
         )
 
         return event_dto

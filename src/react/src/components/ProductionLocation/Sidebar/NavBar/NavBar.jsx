@@ -2,62 +2,101 @@ import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
 
 import { withStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
+import Tab from '@material-ui/icons/Tab';
 import Typography from '@material-ui/core/Typography';
+import OverviewIcon from '../../../Icons/Overview';
+import GeneralInformationIcon from '../../../Icons/GeneralInformation';
+import OperationalDetailsIcon from '../../../Icons/OperationalDetails';
 
-import Overview from '../../../Icons/Overview';
-import GeneralInformation from '../../../Icons/GeneralInformation';
-import OperationalDetails from '../../../Icons/OperationalDetails';
-
+import { setScrollTargetSection } from '../../../../actions/sectionNavigation';
+import { getClaimDisplayData } from '../../../../selectors/claimDataSelectors';
+import { getVisiblePartnerGroups } from '../../../../selectors/partnerFieldGroupsSelectors';
 import navBarStyles from './styles';
-import getIconURL from './utils';
+import { getIconURL, scrollToSection } from './utils';
 
-const defaultNavItems = [
-    { to: '#overview', label: 'Overview', Icon: Overview },
-    {
-        to: '#general-information',
-        label: 'General Information',
-        Icon: GeneralInformation,
-    },
-    {
-        to: '#operational-details',
-        label: 'Operational Details',
-        Icon: OperationalDetails,
-    },
-];
+const NavBar = ({
+    classes,
+    partnerFieldGroups: { groups },
+    dispatch,
+    hasOperationalDetails,
+}) => {
+    const navItems = useMemo(() => {
+        function handleOperationalDetailsClick(event) {
+            event.preventDefault();
+            dispatch(setScrollTargetSection('operational-details'));
+        }
 
-const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
-    const handleClick = (event, to) => {
-        event.preventDefault();
-        const id = to.replace('#', '');
-        const element = document.getElementById(id);
-        if (!element) return;
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
+        function handleGroupClick(id) {
+            return event => {
+                event.preventDefault();
+                dispatch(setScrollTargetSection(id));
+            };
+        }
 
-    const navItems = useMemo(
-        () => [
-            ...defaultNavItems,
+        function handleDefaultSectionClick(id) {
+            return event => {
+                event.preventDefault();
+                const element = document.getElementById(id);
+                scrollToSection(element);
+            };
+        }
+
+        return [
+            ...[
+                {
+                    to: '#overview',
+                    label: 'Overview',
+                    Icon: OverviewIcon,
+                    handler: handleDefaultSectionClick('overview'),
+                    testId: 'jump-to-overview-link',
+                },
+                {
+                    to: '#general-information',
+                    label: 'General Information',
+                    Icon: GeneralInformationIcon,
+                    handler: handleDefaultSectionClick('general-information'),
+                    testId: 'jump-to-general-information-link',
+                },
+            ],
+            ...(hasOperationalDetails
+                ? [
+                      {
+                          to: '#operational-details',
+                          label: 'Operational Details',
+                          Icon: OperationalDetailsIcon,
+                          handler: handleOperationalDetailsClick,
+                          testId: 'jump-to-operational-details-link',
+                      },
+                  ]
+                : []),
             ...groups.map(group => ({
                 to: `#${group.uuid}`,
                 label: group.name,
-                Image: () => (
-                    <img
-                        src={getIconURL(group.icon_file)}
-                        width={18}
-                        height={18}
-                        alt={group.name}
-                    />
-                ),
+                handler: handleGroupClick(group.uuid),
+                testId: `jump-to-${group.name
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')}-link`,
+                Image: group.icon_file
+                    ? () => (
+                          <img
+                              src={getIconURL(group.icon_file)}
+                              width={18}
+                              height={18}
+                              alt={group.name}
+                          />
+                      )
+                    : () => <Tab style={{ height: 18, width: 18 }} />,
             })),
-        ],
-        [groups],
-    );
+        ];
+    }, [groups, hasOperationalDetails]);
 
     return (
-        <div className={`${classes.container} ${classes.navContainer}`}>
+        <div
+            className={`${classes.container} ${classes.navContainer}`}
+            data-testid="jump-to-section"
+        >
             <Typography
                 variant="title"
                 className={classes.title}
@@ -66,18 +105,16 @@ const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
                 Jump to
             </Typography>
             <MenuList className={classes.menuList}>
-                {navItems.map(({ to, label, Icon, Image, active }) => (
-                    <MenuItem
-                        key={to}
-                        className={`${classes.menuItem} ${
-                            active ? classes.menuItemActive : ''
-                        }`}
-                        disableGutters
-                    >
-                        <Link
-                            to={to}
-                            onClick={event => handleClick(event, to)}
-                            className={classes.link}
+                {navItems.map(
+                    ({ to, label, Icon, Image, active, handler, testId }) => (
+                        <MenuItem
+                            key={to}
+                            className={`${classes.menuItem} ${
+                                active ? classes.menuItemActive : ''
+                            }`}
+                            disableGutters
+                            onClick={handler}
+                            data-testid={testId}
                         >
                             {Image ? (
                                 <Image
@@ -100,19 +137,25 @@ const NavBar = ({ classes, partnerFieldGroups: { groups } }) => {
                             >
                                 {label}
                             </Typography>
-                        </Link>
-                    </MenuItem>
-                ))}
+                        </MenuItem>
+                    ),
+                )}
             </MenuList>
         </div>
     );
 };
 
-const mapStateToProps = ({ partnerFieldGroups: { data, fetching } }) => ({
-    partnerFieldGroups: {
-        groups: data?.results || [],
-        fetching,
-    },
-});
+const mapStateToProps = state => {
+    const { fetching } = state.partnerFieldGroups;
+    const { hasDisplayableFields } = getClaimDisplayData(state);
+
+    return {
+        partnerFieldGroups: {
+            groups: getVisiblePartnerGroups(state),
+            fetching,
+        },
+        hasOperationalDetails: hasDisplayableFields,
+    };
+};
 
 export default connect(mapStateToProps)(withStyles(navBarStyles)(NavBar));

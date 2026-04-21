@@ -10,7 +10,7 @@ const getFormatFromSchema = propertySchema => propertySchema?.format || null;
 
 const getTypeFromSchema = propertySchema => propertySchema?.type || null;
 
-const shouldSkipProperty = (propertyKey, schemaProperties) => {
+export const shouldSkipProperty = (propertyKey, schemaProperties) => {
     if (!(propertyKey in schemaProperties)) {
         return true;
     }
@@ -23,7 +23,7 @@ const shouldSkipProperty = (propertyKey, schemaProperties) => {
     const baseSchema = schemaProperties[baseKey];
     const baseFormat = getFormatFromSchema(baseSchema);
 
-    return baseFormat === FORMAT_TYPES.URI;
+    return [FORMAT_TYPES.URI, FORMAT_TYPES.URL].includes(baseFormat);
 };
 
 const isNestedObject = (propertySchema, propertyValue) =>
@@ -56,6 +56,7 @@ const renderProperty = (
     value,
     schemaProperties,
     partnerConfigFields,
+    gaSpotlightAnalytics,
 ) => {
     const propertySchema = schemaProperties[propertyKey] || {};
     const propertyValue = value[propertyKey];
@@ -68,6 +69,7 @@ const renderProperty = (
             value={value}
             schemaProperties={schemaProperties}
             partnerConfigFields={partnerConfigFields}
+            gaSpotlightAnalytics={gaSpotlightAnalytics}
         />
     );
 };
@@ -88,16 +90,24 @@ export const renderProperties = (
     value,
     schemaProperties,
     partnerConfigFields,
+    gaSpotlightAnalytics,
 ) =>
-    Object.keys(value).reduce((acc, propertyKey) => {
+    Object.keys(schemaProperties).reduce((acc, propertyKey) => {
         if (shouldSkipProperty(propertyKey, schemaProperties)) {
             return acc;
         }
+
+        const propertySchema = schemaProperties[propertyKey] || {};
+        if (!(propertyKey in value) && !propertySchema.default) {
+            return acc;
+        }
+
         const rendered = renderProperty(
             propertyKey,
             value,
             schemaProperties,
             partnerConfigFields,
+            gaSpotlightAnalytics,
         );
         if (rendered) {
             acc.push(rendered);

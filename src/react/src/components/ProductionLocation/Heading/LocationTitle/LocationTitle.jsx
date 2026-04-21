@@ -10,7 +10,7 @@ const ProductionLocationDetailsTitle = ({ classes, data }) => {
     const locationName = get(data, 'properties.name', '') || '';
 
     return (
-        <div className={classes.container}>
+        <div id="overview" className={classes.container}>
             <Typography component="span" className={classes.titleAccent}>
                 Location Name
             </Typography>
@@ -18,6 +18,7 @@ const ProductionLocationDetailsTitle = ({ classes, data }) => {
                 component="h1"
                 className={classes.title}
                 variant="headline"
+                data-testid="location-name"
             >
                 {locationName}
             </Typography>

@@ -1,0 +1,3 @@
+[flake8]
+per-file-ignores =
+    api/views/facility/facilities_view_set.py: E501

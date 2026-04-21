@@ -54,16 +54,15 @@ describe('FacilityDetailsDetail', () => {
             classes: {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
-                sourceText: 'sourceText',
                 unitText: 'unitText',
             },
         };
 
-        const { container } = render(<FacilityDetailsDetail {...props} />);
+        render(<FacilityDetailsDetail {...props} />);
 
         expect(screen.getByText('Test Primary')).toBeInTheDocument();
 
-        const sourceElement = container.querySelector('.sourceText');
+        const sourceElement = screen.getByTestId('facility-details-source-by');
         expect(sourceElement).toBeInTheDocument();
         expect(sourceElement.innerHTML).toBe('<strong>Climate TRACE</strong> API');
     });
@@ -75,14 +74,13 @@ describe('FacilityDetailsDetail', () => {
             classes: {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
-                sourceText: 'sourceText',
                 unitText: 'unitText',
             },
         };
 
-        const { container } = render(<FacilityDetailsDetail {...props} />);
+        render(<FacilityDetailsDetail {...props} />);
 
-        const sourceElement = container.querySelector('.sourceText');
+        const sourceElement = screen.getByTestId('facility-details-source-by');
         expect(sourceElement).toBeInTheDocument();
         expect(sourceElement.innerHTML).toContain('<a href="https://example.com">');
         expect(sourceElement.innerHTML).toContain('Climate TRACE');
@@ -95,17 +93,17 @@ describe('FacilityDetailsDetail', () => {
             classes: {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
-                sourceText: 'sourceText',
                 unitText: 'unitText',
             },
         };
 
-        const { container } = render(<FacilityDetailsDetail {...props} />);
+        render(<FacilityDetailsDetail {...props} />);
 
         expect(screen.getByText('Test Primary')).toBeInTheDocument();
 
-        const sourceElement = container.querySelector('.sourceText');
-        expect(sourceElement).not.toBeInTheDocument();
+        expect(
+            screen.queryByTestId('facility-details-source-by'),
+        ).not.toBeInTheDocument();
     });
 
     test('does not render sourceBy when empty string', () => {
@@ -115,15 +113,15 @@ describe('FacilityDetailsDetail', () => {
             classes: {
                 detailsContainer: 'detailsContainer',
                 primaryText: 'primaryText',
-                sourceText: 'sourceText',
                 unitText: 'unitText',
             },
         };
 
-        const { container } = render(<FacilityDetailsDetail {...props} />);
+        render(<FacilityDetailsDetail {...props} />);
 
-        const sourceElement = container.querySelector('.sourceText');
-        expect(sourceElement).not.toBeInTheDocument();
+        expect(
+            screen.queryByTestId('facility-details-source-by'),
+        ).not.toBeInTheDocument();
     });
 
     test('renders unit text inline with primary value', () => {

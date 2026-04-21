@@ -12,6 +12,7 @@ const NestedObjectProperty = ({
     schemaProperties,
     partnerConfigFields,
     classes,
+    gaSpotlightAnalytics,
 }) => {
     const title = getTitleFromSchema(propertyKey, schemaProperties);
     const displayPropertyKey = propertyKey.replace(/_/g, ' ').toUpperCase();
@@ -25,6 +26,7 @@ const NestedObjectProperty = ({
                 value={nestedValue}
                 jsonSchema={nestedSchema}
                 partnerConfigFields={partnerConfigFields}
+                gaSpotlightAnalytics={gaSpotlightAnalytics}
             />
         </div>
     );
@@ -39,10 +41,12 @@ NestedObjectProperty.propTypes = {
         displayText: string,
     }),
     classes: object.isRequired,
+    gaSpotlightAnalytics: object,
 };
 
 NestedObjectProperty.defaultProps = {
     partnerConfigFields: null,
+    gaSpotlightAnalytics: null,
 };
 
 export default withStyles(nestedObjectPropertyStyles)(NestedObjectProperty);
