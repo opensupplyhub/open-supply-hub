@@ -26,9 +26,8 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
                     rel="noopener noreferrer"
                 >
                     Learn more about how this will be calculated and when it
-                    will appear
+                    will appear.
                 </a>
-                .
             </>
         ),
     }),
