@@ -50,14 +50,14 @@ const NavBar = ({
                     label: 'Overview',
                     Icon: OverviewIcon,
                     handler: handleDefaultSectionClick('overview'),
-                    id: 'jump-to-overview-link',
+                    testid: 'jump-to-overview-link',
                 },
                 {
                     to: '#general-information',
                     label: 'General Information',
                     Icon: GeneralInformationIcon,
                     handler: handleDefaultSectionClick('general-information'),
-                    id: 'jump-to-general-information-link',
+                    testid: 'jump-to-general-information-link',
                 },
             ],
             ...(hasOperationalDetails
@@ -67,7 +67,7 @@ const NavBar = ({
                           label: 'Operational Details',
                           Icon: OperationalDetailsIcon,
                           handler: handleOperationalDetailsClick,
-                          id: 'jump-to-general-operational-details-link',
+                          testid: 'jump-to-general-operational-details-link',
                       },
                   ]
                 : []),
@@ -75,7 +75,7 @@ const NavBar = ({
                 to: `#${group.uuid}`,
                 label: group.name,
                 handler: handleGroupClick(group.uuid),
-                id: `jump-to-${group.name
+                testId: `jump-to-${group.name
                     .toLowerCase()
                     .replace(/\s+/g, '-')}-link`,
                 Image: group.icon_file
@@ -106,7 +106,7 @@ const NavBar = ({
             </Typography>
             <MenuList className={classes.menuList}>
                 {navItems.map(
-                    ({ to, label, Icon, Image, active, handler, id }) => (
+                    ({ to, label, Icon, Image, active, handler, testid }) => (
                         <MenuItem
                             key={to}
                             className={`${classes.menuItem} ${
@@ -114,7 +114,7 @@ const NavBar = ({
                             }`}
                             disableGutters
                             onClick={handler}
-                            id={id}
+                            data-testid={testid}
                         >
                             {Image ? (
                                 <Image
