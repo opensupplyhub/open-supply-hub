@@ -302,3 +302,54 @@ JS_MAX_SAFE_INTEGER = 9007199254740991
 
 PARTNER_FIELD_LIST_KEY = 'partner_field_list'
 PARTNER_FIELD_NAMES_KEY = 'partner_field_names'
+
+CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
+    ('claim_created_at', 'created_at'),
+    ('claim_name_in_native_language', 'facility_name_native_language'),
+    ('claim_company_website', 'facility_website'),
+    ('claim_company_phone', 'facility_phone_number'),
+    ('claim_point_of_contact', 'point_of_contact_person_name'),
+    ('claim_point_of_contact_email', 'point_of_contact_email'),
+    ('claim_office_name', 'office_official_name'),
+    ('claim_office_address', 'office_address'),
+    ('claim_office_country_code', 'office_country_code'),
+    ('claim_office_phone_number', 'office_phone_number'),
+    ('claim_description', 'facility_description'),
+    (
+        'claim_certifications_standards_regulations',
+        'facility_certifications',
+    ),
+    ('claim_affiliations', 'facility_affiliations'),
+    ('claim_minimum_order_quantity', 'facility_minimum_order_quantity'),
+    ('claim_average_lead_time', 'facility_average_lead_time'),
+    (
+        'claim_female_workers_percentage',
+        'facility_female_workers_percentage',
+    ),
+    ('claim_industry_sectors', 'sector'),
+    ('claim_location_types', 'facility_type'),
+    ('claim_other_location_type', 'other_facility_type'),
+    ('claim_product_types', 'facility_product_types'),
+    ('claim_processing_types', 'facility_production_types'),
+    ('claim_parent_company', 'parent_company_name'),
+    ('claim_number_of_workers', 'facility_workers_count'),
+    ('claim_opening_date', 'opening_date'),
+    ('claim_closing_date', 'closing_date'),
+    (
+        'claim_estimated_annual_throughput_kg_year',
+        'estimated_annual_throughput',
+    ),
+    ('claim_energy_coal_j', 'energy_coal'),
+    ('claim_energy_natural_gas_j', 'energy_natural_gas'),
+    ('claim_energy_diesel_j', 'energy_diesel'),
+    ('claim_energy_kerosene_j', 'energy_kerosene'),
+    ('claim_energy_biomass_j', 'energy_biomass'),
+    ('claim_energy_charcoal_j', 'energy_charcoal'),
+    ('claim_energy_animal_waste_j', 'energy_animal_waste'),
+    ('claim_energy_electricity_mwh', 'energy_electricity'),
+    ('claim_energy_other_j', 'energy_other'),
+]
+
+CLAIMED_DOWNLOAD_FIELDS = [
+    field for _, field in CLAIMED_DOWNLOAD_FIELDS_MAPPING
+]

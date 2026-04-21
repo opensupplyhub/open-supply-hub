@@ -4,7 +4,12 @@ from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
 )
 from countries.lib.countries import COUNTRY_NAMES
-from api.csv_download import format_download_extended_fields
+from api.csv_download import (
+    format_download_extended_fields,
+    format_download_claimed_fields,
+    CLAIMED_DOWNLOAD_FIELDS,
+)
+from api.constants import CLAIMED_DOWNLOAD_FIELDS_MAPPING
 from api.helpers.helpers import parse_download_date
 from rest_framework.serializers import Serializer, SerializerMethodField
 
@@ -36,6 +41,10 @@ class FacilityDownloadSerializerBase(Serializer):
         "sector",
     ]
     IS_CLOSED_HEADER = "is_closed"
+
+    CLAIMED_FIELDS_HEADERS = [
+        header for header, _ in CLAIMED_DOWNLOAD_FIELDS_MAPPING
+    ]
 
     def get_common_row(self, facility: FacilityIndexNewManager):
         return [
@@ -77,6 +86,16 @@ class FacilityDownloadSerializerBase(Serializer):
         format_download_extended_fields(fields, extended_fields)
 
         return list(map("|".join, extended_fields))
+
+    def get_claimed_fields(
+            self,
+            facility: FacilityIndexNewManager
+    ) -> List[str]:
+        claimed_fields = [''] * len(CLAIMED_DOWNLOAD_FIELDS)
+        claim = facility.approved_claim
+        if claim:
+            format_download_claimed_fields(claim, claimed_fields)
+        return claimed_fields
 
     @staticmethod
     def get_is_closed(facility: FacilityIndexNewManager) -> str:

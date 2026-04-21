@@ -28,8 +28,6 @@ function PartnerDataContainer({
         );
     }, [facilityData]);
 
-    if (!hasPartnerData) return null;
-
     return (
         <>
             <Grid
@@ -69,7 +67,7 @@ function PartnerDataContainer({
                             />
                         )}
                     </div>
-                    {!fetching && (
+                    {!fetching && hasPartnerData && (
                         <Typography
                             variant="subheading"
                             className={classes.description}
@@ -87,8 +85,31 @@ function PartnerDataContainer({
                             </a>
                         </Typography>
                     )}
+                    {!fetching && !hasPartnerData && (
+                        <Typography
+                            variant="subheading"
+                            className={classes.description}
+                        >
+                            Open Supply Hub works with third-party partners who
+                            provide additional social and environmental data
+                            related to production locations, their context,
+                            and/or their operations.{' '}
+                            <b>
+                                No partner data is currently available for this
+                                facility.
+                            </b>{' '}
+                            <a
+                                href="https://info.opensupplyhub.org/data-integrations"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Learn more about our data partnerships.
+                            </a>
+                        </Typography>
+                    )}
                 </Grid>
                 {!fetching &&
+                    hasPartnerData &&
                     partnerGroups.map(group => (
                         <PartnerSectionItem group={group} key={group.uuid} />
                     ))}
