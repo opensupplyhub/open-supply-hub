@@ -21,6 +21,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.get_partner_fields_headers(
                 FacilitiesDownloadService.get_active_partner_fields()
             ),
+            *self.get_mit_living_wage_headers(),
         ]
 
     def get_row(self, facility: FacilityIndexNewManager) -> List[str]:
@@ -35,6 +36,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
                 extended_fields_raw,
                 FacilitiesDownloadService.get_active_partner_fields()
             ),
+            *self.get_mit_living_wage_row(facility),
         ]
 
     def get_contributors(self, facility: FacilityIndexNewManager) -> str:

@@ -208,8 +208,13 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         ]
         self.empty_claim_values = [""] * len(self.claim_headers)
 
-        self.partner_field_headers: list = []
-        self.empty_partner_field_values: list = []
+        self.partner_field_headers: list = [
+            "mit_living_wage.county_link",
+            "mit_living_wage.county_link_text",
+        ]
+        self.empty_partner_field_values: list = (
+            [""] * len(self.partner_field_headers)
+        )
 
         self.default_headers = [
             "os_id",

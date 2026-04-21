@@ -48,9 +48,12 @@ CLAIM_HEADERS = [
 
 EMPTY_CLAIM_VALUES = [""] * len(CLAIM_HEADERS)
 
-PARTNER_FIELD_HEADERS: list = []
+PARTNER_FIELD_HEADERS: list = [
+    "mit_living_wage.county_link",
+    "mit_living_wage.county_link_text",
+]
 
-EMPTY_PARTNER_FIELD_VALUES: list = []
+EMPTY_PARTNER_FIELD_VALUES: list = [""] * len(PARTNER_FIELD_HEADERS)
 
 
 class FacilityDownloadSerializerTest(TestCase):

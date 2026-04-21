@@ -12,6 +12,10 @@ from api.csv_download import (
 )
 from api.constants import CLAIMED_DOWNLOAD_FIELDS_MAPPING
 from api.helpers.helpers import parse_download_date
+from api.serializers.facility.mit_living_wage_download_helper import (
+    MIT_LIVING_WAGE_DOWNLOAD_HEADERS,
+    MITLivingWageDownloadHelper,
+)
 from api.serializers.facility.partner_field_helper import (
     build_object_field_cells,
     build_primitive_field_cell,
@@ -55,6 +59,13 @@ class FacilityDownloadSerializerBase(Serializer):
 
     PARTNER_FIELD_HEADER_SEPARATOR = "."
     PARTNER_FIELD_VALUE_SEPARATOR = "|"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # Built once per serializer instance so the `mit_living_wage`
+        # PartnerField lookup and the provider are reused for every row
+        # in a paginated download instead of being rebuilt per facility.
+        self.__mit_living_wage_helper = MITLivingWageDownloadHelper()
 
     def get_common_row(self, facility: FacilityIndexNewManager):
         return [
@@ -179,3 +190,25 @@ class FacilityDownloadSerializerBase(Serializer):
                 row.append(build_primitive_field_cell(entries, separator))
 
         return row
+
+    def get_mit_living_wage_headers(self) -> List[str]:
+        '''
+        Download-only headers for the `mit_living_wage` system partner
+        field. Kept separate from `get_partner_fields_headers` because
+        `mit_living_wage` is filtered out of the regular active-partner
+        pipeline (it has `system_field=True`) and the two columns are
+        synthesized at download time from the provider + partner-field
+        row, not from `facility.extended_fields`.
+        '''
+        return MIT_LIVING_WAGE_DOWNLOAD_HEADERS
+
+    def get_mit_living_wage_row(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        '''
+        Download-only cells matching `get_mit_living_wage_headers`.
+        Returns two empty strings for any facility the MIT provider
+        can't resolve (non-US/PR/VI, no TIGER/Line match, missing
+        partner-field row, etc.).
+        '''
+        return self.__mit_living_wage_helper.get_cells(facility)
