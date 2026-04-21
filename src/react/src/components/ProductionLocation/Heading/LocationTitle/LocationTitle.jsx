@@ -18,6 +18,7 @@ const ProductionLocationDetailsTitle = ({ classes, data }) => {
                 component="h1"
                 className={classes.title}
                 variant="headline"
+                data-testid="location-name"
             >
                 {locationName}
             </Typography>

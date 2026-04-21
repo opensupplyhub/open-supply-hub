@@ -30,7 +30,11 @@ function PartnerDataContainer({
 
     return (
         <>
-            <Grid container className={classes.root}>
+            <Grid
+                container
+                className={classes.root}
+                data-testid="spotlight-section"
+            >
                 <Grid item xs={12} className={classes.titleRowContainer}>
                     <div className={classes.titleRow}>
                         {!fetching && (

@@ -63,6 +63,7 @@ const ClaimDataContainer = ({
             id={SECTION_ID}
             ref={containerRef}
             className={`${classes.container} ${className || ''}`}
+            data-testid="operational-details-section"
         >
             <div
                 className={`${classes.header}${
