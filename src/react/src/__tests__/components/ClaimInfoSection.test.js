@@ -21,19 +21,19 @@ describe('ClaimInfoSection component', () => {
             const { getByText } = renderComponent();
 
             expect(
-                getByText(/Claim requests must be submitted by a current employee/)
+                getByText(/Claim requests must be submitted by an owner or manager/)
             ).toBeInTheDocument();
             expect(
-                getByText(/If you're not an owner or manager/)
+                getByText(/If you're an employee of the production location but not an owner or manager/)
             ).toBeInTheDocument();
         });
     });
 
-    describe('Step 2 - Prove Your Name and Role rendering', () => {
+    describe('Step 2 - Submit ONE of the following to confirm your name, title and connection rendering', () => {
         test('displays Step 2 title', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText('Prove Your Name and Role')).toBeInTheDocument();
+            expect(getByText('Submit ONE of the following to confirm your name, title and connection to the company')).toBeInTheDocument();
         });
 
         test('displays OPTIONS list', () => {
@@ -60,12 +60,12 @@ describe('ClaimInfoSection component', () => {
         });
     });
 
-    describe('Step 3 - Prove Company Name and Address rendering', () => {
+    describe('Step 3 - Submit ONE of the following to confirm name and address rendering', () => {
         test('displays Step 3 title', () => {
             const { getByText } = renderComponent();
 
             expect(
-                getByText('Prove Company Name and Address')
+                getByText('Submit ONE of the following to confirm name and address of the company')
             ).toBeInTheDocument();
         });
 

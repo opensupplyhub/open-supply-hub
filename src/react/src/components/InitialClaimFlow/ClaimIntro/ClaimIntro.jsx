@@ -65,10 +65,8 @@ const ClaimIntro = ({
                             variant="subheading"
                             className={classes.subtitle}
                         >
-                            In order to submit a claim request, you must be an
-                            owner, manager, have supervisor approval or be an
-                            authorized representative of the parent company of
-                            the production location.
+                            Review the steps below to confirm your eligibility
+                            and gather required documentation before you begin.
                         </Typography>
                     </div>
                     <ClaimInfoSection>
