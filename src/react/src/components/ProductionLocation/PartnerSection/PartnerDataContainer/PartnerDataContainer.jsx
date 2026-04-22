@@ -23,10 +23,20 @@ function PartnerDataContainer({
     const hasPartnerData = useMemo(() => {
         const fields = facilityData?.properties?.partner_fields;
         if (!fields) return false;
-        return Object.values(fields).some(
-            values => Array.isArray(values) && values.length > 0 && values[0],
+
+        const fieldsWithValues = Object.keys(fields).filter(key => {
+            const values = fields[key];
+            return Array.isArray(values) && values.length > 0 && values[0];
+        });
+
+        if (fieldsWithValues.length === 0) return false;
+
+        return partnerGroups.some(group =>
+            group.partner_fields.some(field =>
+                fieldsWithValues.includes(field),
+            ),
         );
-    }, [facilityData]);
+    }, [facilityData, partnerGroups]);
 
     return (
         <>
