@@ -23,6 +23,18 @@ import {
     startFetchUserApiInfo,
     failFetchUserApiInfo,
     completeFetchUserApiInfo,
+    startFetchProductionLocations,
+    failFetchProductionLocations,
+    completeFetchProductionLocations,
+    startFetchMoreProductionLocations,
+    failFetchMoreProductionLocations,
+    completeFetchMoreProductionLocations,
+    startFetchFacilityLists,
+    failFetchFacilityLists,
+    completeFetchFacilityLists,
+    startFetchMoreFacilityLists,
+    failFetchMoreFacilityLists,
+    completeFetchMoreFacilityLists,
 } from '../actions/profile';
 
 import {
@@ -31,11 +43,7 @@ import {
     completeSubmitLogOut,
 } from '../actions/auth';
 
-import {
-    registrationFieldsEnum,
-    profileFieldsEnum,
-    profileSummaryFieldsEnum,
-} from '../util/constants';
+import { registrationFieldsEnum, profileFieldsEnum } from '../util/constants';
 
 const initialState = Object.freeze({
     profile: Object.freeze({
@@ -50,7 +58,6 @@ const initialState = Object.freeze({
         [profileFieldsEnum.currentPassword]: '',
         [profileFieldsEnum.newPassword]: '',
         [profileFieldsEnum.confirmNewPassword]: '',
-        [profileSummaryFieldsEnum.facilityLists]: [],
     }),
     formSubmission: {
         fetching: false,
@@ -68,6 +75,20 @@ const initialState = Object.freeze({
             renewalPeriod: 'Is not set',
         }),
         fetching: false,
+        error: null,
+    }),
+    productionLocations: Object.freeze({
+        data: Object.freeze([]),
+        fetching: false,
+        fetchingMore: false,
+        nextPageUrl: null,
+        error: null,
+    }),
+    facilityLists: Object.freeze({
+        data: Object.freeze([]),
+        fetching: false,
+        fetchingMore: false,
+        nextPageUrl: null,
         error: null,
     }),
     fetching: false,
@@ -203,13 +224,6 @@ export default createReducer(
                     newPassword: { $set: '' },
                     confirmNewPassword: { $set: '' },
                     isVerified: { $set: payload.is_verified || false },
-                    facilityLists: {
-                        $set:
-                            payload.facility_lists ||
-                            initialState[
-                                profileSummaryFieldsEnum.facilityLists
-                            ],
-                    },
                     contributorId: { $set: payload.contributor_id || null },
                 },
                 fetching: { $set: false },
@@ -230,6 +244,8 @@ export default createReducer(
                     otherContributorType: {
                         $set: payload.other_contributor_type || '',
                     },
+                    isVerified: { $set: payload.is_verified || false },
+                    contributorId: { $set: payload.contributor_id || null },
                 },
                 fetching: { $set: false },
                 error: { $set: null },
@@ -278,6 +294,98 @@ export default createReducer(
                     [profileFieldsEnum.confirmNewPassword]: {
                         $set: initialState.profile.confirmNewPassword,
                     },
+                },
+            }),
+        [startFetchProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    data: { $set: payload.features },
+                    fetching: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
+                },
+            }),
+        [startFetchMoreProductionLocations]: state =>
+            update(state, {
+                productionLocations: {
+                    fetchingMore: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchMoreProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    fetchingMore: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchMoreProductionLocations]: (state, payload) =>
+            update(state, {
+                productionLocations: {
+                    data: { $push: payload.features },
+                    fetchingMore: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
+                },
+            }),
+        [startFetchFacilityLists]: state =>
+            update(state, {
+                facilityLists: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    data: { $set: payload.results },
+                    fetching: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
+                },
+            }),
+        [startFetchMoreFacilityLists]: state =>
+            update(state, {
+                facilityLists: {
+                    fetchingMore: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchMoreFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    fetchingMore: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchMoreFacilityLists]: (state, payload) =>
+            update(state, {
+                facilityLists: {
+                    data: { $push: payload.results },
+                    fetchingMore: { $set: false },
+                    nextPageUrl: { $set: payload.nextPageUrl },
+                    error: { $set: null },
                 },
             }),
         [resetUserProfile]: () => initialState,

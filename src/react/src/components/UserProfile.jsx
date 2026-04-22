@@ -10,7 +10,6 @@ import { toast } from 'react-toastify';
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import Button from './Button';
-import FacilityListSummary from './FacilityListSummary';
 import UserProfileField from './UserProfileField';
 import UserCookiePreferences from './UserCookiePreferences';
 import BadgeVerified from './BadgeVerified';
@@ -18,6 +17,8 @@ import MapIcon from './MapIcon';
 import ShowOnly from './ShowOnly';
 import RouteNotFound from './RouteNotFound';
 import COLOURS from '../util/COLOURS';
+import UserProfileProductionLocations from './UserProfileProductionLocations/UserProfileProductionLocations';
+import UserProfileFacilityLists from './UserProfileFacilityLists/UserProfileFacilityLists';
 
 import '../styles/css/specialStates.css';
 
@@ -46,6 +47,8 @@ import {
     fetchUserProfile,
     resetUserProfile,
     updateUserProfile,
+    fetchProductionLocations,
+    fetchFacilityLists,
 } from '../actions/profile';
 
 const profileStyles = Object.freeze({
@@ -63,8 +66,9 @@ const profileStyles = Object.freeze({
     }),
     appGridContainer: Object.freeze({
         justifyContent: 'space-between',
-        marginBottom: '100px',
-        backgroundColor: '#fff',
+        marginBottom: '30px',
+        backgroundColor: COLOURS.WHITE,
+        padding: '0 24px 24px 24px',
     }),
     submitButton: Object.freeze({
         display: 'flex',
@@ -84,9 +88,51 @@ const profileStyles = Object.freeze({
     badgeVerifiedStyles: Object.freeze({
         padding: '10px',
     }),
+    sectionLabelStyles: Object.freeze({
+        fontWeight: '900',
+        fontSize: '14px',
+        letterSpacing: '0.5px',
+        lineHeight: '14px',
+        textTransform: 'uppercase',
+    }),
+    titleBar: Object.freeze({
+        display: 'flex',
+        justifyContent: 'space-between',
+    }),
+    facilityMapLink: Object.freeze({
+        backgroundColor: '#FFCF3F',
+        color: '#000',
+        fontSize: '18px',
+        fontWeight: '900',
+        lineHeight: '20px',
+        textDecoration: 'none',
+        padding: '16px',
+        gap: '8px',
+        display: 'flex',
+    }),
+    backgroundWrapper: Object.freeze({
+        backgroundColor: '#F9F7F7',
+    }),
+    backButton: Object.freeze({
+        backgroundColor: 'transparent',
+        color: '#8428FA',
+        fontSize: '18px',
+        fontWeight: '700',
+        lineHeight: '18px',
+        letterSpacing: '0.5px',
+        textTransform: 'none',
+    }),
 });
 
 class UserProfile extends Component {
+    isEditableProfile() {
+        const { user, id, profile, allowEdits } = this.props;
+        const isCurrentUsersProfile =
+            !user.isAnon &&
+            [profile.id, Number(id)].every(val => val === user.id);
+        return allowEdits && isCurrentUsersProfile;
+    }
+
     componentDidMount() {
         return this.props.fetchProfile();
     }
@@ -98,6 +144,9 @@ class UserProfile extends Component {
             resetProfile,
             updatingProfile,
             errorsUpdatingProfile,
+            profile,
+            fetchLocations,
+            fetchLists,
         } = this.props;
 
         if (prevProps.id !== id) {
@@ -111,6 +160,13 @@ class UserProfile extends Component {
 
         if (!updatingProfile && prevProps.updatingProfile) {
             return toast('Updated profile!');
+        }
+
+        if (profile.id && profile.id !== prevProps.profile.id) {
+            if (!this.isEditableProfile()) {
+                fetchLocations(profile.id);
+                fetchLists(profile.id);
+            }
         }
 
         return null;
@@ -152,7 +208,7 @@ class UserProfile extends Component {
             !user.isAnon &&
             [profile.id, Number(id)].every(val => val === user.id);
 
-        const isEditableProfile = allowEdits && isCurrentUsersProfile;
+        const isEditableProfile = this.isEditableProfile();
 
         const moderationEnabled =
             user.is_staff === true && user.is_superuser === true;
@@ -197,17 +253,7 @@ class UserProfile extends Component {
 
         const title = (
             <div>
-                <h3
-                    style={{
-                        fontWeight: '900',
-                        fontSize: '14px',
-                        letterSpacing: '0.5px',
-                        lineHeight: '14px',
-                        textTransform: 'uppercase',
-                    }}
-                >
-                    Organization
-                </h3>
+                <h3 style={profileStyles.sectionLabelStyles}>Organization</h3>
                 <h2 style={profileStyles.titleStyles}>
                     {!isEditableProfile && profile.name}
                 </h2>
@@ -225,10 +271,7 @@ class UserProfile extends Component {
         const titleBar = (
             <div
                 className="user-profile-title-bar"
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                }}
+                style={profileStyles.titleBar}
             >
                 {title}
                 <ShowOnly when={!isEditableProfile}>
@@ -236,17 +279,7 @@ class UserProfile extends Component {
                         <a
                             href={`/facilities?contributors=${profile.contributorId}`}
                             rel="noopener noreferrer"
-                            style={{
-                                backgroundColor: '#FFCF3F',
-                                color: '#000',
-                                fontSize: '18px',
-                                fontWeight: '900',
-                                lineHeight: '20px',
-                                textDecoration: 'none',
-                                padding: '16px',
-                                gap: '8px',
-                                display: 'flex',
-                            }}
+                            style={profileStyles.facilityMapLink}
                         >
                             <MapIcon />
                             View map of facilities
@@ -293,52 +326,16 @@ class UserProfile extends Component {
             </div>
         ) : null;
 
-        const facilityLists =
-            !isEditableProfile && profile.facilityLists.length > 0 ? (
-                <React.Fragment>
-                    <h3
-                        style={{
-                            fontWeight: '900',
-                            fontSize: '14px',
-                            letterSpacing: '0.5px',
-                            lineHeight: '14px',
-                            textTransform: 'uppercase',
-                        }}
-                    >
-                        Facility Lists
-                    </h3>
-                    <p color="#191919">
-                        The following lists have been provided by this
-                        contributor:
-                    </p>
-                    {profile.facilityLists.map(list => (
-                        <FacilityListSummary
-                            key={list.id}
-                            contributor={list.contributor_id}
-                            {...list}
-                        />
-                    ))}
-                </React.Fragment>
-            ) : null;
-
         const cookiePreferences = isEditableProfile ? (
             <UserCookiePreferences />
         ) : null;
 
         return (
             <AppOverflow>
-                <div style={{ backgroundColor: '#F9F7F7' }}>
+                <div style={profileStyles.backgroundWrapper}>
                     <ShowOnly when={!isEditableProfile}>
                         <Button
-                            style={{
-                                backgroundColor: 'transparent',
-                                color: '#8428FA',
-                                fontSize: '18px',
-                                fontWeight: '700',
-                                lineHeight: '18px',
-                                letterSpacing: '0.5px',
-                                textTransform: 'none',
-                            }}
+                            style={profileStyles.backButton}
                             Icon={ArrowBack}
                             text="Back to search results"
                             onClick={() => {
@@ -353,12 +350,13 @@ class UserProfile extends Component {
                         <Grid item xs={12}>
                             {toolbar}
                             {profileInputs}
-                            {facilityLists}
                             {errorMessages}
                             {submitButton}
                             {cookiePreferences}
                         </Grid>
                     </AppGrid>
+                    {!isEditableProfile && <UserProfileProductionLocations />}
+                    {!isEditableProfile && <UserProfileFacilityLists />}
                 </div>
             </AppOverflow>
         );
@@ -384,6 +382,8 @@ UserProfile.propTypes = {
     errorsUpdatingProfile: arrayOf(string),
     submitFormOnEnterKeyPress: func.isRequired,
     errorFetchingProfile: arrayOf(string),
+    fetchLocations: func.isRequired,
+    fetchLists: func.isRequired,
 };
 
 function mapStateToProps({
@@ -438,6 +438,9 @@ const mapDispatchToProps = (dispatch, { id: profileID }) => {
         fetchProfile: () => dispatch(fetchUserProfile(Number(profileID))),
         resetProfile: () => dispatch(resetUserProfile()),
         updateProfile: () => dispatch(updateUserProfile(Number(profileID))),
+        fetchLocations: profileId =>
+            dispatch(fetchProductionLocations(profileId)),
+        fetchLists: profileId => dispatch(fetchFacilityLists(profileId)),
         submitFormOnEnterKeyPress: makeSubmitFormOnEnterKeyPressFunction(() =>
             dispatch(updateUserProfile(Number(profileID))),
         ),
