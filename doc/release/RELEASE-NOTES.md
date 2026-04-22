@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* **0207_add_energy_and_throughput_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
+* 0207_add_energy_and_throughput_to_index_approved_claim.py — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
 
 ### What's new
 * [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
@@ -69,6 +69,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **Multiple contributions** for the same field on one location are joined with `|`, matching existing `number_of_workers` / `product_type` behavior.
     * **MIT Living Wage (download-only)** — `mit_living_wage.county_link` (`base_url` + FIPS county code, e.g. `https://livingwage.mit.edu/counties/25017`) and `mit_living_wage.county_link_text` (`display_text`) are synthesized at export time from `MITLivingWageProvider` output and the shared partner-field cache.
     * **Caching** — `FacilitiesDownloadService.get_active_partner_fields()` and `FacilityIndexDetailsSerializer` share a `get_cached_all_partner_fields()` helper that caches the full `PartnerField` superset under `PARTNER_FIELD_LIST_KEY` (TTL: `PARTNER_FIELD_LIST_CACHE_TTL_SECONDS`) and filters in memory, so cache contents are consistent regardless of which caller warms it.
+* [OSDEV-2426](https://opensupplyhub.atlassian.net/browse/OSDEV-2426) - Added a site-wide maintenance banner that is displayed automatically when the `disable_list_uploading` waffle switch is active in Django Admin. The banner informs users that planned maintenance is in progress, that data uploads are temporarily unavailable, and that full service will resume shortly. Feature flags are now silently re-fetched on every React Router navigation, so the banner appears and disappears dynamically as the switch is toggled — without requiring a page refresh.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
