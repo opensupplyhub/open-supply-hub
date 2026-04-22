@@ -1,7 +1,7 @@
 import COLOURS from '../../../util/COLOURS';
 import getTypographyStyles from '../../../util/typographyStyles';
 
-const styles = theme => {
+export default theme => {
     const typography = getTypographyStyles(theme);
     return {
         banner: {
@@ -31,5 +31,3 @@ const styles = theme => {
         },
     };
 };
-
-export default styles;

@@ -5,7 +5,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import { DISABLE_LIST_UPLOADING } from '../../../util/constants';
-import styles from './styles';
+import maintenanceBannerStyles from './styles';
 
 const MaintenanceBanner = ({ isActive, classes }) => {
     if (!isActive) {
@@ -41,4 +41,6 @@ const mapStateToProps = ({ featureFlags: { flags } }) => ({
     isActive: !!flags[DISABLE_LIST_UPLOADING],
 });
 
-export default connect(mapStateToProps)(withStyles(styles)(MaintenanceBanner));
+export default connect(mapStateToProps)(
+    withStyles(maintenanceBannerStyles)(MaintenanceBanner),
+);
