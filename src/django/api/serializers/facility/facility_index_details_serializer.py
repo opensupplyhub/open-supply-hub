@@ -3,6 +3,7 @@ from typing import Dict, List, Any
 from rest_framework.serializers import (
   SerializerMethodField,
 )
+from drf_yasg.utils import swagger_serializer_method
 from waffle import switch_is_active
 from django.core.cache import cache
 
@@ -33,6 +34,7 @@ from .utils import (
     format_date,
     is_created_at_main_date
 )
+from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -361,6 +363,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     def get_is_claimed(self, facility):
         return facility.approved_claim is not None
 
+    @swagger_serializer_method(
+        serializer_or_field=PartnerFieldEntrySerializer(many=True)
+    )
     def get_partner_fields(self, facility):
         request = self._get_request()
 

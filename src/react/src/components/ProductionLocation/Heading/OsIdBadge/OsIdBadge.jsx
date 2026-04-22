@@ -22,6 +22,7 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
                 component="h2"
                 variant="title"
                 className={classes.osIdValue}
+                data-testid="os-id"
             >
                 <span className={classes.osIdLabel}>OS ID</span>: {osId}
             </Typography>
