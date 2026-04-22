@@ -12,6 +12,9 @@ from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
+from api.serializers.facility.partner_field_helper import (
+    get_cached_all_partner_fields,
+)
 from api.exceptions import ServiceUnavailableException
 from api.constants import APIErrorMessages
 
@@ -38,6 +41,33 @@ logger = logging.getLogger(__name__)
 
 
 class FacilitiesDownloadService:
+    @staticmethod
+    def get_active_partner_fields():
+        '''
+        Return the PartnerField instances that should appear as download
+        columns: active and not a system field, sorted by name.
+
+        Reads from the shared `PARTNER_FIELD_LIST_KEY` cache via
+        `get_cached_all_partner_fields` (which always caches the full
+        superset so it stays consistent with other consumers such as
+        `FacilityIndexDetailsSerializer`) and filters the result in
+        memory. System fields are excluded because they are synthesized
+        at read time from registered providers rather than from
+        contributor-supplied extended fields, and inactive fields are
+        dropped so deactivated partners do not leak back into exports.
+
+        The cache avoids one query per paginated page during a single
+        download session and is invalidated by `PartnerField.save`/
+        `delete` hooks so new or updated partners appear in subsequent
+        exports.
+        '''
+        partner_fields = [
+            pf
+            for pf in get_cached_all_partner_fields()
+            if pf.active and not pf.system_field
+        ]
+        return sorted(partner_fields, key=lambda pf: pf.name)
+
     @staticmethod
     def check_if_downloads_are_blocked():
         if switch_is_active('block_location_downloads'):

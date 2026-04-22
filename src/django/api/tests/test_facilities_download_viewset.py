@@ -105,6 +105,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "10",
@@ -159,6 +161,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "11",
@@ -213,6 +217,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "12",
@@ -267,6 +273,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "13",
@@ -321,6 +329,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "14",
@@ -375,6 +385,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "15",
@@ -429,6 +441,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "16",
@@ -483,6 +497,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "17",
@@ -537,6 +553,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "18",
@@ -591,6 +609,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "2",
@@ -646,6 +666,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "3",
@@ -700,6 +722,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "4",
@@ -754,6 +778,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "5",
@@ -808,6 +834,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "6",
@@ -862,6 +890,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "7",
@@ -916,6 +946,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "8",
@@ -970,6 +1002,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
             [
                 "9",
@@ -1024,6 +1058,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
         ]
         actual_data = response.data.get("results", {}).get("rows", [])
@@ -1107,6 +1143,8 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
+                "",
             ],
         ]
 
