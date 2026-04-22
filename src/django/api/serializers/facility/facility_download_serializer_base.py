@@ -22,6 +22,10 @@ from api.serializers.facility.partner_field_helper import (
     group_extended_fields_by_name,
     partner_field_property_paths,
 )
+from api.serializers.facility.wage_indicator_download_helper import (
+    WAGE_INDICATOR_DOWNLOAD_HEADERS,
+    WageIndicatorDownloadHelper,
+)
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 
@@ -62,10 +66,11 @@ class FacilityDownloadSerializerBase(Serializer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        # Built once per serializer instance so the `mit_living_wage`
-        # PartnerField lookup and the provider are reused for every row
-        # in a paginated download instead of being rebuilt per facility.
+        # Built once per serializer instance so each system-partner-field
+        # provider lookup is reused across every row in a paginated
+        # download instead of being rebuilt per facility.
         self.__mit_living_wage_helper = MITLivingWageDownloadHelper()
+        self.__wage_indicator_helper = WageIndicatorDownloadHelper()
 
     def get_common_row(self, facility: FacilityIndexNewManager):
         return [
@@ -212,3 +217,25 @@ class FacilityDownloadSerializerBase(Serializer):
         partner-field row, etc.).
         '''
         return self.__mit_living_wage_helper.get_cells(facility)
+
+    def get_wage_indicator_headers(self) -> List[str]:
+        '''
+        Download-only headers for the `wage_indicator` system partner
+        field. Like `mit_living_wage`, `wage_indicator` has
+        `system_field=True` so it's excluded from the regular
+        active-partner pipeline; its six columns (URL + display text
+        for each of the three link types) are synthesized at download
+        time from `WageIndicatorProvider` output.
+        '''
+        return WAGE_INDICATOR_DOWNLOAD_HEADERS
+
+    def get_wage_indicator_row(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        '''
+        Download-only cells matching `get_wage_indicator_headers`.
+        Returns six empty strings for any facility whose country has
+        no `WageIndicatorCountryData` row, or when the
+        `wage_indicator` `PartnerField` has no associated contributor.
+        '''
+        return self.__wage_indicator_helper.get_cells(facility)
