@@ -40,7 +40,7 @@ import withProductionLocationSubmit from './components/Contribute/HOC/withProduc
 import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 
 import { sessionLogin } from './actions/auth';
-import { fetchFeatureFlags } from './actions/featureFlags';
+import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
 import { reportWindowResize } from './actions/ui';
 
 import { setFacilityGridRamp } from './actions/vectorTileLayer';
@@ -93,8 +93,17 @@ class Routes extends Component {
 
         window.setGridColorRamp = this.props.setRamp;
         this.props.getFeatureFlags();
+        this.unlistenHistory = history.listen(() =>
+            this.props.refreshFeatureFlags(),
+        );
 
         return this.props.logIn();
+    }
+
+    componentWillUnmount() {
+        if (this.unlistenHistory) {
+            this.unlistenHistory();
+        }
     }
 
     render() {
@@ -314,6 +323,7 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch) {
     return {
         getFeatureFlags: () => dispatch(fetchFeatureFlags()),
+        refreshFeatureFlags: () => dispatch(refreshFeatureFlags()),
         logIn: () => dispatch(sessionLogin()),
         handleWindowResize: data => dispatch(reportWindowResize(data)),
         setRamp: ramp => dispatch(setFacilityGridRamp(ramp)),
