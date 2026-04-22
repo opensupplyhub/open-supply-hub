@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import MaintenanceBanner from '../../components/Navbar/MaintenanceBanner';
+import MaintenanceBanner from '../../components/Navbar/MaintenanceBanner/MaintenanceBanner';
 
 const HEADLINE_TEXT =
     'Open Supply Hub is currently undergoing planned maintenance.';
