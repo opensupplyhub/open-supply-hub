@@ -1,26 +1,3 @@
-'''
-Download-only transform for the `wage_indicator` system partner field.
-
-Mirrors `mit_living_wage_download_helper` in spirit: it emits flat CSV/
-XLSX columns at export time without touching the provider, the
-`PartnerField` row, the `WageIndicatorCountryData` model, or running
-any migration.
-
-Unlike MIT — which stores only a `county_id` in `raw_values` and has to
-concatenate it with `PartnerField.base_url` at render time — the
-`WageIndicatorProvider` already emits both the URL and the display text
-for every link directly in `raw_values` (see `get_links_with_text` on
-`WageIndicatorCountryData`). So this helper is a pure projection: for
-each of the three link types we emit one URL column and one text
-column, in a fixed declaration order that matches
-`WageIndicatorCountryData.LinkType`.
-
-Cells are empty for any facility whose country has no
-`WageIndicatorCountryData` row, for any environment where no
-contributor is associated with the `wage_indicator` `PartnerField`
-(the provider's `fetch_data` contract returns `None` in that case),
-or for any individual link type the country's row leaves blank.
-'''
 from typing import List
 
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
