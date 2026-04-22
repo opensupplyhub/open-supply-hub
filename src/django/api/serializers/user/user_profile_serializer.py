@@ -2,11 +2,8 @@ from rest_framework.serializers import (
     ModelSerializer,
     SerializerMethodField,
 )
-from ...models import Contributor, FacilityList, User
+from ...models import Contributor, User
 from ..embed_config import EmbedConfigSerializer
-from ..facility.facility_list_summary_serializer import (
-    FacilityListSummarySerializer
-)
 
 
 class UserProfileSerializer(ModelSerializer):
@@ -23,10 +20,20 @@ class UserProfileSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'description', 'website', 'contributor_type',
-                  'other_contributor_type', 'facility_lists', 'is_verified',
-                  'is_moderation_mode', 'embed_config', 'contributor_id')
-        read_only_fields = ('contributor_id',)
+        fields = (
+            "id",
+            "name",
+            "description",
+            "website",
+            "contributor_type",
+            "other_contributor_type",
+            "facility_lists",
+            "is_verified",
+            "is_moderation_mode",
+            "embed_config",
+            "contributor_id",
+        )
+        read_only_fields = ("contributor_id",)
 
     def get_name(self, user):
         try:
@@ -64,20 +71,9 @@ class UserProfileSerializer(ModelSerializer):
         except Contributor.DoesNotExist:
             return None
 
-    def get_facility_lists(self, user):
-        try:
-            contributor = user.contributor
-            return FacilityListSummarySerializer(
-                FacilityList.objects.filter(
-                    source__contributor=contributor,
-                    source__is_active=True,
-                    source__is_public=True,
-                    status=FacilityList.APPROVED,
-                ).order_by('-created_at'),
-                many=True,
-            ).data
-        except Contributor.DoesNotExist:
-            return []
+    # TODO: Deprecated. Returns a stub to avoid breaking changes.
+    def get_facility_lists(self, _):
+        return []
 
     def get_is_verified(self, user):
         try:

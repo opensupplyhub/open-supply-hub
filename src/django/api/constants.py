@@ -303,6 +303,11 @@ JS_MAX_SAFE_INTEGER = 9007199254740991
 PARTNER_FIELD_LIST_KEY = 'partner_field_list'
 PARTNER_FIELD_NAMES_KEY = 'partner_field_names'
 
+# Shared TTL (seconds) for the `PARTNER_FIELD_LIST_KEY` cache entry.
+# Consumers reading/writing this cache key should use this constant so the
+# entry behaves consistently no matter which caller warmed it.
+PARTNER_FIELD_LIST_CACHE_TTL_SECONDS = 60
+
 CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_created_at', 'created_at'),
     ('claim_name_in_native_language', 'facility_name_native_language'),
