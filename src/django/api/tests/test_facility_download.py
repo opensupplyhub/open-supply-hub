@@ -208,6 +208,14 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         ]
         self.empty_claim_values = [""] * len(self.claim_headers)
 
+        self.partner_field_headers: list = [
+            "mit_living_wage.county_link",
+            "mit_living_wage.county_link_text",
+        ]
+        self.empty_partner_field_values: list = (
+            [""] * len(self.partner_field_headers)
+        )
+
         self.default_headers = [
             "os_id",
             "contribution_date",
@@ -227,6 +235,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "product_type",
             *self.claim_headers,
             "is_closed",
+            *self.partner_field_headers,
         ]
         self.contrib_facility_base_row = [
             self.contrib_facility.id,
@@ -247,6 +256,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             *self.empty_claim_values,
             "False",
+            *self.empty_partner_field_values,
         ]
 
         self.user_two = User.objects.create(email="test2@example.com")
@@ -522,6 +532,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             *self.empty_claim_values,
             "False",
+            *self.empty_partner_field_values,
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
         self.assertEqual(base_row, expected_base_row)
@@ -639,6 +650,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "Shirts",
             *self.empty_claim_values,
             "False",
+            *self.empty_partner_field_values,
         ]
         self.assertEqual(len(base_row), len(row))
         self.assertEqual(base_row, row)
@@ -701,6 +713,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "False",
+            *self.empty_partner_field_values,
         ]
         self.assertEquals(rows[0], row)
 
@@ -736,6 +749,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             *self.empty_claim_values,
             "False",
+            *self.empty_partner_field_values,
         ]
         self.assertEqual(row, rows[0])
 
@@ -802,6 +816,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             *self.empty_claim_values,
             "False",
+            *self.empty_partner_field_values,
         ]
         self.assertEquals(rows[0], row)
 
@@ -833,6 +848,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             *self.empty_claim_values,
             "False",
+            *self.empty_partner_field_values,
         ]
         self.assertEquals(rows[0], row)
 

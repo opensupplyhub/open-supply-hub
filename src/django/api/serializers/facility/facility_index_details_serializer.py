@@ -5,10 +5,12 @@ from rest_framework.serializers import (
 )
 from drf_yasg.utils import swagger_serializer_method
 from waffle import switch_is_active
-from django.core.cache import cache
 
-from api.constants import FacilityClaimStatuses, PARTNER_FIELD_LIST_KEY
+from api.constants import FacilityClaimStatuses
 from api.partner_fields.registry import system_partner_field_registry
+from api.serializers.facility.partner_field_helper import (
+    get_cached_all_partner_fields,
+)
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
@@ -485,15 +487,4 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     @staticmethod
     def __get_cached_partner_fields():
-        cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
-
-        if cached_names is not None:
-            return cached_names
-
-        partner_fields = list(
-            PartnerField.objects.all()
-        )
-
-        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
-
-        return partner_fields
+        return get_cached_all_partner_fields()
