@@ -15,6 +15,7 @@ from api.models import (
     Source,
     User,
 )
+from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from django.core.files.uploadedfile import SimpleUploadedFile
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
@@ -31,6 +32,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
 
     def setUp(self):
         super(FacilityDownloadTest, self).setUp()
+        # Migration 0193 seeds WageIndicatorCountryData for every country
+        # these tests use. Clear it so the download row assertions below
+        # can expect empty `wage_indicator.*` cells instead of
+        # migration-provided URLs.
+        WageIndicatorCountryData.objects.all().delete()
         self.download_url = "/api/facilities-downloads/"
         self.contributor_column_index = 9
         self.date = timezone.now().strftime("%Y-%m-%d")
