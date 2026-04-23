@@ -41,7 +41,7 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
     def _format_data(
         self,
         raw_data: WageIndicatorCountryData,
-        contributor_info: Dict[str, Any],
+        contributor_info: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """
         Format wage indicator data into standard partner field structure.

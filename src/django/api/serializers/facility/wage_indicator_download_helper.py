@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
 
@@ -35,11 +35,15 @@ class WageIndicatorDownloadHelper:
     Stateless helper that projects `WageIndicatorProvider` output into
     six flat columns (URL + display text for each of the three link
     types). Instantiated once per serializer so the provider instance
-    is reused across every row of a paginated download.
+    and the per-country raw_values cache are reused across every row
+    of a paginated download.
     '''
 
     def __init__(self) -> None:
         self.__provider = WageIndicatorProvider()
+        self.__raw_values_cache: Dict[
+            Optional[str], Optional[Dict[str, Any]]
+        ] = {}
 
     def get_cells(self, facility) -> List[str]:
         '''
@@ -47,14 +51,7 @@ class WageIndicatorDownloadHelper:
         `WAGE_INDICATOR_DOWNLOAD_HEADERS`, or six empty strings if the
         provider has no data for this facility.
         '''
-        try:
-            data = self.__provider.fetch_data(facility)
-        except Exception:
-            return list(EMPTY_CELLS)
-        if not isinstance(data, dict):
-            return list(EMPTY_CELLS)
-
-        raw_values = (data.get('value') or {}).get('raw_values') or {}
+        raw_values = self.__get_raw_values(facility)
         if not isinstance(raw_values, dict):
             return list(EMPTY_CELLS)
 
@@ -63,3 +60,15 @@ class WageIndicatorDownloadHelper:
             cells.append(raw_values.get(link_type) or '')
             cells.append(raw_values.get(f'{link_type}_text') or '')
         return cells
+
+    def __get_raw_values(self, facility) -> Optional[Dict[str, Any]]:
+        country_code = getattr(facility, 'country_code', None)
+        if country_code in self.__raw_values_cache:
+            return self.__raw_values_cache[country_code]
+
+        try:
+            raw_values = self.__provider.fetch_only_raw_values(facility)
+        except Exception:
+            raw_values = None
+        self.__raw_values_cache[country_code] = raw_values
+        return raw_values
