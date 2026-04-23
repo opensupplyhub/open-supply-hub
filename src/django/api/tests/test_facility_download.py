@@ -211,6 +211,12 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.partner_field_headers: list = [
             "mit_living_wage.county_link",
             "mit_living_wage.county_link_text",
+            "wage_indicator.living_wage_link_national",
+            "wage_indicator.living_wage_link_national_text",
+            "wage_indicator.minimum_wage_link_english",
+            "wage_indicator.minimum_wage_link_english_text",
+            "wage_indicator.minimum_wage_link_national",
+            "wage_indicator.minimum_wage_link_national_text",
         ]
         self.empty_partner_field_values: list = (
             [""] * len(self.partner_field_headers)
