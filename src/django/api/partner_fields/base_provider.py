@@ -70,8 +70,12 @@ class SystemPartnerFieldProvider(ABC):
             raw_data=raw_data,
             contributor_info=None,
         )
-        value = formatted.get("value") if isinstance(formatted, dict) else None
-        raw_values = value.get("raw_values") if isinstance(value, dict) else None
+        value = (
+            formatted.get("value") if isinstance(formatted, dict) else None
+        )
+        raw_values = (
+            value.get("raw_values") if isinstance(value, dict) else None
+        )
         if not isinstance(raw_values, dict):
             return None
         return raw_values
