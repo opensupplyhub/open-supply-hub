@@ -49,6 +49,33 @@ class SystemPartnerFieldProvider(ABC):
             contributor_info=contributor_info,
         )
 
+    def fetch_only_raw_values(
+        self,
+        production_location: Facility,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Download-only fast path. Returns just the `raw_values` dict
+        produced by `_format_data`, skipping the per-call
+        `PartnerField` + `Contributor` lookups that `fetch_data` does
+        for the details endpoint.
+
+        Returns `None` if no raw data is available or the formatted
+        payload has no `raw_values` dict.
+        """
+        raw_data = self._fetch_raw_data(production_location)
+        if raw_data is None:
+            return None
+
+        formatted = self._format_data(
+            raw_data=raw_data,
+            contributor_info=None,
+        )
+        value = formatted.get("value") if isinstance(formatted, dict) else None
+        raw_values = value.get("raw_values") if isinstance(value, dict) else None
+        if not isinstance(raw_values, dict):
+            return None
+        return raw_values
+
     @abstractmethod
     def _get_field_name(self) -> str:
         """
@@ -64,7 +91,9 @@ class SystemPartnerFieldProvider(ABC):
 
     @abstractmethod
     def _format_data(
-        self, raw_data: Any, contributor_info: Dict[str, Any]
+        self,
+        raw_data: Any,
+        contributor_info: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Format raw data into the standard partner field structure."""
         pass
