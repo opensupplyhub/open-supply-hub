@@ -81,7 +81,7 @@ class UserProfileFacilities(ListAPIView):
         )
 
         if not partner_fields:
-            return queryset
+            return self.__base_queryset().none()
 
         if "wage_indicator" in partner_fields:
             country_codes = list(
