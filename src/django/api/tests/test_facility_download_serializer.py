@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
+from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
@@ -66,6 +67,11 @@ class FacilityDownloadSerializerTest(TestCase):
     fixtures = ["facilities_index"]
 
     def setUp(self):
+        # Migration 0193 seeds WageIndicatorCountryData for every country
+        # these fixtures use. Clear it so the partner-field assertions
+        # below can expect empty `wage_indicator.*` cells instead of
+        # migration-provided URLs.
+        WageIndicatorCountryData.objects.all().delete()
         self.facility_one = FacilityIndex.objects.get(id="1")
         self.facility_two = FacilityIndex.objects.get(id="2")
         self.facility_three = FacilityIndex.objects.get(id="3")
