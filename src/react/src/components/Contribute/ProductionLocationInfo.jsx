@@ -799,13 +799,23 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .locationType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'locationType',
                                                     value,
-                                                )
-                                            }
-                                            styles={getSelectStyles()}
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'locationType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .locationType &&
+                                                    !!contributionForm.errors
+                                                        .locationType,
+                                            )}
                                             className={classes.selectStyles}
                                             placeholder="Select location type(s)"
                                         />
@@ -817,19 +827,45 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .locationType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'locationType',
                                                     value,
-                                                )
-                                            }
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'locationType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
                                             placeholder="Enter location type(s)"
                                             aria-label="Location type"
-                                            styles={getSelectStyles()}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .locationType &&
+                                                    !!contributionForm.errors
+                                                        .locationType,
+                                            )}
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
                                     )}
+                                    {contributionForm.touched.locationType &&
+                                        contributionForm.errors
+                                            .locationType && (
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
+                                                }
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .locationType
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -864,13 +900,23 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .processingType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'processingType',
                                                     value,
-                                                )
-                                            }
-                                            styles={getSelectStyles()}
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'processingType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .processingType &&
+                                                    !!contributionForm.errors
+                                                        .processingType,
+                                            )}
                                             className={classes.selectStyles}
                                             placeholder="Select processing type(s)"
                                         />
@@ -882,19 +928,45 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .processingType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'processingType',
                                                     value,
-                                                )
-                                            }
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'processingType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
                                             placeholder="Enter processing type(s)"
                                             aria-label="Processing Type"
-                                            styles={getSelectStyles()}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .processingType &&
+                                                    !!contributionForm.errors
+                                                        .processingType,
+                                            )}
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
                                     )}
+                                    {contributionForm.touched.processingType &&
+                                        contributionForm.errors
+                                            .processingType && (
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
+                                                }
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .processingType
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
