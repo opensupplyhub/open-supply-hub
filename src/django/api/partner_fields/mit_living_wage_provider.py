@@ -56,7 +56,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
     def _format_data(
         self,
         raw_data: USCountyTigerline,
-        contributor_info: Dict[str, Any]
+        contributor_info: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         '''
         Format mit living wage data into standard partner field structure.

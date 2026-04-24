@@ -8,6 +8,7 @@ from api.models.user import User
 from api.models.contributor.contributor import Contributor
 from api.constants import FeatureGroups
 from api.models.facility_download_limit import FacilityDownloadLimit
+from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from django.utils import timezone
 from django.utils.timezone import make_aware, datetime
 
@@ -19,6 +20,11 @@ class FacilitiesDownloadViewSetTest(APITestCase):
     fixtures = ["facilities_index"]
 
     def setUp(self):
+        # Migration 0193 seeds WageIndicatorCountryData for every country
+        # these fixtures use. Clear it so the download row assertions
+        # below can expect empty `wage_indicator.*` cells instead of
+        # migration-provided URLs.
+        WageIndicatorCountryData.objects.all().delete()
         self.download_url = reverse("facilities-downloads-list")
         self.email = "test@example.com"
         self.test_pass = "example123"
