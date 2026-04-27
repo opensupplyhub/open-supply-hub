@@ -83,9 +83,9 @@ function PartnerDataContainer({
                             className={classes.description}
                         >
                             The following information is provided by third-party
-                            partners who host additional social or environmental
-                            data related to this production location, its
-                            context, and/or its operations.{' '}
+                            partners who host additional data related to this
+                            production location, its context, and/or its
+                            operations.{' '}
                             <a
                                 href="https://info.opensupplyhub.org/data-integrations"
                                 target="_blank"
@@ -101,9 +101,8 @@ function PartnerDataContainer({
                             className={classes.description}
                         >
                             Open Supply Hub works with third-party partners who
-                            provide additional social and environmental data
-                            related to production locations, their context,
-                            and/or their operations.{' '}
+                            provide additional data related to production
+                            locations, their context, and/or their operations.{' '}
                             <b>
                                 No partner data is currently available for this
                                 facility.
