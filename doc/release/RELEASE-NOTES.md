@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 29, 2026
+
+### Bugfix
+* [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
+
+### What's new
+* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Hyphenate Spotlight Partners description text in the **Understanding Data Sources** section.
+
+### Release instructions
+* Ensure that no commands are included in the `post_deployment` command.
+
+
 ## Release 2.22.1
 
 ## Introduction
