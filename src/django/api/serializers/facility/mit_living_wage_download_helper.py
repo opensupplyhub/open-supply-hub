@@ -38,13 +38,12 @@ class MITLivingWageDownloadHelper:
         or two empty strings if the provider has no data for it.
         '''
         try:
-            data = self.__provider.fetch_data(facility)
+            raw_values = self.__provider.fetch_only_raw_values(facility)
         except Exception:
             return list(EMPTY_CELLS)
-        if not isinstance(data, dict):
+        if not isinstance(raw_values, dict):
             return list(EMPTY_CELLS)
 
-        raw_values = (data.get('value') or {}).get('raw_values') or {}
         county_id = raw_values.get('county_id')
         if not county_id:
             return list(EMPTY_CELLS)

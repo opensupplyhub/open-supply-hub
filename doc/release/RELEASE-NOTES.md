@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 28, 2026
+
+### What's new
+* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Updated Production Location page copy in the Spotlight section and in **Understanding Data Sources** so language stays inclusive as Spotlight expands beyond strictly social or environmental data:
+    * **Spotlight (data present)** — The section subheading no longer limits partner-hosted data to “social or environmental”; it now describes additional data about the location, its context, and/or operations in general terms.
+    * **Spotlight (no partner data)** — The empty state text no longer describes partner data as “social and environmental”; it now uses the same broader “additional data” wording, with the “no partner data” callout unchanged.
+    * **Understanding Data Sources → Spotlight Partners** — The short description for Spotlight Partners now reads: *Additional information about facility operations or context shared by third party platforms* (replacing the prior “social or environmental” framing). These are text-only changes intended for a midweek hotfix.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+    * `reindex_locations_with_approved_claim`
+
+
 ## Release 2.22.0
 
 ## Introduction
@@ -70,6 +89,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **MIT Living Wage (download-only, 2 columns)** — `mit_living_wage.county_link` (`base_url` + FIPS county code, e.g. `https://livingwage.mit.edu/counties/25017`) and `mit_living_wage.county_link_text` (`display_text`) are synthesized at export time from `MITLivingWageProvider` output and the shared partner-field cache.
     * **WageIndicator (download-only, 6 columns)** — For each link type on `WageIndicatorCountryData.LinkType` (`living_wage_link_national`, `minimum_wage_link_english`, `minimum_wage_link_national`) one URL column (`wage_indicator.<link_type>`) and one display-text column (`wage_indicator.<link_type>_text`) are projected from `WageIndicatorProvider.raw_values`.
     * Both system-field blocks are synthesized via dedicated download-only helpers (`mit_living_wage_download_helper`, `wage_indicator_download_helper`) wired through `FacilityDownloadSerializerBase.get_mit_living_wage_*` / `get_wage_indicator_*`.
+    * **Download fast path** — System-field helpers call a new `SystemPartnerFieldProvider.fetch_only_raw_values()` method that skips the per-row `PartnerField` + `Contributor` lookups `fetch_data` does for the details endpoint (the download never renders provenance, so those queries are pure waste). As a consequence, the download no longer gates system-field cells on contributor assignment: if the underlying raw data exists (county match for MIT, `WageIndicatorCountryData` row for WI), the cells are populated.
+    * **Per-request dedup (WageIndicator only)** — The WageIndicator helper memoizes `fetch_only_raw_values` on the serializer instance, keyed by `country_code`, so a paginated download issues at most one `WageIndicatorCountryData` lookup per distinct country (typically 1–30) rather than one per row; both hits and misses are cached.
     * **Caching** — `FacilitiesDownloadService.get_active_partner_fields()` and `FacilityIndexDetailsSerializer` share a `get_cached_all_partner_fields()` helper that caches the full `PartnerField` superset under `PARTNER_FIELD_LIST_KEY` (TTL: `PARTNER_FIELD_LIST_CACHE_TTL_SECONDS`) and filters in memory, so cache contents are consistent regardless of which caller warms it.
 * [OSDEV-2426](https://opensupplyhub.atlassian.net/browse/OSDEV-2426) - Added a site-wide maintenance banner that is displayed automatically when the `disable_list_uploading` waffle switch is active in Django Admin. The banner informs users that planned maintenance is in progress, that data uploads are temporarily unavailable, and that full service will resume shortly. Feature flags are now silently re-fetched on every React Router navigation, so the banner appears and disappears dynamically as the switch is toggled — without requiring a page refresh.
 
