@@ -64,6 +64,7 @@ const PartnerSectionItem = ({
             key={group.uuid}
             id={group.uuid}
             className={classes.partnerSectionItem}
+            data-testid="partner-group-section"
         >
             <div className={classes.container} ref={containerRef}>
                 <div
@@ -145,6 +146,7 @@ const PartnerSectionItem = ({
                                             <PartnerFieldItem
                                                 field={field}
                                                 facilityData={facilityData}
+                                                partnerGroupName={group.name}
                                             />
                                         </div>
                                     ))}
@@ -158,6 +160,7 @@ const PartnerSectionItem = ({
                                             <PartnerFieldItem
                                                 field={field}
                                                 facilityData={facilityData}
+                                                partnerGroupName={group.name}
                                             />
                                         </div>
                                     ))}

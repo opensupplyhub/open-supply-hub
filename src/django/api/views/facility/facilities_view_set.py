@@ -303,10 +303,11 @@ class FacilitiesViewSet(ListModelMixin,
         response['params'] = params.validated_data
         return Response(response)
 
-    @swagger_auto_schema(manual_parameters=facility_parameters)
+    @swagger_auto_schema(manual_parameters=facility_parameters,
+                         responses={200: FacilityIndexDetailsSerializer})
     def retrieve(self, request, pk=None):
         """
-        Returns the facility specified by a given OS ID in GeoJSON format.
+        Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
 
         ### Sample Response
             {
@@ -318,7 +319,7 @@ class FacilitiesViewSet(ListModelMixin,
                 },
                 "properties": {
                     "name": "facility_name",
-                    "address" "facility address",
+                    "address": "facility address",
                     "country_code": "US",
                     "country_name": "United States",
                     "os_id": "OSHUB_ID",
@@ -332,7 +333,160 @@ class FacilitiesViewSet(ListModelMixin,
                             "contributor_type": "Brand/Retailer",
                             "count": 1
                         }
-                    ]
+                    ],
+                    "partner_fields": {
+                        "worldly_assessment_data": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "fem_assessment": {
+                                            "verification_status": "pending",
+                                            "assessment_url": "https://example.com/assessment-id",
+                                            "last_date": "2026-03-09T13:52:43Z",
+                                            "reporting_year": 2025
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "slcp_assessment": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "most_recent_assessment_status": "Assessment Completed",
+                                        "most_recent_assessment_date": "2025-01-29",
+                                        "assessment_platform": "SLCP Gateway",
+                                        "verifier_body": "Bureau Veritas",
+                                        "slcp_facility_id": "FA1000010"
+                                    }
+                                }
+                            }
+                        ],
+                        "accord_inspections_and_remediation_program": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "first_inspection_date": "2022-06-01",
+                                        "rsc_presence": "Yes"
+                                    }
+                                }
+                            }
+                        ],
+                        "amfori_compliance_status": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "bepi_audit": {
+                                            "submission_date": "2023-10-28",
+                                            "expiration_date": "2025-10-30"
+                                        },
+                                        "bsci_audit": {
+                                            "submission_date": "2023-10-28",
+                                            "expiration_date": "2025-10-28"
+                                        },
+                                        "environmental_risk_assessment": {
+                                            "completion_date": "2025-10-28",
+                                            "expiration_date": "2025-10-30"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "climate_trace_emissions": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "estimated_emissions": 1250500,
+                                        "estimated_annual_throughput": 450000,
+                                        "emissions_model": "Partially Modeled"
+                                    }
+                                }
+                            }
+                        ],
+                        "estimated_annual_activity": [
+                            {
+                                "value": {
+                                    "raw_value": 450000
+                                }
+                            }
+                        ],
+                        "estimated_emissions": [
+                            {
+                                "value": {
+                                    "raw_value": 32833
+                                }
+                            }
+                        ],
+                        "wage_indicator": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "living_wage_link_national": "https://paywizard.org/salary/living-wages",
+                                        "living_wage_link_national_text": "View Living Wages in national language",
+                                        "minimum_wage_link_english": "https://wageindicator.org/salary/minimum-wage/united-states-of-america",
+                                        "minimum_wage_link_english_text": "View Minimum Wage in English",
+                                        "minimum_wage_link_national": "https://paywizard.org/salary/minimum-wage",
+                                        "minimum_wage_link_national_text": "View Minimum Wage in national language"
+                                    }
+                                }
+                            }
+                        ],
+                        "mit_living_wage": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "county_id": "24033"
+                                    }
+                                }
+                            }
+                        ],
+                        "ulula_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "start_date": "2026-01-29",
+                                        "end_date": "2026-01-29",
+                                        "attributes": "..."
+                                    }
+                                }
+                            }
+                        ],
+                        "rsc_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "active_since": "2022-06-01",
+                                        "end_date": "2022-06-01",
+                                        "attributes": "..."
+                                    }
+                                }
+                            }
+                        ],
+                        "labor_solutions_grievance_mechanism": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "wovo_active": "active",
+                                        "wovo_established_date": "2022-06-01",
+                                        "attributes": "..."
+                                    }
+                                }
+                            }
+                        ],
+                        "wrap_certification": [
+                            {
+                                "value": {
+                                    "raw_values": {
+                                        "certification_status": "active",
+                                        "issue_date": "2022-06-01",
+                                        "expiration_date": "2022-12-01"
+                                    }
+                                }
+                            }
+                        ]
+                    }
                 }
             }
         """

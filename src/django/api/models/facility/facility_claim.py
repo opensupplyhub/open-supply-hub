@@ -565,27 +565,43 @@ class FacilityClaim(models.Model):
         'claimant_linkedin_profile_url',
     )
 
+    VISIBILITY_FLAGS = (
+        'facility_phone_number_publicly_visible',
+        'facility_website_publicly_visible',
+        'point_of_contact_publicly_visible',
+        'office_info_publicly_visible',
+    )
+
+    @classmethod
+    def is_field_visible(cls, field_name, claim_dict):
+        from types import SimpleNamespace
+        flags = {
+            flag: claim_dict.get(flag, False)
+            for flag in cls.VISIBILITY_FLAGS
+        }
+        return cls.change_conditions[field_name](SimpleNamespace(**flags))
+
     # A dictionary where the keys are field names and the values are predicate
     # functions that will be passed a FacilityClaim instance and should return
     # a boolean.
     change_conditions = defaultdict(
-        lambda: lambda c: True,
+        lambda: lambda claim: True,
         facility_phone_number=(
-            lambda c: c.facility_phone_number_publicly_visible),
+            lambda claim: claim.facility_phone_number_publicly_visible),
         facility_website=(
-            lambda c: c.facility_website_publicly_visible),
+            lambda claim: claim.facility_website_publicly_visible),
         point_of_contact_person_name=(
-            lambda c: c.point_of_contact_publicly_visible),
+            lambda claim: claim.point_of_contact_publicly_visible),
         point_of_contact_email=(
-            lambda c: c.point_of_contact_publicly_visible),
+            lambda claim: claim.point_of_contact_publicly_visible),
         office_official_name=(
-            lambda c: c.office_info_publicly_visible),
+            lambda claim: claim.office_info_publicly_visible),
         office_address=(
-            lambda c: c.office_info_publicly_visible),
+            lambda claim: claim.office_info_publicly_visible),
         office_country_code=(
-            lambda c: c.office_info_publicly_visible),
+            lambda claim: claim.office_info_publicly_visible),
         office_phone_number=(
-            lambda c: c.office_info_publicly_visible),
+            lambda claim: claim.office_info_publicly_visible),
     )
 
     # A dictionary where the keys are field_names and the values are functions

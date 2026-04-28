@@ -8,6 +8,7 @@ import ShowOnly from './ShowOnly';
 import BadgeVerified from './BadgeVerified';
 import FeatureFlag from './FeatureFlag';
 import PartnerFieldSchemaValue from './PartnerFields/PartnerFieldSchemaValue/PartnerFieldSchemaValue';
+import SourceByHtmlBlock from './SourceByHtmlBlock/SourceByHtmlBlock';
 
 import { CLAIM_A_FACILITY } from '../util/constants';
 
@@ -34,17 +35,6 @@ const detailsStyles = theme =>
             fontSize: '14px',
             lineHeight: '17px',
             paddingTop: theme.spacing.unit,
-        },
-        sourceText: {
-            overflowWrap: 'anywhere',
-            fontWeight: 500,
-            fontSize: '16px',
-            lineHeight: '19px',
-            paddingTop: theme.spacing.unit,
-            '& *': {
-                margin: 0,
-                padding: 0,
-            },
         },
         unitText: {
             display: 'inline-block',
@@ -74,6 +64,7 @@ const FacilityDetailsDetail = ({
     isFromClaim,
     classes,
     partnerConfigFields,
+    gaSpotlightAnalytics,
 }) => (
     <div className={classes.root} data-testid="facility-details-detail">
         <ShowOnly when={isVerified || isFromClaim}>
@@ -97,6 +88,7 @@ const FacilityDetailsDetail = ({
                         value={primary}
                         jsonSchema={jsonSchema}
                         partnerConfigFields={partnerConfigFields}
+                        gaSpotlightAnalytics={gaSpotlightAnalytics}
                     />
                 ) : (
                     primary || locationLabeled
@@ -104,10 +96,9 @@ const FacilityDetailsDetail = ({
                 {unit ? <span className={classes.unitText}>{unit}</span> : null}
             </Typography>
             {sourceBy ? (
-                <Typography
-                    className={classes.sourceText}
-                    component="div"
-                    dangerouslySetInnerHTML={{ __html: sourceBy }}
+                <SourceByHtmlBlock
+                    sourceBy={sourceBy}
+                    gaSpotlightAnalytics={gaSpotlightAnalytics}
                 />
             ) : null}
             {secondary ? (
@@ -136,12 +127,12 @@ FacilityDetailsDetail.propTypes = {
         baseUrl: PropTypes.string,
         displayText: PropTypes.string,
     }),
+    gaSpotlightAnalytics: PropTypes.object,
     classes: PropTypes.shape({
         root: PropTypes.string,
         badgeWrapper: PropTypes.string,
         primaryText: PropTypes.string,
         secondaryText: PropTypes.string,
-        sourceText: PropTypes.string,
         unitText: PropTypes.string,
     }).isRequired,
 };
@@ -156,6 +147,7 @@ FacilityDetailsDetail.defaultProps = {
     isVerified: false,
     isFromClaim: false,
     partnerConfigFields: null,
+    gaSpotlightAnalytics: null,
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsDetail);

@@ -15,6 +15,11 @@ import ScheduleIcon from '@material-ui/icons/Schedule';
 
 import { makeProfileRouteLink, formatDate } from '../../../../util/util';
 import { DATE_FORMATS } from '../../../../util/constants';
+import {
+    GA_LINK_PLACEMENT,
+    sendLocationPartnerProfileLinkClick,
+} from '../../../../util/analytics/gaCustomEvents';
+import useViewerUserIdForAnalytics from '../../../../util/analytics/hooks';
 import contributionCardStyles from './styles';
 
 const ContributionCard = ({
@@ -24,78 +29,105 @@ const ContributionCard = ({
     date,
     promoted,
     userId,
+    spotlightGaProfileBase,
     'data-testid': dataTestId,
-}) => (
-    <div
-        className={
-            promoted
-                ? `${classes.contributionCard} ${classes.contributionCardPromoted}`
-                : classes.contributionCard
+}) => {
+    const viewerUserId = useViewerUserIdForAnalytics();
+    const profilePath = makeProfileRouteLink(userId);
+
+    const handleProfileClick = () => {
+        if (!spotlightGaProfileBase || userId == null || !sourceName) {
+            return;
         }
-        data-testid={dataTestId}
-    >
-        <Typography
-            component="div"
+        const destinationUrl =
+            typeof window !== 'undefined'
+                ? `${window.location.origin}${profilePath}`
+                : profilePath;
+        sendLocationPartnerProfileLinkClick({
+            contributorName: sourceName,
+            partnerGroup: spotlightGaProfileBase.partner_group,
+            linkPlacement: GA_LINK_PLACEMENT.CONTRIBUTIONS_DRAWER,
+            destinationUrl,
+            osId: spotlightGaProfileBase.os_id,
+            partnerFieldName: spotlightGaProfileBase.partner_field_name,
+            userId: String(userId),
+            viewerUserId,
+        });
+    };
+
+    return (
+        <div
             className={
                 promoted
-                    ? `${classes.contributionValue} ${classes.contributionValuePromoted}`
-                    : classes.contributionValue
+                    ? `${classes.contributionCard} ${classes.contributionCardPromoted}`
+                    : classes.contributionCard
             }
+            data-testid={dataTestId}
         >
-            {value}
-        </Typography>
-        <div className={classes.contributionValueContainer}>
-            <div className={classes.contributionSourceContainer}>
-                {sourceName &&
-                    (userId != null ? (
-                        <Link
-                            to={makeProfileRouteLink(userId)}
+            <Typography
+                component="div"
+                className={
+                    promoted
+                        ? `${classes.contributionValue} ${classes.contributionValuePromoted}`
+                        : classes.contributionValue
+                }
+            >
+                {value}
+            </Typography>
+            <div className={classes.contributionValueContainer}>
+                <div className={classes.contributionSourceContainer}>
+                    {sourceName &&
+                        (userId != null ? (
+                            <Link
+                                to={profilePath}
+                                className={
+                                    promoted
+                                        ? `${classes.contributionSourceLink} ${classes.contributionSourceLinkPromoted}`
+                                        : classes.contributionSourceLink
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={handleProfileClick}
+                            >
+                                {sourceName}
+                            </Link>
+                        ) : (
+                            <Typography
+                                className={
+                                    promoted
+                                        ? `${classes.contributionSource} ${classes.contributionSourcePromoted}`
+                                        : classes.contributionSource
+                                }
+                            >
+                                {sourceName}
+                            </Typography>
+                        ))}
+                </div>
+                <div className={classes.contributionMetaContainer}>
+                    {date ? (
+                        <span
                             className={
                                 promoted
-                                    ? `${classes.contributionSourceLink} ${classes.contributionSourceLinkPromoted}`
-                                    : classes.contributionSourceLink
+                                    ? `${classes.dateWithIcon} ${classes.dateWithIconPromoted}`
+                                    : classes.dateWithIcon
                             }
-                            target="_blank"
-                            rel="noopener noreferrer"
                         >
-                            {sourceName}
-                        </Link>
-                    ) : (
-                        <Typography
-                            className={
-                                promoted
-                                    ? `${classes.contributionSource} ${classes.contributionSourcePromoted}`
-                                    : classes.contributionSource
-                            }
-                        >
-                            {sourceName}
-                        </Typography>
-                    ))}
-            </div>
-            <div className={classes.contributionMetaContainer}>
-                {date ? (
-                    <span
-                        className={
-                            promoted
-                                ? `${classes.dateWithIcon} ${classes.dateWithIconPromoted}`
-                                : classes.dateWithIcon
-                        }
-                    >
-                        <ScheduleIcon
-                            fontSize="small"
-                            className={
-                                promoted
-                                    ? `${classes.dateIcon} ${classes.dateIconPromoted}`
-                                    : classes.dateIcon
-                            }
-                        />
-                        {formatDate(date, DATE_FORMATS.LONG)}
-                    </span>
-                ) : null}
+                            <ScheduleIcon
+                                fontSize="small"
+                                className={
+                                    promoted
+                                        ? `${classes.dateIcon} ${classes.dateIconPromoted}`
+                                        : classes.dateIcon
+                                }
+                            />
+                            {formatDate(date, DATE_FORMATS.LONG)}
+                        </span>
+                    ) : null}
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 ContributionCard.propTypes = {
     classes: object.isRequired,
@@ -105,6 +137,7 @@ ContributionCard.propTypes = {
     promoted: bool,
     userId: oneOfType([string, number]),
     'data-testid': string,
+    spotlightGaProfileBase: object,
 };
 
 ContributionCard.defaultProps = {
@@ -113,6 +146,7 @@ ContributionCard.defaultProps = {
     promoted: false,
     userId: null,
     'data-testid': undefined,
+    spotlightGaProfileBase: null,
 };
 
 export default withStyles(contributionCardStyles)(ContributionCard);

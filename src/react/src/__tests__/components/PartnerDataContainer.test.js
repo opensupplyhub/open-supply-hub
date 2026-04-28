@@ -38,47 +38,67 @@ const buildState = (facilityData, groups = [], fetching = false) => ({
 });
 
 describe('PartnerDataContainer component', () => {
-    test('renders nothing when facilityData is null', () => {
+    test('renders no-data message when facilityData is null', () => {
         const state = buildState(null, [makeGroup(['climate_trace'])]);
-        const { container } = renderWithProviders(
+        const { getByText } = renderWithProviders(
             <PartnerDataContainer />,
             { preloadedState: state },
         );
-        expect(container.firstChild).toBeNull();
+        expect(getByText('Spotlight')).toBeInTheDocument();
+        expect(
+            getByText(
+                /No partner data is currently available for this facility/,
+            ),
+        ).toBeInTheDocument();
     });
 
-    test('renders nothing when facilityData has no partner_fields property', () => {
+    test('renders no-data message when facilityData has no partner_fields property', () => {
         const facilityData = { properties: {} };
         const state = buildState(facilityData, [makeGroup(['climate_trace'])]);
-        const { container } = renderWithProviders(
+        const { getByText } = renderWithProviders(
             <PartnerDataContainer />,
             { preloadedState: state },
         );
-        expect(container.firstChild).toBeNull();
+        expect(getByText('Spotlight')).toBeInTheDocument();
+        expect(
+            getByText(
+                /No partner data is currently available for this facility/,
+            ),
+        ).toBeInTheDocument();
     });
 
-    test('renders nothing when all partner_fields have empty arrays', () => {
+    test('renders no-data message when all partner_fields have empty arrays', () => {
         const facilityData = {
             properties: { partner_fields: { climate_trace: [] } },
         };
         const state = buildState(facilityData, [makeGroup(['climate_trace'])]);
-        const { container } = renderWithProviders(
+        const { getByText } = renderWithProviders(
             <PartnerDataContainer />,
             { preloadedState: state },
         );
-        expect(container.firstChild).toBeNull();
+        expect(getByText('Spotlight')).toBeInTheDocument();
+        expect(
+            getByText(
+                /No partner data is currently available for this facility/,
+            ),
+        ).toBeInTheDocument();
     });
 
-    test('renders nothing when partner_fields first entry is falsy', () => {
+    test('renders no-data message when partner_fields first entry is falsy', () => {
         const facilityData = {
             properties: { partner_fields: { climate_trace: [null] } },
         };
         const state = buildState(facilityData, [makeGroup(['climate_trace'])]);
-        const { container } = renderWithProviders(
+        const { getByText } = renderWithProviders(
             <PartnerDataContainer />,
             { preloadedState: state },
         );
-        expect(container.firstChild).toBeNull();
+        expect(getByText('Spotlight')).toBeInTheDocument();
+        expect(
+            getByText(
+                /No partner data is currently available for this facility/,
+            ),
+        ).toBeInTheDocument();
     });
 
     test('renders the section when facilityData has valid partner field values', () => {

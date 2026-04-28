@@ -11,7 +11,7 @@ import {
     acceptGATrackingAndStartTracking,
     rejectGATracking,
     clearGATrackingDecision,
-} from '../util/util.ga';
+} from '../util/analytics/consent';
 
 const componentStyles = Object.freeze({
     header: Object.freeze({

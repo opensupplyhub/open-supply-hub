@@ -56,6 +56,7 @@ const renderProperty = (
     value,
     schemaProperties,
     partnerConfigFields,
+    gaSpotlightAnalytics,
 ) => {
     const propertySchema = schemaProperties[propertyKey] || {};
     const propertyValue = value[propertyKey];
@@ -68,6 +69,7 @@ const renderProperty = (
             value={value}
             schemaProperties={schemaProperties}
             partnerConfigFields={partnerConfigFields}
+            gaSpotlightAnalytics={gaSpotlightAnalytics}
         />
     );
 };
@@ -88,6 +90,7 @@ export const renderProperties = (
     value,
     schemaProperties,
     partnerConfigFields,
+    gaSpotlightAnalytics,
 ) =>
     Object.keys(schemaProperties).reduce((acc, propertyKey) => {
         if (shouldSkipProperty(propertyKey, schemaProperties)) {
@@ -104,6 +107,7 @@ export const renderProperties = (
             value,
             schemaProperties,
             partnerConfigFields,
+            gaSpotlightAnalytics,
         );
         if (rendered) {
             acc.push(rendered);
