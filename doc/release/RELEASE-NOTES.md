@@ -3,6 +3,19 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 29, 2026
+
+### What's new
+* [OSDEV-2564](https://opensupplyhub.atlassian.net/browse/OSDEV-2564) - Renamed navbar labels ('Premium Features' → 'Featured Solutions', 'Data Cleaning Service' → 'Embedded Map', 'Pricing' → 'Solutions') and updated corresponding InfoPaths to align with new feature naming.
+
+### Release instructions
+* Ensure that no commands are included in the `post_deployment` command.
+
+
 ## Release 2.22.1
 
 ## Introduction
