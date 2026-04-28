@@ -153,13 +153,17 @@ const UserProfileProductionLocations = ({
                                     <IconComponent
                                         title={
                                             <>
-                                                Are you a data provider and want
-                                                your data listed here? Looking
-                                                to access this data for
-                                                compliance reporting, risk
-                                                analysis, or supplier
-                                                monitoring?
-                                                <LearnMoreLink href="https://info.opensupplyhub.org/data-integrations" />
+                                                OS Hub Spotlight is the enriched
+                                                data layer built into OS Hub
+                                                production location profiles. It
+                                                aggregates facility-level data
+                                                from vetted third-party partner
+                                                organizations (Spotlight
+                                                Partners) and surfaces it
+                                                alongside the core OS Hub
+                                                database of millions of
+                                                production locations.
+                                                <LearnMoreLink href="https://info.opensupplyhub.org/spotlight" />
                                             </>
                                         }
                                         icon={InfoOutlined}
