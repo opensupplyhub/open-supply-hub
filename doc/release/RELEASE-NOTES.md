@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 9, 2026
 
+### Bugfix
+* [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
+
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
 * [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
