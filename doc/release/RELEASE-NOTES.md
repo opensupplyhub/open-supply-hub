@@ -9,8 +9,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: April 29, 2026
 
+### Bugfix
+* [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
+
 ### What's new
-* [OSDEV-2564](https://opensupplyhub.atlassian.net/browse/OSDEV-2564) - Renamed navbar labels ('Premium Features' → 'Featured Solutions', 'Data Cleaning Service' → 'Embedded Map', 'Pricing' → 'Solutions') and updated corresponding InfoPaths to align with new feature naming.
+* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Hyphenate Spotlight Partners description text in the **Understanding Data Sources** section.
 
 ### Release instructions
 * Ensure that no commands are included in the `post_deployment` command.
