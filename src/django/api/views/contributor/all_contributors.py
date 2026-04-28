@@ -1,3 +1,4 @@
+from django.views.decorators.cache import cache_page
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 
@@ -6,6 +7,7 @@ from .active_contributors import active_contributors
 
 @api_view(['GET'])
 @throttle_classes([])
+@cache_page(60 * 10, cache="view_cache")
 def all_contributors(_):
     """
     Returns list contributors as a list of tuples of
