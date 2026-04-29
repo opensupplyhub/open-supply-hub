@@ -114,7 +114,7 @@ export const facilityListStatusChoices = [
     { value: facilityListStatusChoicesEnum.MATCHED, label: 'Matched' },
     { value: facilityListStatusChoicesEnum.PENDING, label: 'Pending' },
     { value: facilityListStatusChoicesEnum.APPROVED, label: 'Approved' },
-    { value: facilityListStatusChoicesEnum.REJECTED, label: 'Feedback Phase' },
+    { value: facilityListStatusChoicesEnum.REJECTED, label: 'Rejected' },
     { value: facilityListStatusChoicesEnum.REPLACED, label: 'Replaced' },
 ];
 
