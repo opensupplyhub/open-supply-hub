@@ -3,11 +3,14 @@ from typing import Dict, List, Any
 from rest_framework.serializers import (
   SerializerMethodField,
 )
+from drf_yasg.utils import swagger_serializer_method
 from waffle import switch_is_active
-from django.core.cache import cache
 
-from api.constants import FacilityClaimStatuses, PARTNER_FIELD_LIST_KEY
+from api.constants import FacilityClaimStatuses
 from api.partner_fields.registry import system_partner_field_registry
+from api.serializers.facility.partner_field_helper import (
+    get_cached_all_partner_fields,
+)
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
@@ -33,6 +36,7 @@ from .utils import (
     format_date,
     is_created_at_main_date
 )
+from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -361,6 +365,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     def get_is_claimed(self, facility):
         return facility.approved_claim is not None
 
+    @swagger_serializer_method(
+        serializer_or_field=PartnerFieldEntrySerializer(many=True)
+    )
     def get_partner_fields(self, facility):
         request = self._get_request()
 
@@ -480,15 +487,4 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     @staticmethod
     def __get_cached_partner_fields():
-        cached_names = cache.get(PARTNER_FIELD_LIST_KEY)
-
-        if cached_names is not None:
-            return cached_names
-
-        partner_fields = list(
-            PartnerField.objects.all()
-        )
-
-        cache.set(PARTNER_FIELD_LIST_KEY, partner_fields, 60)
-
-        return partner_fields
+        return get_cached_all_partner_fields()

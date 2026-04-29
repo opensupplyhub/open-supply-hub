@@ -64,6 +64,7 @@ const PartnerSectionItem = ({
             key={group.uuid}
             id={group.uuid}
             className={classes.partnerSectionItem}
+            data-testid="partner-group-section"
         >
             <div className={classes.container} ref={containerRef}>
                 <div

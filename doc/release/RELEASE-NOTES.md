@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.22.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 28, 2026
+
+### What's new
+* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Updated Production Location page copy in the Spotlight section and in **Understanding Data Sources** so language stays inclusive as Spotlight expands beyond strictly social or environmental data:
+    * **Spotlight (data present)** — The section subheading no longer limits partner-hosted data to “social or environmental”; it now describes additional data about the location, its context, and/or operations in general terms.
+    * **Spotlight (no partner data)** — The empty state text no longer describes partner data as “social and environmental”; it now uses the same broader “additional data” wording, with the “no partner data” callout unchanged.
+    * **Understanding Data Sources → Spotlight Partners** — The short description for Spotlight Partners now reads: *Additional information about facility operations or context shared by third party platforms* (replacing the prior “social or environmental” framing). These are text-only changes intended for a midweek hotfix.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+    * `reindex_locations_with_approved_claim`
+
+
 ## Release 2.22.0
 
 ## Introduction
@@ -12,7 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* **0207_add_energy_and_throughput_to_index_approved_claim** — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
+* 0207_add_energy_and_throughput_to_index_approved_claim.py — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
 
 ### What's new
 * [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
@@ -60,7 +79,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
     * Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `contributor_user_id`, `viewer_user_id` where applicable). The user id is sent as `contributor_user_id` (not `user_id`) so it does not collide with GA4’s reserved User-ID field; `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
 * [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
-* [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
+* [OSDEV-2525](https://opensupplyhub.atlassian.net/browse/OSDEV-2525) - Added a "Spotlight Locations" section to user profiles that displays production locations associated with the contributor, with support for pagination and spotlight filtering based on partner fields.
+* [OSDEV-2423](https://opensupplyhub.atlassian.net/browse/OSDEV-2423) - Updated Swagger/OpenAPI documentation for `GET api/facilities/{os_id}/` to describe the `partner_fields` response property. Added `PartnerFieldEntrySerializer` for the schema, annotated the serializer method with `@swagger_serializer_method`, declared an explicit `200` response type, and included a `partner_fields` sample in the docstring.
+* [OSDEV-2273](https://opensupplyhub.atlassian.net/browse/OSDEV-2273) - Updated copy on the Claims Intro screen (eligibility requirements, step headings) and the Free Emissions Estimate section (title, description with Climate TRACE hyperlinks). Fixed backward quotation mark in Contact Info toggle text.
+* [OSDEV-2424](https://opensupplyhub.atlassian.net/browse/OSDEV-2424) - Added partner-field columns to CSV and XLSX facility downloads. Every `PartnerField` with `active=True` and `system_field=False` is appended after the `is_closed` column, followed by download-only columns for the two system partner fields (MIT Living Wage and WageIndicator).
+    * **Object-typed fields** (with a JSON Schema) flatten into one column per leaf using `.`-joined paths (e.g. `bsci_audit.submission_date`); nested schemas are walked in declaration order for deterministic column order.
+    * **Primitive fields** become a single column named after the field.
+    * **Multiple contributions** for the same field on one location are joined with `|`, matching existing `number_of_workers` / `product_type` behavior.
+    * **MIT Living Wage (download-only, 2 columns)** — `mit_living_wage.county_link` (`base_url` + FIPS county code, e.g. `https://livingwage.mit.edu/counties/25017`) and `mit_living_wage.county_link_text` (`display_text`) are synthesized at export time from `MITLivingWageProvider` output and the shared partner-field cache.
+    * **WageIndicator (download-only, 6 columns)** — For each link type on `WageIndicatorCountryData.LinkType` (`living_wage_link_national`, `minimum_wage_link_english`, `minimum_wage_link_national`) one URL column (`wage_indicator.<link_type>`) and one display-text column (`wage_indicator.<link_type>_text`) are projected from `WageIndicatorProvider.raw_values`.
+    * Both system-field blocks are synthesized via dedicated download-only helpers (`mit_living_wage_download_helper`, `wage_indicator_download_helper`) wired through `FacilityDownloadSerializerBase.get_mit_living_wage_*` / `get_wage_indicator_*`.
+    * **Download fast path** — System-field helpers call a new `SystemPartnerFieldProvider.fetch_only_raw_values()` method that skips the per-row `PartnerField` + `Contributor` lookups `fetch_data` does for the details endpoint (the download never renders provenance, so those queries are pure waste). As a consequence, the download no longer gates system-field cells on contributor assignment: if the underlying raw data exists (county match for MIT, `WageIndicatorCountryData` row for WI), the cells are populated.
+    * **Per-request dedup (WageIndicator only)** — The WageIndicator helper memoizes `fetch_only_raw_values` on the serializer instance, keyed by `country_code`, so a paginated download issues at most one `WageIndicatorCountryData` lookup per distinct country (typically 1–30) rather than one per row; both hits and misses are cached.
+    * **Caching** — `FacilitiesDownloadService.get_active_partner_fields()` and `FacilityIndexDetailsSerializer` share a `get_cached_all_partner_fields()` helper that caches the full `PartnerField` superset under `PARTNER_FIELD_LIST_KEY` (TTL: `PARTNER_FIELD_LIST_CACHE_TTL_SECONDS`) and filters in memory, so cache contents are consistent regardless of which caller warms it.
+* [OSDEV-2426](https://opensupplyhub.atlassian.net/browse/OSDEV-2426) - Added a site-wide maintenance banner that is displayed automatically when the `disable_list_uploading` waffle switch is active in Django Admin. The banner informs users that planned maintenance is in progress, that data uploads are temporarily unavailable, and that full service will resume shortly. Feature flags are now silently re-fetched on every React Router navigation, so the banner appears and disappears dynamically as the switch is toggled — without requiring a page refresh.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
@@ -107,6 +139,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [Follow-up] [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Geographic Information section: show `Crowdsourced` badge, date of contribution and contributor name near the `Address` field if `extended_fields` contains only empty records.
 * [OSDEV-2418](https://opensupplyhub.atlassian.net/browse/OSDEV-2418) - Aligned Production Location page copy with "production location" wording: closure banners (pending, moved, closed), the report closure/reopen dialog, the map control’s accessible label for centering on the location, and operational-details labels for location type fields in the claim section.
 * [OSDEV-2422](https://opensupplyhub.atlassian.net/browse/OSDEV-2422) - Geographic Information section: added error text labels for invalid coordinates contributions; introduced additional user id fallback based on `contributors` list and `created_from` properties from GET `api/facilities/{os_id}/` response. This is needed to create a link to the user profile page when we take values from `created_from`.
+* [Hotfix][OSDEV-2529](https://opensupplyhub.atlassian.net/browse/OSDEV-2529) - Fixed duplicate throttle logic for production location creation and updates:
+    * Added `pk` to the duplicate throttle cache key to prevent collisions when the same user makes multiple requests for the same production location.
 
 ### What's new
 * [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.

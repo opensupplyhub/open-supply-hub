@@ -331,6 +331,11 @@ CACHES = {
         # Use memcached for API throttling
         'BACKEND': CACHE_BACKEND,
         'LOCATION': MEMCACHED_LOCATION
+    },
+    'view_cache': {
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'view',
     }
 }
 
