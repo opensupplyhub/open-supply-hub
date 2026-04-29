@@ -222,6 +222,49 @@ def _collect_path_values(
         collected[path].append(str(value))
 
 
+def _set_nested_value(
+    data: Dict[str, Any],
+    path: Tuple[str, ...],
+    value: Any,
+) -> None:
+    '''
+    Walk *data* along *path*, creating intermediate dicts as needed,
+    and set the leaf key to *value*.
+    '''
+    current = data
+    for key in path[:-1]:
+        nxt = current.get(key)
+        if not isinstance(nxt, dict):
+            nxt = {}
+            current[key] = nxt
+        current = nxt
+    current[path[-1]] = value
+
+
+def apply_schema_defaults(
+    raw_values: Dict[str, Any],
+    schema: Dict[str, Any],
+) -> Dict[str, Any]:
+    '''
+    Mutate *raw_values* in place, filling missing non-object leaf
+    values with the ``"default"`` declared in *schema*. Returns
+    *raw_values* for convenience.
+    '''
+    if not isinstance(raw_values, dict) or not isinstance(schema, dict):
+        return raw_values
+    paths = collect_leaf_paths(schema)
+    for path in paths:
+        if not is_empty_partner_value(resolve_nested_value(
+            raw_values, path
+        )):
+            continue
+        default = resolve_schema_default(schema, path)
+        if is_empty_partner_value(default):
+            continue
+        _set_nested_value(raw_values, path, default)
+    return raw_values
+
+
 def build_primitive_field_cell(
     entries: List[Dict[str, Any]],
     separator: str,

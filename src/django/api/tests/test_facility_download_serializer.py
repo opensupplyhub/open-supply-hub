@@ -8,6 +8,9 @@ from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
+from api.serializers.facility.partner_field_helper import (
+    apply_schema_defaults,
+)
 
 CLAIM_HEADERS = [
     "claim_created_at",
@@ -440,3 +443,84 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_PARTNER_FIELD_VALUES,
         ]
         self.assertEqual(row, expected_row)
+
+
+class ApplySchemaDefaultsTest(TestCase):
+    def test_fills_missing_leaf_values_with_defaults(self):
+        schema = {
+            'properties': {
+                'submission_date': {'type': 'string'},
+                'expiration_date': {
+                    'type': 'string',
+                    'default': 'N/A',
+                },
+                'rating': {
+                    'type': 'integer',
+                    'default': 0,
+                },
+            }
+        }
+        raw_values = {'submission_date': '2024-10-15'}
+        result = apply_schema_defaults(raw_values, schema)
+        self.assertEqual(result, {
+            'submission_date': '2024-10-15',
+            'expiration_date': 'N/A',
+            'rating': 0,
+        })
+        self.assertIs(result, raw_values)
+
+    def test_does_not_overwrite_existing_values(self):
+        schema = {
+            'properties': {
+                'rating': {
+                    'type': 'integer',
+                    'default': 0,
+                },
+            }
+        }
+        raw_values = {'rating': 5}
+        apply_schema_defaults(raw_values, schema)
+        self.assertEqual(raw_values['rating'], 5)
+
+    def test_ignores_defaults_on_object_sub_schemas(self):
+        schema = {
+            'properties': {
+                'nested': {
+                    'type': 'object',
+                    'default': {'should': 'be ignored'},
+                    'properties': {
+                        'leaf': {'type': 'string'},
+                    },
+                },
+            }
+        }
+        raw_values = {}
+        apply_schema_defaults(raw_values, schema)
+        self.assertNotIn('nested', raw_values)
+
+    def test_creates_intermediate_dicts_for_nested_defaults(self):
+        schema = {
+            'properties': {
+                'audit': {
+                    'type': 'object',
+                    'properties': {
+                        'status': {
+                            'type': 'string',
+                            'default': 'pending',
+                        },
+                    },
+                },
+            }
+        }
+        raw_values = {}
+        apply_schema_defaults(raw_values, schema)
+        self.assertEqual(raw_values, {'audit': {'status': 'pending'}})
+
+    def test_noop_when_raw_values_not_dict(self):
+        result = apply_schema_defaults('not a dict', {'properties': {}})
+        self.assertEqual(result, 'not a dict')
+
+    def test_noop_when_schema_not_dict(self):
+        raw_values = {'a': 1}
+        result = apply_schema_defaults(raw_values, None)
+        self.assertEqual(result, {'a': 1})

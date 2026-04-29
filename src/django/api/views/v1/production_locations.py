@@ -2,7 +2,6 @@ from typing import Tuple, List
 
 from django.http import QueryDict
 from django.db import transaction
-from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
@@ -31,7 +30,6 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
-from api.models.partner_field import PartnerField
 from api.models.extended_field import ExtendedField
 from api.throttles import (
     DataUploadThrottle,
@@ -41,7 +39,10 @@ from api.constants import (
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY,
     APIV1LocationContributionErrorMessages,
-    PARTNER_FIELD_NAMES_KEY,
+)
+from api.serializers.facility.partner_field_helper import (
+    apply_schema_defaults,
+    get_cached_all_partner_fields,
 )
 from api.exceptions import ServiceUnavailableException
 from api.mail import (
@@ -285,7 +286,8 @@ class ProductionLocations(ViewSet):
         production location object by its ID or
         by the provided Facility instance.
 
-        Caches the list of partner field names for one hour.
+        Uses the shared partner-field cache so schemas are available
+        for filling default values on object-typed fields.
         Returns a dictionary of the form:
             {
                 "field_name_1": value_1,
@@ -293,14 +295,13 @@ class ProductionLocations(ViewSet):
                 ...
             }
         """
-        cache_key = PARTNER_FIELD_NAMES_KEY
-        partner_field_names = cache.get(cache_key)
-
-        if partner_field_names is None:
-            partner_field_names = list(
-                PartnerField.objects.values_list('name', flat=True)
-            )
-            cache.set(cache_key, partner_field_names, 60 * 60)
+        all_partner_fields = get_cached_all_partner_fields()
+        schema_by_name = {
+            pf.name: pf.json_schema
+            for pf in all_partner_fields
+            if pf.json_schema
+        }
+        partner_field_names = [pf.name for pf in all_partner_fields]
 
         partner_extended_fields = {}
 
@@ -315,6 +316,7 @@ class ProductionLocations(ViewSet):
                     partner_extended_fields,
                     field.get('field_name'),
                     field.get('value'),
+                    schema_by_name,
                 )
 
         facility = Facility.objects.filter(id=pk).only(
@@ -340,14 +342,19 @@ class ProductionLocations(ViewSet):
                     partner_extended_fields,
                     field_name,
                     provider_value,
+                    schema_by_name,
                 )
 
         return partner_extended_fields
 
     @staticmethod
-    def __add_partner_field_value(partner_extended_fields, field_name, value):
+    def __add_partner_field_value(
+        partner_extended_fields, field_name, value, schema_by_name
+    ):
         """
         Extract and add partner field value to the response dictionary.
+        When a JSON Schema with defaults exists for this field and the
+        payload is a dict, missing non-object leaves are filled.
         """
         if not field_name or not isinstance(value, dict):
             return
@@ -363,5 +370,9 @@ class ProductionLocations(ViewSet):
 
         if payload is None:
             return
+
+        schema = schema_by_name.get(field_name)
+        if schema and isinstance(payload, dict):
+            apply_schema_defaults(payload, schema)
 
         partner_extended_fields[field_name] = payload
