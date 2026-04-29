@@ -254,9 +254,8 @@ def apply_schema_defaults(
         return raw_values
     paths = collect_leaf_paths(schema)
     for path in paths:
-        if not is_empty_partner_value(resolve_nested_value(
-            raw_values, path
-        )):
+        nested_value = resolve_nested_value(raw_values, path)
+        if not is_empty_partner_value(nested_value):
             continue
         default = resolve_schema_default(schema, path)
         if is_empty_partner_value(default):
