@@ -29,7 +29,7 @@ export const EMPTY_PLACEHOLDER = 'N/A';
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
-    dataCleaningService: 'data-cleaning-service',
+    spotlight: 'spotlight',
     preparingData: 'resources/preparing-data',
     dataQuality: 'resources/a-free-universal-id-matching-algorithm',
     claimedFacilities: 'stories-resources/claim-a-facility',
@@ -868,7 +868,7 @@ export const NavbarItems = [
                     ],
                 },
                 {
-                    label: 'Premium Features',
+                    label: 'Featured Solutions',
                     items: [
                         {
                             type: 'link',
@@ -877,13 +877,13 @@ export const NavbarItems = [
                         },
                         {
                             type: 'link',
-                            label: 'Data Cleaning Service',
-                            href: `${InfoLink}/${InfoPaths.dataCleaningService}`,
+                            label: 'Embedded Map',
+                            href: `${InfoLink}/${InfoPaths.embeddedMap}`,
                         },
                         {
                             type: 'link',
-                            label: 'Embedded Map',
-                            href: `${InfoLink}/${InfoPaths.embeddedMap}`,
+                            label: 'Spotlight',
+                            href: `${InfoLink}/${InfoPaths.spotlight}`,
                         },
                     ],
                 },
@@ -969,7 +969,7 @@ export const NavbarItems = [
     },
     {
         type: 'link',
-        label: 'Pricing',
+        label: 'Solutions',
         href: `${InfoLink}/${InfoPaths.pricing}`,
     },
     { type: 'international' },
