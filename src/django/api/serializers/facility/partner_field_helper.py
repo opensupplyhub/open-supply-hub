@@ -123,6 +123,27 @@ def resolve_nested_value(
     return current
 
 
+def resolve_schema_default(
+    schema: Dict[str, Any],
+    path: Tuple[str, ...],
+) -> Any:
+    '''
+    Walk the JSON Schema along `path` and return the ``"default"`` value
+    from the leaf node, or ``None`` if no default exists or the leaf is
+    an object with nested properties (defaults only apply to primitive
+    leaves).
+    '''
+    current = schema
+    for key in path:
+        props = current.get("properties", {})
+        current = props.get(key)
+        if not isinstance(current, dict):
+            return None
+    if _has_nested_properties(current):
+        return None
+    return current.get("default")
+
+
 def group_extended_fields_by_name(
     extended_fields: List[Dict[str, Any]],
 ) -> Dict[str, List[Dict[str, Any]]]:
@@ -165,11 +186,15 @@ def build_object_field_cells(
     entries: List[Dict[str, Any]],
     paths: List[Tuple[str, ...]],
     separator: str,
+    schema: Dict[str, Any] = None,
 ) -> List[str]:
     '''
     Build one joined cell per leaf path for an object-typed partner
     field, walking each contribution's `raw_values` in declaration
     order and skipping empty values.
+
+    When *schema* is provided, missing leaf values are filled from the
+    schema ``"default"`` (non-object leaves only).
     '''
     collected: Dict[Tuple[str, ...], List[str]] = {
         path: [] for path in paths
@@ -178,7 +203,7 @@ def build_object_field_cells(
         raw_values = _entry_value_dict(entry).get("raw_values")
         if not isinstance(raw_values, dict):
             continue
-        _collect_path_values(raw_values, paths, collected)
+        _collect_path_values(raw_values, paths, collected, schema)
     return [separator.join(collected[path]) for path in paths]
 
 
@@ -186,9 +211,12 @@ def _collect_path_values(
     raw_values: Dict[str, Any],
     paths: List[Tuple[str, ...]],
     collected: Dict[Tuple[str, ...], List[str]],
+    schema: Dict[str, Any] = None,
 ) -> None:
     for path in paths:
         value = resolve_nested_value(raw_values, path)
+        if is_empty_partner_value(value) and schema:
+            value = resolve_schema_default(schema, path)
         if is_empty_partner_value(value):
             continue
         collected[path].append(str(value))

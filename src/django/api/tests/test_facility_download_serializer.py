@@ -343,6 +343,78 @@ class FacilityDownloadSerializerTest(TestCase):
             ],
         )
 
+    def test_partner_fields_use_schema_defaults_for_missing_leaves(self):
+        schema = {
+            'properties': {
+                'submission_date': {'type': 'string'},
+                'expiration_date': {
+                    'type': 'string',
+                    'default': 'N/A',
+                },
+                'rating': {
+                    'type': 'integer',
+                    'default': 0,
+                },
+            }
+        }
+        partner_fields = [
+            SimpleNamespace(
+                name='audit_info',
+                type=PartnerField.OBJECT,
+                json_schema=schema,
+            ),
+        ]
+        extended_fields = [
+            {
+                'field_name': 'audit_info',
+                'value': {
+                    'raw_values': {
+                        'submission_date': '2024-10-15',
+                    }
+                },
+                'contributor': {'id': 1},
+            },
+        ]
+        serializer = FacilityDownloadSerializer()
+        row = serializer.get_partner_fields_row(
+            extended_fields, partner_fields
+        )
+        self.assertEqual(row, ['2024-10-15', 'N/A', '0'])
+
+    def test_partner_fields_ignores_defaults_on_object_sub_schemas(self):
+        schema = {
+            'properties': {
+                'nested_obj': {
+                    'type': 'object',
+                    'default': {'should': 'be ignored'},
+                    'properties': {
+                        'leaf': {'type': 'string'},
+                    },
+                },
+            }
+        }
+        partner_fields = [
+            SimpleNamespace(
+                name='complex_field',
+                type=PartnerField.OBJECT,
+                json_schema=schema,
+            ),
+        ]
+        extended_fields = [
+            {
+                'field_name': 'complex_field',
+                'value': {
+                    'raw_values': {}
+                },
+                'contributor': {'id': 1},
+            },
+        ]
+        serializer = FacilityDownloadSerializer()
+        row = serializer.get_partner_fields_row(
+            extended_fields, partner_fields
+        )
+        self.assertEqual(row, [''])
+
     def test_get_row_with_claim_from_contributor_without_extended_fields(self):
         serializer = FacilityDownloadSerializer()
         row = serializer.get_row(self.facility_three)

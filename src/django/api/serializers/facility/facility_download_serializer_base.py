@@ -189,7 +189,10 @@ class FacilityDownloadSerializerBase(Serializer):
 
             if paths:
                 row.extend(
-                    build_object_field_cells(entries, paths, separator)
+                    build_object_field_cells(
+                        entries, paths, separator,
+                        partner_field.json_schema,
+                    )
                 )
             else:
                 row.append(build_primitive_field_cell(entries, separator))
