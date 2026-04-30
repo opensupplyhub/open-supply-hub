@@ -13,31 +13,9 @@ jest.mock('../../components/DownloadLimitInfo', () => () => (
     <div data-testid="mock-download-limit-info">Mocked DownloadLimitInfo</div>
 ));
 
-const emptyFilters = {
-    facilityFreeTextQuery: '',
-    contributors: [],
-    contributorTypes: [],
-    countries: [],
-    claimStatuses: [],
-    sectors: [],
-    sortAlgorithm: '',
-    parentCompany: [],
-    facilityType: [],
-    processingType: [],
-    productType: [],
-    numberOfWorkers: [],
-    dataSources: [],
-    moderationStatuses: [],
-    nativeLanguageName: '',
-    combineContributors: '',
-    boundary: null,
-    lists: [],
-};
-
-const activeFilters = {
-    ...emptyFilters,
-    facilityFreeTextQuery: 'test',
-};
+const createFacilitiesState = (count, hasAppliedFilters = false) => ({
+    facilities: { data: { count }, hasAppliedFilters },
+});
 
 describe('FilterSidebarHeader component', () => {
     const renderComponent = ({ preloadedState = {}, props = {} } = {}) =>
@@ -49,7 +27,7 @@ describe('FilterSidebarHeader component', () => {
         const { getByText } = renderComponent({
             preloadedState: {
                 facilities: {
-                    facilities: { data: { count: 10 } },
+                    ...createFacilitiesState(10),
                 },
                 auth: {
                     user: {
@@ -62,7 +40,6 @@ describe('FilterSidebarHeader component', () => {
                 embeddedMap: {
                     embed: false,
                 },
-                filters: emptyFilters,
             },
             props: {
                 multiLine: false,
@@ -76,7 +53,7 @@ describe('FilterSidebarHeader component', () => {
             const { getByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds 5000 limit.
+                        ...createFacilitiesState(6000, true), // Exceeds 5000 limit.
                     },
                     auth: {
                         user: {
@@ -89,7 +66,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -102,7 +78,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -115,7 +91,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -128,7 +103,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 3000 } }, // Within 5000 limit.
+                        ...createFacilitiesState(3000, true), // Within 5000 limit.
                     },
                     auth: {
                         user: {
@@ -141,7 +116,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -154,7 +128,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -167,7 +141,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: true, // Embed mode.
                     },
-                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -180,7 +153,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } },
+                        ...createFacilitiesState(6000, true),
                     },
                     auth: {
                         user: {
@@ -193,7 +166,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: activeFilters,
                 },
                 props: {
                     multiLine: false,
@@ -206,7 +178,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -219,7 +191,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: activeFilters,
                     featureFlags: {
                         flags: {
                             private_instance: true, // Private instance flag active.
@@ -237,7 +208,7 @@ describe('FilterSidebarHeader component', () => {
             const { getByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -250,7 +221,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: activeFilters,
                     featureFlags: {
                         flags: {
                             private_instance: false, // Private instance flag not active.
@@ -264,11 +234,11 @@ describe('FilterSidebarHeader component', () => {
             expect(getByTestId('mock-download-limit-info')).toBeInTheDocument();
         });
 
-        test('does not display DownloadLimitInfo when no search criteria or filters are applied', () => {
+        test('does not display DownloadLimitInfo when filters have not been applied', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, false), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -281,7 +251,6 @@ describe('FilterSidebarHeader component', () => {
                     embeddedMap: {
                         embed: false,
                     },
-                    filters: emptyFilters, // No search criteria or filters.
                 },
                 props: {
                     multiLine: false,
