@@ -20,6 +20,7 @@ const FilterSidebarHeader = ({
     embed,
     user,
     isSameContributor,
+    hasAppliedFilters,
 }) => (
     <div className={`${classes.header} results-height-subtract`}>
         <h1 className={classes.headerText}>
@@ -39,7 +40,8 @@ const FilterSidebarHeader = ({
             when={
                 !embed &&
                 !user.isAnon &&
-                facilitiesCount > user.allowed_records_number
+                facilitiesCount > user.allowed_records_number &&
+                hasAppliedFilters
             }
         >
             <FeatureFlag
@@ -53,6 +55,10 @@ const FilterSidebarHeader = ({
     </div>
 );
 
+FilterSidebarHeader.defaultProps = {
+    hasAppliedFilters: false,
+};
+
 FilterSidebarHeader.propTypes = {
     multiLine: bool.isRequired,
     facilitiesCount: number.isRequired,
@@ -60,12 +66,13 @@ FilterSidebarHeader.propTypes = {
     classes: object.isRequired,
     user: userPropType.isRequired,
     isSameContributor: bool.isRequired,
+    hasAppliedFilters: bool,
 };
 
 const mapStateToProps = ({
     embeddedMap: { embed },
     facilities: {
-        facilities: { data: facilities },
+        facilities: { data: facilities, hasAppliedFilters },
     },
     auth: {
         user: { user },
@@ -75,6 +82,7 @@ const mapStateToProps = ({
     facilitiesCount: get(facilities, 'count', null),
     user,
     isSameContributor: get(facilities, 'is_same_contributor', false),
+    hasAppliedFilters,
 });
 
 export default withStyles(filterSidebarHeaderStyles)(

@@ -13,6 +13,10 @@ jest.mock('../../components/DownloadLimitInfo', () => () => (
     <div data-testid="mock-download-limit-info">Mocked DownloadLimitInfo</div>
 ));
 
+const createFacilitiesState = (count, hasAppliedFilters = false) => ({
+    facilities: { data: { count }, hasAppliedFilters },
+});
+
 describe('FilterSidebarHeader component', () => {
     const renderComponent = ({ preloadedState = {}, props = {} } = {}) =>
         renderWithProviders(<FilterSidebarHeader {...props} />, {
@@ -23,7 +27,7 @@ describe('FilterSidebarHeader component', () => {
         const { getByText } = renderComponent({
             preloadedState: {
                 facilities: {
-                    facilities: { data: { count: 10 } },
+                    ...createFacilitiesState(10),
                 },
                 auth: {
                     user: {
@@ -49,7 +53,7 @@ describe('FilterSidebarHeader component', () => {
             const { getByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds 5000 limit.
+                        ...createFacilitiesState(6000, true), // Exceeds 5000 limit.
                     },
                     auth: {
                         user: {
@@ -74,7 +78,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -99,7 +103,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 3000 } }, // Within 5000 limit.
+                        ...createFacilitiesState(3000, true), // Within 5000 limit.
                     },
                     auth: {
                         user: {
@@ -124,7 +128,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -149,7 +153,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } },
+                        ...createFacilitiesState(6000, true),
                     },
                     auth: {
                         user: {
@@ -174,7 +178,7 @@ describe('FilterSidebarHeader component', () => {
             const { queryByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -204,7 +208,7 @@ describe('FilterSidebarHeader component', () => {
             const { getByTestId } = renderComponent({
                 preloadedState: {
                     facilities: {
-                        facilities: { data: { count: 6000 } }, // Exceeds limit.
+                        ...createFacilitiesState(6000, true), // Exceeds limit.
                     },
                     auth: {
                         user: {
@@ -228,6 +232,33 @@ describe('FilterSidebarHeader component', () => {
                 },
             });
             expect(getByTestId('mock-download-limit-info')).toBeInTheDocument();
+        });
+
+        test('does not display DownloadLimitInfo when filters have not been applied', () => {
+            const { queryByTestId } = renderComponent({
+                preloadedState: {
+                    facilities: {
+                        ...createFacilitiesState(6000, false), // Exceeds limit.
+                    },
+                    auth: {
+                        user: {
+                            user: {
+                                isAnon: false,
+                                allowed_records_number: 5000,
+                            },
+                        },
+                    },
+                    embeddedMap: {
+                        embed: false,
+                    },
+                },
+                props: {
+                    multiLine: false,
+                },
+            });
+            expect(
+                queryByTestId('mock-download-limit-info'),
+            ).not.toBeInTheDocument();
         });
     });
 });
