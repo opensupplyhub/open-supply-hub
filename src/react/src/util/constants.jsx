@@ -31,6 +31,7 @@ export const InfoPaths = {
     privacyPolicy: 'privacy-policy',
     spotlight: 'spotlight',
     preparingData: 'resources/preparing-data',
+    dataCleaningService: 'data-cleaning-service',
     dataQuality: 'resources/a-free-universal-id-matching-algorithm',
     claimedFacilities: 'stories-resources/claim-a-facility',
     termsOfService: 'terms-of-service',
