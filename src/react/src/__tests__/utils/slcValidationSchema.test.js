@@ -1,9 +1,10 @@
 import { slcValidationSchema } from '../../util/util';
+import { SLC_FORM_CONSTRAINTS } from '../../util/constants';
 
 // Minimal valid base values — only name, address, and country are required.
 // Optional string fields use undefined so Yup skips their tests (empty string
-// fails the meaningful-characters check for non-required slcTextFieldValidation
-// fields, and fails the format-and-range check for numberOfWorkers).
+// fails the meaningful-characters check for non-required text fields, and
+// fails the format-and-range check for numberOfWorkers).
 const validBase = {
     name: 'Test Facility',
     address: '123 Main Street',
@@ -26,7 +27,14 @@ const validate = (overrides = {}) =>
 const isValid = (overrides = {}) =>
     slcValidationSchema.isValid({ ...validBase, ...overrides });
 
-describe('slcValidationSchema — non-Latin character validation', () => {
+// Helper: build an array of N valid { label, value } items.
+const makeItems = count =>
+    Array.from({ length: count }, (_, i) => ({
+        label: `Item ${i + 1}`,
+        value: `item-${i + 1}`,
+    }));
+
+describe('slcValidationSchema', () => {
     // -------------------------------------------------------------------------
     // name
     // -------------------------------------------------------------------------
@@ -78,8 +86,20 @@ describe('slcValidationSchema — non-Latin character validation', () => {
 
         it('accepts accented Latin characters in address', async () => {
             await expect(
-                isValid({ address: '12 Rue de l\'Église, Montréal' }),
+                isValid({ address: "12 Rue de l'Église, Montréal" }),
             ).resolves.toBe(true);
+        });
+
+        it('accepts an address of exactly 200 characters', async () => {
+            await expect(
+                isValid({ address: 'A'.repeat(200) }),
+            ).resolves.toBe(true);
+        });
+
+        it('rejects an address exceeding 200 characters', async () => {
+            await expect(
+                validate({ address: 'A'.repeat(201) }),
+            ).rejects.toThrow('cannot exceed 200 characters');
         });
 
         it('rejects Chinese characters in address', async () => {
@@ -143,13 +163,13 @@ describe('slcValidationSchema — non-Latin character validation', () => {
         it('rejects fullwidth (Japanese) digits', async () => {
             await expect(
                 validate({ numberOfWorkers: '１００' }),
-            ).rejects.toThrow('Only Latin characters are accepted');
+            ).rejects.toThrow('Enter a single positive number');
         });
 
         it('rejects Arabic-Indic digits', async () => {
             await expect(
                 validate({ numberOfWorkers: '١٠٠' }),
-            ).rejects.toThrow('Only Latin characters are accepted');
+            ).rejects.toThrow('Enter a single positive number');
         });
     });
 
@@ -172,12 +192,32 @@ describe('slcValidationSchema — non-Latin character validation', () => {
             ).resolves.toBe(true);
         });
 
+        it(`accepts exactly ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} items`, async () => {
+            await expect(
+                isValid({
+                    productType: makeItems(
+                        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+                    ),
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects more than ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} items`, async () => {
+            await expect(
+                validate({
+                    productType: makeItems(
+                        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT + 1,
+                    ),
+                }),
+            ).rejects.toThrow('product types allowed');
+        });
+
         it('rejects an item with a Chinese label', async () => {
             await expect(
                 validate({
                     productType: [{ label: '衬衫', value: '衬衫' }],
                 }),
-            ).rejects.toThrow('must contain only Latin characters');
+            ).rejects.toThrow('Product type(s) must contain only Latin characters');
         });
 
         it('rejects when only one item in the list is non-Latin', async () => {
@@ -215,7 +255,7 @@ describe('slcValidationSchema — non-Latin character validation', () => {
                 validate({
                     locationType: [{ label: '组装', value: '组装' }],
                 }),
-            ).rejects.toThrow('must contain only Latin characters');
+            ).rejects.toThrow('Location type(s) must contain only Latin characters');
         });
     });
 
@@ -242,7 +282,7 @@ describe('slcValidationSchema — non-Latin character validation', () => {
                 validate({
                     processingType: [{ label: 'طباعة', value: 'طباعة' }],
                 }),
-            ).rejects.toThrow('must contain only Latin characters');
+            ).rejects.toThrow('Processing type(s) must contain only Latin characters');
         });
     });
 });

@@ -52,6 +52,8 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     getSelectStyles,
+    containsPOBox,
+    isShortAddress,
 } from '../../util/util';
 
 import FeatureFlag from '../FeatureFlag';
@@ -61,8 +63,30 @@ import RequireAuthNotice from '../RequireAuthNotice';
 import StyledTooltip from '../StyledTooltip';
 
 import InputErrorText from './InputErrorText';
+import ContributionWarningDialog from './ContributionWarningDialog';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
+
+// Ordered list of soft-warning checks run before submission. Each entry
+// specifies which form field to inspect, a condition function (returns true
+// when the warning should fire), and the dialog copy to show the contributor.
+// To add a new warning, append an entry here — no other code needs to change.
+const SUBMISSION_WARNING_CHECKS = [
+    {
+        field: 'address',
+        condition: containsPOBox,
+        title: 'Address May Contain a PO Box',
+        message:
+            'The address field appears to contain a PO Box. Street addresses provide better geocoding, and will allow our matching systems to accurately locate the facility on our map. Submissions with a street address are more likely to be matched correctly and accepted.',
+    },
+    {
+        field: 'address',
+        condition: isShortAddress,
+        title: 'Address Appears Short',
+        message:
+            'The address field appears to be short. Please ensure your address contains: street number (or cross streets or neighborhood/industrial zone) if available, town/city, state/province, postal code (if applicable). Submissions with these details are more likely to be matched correctly and accepted.',
+    },
+];
 
 const ProductionLocationInfo = ({
     submitMethod,
@@ -109,6 +133,8 @@ const ProductionLocationInfo = ({
         showPostSubmitErrorNotification,
         setShowPostSubmitErrorNotification,
     ] = useState(false);
+
+    const [activeWarningIndex, setActiveWarningIndex] = useState(null);
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
@@ -388,11 +414,25 @@ const ProductionLocationInfo = ({
         contributionForm.validateField('country');
     }, [contributionForm.values.productType, contributionForm.values.country]);
 
+    const runWarningChecks = (startIndex = 0) => {
+        const { values } = contributionForm;
+        for (let i = startIndex; i < SUBMISSION_WARNING_CHECKS.length; i += 1) {
+            const { field, condition } = SUBMISSION_WARNING_CHECKS[i];
+            if (condition(values[field])) {
+                setActiveWarningIndex(i);
+                return;
+            }
+        }
+        contributionForm.handleSubmit();
+    };
+
+    const handleSubmitClick = () => runWarningChecks(0);
+
     const activeSubmitButton = (
         <Button
             color="secondary"
             variant="contained"
-            onClick={contributionForm.handleSubmit}
+            onClick={handleSubmitClick}
             className={classes.submitButtonStyles}
             disabled={
                 !contributionForm.isValid || pendingModerationEventFetching
@@ -1146,6 +1186,25 @@ const ProductionLocationInfo = ({
                     </div>
                 </Paper>
             </div>
+            <ContributionWarningDialog
+                open={activeWarningIndex !== null}
+                onClose={() => setActiveWarningIndex(null)}
+                onSubmitAnyway={() => {
+                    const next = activeWarningIndex + 1;
+                    setActiveWarningIndex(null);
+                    runWarningChecks(next);
+                }}
+                title={
+                    activeWarningIndex !== null
+                        ? SUBMISSION_WARNING_CHECKS[activeWarningIndex].title
+                        : ''
+                }
+                message={
+                    activeWarningIndex !== null
+                        ? SUBMISSION_WARNING_CHECKS[activeWarningIndex].message
+                        : ''
+                }
+            />
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
                 localStorage.getItem(moderationID) ||
