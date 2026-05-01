@@ -34,7 +34,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.get_claimed_fields(facility),
             self.get_is_closed(facility),
             *self.get_partner_fields_row(
-                extended_fields_raw,
+                facility.extended_fields,
                 FacilitiesDownloadService.get_active_partner_fields()
             ),
             *self.get_mit_living_wage_row(facility),
