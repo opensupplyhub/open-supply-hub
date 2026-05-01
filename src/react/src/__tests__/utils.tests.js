@@ -22,6 +22,7 @@ const {
     getValueFromObject,
     createQueryStringFromSearchFilters,
     allFiltersAreEmpty,
+    hasAppliedSearchFilters,
     createFiltersFromQueryString,
     getValueFromEvent,
     getCheckedFromEvent,
@@ -292,6 +293,52 @@ it('checks whether the filters object has only empty values', () => {
     };
 
     expect(allFiltersAreEmpty(nonEmptyStringFilter)).toBe(false);
+});
+
+it('checks whether a search has applied filters', () => {
+    const emptyFilters = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        claimStatuses: [],
+        sectors: [],
+        sortAlgorithm: '',
+        parentCompany: [],
+        facilityType: [],
+        processingType: [],
+        productType: [],
+        numberOfWorkers: [],
+        dataSources: [],
+        moderationStatuses: [],
+        nativeLanguageName: '',
+        combineContributors: '',
+        boundary: null,
+        lists: [],
+    };
+
+    expect(hasAppliedSearchFilters(emptyFilters)).toBe(false);
+
+    expect(
+        hasAppliedSearchFilters({
+            ...emptyFilters,
+            sortAlgorithm: { value: 'name', label: 'Name' },
+        }),
+    ).toBe(false);
+
+    expect(
+        hasAppliedSearchFilters({
+            ...emptyFilters,
+            facilityFreeTextQuery: 'test',
+        }),
+    ).toBe(true);
+
+    expect(
+        hasAppliedSearchFilters({
+            ...emptyFilters,
+            countries: [{ value: 'BR', label: 'Brazil' }],
+        }),
+    ).toBe(true);
 });
 
 it('creates a set of filters from a querystring', () => {

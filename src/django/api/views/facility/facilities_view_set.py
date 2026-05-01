@@ -446,8 +446,7 @@ class FacilitiesViewSet(ListModelMixin,
                                     "raw_values": {
                                         "status": "active",
                                         "start_date": "2026-01-29",
-                                        "end_date": "2026-01-29",
-                                        "attributes": "..."
+                                        "end_date": "2026-01-29"
                                     }
                                 }
                             }
@@ -458,8 +457,7 @@ class FacilitiesViewSet(ListModelMixin,
                                     "raw_values": {
                                         "status": "active",
                                         "active_since": "2022-06-01",
-                                        "end_date": "2022-06-01",
-                                        "attributes": "..."
+                                        "end_date": "2022-06-01"
                                     }
                                 }
                             }
@@ -469,8 +467,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "value": {
                                     "raw_values": {
                                         "wovo_active": "active",
-                                        "wovo_established_date": "2022-06-01",
-                                        "attributes": "..."
+                                        "wovo_established_date": "2022-06-01"
                                     }
                                 }
                             }

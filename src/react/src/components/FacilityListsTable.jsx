@@ -134,7 +134,7 @@ function FacilityListsTable({ facilityLists, history: { push } }) {
                                 />
                                 {/* Status derivation:
                                     Pending approval: the list status == PENDING
-                                    Rejected: the list status == REJECTED
+                                    Feedback Phase: the list status == REJECTED
                                     Processing: If the list status is APPROVED and any of the UPLOADED, PARSED, or GEOCODED counts are > 0
                                     Action Required: If not processing and match_resposibility == contributor
                                     Pending Moderation: If not processing and match_resposibility == moderator
@@ -162,7 +162,7 @@ function FacilityListsTable({ facilityLists, history: { push } }) {
                                                 status = 'Pending approval';
                                             }
                                         } else if (list.status === 'REJECTED') {
-                                            status = 'Rejected';
+                                            status = 'Feedback Phase';
                                         } else if (list.status === 'REPLACED') {
                                             status = 'Replaced';
                                         } else if (list.status === 'APPROVED') {
