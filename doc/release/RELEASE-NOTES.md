@@ -9,9 +9,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 9, 2026
 
-### Bugfix
-* [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
-
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
 * [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
@@ -21,6 +18,22 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
     * `reindex_locations_with_approved_claim`
+
+
+## Release 2.22.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: April 29, 2026
+
+### Bugfix
+* [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
+
+### What's new
+* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Hyphenate Spotlight Partners description text in the **Understanding Data Sources** section.
+
+### Release instructions
+* Ensure that no commands are included in the `post_deployment` command.
 
 
 ## Release 2.22.1
