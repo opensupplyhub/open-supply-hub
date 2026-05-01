@@ -1744,10 +1744,8 @@ const isCleanValueMeaningful = value => {
 // Covers accented characters like é, ü, ñ, ø, etc.
 const containsOnlyLatinCharacters = value => {
     if (typeof value !== 'string') return true;
-    return Array.from(value).every(char => {
-        const code = char.codePointAt(0);
-        return code <= 0x024f || (code >= 0x1e00 && code <= 0x1eff);
-    });
+    const normalized = value.normalize('NFC');
+    return !/[\u0250-\u1FFF\u2070-\u2E7F\u2E80-\uFFFF]/g.test(normalized);
 };
 
 const slcTextFieldValidation = stringYup()
@@ -1783,48 +1781,32 @@ const slcTextFieldValidation = stringYup()
             `${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
     );
 
+const latinOnlyArrayTest = fieldName =>
+    arrayYup().test(
+        'latin-characters-only',
+        `${fieldName} must contain only Latin characters. Remove any non-Latin characters (e.g. Chinese, Arabic, Cyrillic).`,
+        value =>
+            !value ||
+            value.every(item => containsOnlyLatinCharacters(item?.label)),
+    );
+
 export const slcValidationSchema = objectYup({
     name: slcTextFieldValidation.required('Name is required.').label('Name'),
     address: slcTextFieldValidation
         .required('Address is required.')
         .label('Address'),
     country: objectYup().nullable().required('Country is required.'),
-    productType: arrayYup()
-        .max(
-            SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
-            `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
-        )
-        .test(
-            'latin-characters-only',
-            'Product type(s) must contain only Latin characters. Remove any non-Latin characters (e.g. Chinese, Arabic, Cyrillic).',
-            value =>
-                !value ||
-                value.every(item => containsOnlyLatinCharacters(item?.label)),
-        ),
-    locationType: arrayYup().test(
-        'latin-characters-only',
-        'Location type(s) must contain only Latin characters. Remove any non-Latin characters (e.g. Chinese, Arabic, Cyrillic).',
-        value =>
-            !value ||
-            value.every(item => containsOnlyLatinCharacters(item?.label)),
+    productType: latinOnlyArrayTest('Product type(s)').max(
+        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+        `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
     ),
-    processingType: arrayYup().test(
-        'latin-characters-only',
-        'Processing type(s) must contain only Latin characters. Remove any non-Latin characters (e.g. Chinese, Arabic, Cyrillic).',
-        value =>
-            !value ||
-            value.every(item => containsOnlyLatinCharacters(item?.label)),
-    ),
+    locationType: latinOnlyArrayTest('Location type(s)'),
+    processingType: latinOnlyArrayTest('Processing type(s)'),
     numberOfWorkers: stringYup()
         .test(
             'is-trimmed',
             'Remove spaces at start and end of entry.',
             value => value == null || value === value.trim(),
-        )
-        .test(
-            'latin-characters-only',
-            'Only Latin characters are accepted. Use standard digits (e.g., 5 or 3-10).',
-            value => value == null || containsOnlyLatinCharacters(value),
         )
         .test(
             'valid-format-and-range',
@@ -1855,7 +1837,8 @@ export const slcValidationSchema = objectYup({
 
                 return false;
             },
-        ),
+        )
+        .label('Number of workers'),
     parentCompany: slcTextFieldValidation.label('Parent company'),
 });
 
