@@ -320,6 +320,9 @@ AUTH_USER_MODEL = 'api.User'
 # https://docs.djangoproject.com/en/3.2/topics/cache/
 
 MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
+MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS = int(
+    os.getenv('MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS', 60 * 10)
+)
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
 CACHES = {
