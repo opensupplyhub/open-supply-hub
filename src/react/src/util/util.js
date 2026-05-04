@@ -1797,7 +1797,7 @@ const SLC_TEXT_FIELD_TESTS = Object.freeze({
         message: 'Remove spaces at start and end of text.',
         test: value => value == null || value === value.trim(),
     }),
-    'not-a-number': Object.freeze({
+    'valid-non-number': Object.freeze({
         message: ({ label }) => `${label} cannot be a number.`,
         test: value => value == null || notANumber(value),
     }),
@@ -1854,16 +1854,17 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
         type: 'text',
         tests: [
             'is-trimmed',
-            'not-a-number',
+            'valid-non-number',
             'meaningful-characters',
             'latin-characters-only',
+            'max-char-count',
         ],
     }),
     address: Object.freeze({
         type: 'text',
         tests: [
             'is-trimmed',
-            'not-a-number',
+            'valid-non-number',
             'meaningful-characters',
             'latin-characters-only',
             'max-char-count',
@@ -1873,9 +1874,10 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
         type: 'text',
         tests: [
             'is-trimmed',
-            'not-a-number',
+            'valid-non-number',
             'meaningful-characters',
             'latin-characters-only',
+            'max-char-count',
         ],
     }),
     productType: Object.freeze({
