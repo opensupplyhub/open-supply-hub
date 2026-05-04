@@ -16,6 +16,7 @@ import {
     makeFacilityDetailLink,
     createQueryStringFromSearchFilters,
     makeGetFacilityByOSIdURLWithContributorId,
+    hasAppliedSearchFilters,
 } from '../util/util';
 
 import { toggleFilterModal } from './ui';
@@ -56,6 +57,7 @@ export function fetchFacilities({
         } = getState();
 
         const qs = createQueryStringFromSearchFilters(filters, embed, detail);
+        const hasAppliedFilters = hasAppliedSearchFilters(filters);
 
         return apiRequest
             .get(makeGetFacilitiesURLWithQueryString(qs, pageSize))
@@ -75,7 +77,12 @@ export function fetchFacilities({
                 return data;
             })
             .then(data => {
-                dispatch(completeFetchFacilities(data));
+                dispatch(
+                    completeFetchFacilities({
+                        data,
+                        hasAppliedFilters,
+                    }),
+                );
                 if (activateFacilitiesTab) {
                     dispatch(toggleFilterModal(false));
                 }
