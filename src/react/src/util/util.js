@@ -1778,7 +1778,7 @@ const validNumWorkersFormat = value => {
 
 export const containsPOBox = value => {
     if (typeof value !== 'string') return false;
-    return /\b(post\s+office|p\.?\s*o\.?\s+box)\b/i.test(value);
+    return /\b(post\s+office|p\.?\s*o\.?\s*box)\b/i.test(value);
 };
 
 export const isShortAddress = value => {
