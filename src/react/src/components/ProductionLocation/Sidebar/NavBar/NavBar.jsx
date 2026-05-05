@@ -50,12 +50,14 @@ const NavBar = ({
                     label: 'Overview',
                     Icon: OverviewIcon,
                     handler: handleDefaultSectionClick('overview'),
+                    testId: 'jump-to-overview-link',
                 },
                 {
                     to: '#general-information',
                     label: 'General Information',
                     Icon: GeneralInformationIcon,
                     handler: handleDefaultSectionClick('general-information'),
+                    testId: 'jump-to-general-information-link',
                 },
             ],
             ...(hasOperationalDetails
@@ -65,6 +67,7 @@ const NavBar = ({
                           label: 'Operational Details',
                           Icon: OperationalDetailsIcon,
                           handler: handleOperationalDetailsClick,
+                          testId: 'jump-to-operational-details-link',
                       },
                   ]
                 : []),
@@ -72,6 +75,9 @@ const NavBar = ({
                 to: `#${group.uuid}`,
                 label: group.name,
                 handler: handleGroupClick(group.uuid),
+                testId: `jump-to-${group.name
+                    .toLowerCase()
+                    .replace(/\s+/g, '-')}-link`,
                 Image: group.icon_file
                     ? () => (
                           <img
@@ -87,7 +93,10 @@ const NavBar = ({
     }, [groups, hasOperationalDetails]);
 
     return (
-        <div className={`${classes.container} ${classes.navContainer}`}>
+        <div
+            className={`${classes.container} ${classes.navContainer}`}
+            data-testid="jump-to-section"
+        >
             <Typography
                 variant="title"
                 className={classes.title}
@@ -96,38 +105,41 @@ const NavBar = ({
                 Jump to
             </Typography>
             <MenuList className={classes.menuList}>
-                {navItems.map(({ to, label, Icon, Image, active, handler }) => (
-                    <MenuItem
-                        key={to}
-                        className={`${classes.menuItem} ${
-                            active ? classes.menuItemActive : ''
-                        }`}
-                        disableGutters
-                        onClick={handler}
-                    >
-                        {Image ? (
-                            <Image
-                                className={`${classes.menuImage} ${
-                                    active ? classes.menuImageActive : ''
-                                }`}
-                            />
-                        ) : (
-                            <Icon
-                                className={`${classes.menuIcon} ${
-                                    active ? classes.menuIconActive : ''
-                                }`}
-                            />
-                        )}
-                        <Typography
-                            variant="body1"
-                            className={`${classes.menuLabel} ${
-                                active ? classes.menuLabelActive : ''
+                {navItems.map(
+                    ({ to, label, Icon, Image, active, handler, testId }) => (
+                        <MenuItem
+                            key={to}
+                            className={`${classes.menuItem} ${
+                                active ? classes.menuItemActive : ''
                             }`}
+                            disableGutters
+                            onClick={handler}
+                            data-testid={testId}
                         >
-                            {label}
-                        </Typography>
-                    </MenuItem>
-                ))}
+                            {Image ? (
+                                <Image
+                                    className={`${classes.menuImage} ${
+                                        active ? classes.menuImageActive : ''
+                                    }`}
+                                />
+                            ) : (
+                                <Icon
+                                    className={`${classes.menuIcon} ${
+                                        active ? classes.menuIconActive : ''
+                                    }`}
+                                />
+                            )}
+                            <Typography
+                                variant="body1"
+                                className={`${classes.menuLabel} ${
+                                    active ? classes.menuLabelActive : ''
+                                }`}
+                            >
+                                {label}
+                            </Typography>
+                        </MenuItem>
+                    ),
+                )}
             </MenuList>
         </div>
     );

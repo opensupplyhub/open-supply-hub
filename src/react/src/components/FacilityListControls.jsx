@@ -164,7 +164,9 @@ function FacilityListControls({
                     variant="title"
                     style={facilityListControlStyles.statusLabelStyles}
                 >
-                    {status}{' '}
+                    {status === facilityListStatusChoicesEnum.REJECTED
+                        ? 'Feedback Phase'
+                        : status}{' '}
                     {status === facilityListStatusChoicesEnum.REJECTED && (
                         <Button
                             onClick={openInformationDialog}

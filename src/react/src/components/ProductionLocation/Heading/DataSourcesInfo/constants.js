@@ -32,9 +32,9 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
         Icon: HandshakeIcon,
         iconClassNameKey: 'iconPartner',
         labelClassNameKey: 'labelPartner',
-        title: 'Partner Data',
+        title: 'Spotlight Partners',
         subsectionText:
-            'Additional social or environmental information shared by third party platforms',
+            'Additional information about facility operations or context shared by third-party platforms',
         learnMoreUrl: 'https://info.opensupplyhub.org/data-integrations',
     }),
 ]);

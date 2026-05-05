@@ -23,16 +23,28 @@ function PartnerDataContainer({
     const hasPartnerData = useMemo(() => {
         const fields = facilityData?.properties?.partner_fields;
         if (!fields) return false;
-        return Object.values(fields).some(
-            values => Array.isArray(values) && values.length > 0 && values[0],
-        );
-    }, [facilityData]);
 
-    if (!hasPartnerData) return null;
+        const fieldsWithValues = Object.keys(fields).filter(key => {
+            const values = fields[key];
+            return Array.isArray(values) && values.length > 0 && values[0];
+        });
+
+        if (fieldsWithValues.length === 0) return false;
+
+        return partnerGroups.some(group =>
+            group.partner_fields.some(field =>
+                fieldsWithValues.includes(field),
+            ),
+        );
+    }, [facilityData, partnerGroups]);
 
     return (
         <>
-            <Grid container className={classes.root}>
+            <Grid
+                container
+                className={classes.root}
+                data-testid="spotlight-section"
+            >
                 <Grid item xs={12} className={classes.titleRowContainer}>
                     <div className={classes.titleRow}>
                         {!fetching && (
@@ -47,9 +59,7 @@ function PartnerDataContainer({
                             className={classes.title}
                             component="h3"
                         >
-                            {!fetching
-                                ? 'Partner Data'
-                                : 'Loading Partner Data...'}
+                            {!fetching ? 'Spotlight' : 'Loading Spotlight...'}
                         </Typography>
                         {!fetching && (
                             <IconComponent
@@ -67,15 +77,15 @@ function PartnerDataContainer({
                             />
                         )}
                     </div>
-                    {!fetching && (
+                    {!fetching && hasPartnerData && (
                         <Typography
                             variant="subheading"
                             className={classes.description}
                         >
                             The following information is provided by third-party
-                            partners who host additional social or environmental
-                            data related to this production location, its
-                            context, and/or its operations.{' '}
+                            partners who host additional data related to this
+                            production location, its context, and/or its
+                            operations.{' '}
                             <a
                                 href="https://info.opensupplyhub.org/data-integrations"
                                 target="_blank"
@@ -85,8 +95,30 @@ function PartnerDataContainer({
                             </a>
                         </Typography>
                     )}
+                    {!fetching && !hasPartnerData && (
+                        <Typography
+                            variant="subheading"
+                            className={classes.description}
+                        >
+                            Open Supply Hub works with third-party partners who
+                            provide additional data related to production
+                            locations, their context, and/or their operations.{' '}
+                            <b>
+                                No partner data is currently available for this
+                                facility.
+                            </b>{' '}
+                            <a
+                                href="https://info.opensupplyhub.org/data-integrations"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Learn more about our data partnerships.
+                            </a>
+                        </Typography>
+                    )}
                 </Grid>
                 {!fetching &&
+                    hasPartnerData &&
                     partnerGroups.map(group => (
                         <PartnerSectionItem group={group} key={group.uuid} />
                     ))}

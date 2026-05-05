@@ -23,5 +23,8 @@ export default theme =>
             fontSize: '1rem',
             color: COLOURS.DARK_GREY,
             cursor: 'pointer',
+            [theme.breakpoints.down('xs')]: {
+                fontSize: '1.4rem',
+            },
         }),
     });

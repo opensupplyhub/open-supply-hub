@@ -23,6 +23,17 @@ export default theme => {
             marginBottom: 0,
             marginRight: 0,
         }),
+        titleShort: Object.freeze({
+            [theme.breakpoints.up('sm')]: {
+                display: 'none',
+            },
+        }),
+        titleFull: Object.freeze({
+            display: 'none',
+            [theme.breakpoints.up('sm')]: {
+                display: 'inline',
+            },
+        }),
         infoButton: Object.freeze({
             marginLeft: spacing * 0.5,
             padding: spacing * 0.5,

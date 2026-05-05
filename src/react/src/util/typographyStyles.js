@@ -19,6 +19,9 @@ export const getTypographyStyles = theme => {
         fontWeight: 600,
     });
     return Object.freeze({
+        formLabelTight: Object.freeze({
+            ...formLabelBase,
+        }),
         formLabel: Object.freeze({
             ...formLabelBase,
             margin: '24px 0 8px 0',
@@ -27,9 +30,6 @@ export const getTypographyStyles = theme => {
             ...formLabelBase,
             marginTop: 0,
             marginBottom: '8px',
-        }),
-        formLabelTight: Object.freeze({
-            ...formLabelBase,
         }),
         sectionTitle: Object.freeze({
             fontSize: '24px',

@@ -1,6 +1,7 @@
 from api.models import ExtendedField
-
-from api.helpers.helpers import prefix_a_an
+from api.models.facility.facility_claim import FacilityClaim
+from api.helpers.helpers import prefix_a_an, parse_download_date
+from api.constants import CLAIMED_DOWNLOAD_FIELDS
 
 
 def format_download_date(date):
@@ -85,6 +86,37 @@ def format_download_extended_fields(fields, extended_fields):
             extended_fields[5].extend(result)
 
     return extended_fields
+
+
+def get_claim_created_at_value(claim: dict) -> str:
+    raw = claim.get('created_at')
+    return parse_download_date(raw) if raw else ''
+
+
+def get_claim_field_value(field: str, claim: dict) -> str:
+    if not FacilityClaim.is_field_visible(field, claim):
+        return ''
+
+    raw = claim.get(field)
+    if raw is None:
+        return ''
+
+    formatted = FacilityClaim.change_value_serializers[field](raw)
+    if isinstance(formatted, list):
+        formatted = ', '.join(str(value) for value in formatted)
+    return str(formatted) if formatted is not None else ''
+
+
+def format_download_claimed_fields(
+    claim: dict,
+    claimed_fields: list,
+) -> list:
+    for i, field in enumerate(CLAIMED_DOWNLOAD_FIELDS):
+        if field == 'created_at':
+            claimed_fields[i] = get_claim_created_at_value(claim)
+        else:
+            claimed_fields[i] = get_claim_field_value(field, claim)
+    return claimed_fields
 
 
 def value_to_set(value):

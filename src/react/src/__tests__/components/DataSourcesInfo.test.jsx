@@ -24,7 +24,7 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         expect(
-            screen.getByRole('heading', { name: 'Understanding Data Sources' }),
+            screen.getByRole('heading', { name: 'Data Sources' }),
         ).toBeInTheDocument();
     });
 
@@ -32,7 +32,7 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         expect(
-            screen.getByRole('heading', { level: 3, name: 'Understanding Data Sources' }),
+            screen.getByRole('heading', { level: 3, name: 'Data Sources' }),
         ).toBeInTheDocument();
     });
 
@@ -65,7 +65,7 @@ describe('ProductionLocation DataSourcesInfo', () => {
 
         expect(screen.getByText('Claimed')).toBeInTheDocument();
         expect(screen.getByText('Crowdsourced')).toBeInTheDocument();
-        expect(screen.getByText('Partner Data')).toBeInTheDocument();
+        expect(screen.getByText('Spotlight Partners')).toBeInTheDocument();
     });
 
     test('expand control shows subsection text when opened', () => {

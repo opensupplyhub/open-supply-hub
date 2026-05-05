@@ -4,6 +4,8 @@ import get from 'lodash/get';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+import StoreMallDirectory from '@material-ui/icons/StoreMallDirectory';
+
 import FeatureFlag from '../../../FeatureFlag';
 import { REPORT_A_FACILITY } from '../../../../util/constants';
 
@@ -31,9 +33,9 @@ const ProductionLocationDetailClosureStatus = ({
             <div className={classes.status}>
                 <div className={classes.contentContainer}>
                     <div className={classes.iconColumn}>
-                        <i
-                            className={`${classes.text} ${classes.icon} far fa-fw fa-store-slash`}
-                        />
+                        <span className={classes.iconSlash}>
+                            <StoreMallDirectory className={classes.icon} />
+                        </span>
                     </div>
                     <div className={classes.textBox}>
                         <PrimaryText
@@ -71,6 +73,7 @@ ProductionLocationDetailClosureStatus.propTypes = {
         contentContainer: PropTypes.string,
         iconColumn: PropTypes.string,
         icon: PropTypes.string,
+        iconSlash: PropTypes.string,
         textBox: PropTypes.string,
         text: PropTypes.string,
         statusPending: PropTypes.string,

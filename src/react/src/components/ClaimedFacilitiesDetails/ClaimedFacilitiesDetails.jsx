@@ -388,6 +388,36 @@ function ClaimedFacilitiesDetails({
         return mergedOptions;
     }, [facilityData, sectorValue]);
 
+    const productionTypeSelectOptions = useMemo(
+        () =>
+            mapDjangoChoiceTuplesToSelectOptions(
+                facilityData.production_type_choices || [],
+            ),
+        [facilityData.production_type_choices],
+    );
+
+    const facilityProductionTypesValue = useMemo(() => {
+        const selectedTypes = get(
+            facilityData,
+            'facility_production_types',
+            [],
+        );
+        if (!selectedTypes.length) {
+            return [];
+        }
+
+        const labelToValue = new Map(
+            productionTypeSelectOptions.map(({ label, value }) => [
+                label,
+                value,
+            ]),
+        );
+
+        return selectedTypes
+            .map(type => labelToValue.get(type) || type)
+            .filter(Boolean);
+    }, [facilityData, productionTypeSelectOptions]);
+
     if (fetching) {
         return <LoadingIndicator title={TITLE} />;
     }
@@ -601,14 +631,12 @@ function ClaimedFacilitiesDetails({
                         />
                         <InputSection
                             label="Facility / Processing Types"
-                            value={get(data, 'facility_production_types', [])}
+                            value={facilityProductionTypesValue}
                             onChange={updateFacilityProductionTypes}
                             disabled={updating}
                             isSelect
                             isMultiSelect
-                            selectOptions={mapDjangoChoiceTuplesToSelectOptions(
-                                data.production_type_choices,
-                            )}
+                            selectOptions={productionTypeSelectOptions}
                         />
                         <InputSection
                             label="Product Types"

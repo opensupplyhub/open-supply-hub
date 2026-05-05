@@ -56,6 +56,8 @@ const FacilityDetailsItem = ({
     drawerFieldName,
     drawerPromotedContribution,
     drawerContributions,
+    gaSpotlightAnalytics,
+    spotlightGaProfileBase,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const hasAdditionalContent = !embed && !!additionalContent?.length;
@@ -78,6 +80,7 @@ const FacilityDetailsItem = ({
                 isVerified={isVerified}
                 isFromClaim={isFromClaim}
                 partnerConfigFields={partnerConfigFields}
+                gaSpotlightAnalytics={gaSpotlightAnalytics}
             />
             <ShowOnly when={hasAdditionalContent}>
                 <Button
@@ -101,6 +104,7 @@ const FacilityDetailsItem = ({
                     fieldName={drawerFieldName || label}
                     promotedContribution={drawerPromotedContribution}
                     contributions={drawerContributions}
+                    spotlightGaProfileBase={spotlightGaProfileBase}
                 />
             ) : (
                 <TitledDrawer
@@ -185,6 +189,8 @@ FacilityDetailsItem.propTypes = {
     drawerFieldName: PropTypes.string,
     drawerPromotedContribution: PropTypes.object,
     drawerContributions: PropTypes.arrayOf(PropTypes.object),
+    gaSpotlightAnalytics: PropTypes.object,
+    spotlightGaProfileBase: PropTypes.object,
 };
 
 FacilityDetailsItem.defaultProps = {
@@ -209,6 +215,8 @@ FacilityDetailsItem.defaultProps = {
     drawerFieldName: null,
     drawerPromotedContribution: null,
     drawerContributions: [],
+    gaSpotlightAnalytics: null,
+    spotlightGaProfileBase: null,
 };
 
 export default withStyles(detailsStyles)(FacilityDetailsItem);

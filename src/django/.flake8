@@ -5,3 +5,5 @@ exclude = settings.py, manage.py, *.pyc, api/migrations/*
 max-line-length = 88
 extend-ignore = E203, W503
 
+per-file-ignores =
+    api/views/facility/facilities_view_set.py: E501

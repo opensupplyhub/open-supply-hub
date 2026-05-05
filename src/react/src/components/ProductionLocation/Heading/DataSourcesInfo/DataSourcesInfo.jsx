@@ -28,7 +28,10 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
     };
 
     return (
-        <div className={`${classes.container} ${className || ''}`}>
+        <div
+            className={`${classes.container} ${className || ''}`}
+            data-testid="understanding-data-sources-section"
+        >
             <div
                 className={classes.titleRow}
                 role="button"
@@ -42,7 +45,10 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                     className={classes.sectionTitle}
                     variant="title"
                 >
-                    Understanding Data Sources
+                    <span className={classes.titleShort}>Data Sources</span>
+                    <span className={classes.titleFull}>
+                        Understanding Data Sources
+                    </span>
                 </Typography>
                 <IconComponent
                     title={

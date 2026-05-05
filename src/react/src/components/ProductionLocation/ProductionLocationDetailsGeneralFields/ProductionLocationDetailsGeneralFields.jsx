@@ -27,6 +27,17 @@ const ProductionLocationDetailsGeneralFields = ({
     activeFeatureFlags,
     featureFlagsFetching,
 }) => {
+    const generalInfoFieldTestIds = {
+        name: 'gi-name',
+        parent_company: 'gi-parent-company',
+        sector: 'gi-sector',
+        product_type: 'gi-prod-types',
+        facility_type: 'gi-location-types',
+        processing_type: 'gi-proc-types',
+        number_of_workers: 'gi-workers',
+        native_language_name: 'gi-name-in-native-language',
+    };
+
     const [
         openDrawerFieldKey,
         isDrawerOpen,
@@ -48,7 +59,11 @@ const ProductionLocationDetailsGeneralFields = ({
 
     const renderDataPoints = items =>
         items.map(item => (
-            <Grid item key={item.key}>
+            <Grid
+                item
+                key={item.key}
+                data-testid={generalInfoFieldTestIds[item.key]}
+            >
                 <DataPoint
                     label={item.label}
                     value={item.value}

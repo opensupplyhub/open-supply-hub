@@ -11,9 +11,12 @@ export default theme => {
         title: {
             marginBottom: theme.spacing.unit,
         },
-        divider: Object.freeze({
-            marginBottom: '20px',
-        }),
+        divider: {
+            marginBottom: '0.5px',
+            [theme.breakpoints.up('sm')]: {
+                marginBottom: '20px',
+            },
+        },
         sectionTitleRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
@@ -106,9 +109,14 @@ export default theme => {
         }),
         infoGrid: Object.freeze({
             marginTop: theme.spacing.unit * 2,
+            [theme.breakpoints.down('sm')]: {
+                padding: '0 20px 20px 20px',
+            },
         }),
-        mapContainerWrapper: Object.freeze({
-            padding: `0 20px 20px 20px`,
-        }),
+        mapContainerWrapper: {
+            [theme.breakpoints.up('sm')]: {
+                padding: '0 20px 20px 20px',
+            },
+        },
     });
 };
