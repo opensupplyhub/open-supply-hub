@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
+* [OSDEV-2360](https://opensupplyhub.atlassian.net/browse/OSDEV-2360) - Updated how we write os_id for moderation events so we are not dependent on Logstash to write the os_id.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
