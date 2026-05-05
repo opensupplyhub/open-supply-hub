@@ -7,11 +7,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: May 9, 2026
+* Release date: May 15, 2026
 
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
 * [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
+
+### Code/API changes
+* [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Enforce download limits for all non-anonymous session-authenticated users, bypass limits only for token-authenticated API requests, and use `get_or_create_user_download_limit` in the Stripe webhook to handle users without a pre-existing limit record.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
