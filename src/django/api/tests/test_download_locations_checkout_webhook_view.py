@@ -2,10 +2,12 @@ import stripe
 
 from unittest.mock import patch, MagicMock
 
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from api.constants import FeatureGroups, SINGLE_PAID_DOWNLOAD_RECORDS
 from api.models import (
     DownloadLocationPayment,
     FacilityDownloadLimit,
@@ -146,3 +148,46 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 500)
         self.assertIn("Unexpected error", response.content.decode())
+
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_api_user_payment_credits_download_limit(
+        self,
+        mock_construct,
+        mock_retrieve
+    ):
+        group = Group.objects.get(name=FeatureGroups.CAN_SUBMIT_FACILITY)
+        self.user.groups.add(group)
+
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_api_user",
+            "payment_intent": "pi_api",
+            "amount_subtotal": 20000,
+            "amount_total": 20000,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = 3
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response = self.client.post(
+            self.url, data={}, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.download_limit.refresh_from_db()
+        expected_paid = 3 * SINGLE_PAID_DOWNLOAD_RECORDS
+        self.assertEqual(
+            self.download_limit.paid_download_records, expected_paid
+        )
+        self.assertIsNotNone(self.download_limit.purchase_date)

@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth.models import Group
@@ -1345,24 +1346,70 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         'FREE_FACILITIES_DOWNLOAD_LIMIT',
         FREE_FACILITIES_DOWNLOAD_LIMIT,
     )
-    def test_api_user_can_download_over_limit(self):
+    def test_api_user_subject_to_download_limit(self):
         user = self.create_user(is_api_user=True)
         self.login_user(user)
+        FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=FREE_FACILITIES_DOWNLOAD_LIMIT,
+            paid_download_records=0,
+        )
 
         response = self.get_facility_downloads()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_api_user_download_decrements_quota(self):
+        user = self.create_user(is_api_user=True)
+        self.login_user(user)
+        limit = FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=20,
+            paid_download_records=0,
+        )
+
+        with patch(
+            'api.services.facilities_download_service.'
+            'FacilitiesDownloadService.send_email_if_needed',
+            return_value=None
+        ):
+            response = self.get_facility_downloads()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        total_count = response.data.get("count")
+
+        limit.refresh_from_db()
+        self.assertEqual(
+            limit.free_download_records,
+            max(20 - total_count, 0)
+        )
+
+    @patch(
+        'api.constants.FacilitiesDownloadSettings.'
+        'FREE_FACILITIES_DOWNLOAD_LIMIT',
+        FREE_FACILITIES_DOWNLOAD_LIMIT,
+    )
+    def test_api_user_token_auth_unlimited_downloads(self):
+        user = self.create_user(is_api_user=True)
+        Contributor.objects.create(
+            admin=user,
+            name="API Contributor",
+            contrib_type="Brand / Retailer",
+        )
+        token = Token.objects.create(user=user)
+        FacilityDownloadLimit.objects.create(
+            user=user,
+            free_download_records=FREE_FACILITIES_DOWNLOAD_LIMIT,
+            paid_download_records=0,
+        )
+
+        response = self.client.get(
+            self.download_url,
+            HTTP_AUTHORIZATION="Token {0}".format(token),
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(
             len(response.data.get("results", {}).get("rows", [])),
-            FREE_FACILITIES_DOWNLOAD_LIMIT
+            FREE_FACILITIES_DOWNLOAD_LIMIT,
         )
-
-    def test_api_user_not_limited_by_download_count(self):
-        user = self.create_user(is_api_user=True)
-        self.login_user(user)
-
-        for _ in range(5):
-            response = self.get_facility_downloads()
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_is_same_contributor_true_when_all_facilities_belong_to_user(self):
         user = self.create_user()

@@ -14,9 +14,9 @@ from api.models.facility_download_limit_manager import (
 class FacilityDownloadLimit(models.Model):
     """
     Stores the number of facility records allowed for free download per
-    calendar year, the number of paid facility records for non-API
-    users, the date of last update of free facilities records, and the
-    date when paid facility records were purchased.
+    calendar year, the number of paid facility records, the date of last
+    update of free facilities records, and the date when paid facility
+    records were purchased.
     """
     uuid = models.UUIDField(
         default=uuid.uuid4,
@@ -89,9 +89,7 @@ class FacilityDownloadLimit(models.Model):
         user,
         custom_date=None
     ) -> Optional[FacilityDownloadLimit]:
-        is_api_user = not user.is_anonymous and user.has_groups
-        # If user is an API user we don't want to impose limits.
-        if is_api_user or user.is_anonymous:
+        if user.is_anonymous:
             return None
 
         defaults = {'updated_at': custom_date} if custom_date else {}

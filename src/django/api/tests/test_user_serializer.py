@@ -1,6 +1,8 @@
-from api.models import User
+from django.contrib.auth.models import Group
 from rest_framework.test import APITestCase
-from api.constants import FacilitiesDownloadSettings
+
+from api.constants import FacilitiesDownloadSettings, FeatureGroups
+from api.models import User
 from api.models.facility_download_limit import FacilityDownloadLimit
 
 
@@ -40,4 +42,19 @@ class UserSerializerTest(APITestCase):
         self.assertEqual(
             number_from_db,
             FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT
+        )
+
+    def test_api_user_gets_default_allowed_records_number(self):
+        group = Group.objects.get(name=FeatureGroups.CAN_SUBMIT_FACILITY)
+        self.user.groups.add(group)
+
+        response = self.client.post(
+            "/user-login/",
+            {'email': self.email, 'password': self.test_pass},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["allowed_records_number"],
+            FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT,
         )

@@ -96,6 +96,9 @@ class FacilitiesDownloadService:
 
     @staticmethod
     def get_download_limit(request):
+        if request.auth is not None:
+            return None
+
         initial_release_date = make_aware(datetime(2025, 7, 12))
 
         return FacilityDownloadLimit.get_or_create_user_download_limit(
