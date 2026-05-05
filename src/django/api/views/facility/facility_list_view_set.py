@@ -268,6 +268,11 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status = FacilityList.APPROVED
         facility_list.save()
 
+        if facility_list.replaces:
+            replaced_source = facility_list.replaces.source
+            replaced_source.is_active = False
+            replaced_source.save()
+
         if not DEBUG:
             submit_jobs(facility_list)
 
