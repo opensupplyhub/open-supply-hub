@@ -198,6 +198,47 @@ class FacilityListViewTest(BaseFacilityListTest):
         original_source.refresh_from_db()
         self.assertFalse(original_source.is_active)
 
+    def test_reject_reverts_replaced_status(self):
+        original_list = FacilityList.objects.create(
+            header="header", file_name="original.csv", name="Original List"
+        )
+        Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=original_list,
+            contributor=self.supercontributor,
+            is_active=True,
+        )
+
+        replacement_list = FacilityList.objects.create(
+            header="header",
+            file_name="replacement.csv",
+            name="Replacement List",
+            replaces=original_list,
+        )
+        Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=replacement_list,
+            contributor=self.supercontributor,
+        )
+
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+
+        response = self.client.post(
+            "/api/facility-lists/{}/reject/".format(replacement_list.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+
+        replacement_list.refresh_from_db()
+        self.assertIsNone(replacement_list.replaces)
+
+        original_list.refresh_from_db()
+        self.assertFalse(
+            FacilityList.objects.filter(replaces=original_list).exists()
+        )
+
     def test_other_users_cannot_reject(self):
         response = self.client.post(
             "/api/facility-lists/{}/reject/".format(self.superlist.id)
