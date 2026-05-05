@@ -42,6 +42,7 @@ const initialState = Object.freeze({
         error: null,
         nextPageURL: null,
         isInfiniteLoading: false,
+        hasAppliedFilters: false,
     }),
     singleFacility: Object.freeze({
         data: null,
@@ -89,6 +90,7 @@ const clearFacilitiesDataOnFilterChange = state =>
     update(state, {
         facilities: {
             data: { $set: null },
+            hasAppliedFilters: { $set: false },
         },
     });
 
@@ -100,6 +102,7 @@ export default createReducer(
                     fetching: { $set: true },
                     error: { $set: null },
                     data: { $set: null },
+                    hasAppliedFilters: { $set: false },
                 },
             }),
         [failFetchFacilities]: (state, payload) =>
@@ -109,13 +112,14 @@ export default createReducer(
                     error: { $set: payload },
                 },
             }),
-        [completeFetchFacilities]: (state, payload) =>
+        [completeFetchFacilities]: (state, { data, hasAppliedFilters }) =>
             update(state, {
                 facilities: {
                     fetching: { $set: false },
                     error: { $set: null },
-                    data: { $set: payload },
-                    nextPageURL: { $set: get(payload, 'next', null) },
+                    data: { $set: data },
+                    nextPageURL: { $set: get(data, 'next', null) },
+                    hasAppliedFilters: { $set: hasAppliedFilters },
                 },
             }),
         [startFetchNextPageOfFacilities]: state =>
