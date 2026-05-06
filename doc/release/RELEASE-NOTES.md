@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 * `0208_deactivate_replaced_list_sources.py` - Data migration that retroactively deactivates the `Source.is_active` flag for all facility lists that were already replaced by an approved list, fixing pre-existing stale active sources.
 * `0209_clear_replaces_on_rejected_lists.py` - Data migration that clears the `replaces` FK on all facility lists whose replacement was already rejected, restoring the original list to a non-replaced state.
+* `0210_deactivate_rejected_list_sources.py` - Data migration that sets `Source.is_active = False` for any rejected facility list whose source was never deactivated, fixing a small number of pre-existing anomalies where rejected lists remained active.
 
 ### Bugfix
 * [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
