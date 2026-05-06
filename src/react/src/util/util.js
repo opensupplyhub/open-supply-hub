@@ -1749,8 +1749,7 @@ const notANumber = value => {
 
 const containsOnlyLatinCharacters = value => {
     if (typeof value !== 'string') return true;
-    const normalized = value.normalize('NFC');
-    return !/[\u0250-\u1FFF\u2070-\u2E7F\u2E80-\uFFFF]/g.test(normalized);
+    return /^[\p{Script=Latin}\p{M}\p{N}\p{P}\s]*$/u.test(value);
 };
 
 const validNumWorkersFormat = value => {
