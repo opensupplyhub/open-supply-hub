@@ -398,7 +398,7 @@ const ProductionLocationInfo = ({
 
     /*
     The Formik library, which is used for the SLC form, doesn’t
-    automatically re-run validation when the value of the product
+    automatically re-run validation when the value of the product, location, and processing
     type and country field changes - unless the field is actively touched or
     blurred. This issue happens only when clicking the "x"
     (remove) button on a value inside the React Select
@@ -412,7 +412,14 @@ const ProductionLocationInfo = ({
     useEffect(() => {
         contributionForm.validateField('productType');
         contributionForm.validateField('country');
-    }, [contributionForm.values.productType, contributionForm.values.country]);
+        contributionForm.validateField('locationType');
+        contributionForm.validateField('processingType');
+    }, [
+        contributionForm.values.productType,
+        contributionForm.values.country,
+        contributionForm.values.locationType,
+        contributionForm.values.processingType,
+    ]);
 
     const runWarningChecks = (startIndex = 0) => {
         const { values } = contributionForm;
