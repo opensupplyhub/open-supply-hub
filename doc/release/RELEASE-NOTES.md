@@ -7,7 +7,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: May 9, 2026
+* Release date: *Provide release date*
+
+### Database changes
+
+#### Migrations
+
+* `0208_deactivate_replaced_list_sources.py` - Data migration that retroactively deactivates the `Source.is_active` flag for all facility lists that were already replaced by an approved list, fixing pre-existing stale active sources.
+* `0209_clear_replaces_on_rejected_lists.py` - Data migration that clears the `replaces` FK on all facility lists whose replacement was already rejected, restoring the original list to a non-replaced state.
+
+### Bugfix
+* [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
 
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
@@ -17,7 +27,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-    * `reindex_locations_with_approved_claim`
 
 
 ## Release 2.22.2
