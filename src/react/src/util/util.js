@@ -1807,7 +1807,7 @@ const SLC_TEXT_FIELD_TESTS = Object.freeze({
     'meaningful-characters': Object.freeze({
         message: ({ label }) =>
             `${label} cannot contain only spaces or symbols.`,
-        test: value => value == null || isCleanValueMeaningful(value),
+        test: value => isEmpty(value) || isCleanValueMeaningful(value),
     }),
     'latin-characters-only': Object.freeze({
         message: ({ label }) =>
@@ -1826,7 +1826,7 @@ const SLC_TEXT_FIELD_TESTS = Object.freeze({
             'Enter a single positive number (e.g., 5) or a valid range ' +
             '(e.g., 3–10). In a range, the minimum value must be less ' +
             'than or equal to the maximum, and both must be at least 1.',
-        test: value => value == null || validNumWorkersFormat(value),
+        test: value => isEmpty(value) || validNumWorkersFormat(value),
     }),
 });
 

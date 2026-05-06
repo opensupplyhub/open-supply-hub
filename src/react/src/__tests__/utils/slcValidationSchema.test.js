@@ -35,9 +35,6 @@ const makeItems = count =>
     }));
 
 describe('slcValidationSchema', () => {
-    // -------------------------------------------------------------------------
-    // name
-    // -------------------------------------------------------------------------
     describe('name field', () => {
         it('accepts plain ASCII text', async () => {
             await expect(isValid({ name: 'Acme Factory' })).resolves.toBe(true);
@@ -74,9 +71,6 @@ describe('slcValidationSchema', () => {
         });
     });
 
-    // -------------------------------------------------------------------------
-    // address
-    // -------------------------------------------------------------------------
     describe('address field', () => {
         it('accepts a standard Latin address', async () => {
             await expect(
@@ -115,9 +109,6 @@ describe('slcValidationSchema', () => {
         });
     });
 
-    // -------------------------------------------------------------------------
-    // parentCompany
-    // -------------------------------------------------------------------------
     describe('parentCompany field', () => {
         it('accepts a Latin parent company name', async () => {
             await expect(
@@ -144,10 +135,13 @@ describe('slcValidationSchema', () => {
         });
     });
 
-    // -------------------------------------------------------------------------
-    // numberOfWorkers
-    // -------------------------------------------------------------------------
     describe('numberOfWorkers field', () => {
+        it('accepts an empty optional field (real initial value)', async () => {
+            await expect(isValid({ parentCompany: '', numberOfWorkers: '' })).resolves.toBe(
+                true
+            );
+        });
+
         it('accepts standard ASCII digits', async () => {
             await expect(isValid({ numberOfWorkers: '500' })).resolves.toBe(
                 true,
@@ -173,9 +167,6 @@ describe('slcValidationSchema', () => {
         });
     });
 
-    // -------------------------------------------------------------------------
-    // productType (array of { label, value } objects)
-    // -------------------------------------------------------------------------
     describe('productType field', () => {
         it('accepts an empty array', async () => {
             await expect(isValid({ productType: [] })).resolves.toBe(true);
@@ -232,9 +223,6 @@ describe('slcValidationSchema', () => {
         });
     });
 
-    // -------------------------------------------------------------------------
-    // locationType (array of { label, value } objects)
-    // -------------------------------------------------------------------------
     describe('locationType field', () => {
         it('accepts an empty array', async () => {
             await expect(isValid({ locationType: [] })).resolves.toBe(true);
@@ -259,9 +247,6 @@ describe('slcValidationSchema', () => {
         });
     });
 
-    // -------------------------------------------------------------------------
-    // processingType (array of { label, value } objects)
-    // -------------------------------------------------------------------------
     describe('processingType field', () => {
         it('accepts an empty array', async () => {
             await expect(isValid({ processingType: [] })).resolves.toBe(true);
