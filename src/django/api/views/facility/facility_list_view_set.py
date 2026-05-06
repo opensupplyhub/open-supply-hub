@@ -55,7 +55,7 @@ class FacilityListViewSet(ModelViewSet):
     """
     Upload and update facility lists for an authenticated Contributor.
     """
-    queryset = FacilityList.objects.all()
+    queryset = FacilityList.objects.select_related('replaced_by')
     serializer_class = FacilityListSerializer
     permission_classes = [IsRegisteredAndConfirmed]
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
