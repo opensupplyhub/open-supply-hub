@@ -202,7 +202,7 @@ class FacilityListViewTest(BaseFacilityListTest):
         original_list = FacilityList.objects.create(
             header="header", file_name="original.csv", name="Original List"
         )
-        Source.objects.create(
+        original_source = Source.objects.create(
             source_type=Source.LIST,
             facility_list=original_list,
             contributor=self.supercontributor,
@@ -234,10 +234,12 @@ class FacilityListViewTest(BaseFacilityListTest):
         replacement_list.refresh_from_db()
         self.assertIsNone(replacement_list.replaces)
 
-        original_list.refresh_from_db()
         self.assertFalse(
             FacilityList.objects.filter(replaces=original_list).exists()
         )
+
+        original_source.refresh_from_db()
+        self.assertTrue(original_source.is_active)
 
     def test_other_users_cannot_reject(self):
         response = self.client.post(
