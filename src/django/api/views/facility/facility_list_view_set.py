@@ -268,7 +268,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status = FacilityList.APPROVED
         facility_list.save()
 
-        if facility_list.replaces:
+        if facility_list.replaces_id:
             replaced_source = facility_list.replaces.source
             replaced_source.is_active = False
             replaced_source.save()
@@ -303,7 +303,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status = FacilityList.REJECTED
         facility_list.save()
 
-        if facility_list.replaces:
+        if facility_list.replaces_id:
             facility_list.replaces = None
             facility_list.save()
 
