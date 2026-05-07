@@ -5,7 +5,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.views import View
 from django.utils import timezone
 
-from api.models import DownloadLocationPayment, FacilityDownloadLimit, User
+from api.models import DownloadLocationPayment, FacilityDownloadLimit
 from api.constants import SINGLE_PAID_DOWNLOAD_RECORDS
 
 
@@ -58,10 +58,10 @@ class DownloadLocationsCheckoutWebhookView(View):
                 )
                 payment.save()
 
-                user = User.objects.get(id=user_id)
-                download_limit = (
-                    FacilityDownloadLimit
-                    .get_or_create_user_download_limit(user)
+                download_limit, _ = (
+                    FacilityDownloadLimit.objects.get_or_create(
+                        user_id=user_id,
+                    )
                 )
 
                 full_session = stripe.checkout.Session.retrieve(
@@ -76,8 +76,8 @@ class DownloadLocationsCheckoutWebhookView(View):
                 download_limit.save(
                     update_fields=[
                         "paid_download_records",
-                        "purchase_date"
-                    ]
+                        "purchase_date",
+                    ],
                 )
 
             except KeyError as e:
