@@ -58,8 +58,10 @@ class DownloadLocationsCheckoutWebhookView(View):
                 )
                 payment.save()
 
-                download_limit = FacilityDownloadLimit.objects.get(
-                    user_id=user_id
+                download_limit, _ = (
+                    FacilityDownloadLimit.objects.get_or_create(
+                        user_id=user_id,
+                    )
                 )
 
                 full_session = stripe.checkout.Session.retrieve(
