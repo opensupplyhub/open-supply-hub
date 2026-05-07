@@ -96,6 +96,15 @@ class FacilitiesDownloadService:
 
     @staticmethod
     def get_download_limit(request):
+        has_api_token = request.auth is not None
+
+        # This is needed to figure out if the user is an API user or not.
+        # The main reason is that API users should be counted against their
+        # API limit when using the API, not the data download limit.
+        if has_api_token:
+            return None
+
+
         initial_release_date = make_aware(datetime(2025, 7, 12))
 
         return FacilityDownloadLimit.get_or_create_user_download_limit(
