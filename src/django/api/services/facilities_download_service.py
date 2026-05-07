@@ -104,7 +104,6 @@ class FacilitiesDownloadService:
         if has_api_token:
             return None
 
-
         initial_release_date = make_aware(datetime(2025, 7, 12))
 
         return FacilityDownloadLimit.get_or_create_user_download_limit(
