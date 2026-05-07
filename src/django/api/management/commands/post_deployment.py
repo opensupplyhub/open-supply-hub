@@ -10,4 +10,3 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         call_command('migrate')
         call_command('reindex_database')
-        call_command('reindex_locations_with_approved_claim')
