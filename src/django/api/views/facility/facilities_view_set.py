@@ -316,7 +316,8 @@ class FacilitiesViewSet(ListModelMixin,
                          responses={200: FacilityIndexDetailsSerializer})
     @method_decorator(
         cache_page(
-            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS, cache="view_cache"
+            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+            cache="view_cache",
         ),
     )
     def retrieve(self, request, pk=None):
