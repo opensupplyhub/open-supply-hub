@@ -53,7 +53,7 @@ class Command(BaseCommand):
         updated = 0
         skipped = 0
 
-        for event in events:
+        for event in events.iterator(chunk_size=1000):
             try:
                 opensearch.client.update(
                     index=OpenSearchIndexNames.MODERATION_EVENTS_INDEX,
