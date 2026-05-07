@@ -2,7 +2,6 @@ from django.views.decorators.cache import cache_page
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 from django.conf import settings
-from django.views.decorators.cache import cache_page
 
 from .active_contributors import active_contributors
 
