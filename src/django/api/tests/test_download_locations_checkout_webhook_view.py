@@ -6,11 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from api.models import (
-    DownloadLocationPayment,
-    FacilityDownloadLimit,
-    User
-)
+from api.models import DownloadLocationPayment, FacilityDownloadLimit, User
 
 
 class DownloadLocationsCheckoutWebhookViewTest(TestCase):
@@ -28,13 +24,13 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             updated_at=timezone.now(),
         )
 
-        self.url = reverse('download-locations-checkout-webhook')
+        self.url = reverse("download-locations-checkout-webhook")
 
     @patch("stripe.Webhook.construct_event")
     def test_invalid_payload_returns_400(self, mock_construct):
         mock_construct.side_effect = ValueError("invalid payload")
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid payload", response.content.decode())
@@ -45,7 +41,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "invalid signature", "signature_header"
         )
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid signature", response.content.decode())
@@ -53,9 +49,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
     @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
     def test_successful_payment_creates_payment_record(
-        self,
-        mock_construct,
-        mock_retrieve
+        self, mock_construct, mock_retrieve
     ):
         session = {
             "metadata": {"user_id": self.user.id},
@@ -81,7 +75,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_retrieve.return_value = mock_session
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -101,9 +95,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
     @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
     def test_successful_payment_updates_download_limit(
-        self,
-        mock_construct,
-        mock_retrieve
+        self, mock_construct, mock_retrieve
     ):
         quantity = 3
         session = {
@@ -128,7 +120,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_retrieve.return_value = mock_session
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -139,8 +131,13 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         )
         self.assertIsNotNone(self.download_limit.purchase_date)
 
+    @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
-    def test_missing_field_returns_400(self, mock_construct):
+    def test_missing_field_returns_400(
+        self,
+        mock_construct,
+        mock_retrieve,
+    ):
         session = {
             "metadata": {"user_id": self.user.id},
             "id": "session_123",
@@ -152,9 +149,10 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "type": "checkout.session.completed",
             "data": {"object": session},
         }
+        mock_retrieve.return_value = MagicMock()
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Missing expected field", response.content.decode())
@@ -188,12 +186,12 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_retrieve.return_value = mock_session
 
         response1 = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response1.status_code, 200)
 
         response2 = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response2.status_code, 200)
 
@@ -231,7 +229,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_save.side_effect = Exception("db error")
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 500)
         self.assertIn("Unexpected error", response.content.decode())
@@ -271,7 +269,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_retrieve.return_value = mock_session
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 200)
 
