@@ -58,7 +58,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
     * `reindex_locations_with_approved_claim`
-    * `backfill_moderation_event_os_id`
 
 
 ## Release 2.22.0
