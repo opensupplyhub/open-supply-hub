@@ -3,6 +3,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django.conf import settings
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
@@ -27,9 +28,11 @@ class ContributorFacilityListViewSet(ReadOnlyModelViewSet):
         type=TYPE_INTEGER,
         required=False
     )], responses={200: ''}, deprecated=True)
-    @cache_page(
-        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
-        cache="view_cache",
+    @method_decorator(
+        cache_page(
+            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+            cache="view_cache",
+        )
     )
     def list(self, request):
         params = ContributorListQueryParamsSerializer(
