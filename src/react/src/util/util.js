@@ -1728,7 +1728,6 @@ export const getSelectStyles = (isErrorState = false, extendedStyles = {}) => ({
 export const snakeToTitleCase = str => startCase(toLower(str));
 
 // SLC form validation schema.
-
 const isCleanValueMeaningful = value => {
     if (typeof value !== 'string') return false;
 
@@ -1743,80 +1742,202 @@ const isCleanValueMeaningful = value => {
     return cleaned.length > 0;
 };
 
-const slcTextFieldValidation = stringYup()
-    .test(
-        'is-trimmed',
-        'Remove spaces at start and end of text.',
-        value => value == null || value === value.trim(),
-    )
-    .test(
-        'not-a-number',
-        ({ label }) => `${label} cannot be a number.`,
-        value => {
-            if (value == null) return true;
+const notANumber = value => {
+    const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
+    return !numberPattern.test(value);
+};
 
-            const numberPattern = /^-?(0|[1-9]\d*)(\.\d+)?$/;
-            return !numberPattern.test(value);
-        },
-    )
-    .test(
-        'meaningful-characters',
-        ({ label }) => `${label} cannot contain only spaces or symbols.`,
-        value => value == null || isCleanValueMeaningful(value),
-    )
-    .max(
-        SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
-        ({ label }) =>
+const containsOnlyLatinCharacters = value => {
+    if (typeof value !== 'string') return true;
+    return /^[\p{Script=Latin}\p{M}\p{N}\p{P}\s]*$/u.test(value);
+};
+
+const validNumWorkersFormat = value => {
+    const singleNumberPattern = /^\d+$/;
+    const rangePattern = /^(\d+)-(\d+)$/;
+
+    if (singleNumberPattern.test(value)) {
+        return !/^0/.test(value) && parseInt(value, 10) >= 1;
+    }
+
+    const match = value.match(rangePattern);
+    if (match) {
+        const [minStr, maxStr] = match.slice(1, 3);
+
+        const min = parseInt(minStr, 10);
+        const max = parseInt(maxStr, 10);
+
+        if (/^0/.test(minStr) || /^0/.test(maxStr)) return false;
+
+        return min >= 1 && max >= 1 && min <= max;
+    }
+
+    return false;
+};
+
+export const containsPOBox = value => {
+    if (typeof value !== 'string') return false;
+    return /\b(post\s+office|p\.?\s*o\.?\s*box)\b/i.test(value);
+};
+
+export const isShortAddress = value => {
+    if (typeof value !== 'string') return false;
+    return value.trim().length < SLC_FORM_CONSTRAINTS.MIN_ADDRESS_LENGTH;
+};
+
+// ─── SLC Validation Test Registry ──────────────────────────────────────────
+//
+// To add a new check: add an entry to SLC_TEXT_FIELD_TESTS or
+// SLC_ARRAY_FIELD_TESTS, then list the key in SLC_FIELD_VALIDATION_CONFIG for
+// whichever fields should run it.
+//
+// Text-field tests receive the raw string value (possibly null/undefined).
+// Array-field tests receive the full array of { label, value } objects.
+// Message functions receive Yup params — `label` is set via .label() below.
+
+const SLC_TEXT_FIELD_TESTS = Object.freeze({
+    'is-trimmed': Object.freeze({
+        message: 'Remove spaces at start and end of text.',
+        test: value => value == null || value === value.trim(),
+    }),
+    'valid-non-number': Object.freeze({
+        message: ({ label }) => `${label} cannot be a number.`,
+        test: value => value == null || notANumber(value),
+    }),
+    'meaningful-characters': Object.freeze({
+        message: ({ label }) =>
+            `${label} cannot contain only spaces or symbols.`,
+        test: value => isEmpty(value) || isCleanValueMeaningful(value),
+    }),
+    'latin-characters-only': Object.freeze({
+        message: ({ label }) =>
+            `${label} must contain only Latin characters. Please translate any non-Latin characters (e.g. Chinese, Arabic, Cyrillic).`,
+        test: value => value == null || containsOnlyLatinCharacters(value),
+    }),
+    'max-char-count': Object.freeze({
+        message: ({ label }) =>
             `${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+        test: value =>
+            value == null ||
+            value.length <= SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+    }),
+    'valid-format-and-range': Object.freeze({
+        message:
+            'Enter a single positive number (e.g., 5) or a valid range ' +
+            '(e.g., 3–10). In a range, the minimum value must be less ' +
+            'than or equal to the maximum, and both must be at least 1.',
+        test: value => isEmpty(value) || validNumWorkersFormat(value),
+    }),
+});
+
+const SLC_ARRAY_FIELD_TESTS = Object.freeze({
+    'latin-characters-only': Object.freeze({
+        message: ({ label }) =>
+            `${label} must contain only Latin characters. Remove any non-Latin characters (e.g. Chinese, Arabic, Cyrillic).`,
+        test: value =>
+            !value ||
+            value.every(item => containsOnlyLatinCharacters(item?.label)),
+    }),
+    'max-product-type-count': Object.freeze({
+        message: `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
+        test: value =>
+            !value ||
+            value.length <= SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+    }),
+});
+
+// ─── Per-field validation config ───────────────────────────────────────────
+//
+// Lists which named tests each field runs, in order. Fields of type 'text'
+// draw from SLC_TEXT_FIELD_TESTS; 'array' fields draw from SLC_ARRAY_FIELD_TESTS.
+// To add a test to a field, append its name to the tests array below.
+
+const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
+    name: Object.freeze({
+        type: 'text',
+        tests: [
+            'is-trimmed',
+            'valid-non-number',
+            'meaningful-characters',
+            'latin-characters-only',
+            'max-char-count',
+        ],
+    }),
+    address: Object.freeze({
+        type: 'text',
+        tests: [
+            'is-trimmed',
+            'valid-non-number',
+            'meaningful-characters',
+            'latin-characters-only',
+            'max-char-count',
+        ],
+    }),
+    parentCompany: Object.freeze({
+        type: 'text',
+        tests: [
+            'is-trimmed',
+            'valid-non-number',
+            'meaningful-characters',
+            'latin-characters-only',
+            'max-char-count',
+        ],
+    }),
+    productType: Object.freeze({
+        type: 'array',
+        tests: ['latin-characters-only', 'max-product-type-count'],
+    }),
+    locationType: Object.freeze({
+        type: 'array',
+        tests: ['latin-characters-only'],
+    }),
+    processingType: Object.freeze({
+        type: 'array',
+        tests: ['latin-characters-only'],
+    }),
+    numberOfWorkers: Object.freeze({
+        type: 'text',
+        tests: ['is-trimmed', 'valid-format-and-range'],
+    }),
+});
+
+const buildFieldValidation = ({ type, tests }) => {
+    const isArrayField = type === 'array';
+    const registry = isArrayField
+        ? SLC_ARRAY_FIELD_TESTS
+        : SLC_TEXT_FIELD_TESTS;
+    return tests.reduce(
+        (schema, testName) => {
+            const { message, test } = registry[testName];
+            return schema.test(testName, message, test);
+        },
+        isArrayField ? arrayYup() : stringYup(),
     );
+};
 
 export const slcValidationSchema = objectYup({
-    name: slcTextFieldValidation.required('Name is required.').label('Name'),
-    address: slcTextFieldValidation
+    name: buildFieldValidation(SLC_FIELD_VALIDATION_CONFIG.name)
+        .required('Name is required.')
+        .label('Name'),
+    address: buildFieldValidation(SLC_FIELD_VALIDATION_CONFIG.address)
         .required('Address is required.')
         .label('Address'),
     country: objectYup().nullable().required('Country is required.'),
-    productType: arrayYup().max(
-        SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
-        `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
-    ),
-    numberOfWorkers: stringYup()
-        .test(
-            'is-trimmed',
-            'Remove spaces at start and end of entry.',
-            value => value == null || value === value.trim(),
-        )
-        .test(
-            'valid-format-and-range',
-            'Enter a single positive number (e.g., 5) or a valid range ' +
-                '(e.g., 3–10). In a range, the minimum value must be less ' +
-                'than or equal to the maximum, and both must be at least 1.',
-            value => {
-                if (value == null) return true;
-
-                const singleNumberPattern = /^\d+$/;
-                const rangePattern = /^(\d+)-(\d+)$/;
-
-                if (singleNumberPattern.test(value)) {
-                    return !/^0/.test(value) && parseInt(value, 10) >= 1;
-                }
-
-                const match = value.match(rangePattern);
-                if (match) {
-                    const [minStr, maxStr] = match.slice(1, 3);
-
-                    const min = parseInt(minStr, 10);
-                    const max = parseInt(maxStr, 10);
-
-                    if (/^0/.test(minStr) || /^0/.test(maxStr)) return false;
-
-                    return min >= 1 && max >= 1 && min <= max;
-                }
-
-                return false;
-            },
-        ),
-    parentCompany: slcTextFieldValidation.label('Parent company'),
+    productType: buildFieldValidation(
+        SLC_FIELD_VALIDATION_CONFIG.productType,
+    ).label('Product type(s)'),
+    locationType: buildFieldValidation(
+        SLC_FIELD_VALIDATION_CONFIG.locationType,
+    ).label('Location type(s)'),
+    processingType: buildFieldValidation(
+        SLC_FIELD_VALIDATION_CONFIG.processingType,
+    ).label('Processing type(s)'),
+    numberOfWorkers: buildFieldValidation(
+        SLC_FIELD_VALIDATION_CONFIG.numberOfWorkers,
+    ).label('Number of workers'),
+    parentCompany: buildFieldValidation(
+        SLC_FIELD_VALIDATION_CONFIG.parentCompany,
+    ).label('Parent company'),
 });
 
 /* eslint-disable camelcase */
