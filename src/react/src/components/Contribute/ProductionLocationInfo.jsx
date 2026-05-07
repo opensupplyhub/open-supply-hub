@@ -52,6 +52,8 @@ import {
     mapFacilityTypeOptions,
     mapProcessingTypeOptions,
     getSelectStyles,
+    containsPOBox,
+    isShortAddress,
 } from '../../util/util';
 
 import FeatureFlag from '../FeatureFlag';
@@ -61,8 +63,30 @@ import RequireAuthNotice from '../RequireAuthNotice';
 import StyledTooltip from '../StyledTooltip';
 
 import InputErrorText from './InputErrorText';
+import ContributionWarningDialog from './ContributionWarningDialog';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
+
+// Ordered list of soft-warning checks run before submission. Each entry
+// specifies which form field to inspect, a condition function (returns true
+// when the warning should fire), and the dialog copy to show the contributor.
+// To add a new warning, append an entry here — no other code needs to change.
+const SUBMISSION_WARNING_CHECKS = [
+    {
+        field: 'address',
+        condition: containsPOBox,
+        title: 'Address May Contain a PO Box',
+        message:
+            'The address field appears to contain a PO Box. Street addresses provide better geocoding, and will allow our matching systems to accurately locate the facility on our map. Submissions with a street address are more likely to be matched correctly and accepted.',
+    },
+    {
+        field: 'address',
+        condition: isShortAddress,
+        title: 'Address Appears Short',
+        message:
+            'The address field appears to be short. Please ensure your address contains: street number (or cross streets or neighborhood/industrial zone) if available, town/city, state/province, postal code (if applicable). Submissions with these details are more likely to be matched correctly and accepted.',
+    },
+];
 
 const ProductionLocationInfo = ({
     submitMethod,
@@ -109,6 +133,8 @@ const ProductionLocationInfo = ({
         showPostSubmitErrorNotification,
         setShowPostSubmitErrorNotification,
     ] = useState(false);
+
+    const [activeWarningIndex, setActiveWarningIndex] = useState(null);
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
@@ -372,7 +398,7 @@ const ProductionLocationInfo = ({
 
     /*
     The Formik library, which is used for the SLC form, doesn’t
-    automatically re-run validation when the value of the product
+    automatically re-run validation when the value of the product, location, and processing
     type and country field changes - unless the field is actively touched or
     blurred. This issue happens only when clicking the "x"
     (remove) button on a value inside the React Select
@@ -386,13 +412,34 @@ const ProductionLocationInfo = ({
     useEffect(() => {
         contributionForm.validateField('productType');
         contributionForm.validateField('country');
-    }, [contributionForm.values.productType, contributionForm.values.country]);
+        contributionForm.validateField('locationType');
+        contributionForm.validateField('processingType');
+    }, [
+        contributionForm.values.productType,
+        contributionForm.values.country,
+        contributionForm.values.locationType,
+        contributionForm.values.processingType,
+    ]);
+
+    const runWarningChecks = (startIndex = 0) => {
+        const { values } = contributionForm;
+        for (let i = startIndex; i < SUBMISSION_WARNING_CHECKS.length; i += 1) {
+            const { field, condition } = SUBMISSION_WARNING_CHECKS[i];
+            if (condition(values[field])) {
+                setActiveWarningIndex(i);
+                return;
+            }
+        }
+        contributionForm.handleSubmit();
+    };
+
+    const handleSubmitClick = () => runWarningChecks(0);
 
     const activeSubmitButton = (
         <Button
             color="secondary"
             variant="contained"
-            onClick={contributionForm.handleSubmit}
+            onClick={handleSubmitClick}
             className={classes.submitButtonStyles}
             disabled={
                 !contributionForm.isValid || pendingModerationEventFetching
@@ -799,13 +846,23 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .locationType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'locationType',
                                                     value,
-                                                )
-                                            }
-                                            styles={getSelectStyles()}
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'locationType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .locationType &&
+                                                    !!contributionForm.errors
+                                                        .locationType,
+                                            )}
                                             className={classes.selectStyles}
                                             placeholder="Select location type(s)"
                                         />
@@ -817,19 +874,45 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .locationType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'locationType',
                                                     value,
-                                                )
-                                            }
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'locationType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
                                             placeholder="Enter location type(s)"
                                             aria-label="Location type"
-                                            styles={getSelectStyles()}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .locationType &&
+                                                    !!contributionForm.errors
+                                                        .locationType,
+                                            )}
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
                                     )}
+                                    {contributionForm.touched.locationType &&
+                                        contributionForm.errors
+                                            .locationType && (
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
+                                                }
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .locationType
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -864,13 +947,23 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .processingType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'processingType',
                                                     value,
-                                                )
-                                            }
-                                            styles={getSelectStyles()}
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'processingType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .processingType &&
+                                                    !!contributionForm.errors
+                                                        .processingType,
+                                            )}
                                             className={classes.selectStyles}
                                             placeholder="Select processing type(s)"
                                         />
@@ -882,19 +975,45 @@ const ProductionLocationInfo = ({
                                                 contributionForm.values
                                                     .processingType
                                             }
-                                            onChange={value =>
+                                            onChange={value => {
                                                 contributionForm.setFieldValue(
                                                     'processingType',
                                                     value,
-                                                )
-                                            }
+                                                );
+                                                contributionForm.setFieldTouched(
+                                                    'processingType',
+                                                    true,
+                                                    false,
+                                                );
+                                            }}
                                             placeholder="Enter processing type(s)"
                                             aria-label="Processing Type"
-                                            styles={getSelectStyles()}
+                                            styles={getSelectStyles(
+                                                contributionForm.touched
+                                                    .processingType &&
+                                                    !!contributionForm.errors
+                                                        .processingType,
+                                            )}
                                             className={classes.selectStyles}
                                             components={customSelectComponents}
                                         />
                                     )}
+                                    {contributionForm.touched.processingType &&
+                                        contributionForm.errors
+                                            .processingType && (
+                                            <div
+                                                className={
+                                                    classes.errorWrapStyles
+                                                }
+                                            >
+                                                <InputErrorText
+                                                    text={
+                                                        contributionForm.errors
+                                                            .processingType
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                 </div>
                                 <div
                                     className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
@@ -1074,6 +1193,25 @@ const ProductionLocationInfo = ({
                     </div>
                 </Paper>
             </div>
+            <ContributionWarningDialog
+                open={activeWarningIndex !== null}
+                onClose={() => setActiveWarningIndex(null)}
+                onSubmitAnyway={() => {
+                    const next = activeWarningIndex + 1;
+                    setActiveWarningIndex(null);
+                    runWarningChecks(next);
+                }}
+                title={
+                    activeWarningIndex !== null
+                        ? SUBMISSION_WARNING_CHECKS[activeWarningIndex].title
+                        : ''
+                }
+                message={
+                    activeWarningIndex !== null
+                        ? SUBMISSION_WARNING_CHECKS[activeWarningIndex].message
+                        : ''
+                }
+            />
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
                 localStorage.getItem(moderationID) ||

@@ -2473,7 +2473,7 @@ describe('slcValidationSchema', () => {
             numberOfWorkers: '1 '
         };
         await expect(slcValidationSchema.validate(data)).rejects.toThrow(
-            'Remove spaces at start and end of entry.'
+            'Remove spaces at start and end of text.'
         );
     });
 
