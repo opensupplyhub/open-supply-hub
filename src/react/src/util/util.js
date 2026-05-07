@@ -10,6 +10,7 @@ import snakeCase from 'lodash/snakeCase';
 import some from 'lodash/some';
 import size from 'lodash/size';
 import negate from 'lodash/negate';
+import omit from 'lodash/omit';
 import omitBy from 'lodash/omitBy';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
@@ -648,6 +649,9 @@ export const allFiltersAreEmpty = filters =>
 
         return acc;
     }, true);
+
+export const hasAppliedSearchFilters = filters =>
+    !allFiltersAreEmpty(omit(filters, ['sortAlgorithm']));
 
 export const getFeaturesFromFeatureCollection = ({ features }) => features;
 
