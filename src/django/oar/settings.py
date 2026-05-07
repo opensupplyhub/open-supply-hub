@@ -612,7 +612,12 @@ if DEBUG and AWS_S3_ENDPOINT_URL:
 
 AWS_S3_FILE_OVERWRITE = False
 
-TESTING = 'test' in sys.argv
+TESTING = "test" in sys.argv
+
+if TESTING:
+    CACHES["view_cache"] = {
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+    }
 
 # Use filesystem for "default" when running tests (so tests never use S3/MinIO) or
 # when DEBUG and no S3 endpoint (local without MinIO). Use S3 when not DEBUG or
