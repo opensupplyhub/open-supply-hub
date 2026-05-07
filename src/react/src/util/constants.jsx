@@ -1633,6 +1633,7 @@ export const MAX_LOCATIONS_TO_SHOW = 100;
 export const SLC_FORM_CONSTRAINTS = Object.freeze({
     MAX_PRODUCT_TYPE_COUNT: 50,
     MAX_STRING_LENGTH: 200,
+    MIN_ADDRESS_LENGTH: 25,
 });
 
 export const HEADER_HEIGHT = 116;
