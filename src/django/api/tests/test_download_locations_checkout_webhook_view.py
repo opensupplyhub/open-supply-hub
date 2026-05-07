@@ -98,6 +98,47 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             ],
         )
 
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_successful_payment_updates_download_limit(
+        self,
+        mock_construct,
+        mock_retrieve
+    ):
+        quantity = 3
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_456",
+            "payment_intent": "pi_456",
+            "amount_subtotal": 15000,
+            "amount_total": 15000,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = quantity
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response = self.client.post(
+            self.url, data={}, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.download_limit.refresh_from_db()
+        self.assertEqual(
+            self.download_limit.paid_download_records,
+            quantity * 10000,
+        )
+        self.assertIsNotNone(self.download_limit.purchase_date)
+
     @patch("stripe.Webhook.construct_event")
     def test_missing_field_returns_400(self, mock_construct):
         session = {
@@ -194,3 +235,48 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 500)
         self.assertIn("Unexpected error", response.content.decode())
+
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_payment_creates_download_limit_when_not_exists(
+        self,
+        mock_construct,
+        mock_retrieve,
+    ):
+        self.download_limit.delete()
+        self.assertFalse(
+            FacilityDownloadLimit.objects.filter(user=self.user).exists()
+        )
+
+        quantity = 2
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_new_limit",
+            "payment_intent": "pi_new",
+            "amount_subtotal": 10000,
+            "amount_total": 10000,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = quantity
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response = self.client.post(
+            self.url, data={}, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        limit = FacilityDownloadLimit.objects.get(user=self.user)
+        self.assertEqual(
+            limit.paid_download_records,
+            quantity * 10000,
+        )

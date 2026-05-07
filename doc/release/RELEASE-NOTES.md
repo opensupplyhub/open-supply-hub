@@ -29,6 +29,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
 
+### Code/API changes
+* [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Updated download limits logic: exempt API-token requests from data download limits, add idempotent duplicate webhook handling, and use `get_or_create` for `FacilityDownloadLimit` in the checkout webhook.
+
 ### What's new
 * [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Hyphenate Spotlight Partners description text in the **Understanding Data Sources** section.
 * [OSDEV-2564](https://opensupplyhub.atlassian.net/browse/OSDEV-2564) - Renamed navbar labels ('Premium Features' → 'Featured Solutions', 'Data Cleaning Service' → 'Embedded Map', 'Pricing' → 'Solutions') and updated corresponding InfoPaths to align with new feature naming.
