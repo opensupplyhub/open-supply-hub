@@ -118,6 +118,54 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Missing expected field", response.content.decode())
 
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_duplicate_webhook_returns_200_without_double_counting(
+        self,
+        mock_construct,
+        mock_retrieve,
+    ):
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_duplicate",
+            "payment_intent": "pi_dup",
+            "amount_subtotal": 5000,
+            "amount_total": 2500,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = 1
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response1 = self.client.post(
+            self.url, data={}, content_type='application/json'
+        )
+        self.assertEqual(response1.status_code, 200)
+
+        response2 = self.client.post(
+            self.url, data={}, content_type='application/json'
+        )
+        self.assertEqual(response2.status_code, 200)
+
+        self.assertEqual(
+            DownloadLocationPayment.objects.filter(
+                stripe_session_id="session_duplicate"
+            ).count(),
+            1,
+        )
+
+        self.download_limit.refresh_from_db()
+        self.assertEqual(self.download_limit.paid_download_records, 10000)
+
     @patch(
         "api.views.stripe.download_locations_checkout_webhook_view"
         ".DownloadLocationPayment.save"
