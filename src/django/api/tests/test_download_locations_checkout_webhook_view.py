@@ -6,11 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from api.models import (
-    DownloadLocationPayment,
-    FacilityDownloadLimit,
-    User
-)
+from api.models import DownloadLocationPayment, FacilityDownloadLimit, User
 
 
 class DownloadLocationsCheckoutWebhookViewTest(TestCase):
@@ -28,13 +24,13 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             updated_at=timezone.now(),
         )
 
-        self.url = reverse('download-locations-checkout-webhook')
+        self.url = reverse("download-locations-checkout-webhook")
 
     @patch("stripe.Webhook.construct_event")
     def test_invalid_payload_returns_400(self, mock_construct):
         mock_construct.side_effect = ValueError("invalid payload")
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid payload", response.content.decode())
@@ -45,7 +41,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "invalid signature", "signature_header"
         )
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid signature", response.content.decode())
@@ -53,9 +49,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
     @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
     def test_successful_payment_creates_payment_record(
-        self,
-        mock_construct,
-        mock_retrieve
+        self, mock_construct, mock_retrieve
     ):
         session = {
             "metadata": {"user_id": self.user.id},
@@ -81,7 +75,7 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_retrieve.return_value = mock_session
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -98,8 +92,52 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             ],
         )
 
+    @patch("stripe.checkout.Session.retrieve")
     @patch("stripe.Webhook.construct_event")
-    def test_missing_field_returns_400(self, mock_construct):
+    def test_successful_payment_updates_download_limit(
+        self, mock_construct, mock_retrieve
+    ):
+        quantity = 3
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_456",
+            "payment_intent": "pi_456",
+            "amount_subtotal": 15000,
+            "amount_total": 15000,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = quantity
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response = self.client.post(
+            self.url, data={}, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.download_limit.refresh_from_db()
+        self.assertEqual(
+            self.download_limit.paid_download_records,
+            quantity * 10000,
+        )
+        self.assertIsNotNone(self.download_limit.purchase_date)
+
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_missing_field_returns_400(
+        self,
+        mock_construct,
+        mock_retrieve,
+    ):
         session = {
             "metadata": {"user_id": self.user.id},
             "id": "session_123",
@@ -111,12 +149,61 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
             "type": "checkout.session.completed",
             "data": {"object": session},
         }
+        mock_retrieve.return_value = MagicMock()
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Missing expected field", response.content.decode())
+
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_duplicate_webhook_returns_200_without_double_counting(
+        self,
+        mock_construct,
+        mock_retrieve,
+    ):
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_duplicate",
+            "payment_intent": "pi_dup",
+            "amount_subtotal": 5000,
+            "amount_total": 2500,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = 1
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response1 = self.client.post(
+            self.url, data={}, content_type="application/json"
+        )
+        self.assertEqual(response1.status_code, 200)
+
+        response2 = self.client.post(
+            self.url, data={}, content_type="application/json"
+        )
+        self.assertEqual(response2.status_code, 200)
+
+        self.assertEqual(
+            DownloadLocationPayment.objects.filter(
+                stripe_session_id="session_duplicate"
+            ).count(),
+            1,
+        )
+
+        self.download_limit.refresh_from_db()
+        self.assertEqual(self.download_limit.paid_download_records, 10000)
 
     @patch(
         "api.views.stripe.download_locations_checkout_webhook_view"
@@ -142,7 +229,52 @@ class DownloadLocationsCheckoutWebhookViewTest(TestCase):
         mock_save.side_effect = Exception("db error")
 
         response = self.client.post(
-            self.url, data={}, content_type='application/json'
+            self.url, data={}, content_type="application/json"
         )
         self.assertEqual(response.status_code, 500)
         self.assertIn("Unexpected error", response.content.decode())
+
+    @patch("stripe.checkout.Session.retrieve")
+    @patch("stripe.Webhook.construct_event")
+    def test_payment_creates_download_limit_when_not_exists(
+        self,
+        mock_construct,
+        mock_retrieve,
+    ):
+        self.download_limit.delete()
+        self.assertFalse(
+            FacilityDownloadLimit.objects.filter(user=self.user).exists()
+        )
+
+        quantity = 2
+        session = {
+            "metadata": {"user_id": self.user.id},
+            "id": "session_new_limit",
+            "payment_intent": "pi_new",
+            "amount_subtotal": 10000,
+            "amount_total": 10000,
+            "discounts": [],
+        }
+        mock_construct.return_value = {
+            "type": "checkout.session.completed",
+            "data": {"object": session},
+        }
+
+        mock_line_item = MagicMock()
+        mock_line_item.quantity = quantity
+        mock_line_items = MagicMock()
+        mock_line_items.data = [mock_line_item]
+        mock_session = MagicMock()
+        mock_session.line_items = mock_line_items
+        mock_retrieve.return_value = mock_session
+
+        response = self.client.post(
+            self.url, data={}, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+
+        limit = FacilityDownloadLimit.objects.get(user=self.user)
+        self.assertEqual(
+            limit.paid_download_records,
+            quantity * 10000,
+        )
