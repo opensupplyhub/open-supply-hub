@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import Exists, OuterRef
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -28,7 +29,13 @@ class FacilityIndexCursorPagination(CursorPagination):
     max_page_size = 20
 
 
-@method_decorator(cache_page(60 * 5, cache="view_cache"), name="dispatch")
+@method_decorator(
+    cache_page(
+        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+        cache="view_cache",
+    ),
+    name="dispatch",
+)
 class UserProfileFacilities(ListAPIView):
     """List facilities associated with a user's contributor profile."""
 

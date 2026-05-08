@@ -3,6 +3,9 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from ...models.facility.facility_list import FacilityList
 from ...serializers import ContributorListQueryParamsSerializer
@@ -25,6 +28,12 @@ class ContributorFacilityListSortedViewSet(ReadOnlyModelViewSet):
         type=TYPE_INTEGER,
         required=False
     )], responses={200: ''})
+    @method_decorator(
+        cache_page(
+            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+            cache="view_cache",
+        )
+    )
     def list(self, request):
         params = ContributorListQueryParamsSerializer(
             data=request.query_params)

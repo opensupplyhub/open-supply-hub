@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 15 2026
 
+### Code/API changes
+* Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
+
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
 * [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.

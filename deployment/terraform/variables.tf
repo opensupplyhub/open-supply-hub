@@ -547,6 +547,12 @@ variable "aws_cloudfront_canonical_user_id" {
   default = "c4c1ede66af53448b93c283ce9448c4ba468c9432aa01d700d3878632f77d2d0"
 }
 
+variable "memcached_view_cache_timeout_seconds" {
+  description = "Timeout in seconds for Memcached view cache (MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS)"
+  type        = number
+  default     = 600
+}
+
 variable "ec_memcached_identifier" {}
 
 variable "ec_memcached_port" {
