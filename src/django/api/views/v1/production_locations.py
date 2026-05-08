@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Tuple, List, Any, Optional, Dict
 
 from django.http import QueryDict
@@ -384,6 +385,9 @@ class ProductionLocations(ViewSet):
             return raw_values
 
         if isinstance(raw_values, dict):
-            return apply_schema_defaults(raw_values, schema)
+            return apply_schema_defaults(
+                copy.deepcopy(raw_values),
+                schema,
+            )
 
         return value.get("raw_value")

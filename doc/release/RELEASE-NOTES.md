@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Updated download limits logic: exempt API-token requests from data download limits, add idempotent duplicate webhook handling, and use `get_or_create` for `FacilityDownloadLimit` in the checkout webhook.
+* [OSDEV-2589](https://opensupplyhub.atlassian.net/browse/OSDEV-2589) - Added `apply_schema_defaults` to populate missing partner field values from JSON Schema defaults in both the Production Locations API response and the CSV download serializer. Refactored `ProductionLocations` view to use `get_cached_all_partner_fields()` instead of the removed `PARTNER_FIELD_NAMES_KEY` cache, and deep-copy raw values before applying defaults to avoid mutating stored data.
 
 ### Architecture/Environment changes
 * Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.

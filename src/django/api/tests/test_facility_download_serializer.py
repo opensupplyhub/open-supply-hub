@@ -1,3 +1,4 @@
+import copy
 from types import SimpleNamespace
 
 from django.test import TestCase
@@ -342,6 +343,113 @@ class FacilityDownloadSerializerTest(TestCase):
                 '2026-12-01',
             ],
         )
+
+    def test_partner_fields_row_skips_non_dict_value(self):
+        partner_fields = [
+            SimpleNamespace(
+                name='bsci_audit',
+                type=PartnerField.OBJECT,
+                json_schema={
+                    'properties': {
+                        'submission_date': {'type': 'string'},
+                    }
+                },
+            ),
+        ]
+        extended_fields = [
+            {
+                'field_name': 'bsci_audit',
+                'value': 'not a dict',
+                'contributor': {'id': 1},
+            },
+            {
+                'field_name': 'bsci_audit',
+                'value': ['also', 'not', 'a', 'dict'],
+                'contributor': {'id': 2},
+            },
+            {
+                'field_name': 'bsci_audit',
+                'value': 42,
+                'contributor': {'id': 3},
+            },
+        ]
+        serializer = FacilityDownloadSerializer()
+        row = serializer.get_partner_fields_row(
+            extended_fields, partner_fields
+        )
+        self.assertEqual(row, [''])
+
+    def test_partner_fields_row_does_not_mutate_original_data(self):
+        partner_fields = [
+            SimpleNamespace(
+                name='bsci_audit',
+                type=PartnerField.OBJECT,
+                json_schema={
+                    'properties': {
+                        'submission_date': {'type': 'string'},
+                        'expiration_date': {
+                            'type': 'string',
+                            'default': 'N/A',
+                        },
+                    }
+                },
+            ),
+        ]
+        extended_fields = [
+            {
+                'field_name': 'bsci_audit',
+                'value': {
+                    'raw_values': {
+                        'submission_date': '2024-10-15',
+                    }
+                },
+                'contributor': {'id': 1},
+            },
+        ]
+        original = copy.deepcopy(extended_fields)
+        serializer = FacilityDownloadSerializer()
+        serializer.get_partner_fields_row(extended_fields, partner_fields)
+        self.assertEqual(
+            extended_fields[0]['value']['raw_values'],
+            original[0]['value']['raw_values'],
+        )
+
+    def test_partner_fields_row_fills_schema_defaults_for_missing_values(self):
+        partner_fields = [
+            SimpleNamespace(
+                name='bsci_audit',
+                type=PartnerField.OBJECT,
+                json_schema={
+                    'properties': {
+                        'submission_date': {'type': 'string'},
+                        'expiration_date': {
+                            'type': 'string',
+                            'default': 'N/A',
+                        },
+                        'rating': {
+                            'type': 'string',
+                            'default': 'unrated',
+                        },
+                    }
+                },
+            ),
+        ]
+        extended_fields = [
+            {
+                'field_name': 'bsci_audit',
+                'value': {
+                    'raw_values': {
+                        'submission_date': '2024-10-15',
+                    }
+                },
+                'contributor': {'id': 1},
+            },
+        ]
+        serializer = FacilityDownloadSerializer()
+        row = serializer.get_partner_fields_row(
+            extended_fields, partner_fields
+        )
+        self.assertEqual(row, ['2024-10-15', 'N/A', 'unrated'])
 
     def test_get_row_with_claim_from_contributor_without_extended_fields(self):
         serializer = FacilityDownloadSerializer()
