@@ -89,9 +89,7 @@ class FacilityDownloadLimit(models.Model):
         user,
         custom_date=None
     ) -> Optional[FacilityDownloadLimit]:
-        is_api_user = not user.is_anonymous and user.has_groups
-        # If user is an API user we don't want to impose limits.
-        if is_api_user or user.is_anonymous:
+        if user.is_anonymous:
             return None
 
         defaults = {'updated_at': custom_date} if custom_date else {}

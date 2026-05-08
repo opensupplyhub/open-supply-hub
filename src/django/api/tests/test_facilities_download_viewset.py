@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth.models import Group
@@ -1347,7 +1348,13 @@ class FacilitiesDownloadViewSetTest(APITestCase):
     )
     def test_api_user_can_download_over_limit(self):
         user = self.create_user(is_api_user=True)
-        self.login_user(user)
+        Contributor.objects.create(
+            admin=user,
+            name="API Contributor",
+            contrib_type="Brand / Retailer",
+        )
+        token = Token.objects.create(user=user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
 
         response = self.get_facility_downloads()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1358,7 +1365,13 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
     def test_api_user_not_limited_by_download_count(self):
         user = self.create_user(is_api_user=True)
-        self.login_user(user)
+        Contributor.objects.create(
+            admin=user,
+            name="API Contributor",
+            contrib_type="Brand / Retailer",
+        )
+        token = Token.objects.create(user=user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
 
         for _ in range(5):
             response = self.get_facility_downloads()
@@ -1539,3 +1552,30 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             limit.refresh_from_db()
             self.assertEqual(limit.free_download_records, 0)
             self.assertEqual(limit.paid_download_records, 0)
+
+    def test_get_download_limit_returns_none_for_token_auth(self):
+        from api.services.facilities_download_service import (
+            FacilitiesDownloadService
+        )
+
+        user = self.create_user(is_api_user=True)
+        request = MagicMock()
+        request.user = user
+        request.auth = Token.objects.create(user=user)
+
+        result = FacilitiesDownloadService.get_download_limit(request)
+        self.assertIsNone(result)
+
+    def test_get_download_limit_returns_limit_for_session_auth(self):
+        from api.services.facilities_download_service import (
+            FacilitiesDownloadService
+        )
+
+        user = self.create_user()
+        request = MagicMock()
+        request.user = user
+        request.auth = None
+
+        result = FacilitiesDownloadService.get_download_limit(request)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, FacilityDownloadLimit)
