@@ -291,7 +291,7 @@ variable "rds_cpu_credit_balance_threshold" {
 }
 
 variable "rds_work_mem" {
-  default = "20000"
+  default = "65536"
 }
 
 variable "rds_deletion_protection" {
