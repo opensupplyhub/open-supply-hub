@@ -1,8 +1,8 @@
-from typing import Tuple, List
+import logging
+from typing import Tuple, List, Any, Optional, Dict
 
 from django.http import QueryDict
 from django.db import transaction
-from django.core.cache import cache
 
 from rest_framework import status
 from rest_framework.viewsets import ViewSet
@@ -41,7 +41,6 @@ from api.constants import (
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY,
     APIV1LocationContributionErrorMessages,
-    PARTNER_FIELD_NAMES_KEY,
 )
 from api.exceptions import ServiceUnavailableException
 from api.mail import (
@@ -51,7 +50,12 @@ from api.mail import (
 from api.views.v1.response_mappings.production_locations_response import \
     ProductionLocationsResponseMapping
 from api.partner_fields.registry import system_partner_field_registry
+from api.serializers.facility.partner_field_helper import (
+    apply_schema_defaults,
+    get_cached_all_partner_fields,
+)
 
+logger = logging.getLogger(__name__)
 
 class ProductionLocations(ViewSet):
     swagger_schema = None
@@ -293,75 +297,93 @@ class ProductionLocations(ViewSet):
                 ...
             }
         """
-        cache_key = PARTNER_FIELD_NAMES_KEY
-        partner_field_names = cache.get(cache_key)
+        all_partner_fields = get_cached_all_partner_fields()
+        partner_field_names = [
+            field.name for field in all_partner_fields if field.active
+        ]
 
-        if partner_field_names is None:
-            partner_field_names = list(
-                PartnerField.objects.values_list('name', flat=True)
-            )
-            cache.set(cache_key, partner_field_names, 60 * 60)
+        if not partner_field_names:
+            return {}
 
         partner_extended_fields = {}
+        partner_field_values = ExtendedField.objects.filter(
+            facility__id=pk,
+            field_name__in=partner_field_names,
+        ).values("field_name", "value")
+        json_schemas = {
+            field.name: field.json_schema
+            for field in all_partner_fields
+            if field.json_schema and field.type == PartnerField.OBJECT
+        }
 
-        if partner_field_names:
-            partner_field_values = ExtendedField.objects.filter(
-                facility__id=pk,
-                field_name__in=partner_field_names
-            ).values('field_name', 'value')
+        for field in partner_field_values:
+            field_value = field.get("value")
+            field_name = field.get("field_name")
+            value = self.__get_partner_field_value(
+                value=field_value,
+                schema=json_schemas.get(field_name),
+            )
 
-            for field in partner_field_values:
-                self.__add_partner_field_value(
-                    partner_extended_fields,
-                    field.get('field_name'),
-                    field.get('value'),
-                )
+            if value is None:
+                continue
 
-        facility = Facility.objects.filter(id=pk).only(
-            'id',
-            'country_code',
-            'location',
-        ).first()
+            partner_extended_fields[field_name] = value
 
-        if facility:
-            for provider in system_partner_field_registry.providers:
-                provider_data = provider.fetch_data(facility)
+        facility = (
+            Facility.objects.filter(id=pk)
+            .only(
+                "id",
+                "country_code",
+                "location",
+            )
+            .first()
+        )
 
-                if provider_data is None:
-                    continue
+        if not facility:
+            logger.warning(f"PL viewset: Facility not found for ID: {pk}")
+            return partner_extended_fields
 
-                field_name = provider_data.get('field_name')
-                provider_value = provider_data.get('value')
+        for provider in system_partner_field_registry.providers:
+            provider_data = provider.fetch_data(facility)
 
-                if not field_name or not isinstance(provider_value, dict):
-                    continue
+            if provider_data is None:
+                continue
 
-                self.__add_partner_field_value(
-                    partner_extended_fields,
-                    field_name,
-                    provider_value,
-                )
+            field_name = provider_data.get("field_name")
+            provider_value = provider_data.get("value")
+
+            if not field_name or not isinstance(provider_value, dict):
+                continue
+
+            value = self.__get_partner_field_value(
+                value=provider_value,
+                schema=json_schemas.get(field_name),
+            )
+
+            if value is None:
+                continue
+
+            partner_extended_fields[field_name] = value
 
         return partner_extended_fields
 
-    @staticmethod
-    def __add_partner_field_value(partner_extended_fields, field_name, value):
+    def __get_partner_field_value(
+        self,
+        value: Any,
+        schema: Optional[Dict] = None,
+    ) -> Any:
         """
-        Extract and add partner field value to the response dictionary.
+        Get partner field value from the provider value.
         """
-        if not field_name or not isinstance(value, dict):
-            return
+        if not isinstance(value, dict):
+            return None
 
-        raw_values = value.get('raw_values')
-        raw_value = value.get('raw_value')
+        raw_values = value.get("raw_values")
 
-        payload = None
-        if isinstance(raw_values, (list, dict)):
-            payload = raw_values
-        elif raw_value is not None:
-            payload = raw_value
+        if isinstance(raw_values, list):
+            return raw_values
 
-        if payload is None:
-            return
+        if isinstance(raw_values, dict):
+            return apply_schema_defaults(raw_values, schema)
 
-        partner_extended_fields[field_name] = payload
+        return value.get("raw_value")
