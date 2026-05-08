@@ -3,6 +3,7 @@ import apiRequest from '../util/apiRequest';
 import {
     makeModerationEventRecordURL,
     makeGetProductionLocationsForPotentialMatches,
+    makeProductionLocationURL,
     makeProductionLocationFromModerationEventURL,
     logErrorAndDispatchFailure,
 } from '../util/util';
@@ -93,40 +94,70 @@ export function fetchSingleModerationEvent(moderationID) {
     };
 }
 
+async function pinOsIdToTop(responseData, osId) {
+    const matches = responseData.data || [];
+    const existingIdx = matches.findIndex(m => m.os_id === osId);
+
+    if (existingIdx !== -1) {
+        const updated = [...matches];
+        const [item] = updated.splice(existingIdx, 1);
+        updated.unshift(item);
+        return { ...responseData, data: updated };
+    }
+
+    try {
+        const facilityResponse = await apiRequest.get(
+            makeProductionLocationURL(osId),
+        );
+        if (facilityResponse.data) {
+            return {
+                ...responseData,
+                data: [facilityResponse.data, ...matches],
+            };
+        }
+    } catch (_) {
+        // If the fetch fails, return original data without the pinned item
+    }
+
+    return responseData;
+}
+
 export function fetchPotentialMatches(data) {
-    return dispatch => {
+    return async dispatch => {
         dispatch(startFetchPotentialMatches());
 
         const {
             productionLocationName,
             productionLocationAddress,
             countryCode,
+            osId,
         } = data;
 
-        return apiRequest
-            .get(
+        try {
+            const potentialMatches = await apiRequest.get(
                 makeGetProductionLocationsForPotentialMatches(
                     productionLocationName,
                     productionLocationAddress,
                     countryCode,
                 ),
-            )
-            .then(potentialMatches => {
-                if (potentialMatches.data) {
-                    dispatch(
-                        completeFetchPotentialMatches(potentialMatches.data),
-                    );
-                }
-            })
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching potential matches',
-                        failFetchPotentialMatches,
-                    ),
+            );
+
+            if (potentialMatches.data) {
+                const responseData = osId
+                    ? await pinOsIdToTop(potentialMatches.data, osId)
+                    : potentialMatches.data;
+
+                dispatch(completeFetchPotentialMatches(responseData));
+            }
+        } catch (err) {
+            dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented fetching potential matches',
+                    failFetchPotentialMatches,
                 ),
             );
+        }
     };
 }
 

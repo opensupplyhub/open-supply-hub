@@ -176,6 +176,7 @@ const DashboardContributionRecord = ({
                 productionLocationName,
                 countryCode,
                 productionLocationAddress,
+                osId,
             });
         }
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);

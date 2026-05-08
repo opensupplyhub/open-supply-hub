@@ -318,4 +318,44 @@ describe('DashboardContributionRecord component', () => {
 
     expect(queryByText('Close Dialog')).not.toBeInTheDocument();
   });
+
+  test('calls fetchPotentialMatches with osId when the moderation event has an os_id (UPDATE request)', async () => {
+    renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: {
+            ...data,
+            os_id: 'CN2021250D1DTU7',
+            request_type: 'UPDATE',
+          },
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(fetchPotentialMatches).toHaveBeenCalledWith(
+        expect.objectContaining({ osId: 'CN2021250D1DTU7' }),
+      );
+    });
+  });
+
+  test('calls fetchPotentialMatches with osId null when the moderation event has no os_id (CREATE request)', async () => {
+    renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: {
+            ...data,
+            os_id: null,
+            request_type: 'CREATE',
+          },
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(fetchPotentialMatches).toHaveBeenCalledWith(
+        expect.objectContaining({ osId: null }),
+      );
+    });
+  });
 });
