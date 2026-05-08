@@ -58,6 +58,7 @@ from api.serializers.facility.partner_field_helper import (
 
 logger = logging.getLogger(__name__)
 
+
 class ProductionLocations(ViewSet):
     swagger_schema = None
 
