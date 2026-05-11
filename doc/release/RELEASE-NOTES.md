@@ -33,6 +33,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.
+* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) Upgraded the Staging environment AWS AMI for Batch compute environments from `ami-002e2fef4b94f8fd0` to `ami-0940c95b23a1f7cac` to align with the latest ECS-optimized Amazon Linux 2 image.
+
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
