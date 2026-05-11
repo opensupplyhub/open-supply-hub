@@ -28,6 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
 * [OSDEV-2547](https://opensupplyhub.atlassian.net/browse/OSDEV-2547) - Refactored field tests and added warning pop-ups for the SLC submission form.
 * [OSDEV-2360](https://opensupplyhub.atlassian.net/browse/OSDEV-2360) - Updated how we write os_id for moderation events so we are not dependent on Logstash to write the os_id.
+* [OSDEV-2591](https://opensupplyhub.atlassian.net/browse/OSDEV-2591) - Fixed missing `processing_type_facility_type_raw`, `facility_type`, `processing_type`, and `product_type` values in data downloads for claimed facilities. The old `get_extended_fields_raw` filtering excluded extended fields from non-claimant contributors, causing these columns to appear blank in exports despite being visible on the location profile page.
 
 ### Architecture/Environment changes
 * Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.

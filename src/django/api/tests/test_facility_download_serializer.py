@@ -1,5 +1,7 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
+from django.contrib.gis.geos import Point
 from django.test import TestCase
 
 from api.models.facility.facility_index import FacilityIndex
@@ -149,12 +151,16 @@ class FacilityDownloadSerializerTest(TestCase):
             "A Service Provider|"
             "A Factory / Facility|"
             "Brand A",
-            "101-500",
-            "Parent Company Factory A",
+            "1|101-500",
+            "Parent Company Service Provider A|Parent Company Factory A",
             "Raw Data",
+            "Matched facility type value one Service Provider A|"
+            "Matched facility type value two Service Provider A|"
             "Matched facility type value one Factory A",
+            "Matched processing type value one Service Provider A|"
+            "Matched processing type value two Service Provider A|"
             "Matched processing type value one Factory A",
-            "Product Type Factory A",
+            "Product Type Service Provider A|Product Type Factory A",
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
@@ -164,17 +170,17 @@ class FacilityDownloadSerializerTest(TestCase):
     def test_partner_fields_headers_flatten_object_schema(self):
         partner_fields = [
             SimpleNamespace(
-                name='bsci_audit',
+                name="bsci_audit",
                 type=PartnerField.OBJECT,
                 json_schema={
-                    'properties': {
-                        'submission_date': {'type': 'string'},
-                        'expiration_date': {'type': 'string'},
+                    "properties": {
+                        "submission_date": {"type": "string"},
+                        "expiration_date": {"type": "string"},
                     }
                 },
             ),
             SimpleNamespace(
-                name='estimated_emissions',
+                name="estimated_emissions",
                 type=PartnerField.INT,
                 json_schema=None,
             ),
@@ -184,50 +190,50 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(
             headers,
             [
-                'bsci_audit.submission_date',
-                'bsci_audit.expiration_date',
-                'estimated_emissions',
+                "bsci_audit.submission_date",
+                "bsci_audit.expiration_date",
+                "estimated_emissions",
             ],
         )
 
     def test_partner_fields_row_matches_object_and_primitive(self):
         partner_fields = [
             SimpleNamespace(
-                name='bsci_audit',
+                name="bsci_audit",
                 type=PartnerField.OBJECT,
                 json_schema={
-                    'properties': {
-                        'submission_date': {'type': 'string'},
-                        'expiration_date': {'type': 'string'},
+                    "properties": {
+                        "submission_date": {"type": "string"},
+                        "expiration_date": {"type": "string"},
                     }
                 },
             ),
             SimpleNamespace(
-                name='estimated_emissions',
+                name="estimated_emissions",
                 type=PartnerField.INT,
                 json_schema=None,
             ),
             SimpleNamespace(
-                name='unused_partner_field',
+                name="unused_partner_field",
                 type=PartnerField.STRING,
                 json_schema=None,
             ),
         ]
         extended_fields = [
             {
-                'field_name': 'bsci_audit',
-                'value': {
-                    'raw_values': {
-                        'submission_date': '2024-10-15',
-                        'expiration_date': '2026-10-15',
+                "field_name": "bsci_audit",
+                "value": {
+                    "raw_values": {
+                        "submission_date": "2024-10-15",
+                        "expiration_date": "2026-10-15",
                     }
                 },
-                'contributor': {'id': 1},
+                "contributor": {"id": 1},
             },
             {
-                'field_name': 'estimated_emissions',
-                'value': {'raw_value': 13},
-                'contributor': {'id': 1},
+                "field_name": "estimated_emissions",
+                "value": {"raw_value": 13},
+                "contributor": {"id": 1},
             },
         ]
         serializer = FacilityDownloadSerializer()
@@ -236,50 +242,50 @@ class FacilityDownloadSerializerTest(TestCase):
         )
         self.assertEqual(
             row,
-            ['2024-10-15', '2026-10-15', '13', ''],
+            ["2024-10-15", "2026-10-15", "13", ""],
         )
 
     def test_partner_fields_expand_nested_object_schema(self):
         amfori_schema = {
-            'type': 'object',
-            'title': 'Amfori Compliance Status',
-            'properties': {
-                'bepi_audit': {
-                    'type': 'object',
-                    'properties': {
-                        'expiration_date': {
-                            'type': 'string',
-                            'format': 'date',
+            "type": "object",
+            "title": "Amfori Compliance Status",
+            "properties": {
+                "bepi_audit": {
+                    "type": "object",
+                    "properties": {
+                        "expiration_date": {
+                            "type": "string",
+                            "format": "date",
                         },
-                        'submission_date': {
-                            'type': 'string',
-                            'format': 'date',
-                        },
-                    },
-                },
-                'bsci_audit': {
-                    'type': 'object',
-                    'properties': {
-                        'expiration_date': {
-                            'type': 'string',
-                            'format': 'date',
-                        },
-                        'submission_date': {
-                            'type': 'string',
-                            'format': 'date',
+                        "submission_date": {
+                            "type": "string",
+                            "format": "date",
                         },
                     },
                 },
-                'environmental_risk_assessment': {
-                    'type': 'object',
-                    'properties': {
-                        'completion_date': {
-                            'type': 'string',
-                            'format': 'date',
+                "bsci_audit": {
+                    "type": "object",
+                    "properties": {
+                        "expiration_date": {
+                            "type": "string",
+                            "format": "date",
                         },
-                        'expiration_date': {
-                            'type': 'string',
-                            'format': 'date',
+                        "submission_date": {
+                            "type": "string",
+                            "format": "date",
+                        },
+                    },
+                },
+                "environmental_risk_assessment": {
+                    "type": "object",
+                    "properties": {
+                        "completion_date": {
+                            "type": "string",
+                            "format": "date",
+                        },
+                        "expiration_date": {
+                            "type": "string",
+                            "format": "date",
                         },
                     },
                 },
@@ -287,30 +293,30 @@ class FacilityDownloadSerializerTest(TestCase):
         }
         partner_fields = [
             SimpleNamespace(
-                name='amfori_compliance_status',
+                name="amfori_compliance_status",
                 type=PartnerField.OBJECT,
                 json_schema=amfori_schema,
             ),
         ]
         extended_fields = [
             {
-                'field_name': 'amfori_compliance_status',
-                'value': {
-                    'raw_values': {
-                        'bepi_audit': {
-                            'submission_date': '2024-11-20',
-                            'expiration_date': '2026-11-20',
+                "field_name": "amfori_compliance_status",
+                "value": {
+                    "raw_values": {
+                        "bepi_audit": {
+                            "submission_date": "2024-11-20",
+                            "expiration_date": "2026-11-20",
                         },
-                        'bsci_audit': {
-                            'submission_date': '2024-10-15',
+                        "bsci_audit": {
+                            "submission_date": "2024-10-15",
                         },
-                        'environmental_risk_assessment': {
-                            'completion_date': '2024-12-01',
-                            'expiration_date': '2026-12-01',
+                        "environmental_risk_assessment": {
+                            "completion_date": "2024-12-01",
+                            "expiration_date": "2026-12-01",
                         },
                     }
                 },
-                'contributor': {'id': 1},
+                "contributor": {"id": 1},
             },
         ]
         serializer = FacilityDownloadSerializer()
@@ -321,25 +327,25 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(
             headers,
             [
-                'amfori_compliance_status.bepi_audit.expiration_date',
-                'amfori_compliance_status.bepi_audit.submission_date',
-                'amfori_compliance_status.bsci_audit.expiration_date',
-                'amfori_compliance_status.bsci_audit.submission_date',
-                'amfori_compliance_status'
-                '.environmental_risk_assessment.completion_date',
-                'amfori_compliance_status'
-                '.environmental_risk_assessment.expiration_date',
+                "amfori_compliance_status.bepi_audit.expiration_date",
+                "amfori_compliance_status.bepi_audit.submission_date",
+                "amfori_compliance_status.bsci_audit.expiration_date",
+                "amfori_compliance_status.bsci_audit.submission_date",
+                "amfori_compliance_status"
+                ".environmental_risk_assessment.completion_date",
+                "amfori_compliance_status"
+                ".environmental_risk_assessment.expiration_date",
             ],
         )
         self.assertEqual(
             row,
             [
-                '2026-11-20',
-                '2024-11-20',
-                '',
-                '2024-10-15',
-                '2024-12-01',
-                '2026-12-01',
+                "2026-11-20",
+                "2024-11-20",
+                "",
+                "2024-10-15",
+                "2024-12-01",
+                "2026-12-01",
             ],
         )
 
@@ -357,14 +363,88 @@ class FacilityDownloadSerializerTest(TestCase):
             0.0,
             "Test Sector",
             "Factory A (Claimed)|A Service Provider|A Factory / Facility",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
+            "1",
+            "Parent Company Service Provider A",
+            "Raw Data",
+            "Matched facility type value one Service Provider A|"
+            "Matched facility type value two Service Provider A",
+            "Matched processing type value one Service Provider A|"
+            "Matched processing type value two Service Provider A",
+            "Product Type Service Provider A",
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
         ]
         self.assertEqual(row, expected_row)
+
+    @patch.object(
+        FacilityDownloadSerializer,
+        "get_claimed_fields",
+        return_value=[""] * len(CLAIM_HEADERS),
+    )
+    @patch.object(
+        FacilityDownloadSerializer,
+        "get_partner_fields_row",
+        return_value=[],
+    )
+    @patch.object(
+        FacilityDownloadSerializer,
+        "get_mit_living_wage_row",
+        return_value=["", ""],
+    )
+    @patch.object(
+        FacilityDownloadSerializer,
+        "get_wage_indicator_row",
+        return_value=[""] * 6,
+    )
+    def test_claimed_facility_includes_all_contributors_extended_fields(
+        self, _wage, _mit, _partner, _claim
+    ):
+        facility = SimpleNamespace(
+            id="MOCK_1",
+            name="Mock Facility",
+            address="1 Mock St",
+            country_code="US",
+            location=Point(0.0, 0.0),
+            sector=["Apparel"],
+            is_closed=False,
+            created_from_info={"created_at": "2024-01-01T00:00:00+00:00"},
+            approved_claim={
+                "id": 1,
+                "contributor_id": 100,
+                "contributor": {"name": "Claiming Corp"},
+                "facility_name_english": None,
+            },
+            contributors=[
+                {
+                    "id": 200,
+                    "name": "Other Corp",
+                    "contrib_type": "Brand/Retailer",
+                    "should_display_associations": True,
+                },
+            ],
+            extended_fields=[
+                {
+                    "id": 1,
+                    "field_name": "number_of_workers",
+                    "value": {"min": 50, "max": 100},
+                    "contributor": {"id": 200, "name": "Other Corp"},
+                },
+                {
+                    "id": 2,
+                    "field_name": "number_of_workers",
+                    "value": {"min": 500, "max": 1000},
+                    "contributor": {"id": 100, "name": "Claiming Corp"},
+                },
+                {
+                    "id": 3,
+                    "field_name": "parent_company",
+                    "value": {"name": "Other Parent Co"},
+                    "contributor": {"id": 200, "name": "Other Corp"},
+                },
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        row = serializer.get_row(facility)
+        self.assertEqual(row[10], "50-100|500-1000")
+        self.assertEqual(row[11], "Other Parent Co")
