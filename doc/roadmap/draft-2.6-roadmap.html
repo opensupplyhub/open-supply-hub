@@ -479,8 +479,8 @@ function toggleInit(k){openInits[k]=!openInits[k];renderThemes();}
 function toggleEpic(k){openEpics[k]=!openEpics[k];renderThemes();}
 function toggleExpandAll(){
   allExpanded=!allExpanded;
-  if(allExpanded){for(const i of initiatives)openInits[i.key]=true;}
-  else{openInits={};}
+  if(allExpanded){for(const i of initiatives)openInits[i.key]=true;openEpics={};}
+  else{openInits={};openEpics={};}
   const btn=document.getElementById('expandAllBtn');
   btn.className='expand-all-btn'+(allExpanded?' expanded':'');
   btn.innerHTML=allExpanded
