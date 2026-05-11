@@ -5,7 +5,7 @@ from django.db import models
 from django.core.cache import cache
 from django_ckeditor_5.fields import CKEditor5Field
 
-from api.constants import PARTNER_FIELD_LIST_KEY, PARTNER_FIELD_NAMES_KEY
+from api.constants import PARTNER_FIELD_LIST_KEY
 from api.fields import JSONTextField
 from api.models.partner_field_manager import PartnerFieldManager
 
@@ -154,4 +154,3 @@ class PartnerField(models.Model):
     def __invalidate_cache(self):
         """Invalidate cache for partner field list and names."""
         cache.delete(PARTNER_FIELD_LIST_KEY)
-        cache.delete(PARTNER_FIELD_NAMES_KEY)

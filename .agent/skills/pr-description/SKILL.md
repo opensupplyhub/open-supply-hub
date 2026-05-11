@@ -25,6 +25,14 @@ Before writing the description, run these commands in parallel to understand the
 - `git diff <base-branch>..HEAD`
 - `git log <base-branch>..HEAD --format="%B---"`
 
+Get the ticket id from the current branch name. For example, if the branch name is `OSDEV-1234-add-new-feature`, the ticket id is `OSDEV-1234`. Use the following command to get the ticket id:
+
+```bash
+git branch --show-current | grep -o 'OSDEV-[0-9]*'
+```
+
+And then fetch the ticket details from JIRA using the ticket id to get additional context.
+
 ## First Line
 
 - Short summary of specifically **what** is being done.
