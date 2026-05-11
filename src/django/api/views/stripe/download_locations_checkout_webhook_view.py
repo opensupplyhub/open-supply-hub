@@ -1,3 +1,4 @@
+import logging
 import stripe
 
 from django.conf import settings
@@ -7,6 +8,8 @@ from django.utils import timezone
 
 from api.models import DownloadLocationPayment, FacilityDownloadLimit
 from api.constants import SINGLE_PAID_DOWNLOAD_RECORDS
+
+logger = logging.getLogger(__name__)
 
 
 class DownloadLocationsCheckoutWebhookView(View):
@@ -43,6 +46,20 @@ class DownloadLocationsCheckoutWebhookView(View):
 
             try:
                 stripe_session_id = session["id"]
+
+                payment_exists = DownloadLocationPayment.objects.filter(
+                    stripe_session_id=stripe_session_id
+                ).exists()
+
+                if payment_exists:
+                    logger.info(
+                        f"Payment exists for session: {stripe_session_id}",
+                    )
+                    return HttpResponse(status=200)
+
+                full_session = stripe.checkout.Session.retrieve(
+                    session["id"], expand=["line_items"]
+                )
                 payment_id = session["payment_intent"]
                 amount_subtotal = session["amount_subtotal"]
                 amount_total = session["amount_total"]
@@ -58,23 +75,20 @@ class DownloadLocationsCheckoutWebhookView(View):
                 )
                 payment.save()
 
-                download_limit = FacilityDownloadLimit.objects.get(
-                    user_id=user_id
-                )
-
-                full_session = stripe.checkout.Session.retrieve(
-                    session["id"], expand=["line_items"]
+                download_limit, _ = (
+                    FacilityDownloadLimit.objects.get_or_create(
+                        user_id=user_id,
+                    )
                 )
                 line_item = full_session.line_items.data[0]
                 item_quantity = line_item.quantity
-
                 paid_records = item_quantity * SINGLE_PAID_DOWNLOAD_RECORDS
                 download_limit.paid_download_records += paid_records
                 download_limit.purchase_date = timezone.now()
                 download_limit.save(
                     update_fields=[
                         "paid_download_records",
-                        "purchase_date"
+                        "purchase_date",
                     ]
                 )
 

@@ -12,7 +12,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-
 * `0208_deactivate_replaced_list_sources.py` - Data migration that retroactively deactivates the `Source.is_active` flag for all facility lists that were already replaced by an approved list, fixing pre-existing stale active sources.
 * `0209_clear_replaces_on_rejected_lists.py` - Data migration that clears the `replaces` FK on all facility lists whose replacement was already rejected, restoring the original list to a non-replaced state.
 * `0210_deactivate_rejected_list_sources.py` - Data migration that sets `Source.is_active = False` for any rejected facility list whose source was never deactivated, fixing a small number of pre-existing anomalies where rejected lists remained active.
@@ -20,15 +19,24 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
 
+### Code/API changes
+* Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
+* [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Updated download limits logic: exempt API-token requests from data download limits, add idempotent duplicate webhook handling, and use `get_or_create` for `FacilityDownloadLimit` in the checkout webhook.
+
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
 * [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
 * [OSDEV-2547](https://opensupplyhub.atlassian.net/browse/OSDEV-2547) - Refactored field tests and added warning pop-ups for the SLC submission form.
+* [OSDEV-2360](https://opensupplyhub.atlassian.net/browse/OSDEV-2360) - Updated how we write os_id for moderation events so we are not dependent on Logstash to write the os_id.
+
+### Architecture/Environment changes
+* Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `backfill_moderation_event_os_id`
 
 
 ## Release 2.22.2
