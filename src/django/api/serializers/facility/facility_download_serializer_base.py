@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Dict, Iterable, List
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import (
@@ -21,6 +22,7 @@ from api.serializers.facility.partner_field_helper import (
     build_primitive_field_cell,
     group_extended_fields_by_name,
     partner_field_property_paths,
+    apply_schema_defaults,
 )
 from api.serializers.facility.wage_indicator_download_helper import (
     WAGE_INDICATOR_DOWNLOAD_HEADERS,
@@ -184,7 +186,35 @@ class FacilityDownloadSerializerBase(Serializer):
         row: List[str] = []
 
         for partner_field in partner_fields:
-            entries = grouped.get(partner_field.name, [])
+            entries = copy.deepcopy(grouped.get(partner_field.name, []))
+
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+
+                value = entry.get("value", {})
+
+                if not isinstance(value, dict):
+                    continue
+
+                if "raw_values" not in value:
+                    continue
+
+                raw_values = value.get("raw_values", {})
+
+                if not isinstance(raw_values, dict):
+                    continue
+
+                schema = partner_field.json_schema
+
+                if not isinstance(schema, dict):
+                    continue
+
+                entry["value"]["raw_values"] = apply_schema_defaults(
+                    raw_values,
+                    schema,
+                )
+
             paths = partner_field_property_paths(partner_field)
 
             if paths:
