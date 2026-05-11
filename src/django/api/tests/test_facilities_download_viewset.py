@@ -691,12 +691,16 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "Test Sector",
                 "Factory A (Claimed)|A Service Provider|A Factory / Facility|"
                 "Brand A",
-                "101-500",
-                "Parent Company Factory A",
+                "1|101-500",
+                "Parent Company Service Provider A|Parent Company Factory A",
                 "Raw Data",
+                "Matched facility type value one Service Provider A|"
+                "Matched facility type value two Service Provider A|"
                 "Matched facility type value one Factory A",
+                "Matched processing type value one Service Provider A|"
+                "Matched processing type value two Service Provider A|"
                 "Matched processing type value one Factory A",
-                "Product Type Factory A",
+                "Product Type Service Provider A|Product Type Factory A",
                 "",
                 "",
                 "",
@@ -753,12 +757,14 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 0.0,
                 "Test Sector",
                 "Factory A (Claimed)|A Service Provider|A Factory / Facility",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
+                "1",
+                "Parent Company Service Provider A",
+                "Raw Data",
+                "Matched facility type value one Service Provider A|"
+                "Matched facility type value two Service Provider A",
+                "Matched processing type value one Service Provider A|"
+                "Matched processing type value two Service Provider A",
+                "Product Type Service Provider A",
                 "",
                 "",
                 "",
@@ -1216,12 +1222,16 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "Test Sector",
                 "Factory A (Claimed)|A Service Provider|A Factory / Facility|"
                 "Brand A",
-                "101-500",
-                "Parent Company Factory A",
+                "1|101-500",
+                "Parent Company Service Provider A|Parent Company Factory A",
                 "Raw Data",
+                "Matched facility type value one Service Provider A|"
+                "Matched facility type value two Service Provider A|"
                 "Matched facility type value one Factory A",
+                "Matched processing type value one Service Provider A|"
+                "Matched processing type value two Service Provider A|"
                 "Matched processing type value one Factory A",
-                "Product Type Factory A",
+                "Product Type Service Provider A|Product Type Factory A",
                 "",
                 "",
                 "",

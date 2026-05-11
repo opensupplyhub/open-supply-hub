@@ -26,11 +26,10 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         ]
 
     def get_row(self, facility: FacilityIndexNewManager) -> List[str]:
-        extended_fields_raw = self.get_extended_fields_raw(facility)
         return [
             *self.get_common_row(facility),
             self.get_contributors(facility),
-            *self.get_extended_fields(extended_fields_raw),
+            *self.get_extended_fields(facility.extended_fields),
             *self.get_claimed_fields(facility),
             self.get_is_closed(facility),
             *self.get_partner_fields_row(
@@ -56,19 +55,3 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
                 else "{}".format(prefix_a_an(contributor["contrib_type"]))
             )
         return "|".join(contributors)
-
-    def check_contributor(
-        self, facility: FacilityIndexNewManager, contributor_id: int
-    ) -> bool:
-        claim = facility.approved_claim
-        if claim is None:
-            return True
-
-        return claim["contributor_id"] == contributor_id
-
-    def get_extended_fields_raw(self, facility: FacilityIndexNewManager):
-        return [
-            field
-            for field in facility.extended_fields
-            if self.check_contributor(facility, field["contributor"]["id"])
-        ]
