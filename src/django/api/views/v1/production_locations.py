@@ -346,12 +346,16 @@ class ProductionLocations(ViewSet):
             return partner_extended_fields
 
         for provider in system_partner_field_registry.providers:
+            field_name = provider._get_field_name()
+
+            if field_name not in partner_field_names:
+                continue
+
             provider_data = provider.fetch_data(facility)
 
             if provider_data is None:
                 continue
 
-            field_name = provider_data.get("field_name")
             provider_value = provider_data.get("value")
 
             if not field_name or not isinstance(provider_value, dict):
