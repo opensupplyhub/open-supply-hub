@@ -35,7 +35,8 @@ class AdminFacilityListView(ListAPIView):
         if not params.is_valid():
             raise ValidationError(params.errors)
 
-        facility_lists = FacilityList.objects.order_by('created_at')
+        facility_lists = FacilityList.objects.select_related(
+            'replaced_by').order_by('created_at')
 
         contributor = params.data.get(FacilityListQueryParams.CONTRIBUTOR)
         if contributor:

@@ -55,7 +55,7 @@ class FacilityListViewSet(ModelViewSet):
     """
     Upload and update facility lists for an authenticated Contributor.
     """
-    queryset = FacilityList.objects.all()
+    queryset = FacilityList.objects.select_related('replaced_by')
     serializer_class = FacilityListSerializer
     permission_classes = [IsRegisteredAndConfirmed]
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
@@ -268,6 +268,11 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status = FacilityList.APPROVED
         facility_list.save()
 
+        if facility_list.replaces_id:
+            replaced_source = facility_list.replaces.source
+            replaced_source.is_active = False
+            replaced_source.save()
+
         if not DEBUG:
             submit_jobs(facility_list)
 
@@ -297,6 +302,10 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.status_change_by = request.user
         facility_list.status = FacilityList.REJECTED
         facility_list.save()
+
+        if facility_list.replaces_id:
+            facility_list.replaces = None
+            facility_list.save()
 
         source = facility_list.source
         source.is_active = False

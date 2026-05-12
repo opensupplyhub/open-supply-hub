@@ -8,7 +8,7 @@ serializer composes them from its own `get_partner_fields_headers` and
 `get_partner_fields_row` methods, keeping the surface of the serializer
 consistent with `get_extended_fields`, `get_claimed_fields`, etc.
 '''
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 from django.core.cache import cache
 
@@ -209,3 +209,43 @@ def build_primitive_field_cell(
             continue
         values.append(str(raw_value))
     return separator.join(values)
+
+
+def apply_schema_defaults(
+    value: Any,
+    schema: Optional[Dict[str, Any]],
+) -> Any:
+    '''
+    Apply default values from a JSON Schema to a value.
+    Recursively descends into nested object properties.
+    '''
+    if not isinstance(value, dict):
+        return value
+
+    if not isinstance(schema, dict):
+        return value
+
+    properties = schema.get("properties")
+
+    if not isinstance(properties, dict):
+        return value
+
+    for key, sub_schema in properties.items():
+        if not isinstance(sub_schema, dict):
+            continue
+
+        if key not in value:
+            is_object = (
+                sub_schema.get("type") == "object"
+                and "properties" in sub_schema
+            )
+
+            if is_object:
+                value[key] = {}
+            elif "default" in sub_schema:
+                value[key] = sub_schema["default"]
+
+        if key in value:
+            apply_schema_defaults(value[key], sub_schema)
+
+    return value
