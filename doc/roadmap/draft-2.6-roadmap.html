@@ -464,7 +464,7 @@ function hBadgeCls(h){switch(h){case'On Track':return'hb hb-on';case'At Risk':re
 function hLbl(h){return h||'No Status';}
 
 /* ---- STATE ---- */
-const STALE_DAYS=3;
+const STALE_DAYS=4;
 function isStale(e){
   if(!e.lastCommentDate) return true;
   const last=new Date(e.lastCommentDate+'T00:00:00').getTime();
@@ -554,7 +554,7 @@ function buildFilterBar(){
     hh+=`<button class="fchip h-chip${pCls}" data-v="${esc(c.label)}" onclick="setH(this.dataset.v)">${esc(c.label)}<span class="fcnt">${n}</span></button>`;
   }
   const staleCount=allEpics.filter(e=>isStale(e)).length;
-  hh+=`<button class="fchip stale-chip" id="staleChip" onclick="setStale()">No Recent Update<span class="fcnt">${staleCount}</span></button>`;
+  hh+=`<button class="fchip stale-chip" id="staleChip" onclick="setStale()">No Update in 4 Days<span class="fcnt">${staleCount}</span></button>`;
   hh+=`<button class="expand-all-btn" id="expandAllBtn" onclick="toggleExpandAll()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Expand All</button>`;
   document.getElementById('healthRow').innerHTML=hh;
 
@@ -651,7 +651,7 @@ function renderThemes(){
         const isOpen=!!openInits[init.key];
 
         html+=`<div class="init-block">`;
-        const initKeyTag=init.standalone?'Standalone Epics':'Initiative <a href="'+esc(init.url||'#')+'" target="_blank" class="key-lnk" onclick="event.stopPropagation()">'+esc(init.key)+' ↗</a>';
+        const initKeyTag=init.standalone?'Standalone Epics':'User Story <a href="'+esc(init.url||'#')+'" target="_blank" class="key-lnk" onclick="event.stopPropagation()">'+esc(init.key)+' ↗</a>';
         html+=`<div class="init-header ${tCss.soft}" onclick="toggleInit('${esc(init.key)}')">`;
         html+=`<div class="init-lbl"><div class="init-lbl-text"><div class="init-key-tag">${initKeyTag}</div><div class="init-title">${esc(init.title)}</div></div><div class="init-aside"><span class="init-badge">${epics.length}</span><span class="init-chev${isOpen?' open':''}">›</span></div></div>`;
         html+=`<div class="init-tl-cell"></div></div>`;
@@ -673,7 +673,7 @@ function renderThemes(){
             html+=`<div class="epic-block">`;
             html+=`<div class="epic-header${isEOpen?' open':''}" onclick="event.stopPropagation();toggleEpic('${esc(e.key)}')">`;
             const prioPill=e.priority?`<span class="prio-pill prio-${e.priority.toLowerCase()}">${esc(e.priority)}</span>`:'';
-            const staleBadge=isStale(e)?`<span class="stale-badge">No Recent Update</span>`:'';
+            const staleBadge=isStale(e)?`<span class="stale-badge">No Update in 4 Days</span>`:'';
             const epicKeyLink='<a href="'+esc(e.url||'#')+'" target="_blank" class="key-lnk" onclick="event.stopPropagation()">'+esc(e.key)+' ↗</a>';
             html+=`<div class="epic-lbl"><span class="epic-dot ${hc}"></span><div class="epic-lbl-text"><div class="epic-title">${esc(e.title)}</div><div class="epic-sub"><span class="epic-owner">${esc(e.owner||'Unassigned')}</span> · ${epicKeyLink}${prioPill?' · '+prioPill:''}${staleBadge?' · '+staleBadge:''}</div>${teamDisplay?`<div class="epic-members">${esc(teamDisplay)}</div>`:''}</div><span class="epic-chev${isEOpen?' open':''}">›</span></div>`;
             html+=`<div class="epic-tl">${qShades}<div class="mo-grid">${moGrid}</div><div class="today-epic-line" style="left:${tp}%"></div>`;
