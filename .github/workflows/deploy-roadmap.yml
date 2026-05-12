@@ -28,7 +28,7 @@ jobs:
       - name: Prepare Pages artifact
         run: |
           mkdir _site
-          cp doc/roadmap/draft-2.6-roadmap.html _site/index.html
+          cp doc/roadmap/delivery-roadmap.html _site/index.html
 
       - uses: actions/configure-pages@v5
 
