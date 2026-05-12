@@ -347,6 +347,8 @@ export const filtersPropType = shape({
     countries: arrayOf(reactSelectOptionPropType).isRequired,
     sectors: arrayOf(reactSelectOptionPropType).isRequired,
     combineContributors: string.isRequired,
+    partnerFieldGroups: arrayOf(string).isRequired,
+    partnerFields: arrayOf(string).isRequired,
 });
 
 export const facilityListItemStatusPropType = oneOf(

@@ -198,7 +198,30 @@ facilities_list_parameters = [
             'contributors count descending and secondary by name '
             'ascending/descending and contributors count ascending. '
             )
-    )
+    ),
+    Parameter(
+        'partner_field_group',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'UUID of a partner field group. Facilities returned will have '
+            'data from at least one active partner field in the group. '
+            'May be repeated to AND multiple groups together.'
+        ),
+    ),
+    Parameter(
+        'partner_field',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'Name of a specific partner field. When multiple values are '
+            'supplied, only facilities that have data from ALL specified '
+            'partners are returned (AND semantics). '
+            'May be combined with partner_field_group.'
+        ),
+    ),
 ]
 
 facilities_create_parameters = [

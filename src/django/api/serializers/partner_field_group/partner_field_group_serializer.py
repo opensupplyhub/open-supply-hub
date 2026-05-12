@@ -9,17 +9,23 @@ from rest_framework.serializers import ModelSerializer
 from api.models.partner_field_group import PartnerFieldGroup
 
 
+class PartnerFieldSerializer(serializers.Serializer):
+    """
+    Nested serializer for individual partner fields within a group.
+    Exposes the name (query-string key) and display label.
+    """
+
+    name = serializers.CharField()
+    label = serializers.CharField()
+
+
 class PartnerFieldGroupSerializer(ModelSerializer):
     """
     Serializer for the PartnerFieldGroup model.
     Serializes the fields and related partner_fields for the API response.
     """
 
-    partner_fields = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field="name",
-    )
+    partner_fields = PartnerFieldSerializer(many=True, read_only=True)
 
     class Meta:
         """

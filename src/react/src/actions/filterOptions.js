@@ -353,3 +353,35 @@ export function fetchAllPrimaryFilterOptions() {
         dispatch(fetchListOptions());
     };
 }
+
+export function fetchContributorOptionsIfNeeded() {
+    return (dispatch, getState) => {
+        const { data, fetching } = getState().filterOptions.contributors;
+        if (data !== null || fetching) return;
+        dispatch(fetchContributorOptions());
+    };
+}
+
+export function fetchCountryOptionsIfNeeded() {
+    return (dispatch, getState) => {
+        const { data, fetching } = getState().filterOptions.countries;
+        if (data !== null || fetching) return;
+        dispatch(fetchCountryOptions());
+    };
+}
+
+export function fetchListOptionsIfNeeded() {
+    return (dispatch, getState) => {
+        const { data, fetching } = getState().filterOptions.lists;
+        if (data !== null || fetching) return;
+        dispatch(fetchListOptions());
+    };
+}
+
+export function fetchAllPrimaryFilterOptionsIfNeeded() {
+    return dispatch => {
+        dispatch(fetchContributorOptionsIfNeeded());
+        dispatch(fetchCountryOptionsIfNeeded());
+        dispatch(fetchListOptionsIfNeeded());
+    };
+}

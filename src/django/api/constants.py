@@ -40,6 +40,8 @@ class FacilitiesQueryParams:
     NUMBER_OF_WORKERS = 'number_of_workers'
     NATIVE_LANGUAGE_NAME = 'native_language_name'
     SECTOR = 'sectors'
+    PARTNER_FIELD_GROUP = 'partner_field_group'
+    PARTNER_FIELD = 'partner_field'
 
 
 class FacilityListQueryParams:

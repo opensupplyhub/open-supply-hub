@@ -33,7 +33,7 @@ import {
     fetchContributorOptions,
     fetchListOptions,
     fetchCountryOptions,
-    fetchAllPrimaryFilterOptions,
+    fetchAllPrimaryFilterOptionsIfNeeded,
 } from '../actions/filterOptions';
 import { fetchFacilities } from '../actions/facilities';
 
@@ -382,7 +382,8 @@ function mapDispatchToProps(dispatch, { history: { push } }) {
     return {
         toggleFilter: () => dispatch(toggleFilterModal()),
         setTabActive: value => dispatch(setSidebarTabActive(value)),
-        fetchFilterOptions: () => dispatch(fetchAllPrimaryFilterOptions()),
+        fetchFilterOptions: () =>
+            dispatch(fetchAllPrimaryFilterOptionsIfNeeded()),
         fetchContributors: () => dispatch(fetchContributorOptions()),
         fetchLists: () => dispatch(fetchListOptions()),
         fetchCountries: () => dispatch(fetchCountryOptions()),

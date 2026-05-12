@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -15,6 +15,7 @@ import TextSearchFilter from './Filters/TextSearchFilter';
 import ContributorFilter from './Filters/ContributorFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
 import SectorFilter from './Filters/SectorFilter';
+import SpotlightDataPartnersFilter from './Filters/SpotlightDataPartnersFilter';
 import TitledDrawer from './TitledDrawer';
 
 import { resetAllFilters, resetDrawerFilters } from '../actions/filters';
@@ -120,6 +121,8 @@ function FilterSidebarSearchTab({
     classes,
     embedExtendedFields,
     resetHiddenFilters,
+    partnerFieldGroups,
+    partnerFields,
 }) {
     const isSideBarSearch = true;
     const hiddenFields = [
@@ -130,6 +133,8 @@ function FilterSidebarSearchTab({
         productType,
         numberOfWorkers,
         sectors,
+        partnerFieldGroups,
+        partnerFields,
     ];
 
     const allFields = hiddenFields.concat([
@@ -298,6 +303,7 @@ function FilterSidebarSearchTab({
                 subtitle="Browse facilities using the criteria below."
             >
                 <SectorFilter isSideBarSearch={isSideBarSearch} />
+                <SpotlightDataPartnersFilter />
                 <FeatureFlag flag={EXTENDED_PROFILE_FLAG}>
                     <FilterSidebarExtendedSearch
                         isSideBarSearch={isSideBarSearch}
@@ -324,6 +330,8 @@ FilterSidebarSearchTab.propTypes = {
     fetchingFacilities: bool.isRequired,
     searchForFacilities: func.isRequired,
     fetchingOptions: bool.isRequired,
+    partnerFieldGroups: arrayOf(string).isRequired,
+    partnerFields: arrayOf(string).isRequired,
 };
 
 function mapStateToProps({
@@ -346,6 +354,8 @@ function mapStateToProps({
         nativeLanguageName,
         combineContributors,
         boundary,
+        partnerFieldGroups,
+        partnerFields,
     },
     facilities: {
         facilities: { fetching: fetchingFacilities },
@@ -372,6 +382,8 @@ function mapStateToProps({
         embed: !!embed,
         textSearchLabel: config.text_search_label,
         embedExtendedFields: config.extended_fields,
+        partnerFieldGroups,
+        partnerFields,
     };
 }
 

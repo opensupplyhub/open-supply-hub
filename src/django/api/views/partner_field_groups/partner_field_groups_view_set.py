@@ -4,9 +4,11 @@ Allows listing of the partner field groups with pagination.
 Available for all users.
 """
 
+from django.db.models import Prefetch
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.pagination import CursorPagination
 
+from api.models.partner_field import PartnerField
 from api.models.partner_field_group import PartnerFieldGroup
 from api.serializers.partner_field_group.\
     partner_field_group_serializer import PartnerFieldGroupSerializer
@@ -29,11 +31,15 @@ class PartnerFieldGroupsViewSet(ReadOnlyModelViewSet):
     """
     Allows listing of the partner field groups.
     Also, prefetches the related partner fields to avoid N+1 queries.
+    Only active partner fields are included in the response.
     Available for all users.
     """
 
     queryset = PartnerFieldGroup.objects.prefetch_related(
-        "partner_fields"
+        Prefetch(
+            'partner_fields',
+            queryset=PartnerField.objects.filter(active=True),
+        )
     ).all()
     serializer_class = PartnerFieldGroupSerializer
     pagination_class = PartnerFieldGroupCursorPagination

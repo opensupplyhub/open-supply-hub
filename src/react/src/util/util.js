@@ -420,6 +420,8 @@ export const createQueryStringFromSearchFilters = (
         boundary = {},
         sortAlgorithm = {},
         claimStatuses = [],
+        partnerFieldGroups = [],
+        partnerFields = [],
     },
     withEmbed,
     detail,
@@ -451,6 +453,8 @@ export const createQueryStringFromSearchFilters = (
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
+        partner_field_group: partnerFieldGroups,
+        partner_field: partnerFields,
     });
 
     return querystring.stringify(omitBy(inputForQueryString, isEmpty));
@@ -507,7 +511,14 @@ export const createFiltersFromQueryString = qs => {
         combine_contributors: combineContributors = '',
         boundary = '',
         sort_by: sortBy = '',
+        partner_field_group: rawPartnerFieldGroups = [],
+        partner_field: rawPartnerFields = [],
     } = querystring.parse(qsToParse);
+
+    const normaliseStringArray = val => {
+        if (!val) return [];
+        return isArray(val) ? compact(val) : compact([val]);
+    };
 
     return Object.freeze({
         facilityFreeTextQuery,
@@ -526,6 +537,8 @@ export const createFiltersFromQueryString = qs => {
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
         sortAlgorithm: getAlgorithm(sortBy),
+        partnerFieldGroups: normaliseStringArray(rawPartnerFieldGroups),
+        partnerFields: normaliseStringArray(rawPartnerFields),
     });
 };
 

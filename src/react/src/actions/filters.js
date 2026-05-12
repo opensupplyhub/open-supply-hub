@@ -55,6 +55,10 @@ export const updateSortAlgorithm = createAction('UPDATE_SORT_ALGORITHM');
 export const resetAllFilters = createAction('RESET_ALL_FILTERS');
 export const updateAllFilters = createAction('UPDATE_ALL_FILTERS');
 export const resetDrawerFilters = createAction('RESET_DRAWER_FILTERS');
+export const setPartnerFieldGroupFilter = createAction(
+    'SET_PARTNER_FIELD_GROUP_FILTER',
+);
+export const setPartnerFieldFilter = createAction('SET_PARTNER_FIELD_FILTER');
 
 export function setFiltersFromQueryString(qs = '') {
     return (dispatch, getState) => {

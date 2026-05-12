@@ -24,6 +24,8 @@ import {
     updateAllFilters,
     updateDataSourceFilter,
     updateModerationStatusFilter,
+    setPartnerFieldGroupFilter,
+    setPartnerFieldFilter,
 } from '../actions/filters';
 
 import {
@@ -58,6 +60,8 @@ const initialState = Object.freeze({
     combineContributors: '',
     boundary: null,
     lists: Object.freeze([]),
+    partnerFieldGroups: Object.freeze([]),
+    partnerFields: Object.freeze([]),
 });
 
 export const maybeSetFromQueryString = field => (state, payload) => {
@@ -152,6 +156,14 @@ export default createReducer(
         [updateModerationStatusFilter]: (state, payload) =>
             update(state, {
                 moderationStatuses: { $set: payload },
+            }),
+        [setPartnerFieldGroupFilter]: (state, payload) =>
+            update(state, {
+                partnerFieldGroups: { $set: payload },
+            }),
+        [setPartnerFieldFilter]: (state, payload) =>
+            update(state, {
+                partnerFields: { $set: payload },
             }),
         [resetAllFilters]: (state, isEmbedded) =>
             update(initialState, {

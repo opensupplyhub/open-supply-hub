@@ -16,7 +16,7 @@ export const getEnrichedPartnerGroups = createSelector(
         return groups.map(group => ({
             ...group,
             partnerFields: partnerFields.filter(field =>
-                group.partner_fields.includes(field.fieldName),
+                group.partner_fields.some(pf => pf.name === field.fieldName),
             ),
         }));
     },
@@ -35,4 +35,20 @@ export const getVisiblePartnerGroups = createSelector(
                 return values.length > 0 && !!values[0];
             }),
         ),
+);
+
+/**
+ * Formats partner field groups data into a shape suitable for the
+ * SpotlightDataPartnersFilter component:
+ * [{ value: uuid, label: name, partnerFields: [{ value: name, label }] }]
+ */
+export const getPartnerGroupsForFilter = createSelector([getGroups], groups =>
+    groups.map(group => ({
+        value: group.uuid,
+        label: group.name,
+        partnerFields: (group.partner_fields || []).map(pf => ({
+            value: pf.name,
+            label: pf.label || pf.name,
+        })),
+    })),
 );

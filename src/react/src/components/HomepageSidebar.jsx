@@ -11,7 +11,7 @@ import {
     fetchContributorOptions,
     fetchListOptions,
     fetchCountryOptions,
-    fetchAllPrimaryFilterOptions,
+    fetchAllPrimaryFilterOptionsIfNeeded,
 } from '../actions/filterOptions';
 
 import {
@@ -135,7 +135,8 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
-        fetchFilterOptions: () => dispatch(fetchAllPrimaryFilterOptions()),
+        fetchFilterOptions: () =>
+            dispatch(fetchAllPrimaryFilterOptionsIfNeeded()),
         fetchContributors: () => dispatch(fetchContributorOptions()),
         fetchLists: () => dispatch(fetchListOptions()),
         fetchCountries: () => dispatch(fetchCountryOptions()),
