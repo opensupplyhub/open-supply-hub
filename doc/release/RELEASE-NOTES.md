@@ -3,6 +3,34 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.24.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 29, 2026
+
+### Database changes
+
+#### Migrations
+
+#### Schema changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+
+### What's new
+* [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+---
+
 ## Release 2.23.0
 
 ## Introduction
