@@ -2,7 +2,48 @@
 
 A guide for building tools that automatically pull live data from an external source, update a file in a GitHub repository, and redeploy — on a recurring schedule, with no manual intervention.
 
-> **Important — GitHub Pages:** This repository already uses GitHub Pages to host the OS Hub delivery roadmap (deployed via `.github/workflows/deploy-roadmap.yml`). GitHub Pages supports only **one published site per repository**. If you are building a new automated tool in this same repo, **do not add another GitHub Pages deployment workflow** — it will conflict with the existing one. For a new tool, either (a) store the output file in the repo and access it directly via the GitHub URL, (b) deploy to a separate repo that has its own Pages site, or (c) use a different hosting option (S3, Netlify, Vercel, etc.).
+> **Important — GitHub Pages:** This repository already uses GitHub Pages to host the OS Hub delivery roadmap (deployed via `.github/workflows/deploy-roadmap.yml`). GitHub Pages supports only **one published site per repository**. If you are building a new automated tool in this same repo, **do not add another GitHub Pages deployment workflow** — it will conflict with the existing one.
+
+---
+
+## Choosing How to Publish Your Tool
+
+Before building, answer one question: **does your tool need to be a rendered webpage (a dashboard), or does it just need to expose data?** The answer determines where it should live.
+
+### If you need a rendered dashboard (HTML that a browser displays)
+
+Use a **separate GitHub repository** with its own GitHub Pages site.
+
+- Every GitHub repository gets a free Pages site at `https://opensupplyhub.github.io/<repo-name>/`
+- There is no limit on the number of repos, so no limit on the number of Pages sites
+- Example: create `opensupplyhub/os-hub-dashboards` → its Pages URL is `opensupplyhub.github.io/os-hub-dashboards/`
+- Your sync workflow in *this* repo still runs the script and commits the updated file — the deploy step at the end just pushes the output to the separate repo instead of deploying from this one
+
+This keeps dashboards isolated, independently deployable, and avoids any conflict with the existing roadmap Pages site.
+
+### If you just need to share data (JSON, CSV, markdown)
+
+Use the **raw GitHub URL** — no separate repo or hosting needed.
+
+When the sync workflow commits an updated file to this repo, it is immediately accessible at:
+```
+https://raw.githubusercontent.com/opensupplyhub/open-supply-hub/<branch>/path/to/file.json
+```
+
+Anyone can fetch that URL and always get the latest version. This works well when:
+- The output feeds into another tool, script, or API that consumes structured data
+- You want to share a markdown report or CSV that someone opens directly
+- A downstream dashboard (built elsewhere) pulls from this URL as its data source
+
+**Raw URLs do not render HTML** — GitHub serves them as plain text. Only use this path for data files, not for webpages.
+
+### Decision guide
+
+| What you're building | Recommended approach |
+|---|---|
+| Dashboard / rendered webpage | New GitHub repo with its own Pages site |
+| Data file consumed by another tool | Raw GitHub URL in this repo |
+| Markdown report read in GitHub UI | Commit to this repo, link to the GitHub blob URL |
 
 ---
 
