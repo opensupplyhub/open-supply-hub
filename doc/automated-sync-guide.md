@@ -2,7 +2,15 @@
 
 A guide for building tools that automatically pull live data from an external source, update a file in a GitHub repository, and redeploy — on a recurring schedule, with no manual intervention.
 
-> **Important — GitHub Pages:** This repository already uses GitHub Pages to host the OS Hub delivery roadmap (deployed via `.github/workflows/deploy-roadmap.yml`). GitHub Pages supports only **one published site per repository**. If you are building a new automated tool in this same repo, **do not add another GitHub Pages deployment workflow** — it will conflict with the existing one.
+> ### Important: GitHub Pages
+>
+> GitHub Pages is a great way to host an automated tool as a live, publicly accessible webpage — and it's free. However, **GitHub Pages supports only one published site per repository**, which means only one tool can be hosted via GitHub Pages from any single repository.
+>
+> **This repository's GitHub Pages slot is already taken.** The OS Hub Product Delivery Roadmap is currently hosted here:
+> `https://opensupplyhub.github.io/open-supply-hub/`
+> It is deployed automatically via `.github/workflows/deploy-roadmap.yml` whenever a change is pushed to the `roadmap-delivery` branch.
+>
+> **Do not add a new GitHub Pages deployment workflow to this repository.** Adding one will conflict with the existing roadmap deployment and could break the live roadmap site. If you want to host a new tool using GitHub Pages, create a separate repository — each repository gets its own free Pages site. See the [Choosing How to Publish Your Tool](#choosing-how-to-publish-your-tool) section below for guidance.
 
 ---
 
