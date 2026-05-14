@@ -6,7 +6,7 @@ A guide for building tools that automatically pull live data from an external so
 >
 > GitHub Pages is a great way to host an automated tool as a live, publicly accessible webpage — and it's free. However, **GitHub Pages supports only one published site per repository**, which means only one tool can be hosted via GitHub Pages from any single repository.
 >
-> **This repository's GitHub Pages slot is already taken.** The OS Hub Product Delivery Roadmap is currently hosted here:
+> **The `opensupplyhub/open-supply-hub` repository's GitHub Pages slot is already taken.** The OS Hub Product Delivery Roadmap is currently hosted here:
 > `https://opensupplyhub.github.io/open-supply-hub/`
 > It is deployed automatically via `.github/workflows/deploy-roadmap.yml` whenever a change is pushed to the `roadmap-delivery` branch.
 >
