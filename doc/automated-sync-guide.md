@@ -2,6 +2,8 @@
 
 A guide for building tools that automatically pull live data from an external source, update a file in a GitHub repository, and redeploy — on a recurring schedule, with no manual intervention.
 
+> **Important — GitHub Pages:** This repository already uses GitHub Pages to host the OS Hub delivery roadmap (deployed via `.github/workflows/deploy-roadmap.yml`). GitHub Pages supports only **one published site per repository**. If you are building a new automated tool in this same repo, **do not add another GitHub Pages deployment workflow** — it will conflict with the existing one. For a new tool, either (a) store the output file in the repo and access it directly via the GitHub URL, (b) deploy to a separate repo that has its own Pages site, or (c) use a different hosting option (S3, Netlify, Vercel, etc.).
+
 ---
 
 ## What This Pattern Does
