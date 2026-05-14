@@ -6,6 +6,7 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
   fetchSingleModerationEvent,
   fetchPotentialMatches,
+  fetchExistingOsIdLocation,
   updateSingleModerationEvent,
   createProductionLocationFromModerationEvent,
   confirmPotentialMatchFromModerationEvent,
@@ -28,6 +29,7 @@ jest.mock('../../actions/dashboardContributionRecord', () => {
     createProductionLocationFromModerationEvent: jest.fn(),
     confirmPotentialMatchFromModerationEvent: jest.fn(),
     fetchPotentialMatches: jest.fn(),
+    fetchExistingOsIdLocation: jest.fn(),
   };
 });
 
@@ -94,6 +96,11 @@ describe('DashboardContributionRecord component', () => {
         fetching: false,
         error: null,
       },
+      existingOsIdLocation: {
+        data: null,
+        fetching: false,
+        error: null,
+      },
     },
   };
 
@@ -115,6 +122,10 @@ describe('DashboardContributionRecord component', () => {
               ...preloadedState.dashboardContributionRecord.potentialMatches,
               ...stateOverrides.dashboardContributionRecord?.potentialMatches,
             },
+            existingOsIdLocation: {
+              ...preloadedState.dashboardContributionRecord.existingOsIdLocation,
+              ...stateOverrides.dashboardContributionRecord?.existingOsIdLocation,
+            },
           },
         },
       }
@@ -129,6 +140,7 @@ describe('DashboardContributionRecord component', () => {
     fetchSingleModerationEvent.mockReturnValue(() => Promise.resolve());
     updateSingleModerationEvent.mockReturnValue(() => Promise.resolve());
     fetchPotentialMatches.mockReturnValue(() => Promise.resolve());
+    fetchExistingOsIdLocation.mockReturnValue(() => Promise.resolve());
     createProductionLocationFromModerationEvent.mockReturnValue(() =>
       Promise.resolve()
     );
@@ -317,5 +329,134 @@ describe('DashboardContributionRecord component', () => {
     fireEvent.click(closeButton);
 
     expect(queryByText('Close Dialog')).not.toBeInTheDocument();
+  });
+
+  test('calls fetchPotentialMatches without osId for an UPDATE request', async () => {
+    renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: {
+            ...data,
+            os_id: 'CN2021250D1DTU7',
+            request_type: 'UPDATE',
+          },
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(fetchPotentialMatches).toHaveBeenCalledWith(
+        expect.not.objectContaining({ osId: expect.anything() }),
+      );
+    });
+  });
+
+  test('calls fetchPotentialMatches without osId for a CREATE request', async () => {
+    renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: {
+            ...data,
+            os_id: null,
+            request_type: 'CREATE',
+          },
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(fetchPotentialMatches).toHaveBeenCalledWith(
+        expect.not.objectContaining({ osId: expect.anything() }),
+      );
+    });
+  });
+
+  test('does not render the Existing OSID section for a CREATE request', () => {
+    const { queryByText } = renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: { ...data, request_type: 'CREATE' },
+        },
+      },
+    });
+
+    expect(queryByText('Existing OSID')).not.toBeInTheDocument();
+  });
+
+  const existingOsIdState = {
+    dashboardContributionRecord: {
+      singleModerationEvent: {
+        data: { ...data, os_id: 'CN2021250D1DTU7', request_type: 'UPDATE' },
+      },
+      existingOsIdLocation: {
+        fetching: false,
+        error: null,
+        data: {
+          os_id: 'CN2021250D1DTU7',
+          name: 'Existing Facility Name',
+          address: '123 Existing St',
+          claim_status: 'unclaimed',
+        },
+      },
+    },
+  };
+
+  test('renders the Existing OSID section with location data for an UPDATE request', () => {
+    const { getByText } = renderComponent(existingOsIdState);
+
+    expect(getByText('Existing OSID')).toBeInTheDocument();
+    expect(getByText('CN2021250D1DTU7')).toBeInTheDocument();
+    expect(getByText('Name: Existing Facility Name')).toBeInTheDocument();
+    expect(getByText('Address: 123 Existing St')).toBeInTheDocument();
+    expect(getByText('Claimed Status: unclaimed')).toBeInTheDocument();
+  });
+
+  test('renders a Confirm button in the Existing OSID section for a pending UPDATE event', () => {
+    const { getAllByRole } = renderComponent(existingOsIdState);
+
+    const confirmButtons = getAllByRole('button', { name: /Confirm/i });
+    expect(confirmButtons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('calls confirmPotentialMatch with the existing OS ID when Confirm is clicked in Existing OSID section', async () => {
+    const { getAllByRole } = renderComponent(existingOsIdState);
+
+    const confirmButtons = getAllByRole('button', { name: /Confirm/i });
+    fireEvent.click(confirmButtons[0]);
+
+    await waitFor(() => {
+      expect(confirmPotentialMatchFromModerationEvent).toHaveBeenCalledWith(
+        expect.anything(),
+        'CN2021250D1DTU7',
+      );
+    });
+  });
+
+  test('calls fetchExistingOsIdLocation when request_type is UPDATE and os_id is present', async () => {
+    renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: { ...data, os_id: 'CN2021250D1DTU7', request_type: 'UPDATE' },
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(fetchExistingOsIdLocation).toHaveBeenCalledWith('CN2021250D1DTU7');
+    });
+  });
+
+  test('does not call fetchExistingOsIdLocation for a CREATE request', async () => {
+    renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: { ...data, os_id: null, request_type: 'CREATE' },
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(fetchExistingOsIdLocation).not.toHaveBeenCalled();
+    });
   });
 });

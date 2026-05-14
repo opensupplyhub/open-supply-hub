@@ -28,6 +28,7 @@ import {
 import {
     fetchSingleModerationEvent,
     fetchPotentialMatches,
+    fetchExistingOsIdLocation,
     updateSingleModerationEvent,
     createProductionLocationFromModerationEvent,
     confirmPotentialMatchFromModerationEvent,
@@ -42,6 +43,7 @@ import DialogTooltip from './../Contribute/DialogTooltip';
 import {
     MODERATION_STATUSES_ENUM,
     MODERATION_ACTIONS_ENUM,
+    REQUEST_TYPE_ENUM,
     ENABLE_V1_CLAIMS_FLOW,
 } from '../../util/constants';
 
@@ -76,11 +78,100 @@ const confirmPotentialMatchButtonDisabled = (classes, osId, matchOsId) => (
     </span>
 );
 
+const renderExistingOsIdContent = (
+    classes,
+    existingOsIdLocationFetching,
+    existingOsIdLocationData,
+    isDisabled,
+    moderationEventFetching,
+    moderationEventStatus,
+    confirmPotentialMatch,
+) => {
+    if (existingOsIdLocationFetching) {
+        return <CircularProgress size={25} className={classes.loaderStyles} />;
+    }
+    if (existingOsIdLocationData) {
+        return (
+            <List>
+                <ListItem
+                    className={`${classes.listItemStyle} ${classes.listItemStyle_confirmed}`}
+                >
+                    <div>
+                        <ListItemText
+                            className={classes.listItemTextStyle}
+                            primary={
+                                <Typography>
+                                    OS ID:{' '}
+                                    <Link
+                                        to={makeFacilityDetailLink(
+                                            existingOsIdLocationData.os_id,
+                                        )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {existingOsIdLocationData.os_id}
+                                    </Link>
+                                </Typography>
+                            }
+                        />
+                        <ListItemText
+                            className={classes.listItemTextStyle}
+                            primary={`Name: ${existingOsIdLocationData.name}`}
+                        />
+                        <ListItemText
+                            className={classes.listItemTextStyle}
+                            primary={`Address: ${existingOsIdLocationData.address}`}
+                        />
+                        <ListItemText
+                            className={classes.listItemTextStyle}
+                            primary={`Claimed Status: ${existingOsIdLocationData.claim_status}`}
+                        />
+                    </div>
+                    {!isDisabled ? (
+                        <Button
+                            color="secondary"
+                            variant="contained"
+                            className={classes.confirmButtonStyles}
+                            disabled={moderationEventFetching}
+                            onClick={() => {
+                                confirmPotentialMatch(
+                                    existingOsIdLocationData.os_id,
+                                );
+                            }}
+                        >
+                            {confirmPotentialMatchButtonTitle}
+                        </Button>
+                    ) : (
+                        <DialogTooltip
+                            text="Moderation event data has been already matched to this production location."
+                            aria-label="Confirm existing OS ID button tooltip"
+                            childComponent={confirmPotentialMatchButtonDisabled(
+                                classes,
+                                existingOsIdLocationData.os_id,
+                                existingOsIdLocationData.os_id,
+                            )}
+                        />
+                    )}
+                </ListItem>
+            </List>
+        );
+    }
+    return (
+        <div className={classes.emptyBlockStyles}>
+            <Typography className={classes.emptyTextStyle} variant="title">
+                Existing location not found
+            </Typography>
+        </div>
+    );
+};
+
 let hasPrefetchedData = false;
 const DashboardContributionRecord = ({
     push,
     singleModerationEventItem,
     matches,
+    existingOsIdLocationData,
+    existingOsIdLocationFetching,
     fetchModerationEventError,
     updateModerationEvent,
     createProductionLocation,
@@ -88,6 +179,7 @@ const DashboardContributionRecord = ({
     classes,
     fetchModerationEvent,
     fetchMatches,
+    fetchExistingLocation,
     moderationEventFetching,
     fetchPotentialMatchError,
     handleCleanupContributionRecord,
@@ -104,6 +196,7 @@ const DashboardContributionRecord = ({
         countryCode,
         productionLocationAddress,
         osId,
+        requestType,
     } = useMemo(() => {
         if (isEmpty(singleModerationEventItem)) {
             return {};
@@ -116,6 +209,7 @@ const DashboardContributionRecord = ({
                 address: locationAddress = '',
             } = {},
             os_id: locationOsId = null,
+            request_type: locRequestType = null,
         } = singleModerationEventItem || {};
 
         return {
@@ -123,6 +217,7 @@ const DashboardContributionRecord = ({
             countryCode: code,
             productionLocationAddress: locationAddress,
             osId: locationOsId,
+            requestType: locRequestType,
         };
     }, [singleModerationEventItem]);
 
@@ -179,6 +274,12 @@ const DashboardContributionRecord = ({
             });
         }
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
+
+    useEffect(() => {
+        if (requestType === REQUEST_TYPE_ENUM.UPDATE && osId) {
+            fetchExistingLocation(osId);
+        }
+    }, [requestType, osId]);
 
     useEffect(
         () => () => {
@@ -273,6 +374,29 @@ const DashboardContributionRecord = ({
                     )}
                 </div>
             </Paper>
+
+            {requestType === REQUEST_TYPE_ENUM.UPDATE && (
+                <>
+                    <Typography variant="title" className={classes.title}>
+                        Existing OSID
+                    </Typography>
+                    <div className={classes.potentialMatchesBlock}>
+                        <Divider className={classes.dividerStyle} />
+                        <div className={classes.potentialMatchesInternalBlock}>
+                            {renderExistingOsIdContent(
+                                classes,
+                                existingOsIdLocationFetching,
+                                existingOsIdLocationData,
+                                isDisabled,
+                                moderationEventFetching,
+                                moderationEventStatus,
+                                confirmPotentialMatch,
+                            )}
+                        </div>
+                        <Divider className={classes.dividerStyle} />
+                    </div>
+                </>
+            )}
 
             <Typography variant="title" className={classes.title}>
                 Potential Matches ({potentialMatchCount})
@@ -459,18 +583,22 @@ const DashboardContributionRecord = ({
 DashboardContributionRecord.defaultProps = {
     fetchModerationEventError: null,
     fetchPotentialMatchError: null,
+    existingOsIdLocationData: null,
 };
 
 DashboardContributionRecord.propTypes = {
     push: func.isRequired,
     singleModerationEventItem: moderationEventsListItemPropType.isRequired,
     matches: potentialMatchesPropType.isRequired,
+    existingOsIdLocationData: object,
+    existingOsIdLocationFetching: bool.isRequired,
     moderationEventFetching: bool.isRequired,
     fetchModerationEvent: func.isRequired,
     updateModerationEvent: func.isRequired,
     createProductionLocation: func.isRequired,
     confirmPotentialMatch: func.isRequired,
     fetchMatches: func.isRequired,
+    fetchExistingLocation: func.isRequired,
     classes: object.isRequired,
     fetchModerationEventError: string,
     fetchPotentialMatchError: string,
@@ -490,6 +618,10 @@ const mapStateToProps = ({
             fetching: potentialMatchFetching,
             error: fetchPotentialMatchError,
         },
+        existingOsIdLocation: {
+            data: existingOsIdLocationData,
+            fetching: existingOsIdLocationFetching,
+        },
     },
     featureFlags: { flags },
 }) => {
@@ -504,6 +636,8 @@ const mapStateToProps = ({
         potentialMatchFetching,
         fetchModerationEventError,
         fetchPotentialMatchError,
+        existingOsIdLocationData,
+        existingOsIdLocationFetching,
         isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
             ENABLE_V1_CLAIMS_FLOW,
         ),
@@ -536,6 +670,7 @@ const mapDispatchToProps = (
     confirmPotentialMatch: osId =>
         dispatch(confirmPotentialMatchFromModerationEvent(moderationID, osId)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
+    fetchExistingLocation: osId => dispatch(fetchExistingOsIdLocation(osId)),
     handleCleanupContributionRecord: () =>
         dispatch(cleanupContributionRecord()),
 });

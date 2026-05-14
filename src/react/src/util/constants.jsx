@@ -1462,6 +1462,11 @@ export const MODERATION_ACTIONS_ENUM = Object.freeze({
     REJECTED: 'REJECTED',
 });
 
+export const REQUEST_TYPE_ENUM = Object.freeze({
+    CREATE: 'CREATE',
+    UPDATE: 'UPDATE',
+});
+
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
     { id: 'created_at', label: 'Created Date' },
     { id: 'name', label: 'Location Name' },
