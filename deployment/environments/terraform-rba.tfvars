@@ -14,7 +14,7 @@ api_facilities_cache_max_ttl               = 120
 api_production_locations_cache_default_ttl = 120
 api_production_locations_cache_max_ttl     = 120
 
-bastion_ami           = "ami-0bb3fad3c0286ebd5"
+bastion_ami           = "ami-03a25ed280b358f5b"
 bastion_instance_type = "t3.nano"
 
 rds_allocated_storage      = "256"
@@ -78,7 +78,7 @@ db_sync_chunk_size = 50000
 
 instance_source = "rba"
 
-vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+vpn_ec2_ami = "ami-0e23dbf341970f09c"
 
 db_sync_enabled                   = true
 db_sync_schedule_expression       = "cron(0 7 * * ? *)" # (7:00 AM UTC)
