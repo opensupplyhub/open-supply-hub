@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
+* [OSDEV-2704](https://opensupplyhub.atlassian.net/browse/OSDEV-2704) - Fixed `check_api_limits` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` since the Django 3.2→5.2 upgrade. Replaced the removed `django.utils.timezone.utc` with the stdlib `datetime.timezone.utc`. Added a regression test that invokes the command via `call_command()` to cover the entry point.
 
 ### Code/API changes
 * Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
