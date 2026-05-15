@@ -3,6 +3,19 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.23.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 15, 2026
+
+### Bugfix
+* [OSDEV-2717](https://opensupplyhub.atlassian.net/browse/OSDEV-2717) - Fixed HTTP 500 (`pylibmc.TooBig`) on `GET /api/facilities/` by removing the `cache_page` decorator from `FacilitiesViewSet.list`. When `detail=true` is passed, the response includes four additional fields per facility (`contributors`, `extended_fields`, `contributor_fields`, `sector`), causing the serialized page to exceed Memcached's 1 MB item size limit. Removing caching from this endpoint resolves the crash for all requests to the facilities list.
+
+### Release instructions
+* Ensure that no commands are included in the `post_deployment` command.
+
+
 ## Release 2.23.0
 
 ## Introduction

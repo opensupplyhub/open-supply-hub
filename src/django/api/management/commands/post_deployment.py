@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from django.core.management import call_command
 
 
 class Command(BaseCommand):
@@ -8,6 +7,4 @@ class Command(BaseCommand):
             'post-deployment tasks.')
 
     def handle(self, *args, **options):
-        call_command('migrate')
-        call_command('reindex_database')
-        call_command('backfill_moderation_event_os_id')
+        pass
