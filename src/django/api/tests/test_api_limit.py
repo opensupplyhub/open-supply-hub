@@ -19,6 +19,7 @@ from api.limitation.date.date_limitation_utils import (
 from dateutil.relativedelta import relativedelta
 from datetime import datetime, time
 
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 
@@ -434,6 +435,9 @@ class ApiLimitTest(TestCase):
                 contributor=self.contrib_three_free
             ).first().active, False
         )
+
+    def test_check_api_limits_command_runs(self):
+        call_command('check_api_limits')
 
     def test_prepare_start_date(self):
         date_one = datetime(day=30, month=10, year=2024)
