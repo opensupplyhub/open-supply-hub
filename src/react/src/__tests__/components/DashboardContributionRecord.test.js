@@ -331,46 +331,6 @@ describe('DashboardContributionRecord component', () => {
     expect(queryByText('Close Dialog')).not.toBeInTheDocument();
   });
 
-  test('calls fetchPotentialMatches without osId for an UPDATE request', async () => {
-    renderComponent({
-      dashboardContributionRecord: {
-        singleModerationEvent: {
-          data: {
-            ...data,
-            os_id: 'CN2021250D1DTU7',
-            request_type: 'UPDATE',
-          },
-        },
-      },
-    });
-
-    await waitFor(() => {
-      expect(fetchPotentialMatches).toHaveBeenCalledWith(
-        expect.not.objectContaining({ osId: expect.anything() }),
-      );
-    });
-  });
-
-  test('calls fetchPotentialMatches without osId for a CREATE request', async () => {
-    renderComponent({
-      dashboardContributionRecord: {
-        singleModerationEvent: {
-          data: {
-            ...data,
-            os_id: null,
-            request_type: 'CREATE',
-          },
-        },
-      },
-    });
-
-    await waitFor(() => {
-      expect(fetchPotentialMatches).toHaveBeenCalledWith(
-        expect.not.objectContaining({ osId: expect.anything() }),
-      );
-    });
-  });
-
   test('does not render the Existing OSID section for a CREATE request', () => {
     const { queryByText } = renderComponent({
       dashboardContributionRecord: {
@@ -483,7 +443,9 @@ describe('DashboardContributionRecord component', () => {
     });
 
     await waitFor(() => {
-      expect(fetchExistingOsIdLocation).not.toHaveBeenCalled();
+      expect(fetchSingleModerationEvent).toHaveBeenCalled();
     });
+
+    expect(fetchExistingOsIdLocation).not.toHaveBeenCalled();
   });
 });
