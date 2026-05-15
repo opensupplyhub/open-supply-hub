@@ -65,18 +65,59 @@ const claimButtonDisabled = classes => (
     </span>
 );
 
-const confirmPotentialMatchButtonDisabled = (classes, osId, matchOsId) => (
-    <span className={`${classes.claimTooltipWrapper}`}>
-        <Button
-            color="secondary"
-            variant="contained"
-            className={classes.confirmButtonStyles}
-            disabled
-        >
-            {osId === matchOsId ? 'Matched' : confirmPotentialMatchButtonTitle}
-        </Button>
-    </span>
-);
+const renderConfirmButton = (
+    classes,
+    matchOsId,
+    eventOsId,
+    moderationEventStatus,
+    moderationEventFetching,
+    isDisabled,
+    confirmPotentialMatch,
+    ariaLabel,
+) => {
+    if (!isDisabled) {
+        return (
+            <Button
+                color="secondary"
+                variant="contained"
+                className={classes.confirmButtonStyles}
+                disabled={moderationEventFetching}
+                onClick={() => confirmPotentialMatch(matchOsId)}
+            >
+                {confirmPotentialMatchButtonTitle}
+            </Button>
+        );
+    }
+
+    const isMatched =
+        eventOsId === matchOsId &&
+        moderationEventStatus === MODERATION_STATUSES_ENUM.APPROVED;
+
+    return (
+        <DialogTooltip
+            text={
+                isMatched
+                    ? 'Moderation event data has been already matched to this production location.'
+                    : `You can't confirm the match when moderation event is ${moderationEventStatus.toLowerCase()}.`
+            }
+            aria-label={ariaLabel}
+            childComponent={
+                <span className={`${classes.claimTooltipWrapper}`}>
+                    <Button
+                        color="secondary"
+                        variant="contained"
+                        className={classes.confirmButtonStyles}
+                        disabled
+                    >
+                        {isMatched
+                            ? matchedTitle
+                            : confirmPotentialMatchButtonTitle}
+                    </Button>
+                </span>
+            }
+        />
+    );
+};
 
 const renderExistingOsIdContent = (
     classes,
@@ -84,6 +125,7 @@ const renderExistingOsIdContent = (
     existingOsIdLocationData,
     isDisabled,
     moderationEventFetching,
+    moderationEventStatus,
     confirmPotentialMatch,
 ) => {
     if (existingOsIdLocationFetching) {
@@ -126,30 +168,15 @@ const renderExistingOsIdContent = (
                             primary={`Claimed Status: ${existingOsIdLocationData.claim_status}`}
                         />
                     </div>
-                    {!isDisabled ? (
-                        <Button
-                            color="secondary"
-                            variant="contained"
-                            className={classes.confirmButtonStyles}
-                            disabled={moderationEventFetching}
-                            onClick={() => {
-                                confirmPotentialMatch(
-                                    existingOsIdLocationData.os_id,
-                                );
-                            }}
-                        >
-                            {confirmPotentialMatchButtonTitle}
-                        </Button>
-                    ) : (
-                        <DialogTooltip
-                            text="Moderation event data has been already matched to this production location."
-                            aria-label="Confirm existing OS ID button tooltip"
-                            childComponent={confirmPotentialMatchButtonDisabled(
-                                classes,
-                                existingOsIdLocationData.os_id,
-                                existingOsIdLocationData.os_id,
-                            )}
-                        />
+                    {renderConfirmButton(
+                        classes,
+                        existingOsIdLocationData.os_id,
+                        existingOsIdLocationData.os_id,
+                        moderationEventStatus,
+                        moderationEventFetching,
+                        isDisabled,
+                        confirmPotentialMatch,
+                        'Confirm existing OS ID button tooltip',
                     )}
                 </ListItem>
             </List>
@@ -388,6 +415,7 @@ const DashboardContributionRecord = ({
                                 existingOsIdLocationData,
                                 isDisabled,
                                 moderationEventFetching,
+                                moderationEventStatus,
                                 confirmPotentialMatch,
                             )}
                         </div>
@@ -472,40 +500,15 @@ const DashboardContributionRecord = ({
                                                     primary={`Claimed Status: ${claimStatus}`}
                                                 />
                                             </div>
-                                            {!isDisabled ? (
-                                                <Button
-                                                    color="secondary"
-                                                    variant="contained"
-                                                    className={
-                                                        classes.confirmButtonStyles
-                                                    }
-                                                    disabled={
-                                                        moderationEventFetching
-                                                    }
-                                                    onClick={() => {
-                                                        confirmPotentialMatch(
-                                                            matchOsId,
-                                                        );
-                                                    }}
-                                                >
-                                                    {
-                                                        confirmPotentialMatchButtonTitle
-                                                    }
-                                                </Button>
-                                            ) : (
-                                                <DialogTooltip
-                                                    text={
-                                                        osId === matchOsId
-                                                            ? `Moderation event data has been already matched to this production location.`
-                                                            : `You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`
-                                                    }
-                                                    aria-label="Confirm potential match button tooltip"
-                                                    childComponent={confirmPotentialMatchButtonDisabled(
-                                                        classes,
-                                                        osId,
-                                                        matchOsId,
-                                                    )}
-                                                />
+                                            {renderConfirmButton(
+                                                classes,
+                                                matchOsId,
+                                                osId,
+                                                moderationEventStatus,
+                                                moderationEventFetching,
+                                                isDisabled,
+                                                confirmPotentialMatch,
+                                                'Confirm potential match button tooltip',
                                             )}
                                         </ListItem>
 

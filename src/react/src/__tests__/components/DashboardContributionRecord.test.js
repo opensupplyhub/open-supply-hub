@@ -432,6 +432,33 @@ describe('DashboardContributionRecord component', () => {
     });
   });
 
+  test('shows "Confirm" (not "Matched") in Existing OSID section when event is REJECTED', () => {
+    const { queryByText } = renderComponent({
+      dashboardContributionRecord: {
+        singleModerationEvent: {
+          data: {
+            ...data,
+            os_id: 'CN2021250D1DTU7',
+            request_type: 'UPDATE',
+            status: 'REJECTED',
+          },
+        },
+        existingOsIdLocation: {
+          fetching: false,
+          error: null,
+          data: {
+            os_id: 'CN2021250D1DTU7',
+            name: 'Existing Facility Name',
+            address: '123 Existing St',
+            claim_status: 'unclaimed',
+          },
+        },
+      },
+    });
+
+    expect(queryByText('Matched')).not.toBeInTheDocument();
+  });
+
   test('calls fetchExistingOsIdLocation when request_type is UPDATE and os_id is present', async () => {
     renderComponent({
       dashboardContributionRecord: {
