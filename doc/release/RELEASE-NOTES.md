@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 
 ### Bugfix
+* [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
 
 ### What's new
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
