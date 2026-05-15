@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.24.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Architecture/Environment changes
+* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). Updated `vpn_ec2_ami` for RBA to AL2023 ARM64 (`ami-0e23dbf341970f09c`, compatible with `t4g.nano`).
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.23.0
 
 ## Introduction
@@ -34,7 +49,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.
-* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) Upgraded the Staging and Production environments AWS AMI for Batch compute environments to `ami-03a25ed280b358f5b` to align with the latest ECS-optimized Amazon Linux 2 image.
 
 
 ### Release instructions
