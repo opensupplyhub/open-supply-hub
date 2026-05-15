@@ -84,7 +84,6 @@ const renderExistingOsIdContent = (
     existingOsIdLocationData,
     isDisabled,
     moderationEventFetching,
-    moderationEventStatus,
     confirmPotentialMatch,
 ) => {
     if (existingOsIdLocationFetching) {
@@ -389,7 +388,6 @@ const DashboardContributionRecord = ({
                                 existingOsIdLocationData,
                                 isDisabled,
                                 moderationEventFetching,
-                                moderationEventStatus,
                                 confirmPotentialMatch,
                             )}
                         </div>
