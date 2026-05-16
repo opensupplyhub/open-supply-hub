@@ -1378,7 +1378,7 @@ export const optionsForSortingResults = [
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
-export const uploadedFileRowIndexOffset = 2;
+export const uploadedFileRowIndexOffset = 1;
 
 export const USER_DEFAULT_STATE = Object.freeze({
     isAnon: true,
