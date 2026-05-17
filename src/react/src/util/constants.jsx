@@ -382,7 +382,7 @@ export const productionLocationInfoRouteCreate =
     '/contribute/single-location/info/:moderationID?';
 export const productionLocationInfoRouteUpdate =
     '/contribute/single-location/:osID/info/:moderationID?';
-export const pilotIntegrationsDocsRoute = `${InfoLink}/data-integrations`;
+export const pilotIntegrationsDocsRoute = `${InfoLink}/spotlight`;
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',

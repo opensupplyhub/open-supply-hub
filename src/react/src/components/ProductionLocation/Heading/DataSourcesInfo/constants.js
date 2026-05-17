@@ -35,6 +35,6 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
         title: 'Spotlight Partners',
         subsectionText:
             'Additional information about facility operations or context shared by third-party platforms',
-        learnMoreUrl: 'https://info.opensupplyhub.org/data-integrations',
+        learnMoreUrl: 'https://info.opensupplyhub.org/spotlight',
     }),
 ]);
