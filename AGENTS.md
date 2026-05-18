@@ -43,3 +43,11 @@ docker compose exec django python manage.py test
 
 - To write the description for each PR, use the [pr-description](.agent/skills/pr-description/SKILL.md) skill.
 - To update the release notes, use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
+
+## Sub-agents
+
+Specialized sub-agents live under `.agent/agents/<name>/AGENT.md`. The orchestrator delegates to them for focused tasks.
+
+Available sub-agents:
+
+- [oshub-codebase-expert](.agent/agents/oshub-codebase-expert/AGENT.md) — investigates architecture, finds files, maps cross-layer impact, and flags risks. Delegate here when researching a Jira ticket or planning a change.
