@@ -9,17 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 29, 2026
 
-### Database changes
-
-#### Migrations
-
-#### Schema changes
-
-### Code/API changes
-
-### Architecture/Environment changes
-
 ### Bugfix
+
+* Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 
 ### What's new
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
