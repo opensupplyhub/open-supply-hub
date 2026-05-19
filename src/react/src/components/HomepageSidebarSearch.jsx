@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { array, arrayOf, bool, func, string } from 'prop-types';
+import { array, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
