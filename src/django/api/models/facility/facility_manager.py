@@ -10,6 +10,7 @@ from api.helpers.helpers import (
     clean,
     format_custom_text,)
 from api.os_id import string_matches_os_id_format
+from .facility_manager_index_new import _apply_partner_fields_or_filter
 
 
 class FacilityManager(models.Manager):
@@ -201,6 +202,26 @@ class FacilityManager(models.Manager):
             facilities_qs = facilities_qs.filter(
                 sector__overlap=sectors
             )
+
+        partner_contributors = params.getlist(
+            FacilitiesQueryParams.PARTNER_CONTRIBUTOR
+        )
+
+        if partner_contributors:
+            from api.models.partner_field import PartnerField
+
+            field_names = list(
+                PartnerField.objects.filter(
+                    contributor__id__in=partner_contributors,
+                    active=True,
+                    group__isnull=False,
+                ).values_list('name', flat=True).distinct()
+            )
+
+            if field_names:
+                facilities_qs = _apply_partner_fields_or_filter(
+                    facilities_qs, field_names
+                )
 
         facility_ids = facilities_qs.values_list('id', flat=True)
 

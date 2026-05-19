@@ -3,6 +3,7 @@ import { createAction } from 'redux-act';
 
 import {
     createFiltersFromQueryString,
+    mapPartnerGroupContributorsToSelectOptions,
     updateListWithLabels,
 } from '../util/util';
 import { optionsForSortingResults } from '../util/constants';
@@ -79,6 +80,7 @@ export function setFiltersFromQueryString(qs = '') {
                 parentCompanies: { data: parentCompanies },
                 lists: { data: lists },
             },
+            partnerGroupContributors: { data: partnerGroupContributors },
             embeddedMap: { embed },
         } = getState();
 
@@ -108,6 +110,19 @@ export function setFiltersFromQueryString(qs = '') {
             ? update(payload, {
                   lists: {
                       $set: updateListWithLabels(filters.lists, lists),
+                  },
+              })
+            : payload;
+
+        payload = partnerGroupContributors?.results
+            ? update(payload, {
+                  partnerContributors: {
+                      $set: updateListWithLabels(
+                          filters.partnerContributors,
+                          mapPartnerGroupContributorsToSelectOptions(
+                              partnerGroupContributors.results,
+                          ),
+                      ),
                   },
               })
             : payload;

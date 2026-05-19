@@ -211,7 +211,9 @@ function FilterSidebarSearchTab({
                     <ContributorFilter />
                     <CountryNameFilter />
                     <SectorFilter />
-                    <DataPartnersFilter />
+                    <ShowOnly when={!embed}>
+                        <DataPartnersFilter />
+                    </ShowOnly>
                     <FilterSidebarExtendedSearch />
                 </div>
             </div>

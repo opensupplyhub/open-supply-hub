@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 
@@ -23,6 +23,12 @@ function DataPartnersFilter({
     onContributorChange,
     loadGroupsIfNeeded,
 }) {
+    useEffect(() => {
+        if (selectedContributors?.length) {
+            loadGroupsIfNeeded();
+        }
+    }, [selectedContributors, loadGroupsIfNeeded]);
+
     return (
         <div className="form__field">
             <NestedSelect

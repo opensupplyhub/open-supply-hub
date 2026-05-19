@@ -35,10 +35,14 @@ import {
     completeFetchParentCompanyOptions,
     completeFetchGroupedSectorOptions,
 } from '../actions/filterOptions';
+import { completeFetchPartnerGroupContributors } from '../actions/partnerGroupContributors';
 
 import { completeSubmitLogOut } from '../actions/auth';
 
-import { updateListWithLabels } from '../util/util';
+import {
+    mapPartnerGroupContributorsToSelectOptions,
+    updateListWithLabels,
+} from '../util/util';
 
 const initialState = Object.freeze({
     facilityFreeTextQuery: '',
@@ -190,6 +194,17 @@ export default createReducer(
         [completeFetchParentCompanyOptions]: maybeSetFromQueryString(
             'parentCompany',
         ),
+        [completeFetchPartnerGroupContributors]: (state, payload) =>
+            update(state, {
+                partnerContributors: {
+                    $set: updateListWithLabels(
+                        state.partnerContributors,
+                        mapPartnerGroupContributorsToSelectOptions(
+                            payload?.results || [],
+                        ),
+                    ),
+                },
+            }),
         [completeSubmitLogOut]: () => initialState,
     },
     initialState,

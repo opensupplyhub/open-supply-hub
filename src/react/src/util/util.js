@@ -485,6 +485,16 @@ export const createSelectOptionsFromParams = params => {
     );
 };
 
+export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
+    groups.map(group => ({
+        label: group.label,
+        options: (group.contributors || []).map(contributor => ({
+            value: String(contributor.id),
+            label: contributor.name,
+            groupLabel: group.label,
+        })),
+    }));
+
 export const getAlgorithm = sortBy =>
     optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
     optionsForSortingResults[0];
@@ -1153,8 +1163,8 @@ export const updateListWithLabels = (list, payload) =>
 
         return accumulator.concat(
             Object.freeze({
+                ...validOption,
                 value,
-                label: validOption.label,
             }),
         );
     }, []);

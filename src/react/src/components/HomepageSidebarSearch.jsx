@@ -301,7 +301,9 @@ function FilterSidebarSearchTab({
                 subtitle="Browse facilities using the criteria below."
             >
                 <SectorFilter isSideBarSearch={isSideBarSearch} />
-                <DataPartnersFilter />
+                <ShowOnly when={!embed}>
+                    <DataPartnersFilter />
+                </ShowOnly>
                 <FeatureFlag flag={EXTENDED_PROFILE_FLAG}>
                     <FilterSidebarExtendedSearch
                         isSideBarSearch={isSideBarSearch}
