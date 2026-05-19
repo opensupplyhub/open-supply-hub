@@ -305,6 +305,7 @@ class FacilityIndexNewManager(models.Manager):
                 PartnerField.objects.filter(
                     contributor__id__in=partner_contributors,
                     active=True,
+                    group__isnull=False,
                 ).values_list('name', flat=True).distinct()
             )
 
