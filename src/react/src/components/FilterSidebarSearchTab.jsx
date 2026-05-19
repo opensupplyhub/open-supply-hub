@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, func, string } from 'prop-types';
+import { array, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import Button from '@material-ui/core/Button';
@@ -130,6 +130,7 @@ function FilterSidebarSearchTab({
     embed,
     classes,
     embedExtendedFields,
+    partnerContributors,
 }) {
     const filterListHeight = useFilterListHeight();
 
@@ -147,6 +148,7 @@ function FilterSidebarSearchTab({
         contributors,
         countries,
         sectors,
+        partnerContributors,
     ]);
 
     if (fetchingOptions) {
@@ -281,6 +283,7 @@ FilterSidebarSearchTab.propTypes = {
     searchForFacilities: func.isRequired,
     fetchingOptions: bool.isRequired,
     vectorTileFlagIsActive: bool.isRequired,
+    partnerContributors: array.isRequired,
 };
 
 function mapStateToProps({
@@ -301,6 +304,7 @@ function mapStateToProps({
         numberOfWorkers,
         nativeLanguageName,
         boundary,
+        partnerContributors,
     },
     facilities: {
         facilities: { fetching: fetchingFacilities },
@@ -332,6 +336,7 @@ function mapStateToProps({
         fetchingOptions: fetchingContributors || fetchingCountries,
         embed: !!embed,
         embedExtendedFields: config.extended_fields,
+        partnerContributors,
     };
 }
 

@@ -303,6 +303,8 @@ JS_MAX_SAFE_INTEGER = 9007199254740991
 
 PARTNER_FIELD_LIST_KEY = 'partner_field_list'
 
+MIT_LIVING_WAGE_COUNTRY_CODES = ('US', 'PR', 'VI')
+
 # Shared TTL (seconds) for the `PARTNER_FIELD_LIST_KEY` cache entry.
 # Consumers reading/writing this cache key should use this constant so the
 # entry behaves consistently no matter which caller warmed it.
