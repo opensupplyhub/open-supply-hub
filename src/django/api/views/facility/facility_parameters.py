@@ -222,6 +222,18 @@ facilities_list_parameters = [
             'May be combined with partner_field_group.'
         ),
     ),
+    Parameter(
+        'partner_contributor',
+        IN_QUERY,
+        type=TYPE_INTEGER,
+        required=False,
+        description=(
+            'ID of a contributor. Facilities returned will have data '
+            'contributed via at least one of that contributor\'s active '
+            'partner fields. May be repeated; multiple values are combined '
+            'with OR semantics (any matching contributor is sufficient).'
+        ),
+    ),
 ]
 
 facilities_create_parameters = [

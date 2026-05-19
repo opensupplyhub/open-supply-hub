@@ -15,7 +15,7 @@ import ContributorFilter from './Filters/ContributorFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
 import SectorFilter from './Filters/SectorFilter';
 import FilterSidebarExtendedSearch from './FilterSidebarExtendedSearch';
-import SpotlightDataPartnersFilter from './Filters/SpotlightDataPartnersFilter';
+import DataPartnersFilter from './Filters/DataPartnersFilter';
 
 import {
     updateContributorTypeFilter,
@@ -211,7 +211,7 @@ function FilterSidebarSearchTab({
                     <ContributorFilter />
                     <CountryNameFilter />
                     <SectorFilter />
-                    <SpotlightDataPartnersFilter />
+                    <DataPartnersFilter />
                     <FilterSidebarExtendedSearch />
                 </div>
             </div>

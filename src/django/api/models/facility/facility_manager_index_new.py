@@ -33,6 +33,47 @@ def _spotlight_q(name):
     return Q(extended_fields__contains=[{"field_name": name}])
 
 
+def _apply_partner_fields_or_filter(qs, field_names):
+    """
+    Return a queryset filtered to facilities that have data from at least
+    one of the given partner field names (OR semantics).
+
+    extended_fields is ArrayField(JSONField), so partial JSON matching via
+    __contains does not work — array containment requires exact element
+    equality. Regular fields are handled with a correlated unnest() subquery.
+    System fields use country-code lookups via standard Q objects.
+    All conditions are combined with OR in a single extra(where=...) clause.
+    """
+    where_parts = []
+    params = []
+
+    regular = [n for n in field_names if n not in SYSTEM_PARTNER_FIELD_NAMES]
+    if regular:
+        where_parts.append(
+            "EXISTS ("
+            "  SELECT 1 FROM unnest(extended_fields) AS ef"
+            "  WHERE ef->>'field_name' = ANY(%s)"
+            ")"
+        )
+        params.append(regular)
+
+    if 'wage_indicator' in field_names:
+        where_parts.append(
+            "country_code IN ("
+            "  SELECT country_code FROM api_wageindicatorcountrydata"
+            ")"
+        )
+
+    if 'mit_living_wage' in field_names:
+        where_parts.append("country_code IN ('US', 'PR', 'VI')")
+
+    if not where_parts:
+        return qs
+
+    or_clause = ' OR '.join(f'({part})' for part in where_parts)
+    return qs.extra(where=[f'({or_clause})'], params=params)
+
+
 class FacilityIndexNewManager(models.Manager):
     def filter_by_query_params(self, params):
         """
@@ -252,5 +293,24 @@ class FacilityIndexNewManager(models.Manager):
             # Each chained .filter() call enforces an independent AND condition.
             for field_name in partner_fields:
                 facilities_qs = facilities_qs.filter(_spotlight_q(field_name))
+
+        partner_contributors = params.getlist(
+            FacilitiesQueryParams.PARTNER_CONTRIBUTOR
+        )
+
+        if partner_contributors:
+            from api.models.partner_field import PartnerField
+
+            field_names = list(
+                PartnerField.objects.filter(
+                    contributor__id__in=partner_contributors,
+                    active=True,
+                ).values_list('name', flat=True).distinct()
+            )
+
+            if field_names:
+                facilities_qs = _apply_partner_fields_or_filter(
+                    facilities_qs, field_names
+                )
 
         return facilities_qs

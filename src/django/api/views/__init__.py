@@ -76,3 +76,6 @@ from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
 from .partner_field_groups.partner_field_groups_view_set import (
     PartnerFieldGroupsViewSet,
 )
+from .partner_group_contributors.partner_group_contributors_view import (
+    PartnerGroupContributorsView,
+)

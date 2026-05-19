@@ -348,7 +348,13 @@ export const filtersPropType = shape({
     sectors: arrayOf(reactSelectOptionPropType).isRequired,
     combineContributors: string.isRequired,
     partnerFieldGroups: arrayOf(string).isRequired,
-    partnerFields: arrayOf(string).isRequired,
+    partnerContributors: arrayOf(
+        shape({
+            value: string.isRequired,
+            label: string.isRequired,
+            groupLabel: string.isRequired,
+        }),
+    ).isRequired,
 });
 
 export const facilityListItemStatusPropType = oneOf(

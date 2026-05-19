@@ -16,7 +16,7 @@ export const getEnrichedPartnerGroups = createSelector(
         return groups.map(group => ({
             ...group,
             partnerFields: partnerFields.filter(field =>
-                group.partner_fields.some(pf => pf.name === field.fieldName),
+                group.partner_fields.includes(field.fieldName),
             ),
         }));
     },
@@ -38,17 +38,24 @@ export const getVisiblePartnerGroups = createSelector(
 );
 
 /**
- * Formats partner field groups data into a shape suitable for the
- * SpotlightDataPartnersFilter component:
- * [{ value: uuid, label: name, partnerFields: [{ value: name, label }] }]
+ * Formats partner group contributors data into the shape expected by
+ * NestedSelect / DataPartnersFilter:
+ * [{ label: groupLabel, options: [{ groupLabel, label, value: String(id) }] }]
  */
-export const getPartnerGroupsForFilter = createSelector([getGroups], groups =>
-    groups.map(group => ({
-        value: group.uuid,
-        label: group.name,
-        partnerFields: (group.partner_fields || []).map(pf => ({
-            value: pf.name,
-            label: pf.label || pf.name,
+const EMPTY_CONTRIBUTOR_GROUPS = [];
+
+const getContributorGroups = state =>
+    state.partnerGroupContributors.data?.results || EMPTY_CONTRIBUTOR_GROUPS;
+
+export const getPartnerGroupsWithContributors = createSelector(
+    [getContributorGroups],
+    groups =>
+        groups.map(group => ({
+            label: group.label,
+            options: (group.contributors || []).map(c => ({
+                groupLabel: group.label,
+                label: c.name,
+                value: String(c.id),
+            })),
         })),
-    })),
 );

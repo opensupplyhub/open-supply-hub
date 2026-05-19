@@ -34,11 +34,3 @@ export function fetchPartnerFieldGroups() {
             );
     };
 }
-
-export function fetchPartnerFieldGroupsIfNeeded() {
-    return (dispatch, getState) => {
-        const { data, fetching } = getState().partnerFieldGroups;
-        if (data !== null || fetching) return;
-        dispatch(fetchPartnerFieldGroups());
-    };
-}

@@ -42,6 +42,7 @@ class FacilitiesQueryParams:
     SECTOR = 'sectors'
     PARTNER_FIELD_GROUP = 'partner_field_group'
     PARTNER_FIELD = 'partner_field'
+    PARTNER_CONTRIBUTOR = 'partner_contributor'
 
 
 class FacilityListQueryParams:
