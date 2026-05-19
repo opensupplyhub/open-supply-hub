@@ -24,7 +24,6 @@ import {
     updateAllFilters,
     updateDataSourceFilter,
     updateModerationStatusFilter,
-    setPartnerFieldGroupFilter,
     setPartnerContributorFilter,
 } from '../actions/filters';
 
@@ -60,7 +59,6 @@ const initialState = Object.freeze({
     combineContributors: '',
     boundary: null,
     lists: Object.freeze([]),
-    partnerFieldGroups: Object.freeze([]),
     partnerContributors: Object.freeze([]),
 });
 
@@ -156,10 +154,6 @@ export default createReducer(
         [updateModerationStatusFilter]: (state, payload) =>
             update(state, {
                 moderationStatuses: { $set: payload },
-            }),
-        [setPartnerFieldGroupFilter]: (state, payload) =>
-            update(state, {
-                partnerFieldGroups: { $set: payload },
             }),
         [setPartnerContributorFilter]: (state, payload) =>
             update(state, {

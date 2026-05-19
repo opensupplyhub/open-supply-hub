@@ -1,6 +1,6 @@
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import Q, Subquery
+from django.db.models import Q
 
 from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
@@ -10,27 +10,6 @@ from api.helpers.helpers import (
 from api.os_id import string_matches_os_id_format
 
 SYSTEM_PARTNER_FIELD_NAMES = frozenset({'wage_indicator', 'mit_living_wage'})
-
-
-def _spotlight_q(name):
-    """
-    Return a Q object filtering FacilityIndex rows that have data
-    for the given partner field name.
-
-    System fields (wage_indicator, mit_living_wage) are never stored in
-    extended_fields and require country-code-based filters instead.
-    Regular fields use the JSONB containment operator on extended_fields.
-    """
-    if name == 'wage_indicator':
-        from api.models.wage_indicator_country_data import WageIndicatorCountryData
-        return Q(
-            country_code__in=Subquery(
-                WageIndicatorCountryData.objects.values('country_code')
-            )
-        )
-    if name == 'mit_living_wage':
-        return Q(country_code__in=['US', 'PR', 'VI'])
-    return Q(extended_fields__contains=[{"field_name": name}])
 
 
 def _apply_partner_fields_or_filter(qs, field_names):
@@ -264,35 +243,6 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs = facilities_qs.filter(
                 sector__overlap=sectors
             )
-
-        partner_field_groups = params.getlist(
-            FacilitiesQueryParams.PARTNER_FIELD_GROUP
-        )
-        partner_fields = params.getlist(FacilitiesQueryParams.PARTNER_FIELD)
-
-        if partner_field_groups or partner_fields:
-            from api.models.partner_field import PartnerField
-
-            # AC5 / mixed: group-level OR constraints (one per selected group).
-            # Each group is applied as an independent AND constraint — any
-            # facility must satisfy every selected group, but within a single
-            # group any partner match is sufficient.
-            for group_id in partner_field_groups:
-                group_field_names = list(
-                    PartnerField.objects.filter(
-                        group_id=group_id, active=True
-                    ).values_list('name', flat=True)
-                )
-                if group_field_names:
-                    group_q = Q()
-                    for field_name in group_field_names:
-                        group_q |= _spotlight_q(field_name)
-                    facilities_qs = facilities_qs.filter(group_q)
-
-            # AC4 / mixed: individual partner AND constraints.
-            # Each chained .filter() call enforces an independent AND condition.
-            for field_name in partner_fields:
-                facilities_qs = facilities_qs.filter(_spotlight_q(field_name))
 
         partner_contributors = params.getlist(
             FacilitiesQueryParams.PARTNER_CONTRIBUTOR

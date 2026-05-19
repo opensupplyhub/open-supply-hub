@@ -420,7 +420,6 @@ export const createQueryStringFromSearchFilters = (
         boundary = {},
         sortAlgorithm = {},
         claimStatuses = [],
-        partnerFieldGroups = [],
         partnerContributors = [],
     },
     withEmbed,
@@ -453,7 +452,6 @@ export const createQueryStringFromSearchFilters = (
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
-        partner_field_group: partnerFieldGroups,
         partner_contributor: partnerContributors.map(c => c.value),
     });
 
@@ -511,7 +509,6 @@ export const createFiltersFromQueryString = qs => {
         combine_contributors: combineContributors = '',
         boundary = '',
         sort_by: sortBy = '',
-        partner_field_group: rawPartnerFieldGroups = [],
         partner_contributor: rawPartnerContributors = [],
     } = querystring.parse(qsToParse);
 
@@ -537,7 +534,6 @@ export const createFiltersFromQueryString = qs => {
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
         sortAlgorithm: getAlgorithm(sortBy),
-        partnerFieldGroups: normaliseStringArray(rawPartnerFieldGroups),
         partnerContributors: normaliseStringArray(
             rawPartnerContributors,
         ).map(v => ({ value: v, label: v, groupLabel: '' })),

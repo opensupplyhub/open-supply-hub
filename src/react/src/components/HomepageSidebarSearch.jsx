@@ -121,7 +121,6 @@ function FilterSidebarSearchTab({
     classes,
     embedExtendedFields,
     resetHiddenFilters,
-    partnerFieldGroups,
     partnerContributors,
 }) {
     const isSideBarSearch = true;
@@ -133,7 +132,6 @@ function FilterSidebarSearchTab({
         productType,
         numberOfWorkers,
         sectors,
-        partnerFieldGroups,
         partnerContributors,
     ];
 
@@ -330,7 +328,6 @@ FilterSidebarSearchTab.propTypes = {
     fetchingFacilities: bool.isRequired,
     searchForFacilities: func.isRequired,
     fetchingOptions: bool.isRequired,
-    partnerFieldGroups: arrayOf(string).isRequired,
     partnerContributors: array.isRequired,
 };
 
@@ -354,7 +351,6 @@ function mapStateToProps({
         nativeLanguageName,
         combineContributors,
         boundary,
-        partnerFieldGroups,
         partnerContributors,
     },
     facilities: {
@@ -382,7 +378,6 @@ function mapStateToProps({
         embed: !!embed,
         textSearchLabel: config.text_search_label,
         embedExtendedFields: config.extended_fields,
-        partnerFieldGroups,
         partnerContributors,
     };
 }
