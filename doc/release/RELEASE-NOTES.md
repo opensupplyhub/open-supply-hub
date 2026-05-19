@@ -20,7 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 
 ### Bugfix
-* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them.
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
 
 ### What's new
 * [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
