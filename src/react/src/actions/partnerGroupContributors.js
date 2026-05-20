@@ -16,23 +16,21 @@ export const completeFetchPartnerGroupContributors = createAction(
 
 const fetchURL = '/api/partner-group-contributors/?limit=100';
 
-export const fetchPartnerGroupContributors = () => dispatch => {
+export const fetchPartnerGroupContributors = () => async dispatch => {
     dispatch(startFetchPartnerGroupContributors());
 
-    return apiRequest
-        .get(fetchURL)
-        .then(({ data }) =>
-            dispatch(completeFetchPartnerGroupContributors(data)),
-        )
-        .catch(err =>
-            dispatch(
-                logErrorAndDispatchFailure(
-                    err,
-                    'An error prevented fetching partner group contributors',
-                    failFetchPartnerGroupContributors,
-                ),
+    try {
+        const { data } = await apiRequest.get(fetchURL);
+        return dispatch(completeFetchPartnerGroupContributors(data));
+    } catch (err) {
+        return dispatch(
+            logErrorAndDispatchFailure(
+                err,
+                'An error prevented fetching partner group contributors',
+                failFetchPartnerGroupContributors,
             ),
         );
+    }
 };
 
 export const fetchPartnerGroupContributorsIfNeeded = () => (

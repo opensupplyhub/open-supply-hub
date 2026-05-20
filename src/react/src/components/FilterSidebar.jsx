@@ -30,20 +30,11 @@ import { VECTOR_TILE } from '../util/constants';
 import { setSidebarTabActive, toggleFilterModal } from '../actions/ui';
 import { resetMergeFacilitiesState } from '../actions/mergeFacilities';
 import {
-    fetchContributorOptions,
     fetchListOptions,
-    fetchCountryOptions,
     fetchAllPrimaryFilterOptionsIfNeeded,
 } from '../actions/filterOptions';
 import { fetchFacilities } from '../actions/facilities';
 
-import {
-    contributorOptionsPropType,
-    countryOptionsPropType,
-    sectorOptionsPropType,
-} from '../util/propTypes';
-
-import { allListsAreEmpty } from '../util/util';
 import MapIcon from './MapIcon';
 import FacilitiesIcon from './FacilitiesIcon';
 
@@ -95,20 +86,16 @@ const filterSidebarStyles = theme =>
 const FilterSidebar = ({
     activeFilterSidebarTab,
     filterModalOpen,
-    contributorsData,
-    countriesData,
-    sectorsData,
     fetchingFeatureFlags,
     contributors,
+    fetchingLists,
     facilitiesCount,
     merging,
     mergeError,
     toggleFilter,
     setTabActive,
     fetchFilterOptions,
-    fetchContributors,
     fetchLists,
-    fetchCountries,
     resetMergeState,
     refreshSearchResultsAfterMerge,
     theme,
@@ -116,21 +103,7 @@ const FilterSidebar = ({
 }) => {
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
-        if (allListsAreEmpty(contributorsData, countriesData, sectorsData)) {
-            fetchFilterOptions();
-        }
-
-        if (!contributorsData) {
-            fetchContributors();
-        }
-
-        if (!countriesData) {
-            fetchCountries();
-        }
-
-        if (contributors && contributors.length) {
-            fetchLists();
-        }
+        fetchFilterOptions();
 
         return resetMergeState;
     }, []);
@@ -140,7 +113,7 @@ const FilterSidebar = ({
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
-        } else {
+        } else if (!fetchingLists) {
             fetchLists();
         }
     }, [contributors]);
@@ -328,20 +301,13 @@ const FilterSidebar = ({
     );
 };
 FilterSidebar.defaultProps = {
-    contributorsData: null,
-    countriesData: null,
-    sectorsData: null,
     mergeError: null,
 };
 
 FilterSidebar.propTypes = {
     fetchFilterOptions: func.isRequired,
-    fetchContributors: func.isRequired,
-    fetchCountries: func.isRequired,
-    contributorsData: contributorOptionsPropType,
-    countriesData: countryOptionsPropType,
-    sectorsData: sectorOptionsPropType,
     fetchingFeatureFlags: bool.isRequired,
+    fetchingLists: bool.isRequired,
     merging: bool.isRequired,
     mergeError: arrayOf(string),
     resetMergeState: func.isRequired,
@@ -350,12 +316,10 @@ FilterSidebar.propTypes = {
 
 function mapStateToProps({
     ui: { activeFilterSidebarTab, filterModalOpen },
-    filterOptions: {
-        contributors: { data: contributorsData },
-        countries: { data: countriesData },
-        sectors: { data: sectorsData },
-    },
     featureFlags: { fetching: fetchingFeatureFlags },
+    filterOptions: {
+        lists: { fetching: fetchingLists },
+    },
     filters: { contributors },
     facilities: {
         facilities: { data: facilities },
@@ -367,10 +331,8 @@ function mapStateToProps({
     return {
         activeFilterSidebarTab,
         filterModalOpen,
-        contributorsData,
-        countriesData,
-        sectorsData,
         fetchingFeatureFlags,
+        fetchingLists,
         contributors,
         facilitiesCount: get(facilities, 'count', null),
         merging,
@@ -384,9 +346,7 @@ function mapDispatchToProps(dispatch, { history: { push } }) {
         setTabActive: value => dispatch(setSidebarTabActive(value)),
         fetchFilterOptions: () =>
             dispatch(fetchAllPrimaryFilterOptionsIfNeeded()),
-        fetchContributors: () => dispatch(fetchContributorOptions()),
         fetchLists: () => dispatch(fetchListOptions()),
-        fetchCountries: () => dispatch(fetchCountryOptions()),
         refreshSearchResultsAfterMerge: () =>
             dispatch(fetchFacilities({ pushNewRoute: push })),
         resetMergeState: () => dispatch(resetMergeFacilitiesState()),

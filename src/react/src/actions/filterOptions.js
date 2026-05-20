@@ -354,34 +354,35 @@ export function fetchAllPrimaryFilterOptions() {
     };
 }
 
-export const fetchContributorOptionsIfNeeded = () => {
-    return (dispatch, getState) => {
-        const { data, fetching } = getState().filterOptions.contributors;
-        if (data !== null || fetching) return;
-        dispatch(fetchContributorOptions());
-    };
+export const fetchContributorOptionsIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.contributors;
+    if (data !== null || fetching) return;
+    dispatch(fetchContributorOptions());
 };
 
-export const fetchCountryOptionsIfNeeded = () => {
-    return (dispatch, getState) => {
-        const { data, fetching } = getState().filterOptions.countries;
-        if (data !== null || fetching) return;
-        dispatch(fetchCountryOptions());
-    };
+export const fetchCountryOptionsIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.countries;
+    if (data !== null || fetching) return;
+    dispatch(fetchCountryOptions());
 };
 
-export const fetchListOptionsIfNeeded = () => {
-    return (dispatch, getState) => {
-        const { data, fetching } = getState().filterOptions.lists;
-        if (data !== null || fetching) return;
-        dispatch(fetchListOptions());
-    };
+export const fetchListOptionsIfNeeded = () => (dispatch, getState) => {
+    const {
+        filterOptions: {
+            lists: { data, fetching },
+        },
+        filters: { contributors, lists },
+    } = getState();
+    const hasContributorSelection = contributors.length > 0;
+    const hasListSelection = lists.length > 0;
+
+    if (!hasContributorSelection && !hasListSelection) return;
+    if (data !== null || fetching) return;
+    dispatch(fetchListOptions());
 };
 
-export const fetchAllPrimaryFilterOptionsIfNeeded = () => {
-    return dispatch => {
-        dispatch(fetchContributorOptionsIfNeeded());
-        dispatch(fetchCountryOptionsIfNeeded());
-        dispatch(fetchListOptionsIfNeeded());
-    };
+export const fetchAllPrimaryFilterOptionsIfNeeded = () => dispatch => {
+    dispatch(fetchContributorOptionsIfNeeded());
+    dispatch(fetchCountryOptionsIfNeeded());
+    dispatch(fetchListOptionsIfNeeded());
 };
