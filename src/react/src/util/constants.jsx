@@ -382,7 +382,7 @@ export const productionLocationInfoRouteCreate =
     '/contribute/single-location/info/:moderationID?';
 export const productionLocationInfoRouteUpdate =
     '/contribute/single-location/:osID/info/:moderationID?';
-export const pilotIntegrationsDocsRoute = `${InfoLink}/data-integrations`;
+export const pilotIntegrationsDocsRoute = `${InfoLink}/spotlight`;
 
 export const contributeFieldsEnum = Object.freeze({
     name: 'name',
@@ -1378,7 +1378,7 @@ export const optionsForSortingResults = [
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
-export const uploadedFileRowIndexOffset = 2;
+export const uploadedFileRowIndexOffset = 1;
 
 export const USER_DEFAULT_STATE = Object.freeze({
     isAnon: true,
