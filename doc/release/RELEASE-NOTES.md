@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Architecture/Environment changes
 
 ### Bugfix
+* [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
 
 * [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 
