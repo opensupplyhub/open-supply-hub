@@ -69,7 +69,7 @@ function PartnerDataContainer({
                                         data listed here? Looking to access this
                                         data for compliance reporting, risk
                                         analysis, or supplier monitoring?
-                                        <LearnMoreLink href="https://info.opensupplyhub.org/data-integrations" />
+                                        <LearnMoreLink href="https://info.opensupplyhub.org/spotlight" />
                                     </>
                                 }
                                 icon={InfoOutlined}
@@ -87,7 +87,7 @@ function PartnerDataContainer({
                             production location, its context, and/or its
                             operations.{' '}
                             <a
-                                href="https://info.opensupplyhub.org/data-integrations"
+                                href="https://info.opensupplyhub.org/spotlight"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
@@ -108,7 +108,7 @@ function PartnerDataContainer({
                                 facility.
                             </b>{' '}
                             <a
-                                href="https://info.opensupplyhub.org/data-integrations"
+                                href="https://info.opensupplyhub.org/spotlight"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
