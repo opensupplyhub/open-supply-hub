@@ -33,6 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 
+
 ## Release 2.23.1
 
 ## Introduction
