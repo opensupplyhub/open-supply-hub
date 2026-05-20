@@ -39,12 +39,11 @@ docker compose exec react yarn test --watchAll=false
 docker compose exec django python manage.py test
 ```
 
-## Agents & skills
+## Release notes & PR descriptions
 
-| Task | Tool |
-|---|---|
-| Implement a Jira ticket end-to-end (code + tests + PR description) | [implementer](.cursor/agents/implementer.md) subagent |
-| Plan a Jira ticket before implementation | [ticket-planner](.cursor/agents/ticket-planner.md) subagent |
-| Scan all codebase layers for a ticket's impact | [codebase-explorer](.cursor/agents/codebase-explorer.md) subagent |
-| Write a PR description | [pr-description](.agents/skills/pr-description/SKILL.md) skill |
-| Update release notes | [release-notes](.agents/skills/release-notes/SKILL.md) skill |
+- To write the description for each PR, use the [pr-description](.agent/skills/pr-description/SKILL.md) skill.
+- To update the release notes, use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
+
+IMPORTANT: Before creating a PR, always check whether `doc/release/RELEASE-NOTES.md` has been updated on the current branch. If it has not been updated, prompt the user to update it before opening the PR.
+
+IMPORTANT: When the user asks to add, update, or write a release notes entry, always use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
