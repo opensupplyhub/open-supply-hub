@@ -21,8 +21,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
+* [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
+* [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 
 ### What's new
+* [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
 
 ### Release instructions
@@ -30,7 +34,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 
----
+
+## Release 2.23.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 15, 2026
+
+### Bugfix
+* [OSDEV-2717](https://opensupplyhub.atlassian.net/browse/OSDEV-2717) - Fixed HTTP 500 (`pylibmc.TooBig`) on `GET /api/facilities/` by removing the `cache_page` decorator from `FacilitiesViewSet.list`. When `detail=true` is passed, the response includes four additional fields per facility (`contributors`, `extended_fields`, `contributor_fields`, `sector`), causing the serialized page to exceed Memcached's 1 MB item size limit. Removing caching from this endpoint resolves the crash for all requests to the facilities list.
+
+### Release instructions
+* Ensure that no commands are included in the `post_deployment` command.
+
 
 ## Release 2.23.0
 
