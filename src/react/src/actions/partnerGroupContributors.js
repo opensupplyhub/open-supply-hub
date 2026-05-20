@@ -16,7 +16,7 @@ export const completeFetchPartnerGroupContributors = createAction(
 
 const fetchURL = '/api/partner-group-contributors/?limit=100';
 
-export function fetchPartnerGroupContributors() {
+export const fetchPartnerGroupContributors = () => {
     return dispatch => {
         dispatch(startFetchPartnerGroupContributors());
 
@@ -35,12 +35,12 @@ export function fetchPartnerGroupContributors() {
                 ),
             );
     };
-}
+};
 
-export function fetchPartnerGroupContributorsIfNeeded() {
+export const fetchPartnerGroupContributorsIfNeeded = () => {
     return (dispatch, getState) => {
         const { data, fetching } = getState().partnerGroupContributors;
         if (data !== null || fetching) return;
         dispatch(fetchPartnerGroupContributors());
     };
-}
+};

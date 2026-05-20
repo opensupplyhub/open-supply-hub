@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { arrayOf, bool, func, shape, string } from 'prop-types';
+import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
+import { withStyles } from '@material-ui/core/styles';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
@@ -13,6 +14,7 @@ import {
 } from '../../actions/filters';
 import { fetchPartnerGroupContributorsIfNeeded } from '../../actions/partnerGroupContributors';
 import { getPartnerGroupsWithContributors } from '../../selectors/partnerFieldGroupsSelectors';
+import { makeDataPartnersFilterStyles } from '../../util/styles';
 
 const DATA_PARTNERS = 'DATA_PARTNERS';
 
@@ -22,7 +24,7 @@ const contributorOptionPropType = shape({
     value: string.isRequired,
 });
 
-function DataPartnersFilter({
+const DataPartnersFilter = ({
     groups,
     fetching,
     selectedContributors,
@@ -30,6 +32,7 @@ function DataPartnersFilter({
     onContributorChange,
     onCombinePartnerContributorsChange,
     loadGroupsIfNeeded,
+    classes,
 }) {
     useEffect(() => {
         if (selectedContributors?.length) {
@@ -55,7 +58,7 @@ function DataPartnersFilter({
             <ShowOnly
                 when={selectedContributors && selectedContributors.length > 1}
             >
-                <div style={{ marginLeft: '16px' }}>
+                <div className={classes.sharedFacilitiesCheckbox}>
                     <FormControlLabel
                         control={
                             <Checkbox
@@ -71,7 +74,7 @@ function DataPartnersFilter({
             </ShowOnly>
         </div>
     );
-}
+};
 
 DataPartnersFilter.propTypes = {
     groups: arrayOf(
@@ -86,6 +89,7 @@ DataPartnersFilter.propTypes = {
     onContributorChange: func.isRequired,
     onCombinePartnerContributorsChange: func.isRequired,
     loadGroupsIfNeeded: func.isRequired,
+    classes: object.isRequired,
 };
 
 const mapStateToProps = state => ({
@@ -111,4 +115,6 @@ const mapDispatchToProps = dispatch => ({
     loadGroupsIfNeeded: () => dispatch(fetchPartnerGroupContributorsIfNeeded()),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(DataPartnersFilter);
+export default connect(mapStateToProps, mapDispatchToProps)(
+    withStyles(makeDataPartnersFilterStyles)(DataPartnersFilter),
+);

@@ -287,6 +287,13 @@ export const makeCustomDropdownIndicatorStyles = Object.freeze({
     }),
 });
 
+export const makeDataPartnersFilterStyles = () =>
+    Object.freeze({
+        sharedFacilitiesCheckbox: Object.freeze({
+            marginLeft: '16px',
+        }),
+    });
+
 export const makeContributeProductionLocationStyles = theme =>
     Object.freeze({
         mainContainerStyles: Object.freeze({

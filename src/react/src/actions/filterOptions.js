@@ -354,34 +354,34 @@ export function fetchAllPrimaryFilterOptions() {
     };
 }
 
-export function fetchContributorOptionsIfNeeded() {
+export const fetchContributorOptionsIfNeeded = () => {
     return (dispatch, getState) => {
         const { data, fetching } = getState().filterOptions.contributors;
         if (data !== null || fetching) return;
         dispatch(fetchContributorOptions());
     };
-}
+};
 
-export function fetchCountryOptionsIfNeeded() {
+export const fetchCountryOptionsIfNeeded = () => {
     return (dispatch, getState) => {
         const { data, fetching } = getState().filterOptions.countries;
         if (data !== null || fetching) return;
         dispatch(fetchCountryOptions());
     };
-}
+};
 
-export function fetchListOptionsIfNeeded() {
+export const fetchListOptionsIfNeeded = () => {
     return (dispatch, getState) => {
         const { data, fetching } = getState().filterOptions.lists;
         if (data !== null || fetching) return;
         dispatch(fetchListOptions());
     };
-}
+};
 
-export function fetchAllPrimaryFilterOptionsIfNeeded() {
+export const fetchAllPrimaryFilterOptionsIfNeeded = () => {
     return dispatch => {
         dispatch(fetchContributorOptionsIfNeeded());
         dispatch(fetchCountryOptionsIfNeeded());
         dispatch(fetchListOptionsIfNeeded());
     };
-}
+};
