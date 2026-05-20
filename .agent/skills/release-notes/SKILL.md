@@ -26,7 +26,7 @@ New entries go at the **top** of the file, directly after the header block (line
 
 ## Steps
 
-1. **Read the current release notes** (`doc/release/RELEASE-NOTES.md`) to find the latest version number and the structure of existing entries before writing anything.
+1. **Read the current release notes** to find the latest version number.
 2. **Determine the new version** using semver:
     - Major feature release → bump minor (e.g. `2.19.0` → `2.20.0`)
     - Hotfix → bump patch (e.g. `2.18.0` → `2.18.1`)
@@ -82,8 +82,7 @@ New entries go at the **top** of the file, directly after the header block (line
 - Ensure that the following commands are included in the `post_deployment` command:
     - `migrate`
     - `reindex_database`
-
----
+```
 
 ## Writing Rules
 
@@ -96,4 +95,4 @@ New entries go at the **top** of the file, directly after the header block (line
 5. **Be detailed.** Each bullet should explain _what_ changed and _why_, including endpoint paths, model names, field names, and behavioral effects.
 6. **Release instructions** always include at minimum `migrate` and `reindex_database`. Add other commands (e.g. `reindex_locations_with_approved_claim`) only when the release requires them.
 7. **Release date** — use the actual date if known, otherwise leave as `*Provide release date*`.
-8. **Separate releases** with a `---` divider followed by two blank lines between entries.
+8. **Separate releases** with two blank lines between entries.

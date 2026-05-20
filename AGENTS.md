@@ -43,7 +43,3 @@ docker compose exec django python manage.py test
 
 - To write the description for each PR, use the [pr-description](.agent/skills/pr-description/SKILL.md) skill.
 - To update the release notes, use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
-
-IMPORTANT: Before creating a PR, always check whether `doc/release/RELEASE-NOTES.md` has been updated on the current branch. If it has not been updated, prompt the user to update it before opening the PR.
-
-IMPORTANT: When the user asks to add, update, or write a release notes entry, always use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
