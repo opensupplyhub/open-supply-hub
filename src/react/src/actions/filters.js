@@ -59,6 +59,9 @@ export const resetDrawerFilters = createAction('RESET_DRAWER_FILTERS');
 export const setPartnerContributorFilter = createAction(
     'SET_PARTNER_CONTRIBUTOR_FILTER',
 );
+export const updateCombinePartnerContributorsFilterOption = createAction(
+    'UPDATE_COMBINE_PARTNER_CONTRIBUTORS_FILTER_OPTION',
+);
 
 export function setFiltersFromQueryString(qs = '') {
     return (dispatch, getState) => {

@@ -268,6 +268,23 @@ it('creates a querystring from a set of filter selection', () => {
             .concat('&contributor_types=foo&countries=bar&sectors=baz');
     expect(createQueryStringFromSearchFilters(allFilters))
         .toEqual(expectedAllFiltersMatch);
+
+    const partnerSharedFilters = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        partnerContributors: [
+            { value: '99', label: 'Partner A' },
+            { value: '15', label: 'Partner B' },
+        ],
+        combinePartnerContributors: 'AND',
+    };
+
+    expect(createQueryStringFromSearchFilters(partnerSharedFilters)).toEqual(
+        'combine_partner_contributors=AND&partner_contributor=99&partner_contributor=15',
+    );
 });
 
 it('checks whether the filters object has only empty values', () => {
@@ -809,6 +826,20 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(claimStatusesString),
     ).toMatchObject(expectedClaimStatusesMatch);
+
+    const combinedPartnersString =
+        '?partner_contributor=15&partner_contributor=99&combine_partner_contributors=AND';
+    const expectedCombinedPartnersMatch = {
+        partnerContributors: [
+            { value: '15', label: '15', groupLabel: '' },
+            { value: '99', label: '99', groupLabel: '' },
+        ],
+        combinePartnerContributors: 'AND',
+    };
+
+    expect(
+        createFiltersFromQueryString(combinedPartnersString),
+    ).toMatchObject(expectedCombinedPartnersMatch);
 });
 
 it('creates a facility detail link', () => {

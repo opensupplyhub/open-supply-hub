@@ -207,21 +207,43 @@ class FacilityIndexNewManager(models.Manager):
         partner_contributors = params.getlist(
             FacilitiesQueryParams.PARTNER_CONTRIBUTOR
         )
+        combine_partner_contributors = params.get(
+            FacilitiesQueryParams.COMBINE_PARTNER_CONTRIBUTORS, ''
+        )
 
         if partner_contributors:
             from api.models.partner_field import PartnerField
 
-            field_names = list(
+            partner_fields = list(
                 PartnerField.objects.filter(
                     contributor__id__in=partner_contributors,
                     active=True,
                     group__isnull=False,
-                ).values_list('name', flat=True).distinct()
+                ).values_list('contributor__id', 'name').distinct()
             )
 
-            if field_names:
-                facilities_qs = apply_partner_fields_or_filter(
-                    facilities_qs, field_names
+            if combine_partner_contributors.upper() == 'AND':
+                for contributor_id in partner_contributors:
+                    contributor_field_names = [
+                        field_name
+                        for partner_contributor_id, field_name in partner_fields
+                        if str(partner_contributor_id) == str(contributor_id)
+                    ]
+                    if not contributor_field_names:
+                        return facilities_qs.none()
+                    facilities_qs = apply_partner_fields_or_filter(
+                        facilities_qs, contributor_field_names
+                    )
+            else:
+                field_names = list(
+                    {
+                        field_name
+                        for _partner_contributor_id, field_name in partner_fields
+                    }
                 )
+                if field_names:
+                    facilities_qs = apply_partner_fields_or_filter(
+                        facilities_qs, field_names
+                    )
 
         return facilities_qs

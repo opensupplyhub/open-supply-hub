@@ -1,10 +1,16 @@
 import React, { useEffect } from 'react';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import NestedSelect from './NestedSelect';
+import ShowOnly from '../ShowOnly';
 
-import { setPartnerContributorFilter } from '../../actions/filters';
+import {
+    setPartnerContributorFilter,
+    updateCombinePartnerContributorsFilterOption,
+} from '../../actions/filters';
 import { fetchPartnerGroupContributorsIfNeeded } from '../../actions/partnerGroupContributors';
 import { getPartnerGroupsWithContributors } from '../../selectors/partnerFieldGroupsSelectors';
 
@@ -20,7 +26,9 @@ function DataPartnersFilter({
     groups,
     fetching,
     selectedContributors,
+    combinePartnerContributors,
     onContributorChange,
+    onCombinePartnerContributorsChange,
     loadGroupsIfNeeded,
 }) {
     useEffect(() => {
@@ -33,7 +41,7 @@ function DataPartnersFilter({
         <div className="form__field">
             <NestedSelect
                 name={DATA_PARTNERS}
-                label="Data Partners"
+                label="Spotlight Data Partners"
                 optionsData={groups}
                 sectors={selectedContributors}
                 updateSector={onContributorChange}
@@ -44,6 +52,23 @@ function DataPartnersFilter({
                 disabled={fetching}
                 isSideBarSearch
             />
+            <ShowOnly
+                when={selectedContributors && selectedContributors.length > 1}
+            >
+                <div style={{ marginLeft: '16px' }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={!!combinePartnerContributors}
+                                onChange={onCombinePartnerContributorsChange}
+                                color="primary"
+                                value={combinePartnerContributors}
+                            />
+                        }
+                        label="Show only shared facilities"
+                    />
+                </div>
+            </ShowOnly>
         </div>
     );
 }
@@ -57,7 +82,9 @@ DataPartnersFilter.propTypes = {
     ).isRequired,
     fetching: bool.isRequired,
     selectedContributors: arrayOf(contributorOptionPropType).isRequired,
+    combinePartnerContributors: string.isRequired,
     onContributorChange: func.isRequired,
+    onCombinePartnerContributorsChange: func.isRequired,
     loadGroupsIfNeeded: func.isRequired,
 };
 
@@ -65,11 +92,22 @@ const mapStateToProps = state => ({
     groups: getPartnerGroupsWithContributors(state),
     fetching: state.partnerGroupContributors.fetching,
     selectedContributors: state.filters.partnerContributors,
+    combinePartnerContributors: state.filters.combinePartnerContributors,
 });
 
 const mapDispatchToProps = dispatch => ({
-    onContributorChange: contributors =>
-        dispatch(setPartnerContributorFilter(contributors)),
+    onContributorChange: contributors => {
+        if (!contributors || contributors.length < 2) {
+            dispatch(updateCombinePartnerContributorsFilterOption(''));
+        }
+        dispatch(setPartnerContributorFilter(contributors));
+    },
+    onCombinePartnerContributorsChange: e =>
+        dispatch(
+            updateCombinePartnerContributorsFilterOption(
+                e.target.checked ? 'AND' : '',
+            ),
+        ),
     loadGroupsIfNeeded: () => dispatch(fetchPartnerGroupContributorsIfNeeded()),
 });
 
