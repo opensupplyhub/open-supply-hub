@@ -16,31 +16,30 @@ export const completeFetchPartnerGroupContributors = createAction(
 
 const fetchURL = '/api/partner-group-contributors/?limit=100';
 
-export const fetchPartnerGroupContributors = () => {
-    return dispatch => {
-        dispatch(startFetchPartnerGroupContributors());
+export const fetchPartnerGroupContributors = () => dispatch => {
+    dispatch(startFetchPartnerGroupContributors());
 
-        return apiRequest
-            .get(fetchURL)
-            .then(({ data }) =>
-                dispatch(completeFetchPartnerGroupContributors(data)),
-            )
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching partner group contributors',
-                        failFetchPartnerGroupContributors,
-                    ),
+    return apiRequest
+        .get(fetchURL)
+        .then(({ data }) =>
+            dispatch(completeFetchPartnerGroupContributors(data)),
+        )
+        .catch(err =>
+            dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented fetching partner group contributors',
+                    failFetchPartnerGroupContributors,
                 ),
-            );
-    };
+            ),
+        );
 };
 
-export const fetchPartnerGroupContributorsIfNeeded = () => {
-    return (dispatch, getState) => {
-        const { data, fetching } = getState().partnerGroupContributors;
-        if (data !== null || fetching) return;
-        dispatch(fetchPartnerGroupContributors());
-    };
+export const fetchPartnerGroupContributorsIfNeeded = () => (
+    dispatch,
+    getState,
+) => {
+    const { data, fetching } = getState().partnerGroupContributors;
+    if (data !== null || fetching) return;
+    dispatch(fetchPartnerGroupContributors());
 };

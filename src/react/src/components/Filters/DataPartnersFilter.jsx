@@ -33,7 +33,7 @@ const DataPartnersFilter = ({
     onCombinePartnerContributorsChange,
     loadGroupsIfNeeded,
     classes,
-}) {
+}) => {
     useEffect(() => {
         if (selectedContributors?.length) {
             loadGroupsIfNeeded();
@@ -115,6 +115,7 @@ const mapDispatchToProps = dispatch => ({
     loadGroupsIfNeeded: () => dispatch(fetchPartnerGroupContributorsIfNeeded()),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-    withStyles(makeDataPartnersFilterStyles)(DataPartnersFilter),
-);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withStyles(makeDataPartnersFilterStyles)(DataPartnersFilter));
