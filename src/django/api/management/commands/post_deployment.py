@@ -1,4 +1,3 @@
-from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 
@@ -8,5 +7,7 @@ class Command(BaseCommand):
             'post-deployment tasks.')
 
     def handle(self, *args, **options):
+        from django.core.management import call_command
+
         call_command('migrate')
         call_command('reindex_database')
