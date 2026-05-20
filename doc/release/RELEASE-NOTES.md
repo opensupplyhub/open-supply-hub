@@ -3,6 +3,36 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.24.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 29, 2026
+
+### Database changes
+
+#### Migrations
+
+#### Schema changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
+* [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
+* [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
+
+### What's new
+* [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
+* [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 ## Release 2.23.1
 
 ## Introduction
@@ -14,7 +44,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions
 * Ensure that no commands are included in the `post_deployment` command.
-
 
 ## Release 2.23.0
 
@@ -31,6 +60,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
+* [OSDEV-2704](https://opensupplyhub.atlassian.net/browse/OSDEV-2704) - Fixed `check_api_limits` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` since the Django 3.2→5.2 upgrade. Replaced the removed `django.utils.timezone.utc` with the stdlib `datetime.timezone.utc`. Added a regression test that invokes the command via `call_command()` to cover the entry point.
 
 ### Code/API changes
 * Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
