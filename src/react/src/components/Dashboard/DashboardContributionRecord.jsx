@@ -40,6 +40,7 @@ import {
     convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../../util/util';
 import ModerationMatchConfirmButton from './ModerationMatchConfirmButton';
+import ModerationExistingOsIdContent from './ModerationExistingOsIdContent';
 import {
     MODERATION_STATUSES_ENUM,
     MODERATION_ACTIONS_ENUM,
@@ -63,82 +64,6 @@ const claimButtonDisabled = classes => (
         </Button>
     </span>
 );
-
-const renderExistingOsIdContent = (
-    classes,
-    existingOsIdLocationFetching,
-    existingOsIdLocationData,
-    isDisabled,
-    moderationEventFetching,
-    moderationEventStatus,
-    confirmPotentialMatch,
-) => {
-    if (existingOsIdLocationFetching) {
-        return <CircularProgress size={25} className={classes.loaderStyles} />;
-    }
-    if (existingOsIdLocationData) {
-        return (
-            <List>
-                <ListItem
-                    className={`${classes.listItemStyle} ${classes.listItemStyle_confirmed}`}
-                >
-                    <div>
-                        <ListItemText
-                            className={classes.listItemTextStyle}
-                            primary={
-                                <Typography>
-                                    OS ID:{' '}
-                                    <Link
-                                        to={makeFacilityDetailLink(
-                                            existingOsIdLocationData.os_id,
-                                        )}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {existingOsIdLocationData.os_id}
-                                    </Link>
-                                </Typography>
-                            }
-                        />
-                        <ListItemText
-                            className={classes.listItemTextStyle}
-                            primary={`Name: ${existingOsIdLocationData.name}`}
-                        />
-                        <ListItemText
-                            className={classes.listItemTextStyle}
-                            primary={`Address: ${existingOsIdLocationData.address}`}
-                        />
-                        <ListItemText
-                            className={classes.listItemTextStyle}
-                            primary={`Claimed Status: ${existingOsIdLocationData.claim_status}`}
-                        />
-                    </div>
-                    <ModerationMatchConfirmButton
-                        classes={classes}
-                        match={{
-                            matchOsId: existingOsIdLocationData.os_id,
-                            eventOsId: existingOsIdLocationData.os_id,
-                        }}
-                        moderation={{
-                            status: moderationEventStatus,
-                            fetching: moderationEventFetching,
-                        }}
-                        actions={{ confirmPotentialMatch }}
-                        isDisabled={isDisabled}
-                        ariaLabel="Confirm existing OS ID button tooltip"
-                    />
-                </ListItem>
-            </List>
-        );
-    }
-    return (
-        <div className={classes.emptyBlockStyles}>
-            <Typography className={classes.emptyTextStyle} variant="title">
-                Existing location not found
-            </Typography>
-        </div>
-    );
-};
 
 let hasPrefetchedData = false;
 const DashboardContributionRecord = ({
@@ -358,15 +283,19 @@ const DashboardContributionRecord = ({
                     <div className={classes.potentialMatchesBlock}>
                         <Divider className={classes.dividerStyle} />
                         <div className={classes.potentialMatchesInternalBlock}>
-                            {renderExistingOsIdContent(
-                                classes,
-                                existingOsIdLocationFetching,
-                                existingOsIdLocationData,
-                                isDisabled,
-                                moderationEventFetching,
-                                moderationEventStatus,
-                                confirmPotentialMatch,
-                            )}
+                            <ModerationExistingOsIdContent
+                                classes={classes}
+                                location={{
+                                    fetching: existingOsIdLocationFetching,
+                                    data: existingOsIdLocationData,
+                                }}
+                                moderation={{
+                                    status: moderationEventStatus,
+                                    fetching: moderationEventFetching,
+                                }}
+                                actions={{ confirmPotentialMatch }}
+                                isDisabled={isDisabled}
+                            />
                         </div>
                         <Divider className={classes.dividerStyle} />
                     </div>
