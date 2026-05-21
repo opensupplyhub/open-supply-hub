@@ -39,7 +39,7 @@ import {
     makeFacilityDetailLink,
     convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../../util/util';
-import DialogTooltip from './../Contribute/DialogTooltip';
+import ModerationMatchConfirmButton from './ModerationMatchConfirmButton';
 import {
     MODERATION_STATUSES_ENUM,
     MODERATION_ACTIONS_ENUM,
@@ -48,7 +48,6 @@ import {
 } from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
-const confirmPotentialMatchButtonTitle = 'Confirm';
 const newLocationTitle = 'New Location';
 const matchedTitle = 'Matched';
 
@@ -64,60 +63,6 @@ const claimButtonDisabled = classes => (
         </Button>
     </span>
 );
-
-const renderConfirmButton = (
-    classes,
-    matchOsId,
-    eventOsId,
-    moderationEventStatus,
-    moderationEventFetching,
-    isDisabled,
-    confirmPotentialMatch,
-    ariaLabel,
-) => {
-    if (!isDisabled) {
-        return (
-            <Button
-                color="secondary"
-                variant="contained"
-                className={classes.confirmButtonStyles}
-                disabled={moderationEventFetching}
-                onClick={() => confirmPotentialMatch(matchOsId)}
-            >
-                {confirmPotentialMatchButtonTitle}
-            </Button>
-        );
-    }
-
-    const isMatched =
-        eventOsId === matchOsId &&
-        moderationEventStatus === MODERATION_STATUSES_ENUM.APPROVED;
-
-    return (
-        <DialogTooltip
-            text={
-                isMatched
-                    ? 'Moderation event data has been already matched to this production location.'
-                    : `You can't confirm the match when moderation event is ${moderationEventStatus.toLowerCase()}.`
-            }
-            aria-label={ariaLabel}
-            childComponent={
-                <span className={`${classes.claimTooltipWrapper}`}>
-                    <Button
-                        color="secondary"
-                        variant="contained"
-                        className={classes.confirmButtonStyles}
-                        disabled
-                    >
-                        {isMatched
-                            ? matchedTitle
-                            : confirmPotentialMatchButtonTitle}
-                    </Button>
-                </span>
-            }
-        />
-    );
-};
 
 const renderExistingOsIdContent = (
     classes,
@@ -168,16 +113,20 @@ const renderExistingOsIdContent = (
                             primary={`Claimed Status: ${existingOsIdLocationData.claim_status}`}
                         />
                     </div>
-                    {renderConfirmButton(
-                        classes,
-                        existingOsIdLocationData.os_id,
-                        existingOsIdLocationData.os_id,
-                        moderationEventStatus,
-                        moderationEventFetching,
-                        isDisabled,
-                        confirmPotentialMatch,
-                        'Confirm existing OS ID button tooltip',
-                    )}
+                    <ModerationMatchConfirmButton
+                        classes={classes}
+                        match={{
+                            matchOsId: existingOsIdLocationData.os_id,
+                            eventOsId: existingOsIdLocationData.os_id,
+                        }}
+                        moderation={{
+                            status: moderationEventStatus,
+                            fetching: moderationEventFetching,
+                        }}
+                        actions={{ confirmPotentialMatch }}
+                        isDisabled={isDisabled}
+                        ariaLabel="Confirm existing OS ID button tooltip"
+                    />
                 </ListItem>
             </List>
         );
@@ -302,7 +251,7 @@ const DashboardContributionRecord = ({
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
 
     useEffect(() => {
-        if (requestType === REQUEST_TYPE_ENUM.UPDATE && osId) {
+        if (requestType === REQUEST_TYPE_ENUM.UPDATE && !isEmpty(osId)) {
             fetchExistingLocation(osId);
         }
     }, [requestType, osId]);
@@ -500,16 +449,22 @@ const DashboardContributionRecord = ({
                                                     primary={`Claimed Status: ${claimStatus}`}
                                                 />
                                             </div>
-                                            {renderConfirmButton(
-                                                classes,
-                                                matchOsId,
-                                                osId,
-                                                moderationEventStatus,
-                                                moderationEventFetching,
-                                                isDisabled,
-                                                confirmPotentialMatch,
-                                                'Confirm potential match button tooltip',
-                                            )}
+                                            <ModerationMatchConfirmButton
+                                                classes={classes}
+                                                match={{
+                                                    matchOsId,
+                                                    eventOsId: osId,
+                                                }}
+                                                moderation={{
+                                                    status: moderationEventStatus,
+                                                    fetching: moderationEventFetching,
+                                                }}
+                                                actions={{
+                                                    confirmPotentialMatch,
+                                                }}
+                                                isDisabled={isDisabled}
+                                                ariaLabel="Confirm potential match button tooltip"
+                                            />
                                         </ListItem>
 
                                         {index < matches.length - 1 && (
