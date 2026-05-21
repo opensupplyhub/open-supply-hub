@@ -5,24 +5,17 @@ import { withStyles } from '@material-ui/core/styles';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import NestedSelect from './NestedSelect';
-import ShowOnly from '../ShowOnly';
+import NestedSelect from '../NestedSelect';
+import ShowOnly from '../../ShowOnly';
+import { DATA_PARTNERS, contributorOptionPropType } from './constants';
+import makeDataPartnersFilterStyles from './styles';
 
 import {
     setPartnerContributorFilter,
     updateCombinePartnerContributorsFilterOption,
-} from '../../actions/filters';
-import { fetchPartnerGroupContributorsIfNeeded } from '../../actions/partnerGroupContributors';
-import { getPartnerGroupsWithContributors } from '../../selectors/partnerFieldGroupsSelectors';
-import { makeDataPartnersFilterStyles } from '../../util/styles';
-
-const DATA_PARTNERS = 'DATA_PARTNERS';
-
-const contributorOptionPropType = shape({
-    groupLabel: string.isRequired,
-    label: string.isRequired,
-    value: string.isRequired,
-});
+} from '../../../actions/filters';
+import { fetchPartnerGroupContributorsIfNeeded } from '../../../actions/partnerGroupContributors';
+import { getPartnerGroupsWithContributors } from '../../../selectors/partnerFieldGroupsSelectors';
 
 const DataPartnersFilter = ({
     groups,

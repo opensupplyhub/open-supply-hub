@@ -15,7 +15,7 @@ import TextSearchFilter from './Filters/TextSearchFilter';
 import ContributorFilter from './Filters/ContributorFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
 import SectorFilter from './Filters/SectorFilter';
-import DataPartnersFilter from './Filters/DataPartnersFilter';
+import DataPartnersFilter from './Filters/DataPartnersFilter/DataPartnersFilter';
 import TitledDrawer from './TitledDrawer';
 
 import { resetAllFilters, resetDrawerFilters } from '../actions/filters';

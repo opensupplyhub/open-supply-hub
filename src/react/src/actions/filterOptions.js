@@ -346,14 +346,6 @@ export function fetchClaimStatusOptions() {
     };
 }
 
-export function fetchAllPrimaryFilterOptions() {
-    return dispatch => {
-        dispatch(fetchContributorOptions());
-        dispatch(fetchCountryOptions());
-        dispatch(fetchListOptions());
-    };
-}
-
 export const fetchContributorOptionsIfNeeded = () => (dispatch, getState) => {
     const { data, fetching } = getState().filterOptions.contributors;
     if (data !== null || fetching) return;

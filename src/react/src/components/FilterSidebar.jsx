@@ -214,8 +214,9 @@ const FilterSidebar = ({
                                 >
                                     <MapIcon
                                         color={
-                                            activeFilterSidebarTab === 1 &&
-                                            tabContrastText
+                                            activeFilterSidebarTab === 1
+                                                ? tabContrastText
+                                                : undefined
                                         }
                                     />
                                     MAP

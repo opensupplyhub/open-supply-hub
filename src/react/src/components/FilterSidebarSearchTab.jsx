@@ -15,7 +15,7 @@ import ContributorFilter from './Filters/ContributorFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
 import SectorFilter from './Filters/SectorFilter';
 import FilterSidebarExtendedSearch from './FilterSidebarExtendedSearch';
-import DataPartnersFilter from './Filters/DataPartnersFilter';
+import DataPartnersFilter from './Filters/DataPartnersFilter/DataPartnersFilter';
 
 import {
     updateContributorTypeFilter,
