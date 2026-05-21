@@ -27,6 +27,7 @@ const ModerationMatchConfirmButton = ({
     if (!isDisabled) {
         return (
             <Button
+                data-testid="moderation-match-confirm-button"
                 color="secondary"
                 variant="contained"
                 className={classes.confirmButtonStyles}
@@ -54,6 +55,7 @@ const ModerationMatchConfirmButton = ({
             childComponent={
                 <span className={classes.claimTooltipWrapper}>
                     <Button
+                        data-testid="moderation-match-confirm-button"
                         color="secondary"
                         variant="contained"
                         className={classes.confirmButtonStyles}
