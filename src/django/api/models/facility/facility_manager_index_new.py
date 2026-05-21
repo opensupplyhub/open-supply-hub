@@ -226,7 +226,10 @@ class FacilityIndexNewManager(models.Manager):
                 for contributor_id in partner_contributors:
                     contributor_field_names = [
                         field_name
-                        for partner_contributor_id, field_name in partner_fields
+                        for (
+                            partner_contributor_id,
+                            field_name,
+                        ) in partner_fields
                         if str(partner_contributor_id) == str(contributor_id)
                     ]
                     if not contributor_field_names:
@@ -238,7 +241,10 @@ class FacilityIndexNewManager(models.Manager):
                 field_names = list(
                     {
                         field_name
-                        for _partner_contributor_id, field_name in partner_fields
+                        for (
+                            _partner_contributor_id,
+                            field_name,
+                        ) in partner_fields
                     }
                 )
                 if field_names:

@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Schema changes
 
 ### Code/API changes
+* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added Spotlight partner-contributor filtering support to platform search and facilities APIs. Introduced `partner_contributor` filtering on `GET /api/facilities/` with grouped matching logic (`combine_partner_contributors`) that preserves OR semantics within each selected partner while requiring all selected partners to match overall, and added a new `GET /api/partner-group-contributors/` endpoint to provide grouped filter options for the UI.
 
 ### Architecture/Environment changes
 
@@ -26,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 
 ### What's new
+* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied.
 * [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
 
