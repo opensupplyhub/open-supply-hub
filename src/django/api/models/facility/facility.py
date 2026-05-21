@@ -297,10 +297,11 @@ class Facility(models.Model):
 
     @staticmethod
     def current_tile_cache_key():
-        timestamp = format(
-            Facility.objects.latest('updated_at').updated_at,
-            'U',
-        )
+        latest = Facility.objects.order_by('-updated_at').first()
+        if latest is None:
+            timestamp = '0'
+        else:
+            timestamp = format(latest.updated_at, 'U')
         from ..version import Version
         try:
             tile_version = (

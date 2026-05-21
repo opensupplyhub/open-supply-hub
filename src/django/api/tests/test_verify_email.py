@@ -1,5 +1,4 @@
 from django.core import signing
-from django.urls import reverse
 from allauth.account import app_settings as allauth_settings
 from allauth.account.models import EmailAddress
 from rest_framework import status

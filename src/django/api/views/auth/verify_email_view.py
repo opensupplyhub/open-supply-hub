@@ -4,7 +4,9 @@ from allauth.account.models import EmailAddress
 from allauth.account import app_settings as allauth_settings
 from rest_framework import status
 from rest_framework.response import Response
-from dj_rest_auth.registration.views import VerifyEmailView as BaseVerifyEmailView
+from dj_rest_auth.registration.views import (
+    VerifyEmailView as BaseVerifyEmailView,
+)
 
 ALREADY_CONFIRMED_CODE = 'already_confirmed'
 
