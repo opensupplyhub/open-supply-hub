@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { string, func, bool, object } from 'prop-types';
@@ -11,8 +10,6 @@ import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import AppBar from '@material-ui/core/AppBar';
@@ -36,11 +33,10 @@ import {
 } from '../../actions/dashboardContributionRecord';
 import {
     makeClaimFacilityLinkWithFeatureFlag,
-    makeFacilityDetailLink,
     convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../../util/util';
-import ModerationMatchConfirmButton from './ModerationMatchConfirmButton';
 import ModerationExistingOsIdContent from './ModerationExistingOsIdContent';
+import ModerationLocationMatchListItem from './ModerationLocationMatchListItem';
 import {
     MODERATION_STATUSES_ENUM,
     MODERATION_ACTIONS_ENUM,
@@ -332,69 +328,29 @@ const DashboardContributionRecord = ({
                                     index,
                                 ) => (
                                     <React.Fragment key={matchOsId}>
-                                        <ListItem
-                                            className={
-                                                osId === matchOsId
-                                                    ? `${classes.listItemStyle} ${classes.listItemStyle_confirmed}`
-                                                    : classes.listItemStyle
-                                            }
-                                        >
-                                            <div>
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={
-                                                        <Typography>
-                                                            OS ID:{' '}
-                                                            <Link
-                                                                to={makeFacilityDetailLink(
-                                                                    matchOsId,
-                                                                )}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                            >
-                                                                {matchOsId}
-                                                            </Link>
-                                                        </Typography>
-                                                    }
-                                                />
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={`Name: ${name}`}
-                                                />
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={`Address: ${address}`}
-                                                />
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={`Claimed Status: ${claimStatus}`}
-                                                />
-                                            </div>
-                                            <ModerationMatchConfirmButton
-                                                classes={classes}
-                                                match={{
-                                                    matchOsId,
-                                                    eventOsId: osId,
-                                                }}
-                                                moderation={{
-                                                    status: moderationEventStatus,
-                                                    fetching: moderationEventFetching,
-                                                }}
-                                                actions={{
-                                                    confirmPotentialMatch,
-                                                }}
-                                                isDisabled={isDisabled}
-                                                ariaLabel="Confirm potential match button tooltip"
-                                            />
-                                        </ListItem>
+                                        <ModerationLocationMatchListItem
+                                            classes={classes}
+                                            location={{
+                                                osId: matchOsId,
+                                                name,
+                                                address,
+                                                claimStatus,
+                                            }}
+                                            match={{
+                                                matchOsId,
+                                                eventOsId: osId,
+                                            }}
+                                            moderation={{
+                                                status: moderationEventStatus,
+                                                fetching: moderationEventFetching,
+                                            }}
+                                            actions={{
+                                                confirmPotentialMatch,
+                                            }}
+                                            isDisabled={isDisabled}
+                                            isConfirmed={osId === matchOsId}
+                                            confirmAriaLabel="Confirm potential match button tooltip"
+                                        />
 
                                         {index < matches.length - 1 && (
                                             <Divider
