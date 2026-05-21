@@ -158,6 +158,11 @@ internal_apis = [
     path('health-check/', include('watchman.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('dj_rest_auth.urls')),
+    path(
+        'rest-auth/registration/verify-email/',
+        views.VerifyEmailView.as_view(),
+        name='rest_verify_email',
+    ),
     path('rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     path('user-login/', views.LoginToOARClient.as_view(),
          name='login_to_oar_client'),
