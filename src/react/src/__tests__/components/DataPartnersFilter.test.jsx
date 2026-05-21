@@ -14,11 +14,13 @@ jest.mock('../../components/Filters/NestedSelect', () => props => (
     <div data-testid="data-partners-filter-nested-select">
         <button
             type="button"
+            aria-label="Open data partners menu"
             data-testid="data-partners-filter-open-menu"
             onClick={props.onMenuOpen}
         />
         <button
             type="button"
+            aria-label="Select single data partner"
             data-testid="data-partners-filter-set-single"
             onClick={() =>
                 props.updateSector([
@@ -32,6 +34,7 @@ jest.mock('../../components/Filters/NestedSelect', () => props => (
         />
         <button
             type="button"
+            aria-label="Select multiple data partners"
             data-testid="data-partners-filter-set-multiple"
             onClick={() =>
                 props.updateSector([
