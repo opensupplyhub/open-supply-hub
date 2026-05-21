@@ -1,7 +1,6 @@
 from typing import List, Union
 
 from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 from django.core.files.base import File
 
@@ -18,19 +17,6 @@ class SourceParserXLSX(SourceParser, FileParser):
     def _parse(file: File) -> List[dict]:
         try:
             worksheet = SourceParserXLSX.__get_xlsx_sheet(file)
-
-            # openpyxl package is 1-indexed
-            percent_col = [get_column_letter(cell.column)
-                           for cell in worksheet[2]
-                           if '%' in cell.number_format]
-
-            if percent_col:
-                for col in percent_col:
-                    for cell in worksheet[col]:
-                        if cell.row != 1:
-                            cell.value = SourceParserXLSX.__format_percent(
-                                cell.value
-                            )
 
             worksheet_rows = worksheet.rows
             # Using `next` extracts the header row, causing the iteration of
@@ -57,8 +43,14 @@ class SourceParserXLSX(SourceParser, FileParser):
         formatted_row = []
 
         for cell in row:
-            formatted_cell_value = \
-                SourceParserXLSX.__format_cell_value(cell.value)
+            if '%' in cell.number_format:
+                formatted_cell_value = SourceParserXLSX.__format_percent(
+                    cell.value
+                )
+            else:
+                formatted_cell_value = SourceParserXLSX.__format_cell_value(
+                    cell.value
+                )
             formatted_row.append(formatted_cell_value)
 
         return formatted_row
@@ -82,7 +74,9 @@ class SourceParserXLSX(SourceParser, FileParser):
 
     @staticmethod
     def __format_percent(value: Union[float, int, str, None]) -> str:
-        if value is None or isinstance(value, str):
+        if value is None:
+            return ''
+        if isinstance(value, str):
             return value
         if value <= 1.0:
             str_value = str(value * 100)
