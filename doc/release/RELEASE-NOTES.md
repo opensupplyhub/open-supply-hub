@@ -21,6 +21,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 
+* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
+
 ### What's new
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
 
