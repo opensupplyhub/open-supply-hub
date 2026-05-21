@@ -50,7 +50,7 @@ const ClaimIntro = ({
     };
 
     return (
-        <div className={classes.root}>
+        <div className={`${classes.root} notranslate`} translate="no">
             <AppOverflow>
                 <div className={classes.container}>
                     <div className={classes.heroSection}>
