@@ -11,7 +11,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). RBA `vpn_ec2_ami` remains `ami-0940c95b23a1f7cac`; the existing VPN instance already runs OpenSSH 8.7 with Terrapin mitigations (verified with Terrapin-Scanner).
-* Release date: May 29, 2026
 
 ### Bugfix
 * [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
@@ -72,7 +71,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.
-
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
