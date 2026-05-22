@@ -9,22 +9,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 29, 2026
 
-### Database changes
-
-#### Migrations
-
-#### Schema changes
-
 ### Code/API changes
 * [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added Spotlight partner-contributor filtering support to platform search and facilities APIs. Introduced `partner_contributor` filtering on `GET /api/facilities/` with grouped matching logic (`combine_partner_contributors`) that preserves OR semantics within each selected partner while requiring all selected partners to match overall, and added a new `GET /api/partner-group-contributors/` endpoint to provide grouped filter options for the UI.
 
 ### Architecture/Environment changes
+* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). RBA `vpn_ec2_ami` remains `ami-0940c95b23a1f7cac`; the existing VPN instance already runs OpenSSH 8.7 with Terrapin mitigations (verified with Terrapin-Scanner).
 
 ### Bugfix
 * [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
 * [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
 * [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
 * [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
+
+* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
 
 ### What's new
 * [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied.
