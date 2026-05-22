@@ -10,6 +10,8 @@ from dj_rest_auth.registration.views import (
 
 ALREADY_CONFIRMED_CODE = 'already_confirmed'
 
+SECONDS_PER_DAY = 60 * 60 * 24
+
 
 class VerifyEmailView(BaseVerifyEmailView):
     def post(self, request, *args, **kwargs):
@@ -21,8 +23,11 @@ class VerifyEmailView(BaseVerifyEmailView):
             confirmation = self.get_object()
         except Http404:
             try:
+                # allauth signs confirmation keys with the same expiry window;
+                # max_age must match so we can decode the pk and distinguish
+                # "already verified" from expired or invalid keys.
                 max_age = (
-                    60 * 60 * 24
+                    SECONDS_PER_DAY
                     * allauth_settings.EMAIL_CONFIRMATION_EXPIRE_DAYS
                 )
                 pk = signing.loads(

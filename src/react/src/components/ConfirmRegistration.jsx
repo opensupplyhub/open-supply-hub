@@ -15,14 +15,12 @@ import {
 } from '../actions/auth';
 
 import {
+    alreadyConfirmedCode,
+    alreadyConfirmedMessage,
     authLoginFormRoute,
     contributeRoute,
     facilitiesRoute,
 } from '../util/constants';
-
-const ALREADY_CONFIRMED = 'already_confirmed';
-const ALREADY_CONFIRMED_MESSAGE =
-    'Your account is already active. Please log in with your username and password.';
 
 const confirmRegistrationStyles = Object.freeze({
     loadingStyles: Object.freeze({}),
@@ -57,10 +55,10 @@ class ConfirmRegistration extends Component {
             }
 
             if (error && error.length) {
-                if (error.includes(ALREADY_CONFIRMED)) {
+                if (error.includes(alreadyConfirmedCode)) {
                     return (
                         <div>
-                            <p>{ALREADY_CONFIRMED_MESSAGE}</p>
+                            <p>{alreadyConfirmedMessage}</p>
                             <Link
                                 href={authLoginFormRoute}
                                 to={authLoginFormRoute}

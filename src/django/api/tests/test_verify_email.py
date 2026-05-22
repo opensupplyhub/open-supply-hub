@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from api.models.user import User
+from api.views.auth.verify_email_view import ALREADY_CONFIRMED_CODE
 
 
 VERIFY_EMAIL_URL = '/rest-auth/registration/verify-email/'
@@ -20,7 +21,7 @@ class VerifyEmailViewTest(APITestCase):
 
     def setUp(self):
         self.email = 'testuser@example.com'
-        self.password = 'S3cur3P@ssword!'
+        self.password = 'example123'
         self.user = User(email=self.email)
         self.user.set_password(self.password)
         self.user.save()
@@ -40,7 +41,7 @@ class VerifyEmailViewTest(APITestCase):
         response = self.client.post(VERIFY_EMAIL_URL, {'key': key})
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['detail'], 'already_confirmed')
+        self.assertEqual(response.data['detail'], ALREADY_CONFIRMED_CODE)
 
     def test_unverified_email_is_confirmed_successfully(self):
         email_address = self._create_email_address(verified=False)
