@@ -6,7 +6,8 @@ contribute data through that group's active partner fields. System
 partner fields belong to groups just like regular fields and are
 included via those groups — no separate handling needed.
 
-Available to all users without authentication.
+Uses the project's default API permissions
+(`IsAuthenticatedOrWebClient`).
 """
 
 from django.db.models import Prefetch

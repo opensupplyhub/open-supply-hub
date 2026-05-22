@@ -57,3 +57,55 @@ def apply_partner_fields_or_filter(qs, field_names):
         combined_filter = combined_filter | filter_part
 
     return qs.filter(combined_filter)
+
+
+def apply_partner_contributors_filter(
+    qs, partner_contributors, combine_partner_contributors=''
+):
+    """
+    Filter a FacilityIndex-like queryset by partner contributors.
+
+    Uses active PartnerField names tied to grouped partner fields.
+    Supports OR (default) and AND semantics across contributors.
+    """
+    if not partner_contributors:
+        return qs
+
+    from api.models.partner_field import PartnerField
+
+    partner_fields = list(
+        PartnerField.objects.filter(
+            contributor__id__in=partner_contributors,
+            active=True,
+            group__isnull=False,
+        ).values_list('contributor__id', 'name').distinct()
+    )
+
+    if combine_partner_contributors.upper() == 'AND':
+        for contributor_id in partner_contributors:
+            contributor_field_names = [
+                field_name
+                for (
+                    partner_contributor_id,
+                    field_name,
+                ) in partner_fields
+                if str(partner_contributor_id) == str(contributor_id)
+            ]
+            if not contributor_field_names:
+                qs = qs.none()
+                break
+            qs = apply_partner_fields_or_filter(qs, contributor_field_names)
+    else:
+        field_names = list(
+            {
+                field_name
+                for (
+                    _partner_contributor_id,
+                    field_name,
+                ) in partner_fields
+            }
+        )
+        if field_names:
+            qs = apply_partner_fields_or_filter(qs, field_names)
+
+    return qs

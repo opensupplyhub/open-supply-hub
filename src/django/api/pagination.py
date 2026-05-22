@@ -24,6 +24,6 @@ class PartnerFieldGroupCursorPagination(CursorPagination):
     """
 
     page_size = 20
-    ordering = "order"
+    ordering = ("order", "uuid")
     page_size_query_param = "limit"
     max_page_size = 100

@@ -11,7 +11,7 @@ from api.helpers.helpers import (
     format_custom_text,)
 from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
-    apply_partner_fields_or_filter,
+    apply_partner_contributors_filter,
 )
 
 
@@ -212,46 +212,11 @@ class FacilityManager(models.Manager):
             FacilitiesQueryParams.COMBINE_PARTNER_CONTRIBUTORS, ''
         )
 
-        if partner_contributors:
-            from api.models.partner_field import PartnerField
-
-            partner_fields = list(
-                PartnerField.objects.filter(
-                    contributor__id__in=partner_contributors,
-                    active=True,
-                    group__isnull=False,
-                ).values_list('contributor__id', 'name').distinct()
-            )
-
-            if combine_partner_contributors.upper() == 'AND':
-                for contributor_id in partner_contributors:
-                    contributor_field_names = [
-                        field_name
-                        for (
-                            partner_contributor_id,
-                            field_name,
-                        ) in partner_fields
-                        if str(partner_contributor_id) == str(contributor_id)
-                    ]
-                    if not contributor_field_names:
-                        return facilities_qs.none()
-                    facilities_qs = apply_partner_fields_or_filter(
-                        facilities_qs, contributor_field_names
-                    )
-            else:
-                field_names = list(
-                    {
-                        field_name
-                        for (
-                            _partner_contributor_id,
-                            field_name,
-                        ) in partner_fields
-                    }
-                )
-                if field_names:
-                    facilities_qs = apply_partner_fields_or_filter(
-                        facilities_qs, field_names
-                    )
+        facilities_qs = apply_partner_contributors_filter(
+            facilities_qs,
+            partner_contributors,
+            combine_partner_contributors,
+        )
 
         facility_ids = facilities_qs.values_list('id', flat=True)
 
