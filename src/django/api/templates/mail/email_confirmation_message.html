@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <title>
-            Confirm your Open Supply Hub account registration
+            Activate your Open Supply Hub account
         </title>
     </head>
     <body>
@@ -10,14 +10,18 @@
             Hello,
         </p>
         <p>
-            You're receiving this message because you registered for an Open Supply
-            Hub account.
+            Thank you for registering an account with Open Supply Hub. Please confirm
+            your email address to complete your account setup.
         </p>
         <p>
-            To activate your account, visit <a href="{{ activate_url }}">{{ activate_url }}</a>
+            <a href="{{ activate_url }}" style="display:inline-block;padding:12px 24px;background-color:#8428FA;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold;">Activate my account</a>
         </p>
         <p>
-            Best Regards,
+            If the button doesn't work, copy and paste this link into your browser:<br>
+            <a href="{{ activate_url }}">{{ activate_url }}</a>
+        </p>
+        <p>
+            Didn't create an account? You can safely ignore this email.
         </p>
         {% include "mail/signature_block.html" %}
     </body>

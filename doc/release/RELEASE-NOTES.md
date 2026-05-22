@@ -18,6 +18,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
 * [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 
+* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
+
 ### What's new
 * [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
