@@ -10,7 +10,10 @@ Uses the project's default API permissions
 (`IsAuthenticatedOrWebClient`).
 """
 
+from django.conf import settings
 from django.db.models import Prefetch
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework.generics import ListAPIView
 
 from api.models.contributor.contributor import Contributor
@@ -23,6 +26,13 @@ from api.serializers.partner_group_contributors\
     )
 
 
+@method_decorator(
+    cache_page(
+        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+        cache="view_cache",
+    ),
+    name="dispatch",
+)
 class PartnerGroupContributorsView(ListAPIView):
     """
     GET /api/partner-group-contributors/
