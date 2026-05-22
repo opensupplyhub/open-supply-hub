@@ -9,15 +9,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 29, 2026
 
-### Database changes
-
-#### Migrations
-
-#### Schema changes
-
-### Code/API changes
-
 ### Architecture/Environment changes
+* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). RBA `vpn_ec2_ami` remains `ami-0940c95b23a1f7cac`; the existing VPN instance already runs OpenSSH 8.7 with Terrapin mitigations (verified with Terrapin-Scanner).
 
 ### Bugfix
 * [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
