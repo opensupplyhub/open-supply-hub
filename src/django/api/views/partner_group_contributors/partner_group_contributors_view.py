@@ -1,10 +1,9 @@
 """
 View for the partner group contributors endpoint.
 
-Returns, for each partner field group, the list of contributors who
-contribute data through that group's active partner fields. System
-partner fields belong to groups just like regular fields and are
-included via those groups — no separate handling needed.
+Returns grouped Spotlight Data Partners options. Each returned group includes
+its display label and a deduplicated list of contributors. Groups with no
+available contributors are omitted from the response.
 
 Uses the project's default API permissions
 (`IsAuthenticatedOrWebClient`).
@@ -37,12 +36,13 @@ class PartnerGroupContributorsView(ListAPIView):
     """
     GET /api/partner-group-contributors/
 
-    Returns one entry per PartnerFieldGroup, ordered by
-    PartnerFieldGroup.order.
-    Each entry carries the group's display label and the deduplicated list of
-    contributors who are linked — via Contributor.partner_fields — to at least
-    one active PartnerField in that group. System fields belong to groups and
-    are included through the same path.
+    Returns Spotlight Data Partners grouped for filter display.
+    Results are ordered by the configured group order (`order`) ascending,
+    with `uuid` as the cursor-pagination tie-breaker.
+    Contributor options are built from active partner fields only; groups that
+    end up with no contributors after this filter are omitted.
+
+    Each entry includes `uuid`, `label`, and deduplicated `contributors`.
 
     Response shape (paginated via cursor):
     {
@@ -71,7 +71,10 @@ class PartnerGroupContributorsView(ListAPIView):
             Prefetch('contributor_set', queryset=contributor_qs),
         )
 
-        return PartnerFieldGroup.objects.prefetch_related(
+        return PartnerFieldGroup.objects.filter(
+            partner_fields__active=True,
+            partner_fields__contributor__isnull=False,
+        ).distinct().prefetch_related(
             Prefetch(
                 'partner_fields',
                 queryset=active_fields_qs,

@@ -43,13 +43,34 @@ class PartnerGroupContributorsAPITest(APITestCase):
                 return result
         return None
 
+    def _create_group_with_active_contributor(self, name, order=0):
+        group = self._create_group(name, order=order)
+        field = self._create_field(f"{name}_active_field", group=group)
+        contributor = self._create_contributor(
+            f"{name}@example.com", f"{name} Contributor"
+        )
+        contributor.partner_fields.add(field)
+        return group, contributor
+
     def test_returns_200_for_unauthenticated_request(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_returns_groups_ordered_with_expected_shape(self):
-        early_group = self._create_group("Early Group", order=1)
-        late_group = self._create_group("Late Group", order=2)
+        (
+            early_group,
+            early_contributor,
+        ) = self._create_group_with_active_contributor(
+            "Early Group",
+            order=1,
+        )
+        (
+            late_group,
+            late_contributor,
+        ) = self._create_group_with_active_contributor(
+            "Late Group",
+            order=2,
+        )
 
         response = self.client.get(self.url)
 
@@ -65,8 +86,14 @@ class PartnerGroupContributorsAPITest(APITestCase):
             response.data["results"][0]["label"], early_group.name
         )
         self.assertEqual(response.data["results"][1]["label"], late_group.name)
-        self.assertEqual(response.data["results"][0]["contributors"], [])
-        self.assertEqual(response.data["results"][1]["contributors"], [])
+        self.assertEqual(
+            response.data["results"][0]["contributors"],
+            [{"id": early_contributor.id, "name": early_contributor.name}],
+        )
+        self.assertEqual(
+            response.data["results"][1]["contributors"],
+            [{"id": late_contributor.id, "name": late_contributor.name}],
+        )
 
     def test_returns_contributors_for_active_fields_in_each_group(self):
         group_one = self._create_group("Group 1", order=1)
@@ -134,11 +161,14 @@ class PartnerGroupContributorsAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         result = self._result_by_group_uuid(response, group)
-        self.assertEqual(result["contributors"], [])
+        self.assertIsNone(result)
 
     def test_limit_parameter_controls_number_of_returned_groups(self):
         for i in range(5):
-            self._create_group(f"Limit Group {i}", order=i)
+            self._create_group_with_active_contributor(
+                f"Limit Group {i}",
+                order=i,
+            )
 
         response = self.client.get(self.url, {"limit": 2})
 
