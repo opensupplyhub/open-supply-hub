@@ -112,10 +112,12 @@ def fetch_jira(email: str, token: str) -> dict:
 
 def set_str_field(line: str, field: str, value) -> str:
     """Replace field:<JS string or null> in a JS object line."""
-    replacement = f'null' if value is None else f'"{js_escape(value)}"'
+    replacement = 'null' if value is None else f'"{js_escape(value)}"'
+    subst = f'{field}:{replacement}'
+    # Use a lambda so re.sub never interprets backslashes in the replacement
     return re.sub(
         rf'{re.escape(field)}:{JS_STR_OR_NULL}',
-        f'{field}:{replacement}',
+        lambda _: subst,
         line,
     )
 
@@ -123,9 +125,10 @@ def set_str_field(line: str, field: str, value) -> str:
 def set_array_field(line: str, field: str, values: list) -> str:
     """Replace field:[...] in a JS object line."""
     inner = ",".join(f'"{js_escape(v)}"' for v in values)
+    subst = f'{field}:[{inner}]'
     return re.sub(
         rf'{re.escape(field)}:{JS_STR_ARRAY}',
-        f'{field}:[{inner}]',
+        lambda _: subst,
         line,
     )
 
