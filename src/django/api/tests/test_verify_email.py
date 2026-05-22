@@ -43,6 +43,19 @@ class VerifyEmailViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], ALREADY_CONFIRMED_CODE)
 
+    def test_already_verified_still_returns_already_confirmed_for_expired_key(
+        self,
+    ):
+        email_address = self._create_email_address(verified=True)
+        key = make_hmac_key(email_address.pk)
+        with self.assertRaises(signing.SignatureExpired):
+            signing.loads(key, max_age=0, salt=allauth_settings.SALT)
+
+        response = self.client.post(VERIFY_EMAIL_URL, {'key': key})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], ALREADY_CONFIRMED_CODE)
+
     def test_unverified_email_is_confirmed_successfully(self):
         email_address = self._create_email_address(verified=False)
         key = make_hmac_key(email_address.pk)
