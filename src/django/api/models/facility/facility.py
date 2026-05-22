@@ -301,7 +301,7 @@ class Facility(models.Model):
         if latest is None:
             timestamp = '0'
         else:
-            timestamp = format(latest.updated_at, 'U')
+            timestamp = int(latest.updated_at.timestamp())
         from ..version import Version
         try:
             tile_version = (
