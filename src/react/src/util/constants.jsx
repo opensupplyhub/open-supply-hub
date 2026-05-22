@@ -1378,7 +1378,7 @@ export const optionsForSortingResults = [
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
-export const uploadedFileRowIndexOffset = 2;
+export const uploadedFileRowIndexOffset = 1;
 
 export const USER_DEFAULT_STATE = Object.freeze({
     isAnon: true,
@@ -1460,6 +1460,11 @@ export const MODERATION_ACTIONS_ENUM = Object.freeze({
     NEW_LOCATION: 'NEW_LOCATION',
     MATCHED: 'MATCHED',
     REJECTED: 'REJECTED',
+});
+
+export const REQUEST_TYPE_ENUM = Object.freeze({
+    CREATE: 'CREATE',
+    UPDATE: 'UPDATE',
 });
 
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([
