@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: TBD
+
+### Architecture/Environment changes
+* [OSDEV-2726](https://opensupplyhub.atlassian.net/browse/OSDEV-2726) - Bumped `python:3.7` to `python:3.10` in the `dedupe-hub` and `tests` Dockerfiles to move off an end-of-life Python runtime and patch the related Vanta findings. Patched a batch of Vanta-flagged CVEs across frontend (`src/react/package.json` — `axios`, `lodash`, `validator`, `xlsx` via SheetJS CDN, plus a `resolutions` block covering vulnerable transitive deps such as `qs`, `elliptic`, `on-headers`, `node-forge`, `express`, `send`, `serve-static`, `cookie`, `form-data`, `loader-utils`, `ejs`, `pbkdf2`, `shell-quote`, etc.) and backend (`src/django/requirements.txt` — `django` 5.2.14, `django-allauth` 65.14.1, `requests` 2.33.0; `src/tests/requirements.txt`; `src/dedupe-hub/api/requirements.txt` — `numpy` 1.22.4; `deployment/terraform/database_anonymizer_scheduled_task/docker/requirements.txt` — `pg8000` 1.31.5).
+
+### Bugfix
+
+### What's new
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 ## Release 2.24.0
 
 ## Introduction
