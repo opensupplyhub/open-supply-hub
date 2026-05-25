@@ -198,7 +198,30 @@ facilities_list_parameters = [
             'contributors count descending and secondary by name '
             'ascending/descending and contributors count ascending. '
             )
-    )
+    ),
+    Parameter(
+        'partner_contributor',
+        IN_QUERY,
+        type=TYPE_INTEGER,
+        required=False,
+        description=(
+            'ID of a contributor. Facilities returned will have data '
+            'contributed via at least one of that contributor\'s active '
+            'partner fields. May be repeated; multiple values are combined '
+            'with OR semantics (any matching contributor is sufficient).'
+        ),
+    ),
+    Parameter(
+        'combine_partner_contributors',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'Set this to "AND" to return only facilities that have '
+            'matching partner-field data for all selected '
+            '`partner_contributor` values.'
+        ),
+    ),
 ]
 
 facilities_create_parameters = [

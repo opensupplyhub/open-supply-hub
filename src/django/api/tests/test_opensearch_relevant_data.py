@@ -66,12 +66,16 @@ class TestPrepareOpenSearchResponse(unittest.TestCase):
 
     @patch('api.services.opensearch.search.logger')
     def test_update_facility_updated_at_field(self, mock_logger):
-        current_time = timezone.now()
+        old_updated_at = self.facility.updated_at
+        before_update = timezone.now()
         Facility.update_facility_updated_at_field(self.facility.id)
+        self.facility.refresh_from_db(fields=['updated_at'])
         new_updated_at = self.facility.updated_at
-        self.assertEqual(current_time.replace(microsecond=0),
-                         new_updated_at.replace(microsecond=0))
-        self.assertNotEqual(self.old_updated_at, new_updated_at)
+        after_update = timezone.now()
+
+        self.assertNotEqual(old_updated_at, new_updated_at)
+        self.assertGreaterEqual(new_updated_at, before_update)
+        self.assertLessEqual(new_updated_at, after_update)
         mock_logger.warning.assert_not_called()
 
 

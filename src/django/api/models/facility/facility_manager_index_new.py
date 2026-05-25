@@ -8,6 +8,9 @@ from api.helpers.helpers import (
     clean,
     format_custom_text,)
 from api.os_id import string_matches_os_id_format
+from api.models.facility.partner_contributor_filter import (
+    apply_partner_contributors_filter,
+)
 
 
 class FacilityIndexNewManager(models.Manager):
@@ -200,5 +203,18 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs = facilities_qs.filter(
                 sector__overlap=sectors
             )
+
+        partner_contributors = params.getlist(
+            FacilitiesQueryParams.PARTNER_CONTRIBUTOR
+        )
+        combine_partner_contributors = params.get(
+            FacilitiesQueryParams.COMBINE_PARTNER_CONTRIBUTORS, ''
+        )
+
+        facilities_qs = apply_partner_contributors_filter(
+            facilities_qs,
+            partner_contributors,
+            combine_partner_contributors,
+        )
 
         return facilities_qs

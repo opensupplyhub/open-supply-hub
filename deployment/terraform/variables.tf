@@ -92,6 +92,18 @@ variable "api_partner_fields_cache_max_ttl" {
   default     = 300
 }
 
+variable "api_partner_group_contributors_cache_default_ttl" {
+  description = "Default TTL (seconds) for partner group contributors endpoint"
+  type        = number
+  default     = 120
+}
+
+variable "api_partner_group_contributors_cache_max_ttl" {
+  description = "Max TTL (seconds) for partner group contributors endpoint"
+  type        = number
+  default     = 300
+}
+
 variable "api_contributors_cache_default_ttl" {
   description = "Default TTL (seconds) for API contributors endpoints"
   type        = number
@@ -412,7 +424,7 @@ variable "hubspot_api_key" {
 }
 
 variable "hubspot_subscription_id" {
-  default = ""
+  default   = ""
   sensitive = true
 }
 
@@ -707,8 +719,8 @@ variable "anonymizer_schedule_expression" {
 }
 
 variable "anonymizer_kms_key_admin_users" {
-  type    = list(any)
-  default = []
+  type      = list(any)
+  default   = []
   sensitive = true
 }
 
@@ -723,8 +735,8 @@ variable "anonymized_database_dump_enabled" {
 }
 
 variable "anonymized_database_kms_key_id" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -744,14 +756,14 @@ variable "anonymized_database_schedule_expression" {
 }
 
 variable "anonymized_database_name" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "anonymized_database_username" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
