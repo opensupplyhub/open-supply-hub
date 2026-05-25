@@ -337,6 +337,9 @@ export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute =
     '/accounts/password/reset/key/:uid-:token/';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
+export const alreadyConfirmedCode = 'already_confirmed';
+export const alreadyConfirmedMessage =
+    'Your account is already active. Please log in with your username and password.';
 export const contributeRoute = '/contribute';
 export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
