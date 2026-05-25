@@ -15,6 +15,8 @@ import {
 } from '../actions/auth';
 
 import {
+    alreadyConfirmedCode,
+    alreadyConfirmedMessage,
     authLoginFormRoute,
     contributeRoute,
     facilitiesRoute,
@@ -53,6 +55,19 @@ class ConfirmRegistration extends Component {
             }
 
             if (error && error.length) {
+                if (error.includes(alreadyConfirmedCode)) {
+                    return (
+                        <div>
+                            <p>{alreadyConfirmedMessage}</p>
+                            <Link
+                                href={authLoginFormRoute}
+                                to={authLoginFormRoute}
+                            >
+                                Click here to log in
+                            </Link>
+                        </div>
+                    );
+                }
                 return (
                     <ul style={confirmRegistrationStyles.errorStyles}>
                         {error.map(err => (
