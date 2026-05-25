@@ -417,9 +417,11 @@ export const createQueryStringFromSearchFilters = (
         nativeLanguageName = '',
         lists = [],
         combineContributors = '',
+        combinePartnerContributors = '',
         boundary = {},
         sortAlgorithm = {},
         claimStatuses = [],
+        partnerContributors = [],
     },
     withEmbed,
     detail,
@@ -447,10 +449,12 @@ export const createQueryStringFromSearchFilters = (
         ),
         native_language_name: nativeLanguageName,
         combine_contributors: combineContributors,
+        combine_partner_contributors: combinePartnerContributors,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
+        partner_contributor: partnerContributors.map(c => c.value),
     });
 
     return querystring.stringify(omitBy(inputForQueryString, isEmpty));
@@ -483,6 +487,16 @@ export const createSelectOptionsFromParams = params => {
     );
 };
 
+export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
+    groups.map(group => ({
+        label: group.label,
+        options: (group.contributors || []).map(contributor => ({
+            value: String(contributor.id),
+            label: contributor.name,
+            groupLabel: group.label,
+        })),
+    }));
+
 export const getAlgorithm = sortBy =>
     optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
     optionsForSortingResults[0];
@@ -505,9 +519,16 @@ export const createFiltersFromQueryString = qs => {
         number_of_workers: numberOfWorkers = [],
         native_language_name: nativeLanguageName = '',
         combine_contributors: combineContributors = '',
+        combine_partner_contributors: combinePartnerContributors = '',
         boundary = '',
         sort_by: sortBy = '',
+        partner_contributor: rawPartnerContributors = [],
     } = querystring.parse(qsToParse);
+
+    const normaliseStringArray = val => {
+        if (!val) return [];
+        return isArray(val) ? compact(val) : compact([val]);
+    };
 
     return Object.freeze({
         facilityFreeTextQuery,
@@ -524,8 +545,12 @@ export const createFiltersFromQueryString = qs => {
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
         combineContributors,
+        combinePartnerContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
         sortAlgorithm: getAlgorithm(sortBy),
+        partnerContributors: normaliseStringArray(
+            rawPartnerContributors,
+        ).map(v => ({ value: v, label: v, groupLabel: '' })),
     });
 };
 
@@ -1142,8 +1167,8 @@ export const updateListWithLabels = (list, payload) =>
 
         return accumulator.concat(
             Object.freeze({
+                ...validOption,
                 value,
-                label: validOption.label,
             }),
         );
     }, []);

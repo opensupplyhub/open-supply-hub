@@ -120,6 +120,11 @@ public_apis = [
         views.PartnerFieldGroupsViewSet.as_view({'get': 'list'}),
         name='partner_field_groups'
     ),
+    path(
+        'api/partner-group-contributors/',
+        views.PartnerGroupContributorsView.as_view(),
+        name='partner_group_contributors'
+    ),
 ]
 
 api_v1 = [path('api/v1/', include(v1_router.urls + v1_custom_routes))]

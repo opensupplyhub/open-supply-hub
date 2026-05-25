@@ -24,6 +24,8 @@ import {
     updateAllFilters,
     updateDataSourceFilter,
     updateModerationStatusFilter,
+    setPartnerContributorFilter,
+    updateCombinePartnerContributorsFilterOption,
 } from '../actions/filters';
 
 import {
@@ -34,10 +36,14 @@ import {
     completeFetchParentCompanyOptions,
     completeFetchGroupedSectorOptions,
 } from '../actions/filterOptions';
+import { completeFetchPartnerGroupContributors } from '../actions/partnerGroupContributors';
 
 import { completeSubmitLogOut } from '../actions/auth';
 
-import { updateListWithLabels } from '../util/util';
+import {
+    mapPartnerGroupContributorsToSelectOptions,
+    updateListWithLabels,
+} from '../util/util';
 
 const initialState = Object.freeze({
     facilityFreeTextQuery: '',
@@ -58,6 +64,8 @@ const initialState = Object.freeze({
     combineContributors: '',
     boundary: null,
     lists: Object.freeze([]),
+    partnerContributors: Object.freeze([]),
+    combinePartnerContributors: '',
 });
 
 export const maybeSetFromQueryString = field => (state, payload) => {
@@ -153,6 +161,14 @@ export default createReducer(
             update(state, {
                 moderationStatuses: { $set: payload },
             }),
+        [setPartnerContributorFilter]: (state, payload) =>
+            update(state, {
+                partnerContributors: { $set: payload },
+            }),
+        [updateCombinePartnerContributorsFilterOption]: (state, payload) =>
+            update(state, {
+                combinePartnerContributors: { $set: payload },
+            }),
         [resetAllFilters]: (state, isEmbedded) =>
             update(initialState, {
                 contributors: {
@@ -184,6 +200,17 @@ export default createReducer(
         [completeFetchParentCompanyOptions]: maybeSetFromQueryString(
             'parentCompany',
         ),
+        [completeFetchPartnerGroupContributors]: (state, payload) =>
+            update(state, {
+                partnerContributors: {
+                    $set: updateListWithLabels(
+                        state.partnerContributors,
+                        mapPartnerGroupContributorsToSelectOptions(
+                            payload?.results || [],
+                        ),
+                    ),
+                },
+            }),
         [completeSubmitLogOut]: () => initialState,
     },
     initialState,

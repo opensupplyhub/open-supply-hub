@@ -22,6 +22,11 @@ locals {
       max_ttl      = var.api_partner_fields_cache_max_ttl
     },
     {
+      path_pattern = "api/partner-group-contributors*"
+      default_ttl  = var.api_partner_group_contributors_cache_default_ttl
+      max_ttl      = var.api_partner_group_contributors_cache_max_ttl
+    },
+    {
       path_pattern = "api/contributors/"
       default_ttl  = var.api_contributors_cache_default_ttl
       max_ttl      = var.api_contributors_cache_max_ttl

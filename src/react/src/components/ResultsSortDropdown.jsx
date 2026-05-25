@@ -54,12 +54,17 @@ const resultsSortDropdownStyles = theme =>
         },
     });
 
-const ResultsSortDropdown = ({ classes, sortAlgorithm, updateSort }) => {
+const ResultsSortDropdown = ({
+    classes,
+    sortAlgorithm,
+    initializeSort,
+    updateSort,
+}) => {
     useEffect(() => {
         if (!sortAlgorithm) {
-            updateSort(optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX]);
+            initializeSort(optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX]);
         }
-    }, [sortAlgorithm, updateSort]);
+    }, [sortAlgorithm, initializeSort]);
 
     return (
         <Grid container>
@@ -105,6 +110,7 @@ ResultsSortDropdown.propTypes = {
         }).isRequired,
         string,
     ]).isRequired,
+    initializeSort: func.isRequired,
     updateSort: func.isRequired,
 };
 
@@ -113,6 +119,9 @@ const mapStateToProps = ({ filters }) => ({
 });
 
 const mapDispatchToProps = (dispatch, { history: { push } }) => ({
+    initializeSort: v => {
+        dispatch(updateSortAlgorithm(v));
+    },
     updateSort: v => {
         dispatch(updateSortAlgorithm(v));
         dispatch(fetchFacilities({ pushNewRoute: push }));
