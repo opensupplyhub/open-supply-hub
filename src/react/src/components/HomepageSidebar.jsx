@@ -11,7 +11,7 @@ import {
     fetchContributorOptions,
     fetchListOptions,
     fetchCountryOptions,
-    fetchAllPrimaryFilterOptions,
+    fetchAllPrimaryFilterOptionsIfNeeded,
 } from '../actions/filterOptions';
 
 import {
@@ -46,9 +46,7 @@ class HomepageSidebar extends Component {
             sectorsData,
             fetchFilterOptions,
             fetchContributors,
-            fetchLists,
             fetchCountries,
-            contributors,
             history,
         } = this.props;
 
@@ -68,15 +66,14 @@ class HomepageSidebar extends Component {
             fetchCountries();
         }
 
-        if (contributors && contributors.length) {
-            fetchLists();
-        }
-
         return null;
     }
 
     componentDidUpdate(prevProps) {
-        if (this.props.contributors !== prevProps.contributors) {
+        if (
+            this.props.contributors !== prevProps.contributors &&
+            !this.props.fetchingLists
+        ) {
             this.props.fetchLists();
         }
     }
@@ -113,6 +110,7 @@ HomepageSidebar.propTypes = {
     countriesData: countryOptionsPropType,
     sectorsData: sectorOptionsPropType,
     fetchingFeatureFlags: bool.isRequired,
+    fetchingLists: bool.isRequired,
 };
 
 function mapStateToProps({
@@ -120,6 +118,7 @@ function mapStateToProps({
         contributors: { data: contributorsData },
         countries: { data: countriesData },
         sectors: { data: sectorsData },
+        lists: { fetching: fetchingLists },
     },
     featureFlags: { fetching: fetchingFeatureFlags },
     filters: { contributors },
@@ -128,6 +127,7 @@ function mapStateToProps({
         contributorsData,
         countriesData,
         sectorsData,
+        fetchingLists,
         fetchingFeatureFlags,
         contributors,
     };
@@ -135,7 +135,8 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
-        fetchFilterOptions: () => dispatch(fetchAllPrimaryFilterOptions()),
+        fetchFilterOptions: () =>
+            dispatch(fetchAllPrimaryFilterOptionsIfNeeded()),
         fetchContributors: () => dispatch(fetchContributorOptions()),
         fetchLists: () => dispatch(fetchListOptions()),
         fetchCountries: () => dispatch(fetchCountryOptions()),

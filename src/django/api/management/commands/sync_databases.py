@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+import datetime
 import hashlib
 import hmac
 
@@ -959,14 +959,14 @@ class DatabaseSynchronizer:
             try:
                 with open(last_run_file, 'r') as f:
                     timestamp_str = f.read().strip()
-                    return datetime.fromisoformat(timestamp_str)
+                    return datetime.datetime.fromisoformat(timestamp_str)
             except (ValueError, IOError) as e:
                 logger.warning(
                     'Could not read last run timestamp '
                     f'for {model_name}: {e}.')
 
         # Return a very old date if no last run file exists.
-        return datetime(1970, 1, 1, tzinfo=timezone.utc)
+        return datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
     def __save_last_run_timestamp(self, model_name, timestamp, suffix=''):
         '''Save the last run timestamp for a specific model.'''

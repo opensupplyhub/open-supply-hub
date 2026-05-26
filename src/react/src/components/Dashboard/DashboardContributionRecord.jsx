@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { string, func, bool, object } from 'prop-types';
@@ -11,8 +10,6 @@ import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import AppBar from '@material-ui/core/AppBar';
@@ -28,6 +25,7 @@ import {
 import {
     fetchSingleModerationEvent,
     fetchPotentialMatches,
+    fetchExistingOsIdLocation,
     updateSingleModerationEvent,
     createProductionLocationFromModerationEvent,
     confirmPotentialMatchFromModerationEvent,
@@ -35,18 +33,18 @@ import {
 } from '../../actions/dashboardContributionRecord';
 import {
     makeClaimFacilityLinkWithFeatureFlag,
-    makeFacilityDetailLink,
     convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../../util/util';
-import DialogTooltip from './../Contribute/DialogTooltip';
+import ModerationExistingOsIdContent from './ModerationExistingOsIdContent';
+import ModerationLocationMatchListItem from './ModerationLocationMatchListItem';
 import {
     MODERATION_STATUSES_ENUM,
     MODERATION_ACTIONS_ENUM,
+    REQUEST_TYPE_ENUM,
     ENABLE_V1_CLAIMS_FLOW,
 } from '../../util/constants';
 
 const claimButtonTitle = 'Go to Claim';
-const confirmPotentialMatchButtonTitle = 'Confirm';
 const newLocationTitle = 'New Location';
 const matchedTitle = 'Matched';
 
@@ -63,24 +61,13 @@ const claimButtonDisabled = classes => (
     </span>
 );
 
-const confirmPotentialMatchButtonDisabled = (classes, osId, matchOsId) => (
-    <span className={`${classes.claimTooltipWrapper}`}>
-        <Button
-            color="secondary"
-            variant="contained"
-            className={classes.confirmButtonStyles}
-            disabled
-        >
-            {osId === matchOsId ? 'Matched' : confirmPotentialMatchButtonTitle}
-        </Button>
-    </span>
-);
-
 let hasPrefetchedData = false;
 const DashboardContributionRecord = ({
     push,
     singleModerationEventItem,
     matches,
+    existingOsIdLocationData,
+    existingOsIdLocationFetching,
     fetchModerationEventError,
     updateModerationEvent,
     createProductionLocation,
@@ -88,6 +75,7 @@ const DashboardContributionRecord = ({
     classes,
     fetchModerationEvent,
     fetchMatches,
+    fetchExistingLocation,
     moderationEventFetching,
     fetchPotentialMatchError,
     handleCleanupContributionRecord,
@@ -104,6 +92,7 @@ const DashboardContributionRecord = ({
         countryCode,
         productionLocationAddress,
         osId,
+        requestType,
     } = useMemo(() => {
         if (isEmpty(singleModerationEventItem)) {
             return {};
@@ -116,6 +105,7 @@ const DashboardContributionRecord = ({
                 address: locationAddress = '',
             } = {},
             os_id: locationOsId = null,
+            request_type: locRequestType = null,
         } = singleModerationEventItem || {};
 
         return {
@@ -123,6 +113,7 @@ const DashboardContributionRecord = ({
             countryCode: code,
             productionLocationAddress: locationAddress,
             osId: locationOsId,
+            requestType: locRequestType,
         };
     }, [singleModerationEventItem]);
 
@@ -179,6 +170,12 @@ const DashboardContributionRecord = ({
             });
         }
     }, [productionLocationName, countryCode, productionLocationAddress, osId]);
+
+    useEffect(() => {
+        if (requestType === REQUEST_TYPE_ENUM.UPDATE && !isEmpty(osId)) {
+            fetchExistingLocation(osId);
+        }
+    }, [requestType, osId]);
 
     useEffect(
         () => () => {
@@ -274,6 +271,33 @@ const DashboardContributionRecord = ({
                 </div>
             </Paper>
 
+            {requestType === REQUEST_TYPE_ENUM.UPDATE && (
+                <>
+                    <Typography variant="title" className={classes.title}>
+                        Existing OSID
+                    </Typography>
+                    <div className={classes.potentialMatchesBlock}>
+                        <Divider className={classes.dividerStyle} />
+                        <div className={classes.potentialMatchesInternalBlock}>
+                            <ModerationExistingOsIdContent
+                                classes={classes}
+                                location={{
+                                    fetching: existingOsIdLocationFetching,
+                                    data: existingOsIdLocationData,
+                                }}
+                                moderation={{
+                                    status: moderationEventStatus,
+                                    fetching: moderationEventFetching,
+                                }}
+                                actions={{ confirmPotentialMatch }}
+                                isDisabled={isDisabled}
+                            />
+                        </div>
+                        <Divider className={classes.dividerStyle} />
+                    </div>
+                </>
+            )}
+
             <Typography variant="title" className={classes.title}>
                 Potential Matches ({potentialMatchCount})
             </Typography>
@@ -304,88 +328,29 @@ const DashboardContributionRecord = ({
                                     index,
                                 ) => (
                                     <React.Fragment key={matchOsId}>
-                                        <ListItem
-                                            className={
-                                                osId === matchOsId
-                                                    ? `${classes.listItemStyle} ${classes.listItemStyle_confirmed}`
-                                                    : classes.listItemStyle
-                                            }
-                                        >
-                                            <div>
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={
-                                                        <Typography>
-                                                            OS ID:{' '}
-                                                            <Link
-                                                                to={makeFacilityDetailLink(
-                                                                    matchOsId,
-                                                                )}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                            >
-                                                                {matchOsId}
-                                                            </Link>
-                                                        </Typography>
-                                                    }
-                                                />
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={`Name: ${name}`}
-                                                />
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={`Address: ${address}`}
-                                                />
-                                                <ListItemText
-                                                    className={
-                                                        classes.listItemTextStyle
-                                                    }
-                                                    primary={`Claimed Status: ${claimStatus}`}
-                                                />
-                                            </div>
-                                            {!isDisabled ? (
-                                                <Button
-                                                    color="secondary"
-                                                    variant="contained"
-                                                    className={
-                                                        classes.confirmButtonStyles
-                                                    }
-                                                    disabled={
-                                                        moderationEventFetching
-                                                    }
-                                                    onClick={() => {
-                                                        confirmPotentialMatch(
-                                                            matchOsId,
-                                                        );
-                                                    }}
-                                                >
-                                                    {
-                                                        confirmPotentialMatchButtonTitle
-                                                    }
-                                                </Button>
-                                            ) : (
-                                                <DialogTooltip
-                                                    text={
-                                                        osId === matchOsId
-                                                            ? `Moderation event data has been already matched to this production location.`
-                                                            : `You can't confirm potential match when moderation event is ${moderationEventStatus.toLowerCase()}.`
-                                                    }
-                                                    aria-label="Confirm potential match button tooltip"
-                                                    childComponent={confirmPotentialMatchButtonDisabled(
-                                                        classes,
-                                                        osId,
-                                                        matchOsId,
-                                                    )}
-                                                />
-                                            )}
-                                        </ListItem>
+                                        <ModerationLocationMatchListItem
+                                            classes={classes}
+                                            location={{
+                                                osId: matchOsId,
+                                                name,
+                                                address,
+                                                claimStatus,
+                                            }}
+                                            match={{
+                                                matchOsId,
+                                                eventOsId: osId,
+                                            }}
+                                            moderation={{
+                                                status: moderationEventStatus,
+                                                fetching: moderationEventFetching,
+                                            }}
+                                            actions={{
+                                                confirmPotentialMatch,
+                                            }}
+                                            isDisabled={isDisabled}
+                                            isConfirmed={osId === matchOsId}
+                                            confirmAriaLabel="Confirm potential match button tooltip"
+                                        />
 
                                         {index < matches.length - 1 && (
                                             <Divider
@@ -459,18 +424,22 @@ const DashboardContributionRecord = ({
 DashboardContributionRecord.defaultProps = {
     fetchModerationEventError: null,
     fetchPotentialMatchError: null,
+    existingOsIdLocationData: null,
 };
 
 DashboardContributionRecord.propTypes = {
     push: func.isRequired,
     singleModerationEventItem: moderationEventsListItemPropType.isRequired,
     matches: potentialMatchesPropType.isRequired,
+    existingOsIdLocationData: object,
+    existingOsIdLocationFetching: bool.isRequired,
     moderationEventFetching: bool.isRequired,
     fetchModerationEvent: func.isRequired,
     updateModerationEvent: func.isRequired,
     createProductionLocation: func.isRequired,
     confirmPotentialMatch: func.isRequired,
     fetchMatches: func.isRequired,
+    fetchExistingLocation: func.isRequired,
     classes: object.isRequired,
     fetchModerationEventError: string,
     fetchPotentialMatchError: string,
@@ -490,6 +459,10 @@ const mapStateToProps = ({
             fetching: potentialMatchFetching,
             error: fetchPotentialMatchError,
         },
+        existingOsIdLocation: {
+            data: existingOsIdLocationData,
+            fetching: existingOsIdLocationFetching,
+        },
     },
     featureFlags: { flags },
 }) => {
@@ -504,6 +477,8 @@ const mapStateToProps = ({
         potentialMatchFetching,
         fetchModerationEventError,
         fetchPotentialMatchError,
+        existingOsIdLocationData,
+        existingOsIdLocationFetching,
         isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
             ENABLE_V1_CLAIMS_FLOW,
         ),
@@ -536,6 +511,7 @@ const mapDispatchToProps = (
     confirmPotentialMatch: osId =>
         dispatch(confirmPotentialMatchFromModerationEvent(moderationID, osId)),
     fetchMatches: data => dispatch(fetchPotentialMatches(data)),
+    fetchExistingLocation: osId => dispatch(fetchExistingOsIdLocation(osId)),
     handleCleanupContributionRecord: () =>
         dispatch(cleanupContributionRecord()),
 });

@@ -23,6 +23,7 @@ const NestedSelect = ({
     classes,
     isSideBarSearch,
     windowWidth,
+    onMenuOpen: onMenuOpenProp,
     ...rest
 }) => {
     const selectFilterStyles = makeSelectFilterStyles(windowWidth);
@@ -40,9 +41,14 @@ const NestedSelect = ({
     const {
         menuIsOpen,
         setMenuIsOpen,
-        onMenuOpen,
+        onMenuOpen: onMenuOpenInternal,
         onMenuClose,
     } = useMenuState();
+
+    const onMenuOpen = () => {
+        onMenuOpenInternal();
+        if (onMenuOpenProp) onMenuOpenProp();
+    };
 
     const handleSelect = selected => {
         updateSector(selected);
