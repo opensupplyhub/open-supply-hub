@@ -26,7 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
 * [Follow-up][OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Fixed `sync_databases` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` when no last-run timestamp file exists for a model. Replaced the invalid `django.utils.timezone.utc` reference with the stdlib `datetime.timezone.utc` for the default epoch fallback date.
 
-* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
+* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Added a post-registration banner with troubleshooting steps for users who do not receive the activation email.
 
 ### What's new
 * [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied.
