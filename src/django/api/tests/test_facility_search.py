@@ -2,6 +2,7 @@ import json
 
 from api.models import (
     Contributor,
+    ExtendedField,
     Facility,
     FacilityAlias,
     FacilityList,
@@ -10,7 +11,6 @@ from api.models import (
     Source,
     User,
 )
-from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.models.partner_field_group import PartnerFieldGroup
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
@@ -120,13 +120,6 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         data = json.loads(response.content)
         self.assertEqual(count, int(data["count"]))
 
-    def _set_index_field_names(self, facility, field_names):
-        facility_index = FacilityIndex.objects.get(id=facility.id)
-        facility_index.extended_fields = [
-            {"field_name": field_name} for field_name in field_names
-        ]
-        facility_index.save()
-
     def _create_partner_contributor(self, email, name):
         user = User.objects.create(email=email)
         user.set_password("example123")
@@ -217,14 +210,16 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         contributor_two = self._create_partner_contributor(
             "partner-or-two@example.com", "Partner OR Two"
         )
+        partner_field_name_one = "partner_or_field_one"
+        partner_field_name_two = "partner_or_field_two"
         field_one = PartnerField.objects.create(
-            name="partner_or_field_one",
+            name=partner_field_name_one,
             type=PartnerField.STRING,
             group=group,
             active=True,
         )
         field_two = PartnerField.objects.create(
-            name="partner_or_field_two",
+            name=partner_field_name_two,
             type=PartnerField.STRING,
             group=group,
             active=True,
@@ -232,9 +227,17 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         contributor_one.partner_fields.add(field_one)
         contributor_two.partner_fields.add(field_two)
 
-        self._set_index_field_names(self.facility, ["partner_or_field_one"])
-        self._set_index_field_names(
-            self.facility_two, ["partner_or_field_two"]
+        ExtendedField.objects.create(
+            contributor=contributor_one,
+            facility=self.facility,
+            field_name=partner_field_name_one,
+            value={"min": 1, "max": 1},
+        )
+        ExtendedField.objects.create(
+            contributor=contributor_two,
+            facility=self.facility_two,
+            field_name=partner_field_name_two,
+            value={"raw_values": ["Yarn"]},
         )
 
         response = self.client.get(
@@ -244,49 +247,7 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         )
         self.assert_response_count(response, 2)
 
-    def test_partner_contributor_and_search(self):
-        group = PartnerFieldGroup.objects.create(name="Group AND", order=2)
-        contributor_one = self._create_partner_contributor(
-            "partner-and-one@example.com", "Partner AND One"
-        )
-        contributor_two = self._create_partner_contributor(
-            "partner-and-two@example.com", "Partner AND Two"
-        )
-        field_one = PartnerField.objects.create(
-            name="partner_and_field_one",
-            type=PartnerField.STRING,
-            group=group,
-            active=True,
-        )
-        field_two = PartnerField.objects.create(
-            name="partner_and_field_two",
-            type=PartnerField.STRING,
-            group=group,
-            active=True,
-        )
-        contributor_one.partner_fields.add(field_one)
-        contributor_two.partner_fields.add(field_two)
-
-        self._set_index_field_names(self.facility, ["partner_and_field_one"])
-        self._set_index_field_names(
-            self.facility_two,
-            ["partner_and_field_one", "partner_and_field_two"],
-        )
-
-        response = self.client.get(
-            "{}?partner_contributor={}&partner_contributor={}"
-            "&combine_partner_contributors=AND".format(
-                self.base_url, contributor_one.id, contributor_two.id
-            )
-        )
-        self.assert_response_count(response, 1)
-
-        response_json = json.loads(response.content)
-        self.assertEqual(
-            self.facility_two.id, response_json["features"][0]["id"]
-        )
-
-    def test_partner_contributor_and_missing_active_fields_returns_none(
+    def test_partner_contributor_ignores_inactive_partner_fields(
         self
     ):
         group = PartnerFieldGroup.objects.create(
@@ -298,15 +259,17 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         contributor_two = self._create_partner_contributor(
             "partner-and-missing-two@example.com", "Partner Missing Two"
         )
+        active_partner_field_name = "partner_active_field"
+        inactive_partner_field_name = "partner_inactive_field"
         active_field = PartnerField.objects.create(
-            name="partner_active_field",
+            name=active_partner_field_name,
             type=PartnerField.STRING,
             group=group,
             active=True,
         )
         inactive_field = (
             PartnerField.objects.get_all_including_inactive().create(
-                name="partner_inactive_field",
+                name=inactive_partner_field_name,
                 type=PartnerField.STRING,
                 group=group,
                 active=False,
@@ -315,15 +278,27 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         contributor_one.partner_fields.add(active_field)
         contributor_two.partner_fields.add(inactive_field)
 
-        self._set_index_field_names(self.facility, ["partner_active_field"])
-        self._set_index_field_names(
-            self.facility_two, ["partner_active_field"]
+        ExtendedField.objects.create(
+            contributor=contributor_one,
+            facility=self.facility,
+            field_name=active_partner_field_name,
+            value={"raw_values": ["Facility One"]},
+        )
+        ExtendedField.objects.create(
+            contributor=contributor_two,
+            facility=self.facility_two,
+            field_name=inactive_partner_field_name,
+            value={"raw_values": ["Inactive-only Facility"]},
         )
 
         response = self.client.get(
-            "{}?partner_contributor={}&partner_contributor={}"
-            "&combine_partner_contributors=AND".format(
+            "{}?partner_contributor={}&partner_contributor={}".format(
                 self.base_url, contributor_one.id, contributor_two.id
             )
         )
-        self.assert_response_count(response, 0)
+        self.assert_response_count(response, 1)
+
+        response_json = json.loads(response.content)
+        self.assertEqual(
+            self.facility.id, response_json["features"][0]["id"]
+        )
