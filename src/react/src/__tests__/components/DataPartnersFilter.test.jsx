@@ -70,11 +70,6 @@ const contributorA = {
     label: 'partner-a',
     value: 'partner-a',
 };
-const contributorB = {
-    groupLabel: 'group-b',
-    label: 'partner-b',
-    value: 'partner-b',
-};
 
 describe('DataPartnersFilter component', () => {
     const renderComponent = ({
