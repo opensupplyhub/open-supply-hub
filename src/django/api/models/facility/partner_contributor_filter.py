@@ -22,7 +22,6 @@ def apply_partner_fields_or_filter(
     System partner fields use country-code lookups via standard `Q` objects.
     """
     filters = []
-
     regular_field_names = [
         field_name
         for field_name in field_names
@@ -101,6 +100,9 @@ def apply_partner_contributors_filter(
         .distinct()
     )
 
+    if not partner_fields:
+        return facilities_queryset.none()
+
     field_names = list(
         {
             field_name
@@ -110,11 +112,17 @@ def apply_partner_contributors_filter(
             ) in partner_fields
         }
     )
-    if field_names:
-        facilities_queryset = apply_partner_fields_or_filter(
-            facilities_queryset,
-            field_names,
-            partner_contributors,
-        )
+    contributor_ids = list(
+        {
+            contributor_id
+            for contributor_id, _field_name in partner_fields
+        }
+    )
+
+    facilities_queryset = apply_partner_fields_or_filter(
+        facilities_queryset,
+        field_names,
+        contributor_ids,
+    )
 
     return facilities_queryset

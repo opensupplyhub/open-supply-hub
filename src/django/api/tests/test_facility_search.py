@@ -302,3 +302,41 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
         self.assertEqual(
             self.facility.id, response_json["features"][0]["id"]
         )
+
+    def test_partner_contributor_no_active_grouped_fields_returns_none(
+        self
+    ):
+        group = PartnerFieldGroup.objects.create(
+            name="Inactive Group", order=4
+        )
+        contributor_one = self._create_partner_contributor(
+            "partner-none-one@example.com", "Partner None One"
+        )
+        contributor_two = self._create_partner_contributor(
+            "partner-none-two@example.com", "Partner None Two"
+        )
+        inactive_field_one = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name="partner_inactive_none_one",
+                type=PartnerField.STRING,
+                group=group,
+                active=False,
+            )
+        )
+        inactive_field_two = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name="partner_inactive_none_two",
+                type=PartnerField.STRING,
+                group=group,
+                active=False,
+            )
+        )
+        contributor_one.partner_fields.add(inactive_field_one)
+        contributor_two.partner_fields.add(inactive_field_two)
+
+        response = self.client.get(
+            "{}?partner_contributor={}&partner_contributor={}".format(
+                self.base_url, contributor_one.id, contributor_two.id
+            )
+        )
+        self.assert_response_count(response, 0)
