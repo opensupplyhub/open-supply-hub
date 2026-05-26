@@ -3,6 +3,34 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: _Provide release date_
+
+### Database changes
+
+#### Migrations
+
+#### Schema changes
+
+### Code/API changes
+
+### Architecture/Environment changes
+
+### Bugfix
+
+* [OSDEV-2768](https://opensupplyhub.atlassian.net/browse/OSDEV-2768) - Added a banner to the post-registration screen with guidance on what to do if the activation email is not received within 24 hours.
+
+### What's new
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.24.0
 
 ## Introduction
@@ -25,8 +53,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 * [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
 * [Follow-up][OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Fixed `sync_databases` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` when no last-run timestamp file exists for a model. Replaced the invalid `django.utils.timezone.utc` reference with the stdlib `datetime.timezone.utc` for the default epoch fallback date.
-
-* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Added a banner to the post-registration screen with guidance on what to do if the activation email is not received within 24 hours.
 
 ### What's new
 * [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied.
