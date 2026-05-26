@@ -38,5 +38,8 @@ Precise `file:line` citations always. The caller will add real-world analogies o
 
 - Do not write code
 - Do not run tests or git commands
+- Do not modify files or environment via shell (no redirects/writes `>`, `>>`, `tee`; no `rm`, `mv`, `chmod`, `chown`, `touch`, `dd`)
+- Do not call external networks or APIs from shell (no `curl`, `wget`, `nc`, `scp`, `ssh`, `git fetch/push`, `pip install`, `apt`, `yum`)
+- Use Bash only for read-only local inspection (e.g., `cat`, `grep`, `sed`, `awk`, `head`, `tail`, `ls`, `find`) — never open network sockets or invoke remote services
 - Do not ask the human direct questions — return your findings to the caller, who handles human-facing dialog
 - Do not invent file behavior — if a file does not exist or is ambiguous, say so
