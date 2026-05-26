@@ -15,7 +15,7 @@ If the user did not name a ticket, ask:
 
 ## Step 2 — Read the ticket
 
-Fetch from Jira via the Atlassian MCP. The OS Hub workspace cloudId is `ce4a9d75-c0aa-460b-92fa-28cb0a11baa6` (universal for anyone in the OS Hub Atlassian instance, not personal).
+Fetch from Jira via the Atlassian MCP. The OS Hub Atlassian site is `opensupplyhub.atlassian.net` — use this to identify the workspace when calling the MCP.
 
 Extract: summary, description, acceptance criteria, labels.
 
