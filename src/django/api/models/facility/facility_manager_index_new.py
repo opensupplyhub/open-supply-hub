@@ -207,14 +207,10 @@ class FacilityIndexNewManager(models.Manager):
         partner_contributors = params.getlist(
             FacilitiesQueryParams.PARTNER_CONTRIBUTOR
         )
-        combine_partner_contributors = params.get(
-            FacilitiesQueryParams.COMBINE_PARTNER_CONTRIBUTORS, ''
-        )
 
         facilities_qs = apply_partner_contributors_filter(
             facilities_qs,
             partner_contributors,
-            combine_partner_contributors,
         )
 
         return facilities_qs

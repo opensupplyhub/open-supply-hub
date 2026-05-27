@@ -41,7 +41,6 @@ class FacilitiesQueryParams:
     NATIVE_LANGUAGE_NAME = 'native_language_name'
     SECTOR = 'sectors'
     PARTNER_CONTRIBUTOR = 'partner_contributor'
-    COMBINE_PARTNER_CONTRIBUTORS = 'combine_partner_contributors'
 
 
 class FacilityListQueryParams:
