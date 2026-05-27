@@ -340,3 +340,51 @@ class FacilitySearchTest(FacilityAPITestCaseBase):
             )
         )
         self.assert_response_count(response, 0)
+
+    def test_partner_contributor_ignores_cross_contributor_field_name(
+        self
+    ):
+        group = PartnerFieldGroup.objects.create(
+            name="Cross Contributor Isolation Group", order=5
+        )
+        contributor_one = self._create_partner_contributor(
+            "partner-cross-one@example.com", "Partner Cross One"
+        )
+        contributor_two = self._create_partner_contributor(
+            "partner-cross-two@example.com", "Partner Cross Two"
+        )
+
+        partner_field_name_one = "partner_cross_field_one"
+        partner_field_name_two = "partner_cross_field_two"
+        field_one = PartnerField.objects.create(
+            name=partner_field_name_one,
+            type=PartnerField.STRING,
+            group=group,
+            active=True,
+        )
+        field_two = PartnerField.objects.create(
+            name=partner_field_name_two,
+            type=PartnerField.STRING,
+            group=group,
+            active=True,
+        )
+        contributor_one.partner_fields.add(field_one)
+        contributor_two.partner_fields.add(field_two)
+
+        # This is intentionally invalid data: contributor_one writes a value
+        # under contributor_two's field name. We keep this test to document
+        # the bad input and ensure it does not leak into contributor_two
+        # filtering results.
+        ExtendedField.objects.create(
+            contributor=contributor_one,
+            facility=self.facility,
+            field_name=partner_field_name_two,
+            value={"raw_values": ["Wrong contributor-field pairing"]},
+        )
+
+        response = self.client.get(
+            "{}?partner_contributor={}".format(
+                self.base_url, contributor_two.id
+            )
+        )
+        self.assert_response_count(response, 0)

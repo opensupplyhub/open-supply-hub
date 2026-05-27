@@ -29,8 +29,8 @@ def apply_partner_fields_or_filter(
     ]
 
     if regular_field_names:
-        # We need to use a subquery to match the extended fields because
-        # the extended fields are an ArrayField(JSONField).
+        # Use a correlated Exists subquery on ExtendedField so contributor
+        # and partner-field matching stays in SQL without RawSQL/unnest.
         filters.append(
             Exists(
                 ExtendedField.objects.filter(
