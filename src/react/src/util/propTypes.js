@@ -347,7 +347,6 @@ export const filtersPropType = shape({
     countries: arrayOf(reactSelectOptionPropType).isRequired,
     sectors: arrayOf(reactSelectOptionPropType).isRequired,
     combineContributors: string.isRequired,
-    combinePartnerContributors: string.isRequired,
     partnerContributors: arrayOf(
         shape({
             value: string.isRequired,

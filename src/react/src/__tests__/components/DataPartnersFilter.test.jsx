@@ -5,7 +5,6 @@ import DataPartnersFilter from '../../components/Filters/DataPartnersFilter/Data
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
     setPartnerContributorFilter,
-    updateCombinePartnerContributorsFilterOption,
 } from '../../actions/filters';
 import { fetchPartnerGroupContributorsIfNeeded } from '../../actions/partnerGroupContributors';
 import { getPartnerGroupsWithContributors } from '../../selectors/partnerFieldGroupsSelectors';
@@ -56,7 +55,6 @@ jest.mock('../../components/Filters/NestedSelect', () => props => (
 
 jest.mock('../../actions/filters', () => ({
     setPartnerContributorFilter: jest.fn(),
-    updateCombinePartnerContributorsFilterOption: jest.fn(),
 }));
 
 jest.mock('../../actions/partnerGroupContributors', () => ({
@@ -72,16 +70,10 @@ const contributorA = {
     label: 'partner-a',
     value: 'partner-a',
 };
-const contributorB = {
-    groupLabel: 'group-b',
-    label: 'partner-b',
-    value: 'partner-b',
-};
 
 describe('DataPartnersFilter component', () => {
     const renderComponent = ({
         selectedContributors = [],
-        combinePartnerContributors = '',
         fetching = false,
         groups = [],
     } = {}) => {
@@ -91,7 +83,6 @@ describe('DataPartnersFilter component', () => {
             preloadedState: {
                 filters: {
                     partnerContributors: selectedContributors,
-                    combinePartnerContributors,
                 },
                 partnerGroupContributors: {
                     fetching,
@@ -106,35 +97,20 @@ describe('DataPartnersFilter component', () => {
             type: 'SET_PARTNER_CONTRIBUTOR_FILTER',
             payload,
         }));
-        updateCombinePartnerContributorsFilterOption.mockImplementation(
-            payload => ({
-                type: 'UPDATE_COMBINE_PARTNER_CONTRIBUTORS_FILTER_OPTION',
-                payload,
-            }),
-        );
         fetchPartnerGroupContributorsIfNeeded.mockImplementation(() => ({
             type: 'FETCH_PARTNER_GROUP_CONTRIBUTORS_IF_NEEDED',
         }));
         getPartnerGroupsWithContributors.mockReturnValue([]);
     });
 
-    test('renders nested selector and no checkbox for one contributor', () => {
-        const { getByTestId, queryByRole } = renderComponent({
+    test('renders nested selector', () => {
+        const { getByTestId } = renderComponent({
             selectedContributors: [contributorA],
         });
 
         expect(
             getByTestId('data-partners-filter-nested-select'),
         ).toBeInTheDocument();
-        expect(queryByRole('checkbox')).not.toBeInTheDocument();
-    });
-
-    test('renders checkbox for multiple contributors', () => {
-        const { getByRole } = renderComponent({
-            selectedContributors: [contributorA, contributorB],
-        });
-
-        expect(getByRole('checkbox')).toBeInTheDocument();
     });
 
     test('loads groups on mount when contributor list is not empty', () => {
@@ -153,54 +129,24 @@ describe('DataPartnersFilter component', () => {
         expect(fetchPartnerGroupContributorsIfNeeded).toHaveBeenCalledTimes(1);
     });
 
-    test('resets combine mode when one contributor is selected', () => {
+    test('updates selected partner contributors', () => {
         const { getByTestId } = renderComponent();
 
         fireEvent.click(getByTestId('data-partners-filter-set-single'));
 
-        expect(updateCombinePartnerContributorsFilterOption).toHaveBeenCalledWith(
-            '',
-        );
         expect(setPartnerContributorFilter).toHaveBeenCalledWith([
             expect.objectContaining({ value: 'partner-a' }),
         ]);
     });
 
-    test('does not reset combine mode when multiple contributors are selected', () => {
+    test('updates selected partner contributors when multiple values are selected', () => {
         const { getByTestId } = renderComponent();
 
         fireEvent.click(getByTestId('data-partners-filter-set-multiple'));
 
-        expect(updateCombinePartnerContributorsFilterOption).not.toHaveBeenCalled();
         expect(setPartnerContributorFilter).toHaveBeenCalledWith([
             expect.objectContaining({ value: 'partner-a' }),
             expect.objectContaining({ value: 'partner-b' }),
         ]);
-    });
-
-    test('enables combine mode when checkbox is checked', () => {
-        const { getByRole } = renderComponent({
-            selectedContributors: [contributorA, contributorB],
-            combinePartnerContributors: '',
-        });
-
-        fireEvent.click(getByRole('checkbox'));
-
-        expect(updateCombinePartnerContributorsFilterOption).toHaveBeenCalledWith(
-            'AND',
-        );
-    });
-
-    test('clears combine mode when checkbox is unchecked', () => {
-        const { getByRole } = renderComponent({
-            selectedContributors: [contributorA, contributorB],
-            combinePartnerContributors: 'AND',
-        });
-
-        fireEvent.click(getByRole('checkbox'));
-
-        expect(updateCombinePartnerContributorsFilterOption).toHaveBeenCalledWith(
-            '',
-        );
     });
 });

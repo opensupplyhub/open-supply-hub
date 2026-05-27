@@ -10,6 +10,7 @@ import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
 
 import ShowOnly from './ShowOnly';
+import FeatureFlag from './FeatureFlag';
 import TextSearchFilter from './Filters/TextSearchFilter';
 import ContributorFilter from './Filters/ContributorFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
@@ -49,6 +50,7 @@ import { useFilterListHeight } from '../util/useHeightSubtract';
 import {
     FACILITIES_REQUEST_PAGE_SIZE,
     EXTENDED_FIELDS_EXPLANATORY_TEXT,
+    PRIVATE_INSTANCE,
 } from '../util/constants';
 
 const filterSidebarSearchTabStyles = theme =>
@@ -214,7 +216,12 @@ function FilterSidebarSearchTab({
                     <CountryNameFilter />
                     <SectorFilter />
                     <ShowOnly when={!embed}>
-                        <DataPartnersFilter />
+                        <FeatureFlag
+                            flag={PRIVATE_INSTANCE}
+                            alternative={<DataPartnersFilter />}
+                        >
+                            <></>
+                        </FeatureFlag>
                     </ShowOnly>
                     <FilterSidebarExtendedSearch />
                 </div>

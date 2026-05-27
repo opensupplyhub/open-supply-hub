@@ -211,17 +211,6 @@ facilities_list_parameters = [
             'with OR semantics (any matching contributor is sufficient).'
         ),
     ),
-    Parameter(
-        'combine_partner_contributors',
-        IN_QUERY,
-        type=TYPE_STRING,
-        required=False,
-        description=(
-            'Set this to "AND" to return only facilities that have '
-            'matching partner-field data for all selected '
-            '`partner_contributor` values.'
-        ),
-    ),
 ]
 
 facilities_create_parameters = [
