@@ -279,11 +279,10 @@ it('creates a querystring from a set of filter selection', () => {
             { value: '99', label: 'Partner A' },
             { value: '15', label: 'Partner B' },
         ],
-        combinePartnerContributors: 'AND',
     };
 
     expect(createQueryStringFromSearchFilters(partnerSharedFilters)).toEqual(
-        'combine_partner_contributors=AND&partner_contributor=99&partner_contributor=15',
+        'partner_contributor=99&partner_contributor=15',
     );
 });
 
@@ -828,13 +827,12 @@ it('creates a set of filters from a querystring', () => {
     ).toMatchObject(expectedClaimStatusesMatch);
 
     const combinedPartnersString =
-        '?partner_contributor=15&partner_contributor=99&combine_partner_contributors=AND';
+        '?partner_contributor=15&partner_contributor=99';
     const expectedCombinedPartnersMatch = {
         partnerContributors: [
             { value: '15', label: '15', groupLabel: '' },
             { value: '99', label: '99', groupLabel: '' },
         ],
-        combinePartnerContributors: 'AND',
     };
 
     expect(

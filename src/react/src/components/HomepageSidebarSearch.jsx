@@ -37,7 +37,11 @@ import {
 
 import { filterSidebarStyles } from '../util/styles';
 
-import { facilitiesRoute, EXTENDED_PROFILE_FLAG } from '../util/constants';
+import {
+    facilitiesRoute,
+    EXTENDED_PROFILE_FLAG,
+    PRIVATE_INSTANCE,
+} from '../util/constants';
 
 const filterSidebarSearchTabStyles = theme =>
     Object.freeze({
@@ -302,7 +306,12 @@ function FilterSidebarSearchTab({
             >
                 <SectorFilter isSideBarSearch={isSideBarSearch} />
                 <ShowOnly when={!embed}>
-                    <DataPartnersFilter />
+                    <FeatureFlag
+                        flag={PRIVATE_INSTANCE}
+                        alternative={<DataPartnersFilter />}
+                    >
+                        <></>
+                    </FeatureFlag>
                 </ShowOnly>
                 <FeatureFlag flag={EXTENDED_PROFILE_FLAG}>
                     <FilterSidebarExtendedSearch

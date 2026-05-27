@@ -1,19 +1,11 @@
 import React, { useEffect } from 'react';
-import { arrayOf, bool, func, object, shape, string } from 'prop-types';
+import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
-import { withStyles } from '@material-ui/core/styles';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import NestedSelect from '../NestedSelect';
-import ShowOnly from '../../ShowOnly';
 import { DATA_PARTNERS, contributorOptionPropType } from './constants';
-import makeDataPartnersFilterStyles from './styles';
 
-import {
-    setPartnerContributorFilter,
-    updateCombinePartnerContributorsFilterOption,
-} from '../../../actions/filters';
+import { setPartnerContributorFilter } from '../../../actions/filters';
 import { fetchPartnerGroupContributorsIfNeeded } from '../../../actions/partnerGroupContributors';
 import { getPartnerGroupsWithContributors } from '../../../selectors/partnerFieldGroupsSelectors';
 
@@ -21,11 +13,8 @@ const DataPartnersFilter = ({
     groups,
     fetching,
     selectedContributors,
-    combinePartnerContributors,
     onContributorChange,
-    onCombinePartnerContributorsChange,
     loadGroupsIfNeeded,
-    classes,
 }) => {
     useEffect(() => {
         if (selectedContributors?.length) {
@@ -48,23 +37,6 @@ const DataPartnersFilter = ({
                 disabled={fetching}
                 isSideBarSearch
             />
-            <ShowOnly
-                when={selectedContributors && selectedContributors.length > 1}
-            >
-                <div className={classes.sharedFacilitiesCheckbox}>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={!!combinePartnerContributors}
-                                onChange={onCombinePartnerContributorsChange}
-                                color="primary"
-                                value={combinePartnerContributors}
-                            />
-                        }
-                        label="Show only shared facilities"
-                    />
-                </div>
-            </ShowOnly>
         </div>
     );
 };
@@ -78,37 +50,20 @@ DataPartnersFilter.propTypes = {
     ).isRequired,
     fetching: bool.isRequired,
     selectedContributors: arrayOf(contributorOptionPropType).isRequired,
-    combinePartnerContributors: string.isRequired,
     onContributorChange: func.isRequired,
-    onCombinePartnerContributorsChange: func.isRequired,
     loadGroupsIfNeeded: func.isRequired,
-    classes: object.isRequired,
 };
 
 const mapStateToProps = state => ({
     groups: getPartnerGroupsWithContributors(state),
     fetching: state.partnerGroupContributors.fetching,
     selectedContributors: state.filters.partnerContributors,
-    combinePartnerContributors: state.filters.combinePartnerContributors,
 });
 
 const mapDispatchToProps = dispatch => ({
-    onContributorChange: contributors => {
-        if (!contributors || contributors.length < 2) {
-            dispatch(updateCombinePartnerContributorsFilterOption(''));
-        }
-        dispatch(setPartnerContributorFilter(contributors));
-    },
-    onCombinePartnerContributorsChange: e =>
-        dispatch(
-            updateCombinePartnerContributorsFilterOption(
-                e.target.checked ? 'AND' : '',
-            ),
-        ),
+    onContributorChange: contributors =>
+        dispatch(setPartnerContributorFilter(contributors)),
     loadGroupsIfNeeded: () => dispatch(fetchPartnerGroupContributorsIfNeeded()),
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(withStyles(makeDataPartnersFilterStyles)(DataPartnersFilter));
+export default connect(mapStateToProps, mapDispatchToProps)(DataPartnersFilter);
