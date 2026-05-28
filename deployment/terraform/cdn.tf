@@ -81,6 +81,15 @@ resource "aws_s3_bucket_ownership_controls" "react" {
   }
 }
 
+resource "aws_s3_bucket_public_access_block" "react" {
+  bucket = aws_s3_bucket.react.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 data "aws_iam_policy_document" "react" {
   statement {
     sid    = "denyInsecureTransport"
