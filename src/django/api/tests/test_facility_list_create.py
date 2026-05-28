@@ -173,6 +173,40 @@ class FacilityListCreateTest(APITestCase):
             FacilityList.objects.all().count(), previous_list_count + 2
         )
 
+    def test_cant_replace_rejected_list(self):
+        response = self.post_header_only_file()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        original_id = json.loads(response.content)["id"]
+        original_list = FacilityList.objects.get(pk=original_id)
+        original_list.status = FacilityList.REJECTED
+        original_list.save()
+        original_list.source.is_active = False
+        original_list.source.save()
+
+        response = self.post_header_only_file(replaces=original_id)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "cannot be replaced",
+            json.loads(response.content)[0],
+        )
+
+    def test_cant_replace_inactive_list(self):
+        response = self.post_header_only_file()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        original_id = json.loads(response.content)["id"]
+        original_list = FacilityList.objects.get(pk=original_id)
+        original_list.status = FacilityList.APPROVED
+        original_list.save()
+        original_list.source.is_active = False
+        original_list.source.save()
+
+        response = self.post_header_only_file(replaces=original_id)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "cannot be replaced",
+            json.loads(response.content)[0],
+        )
+
     def test_user_must_be_authenticated(self):
         self.client.post("/user-logout/")
         response = self.client.post(
