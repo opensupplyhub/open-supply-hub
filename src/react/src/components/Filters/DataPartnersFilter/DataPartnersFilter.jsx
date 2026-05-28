@@ -15,6 +15,7 @@ const DataPartnersFilter = ({
     selectedContributors,
     onContributorChange,
     loadGroupsIfNeeded,
+    isSideBarSearch,
 }) => {
     useEffect(() => {
         if (selectedContributors?.length) {
@@ -35,7 +36,7 @@ const DataPartnersFilter = ({
                     fetching ? 'Loading...' : 'No options'
                 }
                 disabled={fetching}
-                isSideBarSearch
+                isSideBarSearch={isSideBarSearch}
             />
         </div>
     );
@@ -52,6 +53,11 @@ DataPartnersFilter.propTypes = {
     selectedContributors: arrayOf(contributorOptionPropType).isRequired,
     onContributorChange: func.isRequired,
     loadGroupsIfNeeded: func.isRequired,
+    isSideBarSearch: bool,
+};
+
+DataPartnersFilter.defaultProps = {
+    isSideBarSearch: false,
 };
 
 const mapStateToProps = state => ({
