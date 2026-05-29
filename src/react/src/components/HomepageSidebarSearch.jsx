@@ -308,7 +308,11 @@ function FilterSidebarSearchTab({
                 <ShowOnly when={!embed}>
                     <FeatureFlag
                         flag={PRIVATE_INSTANCE}
-                        alternative={<DataPartnersFilter />}
+                        alternative={
+                            <DataPartnersFilter
+                                isSideBarSearch={isSideBarSearch}
+                            />
+                        }
                     >
                         <></>
                     </FeatureFlag>
