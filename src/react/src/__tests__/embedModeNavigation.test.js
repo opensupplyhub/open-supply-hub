@@ -71,29 +71,31 @@ const minimalAuthState = {
     },
 };
 
-const createTestStore = (overrides = {}) =>
-    setupStore({
-        facilities: minimalFacilitiesState,
+const createTestStore = (overrides = {}) => {
+    const { facilities: facilitiesOverride, ...restOverrides } = overrides;
+
+    return setupStore({
         filterOptions: {
             contributors: { data: null, fetching: false, error: null },
             parentCompanies: { data: null, fetching: false, error: null },
             lists: { data: null, fetching: false, error: null },
         },
         partnerGroupContributors: { data: null, fetching: false, error: null },
-        ...overrides,
+        ...restOverrides,
         facilities: {
             ...minimalFacilitiesState,
-            ...(overrides.facilities || {}),
+            ...(facilitiesOverride || {}),
             facilities: {
                 ...minimalFacilitiesState.facilities,
-                ...(overrides.facilities?.facilities || {}),
+                ...(facilitiesOverride?.facilities || {}),
             },
             singleFacility: {
                 ...minimalFacilitiesState.singleFacility,
-                ...(overrides.facilities?.singleFacility || {}),
+                ...(facilitiesOverride?.singleFacility || {}),
             },
         },
     });
+};
 
 describe('embed mode navigation integration', () => {
     beforeEach(() => {
