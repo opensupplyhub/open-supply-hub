@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: May 29, 2026
+* Release date: June 12, 2026
 
 ### Bugfix
 * [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
