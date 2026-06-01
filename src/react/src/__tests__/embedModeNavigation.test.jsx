@@ -1,7 +1,6 @@
 import React from 'react';
-import { Route } from 'react-router-dom';
+import { MemoryRouter, Route } from 'react-router-dom';
 import { waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 
 import { setupStore } from '../configureStore';
 import { setFiltersFromQueryString } from '../actions/filters';
