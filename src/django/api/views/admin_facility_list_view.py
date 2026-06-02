@@ -63,5 +63,9 @@ class AdminFacilityListView(ListAPIView):
             facility_lists = facility_lists.filter(replaced_by__isnull=False)
         elif status is not None:
             facility_lists = facility_lists.filter(status=status)
+            if status == FacilityList.PENDING:
+                facility_lists = facility_lists.filter(
+                    replaced_by__isnull=True
+                )
 
         return facility_lists
