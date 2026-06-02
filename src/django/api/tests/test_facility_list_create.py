@@ -141,10 +141,10 @@ class FacilityListCreateTest(APITestCase):
 
         self.assertTrue(hasattr(original_list, "replaced_by"))
 
-        # The replaced list source is deactivated immediately
-        # at upload time, not waiting for the replacement to be approved.
+        # The replaced list source remains active until the replacement
+        # is confirmed (approved); it is not deactivated at upload time.
         original_list.source.refresh_from_db()
-        self.assertFalse(original_list.source.is_active)
+        self.assertTrue(original_list.source.is_active)
 
     def test_cant_replace_twice(self):
         previous_list_count = FacilityList.objects.all().count()
@@ -204,24 +204,6 @@ class FacilityListCreateTest(APITestCase):
         self.assertIn(
             "cannot be replaced",
             json.loads(response.content)[0],
-        )
-
-    def test_replacing_pending_list_deactivates_it_immediately(self):
-        response = self.post_header_only_file()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        original_id = json.loads(response.content)["id"]
-        original_list = FacilityList.objects.get(pk=original_id)
-        self.assertEqual(original_list.status, FacilityList.PENDING)
-        self.assertTrue(original_list.source.is_active)
-
-        response = self.post_header_only_file(replaces=original_id)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        original_list.source.refresh_from_db()
-        self.assertFalse(
-            original_list.source.is_active,
-            "Replaced list source should be deactivated immediately at upload "
-            "time.",
         )
 
     def test_user_must_be_authenticated(self):

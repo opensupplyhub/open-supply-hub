@@ -11,11 +11,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
-  * A replaced list's source is now deactivated (`is_active=False`) immediately when the replacement is uploaded, rather than waiting for approval.
-  * Rejecting a replacement list now restores the previously replaced list to `is_active=True`, making it available for selection in future uploads.
   * The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
+  * The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
   * The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
-  * The Admin Dashboard Approved filter no longer shows lists that have been replaced, preventing a list from appearing in both the Approved and Replaced filters simultaneously.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
