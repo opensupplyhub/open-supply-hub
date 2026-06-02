@@ -3,7 +3,7 @@
 <!--
   Link the Jira ticket this PR addresses. This gives reviewers the full
   business context, acceptance criteria, and any prior discussion.
-  Format: [PROJECT-123](https://your-domain.atlassian.net/browse/PROJECT-123)
+  Format: [OSDEV-123](https://opensupplyhub.atlassian.net/browse/OSDEV-123)
 -->
 
 N/A
