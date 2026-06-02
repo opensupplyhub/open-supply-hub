@@ -101,7 +101,9 @@ class DashboardListTest(BaseFacilityListTest):
             email=self.superuser_email, password=self.superuser_password
         )
         response = self.client.get(
-            "/api/admin-facility-lists/?status={}".format(FacilityList.APPROVED)
+            "/api/admin-facility-lists/?status={}".format(
+                FacilityList.APPROVED
+            )
         )
 
         self.assertEqual(200, response.status_code)
