@@ -346,10 +346,35 @@ export function fetchClaimStatusOptions() {
     };
 }
 
-export function fetchAllPrimaryFilterOptions() {
-    return dispatch => {
-        dispatch(fetchContributorOptions());
-        dispatch(fetchCountryOptions());
-        dispatch(fetchListOptions());
-    };
-}
+export const fetchContributorOptionsIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.contributors;
+    if (data !== null || fetching) return;
+    dispatch(fetchContributorOptions());
+};
+
+export const fetchCountryOptionsIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.countries;
+    if (data !== null || fetching) return;
+    dispatch(fetchCountryOptions());
+};
+
+export const fetchListOptionsIfNeeded = () => (dispatch, getState) => {
+    const {
+        filterOptions: {
+            lists: { data, fetching },
+        },
+        filters: { contributors, lists },
+    } = getState();
+    const hasContributorSelection = contributors.length > 0;
+    const hasListSelection = lists.length > 0;
+
+    if (!hasContributorSelection && !hasListSelection) return;
+    if (data !== null || fetching) return;
+    dispatch(fetchListOptions());
+};
+
+export const fetchAllPrimaryFilterOptionsIfNeeded = () => dispatch => {
+    dispatch(fetchContributorOptionsIfNeeded());
+    dispatch(fetchCountryOptionsIfNeeded());
+    dispatch(fetchListOptionsIfNeeded());
+};

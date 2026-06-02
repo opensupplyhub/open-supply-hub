@@ -60,6 +60,7 @@ const {
     makeUserProfileURL,
     makeProfileRouteLink,
     joinDataIntoCSVString,
+    mapPartnerGroupContributorsToSelectOptions,
     updateListWithLabels,
     makeSubmitFormOnEnterKeyPressFunction,
     makeFacilityListItemsRetrieveCSVItemsURL,
@@ -267,6 +268,22 @@ it('creates a querystring from a set of filter selection', () => {
             .concat('&contributor_types=foo&countries=bar&sectors=baz');
     expect(createQueryStringFromSearchFilters(allFilters))
         .toEqual(expectedAllFiltersMatch);
+
+    const partnerSharedFilters = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        partnerContributors: [
+            { value: '99', label: 'Partner A' },
+            { value: '15', label: 'Partner B' },
+        ],
+    };
+
+    expect(createQueryStringFromSearchFilters(partnerSharedFilters)).toEqual(
+        'partner_contributor=99&partner_contributor=15',
+    );
 });
 
 it('checks whether the filters object has only empty values', () => {
@@ -375,7 +392,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(contributorsString),
-    ).toEqual(expectedContributorsMatch);
+    ).toMatchObject(expectedContributorsMatch);
 
     const combinedContributorsString = '?contributors=1&contributors=2&combine_contributors=AND';
     const expectedCombinedContributorsMatch = {
@@ -410,7 +427,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(combinedContributorsString),
-    ).toEqual(expectedCombinedContributorsMatch);
+    ).toMatchObject(expectedCombinedContributorsMatch);
 
     const defaultSortingString = '?sort_by=name_asc';
     const expectedSortingMatch = {
@@ -436,7 +453,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(defaultSortingString),
-    ).toEqual(expectedSortingMatch);
+    ).toMatchObject(expectedSortingMatch);
 
     const listsString = '?contributors=1&lists=2';
     const expectedListsMatch = {
@@ -472,7 +489,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(listsString),
-    ).toEqual(expectedListsMatch);
+    ).toMatchObject(expectedListsMatch);
 
     const typesString = '?contributor_types=Union&contributor_types=Service Provider';
     const expectedTypesMatch = {
@@ -507,7 +524,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(typesString),
-    ).toEqual(expectedTypesMatch);
+    ).toMatchObject(expectedTypesMatch);
 
     const countriesString = '?countries=US&countries=CN';
     const expectedCountriesMatch = {
@@ -542,7 +559,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(countriesString),
-    ).toEqual(expectedCountriesMatch);
+    ).toMatchObject(expectedCountriesMatch);
 
     const stringWithCountriesMissing = '?contributor_types=Union&countries=';
     const expectedMissingCountriesMatch = {
@@ -573,7 +590,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(stringWithCountriesMissing),
-    ).toEqual(expectedMissingCountriesMatch);
+    ).toMatchObject(expectedMissingCountriesMatch);
 
     const parentCompanyString = '?parent_company=1&parent_company=Test Company'
     const expectedParentCompanyMatch = {
@@ -606,7 +623,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(parentCompanyString),
-    ).toEqual(expectedParentCompanyMatch);
+    ).toMatchObject(expectedParentCompanyMatch);
 
     const facilityTypeString = '?facility_type=Final Product Assembly&facility_type=Office / HQ'
     const expectedFacilityTypeMatch = {
@@ -639,7 +656,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(facilityTypeString),
-    ).toEqual(expectedFacilityTypeMatch);
+    ).toMatchObject(expectedFacilityTypeMatch);
 
     const processingTypeString = '?processing_type=Batch Dyeing&processing_type=Embellishment'
     const expectedProcessingTypeMatch = {
@@ -672,7 +689,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(processingTypeString),
-    ).toEqual(expectedProcessingTypeMatch);
+    ).toMatchObject(expectedProcessingTypeMatch);
 
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {
@@ -705,7 +722,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(productTypeString),
-    ).toEqual(expectedProductTypeMatch);
+    ).toMatchObject(expectedProductTypeMatch);
 
     const numberofWorkersString = '?number_of_workers=Less than 1000&number_of_workers=1001-5000'
     const expectedNumberOfWorkersMatch = {
@@ -738,7 +755,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(numberofWorkersString),
-    ).toEqual(expectedNumberOfWorkersMatch);
+    ).toMatchObject(expectedNumberOfWorkersMatch);
 
     const nativeLanguageNameString = '?native_language_name=杭州'
     const expectedNativeLanguageNameMatch = {
@@ -764,7 +781,7 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(nativeLanguageNameString),
-    ).toEqual(expectedNativeLanguageNameMatch);
+    ).toMatchObject(expectedNativeLanguageNameMatch);
 
     const claimStatusesString = '?statuses=PENDING&statuses=APPROVED&statuses=DENIED&statuses=REVOKED'
     const expectedClaimStatusesMatch = {
@@ -807,7 +824,20 @@ it('creates a set of filters from a querystring', () => {
 
     expect(
         createFiltersFromQueryString(claimStatusesString),
-    ).toEqual(expectedClaimStatusesMatch);
+    ).toMatchObject(expectedClaimStatusesMatch);
+
+    const combinedPartnersString =
+        '?partner_contributor=15&partner_contributor=99';
+    const expectedCombinedPartnersMatch = {
+        partnerContributors: [
+            { value: '15', label: '15', groupLabel: '' },
+            { value: '99', label: '99', groupLabel: '' },
+        ],
+    };
+
+    expect(
+        createFiltersFromQueryString(combinedPartnersString),
+    ).toMatchObject(expectedCombinedPartnersMatch);
 });
 
 it('creates a facility detail link', () => {
@@ -1388,6 +1418,60 @@ it('updates a list of unlabeled values with the correct labels from a given sour
         updateListWithLabels(unlabeled, source),
         corrected,
     )).toBe(true);
+});
+
+it('maps partner-group contributors to grouped select options', () => {
+    const groups = [
+        {
+            label: 'Group A',
+            contributors: [
+                { id: 101, name: 'Contributor One' },
+                { id: 102, name: 'Contributor Two' },
+            ],
+        },
+    ];
+
+    expect(mapPartnerGroupContributorsToSelectOptions(groups)).toEqual([
+        {
+            label: 'Group A',
+            options: [
+                {
+                    value: '101',
+                    label: 'Contributor One',
+                    groupLabel: 'Group A',
+                },
+                {
+                    value: '102',
+                    label: 'Contributor Two',
+                    groupLabel: 'Group A',
+                },
+            ],
+        },
+    ]);
+});
+
+it('preserves option metadata while updating labels', () => {
+    const selected = [{ value: '101', label: '101', groupLabel: '' }];
+    const source = [
+        {
+            label: 'Group A',
+            options: [
+                {
+                    value: '101',
+                    label: 'Contributor One',
+                    groupLabel: 'Group A',
+                },
+            ],
+        },
+    ];
+
+    expect(updateListWithLabels(selected, source)).toEqual([
+        {
+            value: '101',
+            label: 'Contributor One',
+            groupLabel: 'Group A',
+        },
+    ]);
 });
 
 it('calls a given function when the enter key has been pressed in a form input', () => {

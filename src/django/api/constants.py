@@ -40,6 +40,7 @@ class FacilitiesQueryParams:
     NUMBER_OF_WORKERS = 'number_of_workers'
     NATIVE_LANGUAGE_NAME = 'native_language_name'
     SECTOR = 'sectors'
+    PARTNER_CONTRIBUTOR = 'partner_contributor'
 
 
 class FacilityListQueryParams:
@@ -301,6 +302,8 @@ SINGLE_PAID_DOWNLOAD_RECORDS = 10000
 JS_MAX_SAFE_INTEGER = 9007199254740991
 
 PARTNER_FIELD_LIST_KEY = 'partner_field_list'
+
+MIT_LIVING_WAGE_COUNTRY_CODES = ('US', 'PR', 'VI')
 
 # Shared TTL (seconds) for the `PARTNER_FIELD_LIST_KEY` cache entry.
 # Consumers reading/writing this cache key should use this constant so the

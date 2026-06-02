@@ -106,7 +106,11 @@ export default function withQueryStringSync(WrappedComponent) {
                 );
             }
 
-            if (!prevVectorTileFeatureIsActive && vectorTileFeatureIsActive) {
+            if (
+                !prevVectorTileFeatureIsActive &&
+                vectorTileFeatureIsActive &&
+                !search
+            ) {
                 fetchFacilitiesForCurrentSearch();
             }
 

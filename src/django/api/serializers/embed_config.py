@@ -47,12 +47,21 @@ class EmbedConfigSerializer(ModelSerializer):
 
     def get_extended_fields(self, instance):
         try:
-            extended_fields = (
+            contributor_field_names = (
                 ExtendedField
                 .objects
                 .filter(contributor_id=instance.contributor.id)
                 .values_list('field_name', flat=True).distinct()
             )
-            return extended_fields
+            visible_column_names = set(
+                EmbedField
+                .objects
+                .filter(embed_config=instance, visible=True)
+                .values_list('column_name', flat=True)
+            )
+            return [
+                field_name for field_name in contributor_field_names
+                if field_name in visible_column_names
+            ]
         except Contributor.DoesNotExist:
             return []

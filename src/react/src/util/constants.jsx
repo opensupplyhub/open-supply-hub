@@ -337,6 +337,9 @@ export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute =
     '/accounts/password/reset/key/:uid-:token/';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
+export const alreadyConfirmedCode = 'already_confirmed';
+export const alreadyConfirmedMessage =
+    'Your account is already active. Please log in with your username and password.';
 export const contributeRoute = '/contribute';
 export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
@@ -1378,7 +1381,7 @@ export const optionsForSortingResults = [
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
-export const uploadedFileRowIndexOffset = 2;
+export const uploadedFileRowIndexOffset = 1;
 
 export const USER_DEFAULT_STATE = Object.freeze({
     isAnon: true,
@@ -1460,6 +1463,11 @@ export const MODERATION_ACTIONS_ENUM = Object.freeze({
     NEW_LOCATION: 'NEW_LOCATION',
     MATCHED: 'MATCHED',
     REJECTED: 'REJECTED',
+});
+
+export const REQUEST_TYPE_ENUM = Object.freeze({
+    CREATE: 'CREATE',
+    UPDATE: 'UPDATE',
 });
 
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([

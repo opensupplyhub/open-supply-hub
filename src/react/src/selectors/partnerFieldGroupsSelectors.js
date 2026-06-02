@@ -36,3 +36,26 @@ export const getVisiblePartnerGroups = createSelector(
             }),
         ),
 );
+
+/**
+ * Formats partner group contributors data into the shape expected by
+ * NestedSelect / DataPartnersFilter:
+ * [{ label: groupLabel, options: [{ groupLabel, label, value: String(id) }] }]
+ */
+const EMPTY_CONTRIBUTOR_GROUPS = [];
+
+const getContributorGroups = state =>
+    state.partnerGroupContributors.data?.results || EMPTY_CONTRIBUTOR_GROUPS;
+
+export const getPartnerGroupsWithContributors = createSelector(
+    [getContributorGroups],
+    groups =>
+        groups.map(group => ({
+            label: group.label,
+            options: (group.contributors || []).map(c => ({
+                groupLabel: group.label,
+                label: c.name,
+                value: String(c.id),
+            })),
+        })),
+);

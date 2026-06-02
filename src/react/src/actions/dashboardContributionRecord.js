@@ -3,6 +3,7 @@ import apiRequest from '../util/apiRequest';
 import {
     makeModerationEventRecordURL,
     makeGetProductionLocationsForPotentialMatches,
+    makeProductionLocationURL,
     makeProductionLocationFromModerationEventURL,
     logErrorAndDispatchFailure,
 } from '../util/util';
@@ -28,6 +29,15 @@ export const completeFetchPotentialMatches = createAction(
 );
 export const cleanupContributionRecord = createAction(
     'CLEANUP_CONTRIBUTION_RECORD',
+);
+export const startFetchExistingOsIdLocation = createAction(
+    'START_FETCH_EXISTING_OS_ID_LOCATION',
+);
+export const failFetchExistingOsIdLocation = createAction(
+    'FAIL_FETCH_EXISTING_OS_ID_LOCATION',
+);
+export const completeExistingOsIdLocation = createAction(
+    'COMPLETE_EXISTING_OS_ID_LOCATION',
 );
 export const startUpdateSingleModerationEvent = createAction(
     'START_UPDATE_SINGLE_MODERATION_EVENT',
@@ -183,6 +193,25 @@ export function createProductionLocationFromModerationEvent(moderationID) {
                         err,
                         'An error prevented creating production location from moderation event record',
                         failCreateProductionLocationFromModerationEvent,
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchExistingOsIdLocation(osId) {
+    return dispatch => {
+        dispatch(startFetchExistingOsIdLocation());
+
+        return apiRequest
+            .get(makeProductionLocationURL(osId))
+            .then(({ data }) => dispatch(completeExistingOsIdLocation(data)))
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching existing OS ID location',
+                        failFetchExistingOsIdLocation,
                     ),
                 ),
             );

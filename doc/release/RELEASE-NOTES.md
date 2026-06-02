@@ -9,19 +9,26 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: May 29, 2026
 
-### Database changes
-
-#### Migrations
-
-#### Schema changes
-
 ### Code/API changes
+* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added Spotlight partner-contributor filtering support to platform search and facilities APIs. Introduced `partner_contributor` filtering on `GET /api/facilities/` and added a new `GET /api/partner-group-contributors/` endpoint to provide grouped filter options for the UI. Also made partner-contributor filtering logic reusable across both facility managers.
 
 ### Architecture/Environment changes
+* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). RBA `vpn_ec2_ami` remains `ami-0940c95b23a1f7cac`; the existing VPN instance already runs OpenSSH 8.7 with Terrapin mitigations (verified with Terrapin-Scanner).
+* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Standardized SSH key secret usage in restore workflows by replacing `secrets.KEY_FILE` with `secrets.SSH_PRIVATE_KEY` in `.github/workflows/deploy_to_aws.yml` and `.github/workflows/db_apply_anonimized.yml`, removing duplicated secret management for the same bastion access key.
+* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a dedicated CloudFront cache behavior for `api/partner-group-contributors*` with configurable default/max TTL Terraform variables to reduce repeated origin traffic for the Spotlight Data Partners options endpoint.
 
 ### Bugfix
+* [OSDEV-1521](https://opensupplyhub.atlassian.net/browse/OSDEV-1521) - Fixed the email verification page showing a generic "Not found" error when a user clicks an already-used confirmation link. The backend now detects that the email address is already verified and returns an `already_confirmed` code (HTTP 400), and the frontend renders a clear "Your account is already active. Please log in with your username and password." message with a link to the login page.
+* [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
+* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
+* [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
+* [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
+* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
+* [Follow-up][OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Fixed `sync_databases` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` when no last-run timestamp file exists for a model. Replaced the invalid `django.utils.timezone.utc` reference with the stdlib `datetime.timezone.utc` for the default epoch fallback date.
 
 ### What's new
+* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied. The filter is hidden when the `private_instance` feature flag is active (for example, private instances such as RBA).
+* [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
 * [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
 
 ### Release instructions
@@ -29,7 +36,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
 
----
+
+## Release 2.23.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: May 15, 2026
+
+### Bugfix
+* [OSDEV-2717](https://opensupplyhub.atlassian.net/browse/OSDEV-2717) - Fixed HTTP 500 (`pylibmc.TooBig`) on `GET /api/facilities/` by removing the `cache_page` decorator from `FacilitiesViewSet.list`. When `detail=true` is passed, the response includes four additional fields per facility (`contributors`, `extended_fields`, `contributor_fields`, `sector`), causing the serialized page to exceed Memcached's 1 MB item size limit. Removing caching from this endpoint resolves the crash for all requests to the facilities list.
+
+### Release instructions
+* Ensure that no commands are included in the `post_deployment` command.
+
 
 ## Release 2.23.0
 
@@ -52,6 +71,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
 * [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Updated download limits logic: exempt API-token requests from data download limits, add idempotent duplicate webhook handling, and use `get_or_create` for `FacilityDownloadLimit` in the checkout webhook.
 * [OSDEV-2589](https://opensupplyhub.atlassian.net/browse/OSDEV-2589) - Added `apply_schema_defaults` to populate missing partner field values from JSON Schema defaults in both the Production Locations API response and the CSV download serializer. Refactored `ProductionLocations` view to use `get_cached_all_partner_fields()` instead of the removed `PARTNER_FIELD_NAMES_KEY` cache, and deep-copy raw values before applying defaults to avoid mutating stored data.
+* [OSDEV-2654](https://opensupplyhub.atlassian.net/browse/OSDEV-2654) - Added 'Existing OSID' section to the SLC moderation dashboard for all UPDATE SLC submissions.
 
 ### What's new
 * [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
