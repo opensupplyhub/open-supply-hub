@@ -7,17 +7,19 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: June 12, 2026
 
 ### Bugfix
-* [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed the "Select a list to replace" dropdown on the Upload screen showing Replaced, Rejected, and Inactive lists as selectable options, which caused confusion. The dropdown now only displays lists that are eligible for replacement (status `PENDING` or `APPROVED` with an active source). A matching backend guard was added to `POST /api/facility-lists/` to reject requests that attempt to replace an ineligible list directly via the API.
+* [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
+  * A replaced list's source is now deactivated (`is_active=False`) immediately when the replacement is uploaded, rather than waiting for approval.
+  * Rejecting a replacement list now restores the previously replaced list to `is_active=True`, making it available for selection in future uploads.
+  * The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
+  * The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-
----
 
 
 ## Release 2.24.0
