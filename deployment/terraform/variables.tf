@@ -889,40 +889,6 @@ variable "waf_enabled" {
 }
 
 
-# Direct data load variables
-
-variable "direct_data_load_sheet_id" {
-  type        = string
-  description = "Google Sheet ID for direct data load"
-  sensitive   = true
-}
-
-variable "direct_data_load_contributor_name" {
-  type        = string
-  description = "Contributor name for direct data load"
-}
-
-variable "direct_data_load_contributor_email" {
-  type        = string
-  description = "Contributor email for direct data load"
-  sensitive   = true
-}
-
-variable "direct_data_load_user_id" {
-  type        = number
-  description = "User ID for direct data load"
-}
-
-variable "direct_data_load_sheet_name" {
-  type        = string
-  description = "Name of the Google Sheet for direct data load"
-}
-
-variable "direct_data_load_tab_id" {
-  type        = number
-  description = "Tab ID of the Google Sheet for direct data load"
-}
-
 # Stripe variables
 
 variable "stripe_secret_key" {

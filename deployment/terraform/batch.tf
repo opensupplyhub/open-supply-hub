@@ -358,8 +358,8 @@ resource "aws_cloudwatch_log_group" "batch" {
   retention_in_days = 0
 }
 
-data "template_file" "direct_data_load_job_definition" {
-  template = file("job-definitions/direct_data_load.json")
+data "template_file" "partner_data_file_upload_job_definition" {
+  template = file("job-definitions/partner_data_file_upload.json")
 
   vars = {
     image_url                           = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
@@ -375,33 +375,21 @@ data "template_file" "direct_data_load_job_definition" {
     google_server_side_api_key          = var.google_server_side_api_key
     oar_client_key                      = var.oar_client_key
     external_domain                     = local.domain_name
-    batch_job_queue_name                = "queue${local.short}DDLoad"
-    batch_job_def_name                  = "job${local.short}DDLoad"
+    batch_job_queue_name                = "queue${local.short}Default"
+    batch_job_def_name                  = "job${local.short}PartnerDataFileUpload"
     log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64
-    google_drive_shared_directory_id    = var.google_drive_shared_directory_id
-    sheet_id                            = var.direct_data_load_sheet_id
-    contributor_name                    = var.direct_data_load_contributor_name
-    contributor_email                   = var.direct_data_load_contributor_email
-    user_id                             = var.direct_data_load_user_id
-    sheet_name                          = var.direct_data_load_sheet_name
-    tab_id                              = var.direct_data_load_tab_id
-    opensearch_host                     = aws_opensearch_domain.opensearch.endpoint
-    opensearch_port                     = var.opensearch_port
-    opensearch_ssl                      = var.opensearch_ssl
-    opensearch_ssl_cert_verification    = var.opensearch_ssl_cert_verification
-    instance_source                     = var.instance_source
   }
 }
 
-resource "aws_batch_job_definition" "direct_data_load" {
-  name           = "job${local.short}DirectDataLoad"
+resource "aws_batch_job_definition" "partner_data_file_upload" {
+  name           = "job${local.short}PartnerDataFileUpload"
   type           = "container"
   propagate_tags = true
 
   platform_capabilities = ["EC2"]
 
-  container_properties = data.template_file.direct_data_load_job_definition.rendered
+  container_properties = data.template_file.partner_data_file_upload_job_definition.rendered
 
   retry_strategy {
     attempts = 2
