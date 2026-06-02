@@ -181,8 +181,6 @@ class FacilityListCreateTest(APITestCase):
         original_list = FacilityList.objects.get(pk=original_id)
         original_list.status = FacilityList.REJECTED
         original_list.save()
-        original_list.source.is_active = False
-        original_list.source.save()
 
         response = self.post_header_only_file(replaces=original_id)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
