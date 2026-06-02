@@ -62,8 +62,6 @@ class DashboardListTest(BaseFacilityListTest):
             facility_list=replacement,
             contributor=self.contributor,
         )
-        self.source.is_active = False
-        self.source.save()
 
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
