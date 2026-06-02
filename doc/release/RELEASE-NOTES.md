@@ -3,6 +3,27 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: TBD
+
+### Code/API changes
+
+### Architecture/Environment changes
+* [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
+
+### Bugfix
+
+### What's new
+
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
 ## Release 2.24.0
 
 ## Introduction
