@@ -79,6 +79,40 @@ class DashboardListTest(BaseFacilityListTest):
             "Pending filter.",
         )
 
+    def test_approved_filter_excludes_replaced_lists(self):
+        self.list.status = FacilityList.APPROVED
+        self.list.save()
+
+        replacement = FacilityList.objects.create(
+            header="header",
+            file_name="replacement.csv",
+            name="Replacement List",
+            replaces=self.list,
+        )
+        Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=replacement,
+            contributor=self.contributor,
+        )
+        self.source.is_active = False
+        self.source.save()
+
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?status={}".format(FacilityList.APPROVED)
+        )
+
+        self.assertEqual(200, response.status_code)
+        names = [d["name"] for d in response.json()["results"]]
+        self.assertNotIn(
+            "First List",
+            names,
+            "An APPROVED list that has been replaced must not appear in the "
+            "Approved filter.",
+        )
+
     def test_pending_filter_excludes_inactive_pending_lists(self):
         self.source.is_active = False
         self.source.save()
