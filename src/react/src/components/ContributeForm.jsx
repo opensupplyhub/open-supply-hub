@@ -137,9 +137,9 @@ const ContributeForm = ({
 
     const eligibleLists = (facilityLists || []).filter(
         list =>
-            list.status === facilityListStatusChoicesEnum.PENDING ||
-            (list.status === facilityListStatusChoicesEnum.APPROVED &&
-                list.is_active),
+            list.is_active &&
+            (list.status === facilityListStatusChoicesEnum.PENDING ||
+                list.status === facilityListStatusChoicesEnum.APPROVED),
     );
 
     const replacesSection = eligibleLists.length ? (
