@@ -62,6 +62,8 @@ class DashboardListTest(BaseFacilityListTest):
             facility_list=replacement,
             contributor=self.contributor,
         )
+        self.source.is_active = False
+        self.source.save()
 
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
@@ -77,6 +79,26 @@ class DashboardListTest(BaseFacilityListTest):
             names,
             "A PENDING list that has been replaced must not appear in the "
             "Pending filter.",
+        )
+
+    def test_pending_filter_excludes_inactive_pending_lists(self):
+        self.source.is_active = False
+        self.source.save()
+
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?status={}".format(FacilityList.PENDING)
+        )
+
+        self.assertEqual(200, response.status_code)
+        names = [d["name"] for d in response.json()["results"]]
+        self.assertNotIn(
+            "First List",
+            names,
+            "A PENDING list with is_active=False (broken replacement link) "
+            "must not appear in the Pending filter.",
         )
 
     def test_pending_filter_includes_non_replaced_pending_lists(self):

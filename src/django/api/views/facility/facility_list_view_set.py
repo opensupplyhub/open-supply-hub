@@ -320,6 +320,9 @@ class FacilityListViewSet(ModelViewSet):
         facility_list.save()
 
         if facility_list.replaces_id:
+            replaced_source = facility_list.replaces.source
+            replaced_source.is_active = True
+            replaced_source.save()
             facility_list.replaces = None
             facility_list.save()
 
