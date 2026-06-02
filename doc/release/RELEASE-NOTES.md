@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 
 ### Architecture/Environment changes
-* [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
+* [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days (1 year) for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
 
 ### Bugfix
 
