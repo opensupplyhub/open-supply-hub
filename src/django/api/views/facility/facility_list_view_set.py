@@ -174,6 +174,16 @@ class FacilityListViewSet(ModelViewSet):
             facility_list=new_list)
         log.info(f'[List Upload] Source created. ID {source.id}.')
 
+        if replaces is not None:
+            replaced_source = replaces.source
+            replaced_source.is_active = False
+            replaced_source.save()
+            log.info(
+                f'[List Upload] Source {replaced_source.id} deactivated '
+                f'because FacilityList {replaces.pk} was replaced by '
+                f'{new_list.id}.'
+            )
+
         if not DEBUG:
             submit_parse_job(new_list)
 
