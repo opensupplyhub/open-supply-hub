@@ -135,11 +135,13 @@ const ContributeForm = ({
 
     const submitButtonIsDisabled = fetching || fetchingFacilityLists;
 
+    const { PENDING, APPROVED } = facilityListStatusChoicesEnum;
+
     const eligibleLists = (facilityLists || []).filter(
-        list =>
-            list.is_active &&
-            (list.status === facilityListStatusChoicesEnum.PENDING ||
-                list.status === facilityListStatusChoicesEnum.APPROVED),
+        // eslint-disable-next-line camelcase
+        ({ is_active, status }) =>
+            // eslint-disable-next-line camelcase
+            is_active && [PENDING, APPROVED].includes(status),
     );
 
     const replacesSection = eligibleLists.length ? (

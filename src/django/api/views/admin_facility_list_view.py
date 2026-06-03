@@ -1,18 +1,15 @@
-from rest_framework.exceptions import ValidationError
-from rest_framework.generics import ListAPIView
-
 from api.constants import FacilityListQueryParams
 from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.source import Source
 from api.pagination import PageAndSizePagination
 from api.permissions import IsSuperuser
-from api.serializers.facility.facility_list_serializer import (
-    FacilityListSerializer,
-)
-from api.serializers.facility.facility_list_query_params_serializer import (
-    FacilityListQueryParamsSerializer,
-)
+from api.serializers.facility.facility_list_query_params_serializer import \
+    FacilityListQueryParamsSerializer
+from api.serializers.facility.facility_list_serializer import \
+    FacilityListSerializer
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import ListAPIView
 
 
 class AdminFacilityListView(ListAPIView):
@@ -61,12 +58,12 @@ class AdminFacilityListView(ListAPIView):
             facility_lists = facility_lists.filter(source__in=sources)
         elif status == FacilityList.REPLACED:
             facility_lists = facility_lists.filter(replaced_by__isnull=False)
+        elif status in (FacilityList.PENDING, FacilityList.APPROVED):
+            facility_lists = facility_lists.filter(
+                replaced_by__isnull=True,
+                source__is_active=True,
+            )
         elif status is not None:
             facility_lists = facility_lists.filter(status=status)
-            if status in (FacilityList.PENDING, FacilityList.APPROVED):
-                facility_lists = facility_lists.filter(
-                    replaced_by__isnull=True,
-                    source__is_active=True,
-                )
 
         return facility_lists
