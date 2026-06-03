@@ -147,7 +147,7 @@ resource "aws_lambda_function" "redirect_to_s3_origin" {
 
 resource "aws_cloudwatch_log_group" "redirect_to_s3_origin" {
   name              = "/aws/lambda/func${local.short}RedirectToS3origin"
-  retention_in_days = 14
+  retention_in_days = 365
 }
 
 # 
@@ -208,5 +208,5 @@ resource "aws_lambda_function" "add_security_headers" {
 
 resource "aws_cloudwatch_log_group" "add_security_headers" {
   name              = "/aws/lambda/func${local.short}AddSecurityHeaders"
-  retention_in_days = 14
+  retention_in_days = 365
 }
