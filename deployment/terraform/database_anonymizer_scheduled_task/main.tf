@@ -4,7 +4,7 @@ locals {
 
 resource "aws_cloudwatch_log_group" "database_anonymizer" {
   name              = "log${local.short}DatabaseAnonymizer"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 data "aws_iam_policy_document" "database_anonymizer_worker" {

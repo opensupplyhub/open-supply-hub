@@ -7,9 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: TBD
+* Release date: June 12, 2026
 
 ### Architecture/Environment changes
+* [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days (1 year) for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
 * [OSDEV-2726](https://opensupplyhub.atlassian.net/browse/OSDEV-2726) - Patched the SOC 2 / Dependabot batch of low-severity vulnerabilities across the repo. Changes by area:
 * **Docker base images** — Bumped `src/dedupe-hub/api/Dockerfile` from `python:3.7` to `python:3.10` (and added a `cython<3` pip constraint so `dedupe`'s legacy build still compiles), bumped `src/tests/Dockerfile` from `python:3.7` to `python:3.11-slim-bookworm`, and bumped `src/e2e/Dockerfile` from `mcr.microsoft.com/playwright:v1.48.1` to `v1.60.0` to keep the bundled browser binaries in sync with the upgraded Playwright JS library.
 * **Backend Python deps** — `src/django/requirements.txt`: `django` 5.2.10 → 5.2.14, `django-allauth` 64.0.0 → 65.14.1, `requests` 2.32.3 → 2.33.0. `src/dedupe-hub/api/requirements.txt`: `numpy` 1.21.6 → 1.22.4. `src/tests/requirements.txt`: `requests` 2.31.0 → 2.33.0. `deployment/terraform/database_anonymizer_scheduled_task/docker/requirements.txt`: `pg8000` 1.31.2 → 1.31.5.
@@ -19,13 +20,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * **E2E tests** — `src/e2e/package.json` bumps `@playwright/test` from `^1.48.1` to `^1.55.1` (resolves to 1.60.0) to patch CVE-2025-59288; `src/e2e/package-lock.json` regenerated to match so `npm ci` succeeds in the e2e Dockerfile build.
 
 ### Bugfix
-
-### What's new
+* [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+
 
 ## Release 2.24.0
 
