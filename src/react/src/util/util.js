@@ -262,7 +262,7 @@ export const getFilteredSearchForEmbed = search => {
     if (!params.has('embed')) return '';
 
     const filtered = new URLSearchParams();
-    ['embed', 'contributor'].forEach(key => {
+    ['embed', 'contributors'].forEach(key => {
         const value = params.get(key);
         if (value !== null) {
             filtered.set(key, value);
