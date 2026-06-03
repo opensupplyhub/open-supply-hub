@@ -3007,9 +3007,17 @@ describe('shouldUseProductionLocationPage', () => {
 });
 
 describe('getFilteredSearchForEmbed', () => {
-    it('keeps only embed and contributor params', () => {
-        const search = '?embed=1&contributor=abc&sort_by=contributors_desc';
-        expect(getFilteredSearchForEmbed(search)).toBe('?embed=1&contributor=abc');
+    it('keeps embed and contributors params', () => {
+        const search = '?embed=1&contributors=abc&sort_by=contributors_desc';
+        expect(getFilteredSearchForEmbed(search)).toBe('?embed=1&contributors=abc');
+    });
+
+    it('preserves contributors from embed list URLs', () => {
+        const search =
+            '?contributors=10672&lists=9193&sort_by=name_asc&embed=1';
+        expect(getFilteredSearchForEmbed(search)).toBe(
+            '?embed=1&contributors=10672',
+        );
     });
 
     it('returns empty string when embed is absent or search is empty', () => {
@@ -3027,9 +3035,9 @@ describe('makeFacilityDetailLinkOnRedirect', () => {
     it('builds production location link with embed params only', () => {
         const url = makeFacilityDetailLinkOnRedirect(
             'CN2026030PXM73F',
-            '?embed=1&contributor=abc&sort_by=contributors_desc',
+            '?embed=1&contributors=abc&sort_by=contributors_desc',
             true,
         );
-        expect(url).toBe('/production-locations/CN2026030PXM73F?embed=1&contributor=abc');
+        expect(url).toBe('/production-locations/CN2026030PXM73F?embed=1&contributors=abc');
     });
 });
