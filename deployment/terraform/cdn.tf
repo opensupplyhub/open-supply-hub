@@ -904,6 +904,8 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
     Project     = var.project
     Environment = var.environment
   }
+
+  web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }
 
 resource "aws_route53_record" "info_openapparel_redirect" {
