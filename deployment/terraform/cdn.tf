@@ -850,7 +850,7 @@ resource "aws_acm_certificate_validation" "info_openapparel_redirect" {
 resource "aws_cloudfront_function" "info_openapparel_redirect" {
   count   = var.enable_legacy_info_site_redirect ? 1 : 0
   name    = "info-openapparel-org-redirect"
-  runtime = "cloudfront-js-2.0"
+  runtime = "cloudfront-js-1.0"
   publish = true
   code    = <<-EOT
     function handler(event) {
