@@ -804,3 +804,122 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }
+
+#
+# info.openapparel.org → https://info.opensupplyhub.org redirect
+#
+data "aws_route53_zone" "openapparel" {
+  name = "openapparel.org"
+}
+
+module "cert_info_openapparel_redirect" {
+  source = "github.com/azavea/terraform-aws-acm-certificate?ref=4.0.0"
+
+  providers = {
+    aws.acm_account     = aws.certificates
+    aws.route53_account = aws
+  }
+
+  domain_name           = "info.openapparel.org"
+  hosted_zone_id        = data.aws_route53_zone.openapparel.zone_id
+  validation_record_ttl = "60"
+}
+
+resource "aws_cloudfront_function" "info_openapparel_redirect" {
+  name    = "info-openapparel-org-redirect"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      return {
+        statusCode: 301,
+        statusDescription: "Moved Permanently",
+        headers: {
+          location: { value: "https://info.opensupplyhub.org" + event.request.uri }
+        }
+      };
+    }
+  EOT
+}
+
+resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
+  enabled         = true
+  is_ipv6_enabled = true
+  comment         = "Redirect info.openapparel.org to info.opensupplyhub.org"
+  aliases         = ["info.openapparel.org"]
+
+  origin {
+    domain_name = "info.opensupplyhub.org"
+    origin_id   = "info-opensupplyhub-origin"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "info-opensupplyhub-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = false
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.info_openapparel_redirect.arn
+    }
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = module.cert_info_openapparel_redirect.arn
+    minimum_protocol_version = "TLSv1.2_2018"
+    ssl_support_method       = "sni-only"
+  }
+
+  tags = {
+    Project     = var.project
+    Environment = var.environment
+  }
+}
+
+resource "aws_route53_record" "info_openapparel_redirect" {
+  zone_id = data.aws_route53_zone.openapparel.zone_id
+  name    = "info.openapparel.org"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.info_openapparel_redirect.domain_name
+    zone_id                = aws_cloudfront_distribution.info_openapparel_redirect.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "info_openapparel_redirect_ipv6" {
+  zone_id = data.aws_route53_zone.openapparel.zone_id
+  name    = "info.openapparel.org"
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.info_openapparel_redirect.domain_name
+    zone_id                = aws_cloudfront_distribution.info_openapparel_redirect.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
