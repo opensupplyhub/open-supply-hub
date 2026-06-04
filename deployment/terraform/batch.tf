@@ -355,7 +355,7 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
 
 resource "aws_cloudwatch_log_group" "batch" {
   name              = "log${local.short}Batch"
-  retention_in_days = 0
+  retention_in_days = 365
 }
 
 data "template_file" "partner_data_file_upload_job_definition" {

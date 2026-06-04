@@ -166,6 +166,7 @@ export const facilityListPropType = shape({
     file_name: string.isRequired,
     is_active: bool.isRequired,
     is_public: bool.isRequired,
+    status: string,
     item_count: number.isRequired,
     items_url: string.isRequired,
     statuses: arrayOf(oneOf(Object.values(facilityListItemStatusChoicesEnum))),
