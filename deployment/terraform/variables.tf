@@ -888,6 +888,11 @@ variable "waf_enabled" {
   default = false
 }
 
+variable "enable_legacy_info_site_redirect" {
+  type    = bool
+  default = false
+}
+
 
 # Direct data load variables
 
