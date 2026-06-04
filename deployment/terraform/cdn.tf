@@ -813,18 +813,38 @@ data "aws_route53_zone" "openapparel" {
   name  = "openapparel.org"
 }
 
-module "cert_info_openapparel_redirect" {
-  count  = var.environment == "Production" ? 1 : 0
-  source = "github.com/azavea/terraform-aws-acm-certificate?ref=4.0.0"
+resource "aws_acm_certificate" "info_openapparel_redirect" {
+  count             = var.environment == "Production" ? 1 : 0
+  provider          = aws.certificates
+  domain_name       = "info.openapparel.org"
+  validation_method = "DNS"
 
-  providers = {
-    aws.acm_account     = aws.certificates
-    aws.route53_account = aws
+  lifecycle {
+    create_before_destroy = true
   }
+}
 
-  domain_name           = "info.openapparel.org"
-  hosted_zone_id        = data.aws_route53_zone.openapparel[0].zone_id
-  validation_record_ttl = "60"
+resource "aws_route53_record" "info_openapparel_cert_validation" {
+  for_each = var.environment == "Production" ? {
+    for dvo in aws_acm_certificate.info_openapparel_redirect[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  zone_id = data.aws_route53_zone.openapparel[0].zone_id
+  name    = each.value.name
+  type    = each.value.type
+  ttl     = 60
+  records = [each.value.record]
+}
+
+resource "aws_acm_certificate_validation" "info_openapparel_redirect" {
+  count                   = var.environment == "Production" ? 1 : 0
+  provider                = aws.certificates
+  certificate_arn         = aws_acm_certificate.info_openapparel_redirect[0].arn
+  validation_record_fqdns = [for r in aws_route53_record.info_openapparel_cert_validation : r.fqdn]
 }
 
 resource "aws_cloudfront_function" "info_openapparel_redirect" {
@@ -901,7 +921,7 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = module.cert_info_openapparel_redirect[0].arn
+    acm_certificate_arn      = aws_acm_certificate_validation.info_openapparel_redirect[0].certificate_arn
     minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
   }
