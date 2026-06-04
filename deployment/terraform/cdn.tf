@@ -888,6 +888,12 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
     }
   }
 
+  logging_config {
+    include_cookies = false
+    bucket          = aws_s3_bucket.logs.bucket_domain_name
+    prefix          = "CDN-info-openapparel-redirect"
+  }
+
   restrictions {
     geo_restriction {
       restriction_type = "none"
