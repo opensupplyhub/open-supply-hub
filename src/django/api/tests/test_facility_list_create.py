@@ -141,8 +141,9 @@ class FacilityListCreateTest(APITestCase):
 
         self.assertTrue(hasattr(original_list, "replaced_by"))
 
-        # The original list source should not be deactivated. It will be
-        # deactived after the replacement is processed
+        # The replaced list source remains active until the replacement
+        # is confirmed (approved); it is not deactivated at upload time.
+        original_list.source.refresh_from_db()
         self.assertTrue(original_list.source.is_active)
 
     def test_cant_replace_twice(self):
@@ -171,6 +172,38 @@ class FacilityListCreateTest(APITestCase):
 
         self.assertEqual(
             FacilityList.objects.all().count(), previous_list_count + 2
+        )
+
+    def test_cant_replace_rejected_list(self):
+        response = self.post_header_only_file()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        original_id = json.loads(response.content)["id"]
+        original_list = FacilityList.objects.get(pk=original_id)
+        original_list.status = FacilityList.REJECTED
+        original_list.save()
+
+        response = self.post_header_only_file(replaces=original_id)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "cannot be replaced",
+            json.loads(response.content)[0],
+        )
+
+    def test_cant_replace_inactive_list(self):
+        response = self.post_header_only_file()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        original_id = json.loads(response.content)["id"]
+        original_list = FacilityList.objects.get(pk=original_id)
+        original_list.status = FacilityList.APPROVED
+        original_list.save()
+        original_list.source.is_active = False
+        original_list.source.save()
+
+        response = self.post_header_only_file(replaces=original_id)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "cannot be replaced",
+            json.loads(response.content)[0],
         )
 
     def test_user_must_be_authenticated(self):
