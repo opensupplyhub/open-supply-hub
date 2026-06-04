@@ -479,7 +479,8 @@ class PartnerFieldSheetParser:
         mapping_errors = []
         if unmatched_columns:
             mapping_errors.append(
-                "Unknown or invalid sheet columns: "
+                "Unknown or invalid sheet columns, or columns the "
+                "contributor is not authorized to write: "
                 f"{','.join(sorted(unmatched_columns))}"
             )
 
