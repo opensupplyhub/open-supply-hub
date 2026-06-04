@@ -29,26 +29,39 @@ class Migration(migrations.Migration):
                 (
                     "google_drive_file_link",
                     models.URLField(
-                        help_text="Link to a Google Sheet stored in Google Drive.",
+                        help_text=(
+                            "Link to a Google Sheet stored in Google Drive. "
+                            "The sheet must include an os_id column and "
+                            "partner field columns the contributor is "
+                            "authorized to write."
+                        ),
                         max_length=2000,
                     ),
                 ),
                 (
-                    "columns_to_process",
-                    models.TextField(
-                        help_text=(
-                            "Comma-separated list of sheet columns that "
-                            "should be processed, for example: "
-                            "os_id,name,address,country,sector."
-                        ),
-                    ),
-                ),
-                (
-                    "is_processed",
-                    models.BooleanField(
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("PENDING", "Pending"),
+                            ("PROCESSING", "Processing"),
+                            ("PROCESSED", "Processed"),
+                            ("FAILED", "Failed"),
+                        ],
                         db_index=True,
-                        default=False,
-                        help_text="Whether this file has already been processed.",
+                        default="PENDING",
+                        help_text=(
+                            "Updated automatically when the partner list file "
+                            "is processed. PENDING: saved and waiting to be "
+                            "queued. PROCESSING: the file is being read and "
+                            "partner data is being applied. PROCESSED: "
+                            "finished successfully (check the Google Sheet "
+                            "error column for any individual rows that need "
+                            "fixes). FAILED: the file could not be "
+                            "processed—read Processing error for what went "
+                            "wrong, correct the sheet or settings, and "
+                            "submit a new upload."
+                        ),
+                        max_length=20,
                     ),
                 ),
                 (
@@ -73,7 +86,13 @@ class Migration(migrations.Migration):
                     models.TextField(
                         blank=True,
                         default="",
-                        help_text="Terminal processing error when ingestion fails.",
+                        help_text=(
+                            "When status is Failed, explains what went wrong. "
+                            "Messages starting with 'Contact developers:' are "
+                            "for the engineering team. Other messages usually "
+                            "mean fixes are needed in the Google Sheet before "
+                            "you submit again."
+                        ),
                     ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),

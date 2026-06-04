@@ -20,10 +20,46 @@ from api.moderation_event_actions.creation.moderation_event_creator import (
     ModerationEventCreator,
 )
 from api.management.commands.process_partner_data_file_uploads import (
+    ColumnMapping,
     PartnerFieldSheetParser,
     PartnerPatchModerationEventCreator,
 )
 from api.tests.test_data import geocoding_data
+
+WORLDLY_ASSESSMENT_SCHEMA = {
+    "type": "object",
+    "title": "Worldly Assessments Data Update",
+    "properties": {
+        "fdm_assessment": {
+            "type": "object",
+            "properties": {
+                "assessment_url": {
+                    "type": "string",
+                    "format": "uri",
+                },
+                "reporting_year": {
+                    "type": "integer",
+                },
+                "verification_status": {
+                    "enum": ["verified", "unverified", "pending"],
+                    "type": "string",
+                },
+            },
+        },
+        "fem_assessment": {
+            "type": "object",
+            "properties": {
+                "assessment_url": {
+                    "type": "string",
+                    "format": "url",
+                },
+                "reporting_year": {
+                    "type": "integer",
+                },
+            },
+        },
+    },
+}
 
 
 class PartnerDataFileUploadProcessingTest(TestCase):
@@ -49,24 +85,17 @@ class PartnerDataFileUploadProcessingTest(TestCase):
             type=PartnerField.FLOAT,
             label="Estimated Emissions Activity",
         )
-        self.object_field = PartnerField.objects.create(
-            name="schema_field",
+        self.worldly_field = PartnerField.objects.create(
+            name="worldly_assessment_data",
             type=PartnerField.OBJECT,
-            label="Schema Field",
-            json_schema={
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string"},
-                    "age": {"type": "integer"},
-                },
-                "required": ["name", "age"],
-            },
+            label="Worldly Assessment Data",
+            json_schema=WORLDLY_ASSESSMENT_SCHEMA,
         )
         self.contributor.partner_fields.add(
             self.string_field,
             self.int_field,
             self.float_field,
-            self.object_field,
+            self.worldly_field,
         )
 
         facility_list = FacilityList.objects.create(
@@ -96,131 +125,350 @@ class PartnerDataFileUploadProcessingTest(TestCase):
             created_from=list_item,
         )
 
-    def test_validate_partner_columns_preflight_success(self):
-        partner_fields = PartnerFieldSheetParser.validate_preflight(
-            [
-                "os_id",
-                "custom_partner_field",
-                "schema_field",
-            ],
+    def test_validate_headers_reports_multiple_issues(self):
+        header_map = PartnerFieldSheetParser.build_header_map(["Bad-Column"])
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.validate_headers(header_map)
+
+        message = str(context.exception)
+        self.assertIn("snake_case", message)
+        self.assertIn("os_id", message)
+
+        header_map = PartnerFieldSheetParser.build_header_map(["os_id"])
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.validate_headers(header_map)
+
+        self.assertIn("at least one partner field", str(context.exception))
+
+    def test_validate_headers_requires_os_id(self):
+        header_map = PartnerFieldSheetParser.build_header_map(
+            ["custom_partner_field"]
+        )
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.validate_headers(header_map)
+
+        self.assertIn("os_id", str(context.exception))
+
+    def test_validate_headers_rejects_invalid_snake_case(self):
+        header_map = PartnerFieldSheetParser.build_header_map(
+            ["os_id", "Bad-Column"]
+        )
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.validate_headers(header_map)
+
+        self.assertIn("snake_case", str(context.exception))
+
+    def test_validate_headers_rejects_non_normalized_partner_headers(self):
+        header_map = PartnerFieldSheetParser.build_header_map(
+            ["OS ID", "custom_partner_field"]
+        )
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.validate_headers(header_map)
+
+        self.assertIn("OS ID", str(context.exception))
+        self.assertIn("snake_case", str(context.exception))
+
+    def test_build_header_map_does_not_normalize_headers(self):
+        header_map = PartnerFieldSheetParser.build_header_map(
+            ["os_id", "custom_partner_field"]
+        )
+
+        self.assertEqual(
+            header_map,
+            {"os_id": 0, "custom_partner_field": 1},
+        )
+
+    def test_build_header_map_rejects_duplicate_headers(self):
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.build_header_map(
+                [
+                    "os_id",
+                    "custom_partner_field",
+                    "os_id",
+                    "custom_partner_field",
+                ]
+            )
+
+        self.assertIn("duplicate headers", str(context.exception).lower())
+        self.assertIn("os_id", str(context.exception))
+        self.assertIn("custom_partner_field", str(context.exception))
+
+    def test_validate_headers_requires_data_column(self):
+        header_map = PartnerFieldSheetParser.build_header_map(["os_id"])
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.validate_headers(header_map)
+
+        self.assertIn("at least one partner field", str(context.exception))
+
+    def test_allowed_flattened_columns_for_worldly_schema(self):
+        allowed = PartnerFieldSheetParser.allowed_flattened_columns(
+            "worldly_assessment_data",
+            WORLDLY_ASSESSMENT_SCHEMA,
+        )
+
+        self.assertIn(
+            "worldly_assessment_data_fdm_assessment_assessment_url",
+            allowed,
+        )
+        self.assertIn(
+            "worldly_assessment_data_fem_assessment_reporting_year",
+            allowed,
+        )
+
+    def test_build_column_mappings_scalar_and_flattened(self):
+        data_columns = [
+            "custom_partner_field",
+            "worldly_assessment_data_fdm_assessment_assessment_url",
+        ]
+        header_map = PartnerFieldSheetParser.build_header_map(
+            ["os_id"] + data_columns
+        )
+        PartnerFieldSheetParser.validate_headers(header_map)
+        mappings, partner_fields = PartnerFieldSheetParser.build_column_mappings(
+            data_columns,
             self.contributor,
         )
 
         self.assertEqual(
             set(partner_fields.keys()),
-            {"custom_partner_field", "schema_field"},
+            {"custom_partner_field", "worldly_assessment_data"},
+        )
+        self.assertIsNone(
+            mappings["custom_partner_field"].path_segments
+        )
+        self.assertEqual(
+            mappings[
+                "worldly_assessment_data_fdm_assessment_assessment_url"
+            ].path_segments,
+            ["fdm_assessment", "assessment_url"],
         )
 
-    def test_validate_partner_columns_preflight_requires_partner_field(self):
+    def test_build_column_mappings_rejects_unknown_column(self):
         with self.assertRaises(ValueError) as context:
-            PartnerFieldSheetParser.validate_preflight(
-                ["os_id"],
+            PartnerFieldSheetParser.build_column_mappings(
+                ["unknown_partner_field"],
                 self.contributor,
             )
 
-        self.assertIn("at least one partner field", str(context.exception))
+        self.assertIn("Unknown or invalid", str(context.exception))
 
-    def test_validate_partner_columns_preflight_rejects_unknown_field(self):
-        with self.assertRaises(ValueError) as context:
-            PartnerFieldSheetParser.validate_preflight(
-                ["os_id", "unknown_partner_field"],
-                self.contributor,
-            )
-
-        self.assertIn(
-            "Unknown or inactive partner field",
-            str(context.exception),
-        )
-
-    def test_validate_partner_columns_preflight_rejects_unauthorized_field(
-        self,
-    ):
+    def test_build_column_mappings_rejects_unauthorized_field(self):
         unauthorized_field = PartnerField.objects.create(
             name="other_partner_field",
             type=PartnerField.STRING,
             label="Other Partner Field",
         )
         with self.assertRaises(ValueError) as context:
-            PartnerFieldSheetParser.validate_preflight(
-                ["os_id", unauthorized_field.name],
+            PartnerFieldSheetParser.build_column_mappings(
+                [unauthorized_field.name],
                 self.contributor,
             )
 
-        self.assertIn("not permitted", str(context.exception))
+        self.assertIn("Unknown or invalid", str(context.exception))
 
-    def test_is_cell_empty(self):
-        self.assertTrue(PartnerFieldSheetParser.is_cell_empty(None))
-        self.assertTrue(PartnerFieldSheetParser.is_cell_empty(""))
-        self.assertTrue(PartnerFieldSheetParser.is_cell_empty("   "))
-        self.assertFalse(PartnerFieldSheetParser.is_cell_empty(0))
-        self.assertFalse(PartnerFieldSheetParser.is_cell_empty("value"))
-
-    def test_parse_cell_value_for_each_type(self):
-        self.assertEqual(
-            PartnerFieldSheetParser.parse_cell_value(
-                " hello ",
-                self.string_field,
-            ),
-            "hello",
+    @patch.object(PartnerFieldSheetParser, "match_column")
+    def test_build_column_mappings_reports_all_unauthorized_fields(
+        self,
+        mock_match_column,
+    ):
+        unauthorized_a = PartnerField.objects.create(
+            name="unauthorized_field_a",
+            type=PartnerField.STRING,
+            label="Unauthorized Field A",
         )
-        self.assertEqual(
-            PartnerFieldSheetParser.parse_cell_value("42", self.int_field),
-            42,
-        )
-        self.assertEqual(
-            PartnerFieldSheetParser.parse_cell_value(42, self.int_field),
-            42,
-        )
-        self.assertEqual(
-            PartnerFieldSheetParser.parse_cell_value("42.5", self.float_field),
-            42.5,
-        )
-        self.assertEqual(
-            PartnerFieldSheetParser.parse_cell_value(
-                '{"name": "John", "age": 30}',
-                self.object_field,
-            ),
-            {"name": "John", "age": 30},
+        unauthorized_b = PartnerField.objects.create(
+            name="unauthorized_field_b",
+            type=PartnerField.STRING,
+            label="Unauthorized Field B",
         )
 
-    def test_parse_cell_value_rejects_invalid_json(self):
+        def match_side_effect(column, contributor_fields):
+            if column == unauthorized_a.name:
+                return ColumnMapping(
+                    column_name=column,
+                    partner_field=unauthorized_a,
+                )
+            if column == unauthorized_b.name:
+                return ColumnMapping(
+                    column_name=column,
+                    partner_field=unauthorized_b,
+                )
+            return None
+
+        mock_match_column.side_effect = match_side_effect
+
         with self.assertRaises(ValueError) as context:
-            PartnerFieldSheetParser.parse_cell_value(
-                "{bad json}",
-                self.object_field,
+            PartnerFieldSheetParser.build_column_mappings(
+                [unauthorized_b.name, unauthorized_a.name],
+                self.contributor,
             )
 
-        self.assertIn("Invalid JSON", str(context.exception))
+        message = str(context.exception)
+        self.assertIn("not permitted", message)
+        self.assertIn("unauthorized_field_a", message)
+        self.assertIn("unauthorized_field_b", message)
 
-    def test_build_partner_patch_raw_data_skips_empty_cells(self):
+    @patch.object(PartnerFieldSheetParser, "match_column")
+    def test_build_column_mappings_reports_all_schema_missing_fields(
+        self,
+        mock_match_column,
+    ):
+        schema_less_a = PartnerField.objects.create(
+            name="schema_less_object_a",
+            type=PartnerField.OBJECT,
+            label="Schema Less Object A",
+        )
+        schema_less_b = PartnerField.objects.create(
+            name="schema_less_object_b",
+            type=PartnerField.OBJECT,
+            label="Schema Less Object B",
+        )
+        self.contributor.partner_fields.add(schema_less_a, schema_less_b)
+
+        def match_side_effect(column, contributor_fields):
+            for partner_field in (schema_less_a, schema_less_b):
+                if column == f"{partner_field.name}_value":
+                    return ColumnMapping(
+                        column_name=column,
+                        partner_field=partner_field,
+                    )
+            return None
+
+        mock_match_column.side_effect = match_side_effect
+
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.build_column_mappings(
+                [
+                    "schema_less_object_a_value",
+                    "schema_less_object_b_value",
+                ],
+                self.contributor,
+            )
+
+        message = str(context.exception)
+        self.assertIn("no JSON schema", message)
+        self.assertIn("schema_less_object_a", message)
+        self.assertIn("schema_less_object_b", message)
+
+    def test_build_column_mappings_reports_unsupported_array_properties(self):
+        array_field = PartnerField.objects.create(
+            name="array_partner_field",
+            type=PartnerField.OBJECT,
+            label="Array Partner Field",
+            json_schema={
+                "type": "object",
+                "properties": {
+                    "scores": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "nested": {
+                        "type": "object",
+                        "properties": {
+                            "tags": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
+                        },
+                    },
+                    "title": {"type": "string"},
+                },
+            },
+        )
+        self.contributor.partner_fields.add(array_field)
+
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.build_column_mappings(
+                ["custom_partner_field"],
+                self.contributor,
+            )
+
+        message = str(context.exception)
+        self.assertIn("unsupported array", message)
+        self.assertIn("scores", message)
+        self.assertIn("nested_tags", message)
+
+    def test_build_column_mappings_rejects_invalid_flattened_suffix(self):
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.build_column_mappings(
+                ["worldly_assessment_data_invalid_leaf"],
+                self.contributor,
+            )
+
+        self.assertIn("Unknown or invalid", str(context.exception))
+
+    def test_build_patch_raw_data_builds_nested_object(self):
+        mappings, _ = PartnerFieldSheetParser.build_column_mappings(
+            [
+                "custom_partner_field",
+                "estimated_annual_energy_consumption",
+                "worldly_assessment_data_fdm_assessment_assessment_url",
+                "worldly_assessment_data_fdm_assessment_reporting_year",
+            ],
+            self.contributor,
+        )
         raw_data = PartnerFieldSheetParser.build_patch_raw_data(
             {
                 "os_id": self.facility.id,
-                "custom_partner_field": "value",
-                "schema_field": "",
+                "custom_partner_field": "partner value",
+                "estimated_annual_energy_consumption": "1500",
+                "worldly_assessment_data_fdm_assessment_assessment_url": (
+                    "https://example.com/report"
+                ),
+                "worldly_assessment_data_fdm_assessment_reporting_year": "2024",
             },
+            mappings,
+        )
+
+        self.assertEqual(raw_data["custom_partner_field"], "partner value")
+        self.assertEqual(raw_data["estimated_annual_energy_consumption"], 1500)
+        self.assertEqual(
+            raw_data["worldly_assessment_data"],
             {
-                "custom_partner_field": self.string_field,
-                "schema_field": self.object_field,
+                "fdm_assessment": {
+                    "assessment_url": "https://example.com/report",
+                    "reporting_year": 2024,
+                },
             },
         )
 
-        self.assertEqual(raw_data, {"custom_partner_field": "value"})
-
-    def test_build_partner_patch_raw_data_requires_values(self):
+    def test_build_patch_raw_data_requires_values(self):
+        mappings, _ = PartnerFieldSheetParser.build_column_mappings(
+            ["custom_partner_field"],
+            self.contributor,
+        )
         with self.assertRaises(ValueError) as context:
             PartnerFieldSheetParser.build_patch_raw_data(
                 {
                     "os_id": self.facility.id,
                     "custom_partner_field": "",
                 },
-                {"custom_partner_field": self.string_field},
+                mappings,
             )
 
-        self.assertIn(
-            "No partner field values provided",
-            str(context.exception),
+        self.assertIn("No partner field values provided", str(context.exception))
+
+    def test_build_patch_raw_data_reports_all_parse_errors(self):
+        mappings, _ = PartnerFieldSheetParser.build_column_mappings(
+            [
+                "estimated_annual_energy_consumption",
+                "estimated_emissions_activity",
+            ],
+            self.contributor,
         )
+        with self.assertRaises(ValueError) as context:
+            PartnerFieldSheetParser.build_patch_raw_data(
+                {
+                    "os_id": self.facility.id,
+                    "estimated_annual_energy_consumption": "not-an-int",
+                    "estimated_emissions_activity": "not-a-float",
+                },
+                mappings,
+            )
+
+        message = str(context.exception)
+        self.assertIn("estimated_annual_energy_consumption", message)
+        self.assertIn("estimated_emissions_activity", message)
 
     def test_format_api_errors(self):
         formatted = PartnerPatchModerationEventCreator.format_api_errors(
@@ -228,7 +476,7 @@ class PartnerDataFileUploadProcessingTest(TestCase):
                 "detail": "The request body is invalid.",
                 "errors": [
                     {
-                        "field": "schema_field.age",
+                        "field": "worldly_assessment_data.fdm_assessment.age",
                         "detail": "must be integer",
                     }
                 ],
@@ -236,13 +484,25 @@ class PartnerDataFileUploadProcessingTest(TestCase):
         )
 
         self.assertIn("The request body is invalid.", formatted)
-        self.assertIn("schema_field.age: must be integer", formatted)
+        self.assertIn("must be integer", formatted)
 
     @patch("api.geocoding.requests.get")
-    def test_create_partner_patch_moderation_event_success(self, mock_get):
+    def test_create_partner_patch_moderation_event_with_flattened_columns(
+        self,
+        mock_get,
+    ):
         mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
         mock_get.return_value.json.return_value = geocoding_data
 
+        mappings, _ = PartnerFieldSheetParser.build_column_mappings(
+            [
+                "custom_partner_field",
+                "estimated_annual_energy_consumption",
+                "worldly_assessment_data_fdm_assessment_assessment_url",
+                "worldly_assessment_data_fdm_assessment_reporting_year",
+            ],
+            self.contributor,
+        )
         creator = PartnerPatchModerationEventCreator(
             ModerationEventCreator(LocationContribution())
         )
@@ -252,20 +512,21 @@ class PartnerDataFileUploadProcessingTest(TestCase):
                 "os_id": self.facility.id,
                 "custom_partner_field": "partner value",
                 "estimated_annual_energy_consumption": "1500",
-                "schema_field": json.dumps(
-                    {"name": "John Doe", "age": 30}
+                "worldly_assessment_data_fdm_assessment_assessment_url": (
+                    "https://example.com/report"
                 ),
+                "worldly_assessment_data_fdm_assessment_reporting_year": "2024",
             },
-            {
-                "custom_partner_field": self.string_field,
-                "estimated_annual_energy_consumption": self.int_field,
-                "schema_field": self.object_field,
-            },
+            mappings,
         )
 
         self.assertTrue(moderation_id)
 
     def test_create_partner_patch_moderation_event_unknown_os_id(self):
+        mappings, _ = PartnerFieldSheetParser.build_column_mappings(
+            ["custom_partner_field"],
+            self.contributor,
+        )
         creator = PartnerPatchModerationEventCreator(
             ModerationEventCreator(LocationContribution())
         )
@@ -276,7 +537,7 @@ class PartnerDataFileUploadProcessingTest(TestCase):
                     "os_id": "US0000000UNKNOWN",
                     "custom_partner_field": "partner value",
                 },
-                {"custom_partner_field": self.string_field},
+                mappings,
             )
 
         self.assertIn("was not found", str(context.exception))

@@ -1,8 +1,6 @@
 import json
 import logging
-import uuid
 
-import boto3
 from django import forms
 from django.conf import settings
 from django.urls import path
@@ -23,9 +21,9 @@ from api.models.wage_indicator_link_text_config import (
     WageIndicatorLinkTextConfig
 )
 from api.models.us_county_tigerline import USCountyTigerline
-from api.models.partner_data_file_upload import (
-    PartnerDataFileUpload,
-    validate_columns_to_process,
+from api.models.partner_data_file_upload import PartnerDataFileUpload
+from api.partner_data_file_upload_batch import (
+    submit_partner_data_file_upload_job,
 )
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
@@ -38,19 +36,6 @@ from api import models
 from api.reports import get_report_names, run_report
 
 logger = logging.getLogger(__name__)
-PARTNER_DATA_FILE_JOB_DEF_SUFFIX = "PartnerDataFileUpload"
-
-
-def get_partner_data_file_job_def_name():
-    default_job_def_name = settings.BATCH_JOB_DEF_NAME
-    if not default_job_def_name:
-        raise RuntimeError("BATCH_JOB_DEF_NAME setting is not configured.")
-
-    if default_job_def_name.endswith("Default"):
-        prefix = default_job_def_name[:-len("Default")]
-        return f"{prefix}{PARTNER_DATA_FILE_JOB_DEF_SUFFIX}"
-
-    return default_job_def_name
 
 
 class ApiAdminSite(AdminSite):
@@ -455,33 +440,17 @@ class USCountyTigerlineAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
-class PartnerDataFileUploadAdminForm(forms.ModelForm):
-    class Meta:
-        model = PartnerDataFileUpload
-        fields = (
-            "google_drive_file_link",
-            "columns_to_process",
-            "contributor",
-        )
-
-    def clean_columns_to_process(self):
-        return validate_columns_to_process(
-            self.cleaned_data.get("columns_to_process")
-        )
-
-
 class PartnerDataFileUploadAdmin(admin.ModelAdmin):
-    form = PartnerDataFileUploadAdminForm
     list_display = (
         "uuid",
         "contributor",
-        "is_processed",
+        "status",
         "batch_job_id",
         "created_by",
         "created_at",
         "processed_at",
     )
-    list_filter = ("is_processed", "contributor")
+    list_filter = ("status", "contributor")
     search_fields = ("uuid", "google_drive_file_link", "batch_job_id")
     readonly_fields = (
         "uuid",
@@ -496,7 +465,7 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
-            obj.is_processed = False
+            obj.status = PartnerDataFileUpload.Status.PENDING
             obj.processing_error = ""
         super().save_model(request, obj, form, change)
 
@@ -504,25 +473,12 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
             return
 
         try:
-            batch_client = boto3.client("batch")
-            job_name = (
-                f"partner-data-file-{str(obj.uuid)[:8]}-"
-                f"{uuid.uuid4().hex[:8]}"
-            )
-            response = batch_client.submit_job(
-                jobName=job_name,
-                jobQueue=settings.BATCH_JOB_QUEUE_NAME,
-                jobDefinition=get_partner_data_file_job_def_name(),
-                parameters={"queueentryuuid": str(obj.uuid)},
-            )
-            job_id = response.get("jobId")
-            if not job_id:
-                raise RuntimeError(
-                    f"Batch submit response missing jobId: {response}"
-                )
-
+            job_id = submit_partner_data_file_upload_job(obj.uuid)
             obj.batch_job_id = job_id
-            obj.save(update_fields=["batch_job_id", "updated_at"])
+            obj.status = PartnerDataFileUpload.Status.PROCESSING
+            obj.save(
+                update_fields=["batch_job_id", "status", "updated_at"]
+            )
             messages.success(
                 request,
                 (
@@ -531,14 +487,22 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
                 ),
             )
         except Exception as error:
-            obj.processing_error = str(error)
-            obj.save(update_fields=["processing_error", "updated_at"])
+            error_message = (
+                PartnerDataFileUpload.format_developer_processing_error(
+                    str(error)
+                )
+            )
+            obj.status = PartnerDataFileUpload.Status.FAILED
+            obj.processing_error = error_message
+            obj.save(
+                update_fields=["status", "processing_error", "updated_at"]
+            )
             messages.error(
                 request,
                 (
                     "Partner data file was saved but "
                     "Batch submission failed. "
-                    f"Error: {str(error)}"
+                    f"Error: {error_message}"
                 ),
             )
 

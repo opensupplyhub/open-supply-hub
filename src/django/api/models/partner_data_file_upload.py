@@ -1,48 +1,29 @@
-import re
 import uuid
 
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from api.models.contributor.contributor import Contributor
 from api.models.user import User
-
-SNAKE_CASE_COLUMN_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
-
-
-def validate_columns_to_process(raw_columns):
-    """
-    Validate and normalize a comma-separated list of column names.
-
-    Each column must be lowercase snake_case and must not contain commas.
-    """
-    raw_value = str(raw_columns).strip()
-    if not raw_value:
-        raise ValidationError("columns_to_process cannot be empty.")
-
-    columns = []
-    for part in raw_value.split(","):
-        column = part.strip()
-        if not column:
-            raise ValidationError(
-                "columns_to_process must be a comma-separated list of "
-                "lowercase snake_case column names without empty entries."
-            )
-        if not SNAKE_CASE_COLUMN_PATTERN.match(column):
-            raise ValidationError(
-                f'Invalid column name "{column}": each value must be '
-                "lowercase snake_case (letters, numbers, and underscores "
-                "only, starting with a letter)."
-            )
-        columns.append(column)
-
-    return ",".join(columns)
 
 
 class PartnerDataFileUpload(models.Model):
     """
     Tracks Google Sheets queued for moderation-event ingestion.
     """
+
+    DEVELOPER_PROCESSING_ERROR_PREFIX = "Contact developers: "
+    DEVELOPER_ERROR_HINTS = (
+        "Google Service Account",
+        "AWS credentials",
+        "BATCH_JOB_QUEUE_NAME",
+        "BATCH_JOB_DEF_NAME",
+    )
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        PROCESSING = "PROCESSING", "Processing"
+        PROCESSED = "PROCESSED", "Processed"
+        FAILED = "FAILED", "Failed"
 
     uuid = models.UUIDField(
         primary_key=True,
@@ -53,14 +34,10 @@ class PartnerDataFileUpload(models.Model):
     )
     google_drive_file_link = models.URLField(
         max_length=2000,
-        help_text="Link to a Google Sheet stored in Google Drive.",
-    )
-    columns_to_process = models.TextField(
         help_text=(
-            "Comma-separated list of sheet columns that should be processed. "
-            "Must include os_id plus one or more partner field column names, "
-            "for example: os_id,estimated_emissions_activity,schema_field. "
-            "Each column name must be lowercase snake_case."
+            "Link to a Google Sheet stored in Google Drive. The sheet must "
+            "include an os_id column and partner field columns the "
+            "contributor is authorized to write."
         ),
     )
     contributor = models.ForeignKey(
@@ -77,10 +54,20 @@ class PartnerDataFileUpload(models.Model):
         related_name="created_partner_data_file_uploads",
         help_text="Moderator who created this ingestion request.",
     )
-    is_processed = models.BooleanField(
-        default=False,
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
         db_index=True,
-        help_text="Whether this file has already been processed.",
+        help_text=(
+            "Updated automatically when the partner list file is processed. "
+            "PENDING: saved and waiting to be queued. PROCESSING: the file "
+            "is being read and partner data is being applied. PROCESSED: "
+            "finished successfully (check the Google Sheet error column "
+            "for any individual rows that need fixes). FAILED: the file "
+            "could not be processed—read Processing error for what went "
+            "wrong, correct the sheet or settings, and submit a new upload."
+        ),
     )
     batch_job_id = models.CharField(
         max_length=128,
@@ -96,24 +83,36 @@ class PartnerDataFileUpload(models.Model):
     processing_error = models.TextField(
         blank=True,
         default="",
-        help_text="Terminal processing error when ingestion fails.",
+        help_text=(
+            "When status is Failed, explains what went wrong. Messages "
+            "starting with 'Contact developers:' are for the engineering "
+            "team. Other messages usually mean fixes are needed in the "
+            "Google Sheet before you submit again."
+        ),
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
-    def clean(self):
-        super().clean()
-        try:
-            self.columns_to_process = validate_columns_to_process(
-                self.columns_to_process
-            )
-        except ValidationError as error:
-            raise ValidationError(
-                {"columns_to_process": error.messages}
-            ) from error
+    @classmethod
+    def format_developer_processing_error(cls, message: str) -> str:
+        message = (message or "").strip()
+        if message.startswith(cls.DEVELOPER_PROCESSING_ERROR_PREFIX):
+            return message
+        return f"{cls.DEVELOPER_PROCESSING_ERROR_PREFIX}{message}"
+
+    @classmethod
+    def format_upload_processing_error(cls, error: Exception) -> str:
+        """
+        Sheet or list issues stay as-is for moderators. Infrastructure,
+        configuration, and unexpected failures are prefixed so moderators
+        know to contact developers.
+        """
+        message = str(error).strip()
+        if isinstance(error, ValueError):
+            if any(hint in message for hint in cls.DEVELOPER_ERROR_HINTS):
+                return cls.format_developer_processing_error(message)
+            return message
+        return cls.format_developer_processing_error(message)
 
     def __str__(self):
-        return (
-            f"PartnerDataFileUpload {self.uuid} "
-            f"processed={self.is_processed}"
-        )
+        return f"PartnerDataFileUpload {self.uuid} status={self.status}"
