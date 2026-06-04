@@ -834,11 +834,13 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
   publish = true
   code    = <<-EOT
     function handler(event) {
+      var qs = event.request.querystring;
+      var location = "https://info.opensupplyhub.org" + event.request.uri + (qs ? "?" + qs : "");
       return {
         statusCode: 301,
         statusDescription: "Moved Permanently",
         headers: {
-          location: { value: "https://info.opensupplyhub.org" + event.request.uri }
+          location: { value: location }
         }
       };
     }
