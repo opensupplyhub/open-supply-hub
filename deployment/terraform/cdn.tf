@@ -806,13 +806,15 @@ resource "aws_cloudfront_distribution" "cdn" {
 }
 
 #
-# info.openapparel.org → https://info.opensupplyhub.org redirect
+# info.openapparel.org → https://info.opensupplyhub.org redirect (Production only)
 #
 data "aws_route53_zone" "openapparel" {
-  name = "openapparel.org"
+  count = var.environment == "Production" ? 1 : 0
+  name  = "openapparel.org"
 }
 
 module "cert_info_openapparel_redirect" {
+  count  = var.environment == "Production" ? 1 : 0
   source = "github.com/azavea/terraform-aws-acm-certificate?ref=4.0.0"
 
   providers = {
@@ -821,11 +823,12 @@ module "cert_info_openapparel_redirect" {
   }
 
   domain_name           = "info.openapparel.org"
-  hosted_zone_id        = data.aws_route53_zone.openapparel.zone_id
+  hosted_zone_id        = data.aws_route53_zone.openapparel[0].zone_id
   validation_record_ttl = "60"
 }
 
 resource "aws_cloudfront_function" "info_openapparel_redirect" {
+  count   = var.environment == "Production" ? 1 : 0
   name    = "info-openapparel-org-redirect"
   runtime = "cloudfront-js-2.0"
   publish = true
@@ -843,6 +846,7 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
 }
 
 resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
+  count           = var.environment == "Production" ? 1 : 0
   enabled         = true
   is_ipv6_enabled = true
   comment         = "Redirect info.openapparel.org to info.opensupplyhub.org"
@@ -878,7 +882,7 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
 
     function_association {
       event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.info_openapparel_redirect.arn
+      function_arn = aws_cloudfront_function.info_openapparel_redirect[0].arn
     }
   }
 
@@ -889,7 +893,7 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = module.cert_info_openapparel_redirect.arn
+    acm_certificate_arn      = module.cert_info_openapparel_redirect[0].arn
     minimum_protocol_version = "TLSv1.2_2018"
     ssl_support_method       = "sni-only"
   }
@@ -901,25 +905,27 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
 }
 
 resource "aws_route53_record" "info_openapparel_redirect" {
-  zone_id = data.aws_route53_zone.openapparel.zone_id
+  count   = var.environment == "Production" ? 1 : 0
+  zone_id = data.aws_route53_zone.openapparel[0].zone_id
   name    = "info.openapparel.org"
   type    = "A"
 
   alias {
-    name                   = aws_cloudfront_distribution.info_openapparel_redirect.domain_name
-    zone_id                = aws_cloudfront_distribution.info_openapparel_redirect.hosted_zone_id
+    name                   = aws_cloudfront_distribution.info_openapparel_redirect[0].domain_name
+    zone_id                = aws_cloudfront_distribution.info_openapparel_redirect[0].hosted_zone_id
     evaluate_target_health = false
   }
 }
 
 resource "aws_route53_record" "info_openapparel_redirect_ipv6" {
-  zone_id = data.aws_route53_zone.openapparel.zone_id
+  count   = var.environment == "Production" ? 1 : 0
+  zone_id = data.aws_route53_zone.openapparel[0].zone_id
   name    = "info.openapparel.org"
   type    = "AAAA"
 
   alias {
-    name                   = aws_cloudfront_distribution.info_openapparel_redirect.domain_name
-    zone_id                = aws_cloudfront_distribution.info_openapparel_redirect.hosted_zone_id
+    name                   = aws_cloudfront_distribution.info_openapparel_redirect[0].domain_name
+    zone_id                = aws_cloudfront_distribution.info_openapparel_redirect[0].hosted_zone_id
     evaluate_target_health = false
   }
 }
