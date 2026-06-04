@@ -896,7 +896,7 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
 
   viewer_certificate {
     acm_certificate_arn      = module.cert_info_openapparel_redirect[0].arn
-    minimum_protocol_version = "TLSv1.2_2018"
+    minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
   }
 
