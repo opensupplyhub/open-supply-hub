@@ -76,3 +76,5 @@ instance_source = "os_hub"
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 is_database_private_link_provider = true
+
+enable_legacy_info_site_redirect = false

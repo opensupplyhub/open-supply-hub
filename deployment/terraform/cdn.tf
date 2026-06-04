@@ -809,12 +809,12 @@ resource "aws_cloudfront_distribution" "cdn" {
 # info.openapparel.org → https://info.opensupplyhub.org redirect (Production only)
 #
 data "aws_route53_zone" "openapparel" {
-  count = var.environment == "Production" ? 1 : 0
+  count = var.enable_legacy_info_site_redirect ? 1 : 0
   name  = "openapparel.org"
 }
 
 resource "aws_acm_certificate" "info_openapparel_redirect" {
-  count             = var.environment == "Production" ? 1 : 0
+  count             = var.enable_legacy_info_site_redirect ? 1 : 0
   provider          = aws.certificates
   domain_name       = "info.openapparel.org"
   validation_method = "DNS"
@@ -825,7 +825,7 @@ resource "aws_acm_certificate" "info_openapparel_redirect" {
 }
 
 resource "aws_route53_record" "info_openapparel_cert_validation" {
-  for_each = var.environment == "Production" ? {
+  for_each = var.enable_legacy_info_site_redirect ? {
     for dvo in aws_acm_certificate.info_openapparel_redirect[0].domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
@@ -841,14 +841,14 @@ resource "aws_route53_record" "info_openapparel_cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "info_openapparel_redirect" {
-  count                   = var.environment == "Production" ? 1 : 0
+  count                   = var.enable_legacy_info_site_redirect ? 1 : 0
   provider                = aws.certificates
   certificate_arn         = aws_acm_certificate.info_openapparel_redirect[0].arn
   validation_record_fqdns = [for r in aws_route53_record.info_openapparel_cert_validation : r.fqdn]
 }
 
 resource "aws_cloudfront_function" "info_openapparel_redirect" {
-  count   = var.environment == "Production" ? 1 : 0
+  count   = var.enable_legacy_info_site_redirect ? 1 : 0
   name    = "info-openapparel-org-redirect"
   runtime = "cloudfront-js-2.0"
   publish = true
@@ -868,7 +868,7 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
 }
 
 resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
-  count           = var.environment == "Production" ? 1 : 0
+  count           = var.enable_legacy_info_site_redirect ? 1 : 0
   enabled         = true
   is_ipv6_enabled = true
   comment         = "Redirect info.openapparel.org to info.opensupplyhub.org"
@@ -935,7 +935,7 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
 }
 
 resource "aws_route53_record" "info_openapparel_redirect" {
-  count   = var.environment == "Production" ? 1 : 0
+  count   = var.enable_legacy_info_site_redirect ? 1 : 0
   zone_id = data.aws_route53_zone.openapparel[0].zone_id
   name    = "info.openapparel.org"
   type    = "A"
@@ -948,7 +948,7 @@ resource "aws_route53_record" "info_openapparel_redirect" {
 }
 
 resource "aws_route53_record" "info_openapparel_redirect_ipv6" {
-  count   = var.environment == "Production" ? 1 : 0
+  count   = var.enable_legacy_info_site_redirect ? 1 : 0
   zone_id = data.aws_route53_zone.openapparel[0].zone_id
   name    = "info.openapparel.org"
   type    = "AAAA"
