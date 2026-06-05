@@ -2,10 +2,6 @@ import uuid
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import (
-    NoCredentialsError,
-    PartialCredentialsError,
-)
 from django.conf import settings
 
 BATCH_CLIENT_CONFIG = Config(
@@ -14,26 +10,25 @@ BATCH_CLIENT_CONFIG = Config(
     retries={"max_attempts": 2},
 )
 
+_BEFORE_SUBMIT_MSG = (
+    "before submitting a partner data file for processing."
+)
+
 
 def validate_aws_batch_prerequisites():
-    if not settings.BATCH_JOB_QUEUE_NAME:
-        raise ValueError(
-            "BATCH_JOB_QUEUE_NAME is not configured. Set it in the environment "
-            "before submitting a partner data file for processing."
-        )
-
-    if not settings.BATCH_JOB_DEF_NAME:
-        raise ValueError(
-            "BATCH_JOB_DEF_NAME is not configured. Set it in the environment "
-            "before submitting a partner data file for processing."
-        )
+    for setting_name in ("BATCH_JOB_QUEUE_NAME", "BATCH_JOB_DEF_NAME"):
+        if not getattr(settings, setting_name, None):
+            raise ValueError(
+                f"{setting_name} is not configured. Set it in the environment "
+                f"{_BEFORE_SUBMIT_MSG}"
+            )
 
     credentials = boto3.Session().get_credentials()
     if credentials is None:
         raise ValueError(
             "AWS credentials are not configured. Set AWS_ACCESS_KEY_ID and "
             "AWS_SECRET_ACCESS_KEY, configure AWS_PROFILE, or use another "
-            "supported credential source before submitting a partner data file."
+            f"supported credential source {_BEFORE_SUBMIT_MSG}"
         )
 
     frozen = credentials.get_frozen_credentials()
@@ -45,31 +40,20 @@ def validate_aws_batch_prerequisites():
 
 
 def submit_partner_data_file_upload_job(queue_entry_uuid) -> str:
-    """
-    Queue an AWS Batch job to process a partner data file upload.
-    Validates configuration and credentials before calling AWS.
-    """
+    """Queue an AWS Batch job to process a partner data file upload."""
     validate_aws_batch_prerequisites()
 
     job_name = (
         f"partner-data-file-{str(queue_entry_uuid)[:8]}-"
         f"{uuid.uuid4().hex[:8]}"
     )
-    try:
-        batch_client = boto3.client("batch", config=BATCH_CLIENT_CONFIG)
-        response = batch_client.submit_job(
-            jobName=job_name,
-            jobQueue=settings.BATCH_JOB_QUEUE_NAME,
-            jobDefinition=settings.BATCH_JOB_DEF_NAME,
-            parameters={"queueentryuuid": str(queue_entry_uuid)},
-        )
-    except (NoCredentialsError, PartialCredentialsError) as error:
-        raise ValueError(
-            "AWS credentials are not configured. Set AWS_ACCESS_KEY_ID and "
-            "AWS_SECRET_ACCESS_KEY, configure AWS_PROFILE, or use another "
-            "supported credential source before submitting a partner data "
-            "file."
-        ) from error
+    batch_client = boto3.client("batch", config=BATCH_CLIENT_CONFIG)
+    response = batch_client.submit_job(
+        jobName=job_name,
+        jobQueue=settings.BATCH_JOB_QUEUE_NAME,
+        jobDefinition=settings.BATCH_JOB_DEF_NAME,
+        parameters={"queueentryuuid": str(queue_entry_uuid)},
+    )
 
     job_id = response.get("jobId")
     if not job_id:
