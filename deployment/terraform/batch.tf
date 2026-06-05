@@ -506,32 +506,32 @@ data "template_file" "db_sync_job_definition" {
   template = file("job-definitions/db_sync.json")
 
   vars = {
-    image_url                        = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
-    postgres_host                    = aws_route53_record.database.name
-    postgres_port                    = module.database_enc.port
-    postgres_user                    = var.rds_database_username
-    postgres_password                = var.rds_database_password
-    postgres_db                      = var.rds_database_name
-    environment                      = var.environment
-    django_secret_key                = var.django_secret_key
-    google_server_side_api_key       = var.google_server_side_api_key
-    oar_client_key                   = var.oar_client_key
-    external_domain                  = local.domain_name
-    batch_job_queue_name             = "queue${local.short}DbSync"
-    batch_job_def_name               = "job${local.short}DbSync"
-    log_group_name                   = "log${local.short}Batch"
-    instance_source                  = var.instance_source
-    email_anonymization_secret       = var.email_anonymization_secret
-    aws_region                       = var.aws_region
-    aws_storage_bucket_name          = local.files_bucket_name
-    efs_file_system_id               = aws_efs_file_system.efs_db_sync[0].id
-    efs_access_point_id              = aws_efs_access_point.efs_db_sync_user[0].id
-    source_db_host                   = module.database_private_link_consumer[0].vpc_endpoint_dns_name
-    source_db_port                   = var.source_db_port
-    source_db_name                   = var.source_db_name
-    source_db_user                   = var.source_db_user
-    source_db_password               = var.source_db_password
-    chunk_size                       = var.db_sync_chunk_size
+    image_url                  = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
+    postgres_host              = aws_route53_record.database.name
+    postgres_port              = module.database_enc.port
+    postgres_user              = var.rds_database_username
+    postgres_password          = var.rds_database_password
+    postgres_db                = var.rds_database_name
+    environment                = var.environment
+    django_secret_key          = var.django_secret_key
+    google_server_side_api_key = var.google_server_side_api_key
+    oar_client_key             = var.oar_client_key
+    external_domain            = local.domain_name
+    batch_job_queue_name       = "queue${local.short}DbSync"
+    batch_job_def_name         = "job${local.short}DbSync"
+    log_group_name             = "log${local.short}Batch"
+    instance_source            = var.instance_source
+    email_anonymization_secret = var.email_anonymization_secret
+    aws_region                 = var.aws_region
+    aws_storage_bucket_name    = local.files_bucket_name
+    efs_file_system_id         = aws_efs_file_system.efs_db_sync[0].id
+    efs_access_point_id        = aws_efs_access_point.efs_db_sync_user[0].id
+    source_db_host             = module.database_private_link_consumer[0].vpc_endpoint_dns_name
+    source_db_port             = var.source_db_port
+    source_db_name             = var.source_db_name
+    source_db_user             = var.source_db_user
+    source_db_password         = var.source_db_password
+    chunk_size                 = var.db_sync_chunk_size
   }
 }
 
@@ -560,7 +560,7 @@ resource "aws_cloudwatch_event_rule" "db_sync_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "db_sync" {
-  count   = var.environment == "Rba" ? 1 : 0
+  count    = var.environment == "Rba" ? 1 : 0
   rule     = aws_cloudwatch_event_rule.db_sync_schedule[0].name
   arn      = aws_batch_job_queue.db_sync[0].arn
   role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
