@@ -9,6 +9,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: June 12, 2026
 
+### Database changes
+
+#### Migrations
+* 0211_create_partner_data_file_upload.py - Creates the `PartnerDataFileUpload` model for tracking Google Sheet uploads queued for partner-field moderation event ingestion.
+
+#### Schema changes
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added `api_partnerdatafileupload` with `uuid` (PK), `google_drive_file_link`, `contributor_id`, `created_by_id`, `status` (`PENDING`/`PROCESSING`/`PROCESSED`/`FAILED`), `batch_job_id`, `processed_at`, `processing_error`, and timestamps.
+
+### Code/API changes
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added partner Google Sheet upload processing for partner-field production location updates:
+  * Added `api.partner_data_file_upload` with Google Sheets I/O, sheet/header/column parsing, AWS Batch submission, and row processing that creates pending `UPDATE` moderation events via the existing `LocationContribution` pipeline.
+  * Added `process_partner_data_file_uploads` management command (run via AWS Batch) to validate partner field columns against contributor permissions and JSON schemas, create moderation events per row, and write per-row `error` and `moderation_id` feedback back to the sheet.
+  * Registered `PartnerDataFileUpload` in Django admin; saving a new upload submits an AWS Batch job, sets status to `PROCESSING`, and stores the returned job ID.
+
 ### Architecture/Environment changes
 * [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days (1 year) for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
 * [OSDEV-2782](https://opensupplyhub.atlassian.net/browse/OSDEV-2782) - Added an `aws_s3_bucket_public_access_block` resource for the React frontend S3 bucket in `deployment/terraform/cdn.tf` to enable all four Block Public Access flags (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`). No functional impact: the bucket is fronted by CloudFront via an Origin Access Identity, so BPA does not affect the read path.
@@ -20,6 +34,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * **Frontend Yarn `resolutions` block** (`src/react/package.json`) — Added a `resolutions` block to pin vulnerable transitive deps that cannot be reached via direct `dependencies` bumps because they're pulled in deep by `react-scripts`/CRA. Covers: `qs` 6.14.2, `on-headers` 1.1.0, `brace-expansion` 1.1.12, `node-forge` 1.3.1, `express` 4.21.2, `serve-static` 1.16.2, `send` 0.19.0, `cookie` 0.7.2, `pbkdf2` 3.1.3, `shell-quote` 1.8.1, `cipher-base` 1.0.6, `sha.js` 2.4.12, `form-data` 4.0.4, `loader-utils` 2.0.4, `ejs` 3.1.10, `json-schema` 0.4.0, `react-dev-utils/immer` 9.0.21, `tmp` 0.2.5, `yaml` 1.10.3, `bn.js` 5.2.3, `ajv` 6.14.0, `@babel/helpers` 7.26.10, `@babel/runtime` 7.26.10, `@babel/runtime-corejs3` 7.26.10, `tar` 6.2.1, `browserslist` 4.24.4, `tough-cookie` 4.1.4, `nanoid` 3.3.8, `micromatch` 4.0.8, `picomatch` 2.3.2, `follow-redirects` 1.16.0, `protocol-buffers-schema` 3.6.1, `minimatch` 3.1.3, scoped `express/path-to-regexp` 0.1.13 and `react-router/path-to-regexp` 1.9.0 (two coexisting major lines), `flatted` 3.4.2, `immutable` 3.8.3, `rollup` 2.80.0, `ansi-html` 0.0.8, `semver` 7.5.2, `node-fetch` 2.6.7, `is-svg` 4.3.0, `nth-check` 2.0.1, `ws` 8.17.1, `braces` 3.0.3, `cross-spawn` 7.0.5, `body-parser` 1.20.3, `@babel/plugin-transform-modules-systemjs` 7.29.4, `http-proxy-middleware` 2.0.7, and `node-releases` 2.0.14 (held at the last Node 14-compatible release so the existing `node:14-slim` dev image keeps working).
   * **Frontend code change** — `src/react/src/setupProxy.js` migrated from the legacy default-export `http-proxy-middleware` 0.x API (`proxy(path, options)`) to the v2.x named-export API (`createProxyMiddleware(options)` passed to `app.use(path, …)`), so the upgraded library functions without behavior change.
   * **E2E tests** — `src/e2e/package.json` bumps `@playwright/test` from `^1.48.1` to `^1.55.1` (resolves to 1.60.0) to patch CVE-2025-59288; `src/e2e/package-lock.json` regenerated to match so `npm ci` succeeds in the e2e Dockerfile build.
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added dedicated AWS Batch infrastructure for partner Google Sheet uploads:
+  * Provisioned a dedicated compute environment, job queue (`queue*PartnerDataFileUpload`), and job definition (`job*PartnerDataFileUpload`) for partner sheet processing, replacing the unused direct data load batch job definition.
+  * Added `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME` and `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME` to the ECS app task definition so admin Batch submission uses the partner job definition (`queueentryuuid`) instead of the default facility-list job definition (`listid`/`action`).
+  * Trimmed the partner Batch worker job definition to essential environment variables and skipped Batch submit-setting validation in Django when `BATCH_MODE=True`.
 
 ### Bugfix
 * [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
@@ -27,6 +45,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
   * The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
 * [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
+
+### What's new
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Moderators can submit partner Google Sheets through Django admin (**Partner Data File Uploads**) to apply partner-field production location updates without using the API. Each row with a valid `os_id` creates a pending moderation event; row-level outcomes appear in `error` and `moderation_id` columns added to the sheet.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
