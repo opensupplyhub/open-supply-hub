@@ -893,18 +893,6 @@ variable "enable_legacy_info_site_redirect" {
   default = false
 }
 
-variable "enable_dmarc_opensupplyhub" {
-  type        = bool
-  default     = false
-  description = "Whether to manage DMARC TXT records for opensupplyhub.org and openapparel.org (Production AWS account)"
-}
-
-variable "enable_dmarc_oshub_net" {
-  type        = bool
-  default     = false
-  description = "Whether to manage the DMARC TXT record for os-hub.net (Development AWS account)"
-}
-
 
 # Direct data load variables
 
