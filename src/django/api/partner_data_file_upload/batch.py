@@ -16,7 +16,10 @@ _BEFORE_SUBMIT_MSG = (
 
 
 def validate_aws_batch_prerequisites():
-    for setting_name in ("BATCH_JOB_QUEUE_NAME", "BATCH_JOB_DEF_NAME"):
+    for setting_name in (
+        "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME",
+        "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME",
+    ):
         if not getattr(settings, setting_name, None):
             raise ValueError(
                 f"{setting_name} is not configured. Set it in the environment "
@@ -50,8 +53,8 @@ def submit_partner_data_file_upload_job(queue_entry_uuid) -> str:
     batch_client = boto3.client("batch", config=BATCH_CLIENT_CONFIG)
     response = batch_client.submit_job(
         jobName=job_name,
-        jobQueue=settings.BATCH_JOB_QUEUE_NAME,
-        jobDefinition=settings.BATCH_JOB_DEF_NAME,
+        jobQueue=settings.BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME,
+        jobDefinition=settings.BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME,
         parameters={"queueentryuuid": str(queue_entry_uuid)},
     )
 

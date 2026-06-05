@@ -73,24 +73,46 @@ if ENVIRONMENT not in VALID_ENVIRONMENTS:
         'Invalid ENVIRONMENT provided, must be one of {}'
         .format(VALID_ENVIRONMENTS))
 
+# A non-empty value of BATCH_MODE signals that we will only be running batch
+# processing management commands.
+BATCH_MODE = os.getenv('BATCH_MODE', '')
+
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
-if BATCH_JOB_QUEUE_NAME is None and not DEBUG:
+if BATCH_JOB_QUEUE_NAME is None and not DEBUG and not BATCH_MODE:
     raise ImproperlyConfigured(
         'Invalid BATCH_JOB_QUEU_NAME provided, must be set')
 
 BATCH_JOB_DEF_NAME = os.getenv('BATCH_JOB_DEF_NAME')
-if BATCH_JOB_DEF_NAME is None and not DEBUG:
+if BATCH_JOB_DEF_NAME is None and not DEBUG and not BATCH_MODE:
     raise ImproperlyConfigured(
         'Invalid BATCH_JOB_DEF_NAME provided, must be set')
+
+BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME = os.getenv(
+    'BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME')
+if (
+    BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME is None
+    and not DEBUG
+    and not BATCH_MODE
+):
+    raise ImproperlyConfigured(
+        'Invalid BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME provided, '
+        'must be set')
+
+BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME = os.getenv(
+    'BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME')
+if (
+    BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME is None
+    and not DEBUG
+    and not BATCH_MODE
+):
+    raise ImproperlyConfigured(
+        'Invalid BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME provided, '
+        'must be set')
 
 EXTERNAL_DOMAIN = os.getenv('EXTERNAL_DOMAIN')
 if EXTERNAL_DOMAIN is None and not DEBUG:
     raise ImproperlyConfigured(
         'Invalid EXTERNAL_DOMAIN provided, must be set')
-
-# A non-empty value of BATCH_MODE signals that we will only be running batch
-# processing management commands
-BATCH_MODE = os.getenv('BATCH_MODE', '')
 
 LOGLEVEL = os.getenv('DJANGO_LOG_LEVEL', 'INFO')
 

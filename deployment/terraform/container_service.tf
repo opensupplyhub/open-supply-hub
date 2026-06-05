@@ -5,6 +5,8 @@ locals {
   app_logstash_image   = "${module.ecr_repository_logstash.repository_url}:${var.image_tag}"
   batch_job_queue_name = "queue${local.short}Default"
   batch_job_def_name   = "job${local.short}Default"
+  batch_partner_data_file_upload_job_queue_name = "queue${local.short}PartnerDataFileUpload"
+  batch_partner_data_file_upload_job_def_name   = "job${local.short}PartnerDataFileUpload"
 }
 
 #
@@ -174,6 +176,8 @@ data "template_file" "app" {
     CORS_ALLOWED_ORIGIN_REGEXES          = var.CORS_ALLOWED_ORIGIN_REGEXES
     batch_job_queue_name                 = local.batch_job_queue_name
     batch_job_def_name                   = local.batch_job_def_name
+    batch_partner_data_file_upload_job_queue_name = local.batch_partner_data_file_upload_job_queue_name
+    batch_partner_data_file_upload_job_def_name   = local.batch_partner_data_file_upload_job_def_name
     log_group_name                       = "log${local.short}App"
     cache_host                           = aws_route53_record.cache.name
     cache_port                           = var.ec_memcached_port
@@ -239,6 +243,8 @@ data "template_file" "app_cli" {
     environment                      = var.environment
     batch_job_queue_name             = local.batch_job_queue_name
     batch_job_def_name               = local.batch_job_def_name
+    batch_partner_data_file_upload_job_queue_name = local.batch_partner_data_file_upload_job_queue_name
+    batch_partner_data_file_upload_job_def_name   = local.batch_partner_data_file_upload_job_def_name
     log_group_name                   = "log${local.short}AppCLI"
     cache_host                       = aws_route53_record.cache.name
     cache_port                       = var.ec_memcached_port

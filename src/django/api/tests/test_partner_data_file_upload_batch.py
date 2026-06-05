@@ -8,29 +8,46 @@ from api.partner_data_file_upload.batch import (
 )
 from api.partner_data_file_upload.errors import format_upload_processing_error
 
+PARTNER_BATCH_SETTINGS = {
+    "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME": (
+        "queueTestPartnerDataFileUpload"
+    ),
+    "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME": (
+        "jobTestPartnerDataFileUpload"
+    ),
+}
+
 
 class PartnerDataFileUploadBatchTest(TestCase):
-    @override_settings(BATCH_JOB_QUEUE_NAME=None, BATCH_JOB_DEF_NAME="jobTestDefault")
+    @override_settings(
+        BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME=None,
+        BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
+    )
     def test_validate_requires_batch_job_queue_name(self):
         with self.assertRaises(ValueError) as context:
             validate_aws_batch_prerequisites()
 
-        self.assertIn("BATCH_JOB_QUEUE_NAME", str(context.exception))
+        self.assertIn(
+            "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME",
+            str(context.exception),
+        )
 
     @override_settings(
-        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
-        BATCH_JOB_DEF_NAME=None,
+        BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME=(
+            "queueTestPartnerDataFileUpload"
+        ),
+        BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME=None,
     )
     def test_validate_requires_batch_job_def_name(self):
         with self.assertRaises(ValueError) as context:
             validate_aws_batch_prerequisites()
 
-        self.assertIn("BATCH_JOB_DEF_NAME", str(context.exception))
+        self.assertIn(
+            "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME",
+            str(context.exception),
+        )
 
-    @override_settings(
-        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
-        BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
-    )
+    @override_settings(**PARTNER_BATCH_SETTINGS)
     @patch("api.partner_data_file_upload.batch.boto3.Session")
     def test_validate_requires_aws_credentials(self, mock_session):
         mock_session.return_value.get_credentials.return_value = None
@@ -40,10 +57,7 @@ class PartnerDataFileUploadBatchTest(TestCase):
 
         self.assertIn("AWS credentials", str(context.exception))
 
-    @override_settings(
-        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
-        BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
-    )
+    @override_settings(**PARTNER_BATCH_SETTINGS)
     @patch("api.partner_data_file_upload.batch.boto3.client")
     @patch("api.partner_data_file_upload.batch.boto3.Session")
     def test_submit_job_checks_credentials_before_client_call(
@@ -59,10 +73,7 @@ class PartnerDataFileUploadBatchTest(TestCase):
         self.assertIn("AWS credentials", str(context.exception))
         mock_client.assert_not_called()
 
-    @override_settings(
-        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
-        BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
-    )
+    @override_settings(**PARTNER_BATCH_SETTINGS)
     @patch("api.partner_data_file_upload.batch.boto3.client")
     @patch("api.partner_data_file_upload.batch.boto3.Session")
     def test_submit_job_returns_job_id(self, mock_session, mock_client):

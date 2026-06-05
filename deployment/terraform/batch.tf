@@ -425,8 +425,6 @@ data "template_file" "partner_data_file_upload_job_definition" {
     google_server_side_api_key          = var.google_server_side_api_key
     oar_client_key                      = var.oar_client_key
     external_domain                     = local.domain_name
-    batch_job_queue_name                = "queue${local.short}PartnerDataFileUpload"
-    batch_job_def_name                  = "job${local.short}PartnerDataFileUpload"
     log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64
   }
