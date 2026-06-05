@@ -893,6 +893,12 @@ variable "enable_legacy_info_site_redirect" {
   default = false
 }
 
+variable "enable_dmarc_policy" {
+  type        = bool
+  default     = false
+  description = "Whether to manage DMARC TXT records for opensupplyhub.org, openapparel.org, and os-hub.net"
+}
+
 
 # Direct data load variables
 
