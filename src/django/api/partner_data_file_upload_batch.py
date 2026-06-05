@@ -8,27 +8,11 @@ from botocore.exceptions import (
 )
 from django.conf import settings
 
-PARTNER_DATA_FILE_JOB_DEF_SUFFIX = "PartnerDataFileUpload"
 BATCH_CLIENT_CONFIG = Config(
     connect_timeout=5,
     read_timeout=15,
     retries={"max_attempts": 2},
 )
-
-
-def get_partner_data_file_job_def_name():
-    default_job_def_name = settings.BATCH_JOB_DEF_NAME
-    if not default_job_def_name:
-        raise ValueError(
-            "BATCH_JOB_DEF_NAME is not configured. Set it in the environment "
-            "before submitting a partner data file for processing."
-        )
-
-    if default_job_def_name.endswith("Default"):
-        prefix = default_job_def_name[: -len("Default")]
-        return f"{prefix}{PARTNER_DATA_FILE_JOB_DEF_SUFFIX}"
-
-    return default_job_def_name
 
 
 def validate_aws_batch_prerequisites():
@@ -38,7 +22,11 @@ def validate_aws_batch_prerequisites():
             "before submitting a partner data file for processing."
         )
 
-    get_partner_data_file_job_def_name()
+    if not settings.BATCH_JOB_DEF_NAME:
+        raise ValueError(
+            "BATCH_JOB_DEF_NAME is not configured. Set it in the environment "
+            "before submitting a partner data file for processing."
+        )
 
     credentials = boto3.Session().get_credentials()
     if credentials is None:
@@ -72,14 +60,15 @@ def submit_partner_data_file_upload_job(queue_entry_uuid) -> str:
         response = batch_client.submit_job(
             jobName=job_name,
             jobQueue=settings.BATCH_JOB_QUEUE_NAME,
-            jobDefinition=get_partner_data_file_job_def_name(),
+            jobDefinition=settings.BATCH_JOB_DEF_NAME,
             parameters={"queueentryuuid": str(queue_entry_uuid)},
         )
     except (NoCredentialsError, PartialCredentialsError) as error:
         raise ValueError(
             "AWS credentials are not configured. Set AWS_ACCESS_KEY_ID and "
             "AWS_SECRET_ACCESS_KEY, configure AWS_PROFILE, or use another "
-            "supported credential source before submitting a partner data file."
+            "supported credential source before submitting a partner data "
+            "file."
         ) from error
 
     job_id = response.get("jobId")

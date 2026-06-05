@@ -358,6 +358,56 @@ resource "aws_cloudwatch_log_group" "batch" {
   retention_in_days = 365
 }
 
+resource "aws_batch_compute_environment" "partner_data_file_upload" {
+  depends_on = [aws_iam_role_policy_attachment.batch_policy]
+
+  compute_environment_name_prefix = "batch${local.short}PartnerDataFileUploadComputeEnvironment"
+  type                            = "MANAGED"
+  state                           = "ENABLED"
+  service_role                    = aws_iam_role.container_instance_batch.arn
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  compute_resources {
+    type                = "SPOT"
+    allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
+    bid_percentage      = var.batch_partner_data_file_upload_ce_spot_fleet_bid_percentage
+    ec2_key_pair        = var.aws_key_name
+    image_id            = var.batch_ami_id
+
+    min_vcpus     = var.batch_partner_data_file_upload_ce_min_vcpus
+    desired_vcpus = var.batch_partner_data_file_upload_ce_desired_vcpus
+    max_vcpus     = var.batch_partner_data_file_upload_ce_max_vcpus
+
+    spot_iam_fleet_role = aws_iam_role.container_instance_spot_fleet.arn
+    instance_role       = aws_iam_instance_profile.container_instance.arn
+
+    instance_type = var.batch_partner_data_file_upload_ce_instance_types
+
+    security_group_ids = [
+      aws_security_group.batch.id,
+    ]
+
+    subnets = module.vpc.private_subnet_ids
+
+    tags = {
+      Name               = "BatchWorker"
+      ComputeEnvironment = "PartnerDataFileUpload"
+      Project            = var.project
+      Environment        = var.environment
+    }
+  }
+}
+
+resource "aws_batch_job_queue" "partner_data_file_upload" {
+  name                 = "queue${local.short}PartnerDataFileUpload"
+  priority             = 1
+  state                = "ENABLED"
+  compute_environments = [aws_batch_compute_environment.partner_data_file_upload.arn]
+}
+
 data "template_file" "partner_data_file_upload_job_definition" {
   template = file("job-definitions/partner_data_file_upload.json")
 
@@ -375,7 +425,7 @@ data "template_file" "partner_data_file_upload_job_definition" {
     google_server_side_api_key          = var.google_server_side_api_key
     oar_client_key                      = var.oar_client_key
     external_domain                     = local.domain_name
-    batch_job_queue_name                = "queue${local.short}Default"
+    batch_job_queue_name                = "queue${local.short}PartnerDataFileUpload"
     batch_job_def_name                  = "job${local.short}PartnerDataFileUpload"
     log_group_name                      = "log${local.short}Batch"
     google_service_account_creds_base64 = var.google_service_account_creds_base64

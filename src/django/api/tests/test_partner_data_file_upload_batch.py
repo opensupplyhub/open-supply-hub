@@ -18,7 +18,7 @@ class PartnerDataFileUploadBatchTest(TestCase):
         self.assertIn("BATCH_JOB_QUEUE_NAME", str(context.exception))
 
     @override_settings(
-        BATCH_JOB_QUEUE_NAME="test-queue",
+        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
         BATCH_JOB_DEF_NAME=None,
     )
     def test_validate_requires_batch_job_def_name(self):
@@ -28,8 +28,8 @@ class PartnerDataFileUploadBatchTest(TestCase):
         self.assertIn("BATCH_JOB_DEF_NAME", str(context.exception))
 
     @override_settings(
-        BATCH_JOB_QUEUE_NAME="test-queue",
-        BATCH_JOB_DEF_NAME="jobTestDefault",
+        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
+        BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
     )
     @patch("api.partner_data_file_upload_batch.boto3.Session")
     def test_validate_requires_aws_credentials(self, mock_session):
@@ -41,8 +41,8 @@ class PartnerDataFileUploadBatchTest(TestCase):
         self.assertIn("AWS credentials", str(context.exception))
 
     @override_settings(
-        BATCH_JOB_QUEUE_NAME="test-queue",
-        BATCH_JOB_DEF_NAME="jobTestDefault",
+        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
+        BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
     )
     @patch("api.partner_data_file_upload_batch.boto3.client")
     @patch("api.partner_data_file_upload_batch.boto3.Session")
@@ -60,8 +60,8 @@ class PartnerDataFileUploadBatchTest(TestCase):
         mock_client.assert_not_called()
 
     @override_settings(
-        BATCH_JOB_QUEUE_NAME="test-queue",
-        BATCH_JOB_DEF_NAME="jobTestDefault",
+        BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
+        BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
     )
     @patch("api.partner_data_file_upload_batch.boto3.client")
     @patch("api.partner_data_file_upload_batch.boto3.Session")
@@ -84,6 +84,15 @@ class PartnerDataFileUploadBatchTest(TestCase):
 
         self.assertEqual(job_id, "job-123")
         mock_client.assert_called_once()
+        submit_kwargs = mock_client.return_value.submit_job.call_args.kwargs
+        self.assertEqual(
+            submit_kwargs["jobQueue"],
+            "queueTestPartnerDataFileUpload",
+        )
+        self.assertEqual(
+            submit_kwargs["jobDefinition"],
+            "jobTestPartnerDataFileUpload",
+        )
 
     def test_format_upload_processing_error_prefixes_system_failures(self):
         message = PartnerDataFileUpload.format_upload_processing_error(
