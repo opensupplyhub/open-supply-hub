@@ -114,7 +114,8 @@ resource "aws_service_discovery_private_dns_namespace" "service_discovery" {
 }
 
 data "aws_route53_zone" "opensupplyhub_dmarc" {
-  name = "opensupplyhub.org"
+  name         = "opensupplyhub.org"
+  private_zone = false
 }
 
 resource "aws_route53_record" "dmarc_opensupplyhub" {
@@ -126,7 +127,8 @@ resource "aws_route53_record" "dmarc_opensupplyhub" {
 }
 
 data "aws_route53_zone" "openapparel_dmarc" {
-  name = "openapparel.org"
+  name         = "openapparel.org"
+  private_zone = false
 }
 
 resource "aws_route53_record" "dmarc_openapparel" {
@@ -138,7 +140,8 @@ resource "aws_route53_record" "dmarc_openapparel" {
 }
 
 data "aws_route53_zone" "oshub_net_dmarc" {
-  name = "os-hub.net"
+  name         = "os-hub.net"
+  private_zone = false
 }
 
 resource "aws_route53_record" "dmarc_oshub_net" {
