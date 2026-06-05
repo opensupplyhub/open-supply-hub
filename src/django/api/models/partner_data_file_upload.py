@@ -11,14 +11,6 @@ class PartnerDataFileUpload(models.Model):
     Tracks Google Sheets queued for moderation-event ingestion.
     """
 
-    DEVELOPER_PROCESSING_ERROR_PREFIX = "Contact developers: "
-    DEVELOPER_ERROR_HINTS = (
-        "Google Service Account",
-        "AWS credentials",
-        "BATCH_JOB_QUEUE_NAME",
-        "BATCH_JOB_DEF_NAME",
-    )
-
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         PROCESSING = "PROCESSING", "Processing"
@@ -92,27 +84,6 @@ class PartnerDataFileUpload(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
-
-    @classmethod
-    def format_developer_processing_error(cls, message: str) -> str:
-        message = (message or "").strip()
-        if message.startswith(cls.DEVELOPER_PROCESSING_ERROR_PREFIX):
-            return message
-        return f"{cls.DEVELOPER_PROCESSING_ERROR_PREFIX}{message}"
-
-    @classmethod
-    def format_upload_processing_error(cls, error: Exception) -> str:
-        """
-        Sheet or list issues stay as-is for moderators. Infrastructure,
-        configuration, and unexpected failures are prefixed so moderators
-        know to contact developers.
-        """
-        message = str(error).strip()
-        if isinstance(error, ValueError):
-            if any(hint in message for hint in cls.DEVELOPER_ERROR_HINTS):
-                return cls.format_developer_processing_error(message)
-            return message
-        return cls.format_developer_processing_error(message)
 
     def __str__(self):
         return f"PartnerDataFileUpload {self.uuid} status={self.status}"

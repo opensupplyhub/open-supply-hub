@@ -19,9 +19,9 @@ from api.moderation_event_actions.creation.location_contribution.location_contri
 from api.moderation_event_actions.creation.moderation_event_creator import (
     ModerationEventCreator,
 )
-from api.management.commands.process_partner_data_file_uploads import (
-    ColumnMapping,
-    PartnerFieldSheetParser,
+from api.partner_data_file_upload.parsing.parser import PartnerFieldSheetParser
+from api.partner_data_file_upload.parsing.types import ColumnMapping
+from api.partner_data_file_upload.processing.event_creator import (
     PartnerPatchModerationEventCreator,
 )
 from api.tests.test_data import geocoding_data

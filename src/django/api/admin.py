@@ -22,9 +22,8 @@ from api.models.wage_indicator_link_text_config import (
 )
 from api.models.us_county_tigerline import USCountyTigerline
 from api.models.partner_data_file_upload import PartnerDataFileUpload
-from api.partner_data_file_upload_batch import (
-    submit_partner_data_file_upload_job,
-)
+from api.partner_data_file_upload.batch import submit_partner_data_file_upload_job
+from api.partner_data_file_upload.errors import format_upload_processing_error
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
@@ -451,7 +450,14 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
         "processed_at",
     )
     list_filter = ("status", "contributor")
-    search_fields = ("uuid", "google_drive_file_link", "batch_job_id")
+    search_fields = (
+        "uuid",
+        "google_drive_file_link",
+        "batch_job_id",
+        "contributor__name",
+        "contributor__admin__email",
+        "created_by__email",
+    )
     readonly_fields = (
         "uuid",
         "batch_job_id",
@@ -487,11 +493,7 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
                 ),
             )
         except Exception as error:
-            error_message = (
-                PartnerDataFileUpload.format_developer_processing_error(
-                    str(error)
-                )
-            )
+            error_message = format_upload_processing_error(error)
             obj.status = PartnerDataFileUpload.Status.FAILED
             obj.processing_error = error_message
             obj.save(

@@ -2,11 +2,11 @@ from unittest.mock import Mock, patch
 
 from django.test import TestCase, override_settings
 
-from api.models.partner_data_file_upload import PartnerDataFileUpload
-from api.partner_data_file_upload_batch import (
+from api.partner_data_file_upload.batch import (
     submit_partner_data_file_upload_job,
     validate_aws_batch_prerequisites,
 )
+from api.partner_data_file_upload.errors import format_upload_processing_error
 
 
 class PartnerDataFileUploadBatchTest(TestCase):
@@ -31,7 +31,7 @@ class PartnerDataFileUploadBatchTest(TestCase):
         BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
         BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
     )
-    @patch("api.partner_data_file_upload_batch.boto3.Session")
+    @patch("api.partner_data_file_upload.batch.boto3.Session")
     def test_validate_requires_aws_credentials(self, mock_session):
         mock_session.return_value.get_credentials.return_value = None
 
@@ -44,8 +44,8 @@ class PartnerDataFileUploadBatchTest(TestCase):
         BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
         BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
     )
-    @patch("api.partner_data_file_upload_batch.boto3.client")
-    @patch("api.partner_data_file_upload_batch.boto3.Session")
+    @patch("api.partner_data_file_upload.batch.boto3.client")
+    @patch("api.partner_data_file_upload.batch.boto3.Session")
     def test_submit_job_checks_credentials_before_client_call(
         self,
         mock_session,
@@ -63,8 +63,8 @@ class PartnerDataFileUploadBatchTest(TestCase):
         BATCH_JOB_QUEUE_NAME="queueTestPartnerDataFileUpload",
         BATCH_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
     )
-    @patch("api.partner_data_file_upload_batch.boto3.client")
-    @patch("api.partner_data_file_upload_batch.boto3.Session")
+    @patch("api.partner_data_file_upload.batch.boto3.client")
+    @patch("api.partner_data_file_upload.batch.boto3.Session")
     def test_submit_job_returns_job_id(self, mock_session, mock_client):
         mock_session.return_value.get_credentials.return_value = Mock(
             access_key="key",
@@ -95,14 +95,14 @@ class PartnerDataFileUploadBatchTest(TestCase):
         )
 
     def test_format_upload_processing_error_prefixes_system_failures(self):
-        message = PartnerDataFileUpload.format_upload_processing_error(
+        message = format_upload_processing_error(
             RuntimeError("unexpected failure")
         )
 
         self.assertTrue(message.startswith("Contact developers:"))
 
     def test_format_upload_processing_error_keeps_sheet_validation_plain(self):
-        message = PartnerDataFileUpload.format_upload_processing_error(
+        message = format_upload_processing_error(
             ValueError("Sheet contains duplicate headers: os_id")
         )
 
@@ -111,7 +111,7 @@ class PartnerDataFileUploadBatchTest(TestCase):
     def test_format_upload_processing_error_prefixes_infrastructure_value_errors(
         self,
     ):
-        message = PartnerDataFileUpload.format_upload_processing_error(
+        message = format_upload_processing_error(
             ValueError("AWS credentials are not configured.")
         )
 
