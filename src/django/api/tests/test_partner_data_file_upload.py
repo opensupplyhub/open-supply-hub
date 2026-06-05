@@ -59,7 +59,10 @@ class PartnerDataFileUploadTest(TestCase):
                 },
             },
         )
-        self.contributor.partner_fields.add(self.string_field, self.object_field)
+        self.contributor.partner_fields.add(
+            self.string_field,
+            self.object_field,
+        )
 
         facility_list = FacilityList.objects.create(
             header="header",
@@ -90,7 +93,9 @@ class PartnerDataFileUploadTest(TestCase):
 
     @override_settings(
         BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME=None,
-        BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME="jobTestPartnerDataFileUpload",
+        BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME=(
+            "jobTestPartnerDataFileUpload"
+        ),
     )
     def test_batch_validate_requires_partner_queue_setting(self):
         with self.assertRaises(ValueError) as context:
@@ -138,7 +143,9 @@ class PartnerDataFileUploadTest(TestCase):
             {"queueentryuuid": "00000000-0000-0000-0000-000000000001"},
         )
 
-    def test_format_upload_processing_error_prefixes_infrastructure_failures(self):
+    def test_format_upload_processing_error_prefixes_infrastructure(
+        self,
+    ):
         message = format_upload_processing_error(
             ValueError("AWS credentials are not configured.")
         )

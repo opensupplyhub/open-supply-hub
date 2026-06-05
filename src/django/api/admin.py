@@ -2,7 +2,6 @@ import json
 import logging
 
 from django import forms
-from django.conf import settings
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
@@ -22,7 +21,9 @@ from api.models.wage_indicator_link_text_config import (
 )
 from api.models.us_county_tigerline import USCountyTigerline
 from api.models.partner_data_file_upload import PartnerDataFileUpload
-from api.partner_data_file_upload.batch import submit_partner_data_file_upload_job
+from api.partner_data_file_upload.batch import (
+    submit_partner_data_file_upload_job,
+)
 from api.partner_data_file_upload.errors import format_upload_processing_error
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
