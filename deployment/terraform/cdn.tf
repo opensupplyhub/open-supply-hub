@@ -156,7 +156,7 @@ resource "aws_cloudfront_distribution" "cdn" {
       http_port              = 80
       https_port             = 443
       origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
 
     custom_header {
@@ -793,7 +793,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   viewer_certificate {
     acm_certificate_arn      = module.cert_cdn.arn
-    minimum_protocol_version = "TLSv1.2_2018"
+    minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
   }
 
