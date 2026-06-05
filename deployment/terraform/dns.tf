@@ -113,6 +113,42 @@ resource "aws_service_discovery_private_dns_namespace" "service_discovery" {
   vpc         = module.vpc.id
 }
 
+data "aws_route53_zone" "opensupplyhub_dmarc" {
+  name = "opensupplyhub.org"
+}
+
+resource "aws_route53_record" "dmarc_opensupplyhub" {
+  zone_id = data.aws_route53_zone.opensupplyhub_dmarc.zone_id
+  name    = "_dmarc"
+  type    = "TXT"
+  ttl     = "300"
+  records = ["v=DMARC1; p=reject; rua=mailto:dmarc+opensupplyhub.org@inbound.axl.net"]
+}
+
+data "aws_route53_zone" "openapparel_dmarc" {
+  name = "openapparel.org"
+}
+
+resource "aws_route53_record" "dmarc_openapparel" {
+  zone_id = data.aws_route53_zone.openapparel_dmarc.zone_id
+  name    = "_dmarc"
+  type    = "TXT"
+  ttl     = "300"
+  records = ["v=DMARC1; p=none; rua=mailto:dmarc+openapparel.org@inbound.axl.net"]
+}
+
+data "aws_route53_zone" "oshub_net_dmarc" {
+  name = "os-hub.net"
+}
+
+resource "aws_route53_record" "dmarc_oshub_net" {
+  zone_id = data.aws_route53_zone.oshub_net_dmarc.zone_id
+  name    = "_dmarc"
+  type    = "TXT"
+  ttl     = "300"
+  records = ["v=DMARC1; p=none; rua=mailto:dmarc+os-hub.net@inbound.axl.net"]
+}
+
 resource "aws_service_discovery_service" "app" {
   name = "api"
   dns_config {
