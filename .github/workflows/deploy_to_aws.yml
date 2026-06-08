@@ -62,6 +62,8 @@ jobs:
     needs: check-base
     if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     env:
       DEPLOY_ENV: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
