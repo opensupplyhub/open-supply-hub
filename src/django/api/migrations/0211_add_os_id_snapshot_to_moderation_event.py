@@ -15,9 +15,9 @@ class Migration(migrations.Migration):
                 blank=True,
                 default='',
                 help_text=(
-                    'OS ID captured at approval time. Persists through '
-                    'facility deletion or merging, unlike the os FK '
-                    '(on_delete=SET_NULL).'
+                    'OS ID captured at first approval. Written once and '
+                    'never overwritten; persists through facility deletion '
+                    'or merging, unlike the os FK (on_delete=SET_NULL).'
                 ),
                 max_length=32,
             ),
