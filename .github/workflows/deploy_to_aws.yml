@@ -119,7 +119,7 @@ jobs:
               --query "HostedZones[?Name=='${domain}.'].Id" \
               --output text | sed 's|/hostedzone/||')
 
-            if [ -z "$ZONE_ID" ]; then
+            if [ -z "$ZONE_ID" ] || [ "$ZONE_ID" = "None" ]; then
               echo "Zone $domain not found in this account, skipping."
               return
             fi
@@ -129,7 +129,7 @@ jobs:
               --query "ResourceRecordSets[?Name=='_dmarc.${domain}.' && Type=='TXT']" \
               --output text)
 
-            if [ -z "$RECORD" ]; then
+            if [ -z "$RECORD" ] || [ "$RECORD" = "None" ]; then
               echo "No existing _dmarc.$domain record found, nothing to import."
               return
             fi
