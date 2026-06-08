@@ -28,6 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
   * The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
   * The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
+  * The Admin Dashboard Pending and Approved filters now correctly isolate lists by their actual status; previously, active non-replaced lists of any status could appear in either filter.
 * [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
 
 ### Release instructions
