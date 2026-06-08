@@ -105,6 +105,28 @@ class ModerationEventsAddProductionLocationTest(
         self.assertEqual(event.os_id_snapshot, response.data["os_id"])
         self.assertEqual(event.os_id_snapshot, event.os_id)
 
+    def test_os_id_snapshot_is_not_overwritten_on_reapproval(self):
+        """
+        Re-approving an event (admin reset of status to PENDING followed by
+        a second approval) must not overwrite the os_id_snapshot captured
+        at first approval — that is the audit trail.
+        """
+        original_snapshot = 'US1900000ORIGINAL'
+        self.moderation_event.os_id_snapshot = original_snapshot
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(201, response.status_code)
+        event = ModerationEvent.objects.get(uuid=self.moderation_event_id)
+        self.assertEqual(event.os_id_snapshot, original_snapshot)
+        self.assertNotEqual(event.os_id_snapshot, event.os_id)
+
     def test_os_id_snapshot_persists_when_os_id_is_nulled(self):
         """
         Simulates the SET_NULL cascade that fires on the os FK during a
