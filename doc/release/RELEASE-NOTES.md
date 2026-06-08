@@ -24,6 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * **E2E tests** — `src/e2e/package.json` bumps `@playwright/test` from `^1.48.1` to `^1.55.1` (resolves to 1.60.0) to patch CVE-2025-59288; `src/e2e/package-lock.json` regenerated to match so `npm ci` succeeds in the e2e Dockerfile build.
 
 ### Bugfix
+* [OSDEV-2804](https://opensupplyhub.atlassian.net/browse/OSDEV-2804) - Fixed the Deploy to AWS pipeline failing during `terraform init` with a 504 Gateway Timeout from GitHub when installing the unused `zywillc/kafka` provider (v1.0.1). Removed the provider declaration from `deployment/terraform/versions.tf` — all `kafka_topic` resources and the `provider "kafka"` block in `kafka.tf` were already commented out, making the declaration dead code.
 * [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
   * The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
   * The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
