@@ -679,7 +679,7 @@ function renderThemes(){
             const staleBadge=isStale(e)?`<span class="stale-badge">No Update in 4 Days</span>`:'';
             const skipBadge=e.skipUpdate?`<span class="skip-badge" title="Not normally updated in the delivery meeting — call out only if needed">Skip Update</span>`:'';
             const epicKeyLink='<a href="'+esc(e.url||'#')+'" target="_blank" class="key-lnk" onclick="event.stopPropagation()">'+esc(e.key)+' ↗</a>';
-            html+=`<div class="epic-lbl"><span class="epic-dot ${hc}"></span><div class="epic-lbl-text"><div class="epic-title">${esc(e.title)}</div><div class="epic-sub"><span class="epic-owner">${esc(e.owner||'Unassigned')}</span> · ${epicKeyLink}${prioPill?' · '+prioPill:''}${staleBadge?' · '+staleBadge:''}${skipBadge?' · '+skipBadge:''}</div>${teamDisplay?`<div class="epic-members">${esc(teamDisplay)}</div>`:''}</div><span class="epic-chev${isEOpen?' open':''}">›</span></div>`;
+            html+=`<div class="epic-lbl"><span class="epic-dot ${hc}"></span><div class="epic-lbl-text"><div class="epic-title">${esc(e.title)}${skipBadge?' '+skipBadge:''}</div><div class="epic-sub"><span class="epic-owner">${esc(e.owner||'Unassigned')}</span> · ${epicKeyLink}${prioPill?' · '+prioPill:''}${staleBadge?' · '+staleBadge:''}</div>${teamDisplay?`<div class="epic-members">${esc(teamDisplay)}</div>`:''}</div><span class="epic-chev${isEOpen?' open':''}">›</span></div>`;
             html+=`<div class="epic-tl">${qShades}<div class="mo-grid">${moGrid}</div><div class="today-epic-line" style="left:${tp}%"></div>`;
             if(span.pointOnly){
               html+=`<div class="tl-nodates">no dates</div>`;
