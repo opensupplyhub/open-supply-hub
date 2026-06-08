@@ -58,8 +58,105 @@ jobs:
             scripts/check_release_branch.sh
           fi
 
-  init-and-plan:
+  import-dmarc-if-needed:
     needs: check-base
+    if: needs.check-base.outputs.skip == 'false'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Checkout config repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'terraform-config'
+          token: ${{ secrets.PAT }}
+
+      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+        run: |
+          cat "terraform-config/environments/${{ env.TFVAR_NAME }}" "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+        env:
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.13.3
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: |
+          cd deployment/terraform
+          terraform init \
+            -backend-config="bucket=${SETTINGS_BUCKET}" \
+            -backend-config="key=terraform/state"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+
+      - name: Import existing DMARC records if needed
+        run: |
+          cd deployment/terraform
+
+          import_if_needed() {
+            local resource_address=$1
+            local domain=$2
+
+            ZONE_ID=$(aws route53 list-hosted-zones-by-name \
+              --dns-name "$domain" \
+              --query "HostedZones[?Name=='${domain}.'].Id" \
+              --output text | sed 's|/hostedzone/||')
+
+            if [ -z "$ZONE_ID" ]; then
+              echo "Zone $domain not found in this account, skipping."
+              return
+            fi
+
+            RECORD=$(aws route53 list-resource-record-sets \
+              --hosted-zone-id "$ZONE_ID" \
+              --query "ResourceRecordSets[?Name=='_dmarc.${domain}.' && Type=='TXT']" \
+              --output text)
+
+            if [ -z "$RECORD" ]; then
+              echo "No existing _dmarc.$domain record found, nothing to import."
+              return
+            fi
+
+            if terraform state list | grep -qF "$resource_address"; then
+              echo "_dmarc.$domain already in Terraform state, skipping import."
+              return
+            fi
+
+            echo "Importing existing _dmarc.$domain into Terraform state..."
+            terraform import \
+              -var="image_tag=dummy" \
+              -var-file="${SETTINGS_BUCKET}.tfvars" \
+              "$resource_address" \
+              "${ZONE_ID}/_dmarc/TXT"
+          }
+
+          import_if_needed "aws_route53_record.dmarc_oshub_net[0]" "os-hub.net"
+          import_if_needed "aws_route53_record.dmarc_opensupplyhub[0]" "opensupplyhub.org"
+          import_if_needed "aws_route53_record.dmarc_openapparel[0]" "openapparel.org"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+
+  init-and-plan:
+    needs: [check-base, import-dmarc-if-needed]
     if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}

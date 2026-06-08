@@ -117,6 +117,7 @@ resource "aws_service_discovery_private_dns_namespace" "service_discovery" {
 # DMARC DNS records for compliance monitoring
 #
 locals {
+  # Must match environment values in deployment/environments/terraform-*.tfvars
   dev_account_environments  = ["Development", "Test", "Preprod"]
   prod_account_environments = ["Production", "Staging", "Rba"]
 }
