@@ -1,7 +1,6 @@
 import logging
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
 from opensearchpy.exceptions import ConnectionError, NotFoundError
 
 from api.models.facility.facility_list_item import FacilityListItem
@@ -159,13 +158,12 @@ class Command(BaseCommand):
 
         updated = 0
         for uuid, recovered_os_id in combined_map.items():
-            with transaction.atomic():
-                rows = ModerationEvent.objects.filter(
-                    uuid=uuid,
-                    os_id__isnull=True,
-                    os_id_snapshot='',
-                ).update(os_id_snapshot=recovered_os_id)
-                updated += rows
+            rows = ModerationEvent.objects.filter(
+                uuid=uuid,
+                os_id__isnull=True,
+                os_id_snapshot='',
+            ).update(os_id_snapshot=recovered_os_id)
+            updated += rows
 
         log.info(
             'Recovery backfill complete. Updated %s rows, '
