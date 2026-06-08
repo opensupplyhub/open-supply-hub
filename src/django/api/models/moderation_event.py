@@ -164,8 +164,8 @@ class ModerationEvent(models.Model):
         blank=True,
         default='',
         help_text=(
-            'Immutable snapshot of the OS ID set at approval time. '
-            'Survives facility deletion or merging, unlike the os FK.'
+            'OS ID captured at approval time. Persists through facility '
+            'deletion or merging, unlike the os FK (on_delete=SET_NULL).'
         )
     )
 

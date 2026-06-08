@@ -1,7 +1,10 @@
 import logging
 
 from django.core.management.base import BaseCommand
-from opensearchpy.exceptions import ConnectionError, NotFoundError
+from opensearchpy.exceptions import (
+    ConnectionError as OpenSearchConnectionError,
+    NotFoundError,
+)
 
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.moderation_event import ModerationEvent
@@ -37,7 +40,7 @@ class Command(BaseCommand):
         Returns a dict of {uuid_str: os_id}.
         """
         os_id_map = {}
-        uuid_list = list(str(u) for u in target_uuids)
+        uuid_list = [str(u) for u in target_uuids]
 
         for i in range(0, len(uuid_list), BATCH_SIZE):
             batch = uuid_list[i:i + BATCH_SIZE]
@@ -64,7 +67,7 @@ class Command(BaseCommand):
                     oid = source.get('os_id')
                     if mid and oid:
                         os_id_map[mid] = oid
-            except (ConnectionError, NotFoundError) as e:
+            except (OpenSearchConnectionError, NotFoundError) as e:
                 self.stderr.write(
                     self.style.ERROR(
                         f'OpenSearch error on batch {i}-{i+BATCH_SIZE}: {e}'
