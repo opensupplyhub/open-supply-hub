@@ -77,6 +77,18 @@ class BackfillModerationEventOsIdSnapshotTest(TestCase):
         event.refresh_from_db()
         self.assertEqual(event.os_id_snapshot, 'US2020000PREEXIST')
 
+    def test_does_not_backfill_approved_events_with_null_os_id(self):
+        event = self._make_event(
+            status=ModerationEvent.Status.APPROVED,
+            os_id=None,
+            os_id_snapshot='',
+        )
+
+        call_command('backfill_moderation_event_os_id_snapshot')
+
+        event.refresh_from_db()
+        self.assertEqual(event.os_id_snapshot, '')
+
     def test_does_not_backfill_non_approved_events(self):
         event = self._make_event(
             status=ModerationEvent.Status.PENDING,
