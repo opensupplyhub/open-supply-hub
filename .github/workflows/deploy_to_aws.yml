@@ -142,7 +142,7 @@ jobs:
               -var="image_tag=dummy" \
               -var-file="${SETTINGS_BUCKET}.tfvars" \
               "$resource_address" \
-              "${ZONE_ID}/_dmarc/TXT"
+              "${ZONE_ID}__dmarc.${domain}._TXT"
           }
 
           import_if_needed "aws_route53_record.dmarc_oshub_net[0]" "os-hub.net"
