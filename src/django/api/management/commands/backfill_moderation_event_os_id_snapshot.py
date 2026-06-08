@@ -14,7 +14,19 @@ class Command(BaseCommand):
         'os_id_snapshot is empty but os_id is still present.'
     )
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help=(
+                'Show how many events would be updated without '
+                'actually writing to the database.'
+            )
+        )
+
     def handle(self, *args, **options):
+        dry_run = options.get('dry_run', False)
+
         qs = ModerationEvent.objects.filter(
             status=ModerationEvent.Status.APPROVED,
             os_id_snapshot='',
@@ -28,6 +40,15 @@ class Command(BaseCommand):
         self.stdout.write(
             f'Backfilling os_id_snapshot for {total} rows...'
         )
+
+        if dry_run:
+            self.stdout.write(
+                self.style.WARNING(
+                    f'DRY RUN: Would update {total} events. '
+                    'Run without --dry-run to apply changes.'
+                )
+            )
+            return
 
         updated = 0
         for event in qs.iterator(chunk_size=1000):
