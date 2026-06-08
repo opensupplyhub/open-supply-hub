@@ -63,13 +63,9 @@ jobs:
     if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    env:
+      DEPLOY_ENV: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
-        id: get_env_name
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ vars.ENV_NAME }}
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -80,12 +76,15 @@ jobs:
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
 
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Set environment variables
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}" "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
-        env:
-          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
-          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
+          ENV_LOWER=$(echo "$DEPLOY_ENV" | tr '[:upper:]' '[:lower:]' | tr -d '-')
+          echo "SETTINGS_BUCKET=oshub-settings-${ENV_LOWER}" >> $GITHUB_ENV
+          echo "TFVAR_NAME=terraform-${ENV_LOWER}.tfvars" >> $GITHUB_ENV
+
+      - name: Copy tfvars
+        run: |
+          cat "terraform-config/environments/${TFVAR_NAME}" "deployment/environments/${TFVAR_NAME}" > "deployment/terraform/${SETTINGS_BUCKET}.tfvars"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -103,7 +102,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
       - name: Import existing DMARC records if needed
         run: |
@@ -140,6 +138,7 @@ jobs:
 
             echo "Importing existing _dmarc.$domain into Terraform state..."
             terraform import \
+              -no-color \
               -var="image_tag=dummy" \
               -var-file="${SETTINGS_BUCKET}.tfvars" \
               "$resource_address" \
@@ -153,7 +152,6 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
-          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
   init-and-plan:
     needs: [check-base, import-dmarc-if-needed]
