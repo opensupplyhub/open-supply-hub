@@ -3,7 +3,9 @@ from unittest.mock import MagicMock, patch
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
 from django.test import TestCase
-from opensearchpy.exceptions import ConnectionError as OpenSearchConnectionError
+from opensearchpy.exceptions import (
+    ConnectionError as OpenSearchConnectionError,
+)
 
 from api.models import Contributor, ModerationEvent, User
 from api.models.facility.facility import Facility
