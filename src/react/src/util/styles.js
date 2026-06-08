@@ -1814,3 +1814,25 @@ export const filterSidebarHeaderStyles = theme =>
             fontWeight: 800,
         }),
     });
+
+export const registrationSuccessBannerStyles = Object.freeze({
+    container: Object.freeze({
+        backgroundColor: '#f5f0ff',
+        border: '1px solid #8428FA',
+        borderRadius: '4px',
+        padding: '16px 20px',
+        marginTop: '24px',
+        marginBottom: '48px',
+    }),
+    heading: Object.freeze({
+        margin: '0 0 12px',
+        fontWeight: 'bold',
+    }),
+    list: Object.freeze({
+        margin: 0,
+        paddingLeft: '20px',
+    }),
+    listItem: Object.freeze({
+        marginBottom: '8px',
+    }),
+});

@@ -34,7 +34,10 @@ import {
     makeSubmitFormOnEnterKeyPressFunction,
 } from '../util/util';
 
-import { formValidationErrorMessageStyle } from '../util/styles';
+import {
+    formValidationErrorMessageStyle,
+    registrationSuccessBannerStyles,
+} from '../util/styles';
 
 class RegisterForm extends Component {
     state = {
@@ -93,32 +96,26 @@ class RegisterForm extends Component {
                             Check your email for instructions about how to
                             verify your account.
                         </p>
-                        <div
-                            style={{
-                                backgroundColor: '#f5f0ff',
-                                border: '1px solid #8428FA',
-                                borderRadius: '4px',
-                                padding: '16px 20px',
-                                marginTop: '24px',
-                                marginBottom: '48px',
-                            }}
-                        >
-                            <p
-                                style={{
-                                    margin: '0 0 12px',
-                                    fontWeight: 'bold',
-                                }}
-                            >
+                        <div style={registrationSuccessBannerStyles.container}>
+                            <p style={registrationSuccessBannerStyles.heading}>
                                 If you haven&apos;t received the email after 24
                                 hours, please follow these steps:
                             </p>
-                            <ol style={{ margin: 0, paddingLeft: '20px' }}>
-                                <li style={{ marginBottom: '8px' }}>
+                            <ol style={registrationSuccessBannerStyles.list}>
+                                <li
+                                    style={
+                                        registrationSuccessBannerStyles.listItem
+                                    }
+                                >
                                     <strong>Check your spam folder:</strong> The
                                     verification email might have been marked as
                                     spam.
                                 </li>
-                                <li style={{ marginBottom: '8px' }}>
+                                <li
+                                    style={
+                                        registrationSuccessBannerStyles.listItem
+                                    }
+                                >
                                     <strong>Allowlist our domain:</strong> Add{' '}
                                     <strong>@opensupplyhub.org</strong> to your
                                     email provider&apos;s safe sender list to
