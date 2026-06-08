@@ -10,7 +10,7 @@ resource "aws_security_group" "opensearch" {
 
 resource "aws_cloudwatch_log_group" "opensearch" {
   name              = "log${local.short}OpenSearch"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 resource "aws_opensearch_domain" "opensearch" {

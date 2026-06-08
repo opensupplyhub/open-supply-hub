@@ -106,6 +106,7 @@ resource "aws_lb_listener" "app" {
   load_balancer_arn = aws_lb.app.id
   port              = "443"
   protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
   certificate_arn   = module.cert_lb.arn
 
   default_action {
@@ -469,25 +470,25 @@ resource "aws_ecs_service" "app_logstash" {
 #
 resource "aws_cloudwatch_log_group" "app" {
   name              = "log${local.short}App"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 resource "aws_cloudwatch_log_group" "cli" {
   name              = "log${local.short}AppCLI"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 resource "aws_cloudwatch_log_group" "dd" {
   name              = "log${local.short}AppDD"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 resource "aws_cloudwatch_log_group" "kafka" {
   name              = "log${local.short}AppKafka"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 resource "aws_cloudwatch_log_group" "app_logstash" {
   name              = "log${local.short}AppLogstash"
-  retention_in_days = 30
+  retention_in_days = 365
 }

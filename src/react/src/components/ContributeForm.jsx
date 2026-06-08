@@ -35,6 +35,7 @@ import {
     DISABLE_LIST_UPLOADING,
     MAINTENANCE_MESSAGE,
     ENABLE_DROMO_UPLOADING,
+    facilityListStatusChoicesEnum,
 } from '../util/constants';
 
 import { useFileUploadHandler } from '../util/hooks';
@@ -134,14 +135,22 @@ const ContributeForm = ({
 
     const submitButtonIsDisabled = fetching || fetchingFacilityLists;
 
-    const replacesSection =
-        facilityLists && facilityLists.length ? (
-            <ContributeFormSelectListToReplace
-                lists={facilityLists}
-                replaces={replaces}
-                handleChange={updateListToReplace}
-            />
-        ) : null;
+    const { PENDING, APPROVED } = facilityListStatusChoicesEnum;
+
+    const eligibleLists = (facilityLists || []).filter(
+        // eslint-disable-next-line camelcase
+        ({ is_active, status }) =>
+            // eslint-disable-next-line camelcase
+            is_active && [PENDING, APPROVED].includes(status),
+    );
+
+    const replacesSection = eligibleLists.length ? (
+        <ContributeFormSelectListToReplace
+            lists={eligibleLists}
+            replaces={replaces}
+            handleChange={updateListToReplace}
+        />
+    ) : null;
 
     return (
         <div className="control-panel__group">

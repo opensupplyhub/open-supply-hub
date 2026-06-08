@@ -166,6 +166,7 @@ export const facilityListPropType = shape({
     file_name: string.isRequired,
     is_active: bool.isRequired,
     is_public: bool.isRequired,
+    status: string,
     item_count: number.isRequired,
     items_url: string.isRequired,
     statuses: arrayOf(oneOf(Object.values(facilityListItemStatusChoicesEnum))),
@@ -347,7 +348,6 @@ export const filtersPropType = shape({
     countries: arrayOf(reactSelectOptionPropType).isRequired,
     sectors: arrayOf(reactSelectOptionPropType).isRequired,
     combineContributors: string.isRequired,
-    combinePartnerContributors: string.isRequired,
     partnerContributors: arrayOf(
         shape({
             value: string.isRequired,
