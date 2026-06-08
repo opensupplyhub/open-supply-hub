@@ -135,6 +135,43 @@ class DashboardListTest(BaseFacilityListTest):
             "must not appear in the Pending filter.",
         )
 
+    def test_pending_filter_excludes_approved_lists(self):
+        self.list.status = FacilityList.APPROVED
+        self.list.save()
+
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?status={}".format(FacilityList.PENDING)
+        )
+
+        self.assertEqual(200, response.status_code)
+        names = [d["name"] for d in response.json()["results"]]
+        self.assertNotIn(
+            "First List",
+            names,
+            "An APPROVED list must not appear in the Pending filter.",
+        )
+
+    def test_approved_filter_excludes_pending_lists(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?status={}".format(
+                FacilityList.APPROVED
+            )
+        )
+
+        self.assertEqual(200, response.status_code)
+        names = [d["name"] for d in response.json()["results"]]
+        self.assertNotIn(
+            "First List",
+            names,
+            "A PENDING list must not appear in the Approved filter.",
+        )
+
     def test_pending_filter_includes_non_replaced_pending_lists(self):
         self.client.login(
             email=self.superuser_email, password=self.superuser_password
