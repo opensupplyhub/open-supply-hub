@@ -77,6 +77,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Set environment variables
         run: |
@@ -175,6 +176,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
@@ -247,6 +249,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
