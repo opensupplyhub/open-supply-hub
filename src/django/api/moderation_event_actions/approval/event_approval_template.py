@@ -297,6 +297,7 @@ class EventApprovalTemplate(ABC):
         event.action_type = self._get_action_type()
         event.action_perform_by = self.__moderator
         event.os_id = item.facility_id
+        event.os_id_snapshot = item.facility_id
         event.save()
 
     @abstractmethod
