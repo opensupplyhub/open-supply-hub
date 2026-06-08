@@ -1,7 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db.models import F
 
 from api.models.moderation_event import ModerationEvent
 
@@ -50,12 +50,9 @@ class Command(BaseCommand):
             )
             return
 
-        updated = 0
-        for event in qs.iterator(chunk_size=1000):
-            with transaction.atomic():
-                event.os_id_snapshot = event.os_id
-                event.save(update_fields=['os_id_snapshot'])
-                updated += 1
+        # Bulk update is safe here: os_id_snapshot has no signal handlers,
+        # so bypassing the ORM save() path has no side effects.
+        updated = qs.update(os_id_snapshot=F('os_id'))
 
         log.info('Backfill complete. Updated %s rows.', updated)
         self.stdout.write(self.style.SUCCESS(
