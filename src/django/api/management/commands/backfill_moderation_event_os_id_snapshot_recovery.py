@@ -12,7 +12,6 @@ from api.views.v1.index_names import OpenSearchIndexNames
 log = logging.getLogger(__name__)
 
 BATCH_SIZE = 100
-SCROLL_TIMEOUT = '2m'
 
 
 class Command(BaseCommand):
@@ -160,20 +159,13 @@ class Command(BaseCommand):
 
         updated = 0
         for uuid, recovered_os_id in combined_map.items():
-            try:
-                with transaction.atomic():
-                    rows = ModerationEvent.objects.filter(
-                        uuid=uuid,
-                        os_id__isnull=True,
-                        os_id_snapshot='',
-                    ).update(os_id_snapshot=recovered_os_id)
-                    updated += rows
-            except Exception as e:
-                self.stderr.write(
-                    self.style.ERROR(
-                        f'Failed to update event {uuid}: {e}'
-                    )
-                )
+            with transaction.atomic():
+                rows = ModerationEvent.objects.filter(
+                    uuid=uuid,
+                    os_id__isnull=True,
+                    os_id_snapshot='',
+                ).update(os_id_snapshot=recovered_os_id)
+                updated += rows
 
         log.info(
             'Recovery backfill complete. Updated %s rows, '
