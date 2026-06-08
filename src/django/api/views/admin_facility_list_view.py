@@ -60,6 +60,7 @@ class AdminFacilityListView(ListAPIView):
             facility_lists = facility_lists.filter(replaced_by__isnull=False)
         elif status in (FacilityList.PENDING, FacilityList.APPROVED):
             facility_lists = facility_lists.filter(
+                status=status,
                 replaced_by__isnull=True,
                 source__is_active=True,
             )
