@@ -671,13 +671,13 @@ function renderThemes(){
             const filteredMembers=(e.teamMembers||[]).filter(m=>m.toLowerCase()!==ownerLower);
             const teamFirst=filteredMembers.map(m=>shortName(m));
             const teamDisplay=teamFirst.length?('Team: '+teamFirst.slice(0,6).join(', ')+(teamFirst.length>6?' +'+(teamFirst.length-6)+' more':'')):'';
-            const cntLabel=e.backlogTotal>0?(e.backlogDone+' of '+e.backlogTotal+' done'):'';
+            const cntLabel=e.health==='Complete'?'Done':(e.backlogTotal>0?(e.backlogDone+' of '+e.backlogTotal+' done'):'');
 
             html+=`<div class="epic-block">`;
             html+=`<div class="epic-header${isEOpen?' open':''}" onclick="event.stopPropagation();toggleEpic('${esc(e.key)}')">`;
             const prioPill=e.priority?`<span class="prio-pill prio-${e.priority.toLowerCase()}">${esc(e.priority)}</span>`:'';
             const staleBadge=isStale(e)?`<span class="stale-badge">No Update in 4 Days</span>`:'';
-            const skipBadge=e.skipUpdate?`<span class="skip-badge" title="Not normally updated in the delivery meeting — call out only if needed">Skip Update</span>`:'';
+            const skipBadge=(e.skipUpdate||e.health==='Complete')?`<span class="skip-badge" title="Not normally updated in the delivery meeting — call out only if needed">Skip Update</span>`:'';
             const epicKeyLink='<a href="'+esc(e.url||'#')+'" target="_blank" class="key-lnk" onclick="event.stopPropagation()">'+esc(e.key)+' ↗</a>';
             html+=`<div class="epic-lbl"><span class="epic-dot ${hc}"></span><div class="epic-lbl-text"><div class="epic-title">${esc(e.title)}${skipBadge?' '+skipBadge:''}</div><div class="epic-sub"><span class="epic-owner">${esc(e.owner||'Unassigned')}</span> · ${epicKeyLink}${prioPill?' · '+prioPill:''}${staleBadge?' · '+staleBadge:''}</div>${teamDisplay?`<div class="epic-members">${esc(teamDisplay)}</div>`:''}</div><span class="epic-chev${isEOpen?' open':''}">›</span></div>`;
             html+=`<div class="epic-tl">${qShades}<div class="mo-grid">${moGrid}</div><div class="today-epic-line" style="left:${tp}%"></div>`;
@@ -697,7 +697,7 @@ function renderThemes(){
               const deliveryText=e.aiSummary||e.execUpdate;
               html+=deliveryText?`<p class="exec-body">${esc(deliveryText)}</p>`:`<p class="exec-empty">No execution update yet.</p>`;
               html+=`</div>`;
-              const pctLbl=e.backlogTotal>0?Math.round(e.backlogDone/e.backlogTotal*100)+'% ('+e.backlogDone+'/'+e.backlogTotal+' done)':'—';
+              const pctLbl=e.health==='Complete'?'Done':(e.backlogTotal>0?Math.round(e.backlogDone/e.backlogTotal*100)+'% ('+e.backlogDone+'/'+e.backlogTotal+' done)':'—');
               const teamLbl=e.teamMembers&&e.teamMembers.length?esc(e.teamMembers.join(', ')):'—';
               html+=`<dl class="meta-dl"><dt class="meta-dt">Owner</dt><dd class="meta-dd">${esc(e.owner||'Unassigned')}</dd><dt class="meta-dt">Start</dt><dd class="meta-dd">${esc(fmt(e.startDate))}</dd><dt class="meta-dt">Due</dt><dd class="meta-dd">${esc(fmt(e.dueDate))}</dd><dt class="meta-dt">Funding</dt><dd class="meta-dd">${esc(e.funding.length?e.funding.join(', '):'—')}</dd><dt class="meta-dt">% Complete</dt><dd class="meta-dd">${pctLbl}</dd><dt class="meta-dt">Team Members</dt><dd class="meta-dd">${teamLbl}</dd></dl>`;
               html+=`</div></div>`;
