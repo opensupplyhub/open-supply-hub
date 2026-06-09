@@ -1,15 +1,19 @@
 import json
-import re
 from typing import Dict, List, Mapping, Optional, Tuple
 
 from api.models.partner_field import PartnerField
+from api.partner_data_file_upload.constants import (
+    RESERVED_COLUMNS,
+    SNAKE_CASE_COLUMN_PATTERN,
+)
+from api.partner_data_file_upload.parsing.cell_value_parsers import (
+    CELL_PARSERS,
+    LEAF_TYPE_VALIDATORS,
+)
 from api.partner_data_file_upload.parsing.types import (
     ColumnMapping,
     header_label,
 )
-
-SNAKE_CASE_COLUMN_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
-RESERVED_COLUMNS = frozenset({"os_id", "error", "moderation_id"})
 
 
 class PartnerFieldSheetParser:
@@ -18,16 +22,12 @@ class PartnerFieldSheetParser:
         if errors:
             raise ValueError("; ".join(errors))
 
-    @staticmethod
-    def header_label(header) -> str:
-        return header_label(header)
-
     @classmethod
     def build_header_map(cls, headers: List[str]) -> Dict[str, int]:
         header_map = {}
         duplicate_headers = []
         for idx, header in enumerate(headers):
-            column_name = cls.header_label(header)
+            column_name = header_label(header)
             if not column_name.strip():
                 continue
             if column_name in header_map:
@@ -321,6 +321,13 @@ class PartnerFieldSheetParser:
             for value in record.values()
         )
 
+    @classmethod
+    def row_has_existing_outcome(cls, record: Mapping[str, object]) -> bool:
+        return (
+            not cls.is_cell_empty(record.get("moderation_id"))
+            or not cls.is_cell_empty(record.get("error"))
+        )
+
     @staticmethod
     def is_cell_empty(value: object) -> bool:
         if value is None:
@@ -331,78 +338,20 @@ class PartnerFieldSheetParser:
 
     @classmethod
     def parse_cell_value(cls, value: object, partner_field: PartnerField):
-        if partner_field.type == PartnerField.STRING:
-            return str(value).strip()
-
-        if partner_field.type == PartnerField.INT:
-            if isinstance(value, bool):
-                raise ValueError("Expected an integer, not a boolean.")
-            if isinstance(value, int):
-                return value
-            if isinstance(value, float) and value.is_integer():
-                return int(value)
-            try:
-                return int(str(value).strip())
-            except (TypeError, ValueError) as error:
-                raise ValueError(
-                    f"Expected an integer, not '{value}'."
-                ) from error
-
-        if partner_field.type == PartnerField.FLOAT:
-            if isinstance(value, bool):
-                raise ValueError("Expected a number, not a boolean.")
-            if isinstance(value, (int, float)):
-                return float(value)
-            try:
-                return float(str(value).strip())
-            except (TypeError, ValueError) as error:
-                raise ValueError(
-                    f"Expected a number, not '{value}'."
-                ) from error
-
-        raise ValueError(
-            f"Unsupported partner field type '{partner_field.type}'."
-        )
+        parser = CELL_PARSERS.get(partner_field.type)
+        if not parser:
+            raise ValueError(
+                f"Unsupported partner field type '{partner_field.type}'."
+            )
+        return parser(value)
 
     @classmethod
     def parse_leaf_cell_value(cls, value: object, leaf_schema: dict):
         schema_type = leaf_schema.get("type")
 
-        if schema_type == "integer":
-            if isinstance(value, bool):
-                raise ValueError("Expected an integer, not a boolean.")
-            if isinstance(value, int):
-                return value
-            if isinstance(value, float) and value.is_integer():
-                return int(value)
-            try:
-                return int(str(value).strip())
-            except (TypeError, ValueError) as error:
-                raise ValueError(
-                    f"Expected an integer, not '{value}'."
-                ) from error
-
-        if schema_type == "number":
-            if isinstance(value, bool):
-                raise ValueError("Expected a number, not a boolean.")
-            if isinstance(value, (int, float)):
-                return float(value)
-            try:
-                return float(str(value).strip())
-            except (TypeError, ValueError) as error:
-                raise ValueError(
-                    f"Expected a number, not '{value}'."
-                ) from error
-
-        if schema_type == "boolean":
-            if isinstance(value, bool):
-                return value
-            normalized = str(value).strip().lower()
-            if normalized in ("true", "1", "yes"):
-                return True
-            if normalized in ("false", "0", "no"):
-                return False
-            raise ValueError(f"Expected a boolean, not '{value}'.")
+        validator = LEAF_TYPE_VALIDATORS.get(schema_type)
+        if validator:
+            return validator(value)
 
         if schema_type == "string" or "enum" in leaf_schema:
             return str(value).strip()

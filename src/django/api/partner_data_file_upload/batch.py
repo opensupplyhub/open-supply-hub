@@ -1,29 +1,22 @@
 import uuid
 
 import boto3
-from botocore.config import Config
 from django.conf import settings
 
-BATCH_CLIENT_CONFIG = Config(
-    connect_timeout=5,
-    read_timeout=15,
-    retries={"max_attempts": 2},
-)
-
-_BEFORE_SUBMIT_MSG = (
-    "before submitting a partner data file for processing."
+from api.partner_data_file_upload.constants import (
+    BATCH_CLIENT_CONFIG,
+    BATCH_JOB_QUEUE_ENTRY_UUID_PARAM,
+    BATCH_PARTNER_DATA_FILE_UPLOAD_SETTING_NAMES,
+    BEFORE_SUBMIT_PARTNER_DATA_FILE_MSG,
 )
 
 
 def validate_aws_batch_prerequisites():
-    for setting_name in (
-        "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME",
-        "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME",
-    ):
+    for setting_name in BATCH_PARTNER_DATA_FILE_UPLOAD_SETTING_NAMES:
         if not getattr(settings, setting_name, None):
             raise ValueError(
                 f"{setting_name} is not configured. Set it in the environment "
-                f"{_BEFORE_SUBMIT_MSG}"
+                f"{BEFORE_SUBMIT_PARTNER_DATA_FILE_MSG}"
             )
 
     credentials = boto3.Session().get_credentials()
@@ -31,7 +24,8 @@ def validate_aws_batch_prerequisites():
         raise ValueError(
             "AWS credentials are not configured. Set AWS_ACCESS_KEY_ID and "
             "AWS_SECRET_ACCESS_KEY, configure AWS_PROFILE, or use another "
-            f"supported credential source {_BEFORE_SUBMIT_MSG}"
+            "supported credential source "
+            f"{BEFORE_SUBMIT_PARTNER_DATA_FILE_MSG}"
         )
 
     frozen = credentials.get_frozen_credentials()
@@ -55,7 +49,9 @@ def submit_partner_data_file_upload_job(queue_entry_uuid) -> str:
         jobName=job_name,
         jobQueue=settings.BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME,
         jobDefinition=settings.BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME,
-        parameters={"queueentryuuid": str(queue_entry_uuid)},
+        parameters={
+            BATCH_JOB_QUEUE_ENTRY_UUID_PARAM: str(queue_entry_uuid),
+        },
     )
 
     job_id = response.get("jobId")

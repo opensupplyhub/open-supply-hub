@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Dict, Optional
 
 from django.utils import timezone
@@ -26,8 +27,10 @@ class PartnerDataFileUploadProcessor:
         self,
         sheets_client: GoogleSheetClient,
         me_creator: Optional[ModerationEventCreator] = None,
+        row_processing_delay_seconds: float = 0,
     ):
         self.sheets_client = sheets_client
+        self.row_processing_delay_seconds = row_processing_delay_seconds
         self.event_creator = PartnerPatchModerationEventCreator(
             me_creator or ModerationEventCreator(LocationContribution())
         )
@@ -46,11 +49,12 @@ class PartnerDataFileUploadProcessor:
             logger.info(
                 "Partner data file upload uuid=%s processing completed "
                 "successfully. rows_succeeded=%s rows_failed=%s "
-                "rows_skipped_empty=%s",
+                "rows_skipped_empty=%s rows_skipped_existing=%s",
                 queue_row.uuid,
                 row_stats["rows_succeeded"],
                 row_stats["rows_failed"],
                 row_stats["rows_skipped_empty"],
+                row_stats["rows_skipped_existing"],
             )
             return True
         except Exception as error:
@@ -115,6 +119,7 @@ class PartnerDataFileUploadProcessor:
             "rows_succeeded": 0,
             "rows_failed": 0,
             "rows_skipped_empty": 0,
+            "rows_skipped_existing": 0,
         }
 
         logger.info(
@@ -132,6 +137,18 @@ class PartnerDataFileUploadProcessor:
                 row_stats["rows_skipped_empty"] += 1
                 continue
 
+            if PartnerFieldSheetParser.row_has_existing_outcome(record):
+                row_stats["rows_skipped_existing"] += 1
+                logger.info(
+                    "Row %s skipped for upload uuid=%s because it already has "
+                    "a moderation_id or error value. os_id=%s",
+                    row_idx,
+                    queue_row.uuid,
+                    record.get("os_id"),
+                )
+                continue
+
+            row_started_at = time.monotonic()
             try:
                 moderation_id = self.event_creator.create(
                     queue_row.contributor,
@@ -175,15 +192,28 @@ class PartnerDataFileUploadProcessor:
                     str(error),
                 )
 
+            self._wait_before_next_row(row_started_at)
+
         logger.info(
             "Finished sheet row processing for upload uuid=%s. "
-            "rows_succeeded=%s rows_failed=%s rows_skipped_empty=%s",
+            "rows_succeeded=%s rows_failed=%s rows_skipped_empty=%s "
+            "rows_skipped_existing=%s",
             queue_row.uuid,
             row_stats["rows_succeeded"],
             row_stats["rows_failed"],
             row_stats["rows_skipped_empty"],
+            row_stats["rows_skipped_existing"],
         )
         return row_stats
+
+    def _wait_before_next_row(self, row_started_at: float) -> None:
+        if self.row_processing_delay_seconds <= 0:
+            return
+
+        elapsed = time.monotonic() - row_started_at
+        remaining = self.row_processing_delay_seconds - elapsed
+        if remaining > 0:
+            time.sleep(remaining)
 
     @staticmethod
     def _mark_queue_row_processed(queue_row: PartnerDataFileUpload) -> None:

@@ -2,6 +2,7 @@ import json
 import logging
 
 from django import forms
+from django.db import transaction
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
@@ -472,42 +473,49 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user
-            obj.status = PartnerDataFileUpload.Status.PENDING
+            obj.status = PartnerDataFileUpload.Status.PROCESSING
             obj.processing_error = ""
         super().save_model(request, obj, form, change)
 
         if change:
             return
 
-        try:
-            job_id = submit_partner_data_file_upload_job(obj.uuid)
-            obj.batch_job_id = job_id
-            obj.status = PartnerDataFileUpload.Status.PROCESSING
-            obj.save(
-                update_fields=["batch_job_id", "status", "updated_at"]
-            )
-            messages.success(
-                request,
-                (
-                    "Partner data file was queued for moderation ingestion. "
-                    f"Batch job ID: {job_id}"
-                ),
-            )
-        except Exception as error:
-            error_message = format_upload_processing_error(error)
-            obj.status = PartnerDataFileUpload.Status.FAILED
-            obj.processing_error = error_message
-            obj.save(
-                update_fields=["status", "processing_error", "updated_at"]
-            )
-            messages.error(
-                request,
-                (
-                    "Partner data file was saved but "
-                    "Batch submission failed. "
-                    f"Error: {error_message}"
-                ),
-            )
+        upload_uuid = obj.uuid
+
+        def enqueue_batch_job():
+            upload = PartnerDataFileUpload.objects.get(pk=upload_uuid)
+            try:
+                job_id = submit_partner_data_file_upload_job(upload_uuid)
+                upload.batch_job_id = job_id
+                upload.save(update_fields=["batch_job_id", "updated_at"])
+                messages.success(
+                    request,
+                    (
+                        "Partner data file was queued for moderation "
+                        f"ingestion. Batch job ID: {job_id}"
+                    ),
+                )
+            except Exception as error:
+                error_message = format_upload_processing_error(error)
+                upload.status = PartnerDataFileUpload.Status.FAILED
+                upload.processing_error = error_message
+                upload.save(
+                    update_fields=[
+                        "status",
+                        "processing_error",
+                        "updated_at",
+                    ]
+                )
+                messages.error(
+                    request,
+                    (
+                        "Partner data file was saved but "
+                        "Batch submission failed. "
+                        f"Error: {error_message}"
+                    ),
+                )
+
+        transaction.on_commit(enqueue_batch_job)
 
 
 admin_site.register(models.Version)

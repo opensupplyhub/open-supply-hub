@@ -206,7 +206,7 @@ Continue by accepting the list in the web browser dashboard. Then, in the django
 
 Moderators submit partner Google Sheets via Django admin (**Partner Data File Uploads**); deployed environments run this through AWS Batch. Locally, create an upload pointing at a shared Google Sheet (status `PROCESSING`), then run:
 
-```
+```bash
 ./scripts/manage process_partner_data_file_uploads
 ```
 

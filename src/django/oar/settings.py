@@ -78,19 +78,27 @@ if ENVIRONMENT not in VALID_ENVIRONMENTS:
 BATCH_MODE = os.getenv('BATCH_MODE', '')
 
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
-if BATCH_JOB_QUEUE_NAME is None and not DEBUG and not BATCH_MODE:
+if (
+    not (BATCH_JOB_QUEUE_NAME or '').strip()
+    and not DEBUG
+    and not BATCH_MODE
+):
     raise ImproperlyConfigured(
-        'Invalid BATCH_JOB_QUEU_NAME provided, must be set')
+        'Invalid BATCH_JOB_QUEUE_NAME provided, must be set')
 
 BATCH_JOB_DEF_NAME = os.getenv('BATCH_JOB_DEF_NAME')
-if BATCH_JOB_DEF_NAME is None and not DEBUG and not BATCH_MODE:
+if (
+    not (BATCH_JOB_DEF_NAME or '').strip()
+    and not DEBUG
+    and not BATCH_MODE
+):
     raise ImproperlyConfigured(
         'Invalid BATCH_JOB_DEF_NAME provided, must be set')
 
 BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME = os.getenv(
     'BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME')
 if (
-    BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME is None
+    not (BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME or '').strip()
     and not DEBUG
     and not BATCH_MODE
 ):
@@ -101,7 +109,7 @@ if (
 BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME = os.getenv(
     'BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME')
 if (
-    BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME is None
+    not (BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME or '').strip()
     and not DEBUG
     and not BATCH_MODE
 ):

@@ -3,6 +3,9 @@ import logging
 from django.core.management.base import BaseCommand
 
 from api.models.partner_data_file_upload import PartnerDataFileUpload
+from api.partner_data_file_upload.constants import (
+    SHEETS_ROW_PROCESSING_DELAY_SECONDS,
+)
 from api.partner_data_file_upload.processing.processor import (
     PartnerDataFileUploadProcessor,
 )
@@ -53,7 +56,8 @@ class Command(BaseCommand):
         )
 
         processor = PartnerDataFileUploadProcessor(
-            GoogleSheetClient.from_env()
+            GoogleSheetClient.from_env(),
+            row_processing_delay_seconds=SHEETS_ROW_PROCESSING_DELAY_SECONDS,
         )
         uploads_succeeded = 0
         uploads_failed = 0

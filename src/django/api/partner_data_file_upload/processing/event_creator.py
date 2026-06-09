@@ -57,25 +57,31 @@ class PartnerPatchModerationEventCreator:
 
         messages = []
         detail = errors.get("detail")
+
         if isinstance(detail, str) and detail:
             messages.append(detail)
 
-        error_items = errors.get("errors", [])
-        if isinstance(error_items, list):
-            for item in error_items:
-                if isinstance(item, dict):
-                    field = item.get("field", "")
-                    item_detail = item.get("detail", "")
-                    if field and item_detail:
-                        messages.append(f"{field}: {item_detail}")
-                    elif item_detail:
-                        messages.append(str(item_detail))
-                    elif field:
-                        messages.append(str(field))
-                elif item:
-                    messages.append(str(item))
+        error_items = errors.get("errors")
+        if not isinstance(error_items, list):
+            error_items = []
 
-        if messages:
-            return "; ".join(messages)
+        for item in error_items:
+            if not item:
+                continue
 
-        return json.dumps(errors)
+            if not isinstance(item, dict):
+                messages.append(str(item))
+                continue
+
+            field = item.get("field", "")
+            item_detail = item.get("detail", "")
+
+            if not field and not item_detail:
+                continue
+
+            if field and item_detail:
+                messages.append(f"{field}: {item_detail}")
+            else:
+                messages.append(str(field or item_detail))
+
+        return "; ".join(messages) if messages else json.dumps(errors)

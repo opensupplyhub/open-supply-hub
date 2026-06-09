@@ -1,9 +1,6 @@
-DEVELOPER_PROCESSING_ERROR_PREFIX = "Contact developers: "
-DEVELOPER_ERROR_HINTS = (
-    "Google Service Account",
-    "AWS credentials",
-    "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME",
-    "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME",
+from api.partner_data_file_upload.constants import (
+    DEVELOPER_ERROR_HINTS,
+    DEVELOPER_PROCESSING_ERROR_PREFIX,
 )
 
 
