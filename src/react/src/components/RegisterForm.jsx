@@ -93,6 +93,49 @@ class RegisterForm extends Component {
                             Check your email for instructions about how to
                             verify your account.
                         </p>
+                        <div
+                            style={{
+                                backgroundColor: '#f5f0ff',
+                                border: '1px solid #8428FA',
+                                borderRadius: '4px',
+                                padding: '16px 20px',
+                                marginTop: '24px',
+                                marginBottom: '48px',
+                            }}
+                        >
+                            <p
+                                style={{
+                                    margin: '0 0 12px',
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                If you haven&apos;t received the email after 24
+                                hours, please follow these steps:
+                            </p>
+                            <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                                <li style={{ marginBottom: '8px' }}>
+                                    <strong>Check your spam folder:</strong> The
+                                    verification email might have been marked as
+                                    spam.
+                                </li>
+                                <li style={{ marginBottom: '8px' }}>
+                                    <strong>Allowlist our domain:</strong> Add{' '}
+                                    <strong>@opensupplyhub.org</strong> to your
+                                    email provider&apos;s safe sender list to
+                                    prevent future emails from being blocked or
+                                    filtered.
+                                </li>
+                                <li>
+                                    <strong>
+                                        Contact your email provider or IT
+                                        department:
+                                    </strong>{' '}
+                                    Ask them to confirm that emails from{' '}
+                                    <strong>@opensupplyhub.org</strong> are not
+                                    being blocked or restricted.
+                                </li>
+                            </ol>
+                        </div>
                     </AppGrid>
                 </AppOverflow>
             );
