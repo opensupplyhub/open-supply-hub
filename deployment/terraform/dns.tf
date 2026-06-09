@@ -119,7 +119,7 @@ resource "aws_service_discovery_private_dns_namespace" "service_discovery" {
 #
 locals {
   # Must match environment values in deployment/environments/terraform-*.tfvars
-  prod_account_environments = ["Production", "Staging", "Rba"]
+  prod_account_environments = ["Production"]
 }
 
 # Detach the os-hub.net DMARC record from Terraform state without destroying
