@@ -122,6 +122,16 @@ locals {
   prod_account_environments = ["Production", "Staging", "Rba"]
 }
 
+# Detach the os-hub.net DMARC record from Terraform state without destroying
+# the Route 53 record (it was only applied to Development and is now managed
+# outside Terraform). Drop this block once it has been applied to Dev/Test.
+removed {
+  from = aws_route53_record.dmarc_oshub_net
+  lifecycle {
+    destroy = false
+  }
+}
+
 data "aws_route53_zone" "opensupplyhub_dmarc" {
   count        = contains(local.prod_account_environments, var.environment) ? 1 : 0
   name         = "opensupplyhub.org"
