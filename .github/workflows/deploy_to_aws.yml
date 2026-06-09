@@ -145,7 +145,14 @@ jobs:
               -var="image_tag=dummy" \
               -var-file="${SETTINGS_BUCKET}.tfvars" \
               "$resource_address" \
-              "${ZONE_ID}__dmarc.${domain}._TXT"
+              "${ZONE_ID}__dmarc.${domain}._TXT" || true
+
+            if terraform state list | grep -qF "$resource_address"; then
+              echo "_dmarc.$domain imported successfully."
+            else
+              echo "ERROR: import of _dmarc.$domain failed — resource not found in state."
+              exit 1
+            fi
           }
 
           import_if_needed "aws_route53_record.dmarc_oshub_net[0]" "os-hub.net"
