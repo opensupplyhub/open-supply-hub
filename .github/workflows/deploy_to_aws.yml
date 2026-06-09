@@ -95,20 +95,95 @@ jobs:
           terraform_version: 1.13.3
           terraform_wrapper: false
 
-      - name: Terraform Init
-        run: |
-          cd deployment/terraform
-          terraform init \
-            -backend-config="bucket=${SETTINGS_BUCKET}" \
-            -backend-config="key=terraform/state"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-
       - name: Import existing DMARC records if needed
         run: |
-          cd deployment/terraform
+          # Extract the Terraform `environment` value from the merged tfvars so
+          # we can pass it via -var without loading the full deployment config
+          # (which triggers cert_cdn / cert_lb / efs validation errors in fresh
+          # environments where those resources have unknown for_each / count).
+          TF_ENV=$(grep '^environment' "deployment/terraform/${SETTINGS_BUCKET}.tfvars" \
+            | sed 's/.*"\(.*\)".*/\1/')
+          echo "Terraform environment: $TF_ENV"
+
+          # Build a minimal standalone Terraform config that contains only the
+          # DMARC records.  We point it at the same S3 backend key so any import
+          # writes directly to the real state file.
+          IMPORT_DIR=$(mktemp -d)
+          trap "rm -rf '$IMPORT_DIR'" EXIT
+
+          cat > "$IMPORT_DIR/main.tf" << 'TFEOF'
+          terraform {
+            required_version = ">= 1.0.0"
+            required_providers {
+              aws = {
+                source  = "hashicorp/aws"
+                version = "~> 5.8.0"
+              }
+            }
+            backend "s3" {}
+          }
+
+          provider "aws" {
+            region = "eu-west-1"
+          }
+
+          variable "environment" {}
+          variable "image_tag" {}
+
+          locals {
+            dev_account_environments  = ["Development", "Test", "Preprod"]
+            prod_account_environments = ["Production", "Staging", "Rba"]
+          }
+
+          data "aws_route53_zone" "opensupplyhub_dmarc" {
+            count        = contains(local.prod_account_environments, var.environment) ? 1 : 0
+            name         = "opensupplyhub.org"
+            private_zone = false
+          }
+
+          resource "aws_route53_record" "dmarc_opensupplyhub" {
+            count   = contains(local.prod_account_environments, var.environment) ? 1 : 0
+            zone_id = data.aws_route53_zone.opensupplyhub_dmarc[0].zone_id
+            name    = "_dmarc"
+            type    = "TXT"
+            ttl     = "300"
+            records = ["v=DMARC1; p=reject; rua=mailto:dmarc+opensupplyhub.org@inbound.axl.net"]
+          }
+
+          data "aws_route53_zone" "openapparel_dmarc" {
+            count        = contains(local.prod_account_environments, var.environment) ? 1 : 0
+            name         = "openapparel.org"
+            private_zone = false
+          }
+
+          resource "aws_route53_record" "dmarc_openapparel" {
+            count   = contains(local.prod_account_environments, var.environment) ? 1 : 0
+            zone_id = data.aws_route53_zone.openapparel_dmarc[0].zone_id
+            name    = "_dmarc"
+            type    = "TXT"
+            ttl     = "300"
+            records = ["v=DMARC1; p=none; rua=mailto:dmarc+openapparel.org@inbound.axl.net"]
+          }
+
+          data "aws_route53_zone" "oshub_net_dmarc" {
+            count        = contains(local.dev_account_environments, var.environment) ? 1 : 0
+            name         = "os-hub.net"
+            private_zone = false
+          }
+
+          resource "aws_route53_record" "dmarc_oshub_net" {
+            count   = contains(local.dev_account_environments, var.environment) ? 1 : 0
+            zone_id = data.aws_route53_zone.oshub_net_dmarc[0].zone_id
+            name    = "_dmarc"
+            type    = "TXT"
+            ttl     = "300"
+            records = ["v=DMARC1; p=none; rua=mailto:dmarc+os-hub.net@inbound.axl.net"]
+          }
+          TFEOF
+
+          terraform -chdir="$IMPORT_DIR" init \
+            -backend-config="bucket=${SETTINGS_BUCKET}" \
+            -backend-config="key=terraform/state"
 
           import_if_needed() {
             local resource_address=$1
@@ -134,20 +209,20 @@ jobs:
               return
             fi
 
-            if terraform state list | grep -qF "$resource_address"; then
+            if terraform -chdir="$IMPORT_DIR" state list | grep -qF "$resource_address"; then
               echo "_dmarc.$domain already in Terraform state, skipping import."
               return
             fi
 
             echo "Importing existing _dmarc.$domain into Terraform state..."
-            terraform import \
+            terraform -chdir="$IMPORT_DIR" import \
               -no-color \
               -var="image_tag=dummy" \
-              -var-file="${SETTINGS_BUCKET}.tfvars" \
+              -var="environment=${TF_ENV}" \
               "$resource_address" \
-              "${ZONE_ID}__dmarc.${domain}._TXT" || true
+              "${ZONE_ID}__dmarc.${domain}._TXT"
 
-            if terraform state list | grep -qF "$resource_address"; then
+            if terraform -chdir="$IMPORT_DIR" state list | grep -qF "$resource_address"; then
               echo "_dmarc.$domain imported successfully."
             else
               echo "ERROR: import of _dmarc.$domain failed — resource not found in state."
