@@ -3,6 +3,37 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.26.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 26, 2026
+
+### Database changes
+
+#### Migrations
+
+* `0211_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
+
+#### Schema changes
+
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - Added `os_id_snapshot` field to `ModerationEvent`. The existing `os_id` FK uses `on_delete=SET_NULL`, which issues a bulk `UPDATE` that bypasses Django ORM signals and OpenSearch indexing. When a facility is deleted or merged, `os_id` is silently nulled with no audit trail. `os_id_snapshot` is a plain `CharField` written once at approval time and never modified, so it survives facility deletion or merging.
+
+### Code/API changes
+
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* Run the following backfill commands after deployment:
+    * `python manage.py backfill_moderation_event_os_id_snapshot` — populates `os_id_snapshot` for the ~298k approved events where `os_id` is still present in Postgres.
+    * `python manage.py backfill_moderation_event_os_id_snapshot_recovery` — recovers `os_id_snapshot` for the ~36k events where `os_id` was already nulled, using OpenSearch as the primary source and `FacilityListItem` as fallback. Run with `--dry-run` first to verify counts.
+
+---
+
+
 ## Release 2.25.0
 
 ## Introduction
