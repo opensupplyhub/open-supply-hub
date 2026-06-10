@@ -547,6 +547,8 @@ variable "batch_partner_data_file_upload_ce_instance_types" {
   type = list(string)
 
   default = [
+    "c5",
+    "m5",
     "c4",
     "m4",
   ]
