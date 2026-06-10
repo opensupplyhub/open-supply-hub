@@ -540,17 +540,15 @@ variable "batch_partner_data_file_upload_ce_desired_vcpus" {
 
 variable "batch_partner_data_file_upload_ce_max_vcpus" {
   type    = number
-  default = 8
+  default = 1
 }
 
 variable "batch_partner_data_file_upload_ce_instance_types" {
   type = list(string)
 
   default = [
-    "c5",
-    "m5",
-    "m4",
     "c4",
+    "m4",
   ]
 }
 
