@@ -1,4 +1,4 @@
-const createProxyMiddleware = require('http-proxy-middleware');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const _ = require('lodash');
 
 const pathsToProxy = Object.freeze([
