@@ -68,6 +68,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Moderators can submit partner Google Sheets through Django admin (**Partner Data File Uploads**) to apply partner-field production location updates without using the API. Each row with a valid `os_id` creates a pending moderation event; row-level outcomes appear in `error` and `moderation_id` columns added to the sheet.
+* [OSDEV-2788](https://opensupplyhub.atlassian.net/browse/OSDEV-2788) - A banner has been added to the "Add data" and "Claim a Production Location" pages notifying contributors about the upcoming data moderation pause, hidden behind the enable_moderation_pause_info waffle switch.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
