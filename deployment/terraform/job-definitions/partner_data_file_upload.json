@@ -1,7 +1,7 @@
 {
   "image": "${image_url}",
-  "vcpus": 2,
-  "memory": 4096,
+  "vcpus": 1,
+  "memory": 512,
   "command": [
     "python",
     "manage.py",
