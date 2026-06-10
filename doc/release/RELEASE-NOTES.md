@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: June 26, 2026
 
 ### Architecture/Environment changes
-* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed). Reduced the partner data file upload job definition to 1 vCPU and 512 MB memory, switched the compute environment instance families from `c5`/`m5`/`m4`/`c4` to `t3`/`t3a`, and set `batch_partner_data_file_upload_ce_max_vcpus` to 1 so only one upload job runs at a time in the dedicated queue.
+* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed). Reduced the partner data file upload job definition to 1 vCPU and 512 MB memory, switched the compute environment instance families from `c5`/`m5` to `c4`/`m4` (AWS Batch does not support `t3`/`t3a` in eu-west-1), and set `batch_partner_data_file_upload_ce_max_vcpus` to 1 so only one upload job runs at a time in the dedicated queue.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
