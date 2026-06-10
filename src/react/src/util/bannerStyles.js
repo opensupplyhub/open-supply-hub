@@ -1,5 +1,5 @@
-import COLOURS from '../../../util/COLOURS';
-import getTypographyStyles from '../../../util/typographyStyles';
+import COLOURS from './COLOURS';
+import getTypographyStyles from './typographyStyles';
 
 export default theme => {
     const typography = getTypographyStyles(theme);
