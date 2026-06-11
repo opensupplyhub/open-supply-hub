@@ -9,6 +9,7 @@ import {
     completeSubmitSignUpForm,
     failSubmitSignUpForm,
 } from '../../actions/auth';
+
 const makeAuthState = (overrides = {}) => ({
     auth: {
         fetching: false,
