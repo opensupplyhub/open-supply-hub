@@ -1,8 +1,9 @@
 import React from 'react';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
+import { withStyles } from '@material-ui/core/styles';
 import fromPairs from 'lodash/fromPairs';
 import keyBy from 'lodash/keyBy';
 
@@ -51,6 +52,7 @@ const RegisterForm = ({
     submitFormOnEnterKeyPress,
     sessionFetching,
     clearForm,
+    classes,
 }) => {
     const formSubmitted = useRegistrationFormSubmit(fetching, error, clearForm);
 
@@ -67,18 +69,18 @@ const RegisterForm = ({
                             Check your email for instructions about how to
                             verify your account.
                         </p>
-                        <div style={registerFormStyles.wrapper}>
-                            <p style={registerFormStyles.heading}>
+                        <div className={classes.wrapper}>
+                            <p className={classes.heading}>
                                 If you haven&apos;t received the email after 24
                                 hours, please follow these steps:
                             </p>
-                            <ol style={registerFormStyles.list}>
-                                <li style={registerFormStyles.listItem}>
+                            <ol className={classes.list}>
+                                <li className={classes.listItem}>
                                     <strong>Check your spam folder:</strong> The
                                     verification email might have been marked as
                                     spam.
                                 </li>
-                                <li style={registerFormStyles.listItem}>
+                                <li className={classes.listItem}>
                                     <strong>Allowlist our domain:</strong> Add{' '}
                                     <strong>{OSH_DOMAIN}</strong> to your email
                                     provider&apos;s safe sender list to prevent
@@ -177,6 +179,12 @@ RegisterForm.propTypes = {
     submitForm: func.isRequired,
     submitFormOnEnterKeyPress: func.isRequired,
     sessionFetching: bool.isRequired,
+    classes: shape({
+        wrapper: string.isRequired,
+        heading: string.isRequired,
+        list: string.isRequired,
+        listItem: string.isRequired,
+    }).isRequired,
 };
 
 function mapStateToProps({
@@ -226,4 +234,7 @@ function mapDispatchToProps(dispatch) {
     };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(RegisterForm);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withStyles(registerFormStyles)(RegisterForm));
