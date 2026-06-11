@@ -42,7 +42,7 @@ import registerFormStyles from './styles';
 
 const OSH_DOMAIN = '@opensupplyhub.org';
 
-function RegisterForm({
+const RegisterForm = ({
     fetching,
     error,
     form,
@@ -51,7 +51,7 @@ function RegisterForm({
     submitFormOnEnterKeyPress,
     sessionFetching,
     clearForm,
-}) {
+}) => {
     const formSubmitted = useRegistrationFormSubmit(fetching, error, clearForm);
 
     if (sessionFetching) {
@@ -162,7 +162,7 @@ function RegisterForm({
             </AppGrid>
         </AppOverflow>
     );
-}
+};
 
 RegisterForm.defaultProps = {
     error: null,
