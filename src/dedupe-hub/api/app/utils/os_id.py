@@ -1,10 +1,26 @@
-import base32_crockford
 import random
 import re
 
 from datetime import datetime
 
 from app.utils.constants import COUNTRY_NAMES
+
+# Crockford base32 symbol set: digits 0-9 plus 22 letters, omitting I, L, O, U
+_BASE32_SYMBOLS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+
+
+def _base32_encode(number):
+    """Encode a non-negative integer to a Crockford base32 string."""
+    number = int(number)
+    if number < 0:
+        raise ValueError("number '%d' is not a positive integer" % number)
+    if number == 0:
+        return '0'
+    symbol_string = ''
+    while number > 0:
+        symbol_string = _BASE32_SYMBOLS[number % 32] + symbol_string
+        number //= 32
+    return symbol_string
 
 
 def checksum(short_id):
@@ -13,8 +29,8 @@ def checksum(short_id):
     final checksum digit.
     """
     country_val = ord(short_id[0]) + ord(short_id[1])
-    rest_val = sum([base32_crockford.symbols.index(x) for x in short_id[2:]])
-    return base32_crockford.symbols[(country_val + rest_val) % 32]
+    rest_val = sum([_BASE32_SYMBOLS.index(x) for x in short_id[2:]])
+    return _BASE32_SYMBOLS[(country_val + rest_val) % 32]
 
 
 def random_base_32_string(length):
@@ -23,7 +39,7 @@ def random_base_32_string(length):
     specified length.
     """
     maximum = pow(32, length) - 1
-    return base32_crockford.encode(random.randint(0, maximum)).zfill(length)
+    return _base32_encode(random.randint(0, maximum)).zfill(length)
 
 
 def make_os_id(country_code, hyphenate=False):

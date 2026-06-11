@@ -1,6 +1,5 @@
 aiokafka==0.8.0
 kafka-python==2.0.2
-base32-crockford==0.3.0
 boto3==1.35.37
 coreapi==2.3.3
 coverage==7.6.1

@@ -11,4 +11,3 @@ SQLAlchemy==1.4.49
 psycopg2==2.9.6
 geoalchemy2==0.14.1
 typing-extensions==4.7.1
-base32-crockford==0.3.0
