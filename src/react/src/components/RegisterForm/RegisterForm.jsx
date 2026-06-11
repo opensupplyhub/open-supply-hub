@@ -3,6 +3,8 @@ import { arrayOf, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
+import fromPairs from 'lodash/fromPairs';
+import keyBy from 'lodash/keyBy';
 
 import AppGrid from '../AppGrid';
 import AppOverflow from '../AppOverflow';
@@ -202,18 +204,16 @@ function mapDispatchToProps(dispatch) {
             }),
         );
 
-    const inputUpdates = Object.values(registrationFieldsEnum).reduce(
-        (acc, field) => {
-            const { type } = registrationFormFields.find(
-                ({ id }) => id === field,
-            );
-            const getStateFromEvent = getStateFromEventForEventType[type];
+    const fieldsByKey = keyBy(registrationFormFields, 'id');
 
-            return Object.assign({}, acc, {
-                [field]: makeInputChangeHandler(field, getStateFromEvent),
-            });
-        },
-        {},
+    const inputUpdates = fromPairs(
+        Object.values(registrationFieldsEnum).map(field => [
+            field,
+            makeInputChangeHandler(
+                field,
+                getStateFromEventForEventType[fieldsByKey[field].type],
+            ),
+        ]),
     );
 
     return {
