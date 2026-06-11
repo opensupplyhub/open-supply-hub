@@ -38,7 +38,7 @@ import {
 import { formValidationErrorMessageStyle } from '../../util/styles';
 
 import useRegistrationFormSubmit from './hooks';
-import s from './styles';
+import registerFormStyles from './styles';
 
 const OSH_DOMAIN = '@opensupplyhub.org';
 
@@ -67,18 +67,18 @@ function RegisterForm({
                             Check your email for instructions about how to
                             verify your account.
                         </p>
-                        <div style={s.wrapper}>
-                            <p style={s.heading}>
+                        <div style={registerFormStyles.wrapper}>
+                            <p style={registerFormStyles.heading}>
                                 If you haven&apos;t received the email after 24
                                 hours, please follow these steps:
                             </p>
-                            <ol style={s.list}>
-                                <li style={s.listItem}>
+                            <ol style={registerFormStyles.list}>
+                                <li style={registerFormStyles.listItem}>
                                     <strong>Check your spam folder:</strong> The
                                     verification email might have been marked as
                                     spam.
                                 </li>
-                                <li style={s.listItem}>
+                                <li style={registerFormStyles.listItem}>
                                     <strong>Allowlist our domain:</strong> Add{' '}
                                     <strong>{OSH_DOMAIN}</strong> to your email
                                     provider&apos;s safe sender list to prevent
