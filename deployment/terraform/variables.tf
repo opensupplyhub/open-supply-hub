@@ -523,6 +523,37 @@ variable "batch_export_csv_ce_instance_types" {
   ]
 }
 
+variable "batch_partner_data_file_upload_ce_spot_fleet_bid_percentage" {
+  type    = number
+  default = 60
+}
+
+variable "batch_partner_data_file_upload_ce_min_vcpus" {
+  type    = number
+  default = 0
+}
+
+variable "batch_partner_data_file_upload_ce_desired_vcpus" {
+  type    = number
+  default = 0
+}
+
+variable "batch_partner_data_file_upload_ce_max_vcpus" {
+  type    = number
+  default = 2
+}
+
+variable "batch_partner_data_file_upload_ce_instance_types" {
+  type = list(string)
+
+  default = [
+    "c5",
+    "m5",
+    "c4",
+    "m4",
+  ]
+}
+
 variable "app_cli_state_machine_timeout_seconds" {
   default = "600"
 }
@@ -888,40 +919,11 @@ variable "waf_enabled" {
   default = false
 }
 
-
-# Direct data load variables
-
-variable "direct_data_load_sheet_id" {
-  type        = string
-  description = "Google Sheet ID for direct data load"
-  sensitive   = true
+variable "enable_legacy_info_site_redirect" {
+  type    = bool
+  default = false
 }
 
-variable "direct_data_load_contributor_name" {
-  type        = string
-  description = "Contributor name for direct data load"
-}
-
-variable "direct_data_load_contributor_email" {
-  type        = string
-  description = "Contributor email for direct data load"
-  sensitive   = true
-}
-
-variable "direct_data_load_user_id" {
-  type        = number
-  description = "User ID for direct data load"
-}
-
-variable "direct_data_load_sheet_name" {
-  type        = string
-  description = "Name of the Google Sheet for direct data load"
-}
-
-variable "direct_data_load_tab_id" {
-  type        = number
-  description = "Tab ID of the Google Sheet for direct data load"
-}
 
 # Stripe variables
 

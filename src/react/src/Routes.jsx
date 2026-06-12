@@ -10,7 +10,7 @@ import history from './util/history';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import EmbeddedFooter from './components/EmbeddedFooter';
-import RegisterForm from './components/RegisterForm';
+import RegisterForm from './components/RegisterForm/RegisterForm';
 import ResetPasswordForm from './components/ResetPasswordForm';
 import LoginForm from './components/LoginForm';
 import ContributeList from './components/ContributeList';

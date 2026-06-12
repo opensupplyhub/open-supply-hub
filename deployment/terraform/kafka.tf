@@ -60,27 +60,3 @@ resource "aws_security_group_rule" "msk_outbound" {
 
   security_group_id = aws_security_group.msk.id
 }
-
-# locals {
-#   broker_host_list = "${split(",", replace(element(concat(module.msk_cluster.bootstrap_brokers, list("")), 0), ":9092", ""))}"
-# }
-
-
-
-# locals {
-#   broker_host_list = split(",",module.msk_cluster.bootstrap_brokers[0])
-# }
-
-
-# provider "kafka" {
-#   # bootstrap_servers = ["${module.msk_cluster.bootstrap_brokers}"]
-#   # bootstrap_servers = module.msk_cluster.bootstrap_brokers
-#   bootstrap_servers = local.broker_host_list
-# }
-
-# resource "kafka_topic" "logs" {
-#   # bootstrap_servers = join(",", module.msk_cluster.bootstrap_brokers)
-#   name               = "${var.topic_dedup_basic_name}"
-#   replication_factor = 1
-#   partitions         = 1
-# }
