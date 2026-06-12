@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: June 26, 2026
 
+### Code/API changes
+* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
+
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
 
