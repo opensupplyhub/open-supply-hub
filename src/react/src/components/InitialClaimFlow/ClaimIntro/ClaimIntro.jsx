@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 
 import ClaimInfoSection from './ClaimInfoSection';
 import AppOverflow from '../../AppOverflow';
+import ModerationPauseBanner from '../../ModerationPauseBanner';
 import RequireAuthNotice from '../../RequireAuthNotice';
 import { claimIntroStyles } from './styles';
 import withScrollReset from '../HOCs/withScrollReset';
@@ -51,6 +52,7 @@ const ClaimIntro = ({
 
     return (
         <div className={`${classes.root} notranslate`} translate="no">
+            <ModerationPauseBanner />
             <AppOverflow>
                 <div className={classes.container}>
                     <div className={classes.heroSection}>

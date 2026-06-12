@@ -1,0 +1,35 @@
+{
+  "image": "${image_url}",
+  "vcpus": 2,
+  "memory": 512,
+  "command": [
+    "python",
+    "manage.py",
+    "process_partner_data_file_uploads",
+    "--queue_entry_uuid",
+    "Ref::queueentryuuid"
+  ],
+  "environment": [
+      { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
+      { "name": "POSTGRES_PORT", "value": "${postgres_port}" },
+      { "name": "POSTGRES_USER", "value": "${postgres_user}" },
+      { "name": "POSTGRES_PASSWORD", "value": "${postgres_password}" },
+      { "name": "POSTGRES_DB", "value": "${postgres_db}" },
+      { "name": "BATCH_MODE", "value": "True" },
+      { "name": "DJANGO_ENV", "value": "${environment}" },
+      { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
+      { "name": "AWS_STORAGE_BUCKET_NAME", "value": "${aws_storage_bucket_name}" },
+      { "name": "GOOGLE_SERVER_SIDE_API_KEY", "value": "${google_server_side_api_key}" },
+      { "name": "OAR_CLIENT_KEY", "value": "${oar_client_key}" },
+      { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
+      { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "value": "${google_service_account_creds_base64}" }
+  ],
+  "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+          "awslogs-group": "${log_group_name}",
+          "awslogs-region": "${aws_region}",
+          "awslogs-stream-prefix": "partner_data_file_upload"
+      }
+  }
+}

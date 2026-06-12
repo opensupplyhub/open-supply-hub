@@ -31,6 +31,7 @@ export default {
     // Purples
     LIGHT_PURPLE: '#8428FA21',
     PURPLE: '#8428FA',
+    PURPLE_TINT: '#f5f0ff',
     MATERIAL_PURPLE: '#7b1fa2',
     DARK_PURPLE: '#4a148c',
     PURPLE_TEXT: '#6a1b9a',
