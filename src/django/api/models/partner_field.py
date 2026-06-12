@@ -101,6 +101,7 @@ class PartnerField(models.Model):
     )
     available_in_api = models.BooleanField(
         default=True,
+        verbose_name="Available in API",
         help_text=(
             "Indicates if this partner field is available in the API."
         ),
