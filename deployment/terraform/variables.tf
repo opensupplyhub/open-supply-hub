@@ -92,6 +92,18 @@ variable "api_partner_fields_cache_max_ttl" {
   default     = 300
 }
 
+variable "api_partner_group_contributors_cache_default_ttl" {
+  description = "Default TTL (seconds) for partner group contributors endpoint"
+  type        = number
+  default     = 120
+}
+
+variable "api_partner_group_contributors_cache_max_ttl" {
+  description = "Max TTL (seconds) for partner group contributors endpoint"
+  type        = number
+  default     = 300
+}
+
 variable "api_contributors_cache_default_ttl" {
   description = "Default TTL (seconds) for API contributors endpoints"
   type        = number
@@ -412,7 +424,7 @@ variable "hubspot_api_key" {
 }
 
 variable "hubspot_subscription_id" {
-  default = ""
+  default   = ""
   sensitive = true
 }
 
@@ -508,6 +520,37 @@ variable "batch_export_csv_ce_instance_types" {
     "m5",
     "m4",
     "c4",
+  ]
+}
+
+variable "batch_partner_data_file_upload_ce_spot_fleet_bid_percentage" {
+  type    = number
+  default = 60
+}
+
+variable "batch_partner_data_file_upload_ce_min_vcpus" {
+  type    = number
+  default = 0
+}
+
+variable "batch_partner_data_file_upload_ce_desired_vcpus" {
+  type    = number
+  default = 0
+}
+
+variable "batch_partner_data_file_upload_ce_max_vcpus" {
+  type    = number
+  default = 2
+}
+
+variable "batch_partner_data_file_upload_ce_instance_types" {
+  type = list(string)
+
+  default = [
+    "c5",
+    "m5",
+    "c4",
+    "m4",
   ]
 }
 
@@ -707,8 +750,8 @@ variable "anonymizer_schedule_expression" {
 }
 
 variable "anonymizer_kms_key_admin_users" {
-  type    = list(any)
-  default = []
+  type      = list(any)
+  default   = []
   sensitive = true
 }
 
@@ -723,8 +766,8 @@ variable "anonymized_database_dump_enabled" {
 }
 
 variable "anonymized_database_kms_key_id" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -744,14 +787,14 @@ variable "anonymized_database_schedule_expression" {
 }
 
 variable "anonymized_database_name" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "anonymized_database_username" {
-  type    = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -876,40 +919,11 @@ variable "waf_enabled" {
   default = false
 }
 
-
-# Direct data load variables
-
-variable "direct_data_load_sheet_id" {
-  type        = string
-  description = "Google Sheet ID for direct data load"
-  sensitive   = true
+variable "enable_legacy_info_site_redirect" {
+  type    = bool
+  default = false
 }
 
-variable "direct_data_load_contributor_name" {
-  type        = string
-  description = "Contributor name for direct data load"
-}
-
-variable "direct_data_load_contributor_email" {
-  type        = string
-  description = "Contributor email for direct data load"
-  sensitive   = true
-}
-
-variable "direct_data_load_user_id" {
-  type        = number
-  description = "User ID for direct data load"
-}
-
-variable "direct_data_load_sheet_name" {
-  type        = string
-  description = "Name of the Google Sheet for direct data load"
-}
-
-variable "direct_data_load_tab_id" {
-  type        = number
-  description = "Tab ID of the Google Sheet for direct data load"
-}
 
 # Stripe variables
 

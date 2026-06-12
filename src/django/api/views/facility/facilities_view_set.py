@@ -125,12 +125,6 @@ class FacilitiesViewSet(ListModelMixin,
         return super().get_throttles()
 
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
-    @method_decorator(
-        cache_page(
-            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
-            cache="view_cache",
-        ),
-    )
     def list(self, request):
         """
         Returns a list of facilities in GeoJSON format for a given query.

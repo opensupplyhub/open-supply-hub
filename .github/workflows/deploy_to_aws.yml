@@ -58,8 +58,106 @@ jobs:
             scripts/check_release_branch.sh
           fi
 
-  init-and-plan:
+  import-dmarc-if-needed:
     needs: check-base
+    if: needs.check-base.outputs.skip == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    env:
+      DEPLOY_ENV: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Checkout config repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'opensupplyhub/ci-deployment'
+          path: 'terraform-config'
+          token: ${{ secrets.PAT }}
+          persist-credentials: false
+
+      - name: Set environment variables
+        run: |
+          ENV_LOWER=$(echo "$DEPLOY_ENV" | tr '[:upper:]' '[:lower:]' | tr -d '-')
+          echo "SETTINGS_BUCKET=oshub-settings-${ENV_LOWER}" >> $GITHUB_ENV
+          echo "TFVAR_NAME=terraform-${ENV_LOWER}.tfvars" >> $GITHUB_ENV
+
+      - name: Copy tfvars
+        run: |
+          cat "terraform-config/environments/${TFVAR_NAME}" "deployment/environments/${TFVAR_NAME}" > "deployment/terraform/${SETTINGS_BUCKET}.tfvars"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.13.3
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: |
+          cd deployment/terraform
+          terraform init \
+            -backend-config="bucket=${SETTINGS_BUCKET}" \
+            -backend-config="key=terraform/state"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
+      - name: Import existing DMARC records if needed
+        run: |
+          cd deployment/terraform
+
+          import_if_needed() {
+            local resource_address=$1
+            local domain=$2
+
+            ZONE_ID=$(aws route53 list-hosted-zones-by-name \
+              --dns-name "$domain" \
+              --query "HostedZones[?Name=='${domain}.'].Id" \
+              --output text | sed 's|/hostedzone/||')
+
+            if [ -z "$ZONE_ID" ] || [ "$ZONE_ID" = "None" ]; then
+              echo "Zone $domain not found in this account, skipping."
+              return
+            fi
+
+            RECORD=$(aws route53 list-resource-record-sets \
+              --hosted-zone-id "$ZONE_ID" \
+              --query "ResourceRecordSets[?Name=='_dmarc.${domain}.' && Type=='TXT']" \
+              --output text)
+
+            if [ -z "$RECORD" ] || [ "$RECORD" = "None" ]; then
+              echo "No existing _dmarc.$domain record found, nothing to import."
+              return
+            fi
+
+            if terraform state list | grep -qF "$resource_address"; then
+              echo "_dmarc.$domain already in Terraform state, skipping import."
+              return
+            fi
+
+            echo "Importing existing _dmarc.$domain into Terraform state..."
+            terraform import \
+              -no-color \
+              -var="image_tag=dummy" \
+              -var-file="${SETTINGS_BUCKET}.tfvars" \
+              "$resource_address" \
+              "${ZONE_ID}__dmarc.${domain}._TXT"
+          }
+
+          import_if_needed "aws_route53_record.dmarc_oshub_net[0]" "os-hub.net"
+          import_if_needed "aws_route53_record.dmarc_opensupplyhub[0]" "opensupplyhub.org"
+          import_if_needed "aws_route53_record.dmarc_openapparel[0]" "openapparel.org"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
+  init-and-plan:
+    needs: [check-base, import-dmarc-if-needed]
     if: needs.check-base.outputs.skip == 'false'
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
@@ -78,6 +176,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
@@ -150,6 +249,7 @@ jobs:
           repository: 'opensupplyhub/ci-deployment'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Copy tfvars for ${{ vars.ENV_NAME }}
         run: |
@@ -447,7 +547,7 @@ jobs:
         run: |
           cd ./src/anon-tools
           mkdir -p ./keys
-          echo "${{ secrets.KEY_FILE }}" > ./keys/key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./keys/key
           docker build -t restore -f Dockerfile.restore .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \

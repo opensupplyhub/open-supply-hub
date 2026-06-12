@@ -261,7 +261,7 @@ const ClaimForm = ({
     };
 
     return (
-        <div className={classes.container}>
+        <div className={`${classes.container} notranslate`} translate="no">
             <Typography className={classes.title}>
                 Production Location Claims Process
             </Typography>

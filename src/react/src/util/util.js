@@ -262,7 +262,7 @@ export const getFilteredSearchForEmbed = search => {
     if (!params.has('embed')) return '';
 
     const filtered = new URLSearchParams();
-    ['embed', 'contributor'].forEach(key => {
+    ['embed', 'contributors'].forEach(key => {
         const value = params.get(key);
         if (value !== null) {
             filtered.set(key, value);
@@ -420,6 +420,7 @@ export const createQueryStringFromSearchFilters = (
         boundary = {},
         sortAlgorithm = {},
         claimStatuses = [],
+        partnerContributors = [],
     },
     withEmbed,
     detail,
@@ -451,6 +452,7 @@ export const createQueryStringFromSearchFilters = (
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
         detail: detail ? 'true' : undefined,
+        partner_contributor: partnerContributors.map(c => c.value),
     });
 
     return querystring.stringify(omitBy(inputForQueryString, isEmpty));
@@ -483,6 +485,16 @@ export const createSelectOptionsFromParams = params => {
     );
 };
 
+export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
+    groups.map(group => ({
+        label: group.label,
+        options: (group.contributors || []).map(contributor => ({
+            value: String(contributor.id),
+            label: contributor.name,
+            groupLabel: group.label,
+        })),
+    }));
+
 export const getAlgorithm = sortBy =>
     optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
     optionsForSortingResults[0];
@@ -507,7 +519,13 @@ export const createFiltersFromQueryString = qs => {
         combine_contributors: combineContributors = '',
         boundary = '',
         sort_by: sortBy = '',
+        partner_contributor: rawPartnerContributors = [],
     } = querystring.parse(qsToParse);
+
+    const normaliseStringArray = val => {
+        if (!val) return [];
+        return isArray(val) ? compact(val) : compact([val]);
+    };
 
     return Object.freeze({
         facilityFreeTextQuery,
@@ -526,6 +544,9 @@ export const createFiltersFromQueryString = qs => {
         combineContributors,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
         sortAlgorithm: getAlgorithm(sortBy),
+        partnerContributors: normaliseStringArray(
+            rawPartnerContributors,
+        ).map(v => ({ value: v, label: v, groupLabel: '' })),
     });
 };
 
@@ -1142,8 +1163,8 @@ export const updateListWithLabels = (list, payload) =>
 
         return accumulator.concat(
             Object.freeze({
+                ...validOption,
                 value,
-                label: validOption.label,
             }),
         );
     }, []);

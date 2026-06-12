@@ -5,24 +5,11 @@ Available for all users.
 """
 
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework.pagination import CursorPagination
 
 from api.models.partner_field_group import PartnerFieldGroup
+from api.pagination import PartnerFieldGroupCursorPagination
 from api.serializers.partner_field_group.\
     partner_field_group_serializer import PartnerFieldGroupSerializer
-
-
-class PartnerFieldGroupCursorPagination(CursorPagination):
-    """
-    Cursor based pagination for partner field groups.
-    Allows the client to control the page size via the ?limit= parameter.
-    And adds the default ordering by the `order` field.
-    """
-
-    page_size = 20
-    ordering = "order"
-    page_size_query_param = "limit"
-    max_page_size = 100
 
 
 class PartnerFieldGroupsViewSet(ReadOnlyModelViewSet):

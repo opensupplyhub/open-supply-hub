@@ -120,6 +120,11 @@ public_apis = [
         views.PartnerFieldGroupsViewSet.as_view({'get': 'list'}),
         name='partner_field_groups'
     ),
+    path(
+        'api/partner-group-contributors/',
+        views.PartnerGroupContributorsView.as_view(),
+        name='partner_group_contributors'
+    ),
 ]
 
 api_v1 = [path('api/v1/', include(v1_router.urls + v1_custom_routes))]
@@ -158,6 +163,11 @@ internal_apis = [
     path('health-check/', include('watchman.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('dj_rest_auth.urls')),
+    path(
+        'rest-auth/registration/verify-email/',
+        views.VerifyEmailView.as_view(),
+        name='rest_verify_email',
+    ),
     path('rest-auth/registration/', include('dj_rest_auth.registration.urls')),
     path('user-login/', views.LoginToOARClient.as_view(),
          name='login_to_oar_client'),

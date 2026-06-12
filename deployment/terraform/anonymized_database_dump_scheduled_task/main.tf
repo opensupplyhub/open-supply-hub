@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_log_group" "this" {
   name              = "log${local.short}AnonymizedDatabaseDump"
-  retention_in_days = 30
+  retention_in_days = 365
 }
 
 data "aws_iam_policy_document" "this" {

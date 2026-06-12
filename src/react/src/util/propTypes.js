@@ -34,6 +34,7 @@ import {
     ENABLE_DROMO_UPLOADING,
     ENABLE_V1_CLAIMS_FLOW,
     ENABLE_PRODUCTION_LOCATION_PAGE,
+    ENABLE_MODERATION_PAUSE_INFO,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -166,6 +167,7 @@ export const facilityListPropType = shape({
     file_name: string.isRequired,
     is_active: bool.isRequired,
     is_public: bool.isRequired,
+    status: string,
     item_count: number.isRequired,
     items_url: string.isRequired,
     statuses: arrayOf(oneOf(Object.values(facilityListItemStatusChoicesEnum))),
@@ -347,6 +349,13 @@ export const filtersPropType = shape({
     countries: arrayOf(reactSelectOptionPropType).isRequired,
     sectors: arrayOf(reactSelectOptionPropType).isRequired,
     combineContributors: string.isRequired,
+    partnerContributors: arrayOf(
+        shape({
+            value: string.isRequired,
+            label: string.isRequired,
+            groupLabel: string.isRequired,
+        }),
+    ).isRequired,
 });
 
 export const facilityListItemStatusPropType = oneOf(
@@ -365,6 +374,7 @@ export const featureFlagPropType = oneOf([
     ENABLE_DROMO_UPLOADING,
     ENABLE_V1_CLAIMS_FLOW,
     ENABLE_PRODUCTION_LOCATION_PAGE,
+    ENABLE_MODERATION_PAUSE_INFO,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(

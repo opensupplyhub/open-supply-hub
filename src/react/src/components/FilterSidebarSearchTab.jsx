@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, func, string } from 'prop-types';
+import { array, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import Button from '@material-ui/core/Button';
@@ -10,11 +10,13 @@ import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
 
 import ShowOnly from './ShowOnly';
+import FeatureFlag from './FeatureFlag';
 import TextSearchFilter from './Filters/TextSearchFilter';
 import ContributorFilter from './Filters/ContributorFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
 import SectorFilter from './Filters/SectorFilter';
 import FilterSidebarExtendedSearch from './FilterSidebarExtendedSearch';
+import DataPartnersFilter from './Filters/DataPartnersFilter/DataPartnersFilter';
 
 import {
     updateContributorTypeFilter,
@@ -48,6 +50,7 @@ import { useFilterListHeight } from '../util/useHeightSubtract';
 import {
     FACILITIES_REQUEST_PAGE_SIZE,
     EXTENDED_FIELDS_EXPLANATORY_TEXT,
+    PRIVATE_INSTANCE,
 } from '../util/constants';
 
 const filterSidebarSearchTabStyles = theme =>
@@ -129,6 +132,7 @@ function FilterSidebarSearchTab({
     embed,
     classes,
     embedExtendedFields,
+    partnerContributors,
 }) {
     const filterListHeight = useFilterListHeight();
 
@@ -146,6 +150,7 @@ function FilterSidebarSearchTab({
         contributors,
         countries,
         sectors,
+        partnerContributors,
     ]);
 
     if (fetchingOptions) {
@@ -210,6 +215,14 @@ function FilterSidebarSearchTab({
                     <ContributorFilter />
                     <CountryNameFilter />
                     <SectorFilter />
+                    <ShowOnly when={!embed}>
+                        <FeatureFlag
+                            flag={PRIVATE_INSTANCE}
+                            alternative={<DataPartnersFilter />}
+                        >
+                            <></>
+                        </FeatureFlag>
+                    </ShowOnly>
                     <FilterSidebarExtendedSearch />
                 </div>
             </div>
@@ -277,6 +290,7 @@ FilterSidebarSearchTab.propTypes = {
     searchForFacilities: func.isRequired,
     fetchingOptions: bool.isRequired,
     vectorTileFlagIsActive: bool.isRequired,
+    partnerContributors: array.isRequired,
 };
 
 function mapStateToProps({
@@ -297,6 +311,7 @@ function mapStateToProps({
         numberOfWorkers,
         nativeLanguageName,
         boundary,
+        partnerContributors,
     },
     facilities: {
         facilities: { fetching: fetchingFacilities },
@@ -328,6 +343,7 @@ function mapStateToProps({
         fetchingOptions: fetchingContributors || fetchingCountries,
         embed: !!embed,
         embedExtendedFields: config.extended_fields,
+        partnerContributors,
     };
 }
 

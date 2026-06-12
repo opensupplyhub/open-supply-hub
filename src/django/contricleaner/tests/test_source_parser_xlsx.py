@@ -232,6 +232,67 @@ class SourceParserXLSXTest(TestCase):
 
         os.remove('test.xlsx')
 
+    def test_percent_formatting_detected_per_cell_not_only_from_row_2(self):
+        """Regression test: percent cells must be detected per cell.
+
+        Previously the parser only examined row 2 to decide which columns were
+        percent-formatted.  If row 2 had a blank/None value in a percent column
+        (e.g. the contributor left that cell empty), every other row in that
+        column would be stored as a raw decimal (0.5) instead of a percentage
+        (50%).  The fix checks cell.number_format on every cell individually.
+        """
+        # Row 2 has an empty percent cell; rows 3-4 have real decimal values
+        # that must be converted to percent strings.
+        sheet_rows = (
+            ('country', 'name', 'address', 'percentage_of_male_workers'),
+            ('United States', 'Factory A', '1 Main St', None),   # row 2: blank
+            ('Canada', 'Factory B', '2 Side Ave', 0.5),          # row 3: 50%
+            ('Italy', 'Factory C', '3 Via Roma', 0.75),          # row 4: 75%
+        )
+
+        workbook = Workbook()
+        sheet = workbook.active
+        for row in sheet_rows:
+            sheet.append(row)
+
+        percentage_style = NamedStyle(
+            name='percentage',
+            number_format='0.00%'
+        )
+        # Apply percent style to ALL data cells in column 4 (including the
+        # blank row-2 cell) — this is the realistic scenario where the
+        # spreadsheet template marks the column as percent-formatted.
+        for row in sheet.iter_rows(min_row=1, max_row=len(sheet_rows),
+                                   min_col=4, max_col=4):
+            for cell in row:
+                cell.style = percentage_style
+
+        workbook.save('test_per_cell.xlsx')
+
+        with open('test_per_cell.xlsx', 'rb') as xlsx_file:
+            uploaded_file = SimpleUploadedFile(
+                'test_per_cell.xlsx', xlsx_file.read()
+            )
+
+        contri_cleaner = ContriCleaner(
+            uploaded_file,
+            SectorCacheMock(),
+            OSIDLookupMock()
+        )
+        processed_list = contri_cleaner.process_data()
+
+        percent_values = [
+            row.raw_json.get('percentage_of_male_workers')
+            for row in processed_list.rows
+        ]
+
+        # Row 2 (blank) should remain empty; rows 3-4 must be percent strings.
+        self.assertEqual(percent_values[0], '')      # blank → empty string
+        self.assertEqual(percent_values[1], '50%')   # 0.5  → '50%'
+        self.assertEqual(percent_values[2], '75%')   # 0.75 → '75%'
+
+        os.remove('test_per_cell.xlsx')
+
     @patch('contricleaner.lib.parsers.source_parser_xlsx.load_workbook')
     def test_entities_forbidden_exception(self, mock_load_workbook):
         mock_load_workbook.side_effect = EntitiesForbidden(
