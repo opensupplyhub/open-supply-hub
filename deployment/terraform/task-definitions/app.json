@@ -24,6 +24,8 @@
         { "name": "DJANGO_ENV", "value": "${environment}" },
         { "name": "BATCH_JOB_QUEUE_NAME", "value": "${batch_job_queue_name}" },
         { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
+        { "name": "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME", "value": "${batch_partner_data_file_upload_job_queue_name}" },
+        { "name": "BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME", "value": "${batch_partner_data_file_upload_job_def_name}" },
         { "name": "DJANGO_SECRET_KEY", "value": "${django_secret_key}" },
         { "name": "DEFAULT_FROM_EMAIL", "value": "${default_from_email}" },
         { "name": "DATA_FROM_EMAIL", "value": "${data_from_email}" },

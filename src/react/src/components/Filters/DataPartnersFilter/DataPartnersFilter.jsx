@@ -27,7 +27,7 @@ const DataPartnersFilter = ({
         <div className="form__field">
             <NestedSelect
                 name={DATA_PARTNERS}
-                label="Spotlight Data Partners"
+                label="Spotlight Partners"
                 optionsData={groups}
                 sectors={selectedContributors}
                 updateSector={onContributorChange}

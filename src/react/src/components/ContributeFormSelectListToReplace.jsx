@@ -22,21 +22,7 @@ export default function ContributeFormSelectListToReplace({
     replaces,
     handleChange,
 }) {
-    const makePrimaryText = ({
-        name,
-        file_name: filename,
-        is_active: active,
-    }) => {
-        if (active) {
-            return name || filename;
-        }
-
-        if (name) {
-            return `${name} (inactive)`;
-        }
-
-        return name ? `${name} (inactive)` : `${filename} (inactive)`;
-    };
+    const makePrimaryText = ({ name, file_name: filename }) => name || filename;
 
     return (
         <div style={listToReplaceStyles.rootStyle} className="form__field">
