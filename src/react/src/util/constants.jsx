@@ -335,7 +335,7 @@ export const settingsRoute = '/settings';
 export const authLoginFormRoute = '/auth/login';
 export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute =
-    '/accounts/password/reset/key/:uid-:token/';
+    '/accounts/password/reset/key/:uid([^-]+)-:token([^/]+)/';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
 export const alreadyConfirmedCode = 'already_confirmed';
 export const alreadyConfirmedMessage =
