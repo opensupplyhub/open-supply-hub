@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.48.1
+FROM mcr.microsoft.com/playwright:v1.60.0
 
 COPY package.json package-lock.json playwright.config.ts ./
 COPY ./tests ./tests

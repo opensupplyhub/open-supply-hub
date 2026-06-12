@@ -4,8 +4,8 @@ import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
-import { DISABLE_LIST_UPLOADING } from '../../../util/constants';
-import maintenanceBannerStyles from './styles';
+import { DISABLE_LIST_UPLOADING } from '../../util/constants';
+import maintenanceBannerStyles from '../../util/bannerStyles';
 
 const MaintenanceBanner = ({ isActive, classes }) => {
     if (!isActive) {

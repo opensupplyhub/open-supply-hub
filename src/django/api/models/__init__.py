@@ -66,6 +66,7 @@ from .extended_field import (
 )
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
+from .partner_data_file_upload import PartnerDataFileUpload
 from .partner_field_group import PartnerFieldGroup
 from .product_type import ProductType
 from .production_type import ProductionType
