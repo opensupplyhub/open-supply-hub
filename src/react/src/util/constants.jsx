@@ -337,6 +337,9 @@ export const authRegisterFormRoute = '/auth/register';
 export const authResetPasswordFormRoute =
     '/accounts/password/reset/key/:uid-:token/';
 export const authConfirmRegistrationRoute = '/auth/confirm/:uid';
+export const alreadyConfirmedCode = 'already_confirmed';
+export const alreadyConfirmedMessage =
+    'Your account is already active. Please log in with your username and password.';
 export const contributeRoute = '/contribute';
 export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
@@ -587,6 +590,7 @@ export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
 export const ENABLE_PRODUCTION_LOCATION_PAGE =
     'enable_production_location_page';
+export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -1378,7 +1382,7 @@ export const optionsForSortingResults = [
 ];
 
 // This offset is necessary to match row indices in the uploaded files.
-export const uploadedFileRowIndexOffset = 2;
+export const uploadedFileRowIndexOffset = 1;
 
 export const USER_DEFAULT_STATE = Object.freeze({
     isAnon: true,
@@ -1460,6 +1464,11 @@ export const MODERATION_ACTIONS_ENUM = Object.freeze({
     NEW_LOCATION: 'NEW_LOCATION',
     MATCHED: 'MATCHED',
     REJECTED: 'REJECTED',
+});
+
+export const REQUEST_TYPE_ENUM = Object.freeze({
+    CREATE: 'CREATE',
+    UPDATE: 'UPDATE',
 });
 
 export const MODERATION_QUEUE_HEAD_CELLS = Object.freeze([

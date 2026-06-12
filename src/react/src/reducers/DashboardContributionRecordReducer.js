@@ -18,6 +18,9 @@ import {
     failConfirmPotentialMatchFromModerationEvent,
     completeConfirmPotentialMatchFromModerationEvent,
     cleanupContributionRecord,
+    startFetchExistingOsIdLocation,
+    failFetchExistingOsIdLocation,
+    completeExistingOsIdLocation,
 } from '../actions/dashboardContributionRecord';
 
 const initialState = Object.freeze({
@@ -28,6 +31,11 @@ const initialState = Object.freeze({
     }),
     potentialMatches: Object.freeze({
         matches: Object.freeze([]),
+        fetching: false,
+        error: null,
+    }),
+    existingOsIdLocation: Object.freeze({
+        data: null,
         fetching: false,
         error: null,
     }),
@@ -168,6 +176,34 @@ export default createReducer(
                     data: {
                         $merge: payload,
                     },
+                },
+            }),
+        [startFetchExistingOsIdLocation]: state =>
+            update(state, {
+                existingOsIdLocation: {
+                    fetching: { $set: true },
+                    error: {
+                        $set: initialState.existingOsIdLocation.error,
+                    },
+                },
+            }),
+        [failFetchExistingOsIdLocation]: (state, error) =>
+            update(state, {
+                existingOsIdLocation: {
+                    fetching: {
+                        $set: initialState.existingOsIdLocation.fetching,
+                    },
+                    error: { $set: error },
+                },
+            }),
+        [completeExistingOsIdLocation]: (state, payload) =>
+            update(state, {
+                existingOsIdLocation: {
+                    fetching: {
+                        $set: initialState.existingOsIdLocation.fetching,
+                    },
+                    error: { $set: initialState.existingOsIdLocation.error },
+                    data: { $set: payload },
                 },
             }),
         [cleanupContributionRecord]: () => initialState,

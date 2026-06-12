@@ -7,10 +7,6 @@ export default function FooterText() {
                 Open Supply Hub is established as a 501(c)(3) nonprofit
                 organization, registered in the USA.
             </p>
-            <p>
-                This site was designed for low energy usage and is hosted on
-                data centers using 100% renewable energy.
-            </p>
             <br />
             <p>
                 Open Supply Hub (OS Hub)&reg; is a registered trademark of Open

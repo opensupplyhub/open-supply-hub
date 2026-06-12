@@ -3,6 +3,7 @@ import { createAction } from 'redux-act';
 
 import {
     createFiltersFromQueryString,
+    mapPartnerGroupContributorsToSelectOptions,
     updateListWithLabels,
 } from '../util/util';
 import { optionsForSortingResults } from '../util/constants';
@@ -55,6 +56,9 @@ export const updateSortAlgorithm = createAction('UPDATE_SORT_ALGORITHM');
 export const resetAllFilters = createAction('RESET_ALL_FILTERS');
 export const updateAllFilters = createAction('UPDATE_ALL_FILTERS');
 export const resetDrawerFilters = createAction('RESET_DRAWER_FILTERS');
+export const setPartnerContributorFilter = createAction(
+    'SET_PARTNER_CONTRIBUTOR_FILTER',
+);
 
 export function setFiltersFromQueryString(qs = '') {
     return (dispatch, getState) => {
@@ -76,6 +80,7 @@ export function setFiltersFromQueryString(qs = '') {
                 parentCompanies: { data: parentCompanies },
                 lists: { data: lists },
             },
+            partnerGroupContributors: { data: partnerGroupContributors },
             embeddedMap: { embed },
         } = getState();
 
@@ -105,6 +110,19 @@ export function setFiltersFromQueryString(qs = '') {
             ? update(payload, {
                   lists: {
                       $set: updateListWithLabels(filters.lists, lists),
+                  },
+              })
+            : payload;
+
+        payload = partnerGroupContributors?.results
+            ? update(payload, {
+                  partnerContributors: {
+                      $set: updateListWithLabels(
+                          filters.partnerContributors,
+                          mapPartnerGroupContributorsToSelectOptions(
+                              partnerGroupContributors.results,
+                          ),
+                      ),
                   },
               })
             : payload;

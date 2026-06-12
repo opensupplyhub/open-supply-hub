@@ -10,6 +10,7 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import AppGrid from './AppGrid';
+import ModerationPauseBanner from './ModerationPauseBanner';
 import RequireAuthNotice from './RequireAuthNotice';
 
 import { openInNewTab } from '../util/util';
@@ -49,6 +50,7 @@ function AddLocationData({ classes, userHasSignedIn, fetchingSessionSignIn }) {
 
     return (
         <div className={classes.container}>
+            <ModerationPauseBanner />
             <Typography variant="display3" className={classes.title}>
                 Add production location data to OS Hub
             </Typography>

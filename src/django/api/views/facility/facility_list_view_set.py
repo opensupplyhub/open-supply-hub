@@ -152,6 +152,12 @@ class FacilityListViewSet(ModelViewSet):
                 raise ValidationError(
                     f'FacilityList {replaces.pk} has already been replaced.'
                 )
+            if replaces.status == FacilityList.REJECTED or \
+                    not replaces.source.is_active:
+                raise ValidationError(
+                    f'FacilityList {replaces.pk} cannot be replaced '
+                    'because it is inactive, replaced, or rejected.'
+                )
 
         new_list = FacilityList.objects.create(
             name=name,
