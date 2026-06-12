@@ -14,7 +14,7 @@ api_facilities_cache_max_ttl               = 120
 api_production_locations_cache_default_ttl = 120
 api_production_locations_cache_max_ttl     = 120
 
-bastion_ami           = "ami-0bb3fad3c0286ebd5"
+bastion_ami           = "ami-03a25ed280b358f5b"
 bastion_instance_type = "t3.nano"
 
 rds_allocated_storage      = "256"

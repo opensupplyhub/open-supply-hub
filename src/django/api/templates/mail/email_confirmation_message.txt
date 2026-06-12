@@ -1,11 +1,13 @@
 {% block content %}
 Hello,
 
-You're receiving this message because you registered for an Open Supply Hub Account.
+Thank you for registering an account with Open Supply Hub. Please confirm your email address to complete your account setup.
 
-To activate your account, visit {{ activate_url }}
+Activate my account: {{ activate_url }}
 
-Best Regards,
+If the link doesn't work, copy and paste it into your browser.
+
+Didn't create an account? You can safely ignore this email.
 
 {% include "mail/signature_block.txt" %}
 {% endblock content %}

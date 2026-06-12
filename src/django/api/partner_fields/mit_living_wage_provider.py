@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any, Optional
 from django.contrib.gis.geos import Point
+from api.constants import MIT_LIVING_WAGE_COUNTRY_CODES
 from api.models.us_county_tigerline import USCountyTigerline
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
@@ -27,7 +28,7 @@ class MITLivingWageProvider(SystemPartnerFieldProvider):
         Only processes facilities in US, Puerto Rico, or US Virgin Islands.
         '''
         # MIT Living Wage data is only available for US territories
-        if facility.country_code not in ['US', 'PR', 'VI']:
+        if facility.country_code not in MIT_LIVING_WAGE_COUNTRY_CODES:
             return None
 
         if not facility.location:

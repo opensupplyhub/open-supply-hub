@@ -114,7 +114,7 @@ resource "aws_iam_role_policy_attachment" "lambda_nlb_registrar_elb_access_polic
 
 resource "aws_cloudwatch_log_group" "nlb_targets_registrar" {
   name              = "/aws/lambda/func${local.env_id_short}NlbTargetsRegistrar"
-  retention_in_days = 14
+  retention_in_days = 365
 
   tags = {
     Name = "logGroupNlbTargetsRegistrar"

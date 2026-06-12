@@ -80,6 +80,7 @@ function SectorFilter({
 SectorFilter.defaultProps = {
     sectorOptions: null,
     groupedSectorOptions: null,
+    isSideBarSearch: false,
 };
 
 SectorFilter.propTypes = {
@@ -90,6 +91,7 @@ SectorFilter.propTypes = {
     fetchingSectors: bool.isRequired,
     fetchingOptions: bool.isRequired,
     embed: bool.isRequired,
+    isSideBarSearch: bool,
     groupedSectorOptions: groupedSectorOptionsPropType,
     fetchingGroupedSectors: bool.isRequired,
     fetchGroupedSectors: func.isRequired,
@@ -108,13 +110,15 @@ function mapStateToProps({
     filters: { sectors },
     embeddedMap: { embed, config },
 }) {
+    const isEmbedded = !!embed;
+
     return {
         sectorOptions,
         sectors,
         fetchingSectors,
         fetchingOptions: fetchingCountries || fetchingContributors,
-        hideSectorData: embed ? config.hide_sector_data : false,
-        embed,
+        hideSectorData: isEmbedded ? config.hide_sector_data : false,
+        embed: isEmbedded,
         groupedSectorOptions,
         fetchingGroupedSectors,
     };

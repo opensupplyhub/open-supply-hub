@@ -1,6 +1,11 @@
 import asyncio
 import json
 import logging
+import time
+
+# dedupe 1.9.4 uses time.clock() which was removed in Python 3.8
+if not hasattr(time, 'clock'):
+    time.clock = time.perf_counter
 
 from random import randint
 from typing import Set, Any

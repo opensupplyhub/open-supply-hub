@@ -7,6 +7,7 @@ from .auth.api_auth_token import APIAuthToken
 from .auth.user_api_info import UserAPIInfo
 from .auth.login_to_oar_client import LoginToOARClient
 from .auth.logout_to_oar_client import LogoutOfOARClient
+from .auth.verify_email_view import VerifyEmailView
 
 from .contributor.active_contributors_count import active_contributors_count
 from .contributor.active_contributors import active_contributors
@@ -75,4 +76,7 @@ from .claim_statuses import claim_statuses
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
 from .partner_field_groups.partner_field_groups_view_set import (
     PartnerFieldGroupsViewSet,
+)
+from .partner_group_contributors.partner_group_contributors_view import (
+    PartnerGroupContributorsView,
 )

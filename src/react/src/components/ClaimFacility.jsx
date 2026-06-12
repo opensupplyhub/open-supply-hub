@@ -71,7 +71,11 @@ const ClaimFacility = ({
     }
 
     return (
-        <div style={appStyles.gridStyles}>
+        <div
+            style={appStyles.gridStyles}
+            translate="no"
+            className="notranslate"
+        >
             <AppOverflow>
                 <AppGrid title="">
                     <div style={claimFacilityContainerStyles.containerStyles}>
