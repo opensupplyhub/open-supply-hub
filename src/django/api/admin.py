@@ -462,6 +462,7 @@ class PartnerDataFileUploadAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "uuid",
+        "status",
         "batch_job_id",
         "created_by",
         "processed_at",
