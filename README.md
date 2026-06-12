@@ -12,6 +12,7 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
     - [Running ECS Management Commands](#running-ecs-management-commands)
     - [Creation of Superusers](#creation-of-superusers)
     - [Upload a list and process it](#upload-a-list-and-process-it)
+    - [Process partner data file uploads](#process-partner-data-file-uploads)
     - [Hot Reloading 🔥](#hot-reloading-🔥)
     - [Debugging Django](#debugging-django)
     - [Embedded Maps](#embedded-maps)
@@ -201,6 +202,16 @@ Continue by accepting the list in the web browser dashboard. Then, in the django
 ./scripts/manage batch_process -a match -l 16
 ```
 
+### Process partner data file uploads
+
+Moderators submit partner Google Sheets via Django admin (**Partner Data File Uploads**); deployed environments run this through AWS Batch. Locally, create an upload pointing at a shared Google Sheet (status `PROCESSING`), then run:
+
+```bash
+./scripts/manage process_partner_data_file_uploads
+```
+
+Set `GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64` in `.env`.
+
 ### Hot Reloading 🔥
 
 The frontend uses [Create React App](https://github.com/facebook/create-react-app/). When running `server`, the page will automatically [reload](https://github.com/facebook/create-react-app/#whats-included) if you make changes to the code.
@@ -279,6 +290,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | Name                   | Description                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `batch_process`        | Given a list id argument run parse, geocode, and match via the batch_process Django management command |
+| `process_partner_data_file_uploads` | Process partner Google Sheet uploads in `PROCESSING` status (see [Process partner data file uploads](#process-partner-data-file-uploads)) |
 | `devhealthcheck.sh`    | Simulate application load balancer health checks in development                                        |
 | `postfacilitiescsv.py` | POST the rows of a CSV containing facility information to the facilities API                           |
 

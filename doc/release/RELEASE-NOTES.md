@@ -3,6 +3,84 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.26.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 26, 2026
+
+### Code/API changes
+* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
+
+### Architecture/Environment changes
+* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+## Release 2.25.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: June 12, 2026
+
+### Database changes
+
+#### Migrations
+* 0211_create_partner_data_file_upload.py - Creates the `PartnerDataFileUpload` model for tracking Google Sheet uploads queued for partner-field moderation event ingestion.
+
+#### Schema changes
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added `api_partnerdatafileupload` with `uuid` (PK), `google_drive_file_link`, `contributor_id`, `created_by_id`, `status` (`PENDING`/`PROCESSING`/`PROCESSED`/`FAILED`), `batch_job_id`, `processed_at`, `processing_error`, and timestamps.
+
+### Code/API changes
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added partner Google Sheet upload processing for partner-field production location updates:
+  * Added `api.partner_data_file_upload` with Google Sheets I/O, sheet/header/column parsing, AWS Batch submission, and row processing that creates pending `UPDATE` moderation events via the existing `LocationContribution` pipeline.
+  * Added `process_partner_data_file_uploads` management command (run via AWS Batch) to validate partner field columns against contributor permissions and JSON schemas, create moderation events per row, and write per-row `error` and `moderation_id` feedback back to the sheet.
+  * Registered `PartnerDataFileUpload` in Django admin; saving a new upload submits an AWS Batch job, sets status to `PROCESSING`, and stores the returned job ID.
+
+### Architecture/Environment changes
+* [OSDEV-2665](https://opensupplyhub.atlassian.net/browse/OSDEV-2665) - Added DMARC `_dmarc` TXT records in Route 53 for all three domains to enable external compliance monitoring via `inbound.axl.net`: `opensupplyhub.org` (`p=reject`, replaces the previous `aws-accounting@opensupplyhub.org` `rua` address), `openapparel.org` (`p=none`, adds `rua` reporting address to the existing record), and `os-hub.net` (`p=none`, new record). Records are scoped by AWS account via `dev_account_environments` / `prod_account_environments` locals in `dns.tf`. Added `import-dmarc-if-needed` job to `deploy_to_aws.yml` that runs before `init-and-plan` and imports any pre-existing `_dmarc` records into Terraform state to prevent duplicate record errors when multiple environments share the same Route 53 hosted zone.
+* [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days (1 year) for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
+* [OSDEV-2782](https://opensupplyhub.atlassian.net/browse/OSDEV-2782) - Added an `aws_s3_bucket_public_access_block` resource for the React frontend S3 bucket in `deployment/terraform/cdn.tf` to enable all four Block Public Access flags (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`). No functional impact: the bucket is fronted by CloudFront via an Origin Access Identity, so BPA does not affect the read path.
+* [OSDEV-2662](https://opensupplyhub.atlassian.net/browse/OSDEV-2662) - Added a dedicated CloudFront distribution with a CloudFront Function to permanently redirect `info.openapparel.org` to `https://info.opensupplyhub.org`, resolving a subdomain takeover risk flagged in the SOC 2 external vulnerability scan (the subdomain previously pointed to a decommissioned Servd host returning 404). Includes a new ACM certificate for `info.openapparel.org` and Route 53 A/AAAA alias records in the `openapparel.org` hosted zone.
+* [OSDEV-2663](https://opensupplyhub.atlassian.net/browse/OSDEV-2663) - Updated TLS security policy on all endpoints to disallow TLSv1.0 and TLSv1.1, flagged in the April SOC 2 vulnerability scan. ALB HTTPS listeners now enforce `ELBSecurityPolicy-TLS13-1-2-Res-2021-06` (TLS 1.2 minimum, TLS 1.3 supported) via `ssl_policy` on `aws_lb_listener.app` in `container_service.tf`. CloudFront distributions now use `TLSv1.2_2021` as the minimum viewer protocol version (up from `TLSv1.2_2018`) and restrict the CloudFront-to-ALB origin connection to `TLSv1.2` only.
+* [OSDEV-2726](https://opensupplyhub.atlassian.net/browse/OSDEV-2726) - Patched the SOC 2 / Dependabot batch of low-severity vulnerabilities across the repo. Changes by area:
+  * **Docker base images** — Bumped `src/dedupe-hub/api/Dockerfile` from `python:3.7` to `python:3.10` (and added a `cython<3` pip constraint so `dedupe`'s legacy build still compiles), bumped `src/tests/Dockerfile` from `python:3.7` to `python:3.11-slim-bookworm`, and bumped `src/e2e/Dockerfile` from `mcr.microsoft.com/playwright:v1.48.1` to `v1.60.0` to keep the bundled browser binaries in sync with the upgraded Playwright JS library.
+  * **Backend Python deps** — `src/django/requirements.txt`: `django` 5.2.10 → 5.2.14, `django-allauth` 64.0.0 → 65.14.1, `requests` 2.32.3 → 2.33.0. `src/dedupe-hub/api/requirements.txt`: `numpy` 1.21.6 → 1.22.4. `src/tests/requirements.txt`: `requests` 2.31.0 → 2.33.0. `deployment/terraform/database_anonymizer_scheduled_task/docker/requirements.txt`: `pg8000` 1.31.2 → 1.31.5.
+  * **Frontend direct deps** (`src/react/package.json`) — `axios` 0.28.0 → 1.16.1, `lodash` 4.17.21 → 4.17.23, `validator` 13.7.0 → 13.15.22, `xlsx` 0.18.5 → SheetJS CDN tarball 0.20.3 (npm registry no longer ships patched releases), `http-proxy-middleware` 0.19.1 → ^2.0.7.
+  * **Frontend Yarn `resolutions` block** (`src/react/package.json`) — Added a `resolutions` block to pin vulnerable transitive deps that cannot be reached via direct `dependencies` bumps because they're pulled in deep by `react-scripts`/CRA. Covers: `qs` 6.14.2, `on-headers` 1.1.0, `brace-expansion` 1.1.12, `node-forge` 1.3.1, `express` 4.21.2, `serve-static` 1.16.2, `send` 0.19.0, `cookie` 0.7.2, `pbkdf2` 3.1.3, `shell-quote` 1.8.1, `cipher-base` 1.0.6, `sha.js` 2.4.12, `form-data` 4.0.4, `loader-utils` 2.0.4, `ejs` 3.1.10, `json-schema` 0.4.0, `react-dev-utils/immer` 9.0.21, `tmp` 0.2.5, `yaml` 1.10.3, `bn.js` 5.2.3, `ajv` 6.14.0, `@babel/helpers` 7.26.10, `@babel/runtime` 7.26.10, `@babel/runtime-corejs3` 7.26.10, `tar` 6.2.1, `browserslist` 4.24.4, `tough-cookie` 4.1.4, `nanoid` 3.3.8, `micromatch` 4.0.8, `picomatch` 2.3.2, `follow-redirects` 1.16.0, `protocol-buffers-schema` 3.6.1, `minimatch` 3.1.3, scoped `express/path-to-regexp` 0.1.13 and `react-router/path-to-regexp` 1.9.0 (two coexisting major lines), `flatted` 3.4.2, `immutable` 3.8.3, `rollup` 2.80.0, `ansi-html` 0.0.8, `semver` 7.5.2, `node-fetch` 2.6.7, `is-svg` 4.3.0, `nth-check` 2.0.1, `ws` 8.17.1, `braces` 3.0.3, `cross-spawn` 7.0.5, `body-parser` 1.20.3, `@babel/plugin-transform-modules-systemjs` 7.29.4, `http-proxy-middleware` 2.0.7, and `node-releases` 2.0.14 (held at the last Node 14-compatible release so the existing `node:14-slim` dev image keeps working).
+  * **Frontend code change** — `src/react/src/setupProxy.js` migrated from the legacy default-export `http-proxy-middleware` 0.x API (`proxy(path, options)`) to the v2.x named-export API (`createProxyMiddleware(options)` passed to `app.use(path, …)`), so the upgraded library functions without behavior change.
+  * **E2E tests** — `src/e2e/package.json` bumps `@playwright/test` from `^1.48.1` to `^1.55.1` (resolves to 1.60.0) to patch CVE-2025-59288; `src/e2e/package-lock.json` regenerated to match so `npm ci` succeeds in the e2e Dockerfile build.
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added dedicated AWS Batch infrastructure for partner Google Sheet uploads:
+  * Provisioned a dedicated compute environment, job queue (`queue*PartnerDataFileUpload`), and job definition (`job*PartnerDataFileUpload`) for partner sheet processing, replacing the unused direct data load batch job definition.
+  * Added `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME` and `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME` to the ECS app task definition so admin Batch submission uses the partner job definition (`queueentryuuid`) instead of the default facility-list job definition (`listid`/`action`).
+  * Trimmed the partner Batch worker job definition to essential environment variables and skipped Batch submit-setting validation in Django when `BATCH_MODE=True`.
+
+### Bugfix
+* [OSDEV-2805](https://opensupplyhub.atlassian.net/browse/OSDEV-2805) - Fixed dedupe-hub service crashing on startup with `Initial Gazetteer Build Error: module 'time' has no attribute 'clock'`. `dedupe==1.9.4` calls `time.clock()` internally, which was removed in Python 3.8. Added a compatibility shim in `src/dedupe-hub/api/app/main.py` that assigns `time.perf_counter` as a drop-in replacement before any dedupe imports run.
+* [OSDEV-2804](https://opensupplyhub.atlassian.net/browse/OSDEV-2804) - Fixed the Deploy to AWS pipeline failing during `terraform init` with a 504 Gateway Timeout from GitHub when installing the unused `zywillc/kafka` provider (v1.0.1). Removed the provider declaration from `deployment/terraform/versions.tf` — all `kafka_topic` resources and the `provider "kafka"` block in `kafka.tf` were already commented out, making the declaration dead code.
+* [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
+  * The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
+  * The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
+  * The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
+  * The Admin Dashboard Pending and Approved filters now correctly isolate lists by their actual status; previously, active non-replaced lists of any status could appear in either filter.
+* [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
+
+### What's new
+* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Moderators can submit partner Google Sheets through Django admin (**Partner Data File Uploads**) to apply partner-field production location updates without using the API. Each row with a valid `os_id` creates a pending moderation event; row-level outcomes appear in `error` and `moderation_id` columns added to the sheet.
+* [OSDEV-2788](https://opensupplyhub.atlassian.net/browse/OSDEV-2788) - A banner has been added to the "Add data" and "Claim a Production Location" pages notifying contributors about the upcoming data moderation pause, hidden behind the enable_moderation_pause_info waffle switch.
+* [OSDEV-2861](https://opensupplyhub.atlassian.net/browse/OSDEV-2861) - Renamed the platform search filter label from **Spotlight Data Partners** to **Spotlight Partners** on the homepage and facilities search sidebars, aligning with product terminology introduced in [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542).
+* [OSDEV-2768](https://opensupplyhub.atlassian.net/browse/OSDEV-2768) - Added a guidance banner to the post-registration success screen. If users do not receive their confirmation email within 24 hours, the banner instructs them to check their spam folder, allowlist `@opensupplyhub.org`, or contact their IT department — reducing support requests from users who miss the verification email.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.24.0
 
 ## Introduction
@@ -25,6 +103,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
 * [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
 * [Follow-up][OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Fixed `sync_databases` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` when no last-run timestamp file exists for a model. Replaced the invalid `django.utils.timezone.utc` reference with the stdlib `datetime.timezone.utc` for the default epoch fallback date.
+
+* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Added a banner to the post-registration screen with guidance on what to do if the activation email is not received within 24 hours.
 
 ### What's new
 * [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied. The filter is hidden when the `private_instance` feature flag is active (for example, private instances such as RBA).
