@@ -99,6 +99,24 @@ class PartnerField(models.Model):
             "System fields cannot be deleted and have restricted editing."
         ),
     )
+    available_in_api = models.BooleanField(
+        default=True,
+        help_text=(
+            "Indicates if this partner field is available in the API."
+        ),
+    )
+    available_in_downloads = models.BooleanField(
+        default=True,
+        help_text=(
+            "Indicates if this partner field is available in data downloads."
+        ),
+    )
+    available_in_profile = models.BooleanField(
+        default=True,
+        help_text=(
+            "Indicates if this partner field is available on the profile page."
+        ),
+    )
     group = models.ForeignKey(
         'PartnerFieldGroup',
         on_delete=models.SET_NULL,
