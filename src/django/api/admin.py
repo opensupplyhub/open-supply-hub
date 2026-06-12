@@ -2,6 +2,7 @@ import json
 import logging
 
 from django import forms
+from django.db import transaction
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
@@ -20,6 +21,11 @@ from api.models.wage_indicator_link_text_config import (
     WageIndicatorLinkTextConfig
 )
 from api.models.us_county_tigerline import USCountyTigerline
+from api.models.partner_data_file_upload import PartnerDataFileUpload
+from api.partner_data_file_upload.batch import (
+    submit_partner_data_file_upload_job,
+)
+from api.partner_data_file_upload.errors import format_upload_processing_error
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
 from waffle.models import Flag, Sample, Switch
@@ -435,6 +441,84 @@ class USCountyTigerlineAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
+class PartnerDataFileUploadAdmin(admin.ModelAdmin):
+    list_display = (
+        "uuid",
+        "contributor",
+        "status",
+        "batch_job_id",
+        "created_by",
+        "created_at",
+        "processed_at",
+    )
+    list_filter = ("status", "contributor")
+    search_fields = (
+        "uuid",
+        "google_drive_file_link",
+        "batch_job_id",
+        "contributor__name",
+        "contributor__admin__email",
+        "created_by__email",
+    )
+    readonly_fields = (
+        "uuid",
+        "status",
+        "batch_job_id",
+        "created_by",
+        "processed_at",
+        "processing_error",
+        "created_at",
+        "updated_at",
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+            obj.status = PartnerDataFileUpload.Status.PROCESSING
+            obj.processing_error = ""
+        super().save_model(request, obj, form, change)
+
+        if change:
+            return
+
+        upload_uuid = obj.uuid
+
+        def enqueue_batch_job():
+            upload = PartnerDataFileUpload.objects.get(pk=upload_uuid)
+            try:
+                job_id = submit_partner_data_file_upload_job(upload_uuid)
+                upload.batch_job_id = job_id
+                upload.save(update_fields=["batch_job_id", "updated_at"])
+                messages.success(
+                    request,
+                    (
+                        "Partner data file was queued for moderation "
+                        f"ingestion. Batch job ID: {job_id}"
+                    ),
+                )
+            except Exception as error:
+                error_message = format_upload_processing_error(error)
+                upload.status = PartnerDataFileUpload.Status.FAILED
+                upload.processing_error = error_message
+                upload.save(
+                    update_fields=[
+                        "status",
+                        "processing_error",
+                        "updated_at",
+                    ]
+                )
+                messages.error(
+                    request,
+                    (
+                        "Partner data file was saved but "
+                        "Batch submission failed. "
+                        f"Error: {error_message}"
+                    ),
+                )
+
+        transaction.on_commit(enqueue_batch_job)
+
+
 admin_site.register(models.Version)
 admin_site.register(models.User, OarUserAdmin)
 admin_site.register(models.Contributor, ContributorAdmin)
@@ -465,3 +549,4 @@ admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
+admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)
