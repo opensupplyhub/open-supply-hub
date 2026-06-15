@@ -115,21 +115,18 @@ resource "aws_service_discovery_private_dns_namespace" "service_discovery" {
 
 #
 # DMARC DNS records for compliance monitoring
+# Each record is owned by a single environment to avoid duplicate Route 53
+# entries when multiple envs share the same hosted zone in one AWS account.
 #
-locals {
-  # Must match environment values in deployment/environments/terraform-*.tfvars
-  dev_account_environments  = ["Development", "Test", "Preprod"]
-  prod_account_environments = ["Production", "Staging", "Rba"]
-}
 
 data "aws_route53_zone" "opensupplyhub_dmarc" {
-  count        = contains(local.prod_account_environments, var.environment) ? 1 : 0
+  count        = var.environment == "Production" ? 1 : 0
   name         = "opensupplyhub.org"
   private_zone = false
 }
 
 resource "aws_route53_record" "dmarc_opensupplyhub" {
-  count   = contains(local.prod_account_environments, var.environment) ? 1 : 0
+  count   = var.environment == "Production" ? 1 : 0
   zone_id = data.aws_route53_zone.opensupplyhub_dmarc[0].zone_id
   name    = "_dmarc"
   type    = "TXT"
@@ -138,13 +135,13 @@ resource "aws_route53_record" "dmarc_opensupplyhub" {
 }
 
 data "aws_route53_zone" "openapparel_dmarc" {
-  count        = contains(local.prod_account_environments, var.environment) ? 1 : 0
+  count        = var.environment == "Production" ? 1 : 0
   name         = "openapparel.org"
   private_zone = false
 }
 
 resource "aws_route53_record" "dmarc_openapparel" {
-  count   = contains(local.prod_account_environments, var.environment) ? 1 : 0
+  count   = var.environment == "Production" ? 1 : 0
   zone_id = data.aws_route53_zone.openapparel_dmarc[0].zone_id
   name    = "_dmarc"
   type    = "TXT"
@@ -153,13 +150,13 @@ resource "aws_route53_record" "dmarc_openapparel" {
 }
 
 data "aws_route53_zone" "oshub_net_dmarc" {
-  count        = contains(local.dev_account_environments, var.environment) ? 1 : 0
+  count        = var.environment == "Test" ? 1 : 0
   name         = "os-hub.net"
   private_zone = false
 }
 
 resource "aws_route53_record" "dmarc_oshub_net" {
-  count   = contains(local.dev_account_environments, var.environment) ? 1 : 0
+  count   = var.environment == "Test" ? 1 : 0
   zone_id = data.aws_route53_zone.oshub_net_dmarc[0].zone_id
   name    = "_dmarc"
   type    = "TXT"
