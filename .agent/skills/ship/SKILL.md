@@ -23,7 +23,7 @@ Working directory: the local OS Hub checkout (typically `~/open-supply-hub`).
 Read `$ARGUMENTS`. Decide one of three paths:
 
 - **Empty** → ask: *"Which ticket are we shipping? Give me an OSDEV key (e.g., OSDEV-2316), or describe the idea and I'll help you draft a ticket first."*
-- **Matches `OSDEV-####`** → continue to Step 2.
+- **Matches `OSDEV-####`** → continue to Step 1.
 - **Anything else (freeform idea)** → say: *"That looks like an idea, not a ticket. I'll need a Jira ticket to ship against. Should I use the `jira-ticket-writer` skill to draft one from what you wrote? Reply 'yes' to draft, or paste an existing OSDEV key."* If `jira-ticket-writer` does not exist yet, say so honestly and ask the user to create the ticket in Jira manually, then re-invoke `/ship OSDEV-####`.
 
 ---
@@ -37,11 +37,11 @@ If unknown from earlier in this session, ask:
 > 2. Used it a few times — some comfort with git and the workflow
 > 3. Engineer — full technical depth, skip the hand-holding
 >
-> Which fits? (1, 2, or 3)
+> Which fits your experience level? (1, 2, or 3)
 
 Calibrate the run:
 - **Level 1:** Gloss every git/GitHub term at first appearance. Plain English before every shell command. Slow pacing, confidence-building.
-- **Level 2:** Gloss only non-obvious terms (PR, merge). Explain only non-routine commands.
+- **Level 2:** Gloss only the less-familiar terms (e.g., PR, merge); skip the ones they clearly know. Explain only non-routine commands.
 - **Level 3:** No glosses, no narration of routine commands.
 
 **Glosses to reuse** (Levels 1 and 2 only, at first appearance):
@@ -133,9 +133,13 @@ Automatically:
 - Create branch `OSDEV-####-short-description` (derive from the real ticket title; no placeholder text)
 - Verify the new branch is checked out before continuing
 
-Implement. If both backend and frontend are needed, launch two generic Agents in parallel (run_in_background: true). Each gets: the approved plan, Confluence context, recent-PR patterns, and AGENTS.md conventions. Each is told: **touch only what the plan calls for. No refactoring of adjacent code. No formatting changes to files outside the plan. Never run git commands.**
+Implement. If both backend and frontend are needed, work contract-first to keep the two layers from drifting apart:
 
-If only one layer is needed, use one agent.
+1. **Lock the API contract before splitting.** Confirm the plan pins the exact interface the two layers share — endpoint path, request/response shape, and field names. If the plan is vague on this, settle it before launching any implementation agent. Both layers build to this fixed contract, so neither has to guess what the other will produce.
+2. **Then launch two generic Agents in parallel** (run_in_background: true). Each gets: the approved plan, the locked API contract, Confluence context, recent-PR patterns, and AGENTS.md conventions. Each is told: **touch only what the plan calls for. No refactoring of adjacent code. No formatting changes to files outside the plan. Never run git commands.**
+3. **Integration check after both finish.** Confirm the frontend's API calls match the backend's actual implementation — same endpoint, same field names, same response shape. Reconcile any mismatch before moving on.
+
+If only one layer is needed, use one agent and skip the contract step.
 
 Wait for implementation to finish.
 
@@ -156,7 +160,7 @@ Wait for the user.
 **Future migration:** When the `test-writer` skill exists, this step calls into it. For now, the orchestrator inlines the test-writing logic.
 
 Write tests:
-- For each new or modified Django view/model/serializer: write a happy-path test plus one edge case. Place in `src/django/api/tests/test_<feature>.py` following recent PR patterns.
+- For each new or modified Django view/model/serializer: write a happy-path test plus the meaningful edge cases (don't stop at one if the feature has several). Place in `src/django/api/tests/test_<feature>.py` following recent PR patterns.
 - For each new or modified React component: write a test in `__tests__/components/` exercising the main props.
 
 Run in parallel:
@@ -189,6 +193,7 @@ Tests must pass before continuing. Verifiable check: zero failures.
 - `git add` the changed files
 - `git commit -m "[OSDEV-####] [real ticket summary]"`
 - **Call the `release-notes` skill** (`.agent/skills/release-notes/SKILL.md`) to update `doc/release/RELEASE-NOTES.md` following OS Hub conventions. Do not write the entry by hand.
+- `git add doc/release/RELEASE-NOTES.md` (stage the release-notes change before committing it)
 - `git commit -m "[OSDEV-####] Update release notes"`
 
 ---
@@ -222,7 +227,7 @@ Show:
 > Preview your change: http://localhost:6543/[path]
 > Log in as: [email] / [password]
 > What you should see: [plain English description]
-> How to verify: [1-2 simple visual checks]
+> How to verify: [a few simple visual checks — cover what the change actually affects]
 >
 > Reply 'looks good' to create the PR, or describe what's wrong.
 
