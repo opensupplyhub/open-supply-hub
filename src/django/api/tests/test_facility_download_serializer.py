@@ -72,7 +72,8 @@ class FacilityDownloadSerializerTest(TestCase):
     fixtures = ["facilities_index"]
 
     def setUp(self):
-        """Load fixture facilities; clear wage-indicator data for empty partner cells."""
+        """Load fixture facilities; clear wage-indicator data for empty
+        partner cells."""
         # Migration 0193 seeds WageIndicatorCountryData for every country
         # these fixtures use. Clear it so partner-field assertions expect
         # empty wage_indicator.* cells instead of migration-provided URLs.
@@ -82,7 +83,8 @@ class FacilityDownloadSerializerTest(TestCase):
         self.facility_three = FacilityIndex.objects.get(id="3")
 
     def test_get_headers(self):
-        """Returns the full header list, including claim and partner-field columns."""
+        """Returns the full header list, including claim and partner-field
+        columns."""
         serializer = FacilityDownloadSerializer()
         headers = serializer.get_headers()
         expected_headers = [
@@ -109,7 +111,8 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(headers, expected_headers)
 
     def test_get_row(self):
-        """Builds a complete row for an unclaimed, multi-contributor facility."""
+        """Builds a complete row for an unclaimed, multi-contributor
+        facility."""
         serializer = FacilityDownloadSerializer()
         row = serializer.get_row(self.facility_one)
         expected_row = [
@@ -174,7 +177,8 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(row, expected_row)
 
     def test_partner_fields_headers_flatten_object_schema(self):
-        """Object fields become dotted headers; primitive fields keep a single column."""
+        """Object fields become dotted headers; primitive fields keep a single
+        column."""
         partner_fields = [
             SimpleNamespace(
                 name="bsci_audit",
@@ -204,7 +208,8 @@ class FacilityDownloadSerializerTest(TestCase):
         )
 
     def test_partner_fields_row_matches_object_and_primitive(self):
-        """Maps object and primitive values to cells; missing fields become empty."""
+        """Maps object and primitive values to cells; missing fields become
+        empty."""
         partner_fields = [
             SimpleNamespace(
                 name="bsci_audit",
@@ -389,7 +394,8 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(row, [''])
 
     def test_partner_fields_row_does_not_mutate_original_data(self):
-        """Leaves extended_fields raw_values unchanged after building the row."""
+        """Leaves extended_fields raw_values unchanged after building the
+        row."""
         partner_fields = [
             SimpleNamespace(
                 name='bsci_audit',
@@ -512,7 +518,8 @@ class FacilityDownloadSerializerTest(TestCase):
     def test_claimed_facility_includes_all_contributors_extended_fields(
         self, _wage, _mit, _partner, _claim
     ):
-        """Includes extended fields from every contributor, not only the claimer."""
+        """Includes extended fields from every contributor, not only the
+        claimer."""
         facility = SimpleNamespace(
             id="MOCK_1",
             name="Mock Facility",

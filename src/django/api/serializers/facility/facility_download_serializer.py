@@ -71,7 +71,10 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         self.__default_partner_fields = [
             field
             for field in fields
-            if partner_fields_override or not getattr(field, "system_field", False)
+            if (
+                partner_fields_override
+                or not getattr(field, "system_field", False)
+            )
         ]
         self.__system_partner_fields = {
             field.name
@@ -106,7 +109,8 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         ]
 
     def get_contributors(self, facility: FacilityIndexNewManager) -> str:
-        """Return pipe-separated contributor names, marking the claimer when present."""
+        """Return pipe-separated contributor names, marking the claimer when
+        present."""
         contributors = []
         claim = facility.approved_claim
         if claim is not None:
@@ -122,8 +126,11 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             )
         return "|".join(contributors)
 
-    def get_claimed_fields(self, facility: FacilityIndexNewManager) -> List[str]:
-        """Return claim columns from ``approved_claim``, or empty strings when unclaimed."""
+    def get_claimed_fields(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        """Return claim columns from ``approved_claim``, or empty strings when
+        unclaimed."""
         claimed_fields = [""] * len(CLAIMED_DOWNLOAD_FIELDS)
         claim = facility.approved_claim
         if claim:
@@ -131,7 +138,8 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         return claimed_fields
 
     def get_partner_fields_headers(self) -> List[str]:
-        """Return partner-field headers; object schemas expand to dotted paths."""
+        """Return partner-field headers; object schemas expand to dotted
+        paths."""
         headers: List[str] = []
         for partner_field in self.__default_partner_fields:
             paths = partner_field_property_paths(partner_field)
@@ -150,7 +158,8 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         self,
         extended_fields: List[Dict[str, Any]],
     ) -> List[str]:
-        """Return partner-field cells aligned with ``get_partner_fields_headers``."""
+        """Return partner-field cells aligned with
+        ``get_partner_fields_headers``."""
         grouped = group_extended_fields_by_name(extended_fields)
         separator = self.PARTNER_FIELD_VALUE_SEPARATOR
         row: List[str] = []
@@ -195,25 +204,33 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         return row
 
     def get_mit_living_wage_headers(self) -> List[str]:
-        """Return MIT living wage columns when that system partner field is active."""
+        """Return MIT living wage columns when that system partner field is
+        active."""
         if "mit_living_wage" not in self.__system_partner_fields:
             return []
         return MIT_LIVING_WAGE_DOWNLOAD_HEADERS
 
-    def get_mit_living_wage_row(self, facility: FacilityIndexNewManager) -> List[str]:
-        """Return MIT living wage cells, or empty strings when data is unavailable."""
+    def get_mit_living_wage_row(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        """Return MIT living wage cells, or empty strings when data is
+        unavailable."""
         if "mit_living_wage" not in self.__system_partner_fields:
             return []
         return self.__mit_living_wage_helper.get_cells(facility)
 
     def get_wage_indicator_headers(self) -> List[str]:
-        """Return wage indicator columns when that system partner field is active."""
+        """Return wage indicator columns when that system partner field is
+        active."""
         if "wage_indicator" not in self.__system_partner_fields:
             return []
         return WAGE_INDICATOR_DOWNLOAD_HEADERS
 
-    def get_wage_indicator_row(self, facility: FacilityIndexNewManager) -> List[str]:
-        """Return wage indicator cells, or empty strings when data is unavailable."""
+    def get_wage_indicator_row(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        """Return wage indicator cells, or empty strings when data is
+        unavailable."""
         if "wage_indicator" not in self.__system_partner_fields:
             return []
         return self.__wage_indicator_helper.get_cells(facility)

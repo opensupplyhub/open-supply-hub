@@ -60,7 +60,8 @@ class FacilityDownloadSerializerBase(Serializer):
 
     @staticmethod
     def get_name(facility: FacilityIndexNewManager) -> str:
-        """Return the English claim name when present, otherwise the facility name."""
+        """Return the English claim name when present, otherwise the facility
+        name."""
         claim = facility.approved_claim
         if claim and claim.get("facility_name_english"):
             return claim.get("facility_name_english")
@@ -81,7 +82,8 @@ class FacilityDownloadSerializerBase(Serializer):
         return self.join(facility.sector)
 
     def get_extended_fields(self, fields) -> List[Any]:
-        """Return the six standard extended-field columns, joined with ``|``."""
+        """Return the six standard extended-field columns, joined with
+        ``|``."""
         extended_fields = [[], [], [], [], [], []]
         format_download_extended_fields(fields, extended_fields)
 
@@ -90,7 +92,11 @@ class FacilityDownloadSerializerBase(Serializer):
     @staticmethod
     def get_is_closed(facility: FacilityIndexNewManager) -> str:
         """Return ``"True"`` or ``"False"`` for the facility closed status."""
-        return str(facility.is_closed if facility.is_closed is not None else False)
+        return str(
+            facility.is_closed
+            if facility.is_closed is not None
+            else False
+        )
 
     @staticmethod
     def join(arr: List[Any]) -> str:
