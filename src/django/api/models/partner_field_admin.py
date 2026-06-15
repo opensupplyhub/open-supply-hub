@@ -47,7 +47,6 @@ class PartnerFieldAdminForm(forms.ModelForm):
             'system_field',
             'available_in_api',
             'available_in_downloads',
-            'available_in_profile',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -110,7 +109,6 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         "system_field",
         "available_in_api",
         "available_in_downloads",
-        "available_in_profile",
         "created_at",
     )
     search_fields = ("name", "type", "label", "unit", "source_by")
@@ -119,7 +117,6 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         "system_field",
         "available_in_api",
         "available_in_downloads",
-        "available_in_profile",
         "type",
         "group",
     )
@@ -138,7 +135,6 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         "system_field",
         "available_in_api",
         "available_in_downloads",
-        "available_in_profile",
         "created_at",
         "updated_at",
     )

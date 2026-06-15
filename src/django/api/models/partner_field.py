@@ -112,12 +112,6 @@ class PartnerField(models.Model):
             "Indicates if this partner field is available in data downloads."
         ),
     )
-    available_in_profile = models.BooleanField(
-        default=True,
-        help_text=(
-            "Indicates if this partner field is available on the profile page."
-        ),
-    )
     group = models.ForeignKey(
         'PartnerFieldGroup',
         on_delete=models.SET_NULL,

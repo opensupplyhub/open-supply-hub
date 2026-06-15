@@ -30,15 +30,4 @@ class Migration(Migration):
                 ),
             ),
         ),
-        AddField(
-            model_name='partnerfield',
-            name='available_in_profile',
-            field=BooleanField(
-                default=True,
-                help_text=(
-                    'Indicates if this partner field is available on the '
-                    'profile page.'
-                ),
-            ),
-        ),
     ]
