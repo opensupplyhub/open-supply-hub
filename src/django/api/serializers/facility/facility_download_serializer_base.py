@@ -1,10 +1,9 @@
 import copy
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
 )
-from api.models.partner_field import PartnerField
 from countries.lib.countries import COUNTRY_NAMES
 from api.csv_download import (
     format_download_extended_fields,
@@ -20,6 +19,7 @@ from api.serializers.facility.mit_living_wage_download_helper import (
 from api.serializers.facility.partner_field_helper import (
     build_object_field_cells,
     build_primitive_field_cell,
+    get_cached_all_partner_fields,
     group_extended_fields_by_name,
     partner_field_property_paths,
     apply_schema_defaults,
@@ -59,9 +59,7 @@ class FacilityDownloadSerializerBase(Serializer):
     ]
     IS_CLOSED_HEADER = "is_closed"
 
-    CLAIMED_FIELDS_HEADERS = [
-        header for header, _ in CLAIMED_DOWNLOAD_FIELDS_MAPPING
-    ]
+    CLAIMED_FIELDS_HEADERS = [header for header, _ in CLAIMED_DOWNLOAD_FIELDS_MAPPING]
 
     PARTNER_FIELD_HEADER_SEPARATOR = "."
     PARTNER_FIELD_VALUE_SEPARATOR = "|"
@@ -73,6 +71,18 @@ class FacilityDownloadSerializerBase(Serializer):
         # download instead of being rebuilt per facility.
         self.__mit_living_wage_helper = MITLivingWageDownloadHelper()
         self.__wage_indicator_helper = WageIndicatorDownloadHelper()
+        self.__partner_fields = [
+            field
+            for field in get_cached_all_partner_fields()
+            if field.active and field.available_in_downloads
+        ]
+        self.__partner_fields.sort(key=lambda field: field.name)
+        self.__default_partner_fields = [
+            field for field in self.__partner_fields if not field.system_field
+        ]
+        self.__system_partner_fields = {
+            field.name for field in self.__partner_fields if field.system_field
+        }
 
     def get_common_row(self, facility: FacilityIndexNewManager):
         return [
@@ -115,11 +125,8 @@ class FacilityDownloadSerializerBase(Serializer):
 
         return list(map("|".join, extended_fields))
 
-    def get_claimed_fields(
-            self,
-            facility: FacilityIndexNewManager
-    ) -> List[str]:
-        claimed_fields = [''] * len(CLAIMED_DOWNLOAD_FIELDS)
+    def get_claimed_fields(self, facility: FacilityIndexNewManager) -> List[str]:
+        claimed_fields = [""] * len(CLAIMED_DOWNLOAD_FIELDS)
         claim = facility.approved_claim
         if claim:
             format_download_claimed_fields(claim, claimed_fields)
@@ -127,19 +134,14 @@ class FacilityDownloadSerializerBase(Serializer):
 
     @staticmethod
     def get_is_closed(facility: FacilityIndexNewManager) -> str:
-        return str(
-            facility.is_closed if facility.is_closed is not None else False
-        )
+        return str(facility.is_closed if facility.is_closed is not None else False)
 
     @staticmethod
     def join(arr: List[Any]) -> str:
         return "|".join([item.title() for item in arr])
 
-    @classmethod
-    def get_partner_fields_headers(
-        cls, partner_fields: Iterable[PartnerField]
-    ) -> List[str]:
-        '''
+    def get_partner_fields_headers(self) -> List[str]:
+        """
         Build CSV headers for the provided active partner fields.
 
         - Object-typed partner fields with a JSON Schema expand into one
@@ -148,14 +150,14 @@ class FacilityDownloadSerializerBase(Serializer):
           reached (e.g. "amfori.bsci_audit.submission_date").
         - Any other partner field (or missing schema) emits a single
           column named after the partner field itself.
-        '''
+        """
         headers: List[str] = []
-        for partner_field in partner_fields:
+        for partner_field in self.__default_partner_fields:
             paths = partner_field_property_paths(partner_field)
             if paths:
                 for path in paths:
                     headers.append(
-                        cls.PARTNER_FIELD_HEADER_SEPARATOR.join(
+                        self.PARTNER_FIELD_HEADER_SEPARATOR.join(
                             (partner_field.name, *path)
                         )
                     )
@@ -163,13 +165,11 @@ class FacilityDownloadSerializerBase(Serializer):
                 headers.append(partner_field.name)
         return headers
 
-    @classmethod
     def get_partner_fields_row(
-        cls,
+        self,
         extended_fields: List[Dict[str, Any]],
-        partner_fields: Iterable[PartnerField],
     ) -> List[str]:
-        '''
+        """
         Build CSV row cells for the provided active partner fields by
         matching each partner field's `name` against entries in the
         facility's `extended_fields`.
@@ -180,12 +180,12 @@ class FacilityDownloadSerializerBase(Serializer):
         Multiple contributions for the same partner field on one facility
         are joined with "|" per leaf column (consistent with the existing
         extended-field behavior).
-        '''
+        """
         grouped = group_extended_fields_by_name(extended_fields)
-        separator = cls.PARTNER_FIELD_VALUE_SEPARATOR
+        separator = self.PARTNER_FIELD_VALUE_SEPARATOR
         row: List[str] = []
 
-        for partner_field in partner_fields:
+        for partner_field in self.__default_partner_fields:
             entries = copy.deepcopy(grouped.get(partner_field.name, []))
 
             for entry in entries:
@@ -218,54 +218,56 @@ class FacilityDownloadSerializerBase(Serializer):
             paths = partner_field_property_paths(partner_field)
 
             if paths:
-                row.extend(
-                    build_object_field_cells(entries, paths, separator)
-                )
+                row.extend(build_object_field_cells(entries, paths, separator))
             else:
                 row.append(build_primitive_field_cell(entries, separator))
 
         return row
 
     def get_mit_living_wage_headers(self) -> List[str]:
-        '''
+        """
         Download-only headers for the `mit_living_wage` system partner
         field. Kept separate from `get_partner_fields_headers` because
         `mit_living_wage` is filtered out of the regular active-partner
         pipeline (it has `system_field=True`) and the two columns are
         synthesized at download time from the provider + partner-field
         row, not from `facility.extended_fields`.
-        '''
+        """
+        if "mit_living_wage" not in self.__system_partner_fields:
+            return []
         return MIT_LIVING_WAGE_DOWNLOAD_HEADERS
 
-    def get_mit_living_wage_row(
-        self, facility: FacilityIndexNewManager
-    ) -> List[str]:
-        '''
+    def get_mit_living_wage_row(self, facility: FacilityIndexNewManager) -> List[str]:
+        """
         Download-only cells matching `get_mit_living_wage_headers`.
         Returns two empty strings for any facility the MIT provider
         can't resolve (non-US/PR/VI, no TIGER/Line match, missing
         partner-field row, etc.).
-        '''
+        """
+        if "mit_living_wage" not in self.__system_partner_fields:
+            return []
         return self.__mit_living_wage_helper.get_cells(facility)
 
     def get_wage_indicator_headers(self) -> List[str]:
-        '''
+        """
         Download-only headers for the `wage_indicator` system partner
         field. Like `mit_living_wage`, `wage_indicator` has
         `system_field=True` so it's excluded from the regular
         active-partner pipeline; its six columns (URL + display text
         for each of the three link types) are synthesized at download
         time from `WageIndicatorProvider` output.
-        '''
+        """
+        if "wage_indicator" not in self.__system_partner_fields:
+            return []
         return WAGE_INDICATOR_DOWNLOAD_HEADERS
 
-    def get_wage_indicator_row(
-        self, facility: FacilityIndexNewManager
-    ) -> List[str]:
-        '''
+    def get_wage_indicator_row(self, facility: FacilityIndexNewManager) -> List[str]:
+        """
         Download-only cells matching `get_wage_indicator_headers`.
         Returns six empty strings for any facility whose country has
         no `WageIndicatorCountryData` row, or when the
         `wage_indicator` `PartnerField` has no associated contributor.
-        '''
+        """
+        if "wage_indicator" not in self.__system_partner_fields:
+            return []
         return self.__wage_indicator_helper.get_cells(facility)

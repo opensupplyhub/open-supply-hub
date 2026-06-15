@@ -5,9 +5,6 @@ from api.helpers.helpers import prefix_a_an
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
 )
-from api.services.facilities_download_service import (
-    FacilitiesDownloadService,
-)
 
 
 class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
@@ -18,9 +15,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.EXTENDED_FIELDS_HEADERS,
             *self.CLAIMED_FIELDS_HEADERS,
             self.IS_CLOSED_HEADER,
-            *self.get_partner_fields_headers(
-                FacilitiesDownloadService.get_active_partner_fields()
-            ),
+            *self.get_partner_fields_headers(),
             *self.get_mit_living_wage_headers(),
             *self.get_wage_indicator_headers(),
         ]
@@ -32,10 +27,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.get_extended_fields(facility.extended_fields),
             *self.get_claimed_fields(facility),
             self.get_is_closed(facility),
-            *self.get_partner_fields_row(
-                facility.extended_fields,
-                FacilitiesDownloadService.get_active_partner_fields()
-            ),
+            *self.get_partner_fields_row(facility.extended_fields),
             *self.get_mit_living_wage_row(facility),
             *self.get_wage_indicator_row(facility),
         ]
