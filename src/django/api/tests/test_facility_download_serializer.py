@@ -67,19 +67,22 @@ EMPTY_PARTNER_FIELD_VALUES: list = [""] * len(PARTNER_FIELD_HEADERS)
 
 
 class FacilityDownloadSerializerTest(TestCase):
+    """CSV header and row output for full facility downloads."""
+
     fixtures = ["facilities_index"]
 
     def setUp(self):
+        """Load fixture facilities; clear wage-indicator data for empty partner cells."""
         # Migration 0193 seeds WageIndicatorCountryData for every country
-        # these fixtures use. Clear it so the partner-field assertions
-        # below can expect empty `wage_indicator.*` cells instead of
-        # migration-provided URLs.
+        # these fixtures use. Clear it so partner-field assertions expect
+        # empty wage_indicator.* cells instead of migration-provided URLs.
         WageIndicatorCountryData.objects.all().delete()
         self.facility_one = FacilityIndex.objects.get(id="1")
         self.facility_two = FacilityIndex.objects.get(id="2")
         self.facility_three = FacilityIndex.objects.get(id="3")
 
     def test_get_headers(self):
+        """Returns the full header list, including claim and partner-field columns."""
         serializer = FacilityDownloadSerializer()
         headers = serializer.get_headers()
         expected_headers = [
@@ -106,6 +109,7 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(headers, expected_headers)
 
     def test_get_row(self):
+        """Builds a complete row for an unclaimed, multi-contributor facility."""
         serializer = FacilityDownloadSerializer()
         row = serializer.get_row(self.facility_one)
         expected_row = [
@@ -136,6 +140,7 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(row, expected_row)
 
     def test_get_row_with_claim_from_contributor_with_extended_fields(self):
+        """Uses the English claim name and labels the claiming contributor."""
         serializer = FacilityDownloadSerializer()
         row = serializer.get_row(self.facility_two)
         expected_row = [
@@ -169,6 +174,7 @@ class FacilityDownloadSerializerTest(TestCase):
         self.assertEqual(row, expected_row)
 
     def test_partner_fields_headers_flatten_object_schema(self):
+        """Object fields become dotted headers; primitive fields keep a single column."""
         partner_fields = [
             SimpleNamespace(
                 name="bsci_audit",
@@ -186,8 +192,8 @@ class FacilityDownloadSerializerTest(TestCase):
                 json_schema=None,
             ),
         ]
-        serializer = FacilityDownloadSerializer()
-        headers = serializer.get_partner_fields_headers(partner_fields)
+        serializer = FacilityDownloadSerializer(partner_fields=partner_fields)
+        headers = serializer.get_partner_fields_headers()
         self.assertEqual(
             headers,
             [
@@ -198,6 +204,7 @@ class FacilityDownloadSerializerTest(TestCase):
         )
 
     def test_partner_fields_row_matches_object_and_primitive(self):
+        """Maps object and primitive values to cells; missing fields become empty."""
         partner_fields = [
             SimpleNamespace(
                 name="bsci_audit",
@@ -237,16 +244,15 @@ class FacilityDownloadSerializerTest(TestCase):
                 "contributor": {"id": 1},
             },
         ]
-        serializer = FacilityDownloadSerializer()
-        row = serializer.get_partner_fields_row(
-            extended_fields, partner_fields
-        )
+        serializer = FacilityDownloadSerializer(partner_fields=partner_fields)
+        row = serializer.get_partner_fields_row(extended_fields)
         self.assertEqual(
             row,
             ["2024-10-15", "2026-10-15", "13", ""],
         )
 
     def test_partner_fields_expand_nested_object_schema(self):
+        """Headers and cells follow nested JSON Schema paths."""
         amfori_schema = {
             "type": "object",
             "title": "Amfori Compliance Status",
@@ -320,11 +326,9 @@ class FacilityDownloadSerializerTest(TestCase):
                 "contributor": {"id": 1},
             },
         ]
-        serializer = FacilityDownloadSerializer()
-        headers = serializer.get_partner_fields_headers(partner_fields)
-        row = serializer.get_partner_fields_row(
-            extended_fields, partner_fields
-        )
+        serializer = FacilityDownloadSerializer(partner_fields=partner_fields)
+        headers = serializer.get_partner_fields_headers()
+        row = serializer.get_partner_fields_row(extended_fields)
         self.assertEqual(
             headers,
             [
@@ -351,6 +355,7 @@ class FacilityDownloadSerializerTest(TestCase):
         )
 
     def test_partner_fields_row_skips_non_dict_value(self):
+        """Skips partner-field entries whose value is not a dict."""
         partner_fields = [
             SimpleNamespace(
                 name='bsci_audit',
@@ -379,13 +384,12 @@ class FacilityDownloadSerializerTest(TestCase):
                 'contributor': {'id': 3},
             },
         ]
-        serializer = FacilityDownloadSerializer()
-        row = serializer.get_partner_fields_row(
-            extended_fields, partner_fields
-        )
+        serializer = FacilityDownloadSerializer(partner_fields=partner_fields)
+        row = serializer.get_partner_fields_row(extended_fields)
         self.assertEqual(row, [''])
 
     def test_partner_fields_row_does_not_mutate_original_data(self):
+        """Leaves extended_fields raw_values unchanged after building the row."""
         partner_fields = [
             SimpleNamespace(
                 name='bsci_audit',
@@ -413,14 +417,15 @@ class FacilityDownloadSerializerTest(TestCase):
             },
         ]
         original = copy.deepcopy(extended_fields)
-        serializer = FacilityDownloadSerializer()
-        serializer.get_partner_fields_row(extended_fields, partner_fields)
+        serializer = FacilityDownloadSerializer(partner_fields=partner_fields)
+        serializer.get_partner_fields_row(extended_fields)
         self.assertEqual(
             extended_fields[0]['value']['raw_values'],
             original[0]['value']['raw_values'],
         )
 
     def test_partner_fields_row_fills_schema_defaults_for_missing_values(self):
+        """Fills missing object properties from JSON Schema defaults."""
         partner_fields = [
             SimpleNamespace(
                 name='bsci_audit',
@@ -451,13 +456,12 @@ class FacilityDownloadSerializerTest(TestCase):
                 'contributor': {'id': 1},
             },
         ]
-        serializer = FacilityDownloadSerializer()
-        row = serializer.get_partner_fields_row(
-            extended_fields, partner_fields
-        )
+        serializer = FacilityDownloadSerializer(partner_fields=partner_fields)
+        row = serializer.get_partner_fields_row(extended_fields)
         self.assertEqual(row, ['2024-10-15', 'N/A', 'unrated'])
 
     def test_get_row_with_claim_from_contributor_without_extended_fields(self):
+        """Builds a row when only the claimer's extended fields are present."""
         serializer = FacilityDownloadSerializer()
         row = serializer.get_row(self.facility_three)
         expected_row = [
@@ -508,6 +512,7 @@ class FacilityDownloadSerializerTest(TestCase):
     def test_claimed_facility_includes_all_contributors_extended_fields(
         self, _wage, _mit, _partner, _claim
     ):
+        """Includes extended fields from every contributor, not only the claimer."""
         facility = SimpleNamespace(
             id="MOCK_1",
             name="Mock Facility",
