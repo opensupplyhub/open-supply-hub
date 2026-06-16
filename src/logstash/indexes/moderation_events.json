@@ -16,6 +16,9 @@
         "os_id": {
           "type": "keyword"
         },
+        "os_id_snapshot": {
+          "type": "keyword"
+        },
         "contributor_id": {
           "type": "integer"
         },

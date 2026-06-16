@@ -160,19 +160,25 @@ class Command(BaseCommand):
             return
 
         updated = 0
+        failed_uuids = []
         for uuid, recovered_os_id in combined_map.items():
-            rows = ModerationEvent.objects.filter(
-                uuid=uuid,
-                os_id__isnull=True,
-                os_id_snapshot='',
-            ).update(os_id_snapshot=recovered_os_id)
-            updated += rows
+            try:
+                rows = ModerationEvent.objects.filter(
+                    uuid=uuid,
+                    os_id__isnull=True,
+                    os_id_snapshot='',
+                ).update(os_id_snapshot=recovered_os_id)
+                updated += rows
+            except Exception as e:
+                failed_uuids.append(uuid)
+                log.error('Failed to update event %s: %s', uuid, e)
 
         log.info(
             'Recovery backfill complete. Updated %s rows, '
-            '%s unrecoverable.',
+            '%s unrecoverable, %s failed.',
             updated,
             unrecoverable,
+            len(failed_uuids),
         )
         self.stdout.write(
             self.style.SUCCESS(
@@ -181,3 +187,10 @@ class Command(BaseCommand):
                 '(no os_id in OpenSearch or FacilityListItem).'
             )
         )
+        if failed_uuids:
+            self.stderr.write(
+                self.style.ERROR(
+                    f'Failed to update {len(failed_uuids)} events. '
+                    f'First failures: {failed_uuids[:10]}'
+                )
+            )

@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 
 * `0211_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
+* `0212_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
 
 #### Schema changes
 
@@ -22,16 +23,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
 * [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
+    * `migrate` — runs `0212_backfill_moderation_event_os_id_snapshot`, which forward-fills `os_id_snapshot` for the ~298k approved events where `os_id` is still present in Postgres.
     * `reindex_database`
-* Run the following backfill commands after deployment:
-    * `python manage.py backfill_moderation_event_os_id_snapshot` — populates `os_id_snapshot` for the ~298k approved events where `os_id` is still present in Postgres.
+* The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
+* Run the following backfill command after deployment:
     * `python manage.py backfill_moderation_event_os_id_snapshot_recovery` — recovers `os_id_snapshot` for the ~36k events where `os_id` was already nulled, using OpenSearch as the primary source and `FacilityListItem` as fallback. Run with `--dry-run` first to verify counts.
 
 ---
