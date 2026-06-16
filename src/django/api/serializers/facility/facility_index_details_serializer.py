@@ -375,6 +375,13 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             if field.active
         ]
 
+        is_api_user = request is not None and request.auth
+        if is_api_user:
+            partner_fields = [
+                field for field in partner_fields
+                if field.available_in_api
+            ]
+
         use_main_created_at = is_created_at_main_date(self)
         date_field_to_sort = self._date_field_to_sort(
             use_main_created_at
