@@ -388,8 +388,14 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         )
 
         system_fields = []
+        partner_field_names = {field.name for field in partner_fields}
 
         for provider in system_partner_field_registry.providers:
+            field_name = provider._get_field_name()
+
+            if field_name not in partner_field_names:
+                continue
+
             field_data = provider.fetch_data(facility)
 
             if field_data is not None:
