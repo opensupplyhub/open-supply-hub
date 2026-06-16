@@ -14,7 +14,7 @@ from api.models.facility.partner_contributor_filter import (
 
 
 class FacilityIndexNewManager(models.Manager):
-    def filter_by_query_params(self, params):
+    def filter_by_query_params(self, params, exclude_trade_union=False):
         """
         Create a Facility queryset filtered by a list of request query params.
 
@@ -22,6 +22,11 @@ class FacilityIndexNewManager(models.Manager):
         self (queryset) -- A queryset on the Facility model
         params (dict) -- Request query parameters whose potential choices are
                         enumerated in `api.constants.FacilitiesQueryParams`.
+        exclude_trade_union (bool) -- When True, drop facilities contributed
+                        by a trade union (Union organization type) contributor.
+                        Used to hide such data from programmatic API callers
+                        while keeping it visible to the web client
+                        (OSDEV-2786).
 
         Returns:
         A queryset on the Facility model
@@ -213,4 +218,24 @@ class FacilityIndexNewManager(models.Manager):
             partner_contributors,
         )
 
+        if exclude_trade_union:
+            facilities_qs = self.exclude_trade_union_linked(facilities_qs)
+
         return facilities_qs
+
+    @staticmethod
+    def exclude_trade_union_linked(facilities_qs):
+        from api.models.contributor.contributor import Contributor
+
+        union_contributor_ids = list(
+            Contributor.objects
+            .filter(contrib_type=Contributor.UNION_CONTRIB_TYPE)
+            .values_list('id', flat=True)
+        )
+
+        if not union_contributor_ids:
+            return facilities_qs
+
+        return facilities_qs.exclude(
+            contributors_id__overlap=union_contributor_ids
+        )

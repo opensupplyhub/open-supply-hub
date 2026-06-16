@@ -24,6 +24,21 @@ def referring_host_is_allowed(host):
     return False
 
 
+def has_api_token(request):
+    return getattr(request, 'auth', None) is not None
+
+
+def is_web_client_request(request):
+    if settings.OAR_CLIENT_KEY == '':
+        return False
+
+    client_key = request.META.get('HTTP_X_OAR_CLIENT_KEY')
+    if client_key != settings.OAR_CLIENT_KEY:
+        return False
+
+    return referring_host_is_allowed(referring_host(request))
+
+
 class IsAuthenticatedOrWebClient(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user and request.user.is_authenticated:

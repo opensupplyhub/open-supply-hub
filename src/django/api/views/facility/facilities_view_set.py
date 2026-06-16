@@ -76,7 +76,12 @@ from api.facility_history import (
 from api.mail import send_claim_facility_confirmation_email
 
 from api.pagination import FacilitiesGeoJSONPagination
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.permissions import (
+    IsRegisteredAndConfirmed,
+    IsSuperuser,
+    has_api_token,
+    is_web_client_request,
+)
 from api.sector_cache import SectorCache
 from api.os_id_lookup import OSIDLookup
 from api.serializers import (
@@ -237,10 +242,17 @@ class FacilitiesViewSet(ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
+        exclude_trade_union = (
+            has_api_token(request) or not is_web_client_request(request)
+        )
+
         queryset = (
             FacilityIndex
             .objects
-            .filter_by_query_params(request.query_params)
+            .filter_by_query_params(
+                request.query_params,
+                exclude_trade_union=exclude_trade_union,
+            )
         )
         sort_by = params.validated_data['sort_by']
         order_list = []
