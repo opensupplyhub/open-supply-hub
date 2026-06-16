@@ -22,7 +22,7 @@ def backfill_os_id_snapshot(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0211_add_os_id_snapshot_to_moderation_event'),
+        ('api', '0213_add_os_id_snapshot_to_moderation_event'),
     ]
 
     operations = [
