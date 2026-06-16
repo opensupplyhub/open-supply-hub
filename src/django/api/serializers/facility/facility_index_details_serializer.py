@@ -8,6 +8,7 @@ from waffle import switch_is_active
 
 from api.constants import FacilityClaimStatuses
 from api.partner_fields.registry import system_partner_field_registry
+from api.models.partner_field import PartnerField
 from api.serializers.facility.partner_field_helper import (
     get_cached_all_partner_fields,
 )
@@ -15,8 +16,6 @@ from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_index import FacilityIndex
 from ...models.embed_field import EmbedField
 from ...models.facility.facility_claim import FacilityClaim
-from ...models.partner_field import PartnerField
-from api.models.facility.facility import Facility
 from ...helpers.helpers import parse_raw_data, get_csv_values, prefix_a_an
 from ..utils import (
     is_embed_mode_active,
@@ -370,25 +369,41 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     )
     def get_partner_fields(self, facility):
         request = self._get_request()
+        fields = get_cached_all_partner_fields()
+        partner_fields = [
+            field for field in fields
+            if field.active
+        ]
 
         use_main_created_at = is_created_at_main_date(self)
         date_field_to_sort = self._date_field_to_sort(
             use_main_created_at
         )
 
-        system_fields = self.__fetch_system_partner_fields(facility)
+        system_fields = []
+
+        for provider in system_partner_field_registry.providers:
+            field_data = provider.fetch_data(facility)
+
+            if field_data is not None:
+                system_fields.append(field_data)
+
         all_extended_fields = facility.extended_fields + system_fields
         fields = self._filter_contributor_extended_fields(
             all_extended_fields,
             request
         )
-        grouped_fields = self.__group_fields_by_name(
-            fields
-        )
+
+        grouped_fields = defaultdict(list)
+
+        for field in fields:
+            name = field.get('field_name')
+
+            if name:
+                grouped_fields[name].append(field)
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
-        partner_fields = self.__get_cached_partner_fields()
 
         return self.__serialize_and_sort_partner_fields(
             grouped_fields,
@@ -454,37 +469,3 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 grouped_data[field_name] = []
 
         return grouped_data
-
-    @staticmethod
-    def __fetch_system_partner_fields(production_location: Facility) -> list:
-        '''
-        Fetch all system-generated partner fields for the production location.
-        Returns list of formatted field data matching extended_fields
-        structure.
-        '''
-        system_fields = []
-
-        providers = system_partner_field_registry.providers
-
-        for provider in providers:
-            field_data = provider.fetch_data(production_location)
-
-            if field_data is not None:
-                system_fields.append(field_data)
-
-        return system_fields
-
-    @staticmethod
-    def __group_fields_by_name(
-        fields: List[Dict[str, Any]]
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        grouped = defaultdict(list)
-        for field in fields:
-            name = field.get('field_name')
-            if name:
-                grouped[name].append(field)
-        return grouped
-
-    @staticmethod
-    def __get_cached_partner_fields():
-        return get_cached_all_partner_fields()
