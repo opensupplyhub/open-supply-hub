@@ -207,6 +207,59 @@ class FacilityDownloadSerializerTest(TestCase):
             ],
         )
 
+    @patch(
+        "api.serializers.facility.facility_download_serializer."
+        "get_cached_all_partner_fields"
+    )
+    def test_headers_exclude_fields_unavailable_in_downloads(
+        self, mock_get_fields
+    ):
+        """Partner fields flagged ``available_in_downloads=False`` are not
+        included in the download headers."""
+        mock_get_fields.return_value = [
+            SimpleNamespace(
+                name="visible_field",
+                type=PartnerField.STRING,
+                json_schema=None,
+                active=True,
+                available_in_downloads=True,
+                system_field=False,
+            ),
+            SimpleNamespace(
+                name="hidden_field",
+                type=PartnerField.STRING,
+                json_schema=None,
+                active=True,
+                available_in_downloads=False,
+                system_field=False,
+            ),
+        ]
+        serializer = FacilityDownloadSerializer()
+        headers = serializer.get_partner_fields_headers()
+        self.assertIn("visible_field", headers)
+        self.assertNotIn("hidden_field", headers)
+
+    @patch(
+        "api.serializers.facility.facility_download_serializer."
+        "get_cached_all_partner_fields"
+    )
+    def test_headers_exclude_inactive_fields(self, mock_get_fields):
+        """Inactive partner fields are excluded even when available in
+        downloads."""
+        mock_get_fields.return_value = [
+            SimpleNamespace(
+                name="inactive_field",
+                type=PartnerField.STRING,
+                json_schema=None,
+                active=False,
+                available_in_downloads=True,
+                system_field=False,
+            ),
+        ]
+        serializer = FacilityDownloadSerializer()
+        headers = serializer.get_partner_fields_headers()
+        self.assertNotIn("inactive_field", headers)
+
     def test_partner_fields_row_matches_object_and_primitive(self):
         """Maps object and primitive values to cells; missing fields become
         empty."""
