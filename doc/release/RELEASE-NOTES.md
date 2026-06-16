@@ -14,7 +14,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 
 * `0213_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
-* `0214_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
 
 #### Schema changes
 
@@ -30,11 +29,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate` — runs `0214_backfill_moderation_event_os_id_snapshot`, which forward-fills `os_id_snapshot` for the ~298k approved events where `os_id` is still present in Postgres.
+    * `migrate`
     * `reindex_database`
 * The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
-* Run the following backfill command after deployment:
-    * `python manage.py backfill_moderation_event_os_id_snapshot_recovery` — recovers `os_id_snapshot` for the ~36k events where `os_id` was already nulled, using OpenSearch as the primary source and `FacilityListItem` as fallback. Run with `--dry-run` first to verify counts.
+* Backfilling `os_id_snapshot` for existing moderation events is handled separately in [OSDEV-2878](https://opensupplyhub.atlassian.net/browse/OSDEV-2878).
 
 ---
 
