@@ -9,11 +9,23 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: June 26, 2026
 
+### Database changes
+
+#### Migrations
+* 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
+
+#### Schema changes
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
+
 ### Code/API changes
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
+
+### What's new
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
