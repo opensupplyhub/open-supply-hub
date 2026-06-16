@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
+* [OSDEV-2798](https://opensupplyhub.atlassian.net/browse/OSDEV-2798) - Enabled VPC Flow Logs (`ALL` traffic) for the environment VPC, delivered to a new dedicated S3 bucket (`opensupplyhub-<env>-vpc-flow-logs-<region>`) with a 365-day retention lifecycle, to satisfy the SOC 2 / Vanta "VPC Flow Logs enabled" test.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
