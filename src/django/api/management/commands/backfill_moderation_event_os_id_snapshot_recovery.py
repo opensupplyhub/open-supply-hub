@@ -18,10 +18,17 @@ BATCH_SIZE = 100
 
 class Command(BaseCommand):
     help = (
-        'Recovers os_id_snapshot for approved ModerationEvents where '
-        'os_id was nulled by a cascading SET_NULL and os_id_snapshot is '
-        'empty. Uses OpenSearch as the primary source (it was not updated '
-        'by SET_NULL) and FacilityListItem as a fallback.'
+        'Best-effort recovery of os_id_snapshot for approved '
+        'ModerationEvents whose os_id was nulled by the SET_NULL cascade '
+        'when a facility was deleted or merged. Tries OpenSearch first, '
+        'then a FacilityListItem fallback.\n\n'
+        'NOTE: coverage of the historical backlog is very low. Measured '
+        'against an Apr 2026 prod dump (~36k target events), only ~16 were '
+        'recoverable: OpenSearch was cleared and refilled from Postgres in '
+        'production (so it mirrors the NULLs), and the FacilityListItem '
+        '<-> event link was only added in 2.21.0 with no backfill. Most '
+        'events are expected to stay unrecoverable. Run with --dry-run to '
+        'see counts before writing.'
     )
 
     def add_arguments(self, parser):

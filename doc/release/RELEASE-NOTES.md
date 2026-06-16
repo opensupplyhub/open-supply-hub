@@ -34,7 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
 * The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
 * Run the following backfill command after deployment:
-    * `python manage.py backfill_moderation_event_os_id_snapshot_recovery` — recovers `os_id_snapshot` for the ~36k events where `os_id` was already nulled, using OpenSearch as the primary source and `FacilityListItem` as fallback. Run with `--dry-run` first to verify counts.
+    * `python manage.py backfill_moderation_event_os_id_snapshot_recovery` — **best-effort** recovery of `os_id_snapshot` for the ~36k events where `os_id` was already nulled, using OpenSearch with a `FacilityListItem` fallback. Run with `--dry-run` first. Note: coverage of this historical backlog is very low (~16 of ~36k on the Apr 2026 prod dump) — OpenSearch was cleared/refilled from Postgres in production and the `FacilityListItem`↔event link predates most of these events, so the majority are expected to stay unrecoverable.
 
 ---
 
