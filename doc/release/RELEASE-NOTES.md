@@ -34,8 +34,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
 * Backfilling `os_id_snapshot` for existing moderation events is handled separately in [OSDEV-2878](https://opensupplyhub.atlassian.net/browse/OSDEV-2878).
 
----
-
 
 ## Release 2.25.0
 
