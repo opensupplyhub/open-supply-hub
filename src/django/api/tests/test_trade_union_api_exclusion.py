@@ -128,10 +128,15 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
 
     @override_settings(DEBUG=True, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_local_env_still_excludes_union_for_token_request(self):
-        # Even in the local environment, an API token marks the request as
+        # Even in the local environment, and even when the request carries
+        # genuine web-client headers (which the local bypass would otherwise
+        # treat as browser traffic), an API token marks the request as
         # programmatic, so union data is still excluded.
         self.use_token()
-        response = self.get_union_scoped_list()
+        response = self.get_union_scoped_list(
+            HTTP_X_OAR_CLIENT_KEY=WEB_CLIENT_KEY,
+            HTTP_REFERER=ALLOWED_REFERER,
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotIn(str(self.union_facility.id),
                          self.feature_ids(response))
