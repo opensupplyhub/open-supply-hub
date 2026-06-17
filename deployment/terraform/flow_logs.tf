@@ -14,6 +14,16 @@ resource "aws_s3_bucket" "vpc_flow_logs" {
   }
 }
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "vpc_flow_logs" {
+  bucket = aws_s3_bucket.vpc_flow_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "vpc_flow_logs" {
   bucket = aws_s3_bucket.vpc_flow_logs.id
 
@@ -43,6 +53,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "vpc_flow_logs" {
 
     expiration {
       days = 365
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }
@@ -126,4 +140,9 @@ resource "aws_flow_log" "vpc" {
     file_format        = "plain-text"
     per_hour_partition = false
   }
+
+  # Ensure the delivery permissions exist before the flow log is created, so
+  # log delivery to S3 does not fail on first write. This is a "hidden"
+  # dependency Terraform cannot infer, mirroring the ALB access-logging setup.
+  depends_on = [aws_s3_bucket_policy.vpc_flow_logs]
 }
