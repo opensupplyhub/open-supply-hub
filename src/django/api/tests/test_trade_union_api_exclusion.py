@@ -90,6 +90,7 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
             self.list_url, {'contributors': UNION_CONTRIBUTOR_ID}, **extra
         )
 
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_token_request_excludes_union(self):
         self.use_token()
         response = self.get_union_scoped_list()
@@ -97,7 +98,7 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
         self.assertNotIn(str(self.union_facility.id),
                          self.feature_ids(response))
 
-    @override_settings(OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_web_client_request_includes_union(self):
         response = self.get_union_scoped_list(
             HTTP_X_OAR_CLIENT_KEY=WEB_CLIENT_KEY,
@@ -107,9 +108,29 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
         self.assertIn(str(self.union_facility.id),
                       self.feature_ids(response))
 
-    @override_settings(OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_authenticated_session_without_web_headers_excludes_union(self):
         self.client.force_login(self.api_user)
+        response = self.get_union_scoped_list()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn(str(self.union_facility.id),
+                         self.feature_ids(response))
+
+    @override_settings(DEBUG=True, OAR_CLIENT_KEY='')
+    def test_local_env_includes_union_for_tokenless_request(self):
+        # In the local environment client-key checks are bypassed and
+        # tokenless traffic is treated as web client, so union data stays
+        # visible.
+        response = self.get_union_scoped_list()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(str(self.union_facility.id),
+                      self.feature_ids(response))
+
+    @override_settings(DEBUG=True, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    def test_local_env_still_excludes_union_for_token_request(self):
+        # Even in the local environment, an API token marks the request as
+        # programmatic, so union data is still excluded.
+        self.use_token()
         response = self.get_union_scoped_list()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotIn(str(self.union_facility.id),

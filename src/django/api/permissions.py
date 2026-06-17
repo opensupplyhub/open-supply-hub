@@ -29,8 +29,12 @@ def has_api_token(request):
 
 
 def is_web_client_request(request):
-    if settings.OAR_CLIENT_KEY == '':
-        return False
+    # In the local environment there is no real client key configured, so
+    # client-key verification is bypassed and every request is treated as
+    # web-client traffic. All other environments keep the full client-key +
+    # Referer check below.
+    if settings.DEBUG:
+        return True
 
     client_key = request.META.get('HTTP_X_OAR_CLIENT_KEY')
     if client_key != settings.OAR_CLIENT_KEY:
