@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            We received your request to claim a profile on Open Supply Hub
+        </title>
+    </head>
+    <body>
+        <p>Hello,</p>
+        <p>
+            You are receiving this email because you submitted a request to
+            claim the following production location on Open Supply Hub (OS Hub):
+        </p>
+        <ul>
+            <li>Name of Production Location: {{ facility_name }}</li>
+            <li>Address of Production Location: {{ facility_address }}</li>
+            <li>OS Hub Profile: {{ facility_url }}</li>
+        </ul>
+        <p><mark>
+            The OS Hub Team will review your request and be in touch soon. For
+            information on expected processing times, please refer to our
+            <a href="https://info.opensupplyhub.org/resources/data-processing-timelines">standard review timelines</a>.
+
+            <div style="margin-left: 40px;">
+                <p><mark>
+                    <b>Important:</b> From <b>Monday, June 29th to Friday, August
+                    7th 2026</b>, we are running an Automation Sprint and
+                    <b>processing times will be extended</b>. Claims submitted during
+                    this window will take at least 6 additional weeks beyond our
+                    standard timelines to be processed. <a href="https://info.opensupplyhub.org/resources/automation-sprint-2026">Find out more.</a>
+                </mark></p>
+            </div>
+        </mark></p>
+        <p>
+            <b>Please note:</b> Buyers can refer their suppliers to claim their
+            profiles on OS Hub; however, the claim request will only be approved
+            when it is submitted by an owner or senior management associated
+            with the production location in question. Requests submitted by a
+            buyer will not be approved.
+        </p>
+        <p>Best Regards,</p>
+        {% include "mail/claims_team_signature_block.html" %}
+    </body>
+</html>

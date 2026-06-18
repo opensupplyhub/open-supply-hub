@@ -14,6 +14,7 @@ from api.constants import FacilityClaimStatuses
 
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
+MODERATION_PAUSE_EMAILS_SWITCH = 'enable_moderation_pause_emails'
 
 
 def make_oshub_url(request: Request):
@@ -72,8 +73,9 @@ def make_pl_search_url(request):
 
 def send_claim_facility_confirmation_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_submitted_subject.txt')
-    text_template = get_template('mail/claim_facility_submitted_body.txt')
-    html_template = get_template('mail/claim_facility_submitted_body.html')
+    suffix = '_pause_version' if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH) else ''
+    text_template = get_template(f'mail/claim_facility_submitted_body{suffix}.txt')
+    html_template = get_template(f'mail/claim_facility_submitted_body{suffix}.html')
 
     claim_dictionary = {
         'facility_name': facility_claim.facility.name,
@@ -445,6 +447,34 @@ def send_facility_list_rejection_email(request, facility_list):
     )
 
 
+def send_facility_list_submission_confirmation_email(request, facility_list):
+    if not switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH):
+        return
+
+    subj_template = get_template(
+        'mail/facility_list_submission_confirmation_subject.txt'
+    )
+    text_template = get_template(
+        'mail/facility_list_submission_confirmation_body.txt'
+    )
+    html_template = get_template(
+        'mail/facility_list_submission_confirmation_body.html'
+    )
+
+    context = {
+        'list_name': facility_list.name,
+        'list_url': make_facility_list_url(request, facility_list.id),
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(context),
+        settings.DATA_FROM_EMAIL,
+        [facility_list.source.contributor.admin.email],
+        html_message=html_template.render(context)
+    )
+
+
 def send_production_location_creation_email(
         moderation_event: ModerationEvent, request: Request
         ):
@@ -479,11 +509,12 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_additional_info_confirmation_subject.txt'
     )
+    suffix = '_pause_version' if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH) else ''
     text_template = get_template(
-        'mail/slc_additional_info_confirmation_body.txt'
+        f'mail/slc_additional_info_confirmation_body{suffix}.txt'
     )
     html_template = get_template(
-        'mail/slc_additional_info_confirmation_body.html'
+        f'mail/slc_additional_info_confirmation_body{suffix}.html'
     )
 
     additional_info_dictionary = {
@@ -507,11 +538,12 @@ def send_slc_new_location_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_new_location_confirmation_subject.txt'
     )
+    suffix = '_pause_version' if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH) else ''
     text_template = get_template(
-        'mail/slc_new_location_confirmation_body.txt'
+        f'mail/slc_new_location_confirmation_body{suffix}.txt'
     )
     html_template = get_template(
-        'mail/slc_new_location_confirmation_body.html'
+        f'mail/slc_new_location_confirmation_body{suffix}.html'
     )
 
     send_mail(
