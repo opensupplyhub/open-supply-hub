@@ -307,16 +307,19 @@ class FacilityMatchPromoteTest(APITestCase):
 
         extended_fields = detail_response.data["properties"]["extended_fields"]
 
+        # The serialized contributor_id is the contributor's admin (user) id.
+        expected_contributor_id = self.contributor_two.admin_id
+
         name_fields = extended_fields["name"]
         self.assertGreater(len(name_fields), 0)
         self.assertEqual(
             name_fields[0]["contributor_id"],
-            self.contributor_two.id,
+            expected_contributor_id,
         )
 
         address_fields = extended_fields["address"]
         self.assertGreater(len(address_fields), 0)
         self.assertEqual(
             address_fields[0]["contributor_id"],
-            self.contributor_two.id,
+            expected_contributor_id,
         )
