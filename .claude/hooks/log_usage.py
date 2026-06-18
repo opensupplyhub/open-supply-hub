@@ -28,6 +28,12 @@ from datetime import datetime, timezone
 
 _CFG = None
 
+# Default salt so the user hash is always salted (stable, no plaintext identity)
+# even when nobody configures one — keeps setup to a single value (the URL).
+# It's committed, so it is NOT a real secret; override with OSHUB_USAGE_LOG_SALT
+# (env or .claude/usage-sink.local) for stronger re-identification resistance.
+_DEFAULT_SALT = "oshub-usage-v1"
+
 
 def _local_config():
     """Parse the optional, gitignored .claude/usage-sink.local (KEY=VALUE lines).
@@ -95,7 +101,7 @@ def _user_hash():
     ident = _identity()
     if not ident:
         return None
-    salt = _setting("OSHUB_USAGE_LOG_SALT") or ""
+    salt = _setting("OSHUB_USAGE_LOG_SALT") or _DEFAULT_SALT
     return hashlib.sha256((salt + ident.lower()).encode("utf-8")).hexdigest()[:16]
 
 

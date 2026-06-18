@@ -9,9 +9,12 @@ contributors don't need this — they just point at the resulting URL (see
 1. In the target Google Sheet: **Extensions → Apps Script**, paste the code below, save.
 2. **Deploy → New deployment → Web app**; *Execute as:* Me, *Who has access:* Anyone
    (the URL itself is the capability secret).
-3. Choose a shared **salt** string for the team.
-4. Share the web-app **URL + salt out of band** (e.g. 1Password / DM) — never commit them.
-   Contributors put them in their gitignored `.claude/usage-sink.local`.
+3. Share the web-app **URL out of band** (e.g. 1Password / DM) — never commit it.
+   Contributors run `/setup-usage-logging` and paste it (it lands in their
+   gitignored `.claude/usage-sink.local`).
+4. (Optional) A default salt is built into the logger, so the URL is all
+   contributors need. Only pick + share a custom `OSHUB_USAGE_LOG_SALT` if you want
+   stronger re-identification resistance — and then everyone must use the same one.
 
 ## Apps Script
 

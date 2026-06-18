@@ -14,6 +14,7 @@
 # never commit the real value; this repo is public).
 OSHUB_USAGE_LOG_URL=
 
-# Shared salt so the pseudonymous user hash is stable across the team and harder
-# to reverse. Use the SAME value everyone else uses, or distinct-user counts break.
+# OPTIONAL. A default salt is built in, so you can leave this blank. Only set it
+# if the team agreed on a custom shared salt for stronger anonymity — and then
+# everyone must use the SAME value, or distinct-user counts break.
 OSHUB_USAGE_LOG_SALT=

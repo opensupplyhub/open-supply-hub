@@ -20,11 +20,11 @@ Each event becomes one JSON line:
 
 - `kind` ∈ `skill` | `subagent` | `command`
 - `id` — the skill / sub-agent / command name
-- `user_hash` — **pseudonymous**: `sha256((SALT)+identity)[:16]`, where `identity`
+- `user_hash` — **pseudonymous**: `sha256(SALT+identity)[:16]`, where `identity`
   is git `user.email` → git `user.name` → OS username (first one available). Lets us
-  count *distinct users* without storing identities. Not strong anonymity for a
-  small, known team — set `OSHUB_USAGE_LOG_SALT` (shared across the team) to make
-  re-identification harder.
+  count *distinct users* without storing identities. A default `SALT` is built in
+  (so setup needs only the URL); it's committed, so for stronger re-identification
+  resistance on a small, known team, override it with a shared `OSHUB_USAGE_LOG_SALT`.
 
 The hook **never blocks**: it writes locally, optionally fires a detached POST,
 prints nothing, and always exits 0.
@@ -54,19 +54,28 @@ from, in order: (1) the `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` env vars,
 (2) a gitignored **`.claude/usage-sink.local`** file. If neither is present, logging
 stays **local-only** — nothing breaks, you just don't contribute to the central sheet.
 
-**Enable it (one-time, per user — no shell editing):**
+**Enable it — easiest, no terminal.** In Claude Code, run:
+
+```
+/setup-usage-logging
+```
+
+Paste the link you were given when it asks. The agent writes the (gitignored)
+config for you and confirms — that's the whole setup. A salt is built in, so the
+**link is the only thing you need.**
+
+**Or do it by hand:**
 
 ```bash
 cp .claude/usage-sink.local.example .claude/usage-sink.local
-# edit .claude/usage-sink.local and paste the URL + salt you were given
+# paste the link into OSHUB_USAGE_LOG_URL
 ```
 
-That file is gitignored, so the secret never reaches the repo. (Alternatively,
-export `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` in your shell — env vars win
-over the file.) **Use the same salt as everyone else**, or distinct-user counts break.
+(Or `export OSHUB_USAGE_LOG_URL=...` in your shell — env vars win over the file.)
 
-Don't have a URL + salt yet? Ask whoever owns the usage Sheet. (Provisioning the
-Sheet itself is a one-time admin task — see `sheet-owner-setup.md`.)
+Don't have a link yet? Ask whoever owns the usage Sheet — until then logging stays
+**local-only** (nothing breaks). Setting up the Sheet is a one-time admin task —
+see `sheet-owner-setup.md`.
 
 ## Notes
 - No secret is committed: the sink URL and salt come only from the env vars or the
