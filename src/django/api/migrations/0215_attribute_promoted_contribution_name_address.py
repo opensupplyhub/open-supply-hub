@@ -12,8 +12,8 @@ def add_is_from_created_from_to_name_address_index(apps, schema_editor):
     # as the source of the canonical name/address even when several
     # contributions share the same value. See OSDEV-2197.
     helper.run_sql_files([
-        '0213_index_facility_names.sql',
-        '0213_index_facility_addresses.sql',
+        '0215_index_facility_names.sql',
+        '0215_index_facility_addresses.sql',
     ])
 
 
@@ -25,7 +25,7 @@ def revert_is_from_created_from_to_name_address_index(apps, schema_editor):
 
 
 class Migration(Migration):
-    dependencies = [('api', '0212_add_moderation_pause_info_switch')]
+    dependencies = [('api', '0214_add_os_id_snapshot_to_moderation_event')]
     operations = [
         RunPython(
             add_is_from_created_from_to_name_address_index,
