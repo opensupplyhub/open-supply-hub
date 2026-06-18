@@ -4,6 +4,13 @@ Logs which Claude Code **skills**, **sub-agents**, and **slash commands** get us
 so we can see what's actually valuable. Wired up via `.claude/settings.json` hooks
 that call `log_usage.py`.
 
+> **Scope: Claude Code sessions only.** These are Claude Code hooks, so they fire
+> only inside Claude Code sessions running in this repo (CLI / IDE extension /
+> desktop app), for users who've pulled a checkout that has them. They capture
+> *nothing* for developers not using Claude Code — and that's inherent, since
+> skills / sub-agents / commands only exist within Claude Code. So the numbers
+> reflect the **Claude Code user population**, not all OS Hub devs.
+
 ## What gets logged
 
 | Event | Hook | Captured |
