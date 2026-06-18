@@ -20,10 +20,11 @@ Each event becomes one JSON line:
 
 - `kind` ∈ `skill` | `subagent` | `command`
 - `id` — the skill / sub-agent / command name
-- `user_hash` — **pseudonymous**: `sha256((SALT)+git user.email)[:16]`. Lets us
+- `user_hash` — **pseudonymous**: `sha256((SALT)+identity)[:16]`, where `identity`
+  is git `user.email` → git `user.name` → OS username (first one available). Lets us
   count *distinct users* without storing identities. Not strong anonymity for a
-  small, known email set — set `OSHUB_USAGE_LOG_SALT` (shared across the team) to
-  make re-identification harder.
+  small, known team — set `OSHUB_USAGE_LOG_SALT` (shared across the team) to make
+  re-identification harder.
 
 The hook **never blocks**: it writes locally, optionally fires a detached POST,
 prints nothing, and always exits 0.
@@ -53,13 +54,7 @@ from, in order: (1) the `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` env vars,
 (2) a gitignored **`.claude/usage-sink.local`** file. If neither is present, logging
 stays **local-only** — nothing breaks, you just don't contribute to the central sheet.
 
-Setup (once, by the Sheet owner):
-
-1. In the target Sheet: **Extensions → Apps Script**, paste the code below, save.
-2. **Deploy → New deployment → Web app**; *Execute as:* Me, *Who has access:* Anyone (the URL is the capability secret).
-3. Share the web-app URL + salt **out of band** — do NOT commit them.
-
-Setup (once, per contributor — recommended, no shell editing):
+**Enable it (one-time, per user — no shell editing):**
 
 ```bash
 cp .claude/usage-sink.local.example .claude/usage-sink.local
@@ -70,50 +65,12 @@ That file is gitignored, so the secret never reaches the repo. (Alternatively,
 export `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` in your shell — env vars win
 over the file.) **Use the same salt as everyone else**, or distinct-user counts break.
 
-> Onboarding: add the `cp …` step above to the local-setup guide alongside the
-> existing `.env` step, so new devs opt in during setup without extra friction.
-
-```javascript
-// Apps Script — aggregate upsert: stores counts + a dedup hash set, not identities.
-const SHEET_NAME = 'usage';
-
-function doPost(e) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    const d = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['kind', 'id', 'uses', 'distinct_users', 'last_used', 'user_hashes']);
-    }
-    const kind = d.kind || '', id = d.id || '', uh = d.user_hash || '';
-    const rows = sheet.getDataRange().getValues();
-    let r = -1;
-    for (let i = 1; i < rows.length; i++) {
-      if (rows[i][0] === kind && rows[i][1] === id) { r = i + 1; break; }
-    }
-    if (r === -1) {
-      sheet.appendRow([kind, id, 1, uh ? 1 : 0, d.ts || '', uh]);
-    } else {
-      const uses = Number(sheet.getRange(r, 3).getValue()) + 1;
-      const hashes = String(sheet.getRange(r, 6).getValue() || '').split(',').filter(Boolean);
-      let distinct = Number(sheet.getRange(r, 4).getValue());
-      if (uh && hashes.indexOf(uh) === -1) { hashes.push(uh); distinct += 1; }
-      sheet.getRange(r, 3, 1, 4).setValues([[uses, distinct, d.ts || '', hashes.join(',')]]);
-    }
-    return ContentService.createTextOutput('ok');
-  } finally {
-    lock.releaseLock();
-  }
-}
-```
-
-> You can hide the `user_hashes` column — it exists only so the script can dedup
-> distinct users. It holds pseudonymous hashes, never emails.
+Don't have a URL + salt yet? Ask whoever owns the usage Sheet. (Provisioning the
+Sheet itself is a one-time admin task — see `sheet-owner-setup.md`.)
 
 ## Notes
-- No secret is committed: the sink URL and salt come only from env vars.
+- No secret is committed: the sink URL and salt come only from the env vars or the
+  gitignored `.claude/usage-sink.local`.
 - Hooks in a project `.claude/settings.json` run without per-use approval; the
   hook's working dir is the project root (`$CLAUDE_PROJECT_DIR`).
 - Disable locally by removing the env var (drops to local-only) or by removing
