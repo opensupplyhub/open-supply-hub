@@ -61,6 +61,15 @@ class TradeUnionExclusionManagerTest(TradeUnionApiExclusionBase):
         self.assertIn(self.union_facility.id,
                       self.filtered_ids(exclude_trade_union=True))
 
+    def test_filter_trade_union_linked_returns_only_union(self):
+        queryset = FacilityIndex.objects.filter_by_query_params(self.params)
+        union_ids = set(
+            FacilityIndex.objects
+            .filter_trade_union_linked(queryset)
+            .values_list('id', flat=True)
+        )
+        self.assertEqual(union_ids, {self.union_facility.id})
+
 
 class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
     def setUp(self):
@@ -140,3 +149,50 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotIn(str(self.union_facility.id),
                          self.feature_ids(response))
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    def test_web_client_reports_excluded_from_download_count(self):
+        # Union data is visible to the web client but flagged as
+        # non-downloadable so the UI can warn the user.
+        response = self.get_union_scoped_list(
+            HTTP_X_OAR_CLIENT_KEY=WEB_CLIENT_KEY,
+            HTTP_REFERER=ALLOWED_REFERER,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['excluded_from_download_count'], 1)
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    def test_token_request_reports_zero_excluded_from_download(self):
+        # Programmatic callers never see union data, so nothing is reported as
+        # hidden from download.
+        self.use_token()
+        response = self.get_union_scoped_list()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['excluded_from_download_count'], 0)
+
+
+class TradeUnionExclusionDownloadViewTest(TradeUnionApiExclusionBase):
+    def setUp(self):
+        super().setUp()
+        self.download_url = reverse('facilities-downloads-list')
+        self.user = User.objects.create(email='downloader@example.com')
+        self.user.set_password('example123')
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def download(self, params=None):
+        return self.client.get(self.download_url, params or {})
+
+    def row_ids(self, response):
+        return {row[0] for row in response.data['results']['rows']}
+
+    def test_download_excludes_union_facility(self):
+        response = self.download()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn(str(self.union_facility.id), self.row_ids(response))
+
+    def test_download_union_scoped_search_returns_nothing(self):
+        response = self.download({'contributors': UNION_CONTRIBUTOR_ID})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('count'), 0)
+        self.assertEqual(self.row_ids(response), set())

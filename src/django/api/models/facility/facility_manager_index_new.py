@@ -224,18 +224,39 @@ class FacilityIndexNewManager(models.Manager):
         return facilities_qs
 
     @staticmethod
-    def exclude_trade_union_linked(facilities_qs):
+    def _union_contributor_ids():
         from api.models.contributor.contributor import Contributor
 
-        union_contributor_ids = list(
+        return list(
             Contributor.objects
             .filter(contrib_type=Contributor.UNION_CONTRIB_TYPE)
             .values_list('id', flat=True)
         )
 
+    @classmethod
+    def exclude_trade_union_linked(cls, facilities_qs):
+        union_contributor_ids = cls._union_contributor_ids()
+
         if not union_contributor_ids:
             return facilities_qs
 
         return facilities_qs.exclude(
+            contributors_id__overlap=union_contributor_ids
+        )
+
+    @classmethod
+    def filter_trade_union_linked(cls, facilities_qs):
+        """
+        Inverse of `exclude_trade_union_linked`: keep only the facilities that
+        are contributed by a trade union (Union organization type) contributor.
+        Used to count how many results in a web-client search are excluded from
+        download/programmatic API access (OSDEV-2786).
+        """
+        union_contributor_ids = cls._union_contributor_ids()
+
+        if not union_contributor_ids:
+            return facilities_qs.none()
+
+        return facilities_qs.filter(
             contributors_id__overlap=union_contributor_ids
         )

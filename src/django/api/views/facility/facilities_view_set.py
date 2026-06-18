@@ -268,6 +268,22 @@ class FacilitiesViewSet(ListModelMixin,
 
         queryset = queryset.extra(order_by=order_list)
 
+        # Union-linked facilities stay visible in web-client search but can
+        # never be downloaded/exported. Surface how many results that affects
+        # so the web client can warn the user and show the true downloadable
+        # total. For programmatic callers union data is already filtered out
+        # of `queryset`, so nothing is "hidden" from them and the count is 0
+        # (OSDEV-2786).
+        if exclude_trade_union:
+            excluded_from_download_count = 0
+        else:
+            excluded_from_download_count = (
+                FacilityIndex
+                .objects
+                .filter_trade_union_linked(queryset)
+                .count()
+            )
+
         page_queryset = self.paginate_queryset(queryset)
 
         extent = queryset.aggregate(Extent('location'))['location__extent']
@@ -301,6 +317,8 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['extent'] = extent
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
+            page.data['excluded_from_download_count'] = \
+                excluded_from_download_count
             return page
 
         # Non-paginated response
@@ -312,6 +330,7 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
+            'excluded_from_download_count': excluded_from_download_count,
         }
         if extent is not None:
             response['extent'] = extent
