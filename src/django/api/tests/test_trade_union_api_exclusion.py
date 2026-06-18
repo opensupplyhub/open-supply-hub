@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.http import QueryDict
 from django.test import override_settings
 from django.urls import reverse
@@ -5,6 +6,7 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
+from api.constants import FeatureGroups
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
@@ -94,6 +96,12 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
             HTTP_AUTHORIZATION=f'Token {self.token.key}'
         )
 
+    def add_to_union_group(self):
+        group = Group.objects.get(
+            name=FeatureGroups.CAN_GET_UNION_LINKED_DATA
+        )
+        self.api_user.groups.add(group)
+
     def get_union_scoped_list(self, **extra):
         return self.client.get(
             self.list_url, {'contributors': UNION_CONTRIBUTOR_ID}, **extra
@@ -170,6 +178,31 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['excluded_from_download_count'], 0)
 
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    def test_token_request_in_group_includes_union(self):
+        # can_get_union_linked_data members keep full programmatic access.
+        self.add_to_union_group()
+        self.use_token()
+        response = self.get_union_scoped_list()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(str(self.union_facility.id),
+                      self.feature_ids(response))
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
+    def test_group_member_reports_zero_excluded_from_download(self):
+        # A group member who can download union data should not be warned that
+        # results are hidden from download.
+        self.add_to_union_group()
+        self.client.force_login(self.api_user)
+        response = self.get_union_scoped_list(
+            HTTP_X_OAR_CLIENT_KEY=WEB_CLIENT_KEY,
+            HTTP_REFERER=ALLOWED_REFERER,
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(str(self.union_facility.id),
+                      self.feature_ids(response))
+        self.assertEqual(response.data['excluded_from_download_count'], 0)
+
 
 class TradeUnionExclusionDownloadViewTest(TradeUnionApiExclusionBase):
     def setUp(self):
@@ -196,3 +229,12 @@ class TradeUnionExclusionDownloadViewTest(TradeUnionApiExclusionBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get('count'), 0)
         self.assertEqual(self.row_ids(response), set())
+
+    def test_group_member_download_includes_union(self):
+        group = Group.objects.get(
+            name=FeatureGroups.CAN_GET_UNION_LINKED_DATA
+        )
+        self.user.groups.add(group)
+        response = self.download({'contributors': UNION_CONTRIBUTOR_ID})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(str(self.union_facility.id), self.row_ids(response))

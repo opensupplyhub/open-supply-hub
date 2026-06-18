@@ -4,6 +4,8 @@ from django.conf import settings
 from django.utils.http import is_same_domain
 from rest_framework import permissions
 
+from api.constants import FeatureGroups
+
 
 def _report_warning_to_rollbar(message, extra_data=None):
     ROLLBAR = getattr(settings, 'ROLLBAR', {})
@@ -26,6 +28,16 @@ def referring_host_is_allowed(host):
 
 def has_api_token(request):
     return getattr(request, 'auth', None) is not None
+
+
+def can_get_union_linked_data(request):
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated:
+        return False
+
+    return user.groups.filter(
+        name=FeatureGroups.CAN_GET_UNION_LINKED_DATA
+    ).exists()
 
 
 def is_web_client_request(request):

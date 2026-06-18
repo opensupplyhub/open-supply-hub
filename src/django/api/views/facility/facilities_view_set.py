@@ -79,6 +79,7 @@ from api.pagination import FacilitiesGeoJSONPagination
 from api.permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser,
+    can_get_union_linked_data,
     has_api_token,
     is_web_client_request,
 )
@@ -242,8 +243,10 @@ class FacilitiesViewSet(ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
+        can_access_union = can_get_union_linked_data(request)
         exclude_trade_union = (
-            has_api_token(request) or not is_web_client_request(request)
+            not can_access_union
+            and (has_api_token(request) or not is_web_client_request(request))
         )
 
         queryset = (
@@ -268,13 +271,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         queryset = queryset.extra(order_by=order_list)
 
-        # Union-linked facilities stay visible in web-client search but can
-        # never be downloaded/exported. Surface how many results that affects
-        # so the web client can warn the user and show the true downloadable
-        # total. For programmatic callers union data is already filtered out
-        # of `queryset`, so nothing is "hidden" from them and the count is 0
-        # (OSDEV-2786).
-        if exclude_trade_union:
+        if exclude_trade_union or can_access_union:
             excluded_from_download_count = 0
         else:
             excluded_from_download_count = (

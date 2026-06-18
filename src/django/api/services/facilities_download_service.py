@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
+from api.permissions import can_get_union_linked_data
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.serializers.facility.partner_field_helper import (
@@ -93,13 +94,15 @@ class FacilitiesDownloadService:
         # Trade union-linked data stays fully searchable on the web client but
         # must never leave the platform through a bulk export. Downloads are an
         # export surface for every caller (web-client "Download" button and
-        # programmatic API token alike), so union-linked facilities are always
-        # excluded here. This also makes `count` the true downloadable total,
-        # which keeps download-limit accounting and billing accurate
-        # (OSDEV-2786).
+        # programmatic API token alike), so union-linked facilities are
+        # excluded here unless the caller belongs to the
+        # can_get_union_linked_data group, which is exempt from the exclusion.
+        # This also makes `count` the true downloadable total, which keeps
+        # download-limit accounting and billing accurate (OSDEV-2786).
+        exclude_trade_union = not can_get_union_linked_data(request)
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params,
-            exclude_trade_union=True,
+            exclude_trade_union=exclude_trade_union,
         ).order_by('id')
 
     @staticmethod

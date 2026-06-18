@@ -9,9 +9,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: June 26, 2026
 
+### Database changes
+
+#### Migrations
+* 0213_add_can_get_union_linked_data_group.py - Creates the `can_get_union_linked_data` auth group used to exempt selected users from the trade union-linked data exclusion.
+
 ### Code/API changes
 * [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Excluded trade union-linked data (contributors with `contrib_type='Union'`) from the programmatic `GET /api/facilities/` endpoint while keeping it fully visible to the web client. A request has union facilities filtered out when it either authenticates with an API token or is not recognized as genuine web-client traffic (matching `X-OAR-Client-Key` plus an allowed `Referer`). The exclusion is applied at query time via a new `exclude_trade_union` option on `FacilityIndex.filter_by_query_params`, so no reindex is required; facility profiles remain unaffected.
 * [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Excluded trade union-linked data from the `GET /api/facilities-downloads/` bulk download endpoint for every caller (web-client "Download" button and API token alike), so union-linked locations can never be bulk-exported; this also keeps the download record `count` and download-limit accounting accurate. The `GET /api/facilities/` response now also returns `excluded_from_download_count`, and the web-client search results counter shows how many of the visible results are union-linked (e.g. "16 results (including 15 union-linked locations)").
+* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Added the `can_get_union_linked_data` group: users added to it from the Django admin are exempt from the union-linked data exclusion, so their API calls and downloads return union-linked data exactly as before. For these users no "excluded from download" notice is shown.
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
 
 ### Architecture/Environment changes
