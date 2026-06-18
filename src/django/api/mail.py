@@ -452,13 +452,13 @@ def send_facility_list_submission_confirmation_email(request, facility_list):
         return
 
     subj_template = get_template(
-        'mail/facility_list_submission_confirmation_subject.txt'
+        'mail/facility_list_submission_confirmation_subject_pause_version.txt'
     )
     text_template = get_template(
-        'mail/facility_list_submission_confirmation_body.txt'
+        'mail/facility_list_submission_confirmation_body_pause_version.txt'
     )
     html_template = get_template(
-        'mail/facility_list_submission_confirmation_body.html'
+        'mail/facility_list_submission_confirmation_body_pause_version.html'
     )
 
     context = {
