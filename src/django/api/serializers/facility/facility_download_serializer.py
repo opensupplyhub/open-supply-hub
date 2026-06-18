@@ -30,6 +30,8 @@ from api.serializers.facility.wage_indicator_download_helper import (
     WAGE_INDICATOR_DOWNLOAD_HEADERS,
     WageIndicatorDownloadHelper,
 )
+from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
+from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
 
 
 class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
@@ -206,7 +208,8 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
     def get_mit_living_wage_headers(self) -> List[str]:
         """Return MIT living wage columns when that system partner field is
         active."""
-        if "mit_living_wage" not in self.__system_partner_fields:
+        field_name = MITLivingWageProvider.FIELD_NAME
+        if field_name not in self.__system_partner_fields:
             return []
         return MIT_LIVING_WAGE_DOWNLOAD_HEADERS
 
@@ -215,14 +218,16 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
     ) -> List[str]:
         """Return MIT living wage cells, or empty strings when data is
         unavailable."""
-        if "mit_living_wage" not in self.__system_partner_fields:
+        field_name = MITLivingWageProvider.FIELD_NAME
+        if field_name not in self.__system_partner_fields:
             return []
         return self.__mit_living_wage_helper.get_cells(facility)
 
     def get_wage_indicator_headers(self) -> List[str]:
         """Return wage indicator columns when that system partner field is
         active."""
-        if "wage_indicator" not in self.__system_partner_fields:
+        field_name = WageIndicatorProvider.FIELD_NAME
+        if field_name not in self.__system_partner_fields:
             return []
         return WAGE_INDICATOR_DOWNLOAD_HEADERS
 
@@ -231,6 +236,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
     ) -> List[str]:
         """Return wage indicator cells, or empty strings when data is
         unavailable."""
-        if "wage_indicator" not in self.__system_partner_fields:
+        field_name = WageIndicatorProvider.FIELD_NAME
+        if field_name not in self.__system_partner_fields:
             return []
         return self.__wage_indicator_helper.get_cells(facility)
