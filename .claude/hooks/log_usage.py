@@ -26,6 +26,44 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+_CFG = None
+
+
+def _local_config():
+    """Parse the optional, gitignored .claude/usage-sink.local (KEY=VALUE lines).
+
+    Lets the central-sink URL and salt live on the machine without being
+    committed to this (public) repo and without each dev editing their shell
+    profile — drop the file in once (e.g. during onboarding) and it's picked up.
+    """
+    path = os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                     "..", "usage-sink.local")
+    )
+    cfg = {}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, val = line.split("=", 1)
+                cfg[key.strip()] = val.strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return cfg
+
+
+def _setting(key):
+    """Env var wins; otherwise fall back to .claude/usage-sink.local."""
+    global _CFG
+    env = os.environ.get(key)
+    if env:
+        return env
+    if _CFG is None:
+        _CFG = _local_config()
+    return _CFG.get(key)
+
 
 def _identity():
     """A stable per-user string for hashing. Prefers git user.email, then
@@ -57,7 +95,7 @@ def _user_hash():
     ident = _identity()
     if not ident:
         return None
-    salt = os.environ.get("OSHUB_USAGE_LOG_SALT", "")
+    salt = _setting("OSHUB_USAGE_LOG_SALT") or ""
     return hashlib.sha256((salt + ident.lower()).encode("utf-8")).hexdigest()[:16]
 
 
@@ -117,7 +155,8 @@ def main():
 
     # 2. Optional best-effort POST to a central sink (e.g. Google Sheet via an
     # Apps Script web app). Backgrounded + fail-soft; never blocks the tool.
-    url = os.environ.get("OSHUB_USAGE_LOG_URL")
+    # URL comes from the env var or .claude/usage-sink.local (never committed).
+    url = _setting("OSHUB_USAGE_LOG_URL")
     if url:
         try:
             subprocess.Popen(

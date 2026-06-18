@@ -41,23 +41,37 @@ jq -r '[.kind,.id,.user_hash] | @tsv' .claude/usage-log.jsonl | sort -u \
 ```
 
 ### 2. Central Google Sheet (optional, team-wide aggregate)
-If `OSHUB_USAGE_LOG_URL` is set, each line is also POSTed (backgrounded, fail-soft)
+If a sink URL is configured, each line is also POSTed (backgrounded, fail-soft)
 to a Google Apps Script web app that maintains an **aggregate** sheet — counts only,
 no per-event identity:
 
 | kind | id | uses | distinct_users | last_used | user_hashes (hidden) |
 | --- | --- | --- | --- | --- | --- |
 
+**The URL is never committed** (this repo is public). The hook reads the URL + salt
+from, in order: (1) the `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` env vars, then
+(2) a gitignored **`.claude/usage-sink.local`** file. If neither is present, logging
+stays **local-only** — nothing breaks, you just don't contribute to the central sheet.
+
 Setup (once, by the Sheet owner):
 
 1. In the target Sheet: **Extensions → Apps Script**, paste the code below, save.
 2. **Deploy → New deployment → Web app**; *Execute as:* Me, *Who has access:* Anyone (the URL is the capability secret).
-3. Share the web-app URL **out of band** — do NOT commit it (this repo is public).
-4. Each contributor sets the env var (e.g. in their shell profile):
-   ```bash
-   export OSHUB_USAGE_LOG_URL="https://script.google.com/macros/s/XXXX/exec"
-   export OSHUB_USAGE_LOG_SALT="some-shared-salt"   # optional, recommended
-   ```
+3. Share the web-app URL + salt **out of band** — do NOT commit them.
+
+Setup (once, per contributor — recommended, no shell editing):
+
+```bash
+cp .claude/usage-sink.local.example .claude/usage-sink.local
+# edit .claude/usage-sink.local and paste the URL + salt you were given
+```
+
+That file is gitignored, so the secret never reaches the repo. (Alternatively,
+export `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` in your shell — env vars win
+over the file.) **Use the same salt as everyone else**, or distinct-user counts break.
+
+> Onboarding: add the `cp …` step above to the local-setup guide alongside the
+> existing `.env` step, so new devs opt in during setup without extra friction.
 
 ```javascript
 // Apps Script — aggregate upsert: stores counts + a dedup hash set, not identities.
