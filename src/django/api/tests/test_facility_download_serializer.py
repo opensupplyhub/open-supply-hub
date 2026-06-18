@@ -214,7 +214,7 @@ class FacilityDownloadSerializerTest(TestCase):
     def test_headers_exclude_fields_unavailable_in_downloads(
         self, mock_get_fields
     ):
-        """Partner fields flagged ``available_in_downloads=False`` are not
+        """Partner fields flagged ``available_in_data_downloads=False`` are not
         included in the download headers."""
         mock_get_fields.return_value = [
             SimpleNamespace(
@@ -222,7 +222,7 @@ class FacilityDownloadSerializerTest(TestCase):
                 type=PartnerField.STRING,
                 json_schema=None,
                 active=True,
-                available_in_downloads=True,
+                available_in_data_downloads=True,
                 system_field=False,
             ),
             SimpleNamespace(
@@ -230,7 +230,7 @@ class FacilityDownloadSerializerTest(TestCase):
                 type=PartnerField.STRING,
                 json_schema=None,
                 active=True,
-                available_in_downloads=False,
+                available_in_data_downloads=False,
                 system_field=False,
             ),
         ]
@@ -252,7 +252,7 @@ class FacilityDownloadSerializerTest(TestCase):
                 type=PartnerField.STRING,
                 json_schema=None,
                 active=False,
-                available_in_downloads=True,
+                available_in_data_downloads=True,
                 system_field=False,
             ),
         ]

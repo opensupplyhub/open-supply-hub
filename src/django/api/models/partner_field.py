@@ -106,7 +106,7 @@ class PartnerField(models.Model):
             "Indicates if this partner field is available in the API."
         ),
     )
-    available_in_downloads = models.BooleanField(
+    available_in_data_downloads = models.BooleanField(
         default=True,
         help_text=(
             "Indicates if this partner field is available in data downloads."

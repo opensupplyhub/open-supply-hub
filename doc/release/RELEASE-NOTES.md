@@ -12,13 +12,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
+* 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
 
 #### Schema changes
-* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
 
 ### Code/API changes
-* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_data_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
 
 ### Architecture/Environment changes

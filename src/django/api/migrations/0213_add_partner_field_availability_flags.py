@@ -21,7 +21,7 @@ class Migration(Migration):
         ),
         AddField(
             model_name='partnerfield',
-            name='available_in_downloads',
+            name='available_in_data_downloads',
             field=BooleanField(
                 default=True,
                 help_text=(

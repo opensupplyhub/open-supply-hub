@@ -64,7 +64,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             else [
                 field
                 for field in get_cached_all_partner_fields()
-                if field.active and field.available_in_downloads
+                if field.active and field.available_in_data_downloads
             ]
         )
         fields = sorted(fields, key=lambda field: field.name)
