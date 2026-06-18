@@ -375,6 +375,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             if field.active
         ]
 
+        # We are checking for the auth token to be present in the request
+        # to determine if the user is an API user, because we only want to
+        # show partner fields that are available in the API to API users.
         is_api_user = request is not None and request.auth
         if is_api_user:
             partner_fields = [
