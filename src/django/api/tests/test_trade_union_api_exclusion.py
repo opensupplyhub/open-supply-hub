@@ -11,13 +11,9 @@ from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
 
-# High, fixed id that cannot collide with the small contributor ids referenced
-# by the `facilities_index` fixture.
 UNION_CONTRIBUTOR_ID = 900001
 UNION_FACILITY_ID = '1'
 
-# Web-client (browser) signals: the client key the FE ships and a Referer
-# within ALLOWED_HOSTS ('.opensupplyhub.org').
 WEB_CLIENT_KEY = 'test-web-client-key'
 ALLOWED_REFERER = 'https://os-hub.opensupplyhub.org/facilities'
 
@@ -78,8 +74,6 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
         super().setUp()
         self.list_url = reverse('facility-list')
 
-        # API (programmatic) user: authenticates with a token and must have an
-        # associated contributor to pass the request-meter middleware.
         self.api_user = User.objects.create(email='api@example.com')
         Contributor.objects.create(
             admin=self.api_user,
@@ -160,8 +154,6 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
 
     @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_web_client_reports_excluded_from_download_count(self):
-        # Union data is visible to the web client but flagged as
-        # non-downloadable so the UI can warn the user.
         response = self.get_union_scoped_list(
             HTTP_X_OAR_CLIENT_KEY=WEB_CLIENT_KEY,
             HTTP_REFERER=ALLOWED_REFERER,
@@ -171,8 +163,6 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
 
     @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_token_request_reports_zero_excluded_from_download(self):
-        # Programmatic callers never see union data, so nothing is reported as
-        # hidden from download.
         self.use_token()
         response = self.get_union_scoped_list()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -180,7 +170,6 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
 
     @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_token_request_in_group_includes_union(self):
-        # can_get_union_linked_data members keep full programmatic access.
         self.add_to_union_group()
         self.use_token()
         response = self.get_union_scoped_list()
@@ -190,8 +179,6 @@ class TradeUnionExclusionListViewTest(TradeUnionApiExclusionBase):
 
     @override_settings(DEBUG=False, OAR_CLIENT_KEY=WEB_CLIENT_KEY)
     def test_group_member_reports_zero_excluded_from_download(self):
-        # A group member who can download union data should not be warned that
-        # results are hidden from download.
         self.add_to_union_group()
         self.client.force_login(self.api_user)
         response = self.get_union_scoped_list(

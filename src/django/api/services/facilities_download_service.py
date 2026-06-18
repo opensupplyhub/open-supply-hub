@@ -91,14 +91,6 @@ class FacilitiesDownloadService:
 
     @staticmethod
     def get_filtered_queryset(request):
-        # Trade union-linked data stays fully searchable on the web client but
-        # must never leave the platform through a bulk export. Downloads are an
-        # export surface for every caller (web-client "Download" button and
-        # programmatic API token alike), so union-linked facilities are
-        # excluded here unless the caller belongs to the
-        # can_get_union_linked_data group, which is exempt from the exclusion.
-        # This also makes `count` the true downloadable total, which keeps
-        # download-limit accounting and billing accurate (OSDEV-2786).
         exclude_trade_union = not can_get_union_linked_data(request)
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params,
