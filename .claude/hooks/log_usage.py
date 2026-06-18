@@ -145,7 +145,6 @@ def main():
         "id": identifier,
         "user_token": _user_token(),
         "session_id": payload.get("session_id"),
-        "cwd": payload.get("cwd"),
     }
     line = json.dumps(entry, ensure_ascii=False)
 

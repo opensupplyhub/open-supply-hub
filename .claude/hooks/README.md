@@ -15,7 +15,7 @@ that call `log_usage.py`.
 Each event becomes one JSON line:
 
 ```json
-{"ts":"2026-06-18T...Z","kind":"skill","id":"code-review","user_token":"3f9c1a7b8d2e45061b2c3d4e5f607189","session_id":"...","cwd":"..."}
+{"ts":"2026-06-18T...Z","kind":"skill","id":"code-review","user_token":"3f9c1a7b8d2e45061b2c3d4e5f607189","session_id":"..."}
 ```
 
 - `kind` ∈ `skill` | `subagent` | `command`
@@ -25,6 +25,9 @@ Each event becomes one JSON line:
   your name/email, so there's nothing to reverse — genuinely anonymous, while still
   letting us count *distinct users*. No salt, no setup; the only thing you ever
   provide is the URL.
+
+**Deliberately not captured:** names, emails, file paths/`cwd`, prompt text, or
+arguments — only the items above. Keeps it anonymous end-to-end.
 
 The hook **never blocks**: it writes locally, optionally fires a detached POST,
 prints nothing, and always exits 0.
