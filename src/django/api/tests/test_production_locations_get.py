@@ -291,7 +291,7 @@ class TestProductionLocationsViewSet(APITestCase):
             {"county_id": "12345"},
         )
 
-    def test_partner_field_filtered_when_unavailable_or_inactive(self):
+    def test_partner_field_filtered_when_unavailable_in_api(self):
         facility = self._create_facility_with_partner_data()
 
         wage_indicator_field = PartnerField.objects.get_all_including_inactive(
@@ -299,8 +299,31 @@ class TestProductionLocationsViewSet(APITestCase):
         wage_indicator_field.available_in_api = False
         wage_indicator_field.save()
 
-        mit_living_wage_field = PartnerField.objects.get_all_including_inactive(
-        ).get(name="mit_living_wage")
+        self.search_index_mock.return_value = {
+            "count": 1,
+            "data": [
+                {
+                    "os_id": facility.id,
+                    "name": "location1",
+                }
+            ],
+        }
+
+        url = f"/api/v1/production-locations/{facility.id}/"
+        api_res = self.client.get(url)
+
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+        self.assertNotIn("wage_indicator", api_res.data)
+        self.assertIn("mit_living_wage", api_res.data)
+
+    def test_partner_field_filtered_when_inactive(self):
+        facility = self._create_facility_with_partner_data()
+
+        mit_living_wage_field = (
+            PartnerField.objects
+            .get_all_including_inactive()
+            .get(name="mit_living_wage")
+        )
         mit_living_wage_field.active = False
         mit_living_wage_field.save()
 
@@ -318,5 +341,5 @@ class TestProductionLocationsViewSet(APITestCase):
         api_res = self.client.get(url)
 
         self.assertEqual(api_res.status_code, status.HTTP_200_OK)
-        self.assertNotIn("wage_indicator", api_res.data)
         self.assertNotIn("mit_living_wage", api_res.data)
+        self.assertIn("wage_indicator", api_res.data)
