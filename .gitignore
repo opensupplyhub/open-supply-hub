@@ -1,3 +1,6 @@
+# Claude Code usage log (local, per-developer; see .claude/hooks/README.md)
+.claude/usage-log.jsonl
+
 # Compiled files
 *.pyc
 __pycache__/
