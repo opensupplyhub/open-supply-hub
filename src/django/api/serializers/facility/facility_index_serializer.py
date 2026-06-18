@@ -1,6 +1,5 @@
 import logging
 
-from itertools import groupby
 from collections import defaultdict
 from rest_framework_gis.serializers import (
     GeoFeatureModelSerializer,
@@ -24,6 +23,7 @@ from .facility_index_extended_field_list_serializer import (
 )
 from .utils import (
     can_user_see_detail,
+    format_date,
     format_field,
     format_numeric,
     format_sectors,
@@ -340,12 +340,20 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
 
+        def format_optional_date(date_value):
+            if not date_value:
+                return None
+            return format_date(date_value)
+
         def format_source(source):
             if source.get('admin_id') is None:
                 return {
                     'name': source.get('name'),
                     'contributor_type': source.get('contributor_type') or None,
                     'count': source.get('count', 1),
+                    'last_contributed_at': format_date(
+                        source.get('last_contributed_at')
+                    ),
                 }
             return {
                 'id': source.get('admin_id') or None,
@@ -355,6 +363,14 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 or '[Unknown Contributor]',
                 'contributor_type': source.get('contrib_type') or None,
                 'list_name': source.get('list_name') or None,
+                'last_contributed_at': format_date(
+                    source.get('last_contributed_at')
+                ),
+                'list_uploaded_at': (
+                    format_date(source.get('list_uploaded_at'))
+                    if source.get('list_uploaded_at') is not None
+                    else None
+                ),
                 'count': 1,
             }
 
@@ -373,7 +389,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         distinct_public = []
         public_names = set()
         public_ids = set()
-        anonymous_types = []
+        anonymous_by_type = defaultdict(
+            lambda: {'count': 0, 'last_contributed_at': None}
+        )
 
         for contributor in valid_contributors:
             is_public = (
@@ -391,17 +409,33 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                         and contributor['id'] not in public_ids):
                     public_names.add(contributor['name'])
                     public_ids.add(contributor['id'])
-                    anonymous_types.append(contributor.get('contrib_type'))
+                    contrib_type = contributor.get('contrib_type')
+                    anonymous_data = anonymous_by_type[contrib_type]
+                    anonymous_data['count'] += 1
+                    contributed_at = contributor.get(
+                        'last_contributed_at'
+                    )
+                    existing_date = anonymous_data[
+                        'last_contributed_at'
+                    ]
+                    if (existing_date is None
+                            or contributed_at > existing_date):
+                        anonymous_data['last_contributed_at'] = (
+                            contributed_at
+                        )
 
         anonymous_entries = []
-        for contrib_type, group in groupby(sorted(anonymous_types)):
-            group_list = list(group)
-            count = len(group_list)
-            anonymous_entries.append({
+        for contrib_type in sorted(anonymous_by_type):
+            anonymous_data = anonymous_by_type[contrib_type]
+            count = anonymous_data['count']
+            last_contributed_at = anonymous_data['last_contributed_at']
+            entry = {
                 'name': Contributor.prefix_with_count(contrib_type, count),
                 'contributor_type': contrib_type,
                 'count': count,
-            })
+                'last_contributed_at': last_contributed_at,
+            }
+            anonymous_entries.append(entry)
 
         sources = distinct_public + anonymous_entries
         seen_names = set()
