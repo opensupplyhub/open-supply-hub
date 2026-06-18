@@ -11,17 +11,15 @@ contributors don't need this — they just point at the resulting URL (see
    (the URL itself is the capability secret).
 3. Share the web-app **URL out of band** (e.g. 1Password / DM) — never commit it.
    Contributors run `/setup-usage-logging` and paste it (it lands in their
-   gitignored `.claude/usage-sink.local`).
-4. (Optional) A default salt is built into the logger, so the URL is all
-   contributors need. Only pick + share a custom `OSHUB_USAGE_LOG_SALT` if you want
-   stronger re-identification resistance — and then everyone must use the same one.
+   gitignored `.claude/usage-sink.local`). The URL is all they need — each user's
+   identity is a random token generated automatically, so there's no salt to share.
 
 ## Apps Script
 
-Aggregate upsert — stores counts + a dedup hash set, never identities. Maintains
+Aggregate upsert — stores counts + a dedup token set, never identities. Maintains
 one row per `(kind, id)`:
 
-| kind | id | uses | distinct_users | last_used | user_hashes (hidden) |
+| kind | id | uses | distinct_users | last_used | user_tokens (hidden) |
 | --- | --- | --- | --- | --- | --- |
 
 ```javascript
@@ -35,22 +33,22 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['kind', 'id', 'uses', 'distinct_users', 'last_used', 'user_hashes']);
+      sheet.appendRow(['kind', 'id', 'uses', 'distinct_users', 'last_used', 'user_tokens']);
     }
-    const kind = d.kind || '', id = d.id || '', uh = d.user_hash || '';
+    const kind = d.kind || '', id = d.id || '', tok = d.user_token || '';
     const rows = sheet.getDataRange().getValues();
     let r = -1;
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] === kind && rows[i][1] === id) { r = i + 1; break; }
     }
     if (r === -1) {
-      sheet.appendRow([kind, id, 1, uh ? 1 : 0, d.ts || '', uh]);
+      sheet.appendRow([kind, id, 1, tok ? 1 : 0, d.ts || '', tok]);
     } else {
       const uses = Number(sheet.getRange(r, 3).getValue()) + 1;
-      const hashes = String(sheet.getRange(r, 6).getValue() || '').split(',').filter(Boolean);
+      const tokens = String(sheet.getRange(r, 6).getValue() || '').split(',').filter(Boolean);
       let distinct = Number(sheet.getRange(r, 4).getValue());
-      if (uh && hashes.indexOf(uh) === -1) { hashes.push(uh); distinct += 1; }
-      sheet.getRange(r, 3, 1, 4).setValues([[uses, distinct, d.ts || '', hashes.join(',')]]);
+      if (tok && tokens.indexOf(tok) === -1) { tokens.push(tok); distinct += 1; }
+      sheet.getRange(r, 3, 1, 4).setValues([[uses, distinct, d.ts || '', tokens.join(',')]]);
     }
     return ContentService.createTextOutput('ok');
   } finally {
@@ -59,8 +57,8 @@ function doPost(e) {
 }
 ```
 
-> Hide the `user_hashes` column — it exists only so the script can dedup distinct
-> users. It holds pseudonymous hashes, never emails.
+> Hide the `user_tokens` column — it exists only so the script can dedup distinct
+> users. It holds the random per-user tokens (never names or emails).
 
 ## Onboarding
 

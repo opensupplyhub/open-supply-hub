@@ -19,28 +19,22 @@ comes only from OSHUB_USAGE_LOG_URL. See .claude/hooks/README.md for setup.
 This hook never blocks a tool call: it writes locally, optionally fires a
 detached POST, prints nothing, and always exits 0.
 """
-import hashlib
 import json
 import os
+import secrets
 import subprocess
 import sys
 from datetime import datetime, timezone
 
 _CFG = None
 
-# Default salt so the user hash is always salted (stable, no plaintext identity)
-# even when nobody configures one — keeps setup to a single value (the URL).
-# It's committed, so it is NOT a real secret; override with OSHUB_USAGE_LOG_SALT
-# (env or .claude/usage-sink.local) for stronger re-identification resistance.
-_DEFAULT_SALT = "oshub-usage-v1"
-
 
 def _local_config():
     """Parse the optional, gitignored .claude/usage-sink.local (KEY=VALUE lines).
 
-    Lets the central-sink URL and salt live on the machine without being
-    committed to this (public) repo and without each dev editing their shell
-    profile — drop the file in once (e.g. during onboarding) and it's picked up.
+    Lets the central-sink URL live on the machine without being committed to this
+    (public) repo and without each dev editing their shell profile — write it once
+    (the /setup-usage-logging command does this) and it's picked up.
     """
     path = os.path.normpath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -71,38 +65,46 @@ def _setting(key):
     return _CFG.get(key)
 
 
-def _identity():
-    """A stable per-user string for hashing. Prefers git user.email, then
-    git user.name, then the OS username — so we still get a token even when
-    user.email isn't explicitly configured (git auto-derives the author then,
-    leaving `git config user.email` empty)."""
-    for cmd in (["git", "config", "user.email"], ["git", "config", "user.name"]):
+def _user_token():
+    """A stable, RANDOM per-user token — minted once, then reused forever.
+
+    It's not derived from any identity (email/name/username), so there's nothing
+    to reverse and no salt needed — it's genuinely anonymous, while still letting
+    the sink count distinct users. 128 bits, so collisions are negligible.
+
+    Persisted per OS user at ~/.claude/oshub-usage-uid (so it's stable across
+    checkouts on this machine), falling back to a gitignored .claude/usage-uid in
+    the repo if home isn't writable.
+    """
+    paths = []
+    try:
+        paths.append(os.path.join(os.path.expanduser("~/.claude"),
+                                  "oshub-usage-uid"))
+    except Exception:
+        pass
+    paths.append(os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                     "..", "usage-uid")))
+
+    for path in paths:  # reuse the first token we find
         try:
-            out = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=2,
-            ).stdout.strip()
-            if out:
-                return out
+            with open(path, encoding="utf-8") as fh:
+                tok = fh.read().strip()
+            if tok:
+                return tok
         except Exception:
             pass
-    try:
-        import getpass
-        return getpass.getuser() or None
-    except Exception:
-        return None
 
-
-def _user_hash():
-    """Pseudonymous, stable per-user token — lets the sink count DISTINCT users
-    without storing identities. Same identity -> same hash, so distinct-user
-    counts work across machines. Set OSHUB_USAGE_LOG_SALT (shared across the
-    team) to make re-identification of the small, known identity set harder;
-    without it this is pseudo-anonymous, not anonymous."""
-    ident = _identity()
-    if not ident:
-        return None
-    salt = _setting("OSHUB_USAGE_LOG_SALT") or _DEFAULT_SALT
-    return hashlib.sha256((salt + ident.lower()).encode("utf-8")).hexdigest()[:16]
+    tok = secrets.token_hex(16)  # mint one and persist it
+    for path in paths:
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(tok + "\n")
+            return tok
+        except Exception:
+            continue
+    return tok  # couldn't persist (rare) — still usable for this run
 
 
 def _classify(payload):
@@ -141,7 +143,7 @@ def main():
         "ts": datetime.now(timezone.utc).isoformat(),
         "kind": kind,
         "id": identifier,
-        "user_hash": _user_hash(),
+        "user_token": _user_token(),
         "session_id": payload.get("session_id"),
         "cwd": payload.get("cwd"),
     }

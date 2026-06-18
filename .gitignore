@@ -1,7 +1,9 @@
 # Claude Code usage log (local, per-developer; see .claude/hooks/README.md)
 .claude/usage-log.jsonl
-# Central-sink config (URL + salt) — never commit; see .claude/usage-sink.local.example
+# Central-sink config (URL) — never commit; see .claude/usage-sink.local.example
 .claude/usage-sink.local
+# Random per-user logging token (machine-local; never commit)
+.claude/usage-uid
 
 # Compiled files
 *.pyc

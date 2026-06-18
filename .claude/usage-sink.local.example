@@ -1,20 +1,16 @@
 # Central usage-sink config for the skill/command/sub-agent logger.
 #
-# Copy this file to ".claude/usage-sink.local" (which is gitignored) and fill in
-# the values shared with you out-of-band. Once present, log_usage.py will POST
-# usage rows to the Google Sheet. Without it, logging stays local-only — nothing
-# breaks, you just don't contribute to the central aggregate.
+# Easiest setup: in Claude Code run  /setup-usage-logging <link>  and it writes
+# this file for you. To do it by hand instead:
 #
 #   cp .claude/usage-sink.local.example .claude/usage-sink.local
-#   # then edit .claude/usage-sink.local with the real values
+#   # then paste your link into OSHUB_USAGE_LOG_URL below
 #
-# Environment variables of the same name take precedence over this file.
+# This file is gitignored — the URL never reaches the (public) repo. Without it,
+# logging stays local-only; nothing breaks. The env var of the same name wins
+# over this file.
 
-# Google Apps Script web-app URL that appends to the usage Sheet (kept secret —
-# never commit the real value; this repo is public).
+# Google Apps Script web-app URL that appends to the usage Sheet. Treat it like a
+# password (never commit the real value). The link is the ONLY thing you need —
+# each user's logging identity is a random token generated automatically.
 OSHUB_USAGE_LOG_URL=
-
-# OPTIONAL. A default salt is built in, so you can leave this blank. Only set it
-# if the team agreed on a custom shared salt for stronger anonymity — and then
-# everyone must use the SAME value, or distinct-user counts break.
-OSHUB_USAGE_LOG_SALT=

@@ -15,16 +15,16 @@ that call `log_usage.py`.
 Each event becomes one JSON line:
 
 ```json
-{"ts":"2026-06-18T...Z","kind":"skill","id":"code-review","user_hash":"a1b2c3d4e5f6a7b8","session_id":"...","cwd":"..."}
+{"ts":"2026-06-18T...Z","kind":"skill","id":"code-review","user_token":"3f9c1a7b8d2e45061b2c3d4e5f607189","session_id":"...","cwd":"..."}
 ```
 
 - `kind` ∈ `skill` | `subagent` | `command`
 - `id` — the skill / sub-agent / command name
-- `user_hash` — **pseudonymous**: `sha256(SALT+identity)[:16]`, where `identity`
-  is git `user.email` → git `user.name` → OS username (first one available). Lets us
-  count *distinct users* without storing identities. A default `SALT` is built in
-  (so setup needs only the URL); it's committed, so for stronger re-identification
-  resistance on a small, known team, override it with a shared `OSHUB_USAGE_LOG_SALT`.
+- `user_token` — a **random** per-user token, minted once and reused forever
+  (128-bit, stored locally at `~/.claude/oshub-usage-uid`). It is **not** derived from
+  your name/email, so there's nothing to reverse — genuinely anonymous, while still
+  letting us count *distinct users*. No salt, no setup; the only thing you ever
+  provide is the URL.
 
 The hook **never blocks**: it writes locally, optionally fires a detached POST,
 prints nothing, and always exits 0.
@@ -37,7 +37,7 @@ Appends to `.claude/usage-log.jsonl` (gitignored, per-developer). Aggregate any 
 ```bash
 # uses + distinct users per item
 jq -r '[.kind,.id] | @tsv' .claude/usage-log.jsonl | sort | uniq -c        # uses
-jq -r '[.kind,.id,.user_hash] | @tsv' .claude/usage-log.jsonl | sort -u \
+jq -r '[.kind,.id,.user_token] | @tsv' .claude/usage-log.jsonl | sort -u \
   | cut -f1,2 | uniq -c                                                     # distinct users
 ```
 
@@ -46,23 +46,25 @@ If a sink URL is configured, each line is also POSTed (backgrounded, fail-soft)
 to a Google Apps Script web app that maintains an **aggregate** sheet — counts only,
 no per-event identity:
 
-| kind | id | uses | distinct_users | last_used | user_hashes (hidden) |
-| --- | --- | --- | --- | --- | --- |
+| kind | id | uses | distinct_users | last_used |
+| --- | --- | --- | --- | --- |
 
-**The URL is never committed** (this repo is public). The hook reads the URL + salt
-from, in order: (1) the `OSHUB_USAGE_LOG_URL` / `OSHUB_USAGE_LOG_SALT` env vars, then
-(2) a gitignored **`.claude/usage-sink.local`** file. If neither is present, logging
-stays **local-only** — nothing breaks, you just don't contribute to the central sheet.
+**The URL is never committed** (this repo is public). The hook reads it from, in
+order: (1) the `OSHUB_USAGE_LOG_URL` env var, then (2) a gitignored
+**`.claude/usage-sink.local`** file. If neither is present, logging stays
+**local-only** — nothing breaks, you just don't contribute to the central sheet.
 
-**Enable it — easiest, no terminal.** In Claude Code, run:
+**Enable it — easiest, no terminal.** In Claude Code, paste the link right into the
+command:
 
 ```
-/setup-usage-logging
+/setup-usage-logging https://script.google.com/macros/s/XXXX/exec
 ```
 
-Paste the link you were given when it asks. The agent writes the (gitignored)
-config for you and confirms — that's the whole setup. A salt is built in, so the
-**link is the only thing you need.**
+The agent writes the (gitignored) config for you and confirms — that's the whole
+setup. (You can also run it bare — `/setup-usage-logging` — and it'll ask for the
+link.) The **link is the only thing you need** — your logging identity is a random
+token generated automatically.
 
 **Or do it by hand:**
 
@@ -78,8 +80,8 @@ Don't have a link yet? Ask whoever owns the usage Sheet — until then logging s
 see `sheet-owner-setup.md`.
 
 ## Notes
-- No secret is committed: the sink URL and salt come only from the env vars or the
-  gitignored `.claude/usage-sink.local`.
+- No secret is committed: the sink URL comes only from the env var or the gitignored
+  `.claude/usage-sink.local`.
 - Hooks in a project `.claude/settings.json` run without per-use approval; the
   hook's working dir is the project root (`$CLAUDE_PROJECT_DIR`).
 - Disable locally by removing the env var (drops to local-only) or by removing

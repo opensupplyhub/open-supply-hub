@@ -35,9 +35,8 @@ OSHUB_USAGE_LOG_URL=<the link they pasted>
 
 Notes:
 - This file is **gitignored** — it never gets committed. Confirm that to the user.
-- A salt is already built in, so the URL is the only value needed. Only add an
-  `OSHUB_USAGE_LOG_SALT=...` line if the user explicitly says they were given a
-  salt too (advanced; everyone must share the same one).
+- The URL is the only value needed — each user's logging identity is a random token
+  generated automatically (no salt, nothing else to set).
 - If the file already exists, preserve any existing lines and just set/replace the
   `OSHUB_USAGE_LOG_URL` line.
 
@@ -46,9 +45,9 @@ Notes:
 Tell the user, simply:
 
 > ✅ Done — usage logging is connected. From now on, when you use a skill,
-> command, or sub-agent, it quietly adds to the team's usage sheet. It's
-> pseudo-anonymous (your name/email is never stored — just a scrambled tag so we
-> can count distinct people), and it never slows anything down. Nothing else to do.
+> command, or sub-agent, it quietly adds to the team's usage sheet. It's anonymous
+> (your name/email is never stored — just a random tag so we can count distinct
+> people), and it never slows anything down. Nothing else to do.
 
 Do **not** echo the full URL back or repeat it anywhere it could be shared — treat
 it like a password. Don't suggest committing the file.
