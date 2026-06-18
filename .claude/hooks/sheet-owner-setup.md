@@ -8,7 +8,10 @@ contributors don't need this — they just point at the resulting URL (see
 
 1. In the target Google Sheet: **Extensions → Apps Script**, paste the code below, save.
 2. **Deploy → New deployment → Web app**; *Execute as:* Me, *Who has access:* Anyone
-   (the URL itself is the capability secret).
+   (the URL itself is the capability secret). This is a **write-only** endpoint
+   carrying only anonymous aggregate data — assessed low-risk (see *Privacy &
+   security* in `README.md`); **rotate the URL if it's ever abused**. It can be
+   tightened to org-only later, which would require authenticating the hook.
 3. Share the web-app **URL out of band** (e.g. 1Password / DM) — never commit it.
    Contributors run `/setup-usage-logging` and paste it (it lands in their
    gitignored `.claude/usage-sink.local`). The URL is all they need — each user's

@@ -82,6 +82,25 @@ Don't have a link yet? Ask whoever owns the usage Sheet — until then logging s
 **local-only** (nothing breaks). Setting up the Sheet is a one-time admin task —
 see `sheet-owner-setup.md`.
 
+## Privacy & security (assessed)
+
+We reviewed this for compliance/SOC 2 and rated it **low risk**:
+
+- **Anonymous & minimal** — only the tool/skill/command name + a random per-user
+  token + timestamp are recorded. Never names, emails, file paths, prompt text, or
+  arguments.
+- **Write-only sink** — the Sheet endpoint only accepts writes (`doPost` returns
+  `ok`); there is no read path, so nothing can be read back or extracted through it.
+- **Non-sensitive data** — internal tool-adoption metrics, not customer data, not a
+  system of record, not a control.
+- **Residual risk = integrity, low-consequence** — the endpoint is deployed public
+  ("Anyone"), so in principle the counts could be spammed/skewed. For an internal
+  metric that's minor, and it's mitigated by rotating the URL if it's ever abused.
+  It can be tightened to org-only later (that would require authenticating the hook).
+- **Opt-in & local-first** — central posting only happens if a user supplies the URL;
+  otherwise everything stays in the local, gitignored file and never leaves the machine.
+- Recorded in the data-flow inventory.
+
 ## Notes
 - No secret is committed: the sink URL comes only from the env var or the gitignored
   `.claude/usage-sink.local`.
