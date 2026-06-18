@@ -281,3 +281,42 @@ class FacilityMatchPromoteTest(APITestCase):
             self.promote_url, {"match_id": single_match.id}
         )
         self.assertEqual(post_response.status_code, 200)
+
+    def test_promoted_contribution_is_attributed_for_name_and_address(self):
+        # Regression test for OSDEV-2197. When two contributions share the
+        # exact same name/address, the field attribution can only be resolved
+        # by which contribution was promoted (i.e. is the facility's
+        # created_from). The promoted contributor must be attributed first.
+        self.list_item_two.name = self.list_item_one.name
+        self.list_item_two.address = self.list_item_one.address
+        self.list_item_two.save()
+
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+
+        promote_response = self.client.post(
+            self.promote_url, {"match_id": self.match_two.id}
+        )
+        self.assertEqual(promote_response.status_code, 200)
+
+        detail_response = self.client.get(
+            "/api/facilities/{}/".format(self.facility_one.id)
+        )
+        self.assertEqual(detail_response.status_code, 200)
+
+        extended_fields = detail_response.data["properties"]["extended_fields"]
+
+        name_fields = extended_fields["name"]
+        self.assertGreater(len(name_fields), 0)
+        self.assertEqual(
+            name_fields[0]["contributor_id"],
+            self.contributor_two.id,
+        )
+
+        address_fields = extended_fields["address"]
+        self.assertGreater(len(address_fields), 0)
+        self.assertEqual(
+            address_fields[0]["contributor_id"],
+            self.contributor_two.id,
+        )

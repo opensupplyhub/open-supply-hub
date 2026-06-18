@@ -255,7 +255,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 name_obj.get('contributor'),
                                 created_at,
                                 name_obj.get('updated_at'),
-                                user_can_see_detail))
+                                user_can_see_detail,
+                                is_from_created_from=name_obj.get(
+                                    'is_from_created_from', False)))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -273,7 +275,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 address_obj.get('contributor'),
                                 created_at,
                                 address_obj.get('updated_at'),
-                                user_can_see_detail))
+                                user_can_see_detail,
+                                is_from_created_from=address_obj.get(
+                                    'is_from_created_from', False)))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -434,6 +438,10 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         return (
             item.get('verified_count', 0),
             item.get('is_from_claim', False),
+            # Among otherwise-equal contributions (e.g. several with the same
+            # value), the promoted contribution (the facility's created_from)
+            # is attributed as the source of the canonical name/address.
+            item.get('is_from_created_from', False),
             item.get('value_count', 1)
         )
 
