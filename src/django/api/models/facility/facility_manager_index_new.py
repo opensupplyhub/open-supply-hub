@@ -14,7 +14,7 @@ from api.models.facility.partner_contributor_filter import (
 
 
 class FacilityIndexNewManager(models.Manager):
-    def filter_by_query_params(self, params):
+    def filter_by_query_params(self, params, exclude_trade_union=False):
         """
         Create a Facility queryset filtered by a list of request query params.
 
@@ -22,6 +22,11 @@ class FacilityIndexNewManager(models.Manager):
         self (queryset) -- A queryset on the Facility model
         params (dict) -- Request query parameters whose potential choices are
                         enumerated in `api.constants.FacilitiesQueryParams`.
+        exclude_trade_union (bool) -- When True, drop facilities contributed
+                        by a trade union (Union organization type) contributor.
+                        Used to hide such data from programmatic API callers
+                        while keeping it visible to the web client
+                        (OSDEV-2786).
 
         Returns:
         A queryset on the Facility model
@@ -213,4 +218,45 @@ class FacilityIndexNewManager(models.Manager):
             partner_contributors,
         )
 
+        if exclude_trade_union:
+            facilities_qs = self.exclude_trade_union_linked(facilities_qs)
+
         return facilities_qs
+
+    @staticmethod
+    def _union_contributor_ids():
+        from api.models.contributor.contributor import Contributor
+
+        return list(
+            Contributor.objects
+            .filter(contrib_type=Contributor.UNION_CONTRIB_TYPE)
+            .values_list('id', flat=True)
+        )
+
+    @classmethod
+    def exclude_trade_union_linked(cls, facilities_qs):
+        union_contributor_ids = cls._union_contributor_ids()
+
+        if not union_contributor_ids:
+            return facilities_qs
+
+        return facilities_qs.exclude(
+            contributors_id__overlap=union_contributor_ids
+        )
+
+    @classmethod
+    def filter_trade_union_linked(cls, facilities_qs):
+        """
+        Inverse of `exclude_trade_union_linked`: keep only the facilities that
+        are contributed by a trade union (Union organization type) contributor.
+        Used to count how many results in a web-client search are excluded from
+        download/programmatic API access (OSDEV-2786).
+        """
+        union_contributor_ids = cls._union_contributor_ids()
+
+        if not union_contributor_ids:
+            return facilities_qs.none()
+
+        return facilities_qs.filter(
+            contributors_id__overlap=union_contributor_ids
+        )

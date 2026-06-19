@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
+from api.permissions import can_get_union_linked_data
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.exceptions import ServiceUnavailableException
@@ -60,8 +61,10 @@ class FacilitiesDownloadService:
 
     @staticmethod
     def get_filtered_queryset(request):
+        exclude_trade_union = not can_get_union_linked_data(request)
         return FacilityIndex.objects.filter_by_query_params(
-            request.query_params
+            request.query_params,
+            exclude_trade_union=exclude_trade_union,
         ).order_by('id')
 
     @staticmethod

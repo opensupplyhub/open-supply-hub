@@ -70,6 +70,7 @@ class FeatureGroups:
     CAN_SUBMIT_FACILITY = 'can_submit_facility'
     CAN_SUBMIT_PRIVATE_FACILITY = 'can_submit_private_facility'
     CAN_VIEW_FULL_CONTRIB_DETAIL = 'can_view_full_contrib_detail'
+    CAN_GET_UNION_LINKED_DATA = 'can_get_union_linked_data'
 
 
 class FacilityHistoryActions:

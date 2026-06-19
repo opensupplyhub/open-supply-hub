@@ -4,6 +4,8 @@ from django.conf import settings
 from django.utils.http import is_same_domain
 from rest_framework import permissions
 
+from api.constants import FeatureGroups
+
 
 def _report_warning_to_rollbar(message, extra_data=None):
     ROLLBAR = getattr(settings, 'ROLLBAR', {})
@@ -22,6 +24,35 @@ def referring_host_is_allowed(host):
         if is_same_domain(host, pattern):
             return True
     return False
+
+
+def has_api_token(request):
+    return getattr(request, 'auth', None) is not None
+
+
+def can_get_union_linked_data(request):
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated:
+        return False
+
+    return user.groups.filter(
+        name=FeatureGroups.CAN_GET_UNION_LINKED_DATA
+    ).exists()
+
+
+def is_web_client_request(request):
+    # In the local environment there is no real client key configured, so
+    # client-key verification is bypassed and every request is treated as
+    # web-client traffic. All other environments keep the full client-key +
+    # Referer check below.
+    if settings.DEBUG:
+        return True
+
+    client_key = request.META.get('HTTP_X_OAR_CLIENT_KEY')
+    if client_key != settings.OAR_CLIENT_KEY:
+        return False
+
+    return referring_host_is_allowed(referring_host(request))
 
 
 class IsAuthenticatedOrWebClient(permissions.BasePermission):

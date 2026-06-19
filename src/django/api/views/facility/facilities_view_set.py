@@ -76,7 +76,13 @@ from api.facility_history import (
 from api.mail import send_claim_facility_confirmation_email
 
 from api.pagination import FacilitiesGeoJSONPagination
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.permissions import (
+    IsRegisteredAndConfirmed,
+    IsSuperuser,
+    can_get_union_linked_data,
+    has_api_token,
+    is_web_client_request,
+)
 from api.sector_cache import SectorCache
 from api.os_id_lookup import OSIDLookup
 from api.serializers import (
@@ -237,10 +243,19 @@ class FacilitiesViewSet(ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
+        can_access_union = can_get_union_linked_data(request)
+        exclude_trade_union = (
+            not can_access_union
+            and (has_api_token(request) or not is_web_client_request(request))
+        )
+
         queryset = (
             FacilityIndex
             .objects
-            .filter_by_query_params(request.query_params)
+            .filter_by_query_params(
+                request.query_params,
+                exclude_trade_union=exclude_trade_union,
+            )
         )
         sort_by = params.validated_data['sort_by']
         order_list = []
@@ -255,6 +270,16 @@ class FacilitiesViewSet(ListModelMixin,
             order_list = ['contributors_count', 'name']
 
         queryset = queryset.extra(order_by=order_list)
+
+        if exclude_trade_union or can_access_union:
+            excluded_from_download_count = 0
+        else:
+            excluded_from_download_count = (
+                FacilityIndex
+                .objects
+                .filter_trade_union_linked(queryset)
+                .count()
+            )
 
         page_queryset = self.paginate_queryset(queryset)
 
@@ -289,6 +314,8 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['extent'] = extent
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
+            page.data['excluded_from_download_count'] = \
+                excluded_from_download_count
             return page
 
         # Non-paginated response
@@ -300,6 +327,7 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
+            'excluded_from_download_count': excluded_from_download_count,
         }
         if extent is not None:
             response['extent'] = extent

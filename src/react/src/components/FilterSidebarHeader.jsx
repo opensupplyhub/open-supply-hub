@@ -16,6 +16,7 @@ import { userPropType } from '../util/propTypes';
 const FilterSidebarHeader = ({
     multiLine,
     facilitiesCount,
+    unionLinkedCount,
     classes,
     embed,
     user,
@@ -29,6 +30,10 @@ const FilterSidebarHeader = ({
         <Grid container justify="space-between">
             <Grid item className={multiLine ? classes.numberResults : ''}>
                 {facilitiesCount} results
+                {unionLinkedCount > 0 &&
+                    ` (including ${unionLinkedCount} union-linked ${
+                        unionLinkedCount === 1 ? 'location' : 'locations'
+                    })`}
             </Grid>
             <ShowOnly when={!embed}>
                 <Grid item>
@@ -57,11 +62,13 @@ const FilterSidebarHeader = ({
 
 FilterSidebarHeader.defaultProps = {
     hasAppliedFilters: false,
+    unionLinkedCount: 0,
 };
 
 FilterSidebarHeader.propTypes = {
     multiLine: bool.isRequired,
     facilitiesCount: number.isRequired,
+    unionLinkedCount: number,
     embed: string.isRequired,
     classes: object.isRequired,
     user: userPropType.isRequired,
@@ -80,6 +87,7 @@ const mapStateToProps = ({
 }) => ({
     embed,
     facilitiesCount: get(facilities, 'count', null),
+    unionLinkedCount: get(facilities, 'excluded_from_download_count', 0),
     user,
     isSameContributor: get(facilities, 'is_same_contributor', false),
     hasAppliedFilters,
