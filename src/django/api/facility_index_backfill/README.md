@@ -69,6 +69,19 @@ mod(abs(hashtext(id::text)), workers) = worker_id
 
 Each worker processes disjoint id ranges using keyset pagination (`id > last_id ORDER BY id LIMIT batch_size`), so batches stay fast at scale.
 
+### Production observations (19 Jun 2026)
+
+Reference run on **Production** RDS (`db.m6in.4xlarge` at the time) backfilling the **`contributors`** field group with **`--parallel 10`** and **`--batch-size 10000`**:
+
+| Metric | Observed impact |
+| --- | --- |
+| Duration | ~**3.5 minutes** to complete |
+| DB CPU | ~**+30%** while the job was running |
+| DB connections | ~**+10** (one connection per parallel worker) |
+| Environment availability | **No downtime** — the app remained available throughout |
+
+Use this as a rough sizing guide when choosing `--parallel` on large environments. Higher parallelism finishes sooner but adds concurrent load on CPU and connection pools; monitor RDS during the first run after deploy.
+
 ### Field groups
 
 Field groups are defined in `specs.py` as `FACILITY_INDEX_FIELD_SPECS`. Each group specifies:
