@@ -15,9 +15,11 @@ class WageIndicatorProvider(SystemPartnerFieldProvider):
     Fetches data from WageIndicatorCountryData table.
     """
 
+    FIELD_NAME = "wage_indicator"
+
     def _get_field_name(self) -> str:
         """Return the partner field name for this provider."""
-        return "wage_indicator"
+        return self.FIELD_NAME
 
     def _fetch_raw_data(
         self,
