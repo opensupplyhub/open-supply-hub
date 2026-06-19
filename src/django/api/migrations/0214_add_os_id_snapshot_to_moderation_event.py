@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0212_add_moderation_pause_info_switch'),
+        ('api', '0213_add_partner_field_availability_flags'),
     ]
 
     operations = [
