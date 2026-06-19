@@ -301,7 +301,9 @@ class ProductionLocations(ViewSet):
         """
         all_partner_fields = get_cached_all_partner_fields()
         partner_field_names = [
-            field.name for field in all_partner_fields if field.active
+            field.name
+            for field in all_partner_fields
+            if field.active and field.available_in_api
         ]
 
         if not partner_field_names:
