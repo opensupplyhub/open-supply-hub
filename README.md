@@ -291,6 +291,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
 | `batch_process`        | Given a list id argument run parse, geocode, and match via the batch_process Django management command |
 | `process_partner_data_file_uploads` | Process partner Google Sheet uploads in `PROCESSING` status (see [Process partner data file uploads](#process-partner-data-file-uploads)) |
+| `backfill_facility_index` | Batch-update selected `api_facilityindex` columns after an `index_*()` SQL change. Update `facility_index_backfill/specs.py` when `FacilityIndex` changes. See [facility_index_backfill](src/django/api/facility_index_backfill/README.md). |
 | `devhealthcheck.sh`    | Simulate application load balancer health checks in development                                        |
 | `postfacilitiescsv.py` | POST the rows of a CSV containing facility information to the facilities API                           |
 

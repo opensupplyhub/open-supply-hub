@@ -4,83 +4,41 @@ import sys
 import tempfile
 import time
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
 from django.db import connection, transaction
 
-WORKER_ID_ENV = 'BACKFILL_INDEX_CONTRIBUTORS_WORKER_ID'
-WORKERS_ENV = 'BACKFILL_INDEX_CONTRIBUTORS_WORKERS'
-RESULT_FILE_ENV = 'BACKFILL_INDEX_CONTRIBUTORS_RESULT_FILE'
-
-NON_EMPTY_CONTRIBUTORS_CLAUSE = (
-    "AND cardinality(COALESCE(contributors, '{}')) > 0"
+from api.facility_index_backfill.specs import (
+    build_count_sql,
+    build_update_sql,
+    get_field_spec,
 )
 
-UPDATE_CONTRIBUTORS_BATCH_SQL = f"""
-UPDATE api_facilityindex afi
-SET
-    contributors = COALESCE(
-        (SELECT array_agg(contributor) FROM index_contributors(afi.id)),
-        '{{}}'
-    ),
-    updated_at = now()
-WHERE afi.id IN (
-    SELECT id
-    FROM api_facilityindex
-    WHERE id > %(last_id)s
-      AND mod(abs(hashtext(id::text)), %(workers)s) = %(worker_id)s
-      {NON_EMPTY_CONTRIBUTORS_CLAUSE}
-    ORDER BY id
-    LIMIT %(batch_size)s
-)
-RETURNING afi.id
-"""
-
-COUNT_WORKER_ROWS_SQL = f"""
-SELECT COUNT(*)
-FROM api_facilityindex
-WHERE mod(abs(hashtext(id::text)), %(workers)s) = %(worker_id)s
-  {NON_EMPTY_CONTRIBUTORS_CLAUSE}
-"""
+WORKER_ID_ENV = 'BACKFILL_FACILITY_INDEX_WORKER_ID'
+WORKERS_ENV = 'BACKFILL_FACILITY_INDEX_WORKERS'
+RESULT_FILE_ENV = 'BACKFILL_FACILITY_INDEX_RESULT_FILE'
+FIELD_NAME_ENV = 'BACKFILL_FACILITY_INDEX_FIELD_NAME'
 
 
-class Command(BaseCommand):
-    help = (
-        'Backfill api_facilityindex.contributors using index_contributors() '
-        'in batches. Skips rows with an empty contributors array. '
-        'Use --parallel to run multiple worker processes.'
-    )
+class FacilityIndexBackfillRunner:
+    command_name = 'backfill_facility_index'
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--batch-size',
-            type=int,
-            default=10000,
-            help='Number of rows to update per batch (default: 10000).',
-        )
-        parser.add_argument(
-            '--parallel',
-            type=int,
-            default=1,
-            metavar='N',
-            help=(
-                'Number of parallel worker processes partitioning the table '
-                'by facility id hash (default: 1).'
-            ),
-        )
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Show row counts per worker without updating.',
-        )
+    def __init__(self, stdout, style):
+        self.stdout = stdout
+        self.style = style
 
-    def handle(self, *args, **options):
-        parallel = options['parallel']
+    def run(self, field_names, parallel, batch_size, dry_run):
         if parallel < 1:
             raise CommandError('--parallel must be at least 1.')
 
         worker_id_env = os.environ.get(WORKER_ID_ENV)
         workers_env = os.environ.get(WORKERS_ENV)
+        field_name_env = os.environ.get(FIELD_NAME_ENV)
+
         if worker_id_env is not None and workers_env is not None:
+            if not field_name_env:
+                raise CommandError(
+                    f'{FIELD_NAME_ENV} must be set for worker processes.'
+                )
             workers = int(workers_env)
             worker_id = int(worker_id_env)
             if workers < 1:
@@ -89,43 +47,63 @@ class Command(BaseCommand):
                 raise CommandError(
                     f'Worker id must be between 0 and {workers - 1}.'
                 )
-            self._run_worker(
+            return self._run_worker(
+                field_name=field_name_env,
                 worker_id=worker_id,
                 workers=workers,
-                batch_size=options['batch_size'],
-                dry_run=options['dry_run'],
+                batch_size=batch_size,
+                dry_run=dry_run,
             )
-            return
 
         started_at = time.monotonic()
-        if parallel > 1:
-            total_rows = self._spawn_parallel_workers(
-                parallel, options
-            )
-        else:
-            total_rows = self._run_worker(
-                worker_id=0,
-                workers=1,
-                batch_size=options['batch_size'],
-                dry_run=options['dry_run'],
+        total_rows = 0
+        for field_name in field_names:
+            total_rows += self._run_field_group(
+                field_name=field_name,
+                parallel=parallel,
+                batch_size=batch_size,
+                dry_run=dry_run,
             )
 
         self._write_summary(
+            field_names,
             total_rows,
             time.monotonic() - started_at,
-            options['dry_run'],
+            dry_run,
+        )
+        return total_rows
+
+    def _run_field_group(self, field_name, parallel, batch_size, dry_run):
+        get_field_spec(field_name)
+        self.stdout.write(f'Backfilling field group: {field_name}')
+
+        if parallel > 1:
+            return self._spawn_parallel_workers(
+                field_name=field_name,
+                parallel=parallel,
+                batch_size=batch_size,
+                dry_run=dry_run,
+            )
+
+        return self._run_worker(
+            field_name=field_name,
+            worker_id=0,
+            workers=1,
+            batch_size=batch_size,
+            dry_run=dry_run,
         )
 
-    def _write_summary(self, total_rows, elapsed, dry_run):
+    def _write_summary(self, field_names, total_rows, elapsed, dry_run):
+        fields_label = ', '.join(field_names)
         if dry_run:
             message = (
-                f'Backfill dry run: {total_rows} rows would be updated in '
-                f'{elapsed:.1f}s.'
+                f'Backfill dry run ({fields_label}): {total_rows} rows would '
+                f'be updated in {elapsed:.1f}s.'
             )
         else:
             message = (
-                f'Backfill completed: {total_rows} rows updated in '
-                f'{elapsed:.1f}s.'
+                f'Backfill completed ({fields_label}): {total_rows} rows '
+                f'updated in {elapsed:.1f}s.'
             )
         self.stdout.write(self.style.SUCCESS(message))
 
@@ -136,25 +114,34 @@ class Command(BaseCommand):
         with open(result_file, 'w', encoding='utf-8') as result:
             result.write(str(row_count))
 
-    def _spawn_parallel_workers(self, parallel, options):
+    def _spawn_parallel_workers(
+        self,
+        field_name,
+        parallel,
+        batch_size,
+        dry_run,
+    ):
         manage_py = sys.argv[0]
         base_args = [
             manage_py,
-            'backfill_index_contributors',
+            self.command_name,
+            '--fields',
+            field_name,
             '--batch-size',
-            str(options['batch_size']),
+            str(batch_size),
         ]
-        if options['dry_run']:
+        if dry_run:
             base_args.append('--dry-run')
 
         self.stdout.write(
-            f'Spawning {parallel} backfill worker processes...'
+            f'Spawning {parallel} backfill worker processes for '
+            f'{field_name}...'
         )
         processes = []
         result_files = []
         for worker_id in range(parallel):
             fd, result_path = tempfile.mkstemp(
-                suffix=f'-worker{worker_id}.txt',
+                suffix=f'-{field_name}-worker{worker_id}.txt',
             )
             os.close(fd)
             result_files.append(result_path)
@@ -162,6 +149,7 @@ class Command(BaseCommand):
             env[WORKERS_ENV] = str(parallel)
             env[WORKER_ID_ENV] = str(worker_id)
             env[RESULT_FILE_ENV] = result_path
+            env[FIELD_NAME_ENV] = field_name
             cmd = [sys.executable, *base_args]
             self.stdout.write(f'  worker {worker_id}: {" ".join(cmd)}')
             processes.append(subprocess.Popen(cmd, env=env))
@@ -180,7 +168,9 @@ class Command(BaseCommand):
                 f'worker {worker_id} (exit {code})'
                 for worker_id, code in failures
             )
-            raise CommandError(f'Backfill failed for: {details}')
+            raise CommandError(
+                f'Backfill failed for {field_name}: {details}'
+            )
 
         total_rows = 0
         for result_path in result_files:
@@ -192,11 +182,16 @@ class Command(BaseCommand):
 
     def _run_worker(
         self,
+        field_name,
         worker_id,
         workers,
         batch_size,
         dry_run,
     ):
+        spec = get_field_spec(field_name)
+        count_sql = build_count_sql(spec)
+        update_sql = build_update_sql(spec)
+
         started_at = time.monotonic()
         sql_params = {
             'workers': workers,
@@ -204,11 +199,12 @@ class Command(BaseCommand):
         }
 
         with connection.cursor() as cursor:
-            cursor.execute(COUNT_WORKER_ROWS_SQL, sql_params)
+            cursor.execute(count_sql, sql_params)
             row_count = cursor.fetchone()[0]
 
         self.stdout.write(
-            f'Worker {worker_id}/{workers}: {row_count} rows assigned.'
+            f'Worker {worker_id}/{workers} ({field_name}): '
+            f'{row_count} rows assigned.'
         )
 
         if dry_run:
@@ -216,7 +212,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.WARNING(
                     f'DRY RUN: worker {worker_id} would update {row_count} '
-                    'rows. Run without --dry-run to apply changes.'
+                    f'rows for {field_name}. Run without --dry-run to apply.'
                 )
             )
             self.stdout.write(
@@ -241,7 +237,7 @@ class Command(BaseCommand):
 
             with transaction.atomic():
                 with connection.cursor() as cursor:
-                    cursor.execute(UPDATE_CONTRIBUTORS_BATCH_SQL, params)
+                    cursor.execute(update_sql, params)
                     returned_ids = [row[0] for row in cursor.fetchall()]
 
             if not returned_ids:
@@ -253,16 +249,16 @@ class Command(BaseCommand):
 
             batch_seconds = time.monotonic() - batch_started_at
             self.stdout.write(
-                f'Worker {worker_id}: batch {batch_number} updated '
-                f'{updated} rows (total {total_updated}, last_id={last_id}, '
-                f'{batch_seconds:.1f}s)'
+                f'Worker {worker_id} ({field_name}): batch {batch_number} '
+                f'updated {updated} rows (total {total_updated}, '
+                f'last_id={last_id}, {batch_seconds:.1f}s)'
             )
 
         elapsed = time.monotonic() - started_at
         self.stdout.write(
             self.style.SUCCESS(
-                f'Worker {worker_id} finished: {total_updated} rows updated '
-                f'in {elapsed:.1f}s.'
+                f'Worker {worker_id} ({field_name}) finished: '
+                f'{total_updated} rows updated in {elapsed:.1f}s.'
             )
         )
         self._write_worker_result(total_updated)

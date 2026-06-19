@@ -11,7 +11,8 @@ class Command(BaseCommand):
         call_command('migrate')
         call_command('reindex_database')
         call_command(
-            'backfill_index_contributors',
+            'backfill_facility_index',
+            fields='contributors',
             parallel=10,
             batch_size=10000,
         )
