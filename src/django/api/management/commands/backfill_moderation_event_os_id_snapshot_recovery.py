@@ -102,9 +102,9 @@ class Command(BaseCommand):
                     os_id_snapshot='',
                 ).update(os_id_snapshot=recovered_os_id)
                 updated += rows
-            except Exception as e:
+            except Exception:
                 failed_uuids.append(uuid)
-                log.error('Failed to update event %s: %s', uuid, e)
+                log.exception('Failed to update event %s', uuid)
 
         log.info(
             'Recovery backfill complete. Updated %s rows, '
