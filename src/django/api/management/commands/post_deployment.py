@@ -12,6 +12,6 @@ class Command(BaseCommand):
         call_command('reindex_database')
         call_command(
             'backfill_index_contributors',
-            parallel=8,
+            parallel=10,
             batch_size=10000,
         )
