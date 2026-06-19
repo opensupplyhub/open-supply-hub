@@ -13,13 +13,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
+* `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
 
 #### Schema changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - Added `os_id_snapshot` field to `ModerationEvent`. The existing `os_id` FK uses `on_delete=SET_NULL`, which issues a bulk `UPDATE` that bypasses Django ORM signals and OpenSearch indexing. When a facility is deleted or merged, `os_id` is silently nulled with no audit trail. `os_id_snapshot` is a plain `CharField` written once at approval time and never modified, so it survives facility deletion or merging.
 
 ### Code/API changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_data_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
 
 ### Architecture/Environment changes
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
@@ -31,6 +35,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+* The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
+* Backfilling `os_id_snapshot` for existing moderation events is handled separately in [OSDEV-2878](https://opensupplyhub.atlassian.net/browse/OSDEV-2878).
 
 
 ## Release 2.25.0
