@@ -150,7 +150,7 @@ resource "aws_cloudfront_origin_access_identity" "react" {
 resource "aws_cloudfront_function" "homepage_host_rewrite" {
   count   = var.enable_homepage_proxy ? 1 : 0
   name    = "func${local.short}HomepageHostRewrite"
-  runtime = "cloudfront-js-2.0"
+  runtime = "cloudfront-js-1.0"
   publish = true
   comment = "Sets Host header to info.opensupplyhub.org for Craft CMS homepage proxy"
   code    = <<-EOT
