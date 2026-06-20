@@ -140,6 +140,31 @@ resource "aws_cloudfront_origin_access_identity" "react" {
   comment = local.frontend_bucket_name
 }
 
+#
+# Homepage proxy — CloudFront Function to rewrite Host header for Craft CMS origin
+#
+# This is used when enable_homepage_proxy = true (dev only for now).
+# The function sets the Host header to info.opensupplyhub.org so Craft serves
+# the correct site when CloudFront reverse-proxies requests from / to it.
+#
+resource "aws_cloudfront_function" "homepage_host_rewrite" {
+  count   = var.enable_homepage_proxy ? 1 : 0
+  name    = "func${local.short}HomepageHostRewrite"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  comment = "Sets Host header to info.opensupplyhub.org for Craft CMS homepage proxy"
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      // Override Host so Craft knows which site to serve.
+      // Without this, CloudFront forwards the original Host (e.g. dev.os-hub.net)
+      // and Craft may return a 404 or the wrong site.
+      request.headers['host'] = { value: 'info.opensupplyhub.org' };
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "cdn" {
   depends_on = [
     aws_s3_bucket.logs,
@@ -176,6 +201,22 @@ resource "aws_cloudfront_distribution" "cdn" {
     custom_header {
       name  = "X-CloudFront-Auth"
       value = var.cloudfront_auth_token
+    }
+  }
+
+  # Craft CMS origin — only present when enable_homepage_proxy = true
+  dynamic "origin" {
+    for_each = var.enable_homepage_proxy ? [1] : []
+    content {
+      domain_name = "info.opensupplyhub.org"
+      origin_id   = "originCraft"
+
+      custom_origin_config {
+        http_port              = 80
+        https_port             = 443
+        origin_protocol_policy = "https-only"
+        origin_ssl_protocols   = ["TLSv1.2"]
+      }
     }
   }
 
@@ -217,6 +258,41 @@ resource "aws_cloudfront_distribution" "cdn" {
     min_ttl                = 0
     default_ttl            = 0
     max_ttl                = 300
+  }
+
+  # Homepage proxy — serves Craft CMS at / when enable_homepage_proxy = true.
+  # Path pattern "/" matches only the exact root path, not sub-paths.
+  # TTL is 0 so CMS content changes are reflected immediately without a cache invalidation.
+  # Note: redirect_to_s3_origin Lambda@Edge runs on the default_cache_behavior only —
+  # it will NOT run for requests matched by this ordered behavior.
+  dynamic "ordered_cache_behavior" {
+    for_each = var.enable_homepage_proxy ? [1] : []
+    content {
+      path_pattern     = "/"
+      allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+      cached_methods   = ["GET", "HEAD"]
+      target_origin_id = "originCraft"
+
+      forwarded_values {
+        query_string = true
+        headers      = ["Accept", "Accept-Encoding", "Accept-Language"]
+
+        cookies {
+          forward = "none"
+        }
+      }
+
+      function_association {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.homepage_host_rewrite[0].arn
+      }
+
+      compress               = true
+      viewer_protocol_policy = "redirect-to-https"
+      min_ttl                = 0
+      default_ttl            = 0
+      max_ttl                = 0
+    }
   }
 
   ordered_cache_behavior {

@@ -932,6 +932,12 @@ variable "enable_legacy_info_site_redirect" {
   default = false
 }
 
+variable "enable_homepage_proxy" {
+  type        = bool
+  default     = false
+  description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage at info.opensupplyhub.org. Enable in dev for testing only — do not apply to production without further validation."
+}
+
 
 # Stripe variables
 
