@@ -26,6 +26,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
 
 ### Architecture/Environment changes
+* [OSDEV-2881](https://opensupplyhub.atlassian.net/browse/OSDEV-2881) - Deploy workflows now support selective OpenSearch clearing via **Which OpenSearch indexes and related templates to clear during deployment** (`none`, `production-locations`, `moderation-events`, or `both`) in `Deploy to AWS` and `[Release] Deploy`. This replaces the old all-or-nothing checkbox so a mapping change on one index does not force a full reindex of the other. On **Deploy to AWS**, enabling **Restore database to original state** always clears both indexes regardless of the selected target. **DB - Apply Anonymized DB** always clears both indexes after restoring the anonymized dump (unchanged behavior; no selective option).
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
 
 ### What's new
@@ -35,7 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-* The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
+* The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Run `[Release] Deploy` with **Which OpenSearch indexes and related templates to clear during deployment** set to `moderation-events` so only that index is recreated — avoid `both`, which would also clear `production-locations` (~2.5M records, 6+ hours to refill). Related v1 GET endpoints return reduced data until Logstash finishes refilling the cleared index.
 * Backfilling `os_id_snapshot` for existing moderation events is handled separately in [OSDEV-2878](https://opensupplyhub.atlassian.net/browse/OSDEV-2878).
 
 
