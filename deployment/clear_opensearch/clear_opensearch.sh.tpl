@@ -7,12 +7,8 @@
 # storage for each pipeline.
 #
 # CLEAR_OPENSEARCH_TARGET: none | production-locations | moderation-events | both
-# When RESTORE_DB is true, both indexes are always cleared.
 
 target="${CLEAR_OPENSEARCH_TARGET:-none}"
-if [ "${RESTORE_DB:-false}" = "true" ]; then
-  target="both"
-fi
 
 CURL_OPTS=(--aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY")
 BASE="https://$OPENSEARCH_DOMAIN"

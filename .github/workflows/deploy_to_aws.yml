@@ -574,7 +574,6 @@ jobs:
           EFS_AP_ID: ${{ steps.export_variables.outputs.EFS_AP_ID }}
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
           BASTION_IP: ${{ vars.BASTION_IP }}
-          RESTORE_DB: ${{ inputs.restore-db }}
         run: |
           if [ "${{ inputs.restore-db }}" = "true" ]; then
             CLEAR_OPENSEARCH_TARGET=both
@@ -589,7 +588,7 @@ jobs:
           printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ssh/id_rsa
           echo "" >> ssh/id_rsa
           echo -n ${{ vars.BASTION_IP }} > script/.env
-          envsubst '${OPENSEARCH_DOMAIN} ${EFS_AP_ID} ${EFS_ID} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} ${CLEAR_OPENSEARCH_TARGET} ${RESTORE_DB}' \
+          envsubst '${OPENSEARCH_DOMAIN} ${EFS_AP_ID} ${EFS_ID} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} ${CLEAR_OPENSEARCH_TARGET}' \
             < clear_opensearch.sh.tpl > script/clear_opensearch.sh
           envsubst < run.sh.tpl > script/run.sh
           docker run --rm  \
