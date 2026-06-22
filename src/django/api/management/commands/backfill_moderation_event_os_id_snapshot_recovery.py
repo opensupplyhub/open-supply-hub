@@ -98,6 +98,7 @@ class Command(BaseCommand):
             try:
                 rows = ModerationEvent.objects.filter(
                     uuid=uuid,
+                    status=ModerationEvent.Status.APPROVED,
                     os_id__isnull=True,
                     os_id_snapshot='',
                 ).update(os_id_snapshot=recovered_os_id)

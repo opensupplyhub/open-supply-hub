@@ -34,11 +34,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate` — runs `0215_backfill_moderation_event_os_id_snapshot`, which forward-fills `os_id_snapshot` for the ~298k approved events where `os_id` is still present in Postgres.
+    * `migrate`
     * `reindex_database`
+    * `backfill_moderation_event_os_id_snapshot_recovery` — one-time, **best-effort** recovery of `os_id_snapshot` for events where `os_id` was already nulled, from the linked `FacilityListItem`. **Remove from `post_deployment` after this release.** Note: low yield (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so most events have no usable link and stay unrecoverable.
 * The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Recreate/reindex the `moderation-events` index so existing documents pick up the new mapping and coalesced `os_id`.
-* Run the following backfill command after deployment:
-    * `python manage.py backfill_moderation_event_os_id_snapshot_recovery` — **best-effort** recovery of `os_id_snapshot` for the ~36k events where `os_id` was already nulled, from the linked `FacilityListItem`. Run with `--dry-run` first. Note: coverage of this historical backlog is very low (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so the majority of these events have no usable link and stay unrecoverable.
 
 ---
 
