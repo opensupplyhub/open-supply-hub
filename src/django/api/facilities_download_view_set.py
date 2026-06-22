@@ -10,6 +10,8 @@ from api.serializers.facility.facility_download_serializer_embed_mode import \
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
 from api.serializers.facility.utils import is_same_contributor_from_url_param
+from api.permissions import can_get_union_linked_data
+from api.trade_union import union_contributor_ids
 from api.constants import PaginationConfig
 
 
@@ -36,7 +38,17 @@ class FacilitiesDownloadViewSet(
                 many=True,
                 contributor_id=contributor_id
             )
-        return FacilityDownloadSerializer(objs, many=True)
+
+        exclude_contributor_ids = (
+            set()
+            if can_get_union_linked_data(self.request)
+            else union_contributor_ids()
+        )
+        return FacilityDownloadSerializer(
+            objs,
+            many=True,
+            exclude_contributor_ids=exclude_contributor_ids,
+        )
 
     def list(self, request):
         FacilitiesDownloadService.check_if_downloads_are_blocked()

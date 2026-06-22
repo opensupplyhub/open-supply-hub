@@ -4,6 +4,8 @@ from django.conf import settings
 from django.utils.http import is_same_domain
 from rest_framework import permissions
 
+from api.constants import FeatureGroups
+
 
 def _report_warning_to_rollbar(message, extra_data=None):
     ROLLBAR = getattr(settings, 'ROLLBAR', {})
@@ -50,6 +52,39 @@ class IsAuthenticatedOrWebClient(permissions.BasePermission):
                 extra_data={'client_key': client_key})
 
         return False
+
+
+def has_api_token(request):
+    auth_header = request.META.get('HTTP_AUTHORIZATION', '') or ''
+    return auth_header.strip().lower().startswith('token ')
+
+
+def is_web_client_request(request):
+    if settings.DEBUG or settings.OAR_CLIENT_KEY == '':
+        return True
+
+    client_key = request.META.get('HTTP_X_OAR_CLIENT_KEY')
+    if client_key and client_key == settings.OAR_CLIENT_KEY:
+        return referring_host_is_allowed(referring_host(request))
+
+    return False
+
+
+def can_get_union_linked_data(request):
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated:
+        return False
+
+    return user.groups.filter(
+        name=FeatureGroups.CAN_GET_UNION_LINKED_DATA
+    ).exists()
+
+
+def should_exclude_union_data(request):
+    if can_get_union_linked_data(request):
+        return False
+
+    return has_api_token(request) or not is_web_client_request(request)
 
 
 class IsAllowedHost(permissions.BasePermission):

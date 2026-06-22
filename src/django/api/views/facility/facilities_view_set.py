@@ -76,7 +76,12 @@ from api.facility_history import (
 from api.mail import send_claim_facility_confirmation_email
 
 from api.pagination import FacilitiesGeoJSONPagination
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.permissions import (
+    IsRegisteredAndConfirmed,
+    IsSuperuser,
+    should_exclude_union_data,
+)
+from api.trade_union import union_contributor_ids
 from api.sector_cache import SectorCache
 from api.os_id_lookup import OSIDLookup
 from api.serializers import (
@@ -275,6 +280,13 @@ class FacilitiesViewSet(ListModelMixin,
                 'sector'])
         if not should_serialize_number_of_public_contributors:
             exclude_fields.extend(['number_of_public_contributors'])
+
+        # Strip trade union-contributed fields from programmatic API access
+        # while keeping the web client's manual search results intact
+        # (OSDEV-2786). Only relevant when extended fields/sector are
+        # serialized (detail mode).
+        if should_serialize_details and should_exclude_union_data(request):
+            context['exclude_union_contributor_ids'] = union_contributor_ids()
 
         is_same_contributor = is_same_contributor_from_url_param(
             request

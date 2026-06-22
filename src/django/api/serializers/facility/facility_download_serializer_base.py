@@ -6,6 +6,7 @@ from api.models.facility.facility_manager_index_new import (
 from countries.lib.countries import COUNTRY_NAMES
 from api.csv_download import format_download_extended_fields
 from api.helpers.helpers import parse_download_date
+from api.trade_union import union_free_sector_values
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 
@@ -13,6 +14,12 @@ class FacilityDownloadSerializerBase(Serializer):
     """Shared CSV row helpers for full and embed facility downloads."""
 
     row = SerializerMethodField()
+
+    def __init__(self, *args, exclude_contributor_ids=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Contributor ids (trade unions) whose fields must be stripped from the
+        # download. Empty for the web client and exempt users (OSDEV-2786).
+        self.exclude_contributor_ids = exclude_contributor_ids or set()
 
     class Meta:
         model = FacilityIndex()
@@ -78,8 +85,15 @@ class FacilityDownloadSerializerBase(Serializer):
         return list(reversed(facility.location.coords))
 
     def get_sector(self, facility: FacilityIndex):
-        """Return pipe-separated, title-cased sector values."""
-        return self.join(facility.sector)
+        """Return pipe-separated, title-cased sector values.
+
+        Sector values contributed solely by a trade union are stripped for
+        programmatic/non-web-client downloads (OSDEV-2786).
+        """
+        sector = union_free_sector_values(
+            facility, self.exclude_contributor_ids
+        )
+        return self.join(sector)
 
     def get_extended_fields(self, fields) -> List[Any]:
         """Return the six standard extended-field columns, joined with
