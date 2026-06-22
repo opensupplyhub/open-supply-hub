@@ -193,6 +193,37 @@ class TradeUnionDownloadSerializerTest(TestCase):
         # wage_indicator.*) are unchanged.
         self.assertEqual(no_strip[-8:], stripped[-8:])
 
+    def _facility_with_contributors(self):
+        facility = self._facility()
+        facility.contributors = [
+            {
+                'id': OTHER_ID,
+                'name': 'Public Org',
+                'should_display_associations': True,
+                'contrib_type': 'Brand / Retailer',
+            },
+            {
+                'id': UNION_ID,
+                'name': 'A Union',
+                'should_display_associations': True,
+                'contrib_type': 'Union',
+            },
+        ]
+        return facility
+
+    def test_download_strips_union_from_contributor_list(self):
+        row = FacilityDownloadSerializer(
+            exclude_contributor_ids={UNION_ID}
+        ).get_row(self._facility_with_contributors())
+        # index 9 == "contributor (list)" column
+        self.assertEqual(row[9], 'Public Org')
+
+    def test_download_keeps_contributor_list_without_exclusion(self):
+        row = FacilityDownloadSerializer().get_row(
+            self._facility_with_contributors()
+        )
+        self.assertEqual(row[9], 'Public Org|A Union')
+
     def test_download_strips_union_contributor_partner_field(self):
         bsci_field = SimpleNamespace(
             name='bsci_audit',

@@ -120,7 +120,13 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
 
     def get_contributors(self, facility: FacilityIndexNewManager) -> str:
         """Return pipe-separated contributor names, marking the claimer when
-        present."""
+        present.
+
+        Trade union contributors are omitted entirely when their fields are
+        being stripped (OSDEV-2786). Even the anonymized "A Union" form would
+        disclose union involvement, so excluded contributors are dropped from
+        the column rather than anonymized.
+        """
         contributors = []
         claim = facility.approved_claim
         if claim is not None:
@@ -129,6 +135,8 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             ))
 
         for contributor in facility.contributors:
+            if contributor.get("id") in self.exclude_contributor_ids:
+                continue
             contributors.append(
                 contributor["name"]
                 if contributor["should_display_associations"]
