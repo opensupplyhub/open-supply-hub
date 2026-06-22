@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
 * `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
 * `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
+* `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
 
 #### Schema changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
@@ -41,8 +42,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `backfill_moderation_event_os_id_snapshot_recovery` — one-time, **best-effort** recovery of `os_id_snapshot` for events where `os_id` was already nulled, from the linked `FacilityListItem`. **Remove from `post_deployment` after this release.** Note: low yield (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so most events have no usable link and stay unrecoverable.
 * The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Run `[Release] Deploy` with **Which OpenSearch indexes and related templates to clear during deployment** set to `moderation-events` so only that index is recreated — avoid `both`, which would also clear `production-locations` (~2.5M records, 6+ hours to refill). Related v1 GET endpoints return reduced data until Logstash finishes refilling the cleared index.
-* Backfilling `os_id_snapshot` for existing moderation events is handled separately in [OSDEV-2878](https://opensupplyhub.atlassian.net/browse/OSDEV-2878).
 
 
 ## Release 2.25.0
