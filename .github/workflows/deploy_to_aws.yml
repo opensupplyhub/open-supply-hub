@@ -31,7 +31,7 @@ on:
         type: boolean
         default: false
       clear-opensearch-target:
-        description: 'Which OpenSearch indexes and related templates to clear (when resetting or restoring the database, both are always cleared)'
+        description: 'Which OpenSearch indexes and related templates to clear during deployment (when Restore database to original state is enabled on Deploy to AWS, both are always cleared)'
         required: false
         type: choice
         options:
