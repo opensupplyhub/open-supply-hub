@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0212_add_moderation_pause_info_switch'),
+        ('api', '0214_add_os_id_snapshot_to_moderation_event'),
     ]
 
     operations = [
