@@ -31,7 +31,7 @@ on:
         type: boolean
         default: false
       clear-opensearch-target:
-        description: 'Which OpenSearch indexes to clear (restore-db always clears both)'
+        description: 'Which OpenSearch indexes and related templates to clear (restore-db always clears both)'
         required: false
         type: choice
         options:

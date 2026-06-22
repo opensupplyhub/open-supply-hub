@@ -17,7 +17,7 @@ on:
           - rba
         default: sandbox
       clear-opensearch-target:
-        description: 'Which OpenSearch indexes to clear during deployment'
+        description: 'Which OpenSearch indexes and related templates to clear during deployment'
         required: false
         type: choice
         options:
