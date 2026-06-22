@@ -574,8 +574,7 @@ jobs:
           EFS_AP_ID: ${{ steps.export_variables.outputs.EFS_AP_ID }}
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
           BASTION_IP: ${{ vars.BASTION_IP }}
-          CLEAR_PRODUCTION_LOCATIONS: ${{ inputs.restore-db == true || inputs.clear-opensearch-target == 'both' || inputs.clear-opensearch-target == 'production-locations' }}
-          CLEAR_MODERATION_EVENTS: ${{ inputs.restore-db == true || inputs.clear-opensearch-target == 'both' || inputs.clear-opensearch-target == 'moderation-events' }}
+          CLEAR_OPENSEARCH_TARGET: ${{ inputs.restore-db == true && 'both' || inputs.clear-opensearch-target }}
         run: |
           cd ./deployment/clear_opensearch
           mkdir -p script
@@ -584,7 +583,7 @@ jobs:
           printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ssh/id_rsa
           echo "" >> ssh/id_rsa
           echo -n ${{ vars.BASTION_IP }} > script/.env
-          envsubst '${OPENSEARCH_DOMAIN} ${EFS_AP_ID} ${EFS_ID} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} ${CLEAR_PRODUCTION_LOCATIONS} ${CLEAR_MODERATION_EVENTS}' \
+          envsubst '${OPENSEARCH_DOMAIN} ${EFS_AP_ID} ${EFS_ID} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} ${CLEAR_OPENSEARCH_TARGET}' \
             < clear_opensearch.sh.tpl > script/clear_opensearch.sh
           envsubst < run.sh.tpl > script/run.sh
           docker run --rm  \

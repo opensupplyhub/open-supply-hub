@@ -5,32 +5,33 @@
 # new index mappings or to refresh the OpenSearch cluster after
 # restarting Logstash, with the lock files deleted from EFS
 # storage for each pipeline.
+#
+# CLEAR_OPENSEARCH_TARGET: none | production-locations | moderation-events | both
 
-clear_production_locations="${CLEAR_PRODUCTION_LOCATIONS:-false}"
-clear_moderation_events="${CLEAR_MODERATION_EVENTS:-false}"
+target="${CLEAR_OPENSEARCH_TARGET:-none}"
 
 CURL_OPTS=(--aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY")
 BASE="https://$OPENSEARCH_DOMAIN"
 
-if [ "$clear_production_locations" = "true" ]; then
+if [ "$target" = "both" ] || [ "$target" = "production-locations" ]; then
   echo -e "\nDelete production-locations index and template\n"
   curl -X DELETE "$BASE/production-locations" "${CURL_OPTS[@]}"
   curl -X DELETE "$BASE/_index_template/production_locations_template" "${CURL_OPTS[@]}"
 fi
 
-if [ "$clear_moderation_events" = "true" ]; then
+if [ "$target" = "both" ] || [ "$target" = "moderation-events" ]; then
   echo -e "\nDelete moderation-events index and template\n"
   curl -X DELETE "$BASE/moderation-events" "${CURL_OPTS[@]}"
   curl -X DELETE "$BASE/_index_template/moderation_events_template" "${CURL_OPTS[@]}"
 fi
 
-if [ "$clear_production_locations" = "true" ] || [ "$clear_moderation_events" = "true" ]; then
+if [ "$target" != "none" ]; then
   echo -e "\nRemove the JDBC input lock files from the EFS storage connected to Logstash\n"
   sudo mount -t efs -o tls,accesspoint=$EFS_AP_ID $EFS_ID:/ /mnt
-  if [ "$clear_production_locations" = "true" ]; then
+  if [ "$target" = "both" ] || [ "$target" = "production-locations" ]; then
     sudo rm -f /mnt/production_locations_jdbc_last_run
   fi
-  if [ "$clear_moderation_events" = "true" ]; then
+  if [ "$target" = "both" ] || [ "$target" = "moderation-events" ]; then
     sudo rm -f /mnt/moderation_events_jdbc_last_run
   fi
   sudo umount /mnt
