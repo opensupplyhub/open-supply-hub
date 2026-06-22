@@ -40,8 +40,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `backfill_moderation_event_os_id_snapshot_recovery` — one-time, **best-effort** recovery of `os_id_snapshot` for events where `os_id` was already nulled, from the linked `FacilityListItem`. **Remove from `post_deployment` after this release.** Note: low yield (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so most events have no usable link and stay unrecoverable.
 * The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Run `[Release] Deploy` with **Which OpenSearch indexes and related templates to clear during deployment** set to `moderation-events` so only that index is recreated — avoid `both`, which would also clear `production-locations` (~2.5M records, 6+ hours to refill). Related v1 GET endpoints return reduced data until Logstash finishes refilling the cleared index.
 
----
-
 
 ## Release 2.25.0
 
