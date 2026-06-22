@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 #### Migrations
 * 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
 * `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
+* `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
 
 #### Schema changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
@@ -32,6 +33,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
+
+### Bugfix
+* [OSDEV-2197](https://opensupplyhub.atlassian.net/browse/OSDEV-2197) - Fixed promoted Single Location Contributions not being attributed as the source of a production location's name/address when the submitted value matched the existing one. The name/address index now flags the promoted (`created_from`) contribution and prioritizes it when ordering entries, so attribution follows the promoted contribution.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
