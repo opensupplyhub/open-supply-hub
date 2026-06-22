@@ -79,9 +79,10 @@ from api.pagination import FacilitiesGeoJSONPagination
 from api.permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser,
-    should_exclude_union_data,
 )
-from api.trade_union import union_contributor_ids
+from api.services.trade_union_exclusion_service import (
+    TradeUnionExclusionService,
+)
 from api.sector_cache import SectorCache
 from api.os_id_lookup import OSIDLookup
 from api.serializers import (
@@ -285,8 +286,10 @@ class FacilitiesViewSet(ListModelMixin,
         # while keeping the web client's manual search results intact
         # (OSDEV-2786). Only relevant when extended fields/sector are
         # serialized (detail mode).
-        if should_serialize_details and should_exclude_union_data(request):
-            context['exclude_union_contributor_ids'] = union_contributor_ids()
+        if should_serialize_details:
+            union_exclude_ids = TradeUnionExclusionService.for_list(request)
+            if union_exclude_ids:
+                context['exclude_union_contributor_ids'] = union_exclude_ids
 
         is_same_contributor = is_same_contributor_from_url_param(
             request

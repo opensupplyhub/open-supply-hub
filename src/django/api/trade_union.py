@@ -12,16 +12,6 @@ MIT living wage, wage indicator) are not union data and are never stripped
 """
 
 
-def union_contributor_ids():
-    from api.models.contributor.contributor import Contributor
-
-    return set(
-        Contributor.objects
-        .filter(contrib_type=Contributor.UNION_CONTRIB_TYPE)
-        .values_list('id', flat=True)
-    )
-
-
 def _contributor_id(entry):
     contributor = entry.get('contributor') or {}
     return contributor.get('id')

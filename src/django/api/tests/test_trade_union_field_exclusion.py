@@ -25,10 +25,12 @@ from api.permissions import (
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
+from api.services.trade_union_exclusion_service import (
+    TradeUnionExclusionService,
+)
 from api.trade_union import (
     strip_union_extended_fields,
     strip_union_sector_items,
-    union_contributor_ids,
     union_free_sector_values,
 )
 
@@ -238,8 +240,8 @@ class TradeUnionPermissionTest(TestCase):
             contrib_type=Contributor.UNION_CONTRIB_TYPE,
         )
 
-    def test_union_contributor_ids(self):
-        ids = union_contributor_ids()
+    def test_union_ids_manager(self):
+        ids = Contributor.objects.union_ids()
         self.assertTrue(
             Contributor.objects.filter(
                 contrib_type=Contributor.UNION_CONTRIB_TYPE
@@ -293,6 +295,21 @@ class TradeUnionPermissionTest(TestCase):
         request.user = self.user
         self.assertTrue(can_get_union_linked_data(request))
         self.assertFalse(should_exclude_union_data(request))
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY='secret-key')
+    def test_service_for_list_excludes_token_request(self):
+        request = self.factory.get('/api/facilities/',
+                                   HTTP_AUTHORIZATION='Token abc123')
+        self.assertTrue(TradeUnionExclusionService.for_list(request))
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY='secret-key')
+    def test_service_for_list_keeps_web_client(self):
+        request = self.factory.get(
+            '/api/facilities/',
+            HTTP_X_OAR_CLIENT_KEY='secret-key',
+            HTTP_REFERER='http://localhost/facilities',
+        )
+        self.assertEqual(TradeUnionExclusionService.for_list(request), set())
 
 
 class TradeUnionDownloadViewGateTest(TestCase):
