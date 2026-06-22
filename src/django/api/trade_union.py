@@ -2,20 +2,14 @@
 
 Trade union-linked data is contributed by ``Contributor`` records whose
 ``contrib_type`` is ``Union``. For programmatic API access and bulk downloads
-we hide the *fields* a union contributed (extended fields, contributor-supplied
-partner fields and sector) while keeping the facility itself - and its primary
-identity fields (name, address, country, location) - fully visible. System or
-synthesized partner fields (e.g. MIT living wage, wage indicator) are not union
-data and are never stripped (OSDEV-2786).
+we hide every *field* a union contributed - extended fields (including the
+union's own name/address entries), contributor-supplied partner fields and
+sector - while keeping the facility itself and its canonical identity (the
+resolved ``name``/``address``/``country_code``/``location`` columns on
+``FacilityIndex``) fully visible. System or synthesized partner fields (e.g.
+MIT living wage, wage indicator) are not union data and are never stripped
+(OSDEV-2786).
 """
-from api.models.extended_field import ExtendedField
-
-# Primary identity fields are out of scope: a union-contributed name/address is
-# left untouched because those fields are never hidden.
-PRIMARY_EXTENDED_FIELDS = frozenset({
-    ExtendedField.NAME,
-    ExtendedField.ADDRESS,
-})
 
 
 def union_contributor_ids():
@@ -40,10 +34,7 @@ def strip_union_extended_fields(extended_fields, union_ids):
     return [
         field
         for field in extended_fields
-        if (
-            field.get('field_name') in PRIMARY_EXTENDED_FIELDS
-            or _contributor_id(field) not in union_ids
-        )
+        if _contributor_id(field) not in union_ids
     ]
 
 

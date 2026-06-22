@@ -56,15 +56,20 @@ class TradeUnionStripHelpersTest(SimpleTestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['contributor']['id'], OTHER_ID)
 
-    def test_keeps_primary_name_and_address_even_from_union(self):
+    def test_strips_union_primary_name_and_address(self):
+        # Union-contributed name/address extended-field entries are stripped
+        # too; the canonical identity columns are emitted separately and stay
+        # intact (OSDEV-2786).
         fields = [
             _ef('name', UNION_ID, 'Union Name'),
             _ef('address', UNION_ID, 'Union Address'),
             _ef('parent_company', UNION_ID, {'name': 'Hidden'}),
+            _ef('name', OTHER_ID, 'Public Name'),
         ]
         result = strip_union_extended_fields(fields, {UNION_ID})
-        kept = {field['field_name'] for field in result}
-        self.assertEqual(kept, {'name', 'address'})
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['field_name'], 'name')
+        self.assertEqual(result[0]['contributor']['id'], OTHER_ID)
 
     def test_extended_fields_no_op_without_union_ids(self):
         fields = [_ef('number_of_workers', UNION_ID, {'min': 1, 'max': 2})]
