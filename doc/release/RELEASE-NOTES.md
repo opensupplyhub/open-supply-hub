@@ -30,6 +30,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
+* [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the lsit contribution and SLC contribution workflow pages.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
