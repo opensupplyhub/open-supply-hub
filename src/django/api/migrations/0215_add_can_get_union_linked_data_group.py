@@ -20,7 +20,7 @@ def remove_can_get_union_linked_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0213_add_partner_field_availability_flags'),
+        ('api', '0214_add_os_id_snapshot_to_moderation_event'),
     ]
 
     operations = [
