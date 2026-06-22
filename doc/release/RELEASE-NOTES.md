@@ -34,6 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
+* [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the list contribution and SLC contribution workflow pages.
 
 ### Bugfix
 * [OSDEV-2197](https://opensupplyhub.atlassian.net/browse/OSDEV-2197) - Fixed promoted Single Location Contributions not being attributed as the source of a production location's name/address when the submitted value matched the existing one. The name/address index now flags the promoted (`created_from`) contribution and prioritizes it when ordering entries, so attribution follows the promoted contribution.
