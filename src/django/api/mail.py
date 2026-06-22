@@ -14,7 +14,7 @@ from api.constants import FacilityClaimStatuses
 
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
-MODERATION_PAUSE_EMAILS_SWITCH = 'enable_moderation_pause_emails'
+MODERATION_PAUSE_EMAILS_SWITCH = 'enable_moderation_pause_info'
 
 
 def make_oshub_url(request: Request):
