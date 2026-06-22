@@ -101,6 +101,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2788](https://opensupplyhub.atlassian.net/browse/OSDEV-2788) - A banner has been added to the "Add data" and "Claim a Production Location" pages notifying contributors about the upcoming data moderation pause, hidden behind the enable_moderation_pause_info waffle switch.
 * [OSDEV-2861](https://opensupplyhub.atlassian.net/browse/OSDEV-2861) - Renamed the platform search filter label from **Spotlight Data Partners** to **Spotlight Partners** on the homepage and facilities search sidebars, aligning with product terminology introduced in [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542).
 * [OSDEV-2768](https://opensupplyhub.atlassian.net/browse/OSDEV-2768) - Added a guidance banner to the post-registration success screen. If users do not receive their confirmation email within 24 hours, the banner instructs them to check their spam folder, allowlist `@opensupplyhub.org`, or contact their IT department — reducing support requests from users who miss the verification email.
+* [OSDEV-2789](https://opensupplyhub.atlassian.net/browse/OSDEV-2789) - Updated data submission confirmation emails for claims, SLCs, and list uploads to reflect the new data moderation pause SLAs.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
