@@ -73,9 +73,17 @@ def make_pl_search_url(request):
 
 def send_claim_facility_confirmation_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_submitted_subject.txt')
-    suffix = '_pause_version' if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH) else ''
-    text_template = get_template(f'mail/claim_facility_submitted_body{suffix}.txt')
-    html_template = get_template(f'mail/claim_facility_submitted_body{suffix}.html')
+    suffix = (
+        '_pause_version'
+        if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH)
+        else ''
+    )
+    text_template = get_template(
+        f'mail/claim_facility_submitted_body{suffix}.txt'
+    )
+    html_template = get_template(
+        f'mail/claim_facility_submitted_body{suffix}.html'
+    )
 
     claim_dictionary = {
         'facility_name': facility_claim.facility.name,
@@ -509,7 +517,11 @@ def send_slc_additional_info_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_additional_info_confirmation_subject.txt'
     )
-    suffix = '_pause_version' if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH) else ''
+    suffix = (
+        '_pause_version'
+        if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH)
+        else ''
+    )
     text_template = get_template(
         f'mail/slc_additional_info_confirmation_body{suffix}.txt'
     )
@@ -538,7 +550,11 @@ def send_slc_new_location_confirmation_email(moderation_event):
     subj_template = get_template(
         'mail/slc_new_location_confirmation_subject.txt'
     )
-    suffix = '_pause_version' if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH) else ''
+    suffix = (
+        '_pause_version'
+        if switch_is_active(MODERATION_PAUSE_EMAILS_SWITCH)
+        else ''
+    )
     text_template = get_template(
         f'mail/slc_new_location_confirmation_body{suffix}.txt'
     )
