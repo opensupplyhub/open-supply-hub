@@ -1,6 +1,7 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.contrib.gis.geos import Point
+from django.http import QueryDict
 from django.test import TestCase
 
 from api.constants import FacilityClaimStatuses
@@ -881,3 +882,101 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertEqual(len(test_data_field), 1)
         self.assertIn('json_schema', test_data_field[0])
         self.assertIsNone(test_data_field[0]['json_schema'])
+
+    def __append_test_partner_extended_field(self):
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value={'raw_value': 'Test Value'},
+            contributor=self.contrib_one
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': {'raw_value': 'Test Value'},
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+        return facility_index
+
+    @patch(
+        'api.serializers.facility.facility_index_details_serializer.'
+        'get_cached_all_partner_fields'
+    )
+    def test_partner_fields_hidden_for_api_user_when_unavailable_in_api(
+        self, mock_get_fields
+    ):
+        self.partner_field_1.available_in_api = False
+        self.partner_field_1.save()
+        mock_get_fields.return_value = [self.partner_field_1]
+
+        facility_index = self.__append_test_partner_extended_field()
+
+        request = Mock(
+            auth='token', query_params=QueryDict(''), user=self.user_one
+        )
+        data = FacilityIndexDetailsSerializer(
+            facility_index, context={'request': request}
+        ).data
+        partner_fields = data["properties"]["partner_fields"]
+
+        self.assertNotIn('test_data_field', partner_fields)
+
+    @patch(
+        'api.serializers.facility.facility_index_details_serializer.'
+        'get_cached_all_partner_fields'
+    )
+    def test_partner_fields_visible_for_api_user_when_available_in_api(
+        self, mock_get_fields
+    ):
+        self.partner_field_1.available_in_api = True
+        self.partner_field_1.save()
+        mock_get_fields.return_value = [self.partner_field_1]
+
+        facility_index = self.__append_test_partner_extended_field()
+
+        request = Mock(
+            auth='token', query_params=QueryDict(''), user=self.user_one
+        )
+        data = FacilityIndexDetailsSerializer(
+            facility_index, context={'request': request}
+        ).data
+        partner_fields = data["properties"]["partner_fields"]
+
+        self.assertIn('test_data_field', partner_fields)
+
+    @patch(
+        'api.serializers.facility.facility_index_details_serializer.'
+        'get_cached_all_partner_fields'
+    )
+    def test_partner_fields_visible_for_non_api_user_regardless_of_api_flag(
+        self, mock_get_fields
+    ):
+        self.partner_field_1.available_in_api = False
+        self.partner_field_1.save()
+        mock_get_fields.return_value = [self.partner_field_1]
+
+        facility_index = self.__append_test_partner_extended_field()
+
+        request = Mock(
+            auth=None, query_params=QueryDict(''), user=self.user_one
+        )
+        data = FacilityIndexDetailsSerializer(
+            facility_index, context={'request': request}
+        ).data
+        partner_fields = data["properties"]["partner_fields"]
+
+        self.assertIn('test_data_field', partner_fields)
