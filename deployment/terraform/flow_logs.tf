@@ -5,7 +5,7 @@
 
 resource "aws_s3_bucket" "vpc_flow_logs" {
   bucket        = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-vpc-flow-logs-${var.aws_region}"
-  force_destroy = false
+  force_destroy = true
 
   tags = {
     Name        = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-vpc-flow-logs-${var.aws_region}"
