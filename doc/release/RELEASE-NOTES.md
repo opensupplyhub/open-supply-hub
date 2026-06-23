@@ -3,6 +3,34 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 10, 2026
+
+### Database changes
+
+#### Migrations
+* `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+
+### Code/API changes
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
+  * Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
+  * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `api_facilityindex` columns using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
+  * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
+
+### What's new
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+    * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
+* Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+
+
 ## Release 2.26.0
 
 ## Introduction

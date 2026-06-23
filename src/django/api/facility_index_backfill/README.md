@@ -4,7 +4,7 @@ Targeted batch updates for denormalized columns on `api_facilityindex`.
 
 ## Purpose
 
-Open Supply Hub stores search and display data in `api_facilityindex`. That table is built from many PostgreSQL `index_*()` functions (see `src/django/sqls/`).
+Open Supply Hub stores search and display data in `api_facilityindex`. That table is built from many PostgreSQL `index_*()` functions (see `src/django/sqls/0171_index_facilities.sql`).
 
 When an `index_*()` function changes in a migration, you usually only need to refresh the affected column(s), not the entire index row.
 

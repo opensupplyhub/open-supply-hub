@@ -73,6 +73,14 @@ class FacilityIndexBackfillRunner:
         )
         return total_rows
 
+    @staticmethod
+    def _format_worker_number(worker_id, workers=None):
+        """1-based worker label for logs; internal worker_id stays 0-based."""
+        number = worker_id + 1
+        if workers is not None:
+            return f'{number}/{workers}'
+        return str(number)
+
     def _run_field_group(self, field_name, parallel, batch_size, dry_run):
         get_field_spec(field_name)
         self.stdout.write(f'Backfilling field group: {field_name}')
@@ -151,7 +159,10 @@ class FacilityIndexBackfillRunner:
             env[RESULT_FILE_ENV] = result_path
             env[FIELD_NAME_ENV] = field_name
             cmd = [sys.executable, *base_args]
-            self.stdout.write(f'  worker {worker_id}: {" ".join(cmd)}')
+            self.stdout.write(
+                f'  worker {self._format_worker_number(worker_id)}: '
+                f'{" ".join(cmd)}'
+            )
             processes.append(subprocess.Popen(cmd, env=env))
 
         failures = []
@@ -165,7 +176,7 @@ class FacilityIndexBackfillRunner:
                 if os.path.exists(result_path):
                     os.unlink(result_path)
             details = ', '.join(
-                f'worker {worker_id} (exit {code})'
+                f'worker {self._format_worker_number(worker_id)} (exit {code})'
                 for worker_id, code in failures
             )
             raise CommandError(
@@ -202,8 +213,11 @@ class FacilityIndexBackfillRunner:
             cursor.execute(count_sql, sql_params)
             row_count = cursor.fetchone()[0]
 
+        worker_number = self._format_worker_number(worker_id, workers)
+        worker_label = self._format_worker_number(worker_id)
+
         self.stdout.write(
-            f'Worker {worker_id}/{workers} ({field_name}): '
+            f'Worker {worker_number} ({field_name}): '
             f'{row_count} rows assigned.'
         )
 
@@ -211,12 +225,13 @@ class FacilityIndexBackfillRunner:
             elapsed = time.monotonic() - started_at
             self.stdout.write(
                 self.style.WARNING(
-                    f'DRY RUN: worker {worker_id} would update {row_count} '
-                    f'rows for {field_name}. Run without --dry-run to apply.'
+                    f'DRY RUN: worker {worker_label} would update '
+                    f'{row_count} rows for {field_name}. '
+                    f'Run without --dry-run to apply.'
                 )
             )
             self.stdout.write(
-                f'Worker {worker_id} dry run finished in {elapsed:.1f}s.'
+                f'Worker {worker_label} dry run finished in {elapsed:.1f}s.'
             )
             self._write_worker_result(row_count)
             return row_count
@@ -249,15 +264,16 @@ class FacilityIndexBackfillRunner:
 
             batch_seconds = time.monotonic() - batch_started_at
             self.stdout.write(
-                f'Worker {worker_id} ({field_name}): batch {batch_number} '
-                f'updated {updated} rows (total {total_updated}, '
-                f'last_id={last_id}, {batch_seconds:.1f}s)'
+                f'Worker {worker_label} ({field_name}): '
+                f'batch {batch_number} updated {updated} rows '
+                f'(total {total_updated}, last_id={last_id}, '
+                f'{batch_seconds:.1f}s)'
             )
 
         elapsed = time.monotonic() - started_at
         self.stdout.write(
             self.style.SUCCESS(
-                f'Worker {worker_id} ({field_name}) finished: '
+                f'Worker {worker_label} ({field_name}) finished: '
                 f'{total_updated} rows updated in {elapsed:.1f}s.'
             )
         )
