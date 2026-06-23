@@ -20,7 +20,7 @@ def remove_can_get_union_linked_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0214_add_os_id_snapshot_to_moderation_event'),
+        ('api', '0216_backfill_moderation_event_os_id_snapshot'),
     ]
 
     operations = [

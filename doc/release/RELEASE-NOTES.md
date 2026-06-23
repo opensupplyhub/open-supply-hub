@@ -3,6 +3,28 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 10, 2026
+
+### Database changes
+
+#### Migrations
+* `0217_add_can_get_union_linked_data_group.py` - Data migration. Creates the `can_get_union_linked_data` auth group whose members are exempt from trade union-linked field stripping in API and download responses. Reversible (reverse deletes the group).
+
+### Code/API changes
+* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Strip trade union-contributed fields (`Contributor.contrib_type = 'Union'`) from programmatic API access and bulk downloads, while keeping the facility, its canonical identity (the resolved `name`/`address`/`country_code`/`location` columns), and the web-client manual search and facility profiles fully intact. All union-contributed extended fields (including the union's own name/address entries), contributor-supplied partner fields, and union-only sector values are removed; system/synthesized partner fields (MIT living wage, wage indicator) are derived from facility data and are never stripped. The bulk download endpoint (`GET /api/facilities-downloads/`) strips union fields for **every** caller, since the download is the paid export product; the facility list endpoint (`GET /api/facilities/` with `detail=true`) and the facility detail endpoint (`GET /api/facilities/{id}/`) strip only for programmatic/non-web-client requests (`Authorization: Token` + `X-OAR-Client-Key`/`Referer` logic) so the web-client manual search and facility profiles stay complete. Members of the new `can_get_union_linked_data` group are exempt on both surfaces. No reindex required - filtering happens at serialization time.
+
+### What's new
+* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Trade union-contributed data is now withheld from programmatic API consumers and bulk downloads while remaining visible to people browsing and searching on the website and on facility profiles. Assign trusted users to the `can_get_union_linked_data` group in Django admin to let their API calls and downloads include union-contributed fields as before.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
+
 ## Release 2.26.0
 
 ## Introduction
@@ -16,7 +38,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
 * `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
 * `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
-* `0217_add_can_get_union_linked_data_group.py` - Creates the `can_get_union_linked_data` auth group whose members are exempt from trade union-linked field stripping in API and download responses.
 
 #### Schema changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
@@ -25,7 +46,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_data_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
-* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Strip trade union-contributed fields (`Contributor.contrib_type = 'Union'`) from programmatic API access and bulk downloads, while keeping the facility, its canonical identity (the resolved `name`/`address`/`country_code`/`location` columns), and the web-client manual search and facility profiles fully intact. All union-contributed extended fields (including the union's own name/address entries), contributor-supplied partner fields, and union-only sector values are removed; system/synthesized partner fields (MIT living wage, wage indicator) are derived from facility data and are never stripped. The bulk download endpoint (`GET /api/facilities-downloads/`) strips union fields for **every** caller, since the download is the paid export product; the facility list endpoint (`GET /api/facilities/` with `detail=true`) strips only for programmatic/non-web-client requests (`Authorization: Token` + `X-OAR-Client-Key`/`Referer` logic) so the web-client manual search stays complete. Members of the new `can_get_union_linked_data` group are exempt on both surfaces. No reindex required - filtering happens at serialization time.
 * [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
 * [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
 
@@ -36,7 +56,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
-* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Trade union-contributed data is now withheld from programmatic API consumers and bulk downloads while remaining visible to people browsing and searching on the website and on facility profiles. Assign trusted users to the `can_get_union_linked_data` group in Django admin to let their API calls and downloads include union-contributed fields as before.
 * [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the list contribution and SLC contribution workflow pages.
 
 ### Bugfix
