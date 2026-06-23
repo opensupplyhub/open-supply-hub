@@ -8,7 +8,7 @@
 #
 # CLEAR_OPENSEARCH_TARGET: none | production-locations | moderation-events | both
 
-target="${CLEAR_OPENSEARCH_TARGET:-none}"
+target="$CLEAR_OPENSEARCH_TARGET"
 
 CURL_OPTS=(--aws-sigv4 "aws:amz:eu-west-1:es" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY")
 BASE="https://$OPENSEARCH_DOMAIN"
