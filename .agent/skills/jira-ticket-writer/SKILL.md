@@ -49,6 +49,8 @@ WHEN [action]
 THEN [expected outcome]
 ```
 
+**Drafting the User Story lines:** the `AS A / I WANT / SO THAT` portion follows the same shape the `/user-story` skill produces. If you're starting from a raw customer ask or an unclear need, draft that part with `/user-story` first (it coaches persona → outcome → value and runs its four tests), then bring the result here to add Requirements and Acceptance Criteria. Don't re-derive the user-story craft in this skill — reuse `/user-story`.
+
 ## Epic format (canonical)
 
 ```
