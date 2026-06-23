@@ -165,7 +165,9 @@ def create_name_field_from_facility_name(name: str,
                                          contributor: dict,
                                          created_at: Union[str, bool],
                                          updated_at: str,
-                                         user_can_see_detail: bool) -> dict:
+                                         user_can_see_detail: bool,
+                                         is_from_created_from: bool = False
+                                         ) -> dict:
     """Create name field from facility name of the FacilityIndex model."""
     field_data = {
         'value': name,
@@ -175,6 +177,7 @@ def create_name_field_from_facility_name(name: str,
         'contributor_name': get_contributor_name_from_facilityindex(
             contributor, user_can_see_detail),
         'updated_at': format_date(updated_at),
+        'is_from_created_from': is_from_created_from,
     }
 
     if created_at:
@@ -183,13 +186,15 @@ def create_name_field_from_facility_name(name: str,
     return field_data
 
 
-def create_address_field_from_facility_address(address: str,
-                                               contributor: dict,
-                                               created_at: Union[str, bool],
-                                               updated_at: str,
-                                               user_can_see_detail: bool,
-                                               is_from_claim: bool = False
-                                               ) -> dict:
+def create_address_field_from_facility_address(
+    address: str,
+    contributor: dict,
+    created_at: Union[str, bool],
+    updated_at: str,
+    user_can_see_detail: bool,
+    is_from_claim: bool = False,
+    is_from_created_from: bool = False,
+) -> dict:
     """Create address field from facility address of the FacilityIndex
     model.
     """
@@ -202,6 +207,7 @@ def create_address_field_from_facility_address(address: str,
             contributor, user_can_see_detail),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_from_claim,
+        'is_from_created_from': is_from_created_from,
     }
 
     if created_at:
@@ -400,6 +406,5 @@ def is_same_contributor_from_url_param(request) -> bool:
 
     return (
         check_only_current_contributor()
-        or
-        check_current_contributor_and_combined()
+        or check_current_contributor_and_combined()
     )
