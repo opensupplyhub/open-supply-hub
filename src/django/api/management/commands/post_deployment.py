@@ -8,14 +8,11 @@ class Command(BaseCommand):
             'post-deployment tasks.')
 
     def handle(self, *args, **options):
-<<<<<<< HEAD
         call_command('migrate')
         call_command('reindex_database')
-=======
->>>>>>> b80a64c7 (Remove backfill from post_deployment and cap migrate at 0213.)
         call_command(
-            'migrate',
-            'api',
-            '0213_add_partner_field_availability_flags',
+            'backfill_facility_index',
+            fields='contributors',
+            parallel=10,
+            batch_size=10000,
         )
-        # call_command('reindex_database')
