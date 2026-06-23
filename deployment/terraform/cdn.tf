@@ -152,16 +152,16 @@ resource "aws_cloudfront_function" "homepage_host_rewrite" {
   name    = "func${local.short}HomepageHostRewrite"
   runtime = "cloudfront-js-1.0"
   publish = true
-  comment = "Sets Host header to info.opensupplyhub.org for Craft CMS homepage proxy"
+  comment = "Rewrites URI to /team for Craft CMS homepage proxy"
   code    = <<-EOT
     function handler(event) {
       var request = event.request;
-      // Override Host so Craft knows which site to serve.
-      // Without this, CloudFront forwards the original Host (e.g. dev.os-hub.net)
-      // and Craft may return a 404 or the wrong site.
-      // Rewrite URI to /team so Craft serves the correct page.
+      // Rewrite URI so Craft serves the correct page.
+      // Note: do NOT set request.headers['host'] here — it is read-only in
+      // CloudFront Functions and will cause a 502. CloudFront automatically
+      // uses the origin domain (info.opensupplyhub.org) as the Host header
+      // when forwarding to a custom origin, so no override is needed.
       request.uri = '/team';
-      request.headers['host'] = { value: 'info.opensupplyhub.org' };
       return request;
     }
   EOT
