@@ -81,6 +81,9 @@ def can_get_union_linked_data(request):
 
 
 def should_exclude_union_data(request):
+    if request is None:
+        return False
+
     if can_get_union_linked_data(request):
         return False
 

@@ -27,6 +27,9 @@ from api.facility_actions.processing_facility_executor import (
 from api.facility_actions.processing_facility_list import (
     ProcessingFacilityList
 )
+from api.services.trade_union_exclusion_service import (
+    TradeUnionExclusionService
+)
 from oar.rollbar import report_error_to_rollbar
 
 logger = logging.getLogger(__name__)
@@ -133,6 +136,12 @@ def geocode_facility_list_item(item):
 
 def handle_external_match_process_result(id, result, request, should_create):
     context = {'request': request}
+    # Strip trade union-contributed fields from the matched facilities returned
+    # by POST /api/facilities/ for programmatic API access, mirroring the list
+    # and detail endpoints (OSDEV-2786).
+    union_exclude_ids = TradeUnionExclusionService.for_list(request)
+    if union_exclude_ids:
+        context['exclude_union_contributor_ids'] = union_exclude_ids
     list_item_object_type = (
         FacilityListItem if should_create else FacilityListItemTemp
     )

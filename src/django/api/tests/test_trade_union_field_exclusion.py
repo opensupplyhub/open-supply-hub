@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.contrib.auth.models import AnonymousUser, Group
 from django.contrib.gis.geos import Point
@@ -13,7 +14,15 @@ from django.test import (
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
 
 from api.constants import FeatureGroups
-from api.models import Contributor, User
+from api.models import (
+    Contributor,
+    Facility,
+    FacilityListItem,
+    FacilityMatch,
+    Source,
+    User,
+)
+from api.processing import handle_external_match_process_result
 from api.models.partner_field import PartnerField
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.permissions import (
@@ -445,3 +454,96 @@ class TradeUnionDownloadViewGateTest(TestCase):
         self.user.groups.add(group)
         exclude_ids = self._exclude_ids_for(self.user)
         self.assertEqual(exclude_ids, set())
+
+
+class TradeUnionCreateApiContextTest(TestCase):
+    """POST /api/facilities/ match results reuse the list/detail gate.
+
+    ``handle_external_match_process_result`` must seed the serializer context
+    with the union contributor ids so the matched facilities returned by
+    POST /api/facilities/ are stripped for programmatic API consumers
+    (OSDEV-2786).
+    """
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create(email='create-union@example.com')
+        self.union = Contributor.objects.create(
+            admin=self.user,
+            name='A Union',
+            contrib_type=Contributor.UNION_CONTRIB_TYPE,
+        )
+
+        self.source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.union,
+        )
+        self.list_item = FacilityListItem.objects.create(
+            name='Item',
+            address='Address',
+            country_code='US',
+            sector=['Apparel'],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.POTENTIAL_MATCH,
+            source=self.source,
+        )
+        self.facility = Facility.objects.create(
+            name='Name',
+            address='Address',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=self.list_item,
+        )
+        self.match = FacilityMatch.objects.create(
+            status=FacilityMatch.PENDING,
+            facility=self.facility,
+            facility_list_item=self.list_item,
+            confidence=0.75,
+            results='',
+        )
+
+    def _base_result(self):
+        return {
+            'matches': [],
+            'item_id': self.list_item.id,
+            'geocoded_geometry': None,
+            'geocoded_address': None,
+            'status': self.list_item.status,
+        }
+
+    def _captured_context(self, mock_process):
+        # process_matches(f_l_item, matches, context, should_create, result)
+        return mock_process.call_args[0][2]
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY='secret-key')
+    @patch('api.processing.process_matches')
+    def test_token_request_strips_union_from_matches(self, mock_process):
+        mock_process.return_value = self._base_result()
+        request = self.factory.get(
+            '/api/facilities/', HTTP_AUTHORIZATION='Token abc123'
+        )
+        handle_external_match_process_result(
+            self.list_item.id, self._base_result(), request, True
+        )
+        context = self._captured_context(mock_process)
+        self.assertEqual(
+            context['exclude_union_contributor_ids'], {self.union.id}
+        )
+
+    @override_settings(DEBUG=False, OAR_CLIENT_KEY='secret-key')
+    @patch('api.processing.process_matches')
+    def test_web_client_request_keeps_union_in_matches(self, mock_process):
+        mock_process.return_value = self._base_result()
+        request = self.factory.get(
+            '/api/facilities/',
+            HTTP_X_OAR_CLIENT_KEY='secret-key',
+            HTTP_REFERER='http://localhost/facilities',
+        )
+        handle_external_match_process_result(
+            self.list_item.id, self._base_result(), request, True
+        )
+        context = self._captured_context(mock_process)
+        self.assertNotIn('exclude_union_contributor_ids', context)
