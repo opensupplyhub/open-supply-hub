@@ -253,6 +253,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             if field_name == ExtendedField.NAME and not embed_mode_active:
                 unsorted_data = serializer.data
                 for name_obj in facility.facility_names:
+                    if self._is_excluded_contributor(
+                            name_obj.get('contributor')):
+                        continue
                     f_name = format_field(name_obj.get('name'))
                     if f_name is not None and len(f_name) != 0:
                         created_at = use_main_created_at \
@@ -271,6 +274,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             elif field_name == ExtendedField.ADDRESS and not embed_mode_active:
                 unsorted_data = serializer.data
                 for address_obj in facility.facility_addresses:
+                    if self._is_excluded_contributor(
+                            address_obj.get('contributor')):
+                        continue
                     f_address = format_field(address_obj.get('address'))
                     if f_address is not None and len(f_address) != 0:
                         created_at = use_main_created_at \
@@ -368,9 +374,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 'count': 1,
             }
 
+        union_ids_to_exclude = self._union_contributor_ids_to_exclude()
         valid_contributors = [
             contributor for contributor in facility.contributors
             if contributor.get('id') is not None
+            and contributor.get('id') not in union_ids_to_exclude
         ]
         valid_contributors.sort(
             key=lambda contributor: (
@@ -432,6 +440,12 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if self.context is None:
             return set()
         return self.context.get('exclude_union_contributor_ids') or set()
+
+    def _is_excluded_contributor(self, contributor):
+        union_ids = self._union_contributor_ids_to_exclude()
+        if not union_ids:
+            return False
+        return (contributor or {}).get('id') in union_ids
 
     @staticmethod
     def _date_field_to_sort(use_main_created_at):

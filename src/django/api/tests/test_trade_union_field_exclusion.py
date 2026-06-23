@@ -25,6 +25,9 @@ from api.permissions import (
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
+from api.serializers.facility.facility_index_details_serializer import (
+    FacilityIndexDetailsSerializer,
+)
 from api.services.trade_union_exclusion_service import (
     TradeUnionExclusionService,
 )
@@ -257,6 +260,72 @@ class TradeUnionDownloadSerializerTest(TestCase):
             partner_fields=[bsci_field],
         ).get_row(facility)
         self.assertEqual(kept[-2:], ['2024-10-15', '2026-10-15'])
+
+
+class TradeUnionApiSerializerTest(SimpleTestCase):
+    """Union stripping in the facility list/detail (API) serializer."""
+
+    def _serializer(self, exclude_ids):
+        request = SimpleNamespace(
+            query_params=QueryDict(''),
+            user=AnonymousUser(),
+            auth=None,
+        )
+        context = {'request': request}
+        if exclude_ids:
+            context['exclude_union_contributor_ids'] = exclude_ids
+        return FacilityIndexDetailsSerializer(context=context)
+
+    def _facility(self):
+        return SimpleNamespace(
+            name='Canonical Name',
+            address='Canonical Address',
+            approved_claim=None,
+            contributors=[
+                {'id': OTHER_ID, 'name': 'Public Org',
+                 'should_display_associations': True,
+                 'contrib_type': 'Brand / Retailer'},
+                {'id': UNION_ID, 'name': 'A Union',
+                 'should_display_associations': True,
+                 'contrib_type': 'Union'},
+            ],
+            facility_names=[
+                {'name': 'Alt Public', 'contributor': {'id': OTHER_ID}},
+                {'name': 'Alt Union', 'contributor': {'id': UNION_ID}},
+            ],
+            facility_addresses=[
+                {'address': 'Alt Public Addr',
+                 'contributor': {'id': OTHER_ID}},
+                {'address': 'Alt Union Addr',
+                 'contributor': {'id': UNION_ID}},
+            ],
+        )
+
+    def test_contributors_strips_union(self):
+        result = self._serializer({UNION_ID}).get_contributors(
+            self._facility()
+        )
+        names = {entry.get('name') for entry in result}
+        self.assertEqual(names, {'Public Org'})
+
+    def test_contributors_kept_without_exclusion(self):
+        result = self._serializer(set()).get_contributors(self._facility())
+        names = {entry.get('name') for entry in result}
+        self.assertEqual(names, {'Public Org', 'A Union'})
+
+    def test_other_names_strips_union(self):
+        result = self._serializer({UNION_ID}).get_other_names(self._facility())
+        self.assertEqual(result, {'Alt Public'})
+
+    def test_other_names_kept_without_exclusion(self):
+        result = self._serializer(set()).get_other_names(self._facility())
+        self.assertEqual(result, {'Alt Public', 'Alt Union'})
+
+    def test_other_addresses_strips_union(self):
+        result = self._serializer({UNION_ID}).get_other_addresses(
+            self._facility()
+        )
+        self.assertEqual(result, {'Alt Public Addr'})
 
 
 class TradeUnionPermissionTest(TestCase):

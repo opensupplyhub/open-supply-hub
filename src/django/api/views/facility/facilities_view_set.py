@@ -514,6 +514,9 @@ class FacilitiesViewSet(ListModelMixin,
         try:
             queryset = FacilityIndex.objects.get(pk=pk)
             context = {'request': request}
+            union_exclude_ids = TradeUnionExclusionService.for_list(request)
+            if union_exclude_ids:
+                context['exclude_union_contributor_ids'] = union_exclude_ids
             response_data = FacilityIndexDetailsSerializer(
                 queryset, context=context).data
             return Response(response_data)
