@@ -7,7 +7,7 @@ helper = MigrationHelper(connection)
 
 
 def update_index_contributors(apps, schema_editor):
-    helper.run_sql_files(['0215_index_contributors.sql'])
+    helper.run_sql_files(['0217_index_contributors.sql'])
 
 
 def revert_index_contributors(apps, schema_editor):
@@ -17,7 +17,7 @@ def revert_index_contributors(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0214_add_os_id_snapshot_to_moderation_event'),
+        ('api', '0216_backfill_moderation_event_os_id_snapshot'),
     ]
 
     operations = [
