@@ -40,11 +40,6 @@ on:
         - moderation-events
         - both
         default: none
-      skip-image-builds:
-        description: 'Skip frontend and Docker image builds (testing only; uses existing S3 assets and ECR images)'
-        required: false
-        type: boolean
-        default: false
 
 env:
   # Stop/clear/start Logstash when restore-db is enabled or a clear target is selected
@@ -254,7 +249,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false && inputs.skip-image-builds != true }}
+    if: false # TODO: re-enable after OpenSearch clearing workflow testing
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -310,7 +305,7 @@ jobs:
     needs: build_and_push_react_app
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ always() && !cancelled() && inputs.deploy-plan-only == false && inputs.skip-image-builds != true && (needs.build_and_push_react_app.result == 'success' || needs.build_and_push_react_app.result == 'skipped') }}
+    if: false # TODO: re-enable after OpenSearch clearing workflow testing
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -401,10 +396,10 @@ jobs:
           tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
 
   create_kafka_topic:
-    needs: build_and_push_docker_image
+    needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ always() && !cancelled() && inputs.deploy-plan-only == false && (needs.build_and_push_docker_image.result == 'success' || needs.build_and_push_docker_image.result == 'skipped') }}
+    if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
