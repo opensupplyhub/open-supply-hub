@@ -9,6 +9,7 @@ import Paper from '@material-ui/core/Paper';
 import AppGrid from './AppGrid';
 import AppOverflow from './AppOverflow';
 import ContributeForm from './ContributeForm';
+import ModerationPauseBanner from './ModerationPauseBanner';
 import RequireAuthNotice from './RequireAuthNotice';
 
 import { listsRoute, InfoLink, InfoPaths } from '../util/constants';
@@ -37,6 +38,7 @@ function ContributeList({ userHasSignedIn, fetchingSessionSignIn }) {
 
     return (
         <AppOverflow>
+            <ModerationPauseBanner />
             <AppGrid title="Upload">
                 <Grid container className="margin-bottom-64">
                     <Grid item xs={12}>

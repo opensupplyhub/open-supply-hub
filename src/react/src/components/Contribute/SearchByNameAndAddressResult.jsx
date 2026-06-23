@@ -9,6 +9,7 @@ import {
     fetchProductionLocations,
     resetProductionLocations,
 } from '../../actions/contributeProductionLocation';
+import ModerationPauseBanner from '../ModerationPauseBanner';
 import BackToSearchButton from './BackToSearchButton';
 import SearchByNameAndAddressNotFoundResult from './SearchByNameAndAddressNotFoundResult';
 import SearchByNameAndAddressSuccessResult from './SearchByNameAndAddressSuccessResult';
@@ -62,6 +63,7 @@ const SearchByNameAndAddressResult = ({
 
     return (
         <>
+            <ModerationPauseBanner />
             <div className={classes.backToSearchButtonContainerStyles}>
                 <BackToSearchButton
                     label="Back to Search"
