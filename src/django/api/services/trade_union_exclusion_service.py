@@ -8,8 +8,6 @@ from api.permissions import (
 class TradeUnionExclusionService:
     """Resolve which contributor ids must be stripped from a response.
 
-    Centralizes the OSDEV-2786 policy so views do not re-assemble it:
-
     * the bulk download endpoint strips trade union-contributed fields for
       every caller except members of the ``can_get_union_linked_data`` group;
     * the facility list/detail endpoints strip only for programmatic/

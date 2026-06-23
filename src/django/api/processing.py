@@ -138,7 +138,7 @@ def handle_external_match_process_result(id, result, request, should_create):
     context = {'request': request}
     # Strip trade union-contributed fields from the matched facilities returned
     # by POST /api/facilities/ for programmatic API access, mirroring the list
-    # and detail endpoints (OSDEV-2786).
+    # and detail endpoints.
     union_exclude_ids = TradeUnionExclusionService.for_list(request)
     if union_exclude_ids:
         context['exclude_union_contributor_ids'] = union_exclude_ids

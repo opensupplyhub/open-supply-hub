@@ -410,8 +410,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         # System partner fields (MIT living wage, wage indicator) are derived
         # from facility data, never from a union, so stripping the combined
-        # list only removes contributor-supplied union partner fields
-        # (OSDEV-2786).
+        # list only removes contributor-supplied union partner fields.
         all_extended_fields = strip_union_extended_fields(
             facility.extended_fields + system_fields,
             self._union_contributor_ids_to_exclude(),

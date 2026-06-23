@@ -8,7 +8,6 @@ sector - while keeping the facility itself and its canonical identity (the
 resolved ``name``/``address``/``country_code``/``location`` columns on
 ``FacilityIndex``) fully visible. System or synthesized partner fields (e.g.
 MIT living wage, wage indicator) are not union data and are never stripped
-(OSDEV-2786).
 """
 
 

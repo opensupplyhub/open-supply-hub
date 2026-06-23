@@ -37,7 +37,7 @@ class ContributorManager(QuerySet):
         )
 
     def union_ids(self):
-        """Return the set of trade union contributor ids (OSDEV-2786)."""
+        """Return the set of trade union contributor ids."""
         return set(
             self
             .filter(contrib_type=self.model.UNION_CONTRIB_TYPE)

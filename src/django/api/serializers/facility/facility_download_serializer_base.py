@@ -18,7 +18,7 @@ class FacilityDownloadSerializerBase(Serializer):
     def __init__(self, *args, exclude_contributor_ids=None, **kwargs):
         super().__init__(*args, **kwargs)
         # Contributor ids (trade unions) whose fields must be stripped from the
-        # download. Empty for the web client and exempt users (OSDEV-2786).
+        # download. Empty for the web client and exempt users.
         self.exclude_contributor_ids = exclude_contributor_ids or set()
 
     class Meta:
@@ -88,7 +88,7 @@ class FacilityDownloadSerializerBase(Serializer):
         """Return pipe-separated, title-cased sector values.
 
         Sector values contributed solely by a trade union are stripped for
-        programmatic/non-web-client downloads (OSDEV-2786).
+        programmatic/non-web-client downloads.
         """
         sector = union_free_sector_values(
             facility, self.exclude_contributor_ids

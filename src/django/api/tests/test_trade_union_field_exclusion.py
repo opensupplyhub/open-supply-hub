@@ -73,7 +73,7 @@ class TradeUnionStripHelpersTest(SimpleTestCase):
     def test_strips_union_primary_name_and_address(self):
         # Union-contributed name/address extended-field entries are stripped
         # too; the canonical identity columns are emitted separately and stay
-        # intact (OSDEV-2786).
+        # intact.
         fields = [
             _ef('name', UNION_ID, 'Union Name'),
             _ef('address', UNION_ID, 'Union Address'),
@@ -461,8 +461,7 @@ class TradeUnionCreateApiContextTest(TestCase):
 
     ``handle_external_match_process_result`` must seed the serializer context
     with the union contributor ids so the matched facilities returned by
-    POST /api/facilities/ are stripped for programmatic API consumers
-    (OSDEV-2786).
+    POST /api/facilities/ are stripped for programmatic API consumers.
     """
 
     def setUp(self):

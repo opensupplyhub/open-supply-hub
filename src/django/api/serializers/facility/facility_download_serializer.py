@@ -103,7 +103,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         # Drop union-contributed extended and contributor-supplied partner
         # fields up front. System/synthesized partner fields (MIT living wage,
         # wage indicator) are derived from facility data, not from
-        # ``extended_fields``, so they are unaffected (OSDEV-2786).
+        # ``extended_fields``, so they are unaffected.
         extended_fields = strip_union_extended_fields(
             facility.extended_fields, self.exclude_contributor_ids
         )
@@ -123,7 +123,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         present.
 
         Trade union contributors are omitted entirely when their fields are
-        being stripped (OSDEV-2786). Even the anonymized "A Union" form would
+        being stripped. Even the anonymized "A Union" form would
         disclose union involvement, so excluded contributors are dropped from
         the column rather than anonymized.
         """

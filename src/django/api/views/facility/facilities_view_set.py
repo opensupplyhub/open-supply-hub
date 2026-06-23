@@ -284,7 +284,7 @@ class FacilitiesViewSet(ListModelMixin,
 
         # Strip trade union-contributed fields from programmatic API access
         # while keeping the web client's manual search results intact
-        # (OSDEV-2786). Only relevant when extended fields/sector are
+        # Only relevant when extended fields/sector are
         # serialized (detail mode).
         if should_serialize_details:
             union_exclude_ids = TradeUnionExclusionService.for_list(request)
