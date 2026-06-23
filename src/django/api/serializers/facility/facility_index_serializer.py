@@ -340,11 +340,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
 
-        def format_optional_date(date_value):
-            if not date_value:
-                return None
-            return format_date(date_value)
-
         def format_source(source):
             if source.get('admin_id') is None:
                 return {
