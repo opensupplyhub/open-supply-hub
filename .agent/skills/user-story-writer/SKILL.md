@@ -5,7 +5,7 @@ description: Draft, review, improve, and file user stories in OS Hub's house sty
 
 # User Story Writer
 
-You draft, review, improve, and file OS Hub user stories. Source of truth: the FY26Q2 PM intro deck (`pm-intro-deck.pdf`) and Bus's 6/3/2026 product thinking workshop. Cite specific lessons when flagging violations so the user learns as you work.
+You draft, review, improve, and file OS Hub user stories. The source of truth is the format and the four tests defined below in this skill — cite the specific test a draft violates when flagging it, so the user learns as you work.
 
 ## The format
 
@@ -18,9 +18,9 @@ What is hard today: [user's reality, NOT the proposed fix]
 
 ---
 
-## Good vs bad — deck examples
+## Good vs bad — worked examples
 
-**GOOD** (deck Story 3 — brand data contributor):
+**GOOD** (brand data contributor):
 
 ```
 As a brand data contributor,
@@ -31,7 +31,7 @@ What is hard today: uploaders don't get meaningfully better data back. There's n
 
 Why it works: specific persona; names a value *and* what it's competing with (investment vs. disclosure); the pain reframes the whole problem in one sentence; doesn't prescribe a feature.
 
-**BAD** (deck Story 1 — Lawrenceburg, before rewrite):
+**BAD** (Lawrenceburg, before rewrite):
 
 ```
 As a facility owner contributing to OS Hub,
@@ -40,13 +40,13 @@ So that I can show our capabilities on my OS Hub profile.
 What is hard today: there are thousands — an email box for missing ones will help.
 ```
 
-Why it fails: "add" is a mechanism, not an outcome; "show capabilities" leaves the chain hanging; "email box" jumps to a feature instead of describing reality. (Irem also flagged the persona on 6/3 — it's a claimed-profile owner, not a contributor.)
+Why it fails: "add" is a mechanism, not an outcome; "show capabilities" leaves the chain hanging; "email box" jumps to a feature instead of describing reality. The persona is also wrong — it's a claimed-profile owner, not a contributor.
 
-**The shift — Bus, 6/3 workshop:**
+**The core shift — start with the outcome:**
 
-> *"The 'so that' actually be the story. The thing they want to do was showing up in our 'so that' — we were prescribing a really narrow thing that accomplished the outcome. As opposed to starting with the outcome and brainstorming how to achieve it."*
+> *"The 'so that' should be the story. The thing they want to do was showing up in our 'so that' — we were prescribing a really narrow thing that accomplished the outcome, as opposed to starting with the outcome and brainstorming how to achieve it."*
 
-**REWRITE** (workshop-validated):
+**REWRITE:**
 
 ```
 As a facility owner contributing to OS Hub,
@@ -98,7 +98,7 @@ When a surface ask hides multiple motivations, offer 2-3 variants:
 
 ## Other guardrails
 
-- **Zoom level** — Bus's "artistic line." Too narrow = feature spec ("I want a button"). Too wide = mission statement ("end forced labor"). Aim for the desk-level verb the persona actually does Monday morning.
+- **Zoom level** — the "artistic line." Too narrow = feature spec ("I want a button"). Too wide = mission statement ("end forced labor"). Aim for the desk-level verb the persona actually does Monday morning.
 - **The Lawrenceburg pattern** — a surface ask often hides multiple motivations. Example: *"facility owner wants to show capabilities"* splits into Commercial (win business) / Operational (stop duplicating data into N portals) / Reputational (signal quality vs unverified competitors). Each = a different story. Surface variants explicitly; never silently pick one.
 - **Tone** — avoid "trust" (name the real interest: compliance, sourcing confidence, risk, procurement). No mission statements; no platitudes. Tighten before proposing.
 
