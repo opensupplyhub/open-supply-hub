@@ -56,6 +56,7 @@ import {
     isShortAddress,
 } from '../../util/util';
 
+import ModerationPauseBanner from '../ModerationPauseBanner';
 import FeatureFlag from '../FeatureFlag';
 import RequiredAsterisk from '../RequiredAsterisk';
 import StyledSelect from '../Filters/StyledSelect';
@@ -486,6 +487,7 @@ const ProductionLocationInfo = ({
 
     return (
         <>
+            <ModerationPauseBanner />
             <div className={classes.mainContainerStyles}>
                 <Typography component="h1" className={classes.headerStyles}>
                     {TITLE}
