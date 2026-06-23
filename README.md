@@ -13,12 +13,15 @@ Open Supply Hub (OS Hub) is a tool to identify every goods production facility w
     - [Creation of Superusers](#creation-of-superusers)
     - [Upload a list and process it](#upload-a-list-and-process-it)
     - [Process partner data file uploads](#process-partner-data-file-uploads)
-    - [Hot Reloading 🔥](#hot-reloading-🔥)
+    - [Hot Reloading](#hot-reloading)
     - [Debugging Django](#debugging-django)
     - [Embedded Maps](#embedded-maps)
     - [Ports](#ports)
-- [Scripts 🧰](#scripts-🧰)
-- [Tools ⚒️](#tools-⚒️)
+- [Scripts](#scripts)
+- [Tools](#tools)
+- [Agents](#agents)
+- [Running e2e (Playwright) and integration tests](#running-e2e-playwright-and-integration-tests)
+    - [Playwright Tests](#playwright-tests)
 
 ## Requirements
 
@@ -212,7 +215,7 @@ Moderators submit partner Google Sheets via Django admin (**Partner Data File Up
 
 Set `GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64` in `.env`.
 
-### Hot Reloading 🔥
+### Hot Reloading
 
 The frontend uses [Create React App](https://github.com/facebook/create-react-app/). When running `server`, the page will automatically [reload](https://github.com/facebook/create-react-app/#whats-included) if you make changes to the code.
 
@@ -272,7 +275,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | React development server | [`6543`](http://localhost:6543) |
 | Gunicorn for Django app  | [`8081`](http://localhost:8081) |
 
-## Scripts 🧰
+## Scripts
 
 | Name                     | Description                                                                                                                                                                                                                                                                           |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -285,7 +288,7 @@ be available on their page, or you can visit http://localhost:6543/?embed=1&cont
 | `run_fe_code_quality`    | This script performs linting and formatting checks, runs tests, and also generates the Jest code coverage report for the React app. The script performs the same code quality checks for the front-end as those conducted during the CI pipeline, excluding code coverage comparison. |
 | `run_bash_script_linter` | This script runs the shellcheck linter for files in the ./scripts folder. It requires the installation of the [shellcheck](https://www.shellcheck.net/) package.                                                                                                                      |
 
-## Tools ⚒️
+## Tools
 
 | Name                   | Description                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |
