@@ -159,6 +159,8 @@ resource "aws_cloudfront_function" "homepage_host_rewrite" {
       // Override Host so Craft knows which site to serve.
       // Without this, CloudFront forwards the original Host (e.g. dev.os-hub.net)
       // and Craft may return a 404 or the wrong site.
+      // Rewrite URI to /team so Craft serves the correct page.
+      request.uri = '/team';
       request.headers['host'] = { value: 'info.opensupplyhub.org' };
       return request;
     }
@@ -171,7 +173,11 @@ resource "aws_cloudfront_distribution" "cdn" {
     aws_s3_bucket.react
   ]
 
-  default_root_object = "index.html"
+  # When the homepage proxy is active, disable default_root_object so CloudFront
+  # doesn't rewrite "/" to "/index.html" before our ordered cache behavior runs.
+  # Without this, CloudFront intercepts "/" before path pattern matching and routes
+  # it to S3, bypassing the Craft origin entirely.
+  default_root_object = var.enable_homepage_proxy ? "" : "index.html"
 
   origin {
     domain_name = "origin.${local.domain_name}"
