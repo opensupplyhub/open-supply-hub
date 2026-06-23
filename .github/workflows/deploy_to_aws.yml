@@ -40,6 +40,11 @@ on:
         - moderation-events
         - both
         default: none
+      skip-image-builds:
+        description: 'Skip frontend and Docker image builds (testing only; uses existing S3 assets and ECR images)'
+        required: false
+        type: boolean
+        default: false
 
 env:
   # Stop/clear/start Logstash when restore-db is enabled or a clear target is selected
@@ -249,7 +254,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-plan-only == false && inputs.skip-image-builds != true }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -305,7 +310,7 @@ jobs:
     needs: build_and_push_react_app
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ always() && !cancelled() && inputs.deploy-plan-only == false && inputs.skip-image-builds != true && (needs.build_and_push_react_app.result == 'success' || needs.build_and_push_react_app.result == 'skipped') }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -399,7 +404,7 @@ jobs:
     needs: build_and_push_docker_image
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ always() && !cancelled() && inputs.deploy-plan-only == false && (needs.build_and_push_docker_image.result == 'success' || needs.build_and_push_docker_image.result == 'skipped') }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
