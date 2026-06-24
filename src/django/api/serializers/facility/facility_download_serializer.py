@@ -32,7 +32,7 @@ from api.serializers.facility.wage_indicator_download_helper import (
 )
 from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
-from api.trade_union import strip_union_extended_fields
+from api.trade_union import strip_union_contributions
 
 
 class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
@@ -104,7 +104,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         # fields up front. System/synthesized partner fields (MIT living wage,
         # wage indicator) are derived from facility data, not from
         # ``extended_fields``, so they are unaffected.
-        extended_fields = strip_union_extended_fields(
+        extended_fields = strip_union_contributions(
             facility.extended_fields, self.exclude_contributor_ids
         )
         return [

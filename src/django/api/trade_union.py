@@ -16,18 +16,7 @@ def _contributor_id(entry):
     return contributor.get('id')
 
 
-def strip_union_extended_fields(extended_fields, union_ids):
-    if not union_ids or not extended_fields:
-        return extended_fields
-
-    return [
-        field
-        for field in extended_fields
-        if _contributor_id(field) not in union_ids
-    ]
-
-
-def strip_union_sector_items(items, union_ids):
+def strip_union_contributions(items, union_ids):
     if not union_ids or not items:
         return items
 

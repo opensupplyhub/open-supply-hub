@@ -19,8 +19,7 @@ from ...models.extended_field import ExtendedField
 from ...models.nonstandard_field import NonstandardField
 from ...helpers.helpers import parse_raw_data, get_csv_values
 from ...trade_union import (
-    strip_union_extended_fields,
-    strip_union_sector_items,
+    strip_union_contributions,
 )
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import (
@@ -227,7 +226,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             request
         )
 
-        fields = strip_union_extended_fields(
+        fields = strip_union_contributions(
             fields,
             self._union_contributor_ids_to_exclude(),
         )
@@ -318,7 +317,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         union_ids_to_exclude = self._union_contributor_ids_to_exclude()
 
         items = regroup_items_for_sector_field(
-            strip_union_sector_items(
+            strip_union_contributions(
                 facility.item_sectors, union_ids_to_exclude
             ),
             date_field_to_sort)

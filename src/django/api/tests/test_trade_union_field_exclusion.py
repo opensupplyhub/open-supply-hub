@@ -41,8 +41,7 @@ from api.services.trade_union_exclusion_service import (
     TradeUnionExclusionService,
 )
 from api.trade_union import (
-    strip_union_extended_fields,
-    strip_union_sector_items,
+    strip_union_contributions,
     union_free_sector_values,
 )
 
@@ -66,7 +65,7 @@ class TradeUnionStripHelpersTest(SimpleTestCase):
             _ef('number_of_workers', OTHER_ID, {'min': 50, 'max': 100}),
             _ef('number_of_workers', UNION_ID, {'min': 500, 'max': 1000}),
         ]
-        result = strip_union_extended_fields(fields, {UNION_ID})
+        result = strip_union_contributions(fields, {UNION_ID})
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['contributor']['id'], OTHER_ID)
 
@@ -80,21 +79,21 @@ class TradeUnionStripHelpersTest(SimpleTestCase):
             _ef('parent_company', UNION_ID, {'name': 'Hidden'}),
             _ef('name', OTHER_ID, 'Public Name'),
         ]
-        result = strip_union_extended_fields(fields, {UNION_ID})
+        result = strip_union_contributions(fields, {UNION_ID})
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['field_name'], 'name')
         self.assertEqual(result[0]['contributor']['id'], OTHER_ID)
 
     def test_extended_fields_no_op_without_union_ids(self):
         fields = [_ef('number_of_workers', UNION_ID, {'min': 1, 'max': 2})]
-        self.assertIs(strip_union_extended_fields(fields, set()), fields)
+        self.assertIs(strip_union_contributions(fields, set()), fields)
 
     def test_strip_union_sector_items(self):
         items = [
             {'contributor': {'id': OTHER_ID}, 'sector': ['Apparel']},
             {'contributor': {'id': UNION_ID}, 'sector': ['Mining']},
         ]
-        result = strip_union_sector_items(items, {UNION_ID})
+        result = strip_union_contributions(items, {UNION_ID})
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['contributor']['id'], OTHER_ID)
 
