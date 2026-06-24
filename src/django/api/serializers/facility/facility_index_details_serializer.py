@@ -36,6 +36,7 @@ from .utils import (
     is_created_at_main_date
 )
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
+from ...trade_union import strip_union_contributions
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -84,6 +85,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         other_names = {
             name_obj.get('name') for name_obj in facility.facility_names
             if name_obj.get('name') != facility.name
+            and not self._is_excluded_contributor(name_obj.get('contributor'))
         }
 
         return other_names
@@ -96,6 +98,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             address_obj.get('address')
             for address_obj in facility.facility_addresses
             if address_obj.get('address') != facility.address
+            and not self._is_excluded_contributor(
+                address_obj.get('contributor'))
         }
 
         if facility.approved_claim is not None:
@@ -404,7 +408,13 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             if field_data is not None:
                 system_fields.append(field_data)
 
-        all_extended_fields = facility.extended_fields + system_fields
+        # System partner fields (MIT living wage, wage indicator) are derived
+        # from facility data, never from a union, so stripping the combined
+        # list only removes contributor-supplied union partner fields.
+        all_extended_fields = strip_union_contributions(
+            facility.extended_fields + system_fields,
+            self._union_contributor_ids_to_exclude(),
+        )
         fields = self._filter_contributor_extended_fields(
             all_extended_fields,
             request

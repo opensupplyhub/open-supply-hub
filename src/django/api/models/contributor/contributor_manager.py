@@ -35,3 +35,11 @@ class ContributorManager(QuerySet):
                 )
             .order_by('-is_verified', '-has_active_sources', '-created_at')
         )
+
+    def union_ids(self):
+        """Return the set of trade union contributor ids."""
+        return set(
+            self
+            .filter(contrib_type=self.model.UNION_CONTRIB_TYPE)
+            .values_list('id', flat=True)
+        )

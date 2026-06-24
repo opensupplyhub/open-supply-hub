@@ -32,6 +32,7 @@ from api.serializers.facility.wage_indicator_download_helper import (
 )
 from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
+from api.trade_union import strip_union_contributions
 
 
 class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
@@ -99,20 +100,33 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
 
     def get_row(self, facility: FacilityIndexNewManager) -> List[str]:
         """Return one CSV row for a facility, aligned with ``get_headers``."""
+        # Drop union-contributed extended and contributor-supplied partner
+        # fields up front. System/synthesized partner fields (MIT living wage,
+        # wage indicator) are derived from facility data, not from
+        # ``extended_fields``, so they are unaffected.
+        extended_fields = strip_union_contributions(
+            facility.extended_fields, self.exclude_contributor_ids
+        )
         return [
             *self.get_common_row(facility),
             self.get_contributors(facility),
-            *self.get_extended_fields(facility.extended_fields),
+            *self.get_extended_fields(extended_fields),
             *self.get_claimed_fields(facility),
             self.get_is_closed(facility),
-            *self.get_partner_fields_row(facility.extended_fields),
+            *self.get_partner_fields_row(extended_fields),
             *self.get_mit_living_wage_row(facility),
             *self.get_wage_indicator_row(facility),
         ]
 
     def get_contributors(self, facility: FacilityIndexNewManager) -> str:
         """Return pipe-separated contributor names, marking the claimer when
-        present."""
+        present.
+
+        Trade union contributors are omitted entirely when their fields are
+        being stripped. Even the anonymized "A Union" form would
+        disclose union involvement, so excluded contributors are dropped from
+        the column rather than anonymized.
+        """
         contributors = []
         claim = facility.approved_claim
         if claim is not None:
@@ -121,6 +135,8 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             ))
 
         for contributor in facility.contributors:
+            if contributor.get("id") in self.exclude_contributor_ids:
+                continue
             contributors.append(
                 contributor["name"]
                 if contributor["should_display_associations"]

@@ -18,6 +18,9 @@ from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
 from ...models.nonstandard_field import NonstandardField
 from ...helpers.helpers import parse_raw_data, get_csv_values
+from ...trade_union import (
+    strip_union_contributions,
+)
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import (
     FacilityIndexExtendedFieldListSerializer
@@ -223,6 +226,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             request
         )
 
+        fields = strip_union_contributions(
+            fields,
+            self._union_contributor_ids_to_exclude(),
+        )
+
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
 
@@ -244,6 +252,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             if field_name == ExtendedField.NAME and not embed_mode_active:
                 unsorted_data = serializer.data
                 for name_obj in facility.facility_names:
+                    if self._is_excluded_contributor(
+                            name_obj.get('contributor')):
+                        continue
                     f_name = format_field(name_obj.get('name'))
                     if f_name is not None and len(f_name) != 0:
                         created_at = use_main_created_at \
@@ -264,6 +275,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             elif field_name == ExtendedField.ADDRESS and not embed_mode_active:
                 unsorted_data = serializer.data
                 for address_obj in facility.facility_addresses:
+                    if self._is_excluded_contributor(
+                            address_obj.get('contributor')):
+                        continue
                     f_address = format_field(address_obj.get('address'))
                     if f_address is not None and len(f_address) != 0:
                         created_at = use_main_created_at \
@@ -300,8 +314,13 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             'created_at' if use_main_created_at else 'updated_at'
         )
 
+        union_ids_to_exclude = self._union_contributor_ids_to_exclude()
+
         items = regroup_items_for_sector_field(
-            facility.item_sectors, date_field_to_sort)
+            strip_union_contributions(
+                facility.item_sectors, union_ids_to_exclude
+            ),
+            date_field_to_sort)
 
         claims = regroup_claims_for_sector_field(
             facility.claim_sectors, date_field_to_sort
@@ -358,9 +377,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 'count': 1,
             }
 
+        union_ids_to_exclude = self._union_contributor_ids_to_exclude()
         valid_contributors = [
             contributor for contributor in facility.contributors
             if contributor.get('id') is not None
+            and contributor.get('id') not in union_ids_to_exclude
         ]
         valid_contributors.sort(
             key=lambda contributor: (
@@ -417,6 +438,17 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         if self.context is None:
             return None
         return self.context.get('request')
+
+    def _union_contributor_ids_to_exclude(self):
+        if self.context is None:
+            return set()
+        return self.context.get('exclude_union_contributor_ids') or set()
+
+    def _is_excluded_contributor(self, contributor):
+        union_ids = self._union_contributor_ids_to_exclude()
+        if not union_ids:
+            return False
+        return (contributor or {}).get('id') in union_ids
 
     @staticmethod
     def _date_field_to_sort(use_main_created_at):

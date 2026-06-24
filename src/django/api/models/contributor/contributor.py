@@ -19,6 +19,7 @@ class Contributor(models.Model):
     # These choices must be kept in sync with the identical list kept in the
     # React client's constants file
     OTHER_CONTRIB_TYPE = 'Other'
+    UNION_CONTRIB_TYPE = 'Union'
 
     CONTRIB_TYPE_CHOICES = (
         ('Academic / Researcher / Journalist / Student',
@@ -30,7 +31,7 @@ class Contributor(models.Model):
         ('Facility / Factory / Manufacturing Group / Supplier / Vendor',
          'Facility / Factory / Manufacturing Group / Supplier / Vendor'),
         ('Multi-Stakeholder Initiative', 'Multi-Stakeholder Initiative'),
-        ('Union', 'Union'),
+        (UNION_CONTRIB_TYPE, UNION_CONTRIB_TYPE),
         (OTHER_CONTRIB_TYPE, OTHER_CONTRIB_TYPE),
     )
 
