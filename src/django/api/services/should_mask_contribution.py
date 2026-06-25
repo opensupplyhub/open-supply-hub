@@ -1,4 +1,4 @@
-from django.core.cache import cache
+from django.core.cache import caches
 
 from api.constants import (
     MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
@@ -74,10 +74,18 @@ class ShouldMaskContribution:
     stored ``Contributor`` record.
 
     The set of contributors to mask is the same for every paid request, so it
-    is cached (mirroring ``get_cached_all_partner_fields``) and shared across
-    every endpoint that builds a paid response. The short TTL keeps the lookup
-    cheap while letting admin changes propagate without a deploy.
+    is cached in the shared ``view_cache`` (memcached) - not the per-process
+    ``default`` cache - so every worker sees the same set and a single
+    ``view_cache`` flush (see ``User.save``) invalidates it everywhere when an
+    admin toggles the flag. The short TTL keeps the lookup cheap while letting
+    admin changes propagate without a deploy even if the flush is missed.
     """
+
+    @staticmethod
+    def _cache():
+        # Resolved lazily (not at import time) so test ``override_settings``
+        # for ``CACHES`` is honoured.
+        return caches['view_cache']
 
     @staticmethod
     def _load():
@@ -97,6 +105,7 @@ class ShouldMaskContribution:
     @classmethod
     def get_masked_contributors(cls):
         """Return the cached `MaskedContributors` for paid responses."""
+        cache = cls._cache()
         cached = cache.get(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
         if cached is None:
             cached = cls._load()

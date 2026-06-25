@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from django.core.cache import cache
-from django.test import TestCase
+from django.core.cache import caches
+from django.test import TestCase, override_settings
 
 from api.constants import (
     MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
@@ -65,14 +65,26 @@ class MaskedContributorsTest(TestCase):
         self.assertFalse(masked.masks_name(None))
 
 
+# The masked set is cached in ``view_cache``, which is a DummyCache in the
+# test settings. Override it with a real local cache so the caching behaviour
+# can be exercised.
+@override_settings(CACHES={
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'view_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'masking-test',
+    },
+})
 class ShouldMaskContributionServiceTest(TestCase):
     """Resolving and caching the contributors to hide in paid products."""
 
     def setUp(self):
-        cache.delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
+        caches['view_cache'].clear()
 
     def tearDown(self):
-        cache.delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
+        caches['view_cache'].clear()
 
     @staticmethod
     def _make_contributor(contrib_type, hide=True, email='c@example.com'):
@@ -137,9 +149,24 @@ class ShouldMaskContributionServiceTest(TestCase):
         self.assertIn(first.id, cached.contributor_ids)
         self.assertNotIn(second.id, cached.contributor_ids)
 
-        cache.delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
+        caches['view_cache'].delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
         refreshed = ShouldMaskContribution.get_masked_contributors()
         self.assertIn(second.id, refreshed.contributor_ids)
+
+    def test_toggling_hide_flag_invalidates_cache(self):
+        contributor, user = self._make_contributor(
+            Contributor.UNION_CONTRIB_TYPE
+        )
+        warm = ShouldMaskContribution.get_masked_contributors()
+        self.assertIn(contributor.id, warm.contributor_ids)
+
+        # Disabling the flag must drop the cached set on save so the next
+        # paid request stops masking the contributor without waiting for TTL.
+        user.hide_in_paid_products = False
+        user.save()
+
+        refreshed = ShouldMaskContribution.get_masked_contributors()
+        self.assertNotIn(contributor.id, refreshed.contributor_ids)
 
 
 class ContributorHelperMaskingTest(TestCase):

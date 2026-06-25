@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
+from django.core.cache import caches
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -168,7 +169,36 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
+
+        # A brand-new user has no contributions yet, so only an existing user
+        # whose flag actually flips can change a cached paid response.
+        hide_flag_changed = False
+        if not self._state.adding:
+            try:
+                previous = User.objects.values_list(
+                    'hide_in_paid_products', flat=True
+                ).get(pk=self.pk)
+                hide_flag_changed = previous != self.hide_in_paid_products
+            except User.DoesNotExist:
+                hide_flag_changed = True
+
         super().save(*args, **kwargs)
+
+        if hide_flag_changed:
+            self.__invalidate_paid_product_masking_cache()
+
+    @staticmethod
+    def __invalidate_paid_product_masking_cache():
+        """
+        Drop the caches that decide trade union masking in paid products so an
+        admin toggle of ``hide_in_paid_products`` takes effect right away.
+
+        The ``view_cache`` (memcached) holds both the masked-contributor set
+        and the per-Authorization facility detail responses, so a single flush
+        clears both for every worker. Without it the change would only surface
+        once they expire (up to ``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
+        """
+        caches['view_cache'].clear()
 
     def __str__(self):
         return self.email
