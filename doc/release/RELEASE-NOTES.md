@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 10, 2026
+
+### Bugfix
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Removed the inaccurate, hardcoded list of editable settings from the validation error shown when editing protected attributes of system-defined partner fields in Django admin, so the message no longer goes stale as editable fields change.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.26.0
 
 ## Introduction
