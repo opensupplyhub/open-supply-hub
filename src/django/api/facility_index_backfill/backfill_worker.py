@@ -1,4 +1,4 @@
-"""Single-partition worker for api_facilityindex backfills."""
+"""Single-partition worker for FacilityIndex backfills."""
 
 import time
 from typing import Optional

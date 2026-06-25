@@ -8,7 +8,7 @@ from api.facility_index_backfill.specs import list_field_names
 
 class Command(BaseCommand):
     help = (
-        'Backfill selected api_facilityindex field groups in batches using '
+        'Backfill selected FacilityIndex field groups in batches using '
         'existing index_*() SQL functions. Use --parallel to run multiple '
         'worker processes.'
     )

@@ -1,10 +1,10 @@
 # Facility index backfill
 
-Targeted batch updates for denormalized columns on `api_facilityindex`.
+Targeted batch updates for denormalized columns on the `FacilityIndex` model.
 
 ## Purpose
 
-Open Supply Hub stores search and display data in `api_facilityindex`. That table is built from many PostgreSQL `index_*()` functions (see `src/django/sqls/0171_index_facilities.sql`).
+Open Supply Hub stores search and display data in `FacilityIndex` (see `api.models.facility.facility_index.FacilityIndex`). Those rows are built from many PostgreSQL `index_*()` functions (see `src/django/sqls/0171_index_facilities.sql`).
 
 When an `index_*()` function changes in a migration, you usually only need to refresh the affected column(s), not the entire index row.
 
@@ -93,7 +93,7 @@ Field groups are defined in `specs.py` as `FACILITY_INDEX_FIELD_SPECS`. Each gro
 
 | Key | Description |
 | --- | --- |
-| `columns` | Map of `api_facilityindex` column → SQL expression (usually calling an `index_*()` function) |
+| `columns` | Map of `FacilityIndex` field → SQL expression (usually calling an `index_*()` function) |
 | `filter_sql` | Optional extra `WHERE` clause to skip rows that do not need updating |
 | `from_clause` | Optional `FROM`/`JOIN` when expressions need `api_facility` columns (e.g. `location`, `name`) |
 | `id_column` | Id column for pagination (default `afi.id`) |
@@ -124,7 +124,7 @@ When a change affects related columns (e.g. `contributors` and `contributors_cou
 - An **`index_*()` function** changes and you rely on targeted backfill instead of a full reindex
 - **`index_facilities()`** gains new column expressions in `src/django/sqls`
 
-Checklist for index table changes:
+Checklist for `FacilityIndex` changes:
 
 1. Update `FacilityIndex` model and migration
 2. Update `index_facilities()` / related `index_*()` SQL

@@ -1,4 +1,4 @@
-"""SQL specs and registry for targeted api_facilityindex backfills."""
+"""SQL specs and registry for targeted FacilityIndex backfills."""
 
 from typing import TypedDict
 
@@ -18,7 +18,7 @@ class FacilityIndexFieldSpec(TypedDict, total=False):
     id_column: str
 
 
-# Each entry defines one logical field group to backfill on api_facilityindex.
+# Each entry defines one logical field group to backfill on FacilityIndex.
 # Column expressions mirror index_facilities() in
 # sqls/0171_index_facilities.sql.
 #

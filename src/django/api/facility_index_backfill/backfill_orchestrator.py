@@ -1,4 +1,4 @@
-"""Parallel orchestration for api_facilityindex backfills."""
+"""Parallel orchestration for FacilityIndex backfills."""
 
 import os
 import subprocess
