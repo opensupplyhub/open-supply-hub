@@ -78,6 +78,8 @@ export const InfoResourcesQuery = {
     video: 'video',
 };
 
+export const UNION_CONTRIBUTOR_TYPE = 'Union';
+
 // This choices must be kept in sync with the identical list
 // kept in the Django API's models.py file
 export const contributorTypeOptions = Object.freeze([
@@ -87,7 +89,7 @@ export const contributorTypeOptions = Object.freeze([
     'Civil Society Organization',
     'Facility / Factory / Manufacturing Group / Supplier / Vendor',
     'Multi-Stakeholder Initiative',
-    'Union',
+    UNION_CONTRIBUTOR_TYPE,
     OTHER,
 ]);
 

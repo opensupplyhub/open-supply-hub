@@ -1,11 +1,11 @@
 from typing import Any, List
-from api.models.facility.facility_index import FacilityIndex
-from api.models.facility.facility_manager_index_new import (
-    FacilityIndexNewManager,
-)
-from countries.lib.countries import COUNTRY_NAMES
+
 from api.csv_download import format_download_extended_fields
 from api.helpers.helpers import parse_download_date
+from api.models.facility.facility_index import FacilityIndex
+from api.models.facility.facility_manager_index_new import \
+    FacilityIndexNewManager
+from countries.lib.countries import COUNTRY_NAMES
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 
@@ -13,6 +13,10 @@ class FacilityDownloadSerializerBase(Serializer):
     """Shared CSV row helpers for full and embed facility downloads."""
 
     row = SerializerMethodField()
+
+    def __init__(self, *args, masked_contributors=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.masked_contributors = masked_contributors
 
     class Meta:
         model = FacilityIndex()

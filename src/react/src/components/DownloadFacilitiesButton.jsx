@@ -73,6 +73,7 @@ const DownloadFacilitiesButton = ({
     theme,
     facilitiesCount,
     isSameContributor,
+    unionFilterActive,
 }) => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const isPrivateInstance = includes(activeFeatureFlags, PRIVATE_INSTANCE);
@@ -134,6 +135,7 @@ const DownloadFacilitiesButton = ({
                 classes,
                 facilitiesCount,
                 isSameContributor,
+                unionFilterActive,
             }),
         [
             user,
@@ -144,6 +146,7 @@ const DownloadFacilitiesButton = ({
             classes,
             facilitiesCount,
             isSameContributor,
+            unionFilterActive,
         ],
     );
 
@@ -202,11 +205,13 @@ DownloadFacilitiesButton.defaultProps = {
     checkoutUrl: null,
     checkoutUrlError: null,
     isSameContributor: false,
+    unionFilterActive: false,
 };
 
 DownloadFacilitiesButton.propTypes = {
     disabled: bool,
     upgrade: bool,
+    unionFilterActive: bool,
     userAllowedRecords: number,
     logDownloadError: arrayOf(string),
     user: shape({

@@ -116,6 +116,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text='User has agreed to the terms of service'
     )
+    hide_in_paid_products = models.BooleanField(
+        'Hide contributor name in paid products',
+        default=True,
+        help_text=(
+            "When enabled, this contributor's name is hidden (anonymized) in "
+            'OS Hub paid products - the bulk data download and the '
+            'programmatic API - so the data cannot be attributed to them at '
+            'scale. Only takes effect for trade union (Union) contributors.'
+        )
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

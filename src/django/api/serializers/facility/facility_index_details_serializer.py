@@ -6,7 +6,7 @@ from rest_framework.serializers import (
 from drf_yasg.utils import swagger_serializer_method
 from waffle import switch_is_active
 
-from api.constants import FacilityClaimStatuses
+from api.constants import FacilityClaimStatuses, MASKED_CONTRIBUTOR_LABEL
 from api.partner_fields.registry import system_partner_field_registry
 from api.models.partner_field import PartnerField
 from api.serializers.facility.partner_field_helper import (
@@ -108,6 +108,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             return []
 
         user_can_see_detail = can_user_see_detail(self)
+        masked = self._masked_contributor_ids()
 
         facility_locations = [
             {
@@ -117,10 +118,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 if loc['location_lng'] is not None else None,
                 'contributor_id': get_contributor_id(
                     loc['contributor'],
-                    user_can_see_detail),
+                    user_can_see_detail,
+                    masked),
                 'contributor_name': get_contributor_name(
                     loc['contributor'],
-                    user_can_see_detail),
+                    user_can_see_detail,
+                    masked),
                 'notes': loc['location_notes'],
             }
             for loc
@@ -135,10 +138,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 if item['location_lng'] is not None else None,
                 'contributor_id': get_contributor_id(
                     item['contributor'],
-                    user_can_see_detail),
+                    user_can_see_detail,
+                    masked),
                 'contributor_name': get_contributor_name(
                     item['contributor'],
-                    user_can_see_detail),
+                    user_can_see_detail,
+                    masked),
                 'notes': None,
             }
             for item
@@ -158,10 +163,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                         if claim['facility_location'] is not None else None,
                         'contributor_id': get_contributor_id(
                             claim['contributor'],
-                            user_can_see_detail),
+                            user_can_see_detail,
+                            masked),
                         'contributor_name': get_contributor_name(
                             claim['contributor'],
-                            user_can_see_detail),
+                            user_can_see_detail,
+                            masked),
                         'notes': None,
                         'is_from_claim': True,
                         'has_invalid_location': (
@@ -178,6 +185,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         claim_info = None
         user_can_see_detail = can_user_see_detail(self)
+        masked = self._masked_contributor_ids()
 
         approved_claim_info = facility.claim_info
         if approved_claim_info:
@@ -185,10 +193,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             contributor = \
                 get_contributor_name_from_facilityindex(
                     claim_info['contributor'],
-                    user_can_see_detail)
+                    user_can_see_detail,
+                    masked)
             user_id = get_user_id_from_facilityindex(
                 claim_info['contributor'],
-                user_can_see_detail)
+                user_can_see_detail,
+                masked)
             claim_info['contributor'] = contributor
             claim_info['user_id'] = user_id
             return claim_info
@@ -346,7 +356,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         contributor_name = None
         if created_from_info['created_at'] is not None:
             created_at = format_date(created_from_info['created_at'])
-        if (created_from_info['contributor_name'] is not None
+        # The created_from JSON has no contributor id, so a masked union is
+        # matched by name and relabeled to the neutral "Other" label.
+        masked = self._masked_contributor_ids()
+        if masked.masks_name(created_from_info.get('contributor_name')):
+            contributor_name = MASKED_CONTRIBUTOR_LABEL
+        elif (created_from_info['contributor_name'] is not None
                 and display_detail):
             contributor_name = created_from_info['contributor_name']
         else:
@@ -427,7 +442,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             user_can_see_detail,
             embed_mode_active,
             use_main_created_at,
-            date_field_to_sort
+            date_field_to_sort,
+            self._masked_contributor_ids()
         )
 
     def __serialize_and_sort_partner_fields(
@@ -437,7 +453,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         user_can_see_detail: bool,
         embed_mode_active: bool,
         use_main_created_at: bool,
-        date_field_to_sort: str
+        date_field_to_sort: str,
+        masked
     ) -> Dict[str, List[Dict[str, Any]]]:
         import logging
         logger = logging.getLogger(__name__)
@@ -461,6 +478,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                     context={
                         'user_can_see_detail': user_can_see_detail,
                         'embed_mode_active': embed_mode_active,
+                        'masked_contributor_ids': masked,
                         'source_by': source_by,
                         'unit': unit,
                         'label': label,

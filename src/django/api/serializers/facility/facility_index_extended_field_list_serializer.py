@@ -75,13 +75,17 @@ class FacilityIndexExtendedFieldListSerializer:
 
         return should_display_association and user_can_see_detail
 
+    def _masked_contributor_ids(self) -> set:
+        return self.context.get('masked_contributor_ids') or set()
+
     def _get_contributor_name(self, extended_field: dict) -> Union[None, str]:
         embed_mode_active = self.context.get('embed_mode_active')
         if embed_mode_active:
             return None
         return get_contributor_name_from_facilityindex(
             extended_field.get('contributor'),
-            self._should_display_contributor(extended_field))
+            self._should_display_contributor(extended_field),
+            self._masked_contributor_ids())
 
     def _get_contributor_id(self, extended_field: dict) -> Union[None, int]:
         embed_mode_active = self.context.get('embed_mode_active')
@@ -89,7 +93,8 @@ class FacilityIndexExtendedFieldListSerializer:
             return None
         return get_contributor_id_from_facilityindex(
             extended_field.get('contributor'),
-            self._should_display_contributor(extended_field)
+            self._should_display_contributor(extended_field),
+            self._masked_contributor_ids()
         )
 
     def _get_is_from_claim(self, extended_field: dict) -> bool:

@@ -18,6 +18,7 @@ import {
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
     mapDjangoChoiceTuplesValueToSelectOptions,
+    mapContributorTuplesToSelectOptions,
     mapSectorGroupsToSelectOptions,
     updateListWithLabels,
 } from '../util/util';
@@ -125,7 +126,7 @@ export function fetchContributorOptions() {
 
         return apiRequest
             .get(makeGetContributorsURL())
-            .then(({ data }) => mapDjangoChoiceTuplesToSelectOptions(data))
+            .then(({ data }) => mapContributorTuplesToSelectOptions(data))
             .then(data => dispatch(completeFetchContributorOptions(data)))
             .catch(err =>
                 dispatch(
