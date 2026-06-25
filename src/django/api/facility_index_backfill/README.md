@@ -51,8 +51,7 @@ backfill_facility_index (orchestrator command)
 BackfillOrchestrator (backfill_orchestrator.py)
         │
         ├── reads field group spec from specs.py
-        ├── parallel == 1: BackfillWorker in-process
-        └── parallel > 1: spawn N backfill_facility_index_worker subprocesses
+        └── spawn N backfill_facility_index_worker subprocesses (N = --parallel)
                 │
                 ▼
         BackfillWorker (backfill_worker.py)

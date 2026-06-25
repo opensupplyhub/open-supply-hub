@@ -9,7 +9,6 @@ import time
 from django.core.management.base import CommandError, OutputWrapper
 from django.core.management.color import Style
 
-from api.facility_index_backfill.backfill_worker import BackfillWorker
 from api.facility_index_backfill.specs import get_field_spec
 from api.facility_index_backfill.utils import format_worker_number
 
@@ -22,7 +21,6 @@ class BackfillOrchestrator:
     def __init__(self, stdout: OutputWrapper, style: Style) -> None:
         self.stdout = stdout
         self.style = style
-        self._worker = BackfillWorker(stdout, style)
 
     def run(
         self,
@@ -57,22 +55,13 @@ class BackfillOrchestrator:
         batch_size: int,
         dry_run: bool,
     ) -> int:
-        """Backfill one field group, spawning workers when parallel > 1."""
+        """Backfill one field group by spawning worker subprocesses."""
         get_field_spec(field_name)
         self.stdout.write(f'Backfilling field group: {field_name}')
 
-        if parallel > 1:
-            return self._spawn_parallel_workers(
-                field_name=field_name,
-                parallel=parallel,
-                batch_size=batch_size,
-                dry_run=dry_run,
-            )
-
-        return self._worker.run(
+        return self._spawn_parallel_workers(
             field_name=field_name,
-            worker_id=0,
-            workers=1,
+            parallel=parallel,
             batch_size=batch_size,
             dry_run=dry_run,
         )

@@ -224,19 +224,28 @@ class BackfillOrchestratorTest(SimpleTestCase):
     @patch(
         'api.facility_index_backfill.backfill_orchestrator.subprocess.Popen',
     )
-    @patch('api.facility_index_backfill.backfill_worker.connection')
-    def test_parallel_one_does_not_spawn_subprocess(
+    @patch(
+        'api.facility_index_backfill.backfill_orchestrator.tempfile.mkstemp',
+    )
+    def test_parallel_one_spawns_single_worker_subprocess(
         self,
-        mock_connection,
+        mock_mkstemp,
         mock_popen,
     ):
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = (1,)
-        mock_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
+        orchestrator, stdout = make_orchestrator()
+        fd, path = _REAL_MKSTEMP()
+        mock_mkstemp.return_value = (fd, path)
 
-        stdout = StringIO()
+        process = MagicMock()
+
+        def wait():
+            with open(path, 'w', encoding='utf-8') as result:
+                result.write('1')
+            return 0
+
+        process.wait.side_effect = wait
+        mock_popen.return_value = process
+
         call_command(
             'backfill_facility_index',
             fields='contributors',
@@ -245,7 +254,14 @@ class BackfillOrchestratorTest(SimpleTestCase):
             stdout=stdout,
         )
 
-        mock_popen.assert_not_called()
+        mock_popen.assert_called_once()
+        cmd = mock_popen.call_args[0][0]
+        self.assertIn('backfill_facility_index_worker', cmd)
+        self.assertIn('--worker-id', cmd)
+        self.assertIn('0', cmd)
+        self.assertIn('--workers', cmd)
+        self.assertIn('1', cmd)
+        self.assertFalse(os.path.exists(path))
 
     def test_run_writes_completed_summary_for_multiple_field_groups(self):
         orchestrator, stdout = make_orchestrator()

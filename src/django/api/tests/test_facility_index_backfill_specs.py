@@ -1,3 +1,5 @@
+import os
+import tempfile
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -12,6 +14,9 @@ from api.facility_index_backfill.specs import (
     list_field_names,
 )
 from api.management.commands.backfill_facility_index import Command
+
+
+_REAL_MKSTEMP = tempfile.mkstemp
 
 
 class FacilityIndexBackfillTest(SimpleTestCase):
@@ -107,13 +112,29 @@ class FacilityIndexBackfillTest(SimpleTestCase):
             str(context.exception),
         )
 
-    @patch('api.facility_index_backfill.backfill_worker.connection')
-    def test_dry_run_reports_contributors_row_count(self, mock_connection):
-        mock_cursor = MagicMock()
-        mock_cursor.fetchone.return_value = (42,)
-        mock_connection.cursor.return_value.__enter__.return_value = (
-            mock_cursor
-        )
+    @patch(
+        'api.facility_index_backfill.backfill_orchestrator.subprocess.Popen',
+    )
+    @patch(
+        'api.facility_index_backfill.backfill_orchestrator.tempfile.mkstemp',
+    )
+    def test_dry_run_reports_contributors_row_count(
+        self,
+        mock_mkstemp,
+        mock_popen,
+    ):
+        fd, path = _REAL_MKSTEMP()
+        mock_mkstemp.return_value = (fd, path)
+
+        process = MagicMock()
+
+        def wait():
+            with open(path, 'w', encoding='utf-8') as result:
+                result.write('42')
+            return 0
+
+        process.wait.side_effect = wait
+        mock_popen.return_value = process
 
         stdout = StringIO()
         call_command(
@@ -127,4 +148,4 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertIn('contributors', output)
         self.assertIn('42', output)
         self.assertIn('Backfill dry run', output)
-        mock_cursor.execute.assert_called()
+        self.assertFalse(os.path.exists(path))
