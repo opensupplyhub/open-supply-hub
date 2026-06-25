@@ -93,9 +93,15 @@ const isUnionOnlySelected = (contributorTypes, contributors) => {
     return !hasNonUnionSignal;
 };
 
-function mapStateToProps({ filters: { contributorTypes, contributors } }) {
+function mapStateToProps({
+    filters: { contributorTypes, contributors, combineContributors },
+}) {
+    const unionOnly =
+        !combineContributors &&
+        isUnionOnlySelected(contributorTypes, contributors);
+
     return {
-        unionFilterActive: isUnionOnlySelected(contributorTypes, contributors),
+        unionFilterActive: unionOnly,
     };
 }
 
