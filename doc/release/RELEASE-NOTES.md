@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: _Provide release date_
+
+### Code/API changes
+* [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.26.0
 
 ## Introduction

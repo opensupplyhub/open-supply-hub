@@ -11,7 +11,7 @@ django-cors-headers==4.4.0
 django-ecsmanage==2.0.1
 django-extensions==3.2.3
 django-jsonview==2.0.0
-dj-rest-auth[with_social]==7.0.2
+dj-rest-auth[with_social]==7.1.0
 django-simple-history==3.4.0
 django-spa==0.3.5
 django-storages==1.14.4
