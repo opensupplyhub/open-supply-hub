@@ -43,6 +43,7 @@ from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 from django.conf import settings
 from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 from django.utils.decorators import method_decorator
 
 from api.models import (
@@ -314,6 +315,12 @@ class FacilitiesViewSet(ListModelMixin,
             cache="view_cache",
         ),
     )
+    # Trade union masking depends on whether the caller is a token (API)
+    # request, so the cached response must vary on the Authorization header.
+    # Otherwise an anonymous/web response (union names shown) and an API
+    # response (union names masked) would collide on the same cache key and
+    # serve whichever was cached first.
+    @method_decorator(vary_on_headers('Authorization'))
     def retrieve(self, request, pk=None):
         """
         Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
