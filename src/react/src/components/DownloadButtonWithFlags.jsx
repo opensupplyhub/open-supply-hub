@@ -70,24 +70,32 @@ DownloadButtonWithFlags.defaultProps = {
     unionFilterActive: false,
 };
 
-// A search targets trade union-linked data - and so cannot be downloaded -
-// when the "Union" Data Contributor Type is selected, or when any selected
-// Data Contributor is a union. The Contributor List sub-filter is covered
-// transitively, since a list can only be picked while its contributor is
-// selected.
-const isUnionSelected = (contributorTypes, contributors) => {
-    const unionTypeSelected = (contributorTypes || []).some(
-        option => option.value === UNION_CONTRIBUTOR_TYPE,
-    );
-    const unionContributorSelected = (contributors || []).some(
-        option => option.type === UNION_CONTRIBUTOR_TYPE,
-    );
-    return unionTypeSelected || unionContributorSelected;
+// The download button is disabled only when a search targets trade
+// union-linked data *exclusively* - i.e. there is a union signal (the "Union"
+// Data Contributor Type, or a union Data Contributor / its list sub-filter)
+// and no non-union contributor signal. A mixed search stays downloadable; the
+// backend relabels the union rows to "Other" in the CSV/XLSX.
+const isUnionOnlySelected = (contributorTypes, contributors) => {
+    const types = contributorTypes || [];
+    const contribs = contributors || [];
+
+    const hasUnionSignal =
+        types.some(option => option.value === UNION_CONTRIBUTOR_TYPE) ||
+        contribs.some(option => option.type === UNION_CONTRIBUTOR_TYPE);
+    if (!hasUnionSignal) {
+        return false;
+    }
+
+    const hasNonUnionSignal =
+        types.some(option => option.value !== UNION_CONTRIBUTOR_TYPE) ||
+        contribs.some(option => option.type !== UNION_CONTRIBUTOR_TYPE);
+
+    return !hasNonUnionSignal;
 };
 
 function mapStateToProps({ filters: { contributorTypes, contributors } }) {
     return {
-        unionFilterActive: isUnionSelected(contributorTypes, contributors),
+        unionFilterActive: isUnionOnlySelected(contributorTypes, contributors),
     };
 }
 
