@@ -1,6 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from api.facility_index_backfill.runner import FacilityIndexBackfillRunner
+from api.facility_index_backfill.backfill_orchestrator import (
+    BackfillOrchestrator,
+)
 from api.facility_index_backfill.specs import list_field_names
 
 
@@ -44,8 +46,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         field_names = self._parse_field_names(options['fields'])
-        runner = FacilityIndexBackfillRunner(self.stdout, self.style)
-        runner.run(
+        if options['batch_size'] < 1:
+            raise CommandError('--batch-size must be at least 1.')
+        if options['parallel'] < 1:
+            raise CommandError('--parallel must be at least 1.')
+
+        orchestrator = BackfillOrchestrator(self.stdout, self.style)
+        orchestrator.run(
             field_names=field_names,
             parallel=options['parallel'],
             batch_size=options['batch_size'],

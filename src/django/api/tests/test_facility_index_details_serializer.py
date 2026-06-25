@@ -980,3 +980,122 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         partner_fields = data["properties"]["partner_fields"]
 
         self.assertIn('test_data_field', partner_fields)
+
+    def _get_contributors(self, contributors, can_see_detail=True):
+        facility = Mock(contributors=contributors)
+        serializer = FacilityIndexDetailsSerializer(
+            context={'request': Mock()},
+        )
+        with patch(
+            'api.serializers.facility.facility_index_serializer'
+            '.can_user_see_detail',
+            return_value=can_see_detail,
+        ):
+            return serializer.get_contributors(facility)
+
+    def test_anonymized_last_contributed_at_uses_most_recent_match(self):
+        contributors = [
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': 100,
+                'name': 'Brand A',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': False,
+                'last_contributed_at': '2020-01-01T00:00:00Z',
+            },
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': 200,
+                'name': 'Brand A (Later List)',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': False,
+                'last_contributed_at': '2024-06-15T00:00:00Z',
+            },
+        ]
+
+        result = self._get_contributors(contributors)
+        anonymized = [
+            contributor for contributor in result
+            if contributor.get('contributor_type') == 'Brand'
+        ]
+
+        self.assertEqual(len(anonymized), 1)
+        self.assertEqual(anonymized[0]['count'], 1)
+        self.assertEqual(
+            anonymized[0]['last_contributed_at'],
+            '2024-06-15T00:00:00.000000Z',
+        )
+
+    def test_public_api_only_last_contributed_at_uses_most_recent_match(self):
+        contributors = [
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': None,
+                'name': 'Brand A',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': True,
+                'last_contributed_at': '2020-01-01T00:00:00Z',
+            },
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': None,
+                'name': 'Brand A',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': True,
+                'last_contributed_at': '2024-06-15T00:00:00Z',
+            },
+        ]
+
+        result = self._get_contributors(contributors)
+        public = [
+            contributor for contributor in result
+            if contributor.get('id') == 10
+        ]
+
+        self.assertEqual(len(public), 1)
+        self.assertEqual(
+            public[0]['last_contributed_at'],
+            '2024-06-15T00:00:00.000000Z',
+        )
+
+    def test_anonymized_skips_contributor_already_shown_as_public(self):
+        contributors = [
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': 100,
+                'name': 'Brand A (Public List)',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': True,
+                'list_name': 'Public List',
+                'last_contributed_at': '2024-01-01T00:00:00Z',
+            },
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': 200,
+                'name': 'Brand A',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': False,
+                'last_contributed_at': '2020-01-01T00:00:00Z',
+            },
+        ]
+
+        result = self._get_contributors(contributors)
+        anonymized = [
+            contributor for contributor in result
+            if contributor.get('contributor_type') == 'Brand'
+            and contributor.get('id') is None
+        ]
+
+        self.assertEqual(len(anonymized), 0)

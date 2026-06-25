@@ -72,7 +72,7 @@ SupplyChainNetworkDrawer.propTypes = {
             lists: arrayOf(
                 shape({
                     name: string.isRequired,
-                    uploaded_at: string,
+                    uploaded_at: string.isRequired,
                 }),
             ).isRequired,
             last_contributed_at: string.isRequired,

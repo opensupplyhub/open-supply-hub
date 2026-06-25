@@ -3,10 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.core.management.color import no_style
 from django.test import SimpleTestCase
 
-from api.facility_index_backfill.runner import FacilityIndexBackfillRunner
 from api.facility_index_backfill.specs import (
     build_count_sql,
     build_update_sql,
@@ -14,12 +12,6 @@ from api.facility_index_backfill.specs import (
     list_field_names,
 )
 from api.management.commands.backfill_facility_index import Command
-
-
-def make_runner(stdout=None):
-    if stdout is None:
-        stdout = StringIO()
-    return FacilityIndexBackfillRunner(stdout, no_style()), stdout
 
 
 class FacilityIndexBackfillTest(SimpleTestCase):
@@ -37,6 +29,7 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertIn('contributors =', sql)
         self.assertIn('index_contributors(afi.id)', sql)
         self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
     def test_build_count_sql_applies_contributors_filter(self):
         spec = get_field_spec('contributors')
@@ -44,6 +37,7 @@ class FacilityIndexBackfillTest(SimpleTestCase):
 
         self.assertIn('cardinality(COALESCE(contributors', sql)
         self.assertIn('hashtext', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
     def test_build_count_sql_omits_filter_when_not_configured(self):
         spec = {
@@ -89,17 +83,31 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertEqual(field_names, ['contributors', 'contributors'])
 
     def test_parallel_must_be_at_least_one(self):
-        runner, _ = make_runner()
-
-        with self.assertRaises(CommandError):
-            runner.run(
-                ['contributors'],
+        with self.assertRaises(CommandError) as context:
+            call_command(
+                'backfill_facility_index',
+                fields='contributors',
                 parallel=0,
-                batch_size=100,
                 dry_run=True,
             )
 
-    @patch('api.facility_index_backfill.runner.connection')
+        self.assertIn('--parallel must be at least 1', str(context.exception))
+
+    def test_batch_size_must_be_at_least_one(self):
+        with self.assertRaises(CommandError) as context:
+            call_command(
+                'backfill_facility_index',
+                fields='contributors',
+                batch_size=0,
+                dry_run=True,
+            )
+
+        self.assertIn(
+            '--batch-size must be at least 1',
+            str(context.exception),
+        )
+
+    @patch('api.facility_index_backfill.backfill_worker.connection')
     def test_dry_run_reports_contributors_row_count(self, mock_connection):
         mock_cursor = MagicMock()
         mock_cursor.fetchone.return_value = (42,)

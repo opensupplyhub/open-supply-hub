@@ -45,19 +45,24 @@ python manage.py backfill_facility_index --fields contributors,claim_info
 ## How it works
 
 ```
-backfill_facility_index (management command)
+backfill_facility_index (orchestrator command)
         │
         ▼
-FacilityIndexBackfillRunner (runner.py)
+BackfillOrchestrator (backfill_orchestrator.py)
         │
         ├── reads field group spec from specs.py
-        ├── optional: spawn N worker subprocesses (hash partition by id)
-        └── each worker:
+        ├── parallel == 1: BackfillWorker in-process
+        └── parallel > 1: spawn N backfill_facility_index_worker subprocesses
+                │
+                ▼
+        BackfillWorker (backfill_worker.py)
               COUNT assigned rows
               loop: UPDATE batch via keyset pagination (id > last_id)
                     SET columns from index_*() expressions
                     COMMIT per batch
 ```
+
+The worker command (`backfill_facility_index_worker`) is not intended for direct use in normal operations; the orchestrator invokes it with explicit CLI arguments (`--field`, `--worker-id`, `--workers`, `--batch-size`, `--result-file`).
 
 ### Parallelism
 
@@ -133,8 +138,15 @@ The model docstring on `FacilityIndex` also references this package as a reminde
 | File | Role |
 | --- | --- |
 | `specs.py` | Field group registry and SQL builders |
-| `runner.py` | Batch loop, transactions, parallel worker orchestration |
+| `backfill_orchestrator.py` | `BackfillOrchestrator` |
+| `backfill_worker.py` | `BackfillWorker` |
+| `utils.py` | Shared helpers (e.g. worker log labels) |
 | `README.md` | This document |
+
+| Command | Role |
+| --- | --- |
+| `backfill_facility_index` | Orchestrator CLI (`--fields`, `--parallel`, …) |
+| `backfill_facility_index_worker` | Single hash partition; spawned by orchestrator |
 
 ## Related commands
 
