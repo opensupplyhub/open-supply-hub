@@ -1,7 +1,6 @@
 import logging
 
 from collections import defaultdict
-from itertools import groupby
 
 from countries.lib.countries import COUNTRY_NAMES
 from rest_framework.serializers import SerializerMethodField
