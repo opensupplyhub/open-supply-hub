@@ -36,6 +36,7 @@ from api.serializers import (FacilityActivityReportSerializer,
 from api.serializers.facility.facility_list_page_parameter_serializer import \
     FacilityListPageParameterSerializer
 from api.serializers.facility.utils import is_same_contributor_from_url_param
+from api.services.masked_contributors import MaskedContributors
 from api.services.should_mask_contribution import ShouldMaskContribution
 from api.throttles import DataUploadThrottle
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -246,6 +247,16 @@ class FacilitiesViewSet(ListModelMixin,
             request
         )
 
+        # Resolve the masked-contributor set once per request and reuse it in
+        # both __is_anonymised_only (always needs the full set) and the
+        # serializer (empty for web clients, full for API callers), avoiding a
+        # second cache round-trip when serialising.
+        masked = ShouldMaskContribution.get_masked_contributors()
+        is_api_caller = bool(getattr(request, 'auth', None))
+        context['masked_contributors'] = (
+            masked if is_api_caller else MaskedContributors()
+        )
+
         if page_queryset is not None:
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
@@ -256,7 +267,7 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
             page.data['anonymised_only'] = self.__is_anonymised_only(
-                queryset, page.data.get('count')
+                queryset, masked, page.data.get('count')
             )
             return page
 
@@ -269,7 +280,7 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
-            'anonymised_only': self.__is_anonymised_only(queryset),
+            'anonymised_only': self.__is_anonymised_only(queryset, masked),
         }
         if extent is not None:
             response['extent'] = extent
@@ -277,16 +288,18 @@ class FacilitiesViewSet(ListModelMixin,
         return Response(response)
 
     @staticmethod
-    def __is_anonymised_only(queryset, count=None):
+    def __is_anonymised_only(queryset, masked, count=None):
         """
         Whether every facility in the (full, unpaginated) result set is
         attributed only to anonymised contributors, so a download would carry
         no real contributor attribution. The front-end disables the download
         button in that case.
+
+        ``masked`` is the pre-resolved ``MaskedContributors`` from the caller
+        (already fetched from the cache) so this method never hits the cache a
+        second time.
         """
-        anonymised_ids = list(
-            ShouldMaskContribution.get_masked_contributors().contributor_ids
-        )
+        anonymised_ids = list(masked.contributor_ids)
         if not anonymised_ids:
             return False
         if count is None:

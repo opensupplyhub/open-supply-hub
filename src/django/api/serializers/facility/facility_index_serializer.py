@@ -358,9 +358,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         seen_public_names = set()
         distinct_public = []
-        public_names = set()
-        public_ids = set()
-        anonymous_types = []
         masked_contributor_ids = set()
         public_contributor_ids = set()
         counted_anonymous_ids = set()
@@ -444,18 +441,28 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     def _masked_contributor_ids(self):
         """Contributor ids whose name must be anonymized for this request.
 
-        Empty for the web client and facility profiles, so union contributor
-        names stay visible there; populated only for programmatic API callers.
+        Empty for the web client and facility profiles, so contributor names
+        stay visible there; populated only for programmatic API callers.
 
         The masked set is the same for the whole response, so it is resolved
         once per serializer instance and reused. Without this the value would
         be re-fetched from the cache for every field of every facility (e.g.
         ``contributors``, ``extended_fields`` and ``sector`` per row of a list
         response).
+
+        When ``masked_contributors`` is present in the serializer context it
+        was already resolved by the view (avoiding a second cache round-trip);
+        otherwise it is resolved lazily via ``ShouldMaskContribution``.
         """
         cached = getattr(self, '_masked_contributors_cache', None)
         if cached is None:
-            cached = ShouldMaskContribution.for_request(self._get_request())
+            ctx = self.context or {}
+            if 'masked_contributors' in ctx:
+                cached = ctx['masked_contributors']
+            else:
+                cached = ShouldMaskContribution.for_request(
+                    self._get_request()
+                )
             self._masked_contributors_cache = cached
         return cached
 
