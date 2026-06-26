@@ -1,5 +1,10 @@
 import PLURAL_MAP from './constants';
 
+const mergeLastContributedAt = (existingDate, incomingDate) =>
+    new Date(incomingDate) > new Date(existingDate)
+        ? incomingDate
+        : existingDate;
+
 export const buildTypeCounts = contributors => {
     const totals = contributors.reduce((acc, contributor) => {
         const type = contributor.contributor_type;
@@ -22,7 +27,14 @@ export const aggregateByType = nonPublicContributors =>
             if (existing) {
                 return acc.map(item =>
                     item.contributor_type === c.contributor_type
-                        ? { ...item, count: item.count + (c.count || 1) }
+                        ? {
+                              ...item,
+                              count: item.count + (c.count || 1),
+                              last_contributed_at: mergeLastContributedAt(
+                                  item.last_contributed_at,
+                                  c.last_contributed_at,
+                              ),
+                          }
                         : item,
                 );
             }
@@ -31,6 +43,7 @@ export const aggregateByType = nonPublicContributors =>
                 {
                     contributor_type: c.contributor_type,
                     count: c.count || 1,
+                    last_contributed_at: c.last_contributed_at,
                 },
             ];
         }, []);

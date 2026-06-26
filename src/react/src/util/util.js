@@ -1021,28 +1021,46 @@ export const splitContributorsIntoPublicAndNonPublic = contributors =>
                         publicContributor.id === currentContributor.id,
                 );
                 if (index === -1) {
-                    /*
-                    Push the contributor to the array of public contributors if they don't
-                    exist there. Also, the code replaces the list_name property with
-                    list_names to make the object contain data more related to the
-                    contributor and their lists, not one contribution of the contributor.
-                    */
                     const {
                         list_name: listName,
-                        ...contributorWithoutListName
+                        list_uploaded_at: listUploadedAt,
+                        ...contributorWithoutListFields
                     } = currentContributor;
                     splittedContributors.publicContributors.push({
-                        ...contributorWithoutListName,
-                        list_names: [listName],
+                        ...contributorWithoutListFields,
+                        lists: listName
+                            ? [
+                                  {
+                                      name: listName,
+                                      uploaded_at: listUploadedAt ?? null,
+                                  },
+                              ]
+                            : [],
+                        last_contributed_at:
+                            currentContributor.last_contributed_at,
                     });
                 } else {
-                    /*
-                    Group the name of the list under the contributor whose id already exists
-                    in the array.
-                    */
-                    splittedContributors.publicContributors[
-                        index
-                    ].list_names.push(currentContributor.list_name);
+                    const existingContributor =
+                        splittedContributors.publicContributors[index];
+                    if (currentContributor.list_name) {
+                        existingContributor.lists = [
+                            ...existingContributor.lists,
+                            {
+                                name: currentContributor.list_name,
+                                uploaded_at:
+                                    currentContributor.list_uploaded_at ?? null,
+                            },
+                        ];
+                    } else {
+                        const {
+                            last_contributed_at: existingDate,
+                        } = existingContributor;
+                        const incomingDate =
+                            currentContributor.last_contributed_at;
+                        if (new Date(incomingDate) > new Date(existingDate)) {
+                            existingContributor.last_contributed_at = incomingDate;
+                        }
+                    }
                 }
             } else {
                 // If the object doesn't have the id key, it is a non-public contributor.

@@ -10,6 +10,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         call_command('migrate')
         call_command('reindex_database')
-        # One-time, best-effort os_id_snapshot recovery for OSDEV-2878.
-        # Remove after the 2.26.0 release has been deployed everywhere.
-        call_command('backfill_moderation_event_os_id_snapshot_recovery')
+        call_command(
+            'backfill_facility_index',
+            fields='contributors',
+            parallel=10,
+            batch_size=10000,
+        )

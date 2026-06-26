@@ -92,6 +92,7 @@ const {
     shouldUseProductionLocationPage,
     getFilteredSearchForEmbed,
     makeFacilityDetailLinkOnRedirect,
+    splitContributorsIntoPublicAndNonPublic,
 } = require('../util/util');
 
 const {
@@ -3039,5 +3040,96 @@ describe('makeFacilityDetailLinkOnRedirect', () => {
             true,
         );
         expect(url).toBe('/production-locations/CN2026030PXM73F?embed=1&contributors=abc');
+    });
+});
+
+describe('splitContributorsIntoPublicAndNonPublic', () => {
+    it('splits public contributors with list metadata into lists array', () => {
+        const result = splitContributorsIntoPublicAndNonPublic([
+            {
+                id: 1,
+                contributor_name: 'Brand A',
+                contributor_type: 'Brand',
+                list_name: 'Spring 2024',
+                list_uploaded_at: '2024-03-01T00:00:00Z',
+                last_contributed_at: '2024-03-01T00:00:00Z',
+            },
+        ]);
+
+        expect(result.publicContributors).toHaveLength(1);
+        expect(result.publicContributors[0].lists).toEqual([
+            {
+                name: 'Spring 2024',
+                uploaded_at: '2024-03-01T00:00:00Z',
+            },
+        ]);
+        expect(result.nonPublicContributors).toEqual([]);
+    });
+
+    it('merges additional list rows for the same public contributor id', () => {
+        const result = splitContributorsIntoPublicAndNonPublic([
+            {
+                id: 1,
+                contributor_name: 'Brand A',
+                list_name: 'List One',
+                list_uploaded_at: '2024-01-01T00:00:00Z',
+                last_contributed_at: '2024-01-01T00:00:00Z',
+            },
+            {
+                id: 1,
+                contributor_name: 'Brand A',
+                list_name: 'List Two',
+                list_uploaded_at: '2024-06-01T00:00:00Z',
+                last_contributed_at: '2024-06-01T00:00:00Z',
+            },
+        ]);
+
+        expect(result.publicContributors).toHaveLength(1);
+        expect(result.publicContributors[0].lists).toEqual([
+            {
+                name: 'List One',
+                uploaded_at: '2024-01-01T00:00:00Z',
+            },
+            {
+                name: 'List Two',
+                uploaded_at: '2024-06-01T00:00:00Z',
+            },
+        ]);
+    });
+
+    it('keeps the most recent API-only last_contributed_at for a public contributor', () => {
+        const result = splitContributorsIntoPublicAndNonPublic([
+            {
+                id: 1,
+                contributor_name: 'Brand A',
+                last_contributed_at: '2020-01-01T00:00:00Z',
+            },
+            {
+                id: 1,
+                contributor_name: 'Brand A',
+                last_contributed_at: '2024-06-15T00:00:00Z',
+            },
+        ]);
+
+        expect(result.publicContributors).toHaveLength(1);
+        expect(result.publicContributors[0].lists).toEqual([]);
+        expect(result.publicContributors[0].last_contributed_at).toBe(
+            '2024-06-15T00:00:00Z',
+        );
+    });
+
+    it('routes contributors without id to nonPublicContributors', () => {
+        const anonymizedContributor = {
+            contributor_type: 'Brand',
+            count: 2,
+            last_contributed_at: '2024-06-15T00:00:00Z',
+        };
+
+        const result = splitContributorsIntoPublicAndNonPublic([
+            anonymizedContributor,
+        ]);
+
+        expect(result.publicContributors).toEqual([]);
+        expect(result.nonPublicContributors).toEqual([anonymizedContributor]);
     });
 });
