@@ -117,14 +117,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text='User has agreed to the terms of service'
     )
-    hide_in_paid_products = models.BooleanField(
-        'Hide contributor name in paid products',
-        default=True,
+    anonymise_in_paid_products = models.BooleanField(
+        'Anonymise contributor name in paid products',
+        default=False,
         help_text=(
-            "When enabled, this contributor's name is hidden (anonymized) in "
-            'OS Hub paid products - the bulk data download and the '
-            'programmatic API - so the data cannot be attributed to them at '
-            'scale. Only takes effect for trade union (Union) contributors.'
+            "When enabled, this contributor's name is anonymised in OS Hub "
+            'paid products - the bulk data download and the programmatic API '
+            '- so the data cannot be attributed to them at scale. Their '
+            'contributions stay visible on the public web app and facility '
+            'profiles.'
         )
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -172,31 +173,32 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         # A brand-new user has no contributions yet, so only an existing user
         # whose flag actually flips can change a cached paid response.
-        hide_flag_changed = False
+        flag_changed = False
         if not self._state.adding:
             try:
                 previous = User.objects.values_list(
-                    'hide_in_paid_products', flat=True
+                    'anonymise_in_paid_products', flat=True
                 ).get(pk=self.pk)
-                hide_flag_changed = previous != self.hide_in_paid_products
+                flag_changed = previous != self.anonymise_in_paid_products
             except User.DoesNotExist:
-                hide_flag_changed = True
+                flag_changed = True
 
         super().save(*args, **kwargs)
 
-        if hide_flag_changed:
+        if flag_changed:
             self.__invalidate_paid_product_masking_cache()
 
     @staticmethod
     def __invalidate_paid_product_masking_cache():
         """
-        Drop the caches that decide trade union masking in paid products so an
-        admin toggle of ``hide_in_paid_products`` takes effect right away.
+        Drop the caches that decide paid-product anonymisation so an admin
+        toggle of ``anonymise_in_paid_products`` takes effect right away.
 
-        The ``view_cache`` (memcached) holds both the masked-contributor set
-        and the per-Authorization facility detail responses, so a single flush
-        clears both for every worker. Without it the change would only surface
-        once they expire (up to ``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
+        The ``view_cache`` (memcached) holds both the anonymised-contributor
+        set and the per-Authorization facility detail responses, so a single
+        flush clears both for every worker. Without it the change would only
+        surface once they expire (up to
+        ``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
         """
         caches['view_cache'].clear()
 

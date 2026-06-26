@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from django.contrib.gis.geos import Point
 from django.core.cache import caches
 from django.test import TestCase, override_settings
 
@@ -9,7 +10,9 @@ from api.constants import (
     MASKED_CONTRIBUTOR_LABEL,
 )
 from api.models.contributor.contributor import Contributor
+from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
+from api.views.facility.facilities_view_set import FacilitiesViewSet
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
@@ -87,10 +90,12 @@ class ShouldMaskContributionServiceTest(TestCase):
         caches['view_cache'].clear()
 
     @staticmethod
-    def _make_contributor(contrib_type, hide=True, email='c@example.com'):
-        user = User.objects.create(email=email)
-        user.hide_in_paid_products = hide
-        user.save()
+    def _make_contributor(contrib_type, anonymise=True, email='c@example.com'):
+        # Set the flag at creation time: a brand-new user does not invalidate
+        # the cache on save, so warm-cache assertions stay deterministic.
+        user = User.objects.create(
+            email=email, anonymise_in_paid_products=anonymise
+        )
         contributor = Contributor.objects.create(
             admin=user,
             name='Contributor {}'.format(contrib_type),
@@ -98,7 +103,7 @@ class ShouldMaskContributionServiceTest(TestCase):
         )
         return contributor, user
 
-    def test_union_with_hide_flag_is_masked(self):
+    def test_contributor_with_flag_is_masked(self):
         contributor, user = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE
         )
@@ -107,17 +112,18 @@ class ShouldMaskContributionServiceTest(TestCase):
         self.assertIn(user.id, masked.admin_ids)
         self.assertIn(contributor.name, masked.names)
 
-    def test_union_without_hide_flag_is_not_masked(self):
+    def test_contributor_without_flag_is_not_masked(self):
         contributor, _ = self._make_contributor(
-            Contributor.UNION_CONTRIB_TYPE, hide=False
+            Contributor.UNION_CONTRIB_TYPE, anonymise=False
         )
         masked = ShouldMaskContribution.get_masked_contributors()
         self.assertNotIn(contributor.id, masked.contributor_ids)
 
-    def test_non_union_is_not_masked(self):
+    def test_non_union_with_flag_is_masked(self):
+        # The flag is the sole control now - it is not limited to unions.
         contributor, _ = self._make_contributor('Brand / Retailer')
         masked = ShouldMaskContribution.get_masked_contributors()
-        self.assertNotIn(contributor.id, masked.contributor_ids)
+        self.assertIn(contributor.id, masked.contributor_ids)
 
     def test_for_request_is_empty_without_token(self):
         self._make_contributor(Contributor.UNION_CONTRIB_TYPE)
@@ -140,8 +146,8 @@ class ShouldMaskContributionServiceTest(TestCase):
         first, _ = self._make_contributor(Contributor.UNION_CONTRIB_TYPE)
         ShouldMaskContribution.get_masked_contributors()
 
-        # A union added after the cache is warm is not seen until the cache
-        # is invalidated.
+        # A contributor added after the cache is warm is not seen until the
+        # cache is invalidated.
         second, _ = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE, email='c2@example.com'
         )
@@ -153,7 +159,7 @@ class ShouldMaskContributionServiceTest(TestCase):
         refreshed = ShouldMaskContribution.get_masked_contributors()
         self.assertIn(second.id, refreshed.contributor_ids)
 
-    def test_toggling_hide_flag_invalidates_cache(self):
+    def test_toggling_flag_invalidates_cache(self):
         contributor, user = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE
         )
@@ -162,7 +168,7 @@ class ShouldMaskContributionServiceTest(TestCase):
 
         # Disabling the flag must drop the cached set on save so the next
         # paid request stops masking the contributor without waiting for TTL.
-        user.hide_in_paid_products = False
+        user.anonymise_in_paid_products = False
         user.save()
 
         refreshed = ShouldMaskContribution.get_masked_contributors()
@@ -389,3 +395,96 @@ class CreatedFromMaskingTest(TestCase):
             info, MaskedContributors(names={'Union X'})
         )
         self.assertEqual(result['contributor'], 'Brand X')
+
+
+@override_settings(CACHES={
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'view_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'anonymised-only-test',
+    },
+})
+class AnonymisedOnlyAggregateTest(TestCase):
+    """
+    `FacilitiesViewSet.__is_anonymised_only` decides whether a whole search
+    result is attributed only to anonymised contributors (front-end download
+    button signal). It resolves from the cached anonymised set against the
+    denormalized `contributors_id` array, with no query when nothing is
+    anonymised.
+    """
+
+    # Resolve the name-mangled static method once for readability.
+    _is_anonymised_only = staticmethod(
+        FacilitiesViewSet._FacilitiesViewSet__is_anonymised_only
+    )
+
+    def setUp(self):
+        caches['view_cache'].clear()
+        self.union_user = User.objects.create(
+            email='union@example.com', anonymise_in_paid_products=True
+        )
+        self.anonymised = Contributor.objects.create(
+            admin=self.union_user,
+            name='Anonymised Co',
+            contrib_type=Contributor.UNION_CONTRIB_TYPE,
+        )
+        self.other = Contributor.objects.create(
+            admin=User.objects.create(email='brand@example.com'),
+            name='Brand Co',
+            contrib_type='Brand / Retailer',
+        )
+
+    def tearDown(self):
+        caches['view_cache'].clear()
+
+    def _make_index(self, idx, contributors_id):
+        return FacilityIndex.objects.create(
+            id=str(idx),
+            name='Name',
+            address='Address',
+            country_code='US',
+            location=Point(0, 0),
+            contributors_count=len(contributors_id),
+            contributors_id=contributors_id,
+            contrib_types=[],
+            contributors=[],
+            lists=[],
+            approved_claim_ids=[],
+            facility_names=[],
+            facility_addresses=[],
+            extended_fields=[],
+            sector=[],
+        )
+
+    def test_all_anonymised_returns_true(self):
+        self._make_index(1, [self.anonymised.id])
+        queryset = FacilityIndex.objects.all()
+        self.assertTrue(
+            self._is_anonymised_only(queryset, queryset.count())
+        )
+
+    def test_mixed_result_returns_false(self):
+        self._make_index(1, [self.anonymised.id])
+        self._make_index(2, [self.anonymised.id, self.other.id])
+        queryset = FacilityIndex.objects.all()
+        self.assertFalse(
+            self._is_anonymised_only(queryset, queryset.count())
+        )
+
+    def test_no_anonymised_contributors_returns_false(self):
+        self.union_user.anonymise_in_paid_products = False
+        self.union_user.save()
+        caches['view_cache'].clear()
+        self._make_index(1, [self.anonymised.id])
+        queryset = FacilityIndex.objects.all()
+        self.assertFalse(
+            self._is_anonymised_only(queryset, queryset.count())
+        )
+
+    def test_empty_result_returns_false(self):
+        self._make_index(1, [self.anonymised.id])
+        self.assertFalse(
+            self._is_anonymised_only(FacilityIndex.objects.all(), 0)
+        )

@@ -1,110 +1,75 @@
 import logging
 import os
 from datetime import datetime
+
+from api.constants import (APIErrorMessages, FacilityClaimStatuses,
+                           FacilityCreateQueryParams, FacilityMergeQueryParams,
+                           FeatureGroups, ProcessingAction,
+                           UpdateLocationParams)
+from api.exceptions import BadRequestException, ServiceUnavailableException
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
-from api.facility_actions.processing_facility_executor import (
+from api.facility_actions.processing_facility_executor import \
     ProcessingFacilityExecutor
-)
-from api.models.transactions.index_facilities_new import index_facilities_new
+from api.facility_history import (create_dissociate_match_change_reason,
+                                  create_facility_history_list)
+from api.mail import send_claim_facility_confirmation_email
+from api.models import (Contributor, ExtendedField, Facility,
+                        FacilityActivityReport, FacilityAlias, FacilityClaim,
+                        FacilityClaimAttachments, FacilityClaimReviewNote,
+                        FacilityListItem, FacilityLocation, FacilityMatch,
+                        Version)
 from api.models.facility.facility_index import FacilityIndex
+from api.models.transactions.index_facilities_new import index_facilities_new
+from api.os_id_lookup import OSIDLookup
+from api.pagination import FacilitiesGeoJSONPagination
+from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.sector_cache import SectorCache
+from api.serializers import (FacilityActivityReportSerializer,
+                             FacilityClaimSerializer,
+                             FacilityCreateClaimSerializer,
+                             FacilityCreateQueryParamsSerializer,
+                             FacilityIndexDetailsSerializer,
+                             FacilityIndexSerializer,
+                             FacilityMergeQueryParamsSerializer,
+                             FacilityQueryParamsSerializer,
+                             FacilityUpdateLocationParamsSerializer)
+from api.serializers.facility.facility_list_page_parameter_serializer import \
+    FacilityListPageParameterSerializer
+from api.serializers.facility.utils import is_same_contributor_from_url_param
+from api.services.should_mask_contribution import ShouldMaskContribution
+from api.throttles import DataUploadThrottle
+from api.views.disabled_pagination_inspector import DisabledPaginationInspector
+from api.views.facility.facility_parameters import (
+    facilities_create_parameters, facilities_list_parameters,
+    facility_parameters)
 from contricleaner.lib.contri_cleaner import ContriCleaner
-from contricleaner.lib.exceptions.handler_not_set_error \
-    import HandlerNotSetError
-
-from api.exceptions import ServiceUnavailableException
-
-from rest_framework.mixins import (
-    ListModelMixin,
-    RetrieveModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
-)
-from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
+from contricleaner.lib.exceptions.handler_not_set_error import \
+    HandlerNotSetError
+from drf_yasg.openapi import TYPE_OBJECT, Schema
+from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    NotAuthenticated,
-    NotFound,
-    PermissionDenied,
-    ValidationError,
-    APIException
-)
-from waffle import switch_is_active, flag_is_active
-from django.contrib.gis.geos import Point
+from rest_framework.exceptions import (APIException, NotAuthenticated,
+                                       NotFound, PermissionDenied,
+                                       ValidationError)
+from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
+                                   ListModelMixin, RetrieveModelMixin)
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
+from waffle import flag_is_active, switch_is_active
+
+from django.conf import settings
 from django.contrib.gis.db.models import Extent
+from django.contrib.gis.geos import Point
 from django.core import exceptions as core_exceptions
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.text import slugify
-from drf_yasg.openapi import Schema, TYPE_OBJECT
-from drf_yasg.utils import no_body, swagger_auto_schema
-from django.conf import settings
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
-from django.utils.decorators import method_decorator
-
-from api.models import (
-    Contributor,
-    Facility,
-    FacilityActivityReport,
-    FacilityAlias,
-    FacilityClaim,
-    FacilityClaimAttachments,
-    FacilityClaimReviewNote,
-    FacilityListItem,
-    FacilityLocation,
-    FacilityMatch,
-    ExtendedField,
-    Version
-)
-from api.constants import (
-    FeatureGroups,
-    FacilityCreateQueryParams,
-    FacilityMergeQueryParams,
-    ProcessingAction,
-    UpdateLocationParams,
-    FacilityClaimStatuses,
-    APIErrorMessages,
-)
-from api.exceptions import BadRequestException
-from api.facility_history import (
-    create_dissociate_match_change_reason,
-    create_facility_history_list,
-)
-from api.mail import send_claim_facility_confirmation_email
-
-from api.pagination import FacilitiesGeoJSONPagination
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
-from api.sector_cache import SectorCache
-from api.os_id_lookup import OSIDLookup
-from api.serializers import (
-    FacilityIndexSerializer,
-    FacilityIndexDetailsSerializer,
-    FacilityActivityReportSerializer,
-    FacilityClaimSerializer,
-    FacilityCreateQueryParamsSerializer,
-    FacilityMergeQueryParamsSerializer,
-    FacilityQueryParamsSerializer,
-    FacilityUpdateLocationParamsSerializer,
-    FacilityCreateClaimSerializer
-)
-from api.serializers.facility.facility_list_page_parameter_serializer \
-    import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle
-from api.serializers.facility.utils import (
-    is_same_contributor_from_url_param,
-)
-
-from api.views.disabled_pagination_inspector import DisabledPaginationInspector
-
-from api.views.facility.facility_parameters import (
-    facility_parameters,
-    facilities_list_parameters,
-    facilities_create_parameters,
-)
 
 log = logging.getLogger(__name__)
 
@@ -290,6 +255,9 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['extent'] = extent
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
+            page.data['anonymised_only'] = self.__is_anonymised_only(
+                queryset, page.data.get('count')
+            )
             return page
 
         # Non-paginated response
@@ -301,11 +269,37 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
+            'anonymised_only': self.__is_anonymised_only(queryset),
         }
         if extent is not None:
             response['extent'] = extent
         response['params'] = params.validated_data
         return Response(response)
+
+    @staticmethod
+    def __is_anonymised_only(queryset, count=None):
+        """
+        Whether every facility in the (full, unpaginated) result set is
+        attributed only to anonymised contributors, so a download would carry
+        no real contributor attribution. The front-end disables the download
+        button in that case.
+        """
+        anonymised_ids = list(
+            ShouldMaskContribution.get_masked_contributors().contributor_ids
+        )
+        if not anonymised_ids:
+            return False
+        if count is None:
+            count = queryset.count()
+        if not count:
+            return False
+        # A facility is downloadable when it has at least one contributor
+        # outside the anonymised set, i.e. its contributors are NOT contained
+        # by that set. None left means the whole result set is anonymised.
+        has_downloadable = queryset.exclude(
+            contributors_id__contained_by=anonymised_ids
+        ).exists()
+        return not has_downloadable
 
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})

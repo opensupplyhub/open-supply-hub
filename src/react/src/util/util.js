@@ -880,19 +880,6 @@ const mapSingleChoiceToSelectOption = ([value, label]) =>
         label,
     });
 
-// Contributor options arrive as `[id, name, type]` tuples. We keep the
-// contributor `type` on the option so the UI can tell whether a selected
-// Data Contributor is a trade union (used to disable the download button).
-const mapSingleContributorChoiceToSelectOption = ([value, label, type]) =>
-    Object.freeze({
-        value,
-        label,
-        type,
-    });
-
-export const mapContributorTuplesToSelectOptions = data =>
-    Object.freeze(data.map(mapSingleContributorChoiceToSelectOption));
-
 const mapSingleDictChoiceToSelectOption = dict =>
     Object.freeze({
         value: dict.id,

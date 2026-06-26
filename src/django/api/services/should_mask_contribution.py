@@ -5,50 +5,7 @@ from api.constants import (
     MASKED_CONTRIBUTOR_IDS_CACHE_TTL_SECONDS,
 )
 from api.models.contributor.contributor import Contributor
-
-
-class MaskedContributors:
-    """
-    The contributors whose identity must be hidden in a paid response.
-
-    A contribution can be attributed in the FacilityIndex JSON by either the
-    contributor id (``contributors``, ``extended_fields``, ``facility_names``,
-    ``facility_addresses``, ``item_sectors``, ``claim_info``) or only by the
-    admin/user id (``facility_locations``, ``facility_list_items``), so we keep
-    both sets and match on whichever key a given contributor blob carries.
-
-    The ``created_from_info`` JSON carries neither id, so masked contributor
-    names are also kept and matched by name there. The name set is built from
-    the same query, so it still honours the per-contributor flag.
-    """
-
-    __slots__ = ('contributor_ids', 'admin_ids', 'names')
-
-    def __init__(self, contributor_ids=None, admin_ids=None, names=None):
-        self.contributor_ids = set(contributor_ids or ())
-        self.admin_ids = set(admin_ids or ())
-        self.names = set(names or ())
-
-    def __bool__(self):
-        return bool(self.contributor_ids or self.admin_ids or self.names)
-
-    def matches(self, contributor):
-        if not contributor:
-            return False
-        contributor_id = contributor.get('id')
-        if (contributor_id is not None
-                and contributor_id in self.contributor_ids):
-            return True
-        admin_id = contributor.get('admin_id')
-        return admin_id is not None and admin_id in self.admin_ids
-
-    def masks_name(self, name):
-        """Match a contribution that is only attributed by name.
-
-        Used for ``created_from_info``, whose JSON exposes the contributor
-        name but no id.
-        """
-        return bool(name) and name in self.names
+from api.services.masked_contributors import MaskedContributors
 
 
 class ShouldMaskContribution:
@@ -59,14 +16,13 @@ class ShouldMaskContribution:
 
     A contribution is masked when ALL of the following hold:
 
-      * the contributor is a trade union (``contrib_type == 'Union'``), and
-      * the contributor's admin user has the ``hide_in_paid_products`` flag
-        enabled (it defaults to ``True``, so unions are protected unless an
-        OS Hub admin deliberately opts them back in), and
+      * the contributor's admin user has the ``anonymise_in_paid_products``
+        flag enabled (it defaults to ``False``, so a contributor is only
+        anonymised when an OS Hub admin deliberately opts them in), and
       * the request is a programmatic API request, i.e. authenticated with a
         token (``request.auth`` is set). Web-client/manual-search traffic is
-        left untouched - the front-end disables the download button for union
-        searches instead.
+        left untouched - the front-end disables the download button for
+        anonymised-only searches instead.
 
     When masked, a contributor's name is relabeled to a neutral
     ``MASKED_CONTRIBUTOR_LABEL`` ("Other"), the contributor id and any list
@@ -91,10 +47,7 @@ class ShouldMaskContribution:
     def _load():
         rows = (
             Contributor.objects
-            .filter(
-                contrib_type=Contributor.UNION_CONTRIB_TYPE,
-                admin__hide_in_paid_products=True,
-            )
+            .filter(admin__anonymise_in_paid_products=True)
             .values_list('id', 'admin_id', 'name')
         )
         contributor_ids = {row[0] for row in rows}
