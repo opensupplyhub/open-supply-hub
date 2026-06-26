@@ -17,6 +17,19 @@ export default theme =>
             fontSize: '1rem',
             color: COLOURS.NEAR_BLACK,
             lineHeight: 1.8,
+            marginBottom: '2px',
+        }),
+        anonymizedDate: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '1rem',
+            color: COLOURS.DARK_GREY,
+            marginBottom: '8px',
+        }),
+        anonymizedDateLabel: Object.freeze({
+            fontSize: '1rem',
+            color: COLOURS.DARK_GREY,
         }),
         anonymizedIcon: Object.freeze({
             fontSize: '1.5rem',

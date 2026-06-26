@@ -69,13 +69,20 @@ SupplyChainNetworkDrawer.propTypes = {
             id: number.isRequired,
             contributor_name: string.isRequired,
             contributor_type: string,
-            list_names: arrayOf(string),
+            lists: arrayOf(
+                shape({
+                    name: string.isRequired,
+                    uploaded_at: string.isRequired,
+                }),
+            ).isRequired,
+            last_contributed_at: string.isRequired,
         }),
     ),
     nonPublicContributors: arrayOf(
         shape({
             contributor_type: string.isRequired,
             count: number.isRequired,
+            last_contributed_at: string.isRequired,
         }),
     ),
 };

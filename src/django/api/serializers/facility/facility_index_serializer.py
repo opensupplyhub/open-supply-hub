@@ -1,4 +1,5 @@
 import logging
+
 from collections import defaultdict
 from itertools import groupby
 
@@ -19,14 +20,21 @@ from ...services.should_mask_contribution import ShouldMaskContribution
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import \
     FacilityIndexExtendedFieldListSerializer
-from .utils import (can_user_see_detail,
-                    create_address_field_from_facility_address,
-                    create_name_field_from_facility_name, format_field,
-                    format_numeric, format_sectors,
-                    get_efs_associated_with_contributor,
-                    get_embed_contributor_id, get_facility_name,
-                    is_created_at_main_date, regroup_claims_for_sector_field,
-                    regroup_items_for_sector_field)
+from .utils import (
+    can_user_see_detail,
+    create_address_field_from_facility_address,
+    create_name_field_from_facility_name,
+    format_date,
+    format_field,
+    format_numeric,
+    format_sectors,
+    get_efs_associated_with_contributor,
+    get_embed_contributor_id,
+    get_facility_name,
+    is_created_at_main_date,
+    regroup_claims_for_sector_field,
+    regroup_items_for_sector_field,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -337,24 +345,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         user_can_see_detail = can_user_see_detail(self)
         masked = self._masked_contributor_ids()
 
-        def format_source(source):
-            if source.get('admin_id') is None:
-                return {
-                    'name': source.get('name'),
-                    'contributor_type': source.get('contributor_type') or None,
-                    'count': source.get('count', 1),
-                }
-            return {
-                'id': source.get('admin_id') or None,
-                'name': source.get('name'),
-                'is_verified': bool(source.get('is_verified')),
-                'contributor_name': source.get('contributor_name')
-                or '[Unknown Contributor]',
-                'contributor_type': source.get('contrib_type') or None,
-                'list_name': source.get('list_name') or None,
-                'count': 1,
-            }
-
         valid_contributors = [
             contributor for contributor in facility.contributors
             if contributor.get('id') is not None
@@ -372,6 +362,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         public_ids = set()
         anonymous_types = []
         masked_contributor_ids = set()
+        public_contributor_ids = set()
+        counted_anonymous_ids = set()
+        anonymous_by_type = defaultdict(
+            lambda: {'count': 0, 'last_contributed_at': None}
+        )
 
         for contributor in valid_contributors:
             if ShouldMaskContribution.is_masked(contributor, masked):
@@ -386,24 +381,43 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 if contributor['name'] not in seen_public_names:
                     seen_public_names.add(contributor['name'])
                     distinct_public.append(contributor)
-                public_names.add(contributor['name'])
-                public_ids.add(contributor['id'])
+                else:
+                    for public_contributor in distinct_public:
+                        if public_contributor['name'] == contributor['name']:
+                            self._update_max_contributed_at(
+                                public_contributor,
+                                contributor.get('last_contributed_at'),
+                            )
+                            break
+                public_contributor_ids.add(contributor['id'])
             else:
-                if (contributor['name'] not in public_names
-                        and contributor['id'] not in public_ids):
-                    public_names.add(contributor['name'])
-                    public_ids.add(contributor['id'])
-                    anonymous_types.append(contributor.get('contrib_type'))
+                if contributor['id'] in public_contributor_ids:
+                    continue
+
+                contrib_type = contributor.get('contrib_type')
+                anonymous_data = anonymous_by_type[contrib_type]
+
+                if contributor['id'] not in counted_anonymous_ids:
+                    counted_anonymous_ids.add(contributor['id'])
+                    anonymous_data['count'] += 1
+
+                self._update_max_contributed_at(
+                    anonymous_data,
+                    contributor.get('last_contributed_at'),
+                )
 
         anonymous_entries = []
-        for contrib_type, group in groupby(sorted(anonymous_types)):
-            group_list = list(group)
-            count = len(group_list)
-            anonymous_entries.append({
+        for contrib_type in sorted(anonymous_by_type):
+            anonymous_data = anonymous_by_type[contrib_type]
+            count = anonymous_data['count']
+            last_contributed_at = anonymous_data['last_contributed_at']
+            entry = {
                 'name': Contributor.prefix_with_count(contrib_type, count),
                 'contributor_type': contrib_type,
                 'count': count,
-            })
+                'last_contributed_at': last_contributed_at,
+            }
+            anonymous_entries.append(entry)
 
         if masked_contributor_ids:
             anonymous_entries.append({
@@ -416,7 +430,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         seen_names = set()
         result = []
         for source in sources:
-            formatted = format_source(source)
+            formatted = self._format_source(source)
             if formatted['name'] not in seen_names:
                 seen_names.add(formatted['name'])
                 result.append(formatted)
@@ -496,3 +510,42 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             )
 
         return extended_fields
+
+    @staticmethod
+    def _format_source(source):
+        if source.get('admin_id') is None:
+            return {
+                'name': source.get('name'),
+                'contributor_type': source.get('contributor_type') or None,
+                'count': source.get('count', 1),
+                'last_contributed_at': format_date(
+                    source.get('last_contributed_at')
+                ),
+            }
+        return {
+            'id': source.get('admin_id') or None,
+            'name': source.get('name'),
+            'is_verified': bool(source.get('is_verified')),
+            'contributor_name': source.get('contributor_name')
+            or '[Unknown Contributor]',
+            'contributor_type': source.get('contrib_type') or None,
+            'list_name': source.get('list_name') or None,
+            'last_contributed_at': format_date(
+                source.get('last_contributed_at')
+            ),
+            'list_uploaded_at': (
+                format_date(source.get('list_uploaded_at'))
+                if source.get('list_uploaded_at') is not None
+                else None
+            ),
+            'count': 1,
+        }
+
+    @staticmethod
+    def _update_max_contributed_at(target, contributed_at):
+        if not contributed_at:
+            return
+        existing_date = target.get('last_contributed_at')
+        if (existing_date is None
+                or contributed_at > existing_date):
+            target['last_contributed_at'] = contributed_at
