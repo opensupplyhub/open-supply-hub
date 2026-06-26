@@ -432,8 +432,18 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         Empty for the web client and facility profiles, so union contributor
         names stay visible there; populated only for programmatic API callers.
+
+        The masked set is the same for the whole response, so it is resolved
+        once per serializer instance and reused. Without this the value would
+        be re-fetched from the cache for every field of every facility (e.g.
+        ``contributors``, ``extended_fields`` and ``sector`` per row of a list
+        response).
         """
-        return ShouldMaskContribution.for_request(self._get_request())
+        cached = getattr(self, '_masked_contributors_cache', None)
+        if cached is None:
+            cached = ShouldMaskContribution.for_request(self._get_request())
+            self._masked_contributors_cache = cached
+        return cached
 
     @staticmethod
     def _date_field_to_sort(use_main_created_at):
