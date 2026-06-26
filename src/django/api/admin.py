@@ -148,21 +148,6 @@ class ContributorAdmin(SimpleHistoryAdmin):
     history_list_display = ('is_verified', 'verification_notes')
     search_fields = ('name', 'admin__email')
     filter_horizontal = ('partner_fields',)
-    fields = (
-        'admin',
-        'name',
-        'description',
-        'website',
-        'contrib_type',
-        'other_contrib_type',
-        'is_verified',
-        'verification_notes',
-        'anonymise_in_paid_products',
-        'embed_level',
-        'embed_config',
-        'match_responsibility',
-        'partner_fields',
-    )
 
     def get_ordering(self, request):
         return ['name']
