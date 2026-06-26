@@ -70,7 +70,6 @@ class OarUserAdmin(UserAdmin):
         (None, {'fields': ('email', 'is_staff', 'is_superuser', 'is_active',
                            'should_receive_newsletter',
                            'has_agreed_to_terms_of_service',
-                           'anonymise_in_paid_products',
                            'groups', 'burst_rate', 'sustained_rate',
                            'data_upload_rate')}),
     )
@@ -149,6 +148,21 @@ class ContributorAdmin(SimpleHistoryAdmin):
     history_list_display = ('is_verified', 'verification_notes')
     search_fields = ('name', 'admin__email')
     filter_horizontal = ('partner_fields',)
+    fields = (
+        'admin',
+        'name',
+        'description',
+        'website',
+        'contrib_type',
+        'other_contrib_type',
+        'is_verified',
+        'verification_notes',
+        'anonymise_in_paid_products',
+        'embed_level',
+        'embed_config',
+        'match_responsibility',
+        'partner_fields',
+    )
 
     def get_ordering(self, request):
         return ['name']

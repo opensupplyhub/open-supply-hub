@@ -7,7 +7,6 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
-from django.core.cache import caches
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -117,17 +116,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text='User has agreed to the terms of service'
     )
-    anonymise_in_paid_products = models.BooleanField(
-        'Anonymise contributor name in paid products',
-        default=False,
-        help_text=(
-            "When enabled, this contributor's name is anonymised in OS Hub "
-            'paid products - the bulk data download and the programmatic API '
-            '- so the data cannot be attributed to them at scale. Their '
-            'contributions stay visible on the public web app and facility '
-            'profiles.'
-        )
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -170,37 +158,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
-
-        # A brand-new user has no contributions yet, so only an existing user
-        # whose flag actually flips can change a cached paid response.
-        flag_changed = False
-        if not self._state.adding:
-            try:
-                previous = User.objects.values_list(
-                    'anonymise_in_paid_products', flat=True
-                ).get(pk=self.pk)
-                flag_changed = previous != self.anonymise_in_paid_products
-            except User.DoesNotExist:
-                flag_changed = True
-
         super().save(*args, **kwargs)
-
-        if flag_changed:
-            self.__invalidate_paid_product_masking_cache()
-
-    @staticmethod
-    def __invalidate_paid_product_masking_cache():
-        """
-        Drop the caches that decide paid-product anonymisation so an admin
-        toggle of ``anonymise_in_paid_products`` takes effect right away.
-
-        The ``view_cache`` (memcached) holds both the anonymised-contributor
-        set and the per-Authorization facility detail responses, so a single
-        flush clears both for every worker. Without it the change would only
-        surface once they expire (up to
-        ``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
-        """
-        caches['view_cache'].clear()
 
     def __str__(self):
         return self.email

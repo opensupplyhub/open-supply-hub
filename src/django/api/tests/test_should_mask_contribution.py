@@ -91,15 +91,15 @@ class ShouldMaskContributionServiceTest(TestCase):
 
     @staticmethod
     def _make_contributor(contrib_type, anonymise=True, email='c@example.com'):
-        # Set the flag at creation time: a brand-new user does not invalidate
-        # the cache on save, so warm-cache assertions stay deterministic.
-        user = User.objects.create(
-            email=email, anonymise_in_paid_products=anonymise
-        )
+        # Set the flag at creation time: a brand-new contributor does not
+        # invalidate the cache on save, so warm-cache assertions stay
+        # deterministic.
+        user = User.objects.create(email=email)
         contributor = Contributor.objects.create(
             admin=user,
             name='Contributor {}'.format(contrib_type),
             contrib_type=contrib_type,
+            anonymise_in_paid_products=anonymise,
         )
         return contributor, user
 
@@ -168,8 +168,8 @@ class ShouldMaskContributionServiceTest(TestCase):
 
         # Disabling the flag must drop the cached set on save so the next
         # paid request stops masking the contributor without waiting for TTL.
-        user.anonymise_in_paid_products = False
-        user.save()
+        contributor.anonymise_in_paid_products = False
+        contributor.save()
 
         refreshed = ShouldMaskContribution.get_masked_contributors()
         self.assertNotIn(contributor.id, refreshed.contributor_ids)
@@ -422,13 +422,12 @@ class AnonymisedOnlyAggregateTest(TestCase):
 
     def setUp(self):
         caches['view_cache'].clear()
-        self.union_user = User.objects.create(
-            email='union@example.com', anonymise_in_paid_products=True
-        )
+        self.union_user = User.objects.create(email='union@example.com')
         self.anonymised = Contributor.objects.create(
             admin=self.union_user,
             name='Anonymised Co',
             contrib_type=Contributor.UNION_CONTRIB_TYPE,
+            anonymise_in_paid_products=True,
         )
         self.other = Contributor.objects.create(
             admin=User.objects.create(email='brand@example.com'),
@@ -474,8 +473,8 @@ class AnonymisedOnlyAggregateTest(TestCase):
         )
 
     def test_no_anonymised_contributors_returns_false(self):
-        self.union_user.anonymise_in_paid_products = False
-        self.union_user.save()
+        self.anonymised.anonymise_in_paid_products = False
+        self.anonymised.save()
         caches['view_cache'].clear()
         self._make_index(1, [self.anonymised.id])
         queryset = FacilityIndex.objects.all()

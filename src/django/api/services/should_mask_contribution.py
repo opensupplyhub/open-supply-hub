@@ -47,7 +47,7 @@ class ShouldMaskContribution:
     def _load():
         rows = (
             Contributor.objects
-            .filter(admin__anonymise_in_paid_products=True)
+            .filter(anonymise_in_paid_products=True)
             .values_list('id', 'admin_id', 'name')
         )
         contributor_ids = {row[0] for row in rows}

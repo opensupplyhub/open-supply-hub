@@ -45,7 +45,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
 * `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
 * `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
-* `0218_add_user_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (defaulting to `False`) to the `User` model.
+* `0218_add_contributor_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (defaulting to `False`) to the `Contributor` model (and its historical twin).
 
 #### Schema changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
@@ -67,7 +67,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
 * [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the list contribution and SLC contribution workflow pages.
-* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - OS Hub admins can now toggle **Anonymise contributor name in paid products** per user in Django admin (`/admin/api/user/<id>/change/`), available for all users and defaulting to off. This keeps the contributor's contributions visible on facility profiles while anonymising their identity in the API and data downloads to protect contributors and workers.
+* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - OS Hub admins can now toggle **Anonymise contributor name in paid products** per contributor in Django admin (`/admin/api/contributor/<id>/change/`), defaulting to off. This keeps the contributor's contributions visible on facility profiles while anonymising their identity in the API and data downloads to protect contributors and workers.
 
 ### Bugfix
 * [OSDEV-2197](https://opensupplyhub.atlassian.net/browse/OSDEV-2197) - Fixed promoted Single Location Contributions not being attributed as the source of a production location's name/address when the submitted value matched the existing one. The name/address index now flags the promoted (`created_from`) contribution and prioritizes it when ordering entries, so attribution follows the promoted contribution.

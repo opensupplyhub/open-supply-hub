@@ -1,5 +1,6 @@
 import uuid
 from simple_history.models import HistoricalRecords
+from django.core.cache import caches
 from django.db import models
 
 from api.constants import (
@@ -136,6 +137,17 @@ class Contributor(models.Model):
         blank=True,
         help_text='Partner fields that this contributor can access'
     )
+    anonymise_in_paid_products = models.BooleanField(
+        'Anonymise contributor name in paid products',
+        default=False,
+        help_text=(
+            "When enabled, this contributor's name is anonymised in OS Hub "
+            'paid products - the bulk data download and the programmatic API '
+            '- so the data cannot be attributed to them at scale. Their '
+            'contributions stay visible on the public web app and facility '
+            'profiles.'
+        )
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -144,6 +156,36 @@ class Contributor(models.Model):
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source', 'partner_fields']
     )
+
+    def save(self, *args, **kwargs):
+        flag_changed = False
+        if not self._state.adding:
+            try:
+                previous = Contributor.objects.values_list(
+                    'anonymise_in_paid_products', flat=True
+                ).get(pk=self.pk)
+                flag_changed = previous != self.anonymise_in_paid_products
+            except Contributor.DoesNotExist:
+                flag_changed = True
+
+        super().save(*args, **kwargs)
+
+        if flag_changed:
+            self.__invalidate_paid_product_masking_cache()
+
+    @staticmethod
+    def __invalidate_paid_product_masking_cache():
+        """
+        Drop the caches that decide paid-product anonymisation so an admin
+        toggle of ``anonymise_in_paid_products`` takes effect right away.
+
+        The ``view_cache`` (memcached) holds both the anonymised-contributor
+        set and the per-Authorization facility detail responses, so a single
+        flush clears both for every worker. Without it the change would only
+        surface once they expire (up to
+        ``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
+        """
+        caches['view_cache'].clear()
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)
