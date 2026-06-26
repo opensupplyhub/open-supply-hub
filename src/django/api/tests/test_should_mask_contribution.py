@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.gis.geos import Point
 from django.core.cache import caches
@@ -160,7 +160,7 @@ class ShouldMaskContributionServiceTest(TestCase):
         self.assertIn(second.id, refreshed.contributor_ids)
 
     def test_toggling_flag_invalidates_cache(self):
-        contributor, user = self._make_contributor(
+        contributor, _ = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE
         )
         warm = ShouldMaskContribution.get_masked_contributors()
@@ -460,16 +460,18 @@ class AnonymisedOnlyAggregateTest(TestCase):
     def test_all_anonymised_returns_true(self):
         self._make_index(1, [self.anonymised.id])
         queryset = FacilityIndex.objects.all()
+        masked = ShouldMaskContribution.get_masked_contributors()
         self.assertTrue(
-            self._is_anonymised_only(queryset, queryset.count())
+            self._is_anonymised_only(queryset, masked, queryset.count())
         )
 
     def test_mixed_result_returns_false(self):
         self._make_index(1, [self.anonymised.id])
         self._make_index(2, [self.anonymised.id, self.other.id])
         queryset = FacilityIndex.objects.all()
+        masked = ShouldMaskContribution.get_masked_contributors()
         self.assertFalse(
-            self._is_anonymised_only(queryset, queryset.count())
+            self._is_anonymised_only(queryset, masked, queryset.count())
         )
 
     def test_no_anonymised_contributors_returns_false(self):
@@ -478,12 +480,105 @@ class AnonymisedOnlyAggregateTest(TestCase):
         caches['view_cache'].clear()
         self._make_index(1, [self.anonymised.id])
         queryset = FacilityIndex.objects.all()
+        masked = ShouldMaskContribution.get_masked_contributors()
         self.assertFalse(
-            self._is_anonymised_only(queryset, queryset.count())
+            self._is_anonymised_only(queryset, masked, queryset.count())
         )
 
     def test_empty_result_returns_false(self):
         self._make_index(1, [self.anonymised.id])
+        masked = ShouldMaskContribution.get_masked_contributors()
         self.assertFalse(
-            self._is_anonymised_only(FacilityIndex.objects.all(), 0)
+            self._is_anonymised_only(FacilityIndex.objects.all(), masked, 0)
         )
+
+
+class DownloadViewMaskingTest(TestCase):
+    """
+    `FacilitiesDownloadViewSet.get_serializer` must pass the pre-resolved
+    `MaskedContributors` set to `FacilityDownloadSerializer` so that
+    contributor names are masked in CSV/XLSX downloads.
+    """
+
+    def test_get_serializer_passes_masked_contributors(self):
+        from api.facilities_download_view_set import FacilitiesDownloadViewSet
+
+        fake_masked = MaskedContributors(contributor_ids={42})
+
+        view = FacilitiesDownloadViewSet()
+        # Simulate a non-embed request
+        view.request = MagicMock()
+        view.request.query_params.get = MagicMock(return_value=None)
+
+        with patch(
+            'api.facilities_download_view_set'
+            '.ShouldMaskContribution.get_masked_contributors',
+            return_value=fake_masked,
+        ) as mock_get, patch(
+            'api.facilities_download_view_set.FacilityDownloadSerializer',
+        ) as mock_cls:
+            view.get_serializer([])
+
+        mock_get.assert_called_once()
+        mock_cls.assert_called_once_with(
+            [],
+            many=True,
+            masked_contributors=fake_masked,
+        )
+
+
+class FacilitiesListAnonymisedOnlyKeyTest(TestCase):
+    """
+    `GET /api/facilities/` must include an `anonymised_only` key in the
+    response so the front-end can decide whether to disable the download
+    button.
+    """
+
+    def _make_list_response(self, request):
+        """Call FacilitiesViewSet.list() and return the response data."""
+        from api.views.facility.facilities_view_set import FacilitiesViewSet
+        view = FacilitiesViewSet()
+        view.request = request
+        view.kwargs = {}
+        view.format_kwarg = None
+        view.action = 'list'
+        return view.list(request)
+
+    def test_anonymised_only_key_present_in_response(self):
+        from rest_framework.request import Request
+        from rest_framework.test import APIRequestFactory
+
+        factory = APIRequestFactory()
+        request = Request(factory.get('/api/facilities/'))
+
+        with patch(
+            'api.views.facility.facilities_view_set'
+            '.ShouldMaskContribution.get_masked_contributors',
+            return_value=MaskedContributors(),
+        ), patch(
+            'api.views.facility.facilities_view_set.FacilityIndexSerializer'
+        ) as mock_ser, patch(
+            'api.views.facility.facilities_view_set'
+            '.FacilityQueryParamsSerializer'
+        ) as mock_params, patch(
+            'api.views.facility.facilities_view_set'
+            '.FacilityListPageParameterSerializer'
+        ) as mock_page_params, patch(
+            'api.views.facility.facilities_view_set.FacilityIndex'
+            '.objects.filter_by_query_params',
+            return_value=FacilityIndex.objects.none(),
+        ), patch.object(
+            FacilitiesViewSet, 'paginate_queryset', return_value=None
+        ):
+            mock_page_params.return_value.is_valid.return_value = True
+            mock_params.return_value.is_valid.return_value = True
+            mock_params.return_value.validated_data = {
+                'sort_by': None,
+                'detail': False,
+                'number_of_public_contributors': False,
+            }
+            mock_ser.return_value.data = []
+
+            response = self._make_list_response(request)
+
+        self.assertIn('anonymised_only', response.data)
