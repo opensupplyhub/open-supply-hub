@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0216_backfill_moderation_event_os_id_snapshot'),
+        ('api', '0217_add_contribution_dates_to_index_contributors'),
     ]
 
     operations = [

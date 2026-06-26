@@ -45,7 +45,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
 * `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
 * `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
-* `0217_add_user_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (defaulting to `False`) to the `User` model.
+* `0218_add_user_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (defaulting to `False`) to the `User` model.
 
 #### Schema changes
 * [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
