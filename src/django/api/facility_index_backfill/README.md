@@ -73,6 +73,20 @@ mod(abs(hashtext(id::text)), workers) = worker_id
 
 Each worker processes disjoint id ranges using keyset pagination (`id > last_id ORDER BY id LIMIT batch_size`), so batches stay fast at scale.
 
+### CLI memory and worker count
+
+Each `--parallel` worker is a separate `manage.py` subprocess that bootstraps the full Django stack. The orchestrator process stays alive while workers run, so peak container memory is roughly:
+
+```
+(orchestrator + N workers) × ~150–200 MB per process
+```
+
+For example, **`--parallel 10` needs about 2 GB RSS** (11 processes). Row data is not held in Python — only Django startup dominates memory.
+
+Choose `--parallel` to fit the CLI/ECS task memory limit (`cli_fargate_memory` in Terraform). If the task is killed with OOM, reduce `--parallel` before increasing batch size.
+
+`post_deployment` uses a fixed worker count per environment (see `BACKFILL_PARALLEL_BY_ENVIRONMENT` in `post_deployment.py`). **Development** uses **`--parallel 2`**: the CLI task is 1 GB and the database is small (on the order of 1,000 production locations today), so one or two workers is enough. Other environments use **`--parallel 10`**.
+
 ### Production observations (19 Jun 2026)
 
 Reference run on **Production** RDS (`db.m6in.4xlarge` at the time) backfilling the **`contributors`** field group with **`--parallel 10`** and **`--batch-size 10000`**:
