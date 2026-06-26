@@ -57,6 +57,24 @@ call_command(
 
 If environments differ in CLI memory, add a temporary `BACKFILL_PARALLEL_BY_ENVIRONMENT` map and `backfill_parallel_worker_count()` helper in `post_deployment.py`. Remove those helpers together with the backfill call.
 
+```python
+from django.conf import settings
+
+# Each worker is a full Django subprocess (~150–200 MB RSS).
+BACKFILL_PARALLEL_BY_ENVIRONMENT = {
+    'Development': 2,
+    'Test': 10,
+    'Staging': 10,
+    'Preprod': 10,
+    'Production': 10,
+    'Rba': 10,
+}
+
+
+def backfill_parallel_worker_count() -> int:
+    return BACKFILL_PARALLEL_BY_ENVIRONMENT[settings.ENVIRONMENT]
+```
+
 ## How it works
 
 ```
