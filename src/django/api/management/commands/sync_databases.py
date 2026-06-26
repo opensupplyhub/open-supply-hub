@@ -946,6 +946,7 @@ class DatabaseSynchronizer:
             'PASSWORD': self.__source_config['PASSWORD'],
             'HOST': self.__source_config['HOST'],
             'PORT': self.__source_config['PORT'],
+            'OPTIONS': {},
         }
 
     def __get_last_run_timestamp(self, model_name, suffix=''):
