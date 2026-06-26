@@ -158,19 +158,33 @@ class Contributor(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        flag_changed = False
-        if not self._state.adding:
+        should_invalidate = False
+        if self._state.adding:
+            # A new contributor whose flag is on immediately affects the
+            # cached masked set, so invalidate before the first request hits.
+            should_invalidate = self.anonymise_in_paid_products
+        else:
             try:
-                previous = Contributor.objects.values_list(
-                    'anonymise_in_paid_products', flat=True
+                previous = Contributor.objects.values(
+                    'anonymise_in_paid_products', 'admin_id', 'name'
                 ).get(pk=self.pk)
-                flag_changed = previous != self.anonymise_in_paid_products
+                was_masked = previous['anonymise_in_paid_products']
+                is_masked = self.anonymise_in_paid_products
+                if was_masked != is_masked:
+                    should_invalidate = True
+                elif is_masked:
+                    # Already anonymised: invalidate when any field that the
+                    # cached set holds changes (id is the PK, immutable).
+                    should_invalidate = (
+                        previous['admin_id'] != self.admin_id
+                        or previous['name'] != self.name
+                    )
             except Contributor.DoesNotExist:
-                flag_changed = True
+                should_invalidate = True
 
         super().save(*args, **kwargs)
 
-        if flag_changed:
+        if should_invalidate:
             self.__invalidate_paid_product_masking_cache()
 
     @staticmethod

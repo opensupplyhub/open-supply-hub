@@ -144,20 +144,21 @@ class ShouldMaskContributionServiceTest(TestCase):
 
     def test_masked_contributors_are_cached(self):
         first, _ = self._make_contributor(Contributor.UNION_CONTRIB_TYPE)
-        ShouldMaskContribution.get_masked_contributors()
+        warm = ShouldMaskContribution.get_masked_contributors()
+        self.assertIn(first.id, warm.contributor_ids)
 
-        # A contributor added after the cache is warm is not seen until the
-        # cache is invalidated.
-        second, _ = self._make_contributor(
-            Contributor.UNION_CONTRIB_TYPE, email='c2@example.com'
+        # A non-masked contributor created after cache warm must not appear in
+        # the cached set (no cache invalidation triggered for flag=False).
+        user2 = User.objects.create(email='c2@example.com')
+        non_masked = Contributor.objects.create(
+            admin=user2,
+            name='Brand X',
+            contrib_type='Brand / Retailer',
+            anonymise_in_paid_products=False,
         )
-        cached = ShouldMaskContribution.get_masked_contributors()
-        self.assertIn(first.id, cached.contributor_ids)
-        self.assertNotIn(second.id, cached.contributor_ids)
-
-        caches['view_cache'].delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
-        refreshed = ShouldMaskContribution.get_masked_contributors()
-        self.assertIn(second.id, refreshed.contributor_ids)
+        still_cached = ShouldMaskContribution.get_masked_contributors()
+        self.assertIn(first.id, still_cached.contributor_ids)
+        self.assertNotIn(non_masked.id, still_cached.contributor_ids)
 
     def test_toggling_flag_invalidates_cache(self):
         contributor, _ = self._make_contributor(
@@ -173,6 +174,41 @@ class ShouldMaskContributionServiceTest(TestCase):
 
         refreshed = ShouldMaskContribution.get_masked_contributors()
         self.assertNotIn(contributor.id, refreshed.contributor_ids)
+
+    def test_insert_with_flag_on_invalidates_cache(self):
+        # Warm the cache with no masked contributors.
+        empty = ShouldMaskContribution.get_masked_contributors()
+        self.assertFalse(empty.contributor_ids)
+
+        # Creating a new contributor with the flag already on must invalidate
+        # the cache so the next request sees them masked immediately.
+        user = User.objects.create(email='new@example.com')
+        new_contributor = Contributor.objects.create(
+            admin=user,
+            name='New Masked Co',
+            contrib_type='Brand / Retailer',
+            anonymise_in_paid_products=True,
+        )
+
+        refreshed = ShouldMaskContribution.get_masked_contributors()
+        self.assertIn(new_contributor.id, refreshed.contributor_ids)
+
+    def test_name_change_on_anonymised_contributor_invalidates_cache(self):
+        contributor, _ = self._make_contributor(
+            Contributor.UNION_CONTRIB_TYPE
+        )
+        original_name = contributor.name
+        warm = ShouldMaskContribution.get_masked_contributors()
+        self.assertIn(original_name, warm.names)
+
+        # Renaming an anonymised contributor must refresh the cached names set
+        # so the new name is masked and the old one is dropped.
+        contributor.name = 'Renamed Masked Co'
+        contributor.save()
+
+        refreshed = ShouldMaskContribution.get_masked_contributors()
+        self.assertIn('Renamed Masked Co', refreshed.names)
+        self.assertNotIn(original_name, refreshed.names)
 
 
 class ContributorHelperMaskingTest(TestCase):
