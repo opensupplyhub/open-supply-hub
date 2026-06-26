@@ -32,9 +32,10 @@ class ShouldMaskContribution:
     The set of contributors to mask is the same for every paid request, so it
     is cached in the shared ``view_cache`` (memcached) - not the per-process
     ``default`` cache - so every worker sees the same set and a single
-    ``view_cache`` flush (see ``User.save``) invalidates it everywhere when an
-    admin toggles the flag. The short TTL keeps the lookup cheap while letting
-    admin changes propagate without a deploy even if the flush is missed.
+    ``view_cache`` flush (see ``Contributor.save``) invalidates it everywhere
+    when an admin toggles the flag. The short TTL keeps the lookup cheap while
+    letting admin changes propagate without a deploy even if the flush is
+    missed.
     """
 
     @staticmethod
@@ -45,7 +46,7 @@ class ShouldMaskContribution:
 
     @staticmethod
     def _load():
-        rows = (
+        rows = list(
             Contributor.objects
             .filter(anonymise_in_paid_products=True)
             .values_list('id', 'admin_id', 'name')
@@ -76,7 +77,7 @@ class ShouldMaskContribution:
         Return the `MaskedContributors` to hide for this request.
 
         Empty for everything that is not a programmatic API call, so the web
-        client and facility profiles keep showing union contributor names.
+        client and facility profiles keep showing contributor names.
         """
         is_api_user = request is not None and getattr(request, 'auth', None)
         if not is_api_user:
