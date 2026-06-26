@@ -40,7 +40,22 @@ python manage.py backfill_facility_index --fields contributors --dry-run
 python manage.py backfill_facility_index --fields contributors,claim_info
 ```
 
-`post_deployment` may invoke this command after migrations when a release requires a targeted backfill.
+### Post-deployment wiring (temporary)
+
+When a release changes an `index_*()` function, **temporarily** add a `backfill_facility_index` call to `post_deployment` so the backfill runs automatically on deploy. **Remove that call once the release code freeze is complete and the release has been deployed everywhere** — `post_deployment` is not a permanent home for backfills.
+
+Example wiring (remove after deploy):
+
+```python
+call_command(
+    'backfill_facility_index',
+    fields='contributors',
+    parallel=backfill_parallel_worker_count(),
+    batch_size=10000,
+)
+```
+
+If environments differ in CLI memory, add a temporary `BACKFILL_PARALLEL_BY_ENVIRONMENT` map and `backfill_parallel_worker_count()` helper in `post_deployment.py`. Remove those helpers together with the backfill call.
 
 ## How it works
 
@@ -85,7 +100,9 @@ For example, **`--parallel 10` needs about 2 GB RSS** (11 processes). Row data i
 
 Choose `--parallel` to fit the CLI/ECS task memory limit (`cli_fargate_memory` in Terraform). If the task is killed with OOM, reduce `--parallel` before increasing batch size.
 
-`post_deployment` uses a fixed worker count per environment (see `BACKFILL_PARALLEL_BY_ENVIRONMENT` in `post_deployment.py`). **Development** uses **`--parallel 2`**: the CLI task is 1 GB and the database is small (on the order of 1,000 production locations today), so one or two workers is enough. Other environments use **`--parallel 10`**.
+When a backfill is wired into `post_deployment`, worker count may be set per environment via a temporary `BACKFILL_PARALLEL_BY_ENVIRONMENT` map in `post_deployment.py` (remove with the backfill call). For example, **Development** may use **`--parallel 2`** when the CLI task has 1 GB memory and the database is small; larger environments may use **`--parallel 10`**.
+
+For manual runs outside `post_deployment`, pass `--parallel` directly on the command line.
 
 ### Production observations (19 Jun 2026)
 
@@ -125,7 +142,7 @@ Column expressions should match `index_facilities()` in `src/django/sqls/0171_in
    python manage.py backfill_facility_index --fields your_group --parallel 4
    ```
 
-5. Wire the group into `post_deployment` if it must run automatically on deploy.
+5. If it must run automatically on deploy, **temporarily** wire the group into `post_deployment`, then remove that call after the release code freeze is complete and the release has been deployed everywhere.
 
 When a change affects related columns (e.g. `contributors` and `contributors_count`), define them in the **same** field group so one pass keeps data consistent.
 

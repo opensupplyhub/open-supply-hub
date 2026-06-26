@@ -2,8 +2,11 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-# Post-deploy backfill worker counts by environment. Each worker is a full
-# Django subprocess (~150–200 MB RSS); see facility_index_backfill/README.md.
+# Temporary for 2.27.0 — remove this map and the backfill_facility_index call
+# below once the 2.27.0 code freeze is complete and the release has been
+# deployed everywhere. See facility_index_backfill/README.md.
+#
+# Each worker is a full Django subprocess (~150–200 MB RSS).
 BACKFILL_PARALLEL_BY_ENVIRONMENT = {
     'Development': 2,
     'Test': 10,
@@ -15,7 +18,11 @@ BACKFILL_PARALLEL_BY_ENVIRONMENT = {
 
 
 def backfill_parallel_worker_count() -> int:
-    """Return post-deploy backfill parallelism for the current environment."""
+    """Return post-deploy backfill parallelism for the current environment.
+
+    Temporary for 2.27.0 — remove with BACKFILL_PARALLEL_BY_ENVIRONMENT after
+    the 2.27.0 code freeze is complete.
+    """
     return BACKFILL_PARALLEL_BY_ENVIRONMENT[settings.ENVIRONMENT]
 
 
@@ -27,6 +34,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         call_command('migrate')
         call_command('reindex_database')
+        # Temporary for 2.27.0 — remove after the code freeze is complete and
+        # the release has been deployed everywhere.
         call_command(
             'backfill_facility_index',
             fields='contributors',
