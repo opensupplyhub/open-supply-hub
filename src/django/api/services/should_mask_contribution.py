@@ -1,11 +1,9 @@
-from django.core.cache import caches
-
-from api.constants import (
-    MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
-    MASKED_CONTRIBUTOR_IDS_CACHE_TTL_SECONDS,
-)
+from api.constants import (MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
+                           MASKED_CONTRIBUTOR_IDS_CACHE_TTL_SECONDS)
 from api.models.contributor.contributor import Contributor
 from api.services.masked_contributors import MaskedContributors
+
+from django.core.cache import caches
 
 
 class ShouldMaskContribution:
@@ -71,18 +69,36 @@ class ShouldMaskContribution:
         contributor_ids, admin_ids, names = cached
         return MaskedContributors(contributor_ids, admin_ids, names)
 
+    @staticmethod
+    def is_api_request(request):
+        """A programmatic API call is authenticated with a token."""
+        return request is not None and bool(getattr(request, 'auth', None))
+
+    @classmethod
+    def gate_for_request(cls, request, masked):
+        """
+        Apply the API-only masking rule to an already-resolved set.
+
+        Returns ``masked`` for programmatic API callers and an empty
+        `MaskedContributors` otherwise, so callers that have already resolved
+        the full set (e.g. the list view, which also needs it ungated for the
+        ``anonymised_only`` flag) can reuse it without a second cache lookup.
+        """
+        if not cls.is_api_request(request):
+            return MaskedContributors()
+        return masked
+
     @classmethod
     def for_request(cls, request):
         """
         Return the `MaskedContributors` to hide for this request.
 
         Empty for everything that is not a programmatic API call, so the web
-        client and facility profiles keep showing contributor names.
+        client and facility profiles keep showing contributor names. The cache
+        is only touched for API callers.
         """
-        is_api_user = request is not None and getattr(request, 'auth', None)
-        if not is_api_user:
+        if not cls.is_api_request(request):
             return MaskedContributors()
-
         return cls.get_masked_contributors()
 
     @staticmethod

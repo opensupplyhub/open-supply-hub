@@ -36,7 +36,6 @@ from api.serializers import (FacilityActivityReportSerializer,
 from api.serializers.facility.facility_list_page_parameter_serializer import \
     FacilityListPageParameterSerializer
 from api.serializers.facility.utils import is_same_contributor_from_url_param
-from api.services.masked_contributors import MaskedContributors
 from api.services.should_mask_contribution import ShouldMaskContribution
 from api.throttles import DataUploadThrottle
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -252,9 +251,8 @@ class FacilitiesViewSet(ListModelMixin,
         # serializer (empty for web clients, full for API callers), avoiding a
         # second cache round-trip when serialising.
         masked = ShouldMaskContribution.get_masked_contributors()
-        is_api_caller = bool(getattr(request, 'auth', None))
         context['masked_contributors'] = (
-            masked if is_api_caller else MaskedContributors()
+            ShouldMaskContribution.gate_for_request(request, masked)
         )
 
         if page_queryset is not None:
