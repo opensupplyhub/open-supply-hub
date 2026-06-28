@@ -1,6 +1,6 @@
 import logging
-
 from collections import defaultdict
+from functools import wraps
 
 from countries.lib.countries import COUNTRY_NAMES
 from rest_framework.serializers import SerializerMethodField
@@ -19,23 +19,32 @@ from ...services.should_mask_contribution import ShouldMaskContribution
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import \
     FacilityIndexExtendedFieldListSerializer
-from .utils import (
-    can_user_see_detail,
-    create_address_field_from_facility_address,
-    create_name_field_from_facility_name,
-    format_date,
-    format_field,
-    format_numeric,
-    format_sectors,
-    get_efs_associated_with_contributor,
-    get_embed_contributor_id,
-    get_facility_name,
-    is_created_at_main_date,
-    regroup_claims_for_sector_field,
-    regroup_items_for_sector_field,
-)
+from .utils import (can_user_see_detail,
+                    create_address_field_from_facility_address,
+                    create_name_field_from_facility_name, format_date,
+                    format_field, format_numeric, format_sectors,
+                    get_efs_associated_with_contributor,
+                    get_embed_contributor_id, get_facility_name,
+                    is_created_at_main_date, regroup_claims_for_sector_field,
+                    regroup_items_for_sector_field)
 
 logger = logging.getLogger(__name__)
+
+
+def with_masked_contributors(get_field):
+    """Inject the request's ``MaskedContributors`` into a field getter.
+
+    DRF invokes a ``SerializerMethodField`` getter as
+    ``get_<field>(self, facility)``. Wrapping it with this decorator resolves
+    the masked-contributor set once per serializer instance (see
+    ``_masked_contributor_ids``) and passes it as the ``masked`` argument, so
+    every field that anonymises contributors receives it the same way instead
+    of fetching it inline.
+    """
+    @wraps(get_field)
+    def wrapper(self, facility):
+        return get_field(self, facility, self._masked_contributor_ids())
+    return wrapper
 
 
 class FacilityIndexSerializer(GeoFeatureModelSerializer):
@@ -208,7 +217,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             except EmbedConfig.DoesNotExist:
                 return fields
 
-    def get_extended_fields(self, facility):
+    @with_masked_contributors
+    def get_extended_fields(self, facility, masked):
         request = self._get_request()
 
         use_main_created_at = is_created_at_main_date(self)
@@ -223,7 +233,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
-        masked_ids = self._masked_contributor_ids()
 
         grouped_data = defaultdict(list)
 
@@ -235,7 +244,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 filtered_fields,
                 context={'user_can_see_detail': user_can_see_detail,
                          'embed_mode_active': embed_mode_active,
-                         'masked_contributor_ids': masked_ids},
+                         'masked_contributor_ids': masked},
                 exclude_fields=(
                     ['created_at'] if not use_main_created_at else []
                 )
@@ -258,7 +267,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 user_can_see_detail,
                                 is_from_created_from=name_obj.get(
                                     'is_from_created_from', False),
-                                masked_ids=masked_ids))
+                                masked_ids=masked))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -279,7 +288,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 user_can_see_detail,
                                 is_from_created_from=address_obj.get(
                                     'is_from_created_from', False),
-                                masked_ids=masked_ids))
+                                masked_ids=masked))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -294,7 +303,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         return grouped_data
 
-    def get_sector(self, facility):
+    @with_masked_contributors
+    def get_sector(self, facility, masked):
         user_can_see_detail = can_user_see_detail(self)
 
         use_main_created_at = is_created_at_main_date(self)
@@ -326,7 +336,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                               date_field_to_sort,
                               use_main_created_at,
                               user_can_see_detail,
-                              self._masked_contributor_ids())
+                              masked)
 
     def get_has_approved_claim(self, facility):
         return len(facility.approved_claim_ids) > 0
@@ -337,12 +347,12 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     def get_number_of_public_contributors(self, facility):
         return facility.contributors_count
 
-    def get_contributors(self, facility):
+    @with_masked_contributors
+    def get_contributors(self, facility, masked):
         if is_embed_mode_active(self):
             return []
 
         user_can_see_detail = can_user_see_detail(self)
-        masked = self._masked_contributor_ids()
 
         valid_contributors = [
             contributor for contributor in facility.contributors

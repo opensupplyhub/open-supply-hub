@@ -22,7 +22,10 @@ from ..utils import (
     get_contributor_id,
     get_contributor_name,
 )
-from .facility_index_serializer import FacilityIndexSerializer
+from .facility_index_serializer import (
+    FacilityIndexSerializer,
+    with_masked_contributors,
+)
 from .facility_index_extended_field_list_serializer import (
     FacilityIndexExtendedFieldListSerializer
 )
@@ -103,12 +106,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         return other_addresses
 
-    def get_other_locations(self, facility):
+    @with_masked_contributors
+    def get_other_locations(self, facility, masked):
         if is_embed_mode_active(self):
             return []
 
         user_can_see_detail = can_user_see_detail(self)
-        masked = self._masked_contributor_ids()
 
         facility_locations = [
             {
@@ -179,13 +182,13 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         return claim_locations + facility_locations + facility_items_location
 
-    def get_claim_info(self, facility):
+    @with_masked_contributors
+    def get_claim_info(self, facility, masked):
         if not switch_is_active('claim_a_facility'):
             return None
 
         claim_info = None
         user_can_see_detail = can_user_see_detail(self)
-        masked = self._masked_contributor_ids()
 
         approved_claim_info = facility.claim_info
         if approved_claim_info:
@@ -338,7 +341,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             else:
                 return []
 
-    def get_created_from(self, facility):
+    @with_masked_contributors
+    def get_created_from(self, facility, masked):
         created_from_info = facility.created_from_info
         user_can_see_detail = can_user_see_detail(self)
         should_display_associations = False
@@ -358,7 +362,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             created_at = format_date(created_from_info['created_at'])
         # The created_from JSON has no contributor id, so a masked union is
         # matched by name and relabeled to the neutral "Other" label.
-        masked = self._masked_contributor_ids()
         if masked.masks_name(created_from_info.get('contributor_name')):
             contributor_name = MASKED_CONTRIBUTOR_LABEL
         elif (created_from_info['contributor_name'] is not None
@@ -382,7 +385,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     @swagger_serializer_method(
         serializer_or_field=PartnerFieldEntrySerializer(many=True)
     )
-    def get_partner_fields(self, facility):
+    @with_masked_contributors
+    def get_partner_fields(self, facility, masked):
         request = self._get_request()
         fields = get_cached_all_partner_fields()
         partner_fields = [
@@ -443,7 +447,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             embed_mode_active,
             use_main_created_at,
             date_field_to_sort,
-            self._masked_contributor_ids()
+            masked
         )
 
     def __serialize_and_sort_partner_fields(

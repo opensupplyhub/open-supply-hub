@@ -5,10 +5,7 @@ from django.contrib.gis.geos import Point
 from django.core.cache import caches
 from django.test import TestCase, override_settings
 
-from api.constants import (
-    MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
-    MASKED_CONTRIBUTOR_LABEL,
-)
+from api.constants import MASKED_CONTRIBUTOR_LABEL
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
