@@ -385,6 +385,107 @@ class FacilityIndexContributorsMaskingTest(TestCase):
         self.assertNotIn('contributor_name', other_entry)
 
 
+@override_settings(CACHES={
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'view_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'create-flow-masking-test',
+    },
+})
+class CreateFlowContributorMaskingTest(TestCase):
+    """POST /api/facilities serializes its matches with
+    FacilityIndexDetailsSerializer using a context of just
+    ``{'request': request}`` (see api.processing.handle_external_match_
+    process_result) - it never pre-resolves ``masked_contributors`` the way the
+    list view does. This guards that an API (token) caller still gets union
+    contributors masked on that path via the ``for_request`` fallback."""
+
+    def setUp(self):
+        caches['view_cache'].clear()
+
+    def tearDown(self):
+        caches['view_cache'].clear()
+
+    def test_token_request_masks_union_via_context_fallback(self):
+        admin = User.objects.create(email='union-admin@example.com')
+        anonymised = Contributor.objects.create(
+            admin=admin,
+            name='Union X',
+            contrib_type=Contributor.UNION_CONTRIB_TYPE,
+            anonymise_in_paid_products=True,
+        )
+
+        facility = SimpleNamespace(contributors=[
+            {
+                'id': anonymised.id,
+                'admin_id': admin.id,
+                'name': 'Union X',
+                'contrib_type': 'Union',
+                'contributor_name': 'Union X',
+                'should_display_associations': True,
+                'is_verified': False,
+                'list_name': 'Union Member List',
+            },
+        ])
+
+        # Mirror the create flow exactly: the serializer context carries only
+        # the authenticated request, NOT a pre-resolved masked set.
+        request = SimpleNamespace(auth='a-token')
+        serializer = FacilityIndexSerializer(context={'request': request})
+
+        module = 'api.serializers.facility.facility_index_serializer'
+        with patch(
+            '{}.is_embed_mode_active'.format(module), return_value=False
+        ), patch(
+            '{}.can_user_see_detail'.format(module), return_value=True
+        ):
+            result = serializer.get_contributors(facility)
+
+        names = [entry['name'] for entry in result]
+        self.assertIn(MASKED_CONTRIBUTOR_LABEL, names)
+        self.assertNotIn('Union X', names)
+
+    def test_non_api_request_keeps_union_visible(self):
+        admin = User.objects.create(email='union-admin2@example.com')
+        anonymised = Contributor.objects.create(
+            admin=admin,
+            name='Union X',
+            contrib_type=Contributor.UNION_CONTRIB_TYPE,
+            anonymise_in_paid_products=True,
+        )
+
+        facility = SimpleNamespace(contributors=[
+            {
+                'id': anonymised.id,
+                'admin_id': admin.id,
+                'name': 'Union X',
+                'contrib_type': 'Union',
+                'contributor_name': 'Union X',
+                'should_display_associations': True,
+                'is_verified': False,
+                'list_name': 'Union Member List',
+            },
+        ])
+
+        # A web/session caller (no token) must still see the real name.
+        request = SimpleNamespace(auth=None)
+        serializer = FacilityIndexSerializer(context={'request': request})
+
+        module = 'api.serializers.facility.facility_index_serializer'
+        with patch(
+            '{}.is_embed_mode_active'.format(module), return_value=False
+        ), patch(
+            '{}.can_user_see_detail'.format(module), return_value=True
+        ):
+            result = serializer.get_contributors(facility)
+
+        names = [entry['name'] for entry in result]
+        self.assertIn('Union X', names)
+        self.assertNotIn(MASKED_CONTRIBUTOR_LABEL, names)
+
+
 class CreatedFromMaskingTest(TestCase):
     """`created_from` is matched by name and relabeled to "Other"."""
 
