@@ -25,7 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
 
 ### Bugfix
-* [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError: 'OPTIONS'`. The dynamically configured source database connection now includes an empty `OPTIONS` dict so Django's PostgreSQL backend can perform connection health checks during `chunked_cursor()` iteration.
+* [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). The dynamically configured source database connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
