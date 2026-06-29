@@ -21,11 +21,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
 * [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
 
-### What's new
-* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
-
 ### Bugfix
 * [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). The dynamically configured source database connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
+
+### What's new
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
