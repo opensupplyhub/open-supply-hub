@@ -42,7 +42,11 @@ export const getClaimDisplayData = createSelector(
 
         const contributorUserId = get(claimInfo, 'user_id', null);
 
+        // Prefer the claim's last-edited date so the claimed section reflects
+        // the most recent update rather than the original claim date.
+        // See OSDEV-2679.
         const claimedAt =
+            get(claimInfo, 'updated_at') ||
             get(claimInfo, 'approved_at') ||
             get(claimInfo, 'created_at') ||
             null;
