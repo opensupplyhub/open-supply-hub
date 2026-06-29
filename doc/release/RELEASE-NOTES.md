@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+* `0218_add_updated_at_to_index_claim_info.py` - Updates the `index_claim_info()` SQL function to include the claim's `updated_at` timestamp in the indexed `claim_info` JSON, so the claimed section can display the latest edit date instead of the original claim date. See OSDEV-2679.
 
 ### Code/API changes
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
@@ -23,6 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). Regression from the Django 3.2→5.2 upgrade: Django 3 lazily filled defaults when a runtime database alias first connected, but Django 5 only normalizes aliases present at startup. The dynamically configured source connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
+* [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - Fixed the claimed "Operational Details Submitted by Management" section showing the original claim date instead of the latest edit date. Three compounding causes were addressed: (1) the indexed `claim_info` blob now includes `updated_at`; (2) the claimant profile-edit endpoint (`FacilityClaimViewSet.get_claimed_details` PUT) now calls `index_facilities_new` so the blob refreshes on edit rather than serving stale pre-edit data; and (3) `claimDataSelectors` now prefers `updated_at` for the displayed date. This surfaces one claim-level "last edited" date for the whole section (not a per-field date).
 
 ### What's new
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
@@ -33,6 +35,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
     * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
 * Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+* [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - The new `updated_at` in `claim_info` only appears for existing approved claims after a re-index (covered by `reindex_database` above). New claim edits refresh automatically via the added `index_facilities_new` call.
 
 
 ## Release 2.26.0
