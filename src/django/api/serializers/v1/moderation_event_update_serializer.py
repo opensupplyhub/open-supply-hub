@@ -2,7 +2,8 @@ from rest_framework.serializers import (
     ModelSerializer,
     ValidationError,
     CharField,
-    IntegerField
+    IntegerField,
+    SerializerMethodField
 )
 from rest_framework.fields import empty
 from api.models.moderation_event \
@@ -19,7 +20,8 @@ class ModerationEventUpdateSerializer(ModelSerializer):
     contributor_id = IntegerField(source='contributor.id', read_only=True)
     contributor_name = CharField(source='contributor.name', read_only=True)
     source = CharField(read_only=True)
-    os_id = CharField(source='os.id', read_only=True)
+    os_id = SerializerMethodField()
+    os_id_snapshot = SerializerMethodField()
     claim_id = IntegerField(source='claim.id', read_only=True)
 
     class Meta:
@@ -29,6 +31,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             'created_at',
             'updated_at',
             'os_id',
+            'os_id_snapshot',
             'contributor_id',
             'contributor_name',
             'cleaned_data',
@@ -56,6 +59,18 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             partial=partial,
             **kwargs
         )
+
+    def get_os_id(self, obj):
+        # Mirror the OpenSearch-backed GET endpoints: fall back to the durable
+        # os_id_snapshot when the live os FK has been nulled by a facility
+        # delete/merge, so PATCH and GET return a consistent os_id.
+        # See OSDEV-2920.
+        return obj.os_id or obj.os_id_snapshot or None
+
+    def get_os_id_snapshot(self, obj):
+        # Expose the snapshot as its own field (null when unset), matching the
+        # GET endpoints which surface NULLIF(os_id_snapshot, '').
+        return obj.os_id_snapshot or None
 
     def to_internal_value(self, data):
         status = data.get('status')

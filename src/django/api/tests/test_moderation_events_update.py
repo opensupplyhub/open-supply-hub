@@ -94,6 +94,49 @@ class ModerationEventsUpdateTest(APITestCase):
 
         self.assertEqual(404, response.status_code)
 
+    def test_moderation_event_os_id_falls_back_to_snapshot(self):
+        # When the live os FK has been nulled (facility deleted/merged) but the
+        # snapshot is retained, the PATCH response should surface the snapshot
+        # as os_id (mirroring the GET endpoints) and expose os_id_snapshot.
+        # See OSDEV-2920.
+        self.moderation_event.os = None
+        self.moderation_event.os_id_snapshot = 'US2020123ABC123'
+        self.moderation_event.save()
+
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "APPROVED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertEqual('US2020123ABC123', body['os_id'])
+        self.assertEqual('US2020123ABC123', body['os_id_snapshot'])
+
+    def test_moderation_event_os_id_null_without_snapshot_or_facility(self):
+        # No live facility and no snapshot -> both null (not empty string).
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "APPROVED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertIsNone(body['os_id'])
+        self.assertIsNone(body['os_id_snapshot'])
+
     def test_moderation_event_invalid_status(self):
         self.client.login(
             email=self.superemail,
