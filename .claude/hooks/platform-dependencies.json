@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "areas": [
+    {
+      "id": "rba_environment",
+      "name": "RBA environment",
+      "summary": "External collaboration environment mirroring Production with partner-specific data and deployment.",
+      "patterns": [
+        "deployment/**/rba*",
+        "deployment/**/*rba*",
+        "src/django/oar/settings.py",
+        "src/django/api/constants.py",
+        "src/django/api/models/extended_field.py",
+        "src/django/api/extended_fields.py",
+        "src/django/contricleaner/**",
+        "src/logstash/**",
+        "doc/release/RELEASE-PROTOCOL.md"
+      ],
+      "keywords": ["rba", "rba_id", "INSTANCE_SOURCE", "isic", "taxonomy"],
+      "review_questions": [
+        "Does this change behave the same on RBA as on Production (feature flags, INSTANCE_SOURCE, extended fields)?",
+        "If serializers or API responses changed, do RBA additional identifiers (duns_id, lei_id, rba_id) still serialize correctly?",
+        "If indexing or search changed, will Logstash/OpenSearch on the RBA instance still index production locations?",
+        "If deployment/terraform changed, is the RBA tag prefix and ECS cluster configuration still valid?"
+      ],
+      "related_tests": [
+        "src/django/api/tests/test_production_locations_create.py",
+        "src/django/contricleaner/tests/",
+        "src/react/src/__tests__/utils/ProductionLocationDetailsGeneralFieldsUtils.test.js"
+      ],
+      "related_jira": [
+        "OSDEV-2282",
+        "OSDEV-1981",
+        "OSDEV-2292",
+        "OSDEV-2293",
+        "OSDEV-2294",
+        "OSDEV-2295",
+        "OSDEV-1428"
+      ]
+    },
+    {
+      "id": "embed_mode",
+      "name": "Embed mode",
+      "summary": "Embedded maps and contributor embed configs with restricted UI, query params, and serializers.",
+      "patterns": [
+        "src/react/src/components/Embedded*",
+        "src/react/src/util/embeddedMap*",
+        "src/django/api/views/embed_config_view_set.py",
+        "src/django/api/models/embed_*",
+        "src/django/api/serializers/embed_*",
+        "src/django/api/serializers/facility/facility_download_serializer_embed_mode.py",
+        "src/django/api/serializers/facility/facility_index_details_serializer.py",
+        "src/django/api/facilities_download_view_set.py",
+        "src/django/api/views/contributor/contributor_embed_config.py",
+        "src/django/api/views/fields/create_embed_fields.py"
+      ],
+      "keywords": ["embed", "embed_config", "embed_field", "EMBEDDED_MAP", "embedded_map"],
+      "review_questions": [
+        "Does embed=1 still work for facility search, detail, and download flows?",
+        "Are embed-only serializers/views updated alongside the main code path?",
+        "Do UI components hide actions correctly when embed is active (navbar, claim, download)?",
+        "If field visibility or formatting changed, are embed display fields and searchable flags still consistent?"
+      ],
+      "related_tests": [
+        "src/react/src/__tests__/embedModeNavigation.test.jsx",
+        "src/react/src/__tests__/components/FacilityDetailsCoreFields.test.js"
+      ],
+      "related_jira": [
+        "OSDEV-2384",
+        "OSDEV-2416",
+        "OSDEV-1940",
+        "OSDEV-873",
+        "OSDEV-2779",
+        "OSDEV-642",
+        "OSDEV-465"
+      ]
+    },
+    {
+      "id": "production_location_dual_fe",
+      "name": "Production Location page vs legacy Facility Details",
+      "summary": "Two frontend surfaces for the same data, gated by ENABLE_PRODUCTION_LOCATION_PAGE.",
+      "patterns": [
+        "src/react/src/components/ProductionLocation/**",
+        "src/react/src/components/FacilityDetails*.jsx",
+        "src/react/src/components/Facilities.jsx",
+        "src/react/src/components/Map.jsx",
+        "src/react/src/components/Contribute/**",
+        "src/react/src/util/util.js",
+        "src/react/src/Routes.jsx",
+        "src/react/src/actions/facilities.js",
+        "src/react/src/actions/productionLocations.js"
+      ],
+      "keywords": [
+        "shouldUseProductionLocationPage",
+        "ENABLE_PRODUCTION_LOCATION_PAGE",
+        "FacilityDetailsContent",
+        "ProductionLocationDetails"
+      ],
+      "review_questions": [
+        "If you changed facility detail behavior, did you update BOTH ProductionLocationDetails* and FacilityDetails* (or shared utils)?",
+        "Does shouldUseProductionLocationPage routing still redirect correctly from the legacy page?",
+        "Are feature-flag-off and feature-flag-on paths both covered by tests?",
+        "Do map clicks, contribute flows, and embed navigation still open the correct profile page?"
+      ],
+      "related_tests": [
+        "src/react/src/__tests__/utils.tests.js",
+        "src/react/src/__tests__/components/ProductionLocationDetailsContainer.test.js",
+        "src/react/src/__tests__/components/FacilityDetailsGeneralFields.test.js",
+        "src/react/src/__tests__/embedModeNavigation.test.jsx"
+      ],
+      "related_jira": [
+        "OSDEV-2419",
+        "OSDEV-2333",
+        "OSDEV-2103",
+        "OSDEV-1829",
+        "OSDEV-2418",
+        "OSDEV-2422",
+        "OSDEV-2315"
+      ]
+    },
+    {
+      "id": "api_throttling",
+      "name": "API request throttling",
+      "summary": "Burst/sustained/data-upload throttles and duplicate-request protection on write endpoints.",
+      "patterns": [
+        "src/django/api/throttles.py",
+        "src/django/api/limits.py",
+        "src/django/api/management/commands/check_api_limits.py",
+        "src/django/oar/settings.py",
+        "src/django/api/views/v1/**",
+        "src/django/api/views/api/api_block_view_set.py"
+      ],
+      "keywords": [
+        "throttle",
+        "Throttle",
+        "DuplicateThrottle",
+        "DataUploadThrottle",
+        "burst_rate",
+        "sustained_rate",
+        "check_api_limits"
+      ],
+      "review_questions": [
+        "If a view's throttle_classes changed, are burst/sustained defaults in settings still appropriate?",
+        "Does DuplicateThrottle cache key logic still distinguish different resources (pk in key)?",
+        "Could larger payloads hit DuplicateThrottle MAX_REQUEST_SIZE or duplicate false positives?",
+        "If user rate fields changed, does check_api_limits still enforce blocks correctly?"
+      ],
+      "related_tests": [
+        "src/django/api/tests/test_api_limit.py",
+        "src/django/api/tests/test_production_locations_create.py"
+      ],
+      "related_jira": [
+        "OSDEV-2529",
+        "OSDEV-2704"
+      ]
+    },
+    {
+      "id": "aws_step_functions",
+      "name": "AWS Step Functions",
+      "summary": "Scheduled ECS App CLI jobs (check_api_limits, update_expired_download_limits) via Step Functions.",
+      "patterns": [
+        "deployment/terraform/sfn.tf",
+        "deployment/terraform/step-functions/**",
+        "deployment/terraform/lambda-functions/alert_sfn_failures/**",
+        "deployment/terraform/lambda.tf",
+        "deployment/terraform/iam.tf",
+        "src/django/api/management/commands/check_api_limits.py",
+        "src/django/api/management/commands/update_expired_download_limits.py",
+        "src/django/api/limits.py"
+      ],
+      "keywords": [
+        "state_machine",
+        "step_functions",
+        "check_api_limits",
+        "update_expired_download_limits",
+        "app_cli"
+      ],
+      "review_questions": [
+        "If management commands used by Step Functions changed signature or imports, will scheduled runs still succeed?",
+        "Do terraform changes preserve IAM permissions for Step Functions -> ECS task execution?",
+        "If timeout_seconds or schedule_expression changed, is the command runtime still within limits?",
+        "Are Django upgrades compatible with commands invoked by the state machine (see OSDEV-2704)?"
+      ],
+      "related_tests": [
+        "src/django/api/tests/test_api_limit.py"
+      ],
+      "related_jira": [
+        "OSDEV-2704",
+        "OSDEV-1428"
+      ]
+    },
+    {
+      "id": "opensearch_logstash",
+      "name": "OpenSearch / Logstash indexing",
+      "summary": "Search indexing pipeline for facilities and production locations.",
+      "patterns": [
+        "src/logstash/**",
+        "src/django/api/index/**",
+        "src/django/api/documents/**",
+        "src/django/api/search/**"
+      ],
+      "keywords": ["opensearch", "elasticsearch", "logstash", "reindex", "search_index"],
+      "review_questions": [
+        "If model fields or serializers changed, do index mappings and Logstash filters still match?",
+        "Will long query strings or new filters trigger OpenSearch errors?",
+        "Does RBA indexing need a separate verification pass?"
+      ],
+      "related_tests": [],
+      "related_jira": [
+        "OSDEV-2282",
+        "OSDEV-2033",
+        "OSDEV-2717"
+      ]
+    },
+    {
+      "id": "dedupe_hub",
+      "name": "Dedupe Hub / list processing",
+      "summary": "Kafka-backed matching and deduplication for facility uploads and API creates.",
+      "patterns": [
+        "src/dedupe-hub/**",
+        "src/django/api/moderation/**",
+        "src/django/api/views/v1/production_locations.py",
+        "src/django/api/processing/**"
+      ],
+      "keywords": ["dedupe", "matching", "moderation_event", "SKIPPED_MATCHING"],
+      "review_questions": [
+        "If facility create/update flow changed, will Dedupe Hub still receive and process events?",
+        "Are moderation event payloads backward compatible?",
+        "Do facility types with SKIPPED_MATCHING still behave correctly end-to-end?"
+      ],
+      "related_tests": [
+        "src/django/api/tests/test_production_locations_create.py"
+      ],
+      "related_jira": [
+        "OSDEV-976",
+        "OSDEV-602",
+        "OSDEV-527",
+        "OSDEV-2315",
+        "OSDEV-2805"
+      ]
+    },
+    {
+      "id": "feature_flags_private_instance",
+      "name": "Feature flags & private instance",
+      "summary": "Waffle switches that gate downloads, embed, claims, and production location page.",
+      "patterns": [
+        "src/django/api/migrations/*switch*",
+        "src/django/api/management/commands/enable_switches.py",
+        "src/django/api/views/api/api_feature_flags.py",
+        "src/react/src/components/FeatureFlag.jsx",
+        "src/react/src/actions/featureFlags.js",
+        "src/react/src/util/constants.jsx"
+      ],
+      "keywords": [
+        "private_instance",
+        "embedded_map",
+        "ENABLE_PRODUCTION_LOCATION_PAGE",
+        "switch_is_active",
+        "waffle"
+      ],
+      "review_questions": [
+        "If behavior is flag-gated, are both enabled and disabled states handled?",
+        "Does private_instance still restrict downloads/search as expected?",
+        "If a new switch was added, is enable_switches.py or a migration included?"
+      ],
+      "related_tests": [
+        "src/react/src/__tests__/components/DownloadFacilitiesButton.test.js"
+      ],
+      "related_jira": []
+    },
+    {
+      "id": "database_migrations",
+      "name": "Database migrations",
+      "summary": "Schema changes deployed to Production, Sandbox, RBA, and Pre-prod with different DB sizes.",
+      "patterns": [
+        "src/django/api/migrations/**",
+        "src/django/*/migrations/**"
+      ],
+      "keywords": [],
+      "review_questions": [
+        "Is the migration backward compatible and safe on large production datasets?",
+        "Does it need a data backfill or multi-step deploy?",
+        "Will RBA and Pre-prod receive the same migration without downtime issues (OSDEV-1428)?"
+      ],
+      "related_tests": [],
+      "related_jira": [
+        "OSDEV-1428"
+      ]
+    }
+  ]
+}
