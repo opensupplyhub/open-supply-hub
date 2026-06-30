@@ -2,188 +2,155 @@
 name: confluence-release-notes
 description: >-
   Create business-oriented Confluence release notes (draft) and a Slack post draft
-  from GitHub doc/release/RELEASE-NOTES.md.   Page structure: metadata table (with Description row), Programs Team warning panel,
-  then issue table with include/exclude suggestions. Use when the user asks to write Confluence release
-  notes, internal release communication, or a Slack post for a release. GitHub is
-  the source of truth for tickets; Jira provides business context for the narrative.
+  from GitHub doc/release/RELEASE-NOTES.md. Files the Confluence page via Atlassian
+  MCP (createConfluencePage) after user approval; Slack post is chat-only. Page
+  structure: metadata table (Description row), Programs warning panel, issue table
+  with Jira inline previews. GitHub is source of truth for tickets; Jira provides
+  business context.
 ---
 
 # Confluence Release Notes & Slack Post
 
-Produces two artifacts per release:
-
 | # | Artifact | Destination |
 |---|---|---|
-| 1 | Confluence page (metadata + description + Programs warning + issue table) | Draft in SD space |
-| 2 | Slack post (org-wide summary + Confluence link) | Written in chat only — user posts manually |
+| 1 | Confluence page (metadata + description + Programs warning + issue table) | Draft in SD space via `createConfluencePage` |
+| 2 | Slack post (org-wide summary + Confluence link) | Chat only — user posts manually |
 
 **Out of scope:** Info-site publishing decisions (Programs Team). Do not recommend what Programs should publish externally beyond filling the issue table's external column with suggested values.
 
 ---
 
-## Source-of-truth hierarchy
+## Rules
 
-```mermaid
-flowchart TD
-    GH["GitHub RELEASE-NOTES.md"] -->|"Which tickets shipped"| Tickets["Release ticket list"]
-    GH -->|"Technical facts, release date"| Facts["Narrative facts"]
-    Jira["Jira"] -->|"Summaries, descriptions, assignees, sprints"| Context["Business context"]
-    Tickets --> Confluence["Confluence draft"]
-    Facts --> Confluence
-    Context --> Confluence
-```
+**GitHub** `doc/release/RELEASE-NOTES.md` is the **source of truth for ticket membership** and release date. Build an allowlist from the target `## Release X.Y.Z` section only (`OSDEV-\d+`, deduplicated). Every narrative bullet and issue-table row must match the allowlist exactly — one row per ticket, no extras, no missing.
 
-| Source | Role |
-|---|---|
-| **GitHub** `doc/release/RELEASE-NOTES.md` | **Source of truth for release membership.** Only tickets listed under the target `## Release X.Y.Z` section belong in the narrative and issue table. Also provides release date and technical facts. |
-| **Jira** | **Supplementary context only.** Fetch summaries, descriptions, assignees, and sprint assignments for GitHub-listed tickets. Use to write business-friendly narrative — never to add tickets GitHub does not list. |
-| **Embedded template in this skill** | Page structure and style. Do **not** read prior Confluence pages for format. |
+**Jira** supplies summaries, descriptions, assignees, and sprints for allowlisted tickets only. Never add tickets from Jira Fix Version, prior Confluence pages, or memory.
 
-### Facts-only rule
+Never invent information. If uncertain about grouping, sprint, or ticket membership, ask the user — do not 
+guess.
 
-Never invent information. If uncertain about grouping, sprint, or ticket membership, ask the user — do not guess.
+**Prior Confluence pages** in the Release Notes folder supply **page format and Description tone** only. Load the latest via `getConfluencePage`; fallback: [2.25.0](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1329954817).
 
-### Jira / GitHub mismatches
-
-When Jira Fix Version contains tickets **not** listed in the GitHub release section:
-
-- **Do not** include them in the narrative or issue table.
-- **Do** mention the discrepancy to the user after creating the draft (e.g. "Jira Fix Version 2.24.0 also lists OSDEV-2654 and OSDEV-2360, but they appear under Release 2.23.0 in GitHub — omitted from this page.").
-
-Tickets tagged `[Follow-up]` in GitHub **do** count as release tickets if they appear under the target release section.
+**Facts-only:** never invent information. `[Follow-up]` items in GitHub count if under the target release section. When Jira Fix Version lists tickets not in GitHub, omit them and note the discrepancy after filing.
 
 ---
 
 ## Workflow
 
-1. **Confirm release version** (if not provided by the user).
-2. **Read GitHub** — open `doc/release/RELEASE-NOTES.md` and extract the full `## Release X.Y.Z` section:
-   - Release date from Introduction
-   - Every ticket ID (`OSDEV-XXXX`) listed in any subsection (Bugfix, What's new, Code/API changes, Architecture/Environment changes, Database changes, etc.)
-   - Deduplicate ticket IDs (a ticket may appear in multiple subsections, e.g. OSDEV-2542)
-3. **Fetch Jira context** for GitHub-listed tickets only:
-   - `key in (OSDEV-XXXX, ...)` — summaries, descriptions, assignees, sprint (`customfield_10020`)
-   - Optionally fetch the Jira Fix Version URL for the metadata table Release link
-4. **Infer Sprint** from Jira sprint assignments on GitHub-listed tickets:
-   - Count tickets per sprint; use the sprint with the most tickets as the primary value
-   - Always include a clarifying note in the Sprint table cell (see template below)
-   - If all tickets share one sprint, note that; if tied or spanning sprints, explain the split
-5. **Build Contributors list** from unique Jira assignees on GitHub-listed tickets (exclude unassigned).
-6. **Group into themed narrative** using the embedded template pattern.
-7. **Create Confluence draft** (see Confluence settings below).
-8. **Write Slack post draft** in chat (see Slack template below).
-9. **Ask user to review** the draft and Slack post.
+1. **Confirm release version** (if not provided).
+2. **Read GitHub** — `Read` `doc/release/RELEASE-NOTES.md`; extract the `## Release X.Y.Z` section, release date, and ticket allowlist.
+3. **Load format reference** — `searchConfluenceUsingCql` (`ancestor = 649494530`, order by `lastmodified DESC`) → `getConfluencePage` (`contentFormat: html`). If a page for this release already exists, update it instead of creating a duplicate.
+4. **Fetch Jira** — `searchJiraIssuesUsingJql` for allowlisted keys only:
+   - `cloudId: opensupplyhub.atlassian.net`
+   - `fields: summary, description, assignee, customfield_10020, fixVersions`
+   - Paginate with `nextPageToken` if >50 tickets
+   - **Release** link: Jira Fix Version URL from `fixVersions` — do not invent version IDs
+5. **Infer Sprint** — sprint with the most tickets (e.g. `Sprint 84`). Add an italic clarifying note only when tickets span multiple sprints.
+6. **Contributors** — unique Jira assignees, space-separated `@Name`.
+7. **Draft narrative** — themed, business-oriented (see [Description](#description-narrative)).
+8. **Checkpoint in chat** (required; never skip) — metadata table with full Description in the Description row, Programs warning, issue table, then Slack post draft. Use `(Confluence link — added after draft page is created)` in Slack.
 
-Do **not** attempt to reorder/move the page within the Confluence folder — the Atlassian MCP has no move API.
+   > Here are the draft **Confluence release notes** and **Slack post** for Release {version}. Review both below.
+   >
+   > [metadata table → Programs warning → issue table]
+   >
+   > ---
+   >
+   > **Slack post (chat only — you post manually):**
+   >
+   > [Slack post draft]
+   >
+   > Reply **'looks good'** to create the Confluence draft page, or tell me what to adjust.
+
+9. **File via Atlassian MCP** (`plugin-atlassian-atlassian`) — only on explicit approval:
+   - **Existing page** → `updateConfluencePage` (`contentFormat: html`, preserve `data-local-id`)
+   - **New page** → `createConfluencePage`:
+     - `cloudId: opensupplyhub.atlassian.net`
+     - `spaceId: 15859716`, `parentId: 649494530`
+     - `title: {version} - {Mon DD YYYY} - Release Notes`
+     - `status: draft`, `contentType: page`, `contentFormat: html`
+     - `body:` HTML per [Page format](#page-format) below
+   - Do not set `status: current` on create. Return draft URL from MCP response.
+10. **Return in chat:** Confluence URL, Slack post with real link, Jira/GitHub mismatch notes. Remind: page is **draft** (user publishes); Slack is copy/paste only.
+
+**Hotfixes:** separate Confluence page per deploy (e.g. 2.22.1 and 2.22.2); read only the matching GitHub section.
 
 ---
 
-## Confluence settings
+## Page format
 
-| Setting | Value |
-|---|---|
-| Space | SD (`15859716`) |
-| Parent folder | Release Notes (`649494530`) |
-| Title format | `{version} - {Mon DD YYYY} - Release Notes` (date from GitHub Introduction) |
-| Status | **Draft** (always — user reviews before publishing) |
+Match published pages ([2.25.0](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1329954817) · [2.24.0](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1329004547)). Assemble one HTML string — no markdown pipe tables in `body`.
 
----
+**Order:** metadata table → Programs warning panel → issue table.
 
-## Confluence page template
+**Metadata table** — first row is Release (not Field/Value); labels in `<th>`, values in `<td>`:
 
-Page content follows this **fixed order** (top to bottom):
-
+```html
+<table data-width="760">
+<thead><tr>
+  <th><p><strong>Release</strong></p></th>
+  <th><p><a href="https://opensupplyhub.atlassian.net/projects/OSDEV/versions/{id}" data-card-appearance="inline">https://opensupplyhub.atlassian.net/projects/OSDEV/versions/{id}</a></p></th>
+</tr></thead>
+<tbody>
+<tr><th><p><strong>Release Date</strong></p></th><td><p><time datetime="YYYY-MM-DD">Month DD, YYYY</time></p></td></tr>
+<tr><th><p><strong>Version</strong></p></th><td><p>{version}</p></td></tr>
+<tr><th><p><strong>Sprint</strong></p></th><td><p>Sprint {N}</p></td></tr>
+<tr><th><p><strong>Contributors</strong></p></th><td><p>@Name @Name …</p></td></tr>
+<tr><th><p><strong>Description</strong></p></th><td><!-- narrative --></td></tr>
+</tbody></table>
 ```
-1. Metadata table (includes Description narrative as the last row)
-2. Programs Team warning panel
-3. Issue tracking table
-```
-
-### 1. Metadata table
-
-Single table at the top of the page. The **Description narrative lives inside this table** as the last row — do not place it as standalone content below the table.
 
 | Field | Source |
 |---|---|
-| **Release** | Jira Fix Version link (e.g. `https://opensupplyhub.atlassian.net/projects/OSDEV/versions/{id}`) |
-| **Release Date** | GitHub Introduction |
-| **Version** | Release version string |
-| **Sprint** | Inferred from Jira (see Sprint field format below) |
-| **Contributors** | `@Name` for each unique Jira assignee on GitHub-listed tickets |
-| **Description** | Opening summary paragraph + themed narrative (see below) |
+| Release | Jira Fix Version inline card — full URL, not version number alone |
+| Release Date | GitHub Introduction |
+| Version | Release version string |
+| Sprint | Primary sprint; italic inference note only when spanning sprints |
+| Contributors | Unique Jira assignees, `@Name` space-separated |
+| Description | Full narrative inside this row — never below the table |
 
-**Sprint field format** — always populate with a value, never leave blank:
-
-```
-Sprint {N}
-
-Inferred from Jira sprint assignments on GitHub release tickets: {X} of {Y} in Sprint {N}, {Z} in Sprint {M} (OSDEV-XXXX, ...). {Any boundary note — e.g. release date falls at Sprint N/M boundary}. Confirm if a different sprint label is preferred.
-```
-
-Italicize the clarification note paragraph.
-
-**Description row content:**
-
-1. **Opening summary** — 1–2 sentences, business-oriented overview of the release.
-2. **Themed sections** — group related tickets:
-
-```
-💥 **Theme Name** — One-line theme description.
-
-🔹 **Lead-in headline** — Business-friendly explanation of the change. _(OSDEV-XXXX)_
-
-🔹 **Another item** — ... _(OSDEV-YYYY)_
-```
-
-**Writing rules:**
-
-- Translate GitHub technical bullets into business language; use Jira user stories/descriptions for context.
-- Every `🔹` bullet must reference a ticket listed in GitHub for this release.
-- Do not create bullets for tickets that are only in Jira Fix Version.
-- Infrastructure items may appear in narrative but are typically `don't include` externally.
-
-### 2. Programs Team callout
-
-Place a **warning panel** directly **below the metadata table** and **above the issue table** so Programs Team sees it before reviewing tickets. Use Confluence HTML:
+**Programs warning** (exact wording, `panel-warning`):
 
 ```html
 <div data-type="panel-warning"><p><strong>Programs Team:</strong> Please review tickets marked <strong>include</strong> under <strong>For External Use (Info Site)</strong> and confirm which items should appear on the info-site. These are suggested starting points only.</p></div>
 ```
 
-Use this exact wording. Do not use a plain paragraph or info panel.
+**Issue table** — `<p><strong>Issue</strong></p>` heading (not `<h2>`):
 
-### 3. Issue tracking table
+```html
+<p><strong>Issue</strong></p>
+<table data-width="760">
+<thead><tr>
+  <th><p><strong>Issue</strong></p></th>
+  <th><p><strong>For Internal Use (Team Discussions + Slack Post)</strong></p></th>
+  <th><p><strong>For External Use (Info Site)</strong></p></th>
+</tr></thead>
+<tbody><!-- one row per allowlisted ticket --></tbody>
+</table>
+```
 
-Heading: **Issue**
+- **Issue column:** `<a href="https://opensupplyhub.atlassian.net/browse/OSDEV-XXXX" data-card-appearance="inline">https://opensupplyhub.atlassian.net/browse/OSDEV-XXXX</a>`
+- **Internal column:** always green `HIGHLIGHT`
+- **External column:** green `include` or red `don't include` — user/partner-facing features and visible bug fixes → `include`; internal tools, infrastructure, release meta → `don't include`
 
-| Issue | For Internal Use (Team Discussions + Slack Post) | For External Use (Info Site) |
-|---|---|---|
-| OSDEV-XXXX | `HIGHLIGHT` | `include` or `don't include` |
+### Description narrative
 
-**One row per GitHub-listed ticket** (deduplicated). Do not add rows for Jira-only tickets.
+1. **Opening summary** — 1–2 sentences, business-oriented.
+2. **Themed sections** — group by user impact, not engineering layer:
 
-**Internal column:** Always `HIGHLIGHT` for every ticket.
+```
+💥 **Theme Name** — One-line theme description.
 
-**External column (suggested values only — Programs Team decides final info-site content):**
+🔹 **Headline** — Business-friendly explanation. _(OSDEV-XXXX)_
+```
 
-| Ticket type | Suggested value |
-|---|---|
-| User/partner-facing feature, visible UI change | `include` |
-| User-visible bug fix | `include` |
-| Customer-facing API or download behavior change | `include` |
-| Internal moderation tools, admin-only workflows | `don't include` |
-| Infrastructure, security patching, analytics | `don't include` |
-| Release meta ticket (e.g. OSDEV-2690) | `don't include` |
+**Writing rules:** lead with who benefits; translate GitHub technical bullets into plain language using Jira context; every `🔹` must reference an allowlisted ticket; infrastructure items typically `don't include` externally.
 
 ---
 
 ## Slack post template
 
-Write in chat only. Do not send to Slack.
-
-**Audience:** Org-wide. Include all updates from the narrative (no HIGHLIGHT filter).
-
-**Structure:**
+Chat only — never post to Slack. Include all narrative items (no HIGHLIGHT filter).
 
 ```
 🚀 **Release {version} is live!** ({date})
@@ -193,44 +160,15 @@ Write in chat only. Do not send to Slack.
 {emoji} **{Theme}**
 • **{Headline}** — {business description}. *(OSDEV-XXXX)*
 
-{repeat for each theme}
-
 Thanks all for your contributions! 🙌
 
 📋 Full release notes (internal): {Confluence draft URL}
-
-cc @Francesca Romano
 ```
 
-Keep length proportional to release size — shorter for hotfixes, longer for major releases.
-
----
-
-## Hotfix handling
-
-Create a **separate Confluence page per deploy** (e.g. 2.22.1 and 2.22.2 each get their own page). Read only the matching GitHub release section for ticket membership.
-
----
-
-## Worked example: Release 2.24.0
-
-**GitHub tickets** (from `## Release 2.24.0`): OSDEV-2542, 2664, 1521, 2416, 2334, 1940, 2724, 2528, 814 (Follow-up), 2694, 2695
-
-**Omitted from page** (Jira Fix Version 2.24.0 but not in GitHub 2.24.0): OSDEV-2360, 2654, 2690
-
-**Themes used:**
-
-1. Spotlight Search & Platform Navigation — 2542, 2695, 2694
-2. Account Registration & Activation — 1521, 2528
-3. Platform Improvements & Bug Fixes — 1940, 2416, 2334, 2724
-4. Platform Security & Infrastructure — 2664, 2542 (CloudFront caching bullet)
-
-Note: OSDEV-814 is a `[Follow-up]` item in GitHub Bugfix — include in narrative/issue table if present in the GitHub section. If the user confirms it was not in the Jira Fix Version, still include it because GitHub is the source of truth.
-
-**Sprint inference:** 8 of 11 GitHub tickets in Sprint 82, 2 in Sprint 83, 1 follow-up in Sprint 75 → primary Sprint 82 with boundary note.
+Keep length proportional to release size.
 
 ---
 
 ## Related skills
 
-- **GitHub engineering release notes:** `.agent/skills/release-notes/SKILL.md` — separate workflow for updating `doc/release/RELEASE-NOTES.md`.
+- **GitHub engineering release notes:** `.agent/skills/release-notes/SKILL.md`
