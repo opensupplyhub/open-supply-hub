@@ -61,11 +61,12 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         )
 
     def get_os_id(self, obj):
-        # Mirror the OpenSearch-backed GET endpoints: fall back to the durable
-        # os_id_snapshot when the live os FK has been nulled by a facility
-        # delete/merge, so PATCH and GET return a consistent os_id.
-        # See OSDEV-2920.
-        return obj.os_id or obj.os_id_snapshot or None
+        # Mirror the OpenSearch-backed GET endpoints, which serve
+        # COALESCE(NULLIF(os_id_snapshot, ''), os_id): the snapshot (written
+        # once at approval) takes precedence, falling back to the live os FK
+        # only when the snapshot is unset. Preserves the originally-approved
+        # OS ID after a facility delete/merge. See OSDEV-2920 / OSDEV-2696.
+        return obj.os_id_snapshot or obj.os_id or None
 
     def get_os_id_snapshot(self, obj):
         # Expose the snapshot as its own field (null when unset), matching the

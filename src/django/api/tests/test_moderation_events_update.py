@@ -11,6 +11,9 @@ from api.models import (
     Contributor,
 )
 from api.signals import moderation_event_update_handler_for_opensearch
+from api.serializers.v1.moderation_event_update_serializer import (
+    ModerationEventUpdateSerializer,
+)
 
 
 @override_settings(DEBUG=True)
@@ -118,6 +121,17 @@ class ModerationEventsUpdateTest(APITestCase):
         body = response.json()
         self.assertEqual('US2020123ABC123', body['os_id'])
         self.assertEqual('US2020123ABC123', body['os_id_snapshot'])
+
+    def test_moderation_event_os_id_prefers_snapshot_over_live_fk(self):
+        # Mirror GET's COALESCE(NULLIF(os_id_snapshot, ''), os_id): when both a
+        # live os FK and a differing snapshot are present, the snapshot wins.
+        serializer = ModerationEventUpdateSerializer()
+
+        class _Obj:
+            os_id = 'US2020111LIVE11'
+            os_id_snapshot = 'US2020999SNAP99'
+
+        self.assertEqual('US2020999SNAP99', serializer.get_os_id(_Obj()))
 
     def test_moderation_event_os_id_null_without_snapshot_or_facility(self):
         # No live facility and no snapshot -> both null (not empty string).
