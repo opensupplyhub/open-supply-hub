@@ -60,16 +60,17 @@ def resolve_base_ref(explicit_base: str | None) -> str | None:
     return None
 
 
-def collect_changed_files(base_ref: str | None) -> list[str]:
+def collect_changed_files(base_ref: str | None, include_worktree: bool = True) -> list[str]:
     files: set[str] = set()
 
-    for args in (
-        ["diff", "--name-only", "--diff-filter=ACMRT"],
-        ["diff", "--name-only", "--cached", "--diff-filter=ACMRT"],
-    ):
-        output = run_git(args)
-        if output:
-            files.update(line.strip() for line in output.splitlines() if line.strip())
+    if include_worktree:
+        for args in (
+            ["diff", "--name-only", "--diff-filter=ACMRT"],
+            ["diff", "--name-only", "--cached", "--diff-filter=ACMRT"],
+        ):
+            output = run_git(args)
+            if output:
+                files.update(line.strip() for line in output.splitlines() if line.strip())
 
     if base_ref and run_git(["rev-parse", "--verify", base_ref]):
         output = run_git(["diff", "--name-only", f"{base_ref}...HEAD"])
@@ -79,13 +80,15 @@ def collect_changed_files(base_ref: str | None) -> list[str]:
     return sorted(files)
 
 
-def load_diff_text(base_ref: str | None) -> str:
+def load_diff_text(base_ref: str | None, include_worktree: bool = True) -> str:
     chunks: list[str] = []
-    for args in (
-        ["diff", "--unified=0"],
-        ["diff", "--cached", "--unified=0"],
-    ):
-        chunks.append(run_git(args))
+
+    if include_worktree:
+        for args in (
+            ["diff", "--unified=0"],
+            ["diff", "--cached", "--unified=0"],
+        ):
+            chunks.append(run_git(args))
 
     if base_ref and run_git(["rev-parse", "--verify", base_ref]):
         chunks.append(run_git(["diff", f"{base_ref}...HEAD", "--unified=0"]))
@@ -256,10 +259,10 @@ def load_config() -> dict:
         return json.load(handle)
 
 
-def analyze(base_ref: str | None) -> tuple[list[str], list[AreaMatch]]:
+def analyze(base_ref: str | None, include_worktree: bool = True) -> tuple[list[str], list[AreaMatch]]:
     config = load_config()
-    changed_files = collect_changed_files(base_ref)
-    diff_text = load_diff_text(base_ref)
+    changed_files = collect_changed_files(base_ref, include_worktree=include_worktree)
+    diff_text = load_diff_text(base_ref, include_worktree=include_worktree)
     matches = find_area_matches(changed_files, diff_text, config["areas"])
     return changed_files, matches
 
@@ -283,7 +286,10 @@ def hook_mode(base_ref: str | None) -> int:
     if command and not is_git_push(command):
         return 0
 
-    changed_files, matches = analyze(base_ref)
+    # Pre-push review must reflect only what is actually being pushed:
+    # the outgoing commits from base_ref to HEAD. Dirty/staged worktree
+    # files are intentionally excluded so they do not trigger the check.
+    changed_files, matches = analyze(base_ref, include_worktree=False)
 
     if not matches:
         return 0
