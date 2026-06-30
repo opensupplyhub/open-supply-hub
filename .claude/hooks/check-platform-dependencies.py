@@ -12,7 +12,6 @@ Manual mode:
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import json
 import re
 import subprocess
@@ -98,12 +97,18 @@ def load_diff_text(base_ref: str | None, include_worktree: bool = True) -> str:
 
 def path_matches_pattern(path: str, pattern: str) -> bool:
     normalized = path.replace("\\", "/")
-    if fnmatch.fnmatch(normalized, pattern):
-        return True
-    if "**" in pattern:
-        regex = "^" + re.escape(pattern).replace(r"\*\*", ".*").replace(r"\*", "[^/]*") + "$"
-        return re.match(regex, normalized) is not None
-    return False
+
+    if not any(ch in pattern for ch in "*?"):
+        return normalized == pattern
+
+    # Build a slash-aware regex so `*` and `?` stay within a single path
+    # segment while `**` is the only token allowed to cross directories.
+    regex = re.escape(pattern)
+    regex = regex.replace(r"\*\*/", "(?:.*/)?")
+    regex = regex.replace(r"\*\*", ".*")
+    regex = regex.replace(r"\*", "[^/]*")
+    regex = regex.replace(r"\?", "[^/]")
+    return re.fullmatch(regex, normalized) is not None
 
 
 def find_area_matches(changed_files: Iterable[str], diff_text: str, areas: list[dict]) -> list[AreaMatch]:
