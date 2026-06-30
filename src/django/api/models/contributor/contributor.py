@@ -4,6 +4,7 @@ from django.core.cache import caches
 from django.db import models
 
 from api.constants import (
+    MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
     MatchResponsibility,
     OriginSource
 )
@@ -190,16 +191,18 @@ class Contributor(models.Model):
     @staticmethod
     def __invalidate_paid_product_masking_cache():
         """
-        Drop the caches that decide paid-product anonymisation so an admin
-        toggle of ``anonymise_in_paid_products`` takes effect right away.
+        Drop the cached anonymised-contributor set so an admin toggle of
+        ``anonymise_in_paid_products`` takes effect right away.
 
-        The ``view_cache`` (memcached) holds both the anonymised-contributor
-        set and the per-Authorization facility detail responses, so a single
-        flush clears both for every worker. Without it the change would only
-        surface once they expire (up to
-        ``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
+        Only the single ``MASKED_CONTRIBUTOR_IDS_CACHE_KEY`` entry is deleted -
+        not the whole ``view_cache`` - so unrelated cached responses keep their
+        warm entries. This set is the one shared across every worker and drives
+        the list API and bulk download immediately. The per-facility detail
+        responses cached by ``cache_page`` cannot be enumerated for targeted
+        deletion in memcached, so they fall back to their own short TTL
+        (``MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS``).
         """
-        caches['view_cache'].clear()
+        caches['view_cache'].delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)
