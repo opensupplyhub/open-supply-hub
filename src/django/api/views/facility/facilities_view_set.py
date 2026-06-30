@@ -300,17 +300,21 @@ class FacilitiesViewSet(ListModelMixin,
         anonymised_ids = list(masked.contributor_ids)
         if not anonymised_ids:
             return False
-        if count is None:
-            count = queryset.count()
-        if not count:
-            return False
         # A facility is downloadable when it has at least one contributor
         # outside the anonymised set, i.e. its contributors are NOT contained
-        # by that set. None left means the whole result set is anonymised.
+        # by that set. A single cheap EXISTS settles the common case (some
+        # facility is downloadable) without ever counting the result set.
         has_downloadable = queryset.exclude(
             contributors_id__contained_by=anonymised_ids
         ).exists()
-        return not has_downloadable
+        if has_downloadable:
+            return False
+        # No downloadable rows left: the result is anonymised-only as long as
+        # it is not empty. Reuse the paginator's count when it was already
+        # computed; otherwise fall back to a cheap EXISTS instead of COUNT(*).
+        if count is not None:
+            return count > 0
+        return queryset.exists()
 
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
