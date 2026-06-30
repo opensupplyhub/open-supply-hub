@@ -74,8 +74,8 @@ class ModerationEventUpdateSerializer(ModelSerializer):
     def get_os_id_snapshot(self, obj):
         # Expose the snapshot as its own field (null when unset), matching the
         # GET endpoints which surface NULLIF(os_id_snapshot, '').
-        # `or None`: os_id_snapshot defaults to '' (falsy), so an unset snapshot
-        # serializes as JSON null rather than "" — consistent with GET.
+        # `or None`: os_id_snapshot defaults to '' (falsy), so an unset
+        # snapshot serializes as JSON null rather than "", matching GET.
         return obj.os_id_snapshot or None
 
     def to_internal_value(self, data):
