@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
   * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
 * [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
+* [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - Added `is_closed` (boolean) to the `production-locations` OpenSearch index and the `GET /api/v1/production-locations/` responses, sourced from `Facility.is_closed`. Lets API consumers and the search page determine whether a location is closed directly, rather than inferring it from `opened_at`/`closed_at`. Implemented in the `sync_production_locations.sql` Logstash query + the `production_locations` index mapping (no Django migration). Docs follow-up (`open-supply-hub-api-docs`): document `is_closed` in the production-locations response schema.
 
 ### Bugfix
 * [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). Regression from the Django 3.2→5.2 upgrade: Django 3 lazily filled defaults when a runtime database alias first connected, but Django 5 only normalizes aliases present at startup. The dynamically configured source connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
@@ -33,6 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
     * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
 * Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+* [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - The `is_closed` field appears on existing production locations only after the `production-locations` OpenSearch index is rebuilt (Logstash re-sync / index clear + refill). New/updated locations pick it up on the next sync.
 
 
 ## Release 2.26.0
