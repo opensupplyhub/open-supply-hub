@@ -66,11 +66,16 @@ class ModerationEventUpdateSerializer(ModelSerializer):
         # once at approval) takes precedence, falling back to the live os FK
         # only when the snapshot is unset. Preserves the originally-approved
         # OS ID after a facility delete/merge. See OSDEV-2920 / OSDEV-2696.
+        # obj.os_id reads the FK column directly: it is None once the facility
+        # is deleted/merged (SET_NULL), and avoids the extra query that os.id
+        # would trigger by dereferencing the related object.
         return obj.os_id_snapshot or obj.os_id or None
 
     def get_os_id_snapshot(self, obj):
         # Expose the snapshot as its own field (null when unset), matching the
         # GET endpoints which surface NULLIF(os_id_snapshot, '').
+        # `or None`: os_id_snapshot defaults to '' (falsy), so an unset snapshot
+        # serializes as JSON null rather than "" — consistent with GET.
         return obj.os_id_snapshot or None
 
     def to_internal_value(self, data):
