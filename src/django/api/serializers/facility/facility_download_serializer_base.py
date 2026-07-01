@@ -18,7 +18,7 @@ class FacilityDownloadSerializerBase(Serializer):
     def __init__(self, *args, masked_contributors=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.masked_contributors = (
-            masked_contributors or MaskedContributors.empty()
+            masked_contributors or MaskedContributors()
         )
 
     class Meta:

@@ -33,7 +33,7 @@ class ContributorMaskingPolicy:
         list view does, for ``anonymised_only``) to avoid a second cache read.
         """
         if not cls._is_token_api_request(request):
-            return MaskedContributors.empty()
+            return MaskedContributors()
         return flagged if flagged is not None else cls.flagged_contributors()
 
     @classmethod

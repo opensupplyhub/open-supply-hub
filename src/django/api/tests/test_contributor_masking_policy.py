@@ -49,7 +49,7 @@ class MaskedContributorsTest(TestCase):
         self.assertFalse(masked.should_mask({'id': 5, 'admin_id': 8}))
 
     def test_empty_is_falsy_and_never_masks(self):
-        masked = MaskedContributors.empty()
+        masked = MaskedContributors()
         self.assertFalse(masked)
         self.assertFalse(masked.should_mask({'id': 1, 'admin_id': 1}))
 
@@ -693,7 +693,7 @@ class FacilitiesListAnonymisedOnlyKeyTest(TestCase):
         with patch(
             'api.views.facility.facilities_view_set'
             '.ContributorMaskingPolicy.flagged_contributors',
-            return_value=MaskedContributors.empty(),
+            return_value=MaskedContributors(),
         ), patch(
             'api.views.facility.facilities_view_set.FacilityIndexSerializer'
         ) as mock_ser, patch(

@@ -26,11 +26,6 @@ class MaskedContributors:
         self.admin_ids = set(admin_ids or ())
         self.names = set(names or ())
 
-    @classmethod
-    def empty(cls):
-        """An empty set that never masks anything."""
-        return cls()
-
     def __bool__(self):
         return bool(self.contributor_ids or self.admin_ids or self.names)
 
