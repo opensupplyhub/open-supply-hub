@@ -41,7 +41,9 @@ class ContributorMaskingPolicy:
         """The full set of contributors flagged ``anonymise_in_paid_products``
         (cached). Endpoint-agnostic; also drives the ``anonymised_only`` flag.
         """
-        cache = cls._cache()
+        # Resolved here (not at import time) so test ``override_settings``
+        # for ``CACHES`` is honoured.
+        cache = caches['view_cache']
         cached = cache.get(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
         if cached is None:
             cached = cls._load()
@@ -57,12 +59,6 @@ class ContributorMaskingPolicy:
     def _is_token_api_request(request):
         """A programmatic API call is authenticated with a token."""
         return request is not None and bool(getattr(request, 'auth', None))
-
-    @staticmethod
-    def _cache():
-        # Resolved lazily (not at import time) so test ``override_settings``
-        # for ``CACHES`` is honoured.
-        return caches['view_cache']
 
     @staticmethod
     def _load():
