@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from api.constants import ProcessingAction
 from api.models.facility.facility import Facility
@@ -32,7 +32,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run = options.get('dry_run', False)
-        batch_size = options.get('batch_size') or 500
+        batch_size = options['batch_size']
+        if batch_size < 1:
+            raise CommandError('--batch-size must be a positive integer.')
 
         self.stdout.write('Searching for promoted locations...')
 

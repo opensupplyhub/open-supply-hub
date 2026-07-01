@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
 from api.constants import ProcessingAction
@@ -104,3 +105,15 @@ class ReindexPromotedLocationsTest(TestCase):
             for os_id in call.args[0]
         ]
         self.assertEqual(len(reindexed), 3)
+
+    @patch(INDEX_PATH)
+    def test_rejects_non_positive_batch_size(self, mock_index):
+        self._make_facility('US2024000PROMO', promoted=True)
+
+        for invalid in ('0', '-1'):
+            with self.assertRaises(CommandError):
+                call_command(
+                    'reindex_promoted_locations',
+                    '--batch-size', invalid,
+                )
+        mock_index.assert_not_called()
