@@ -14,6 +14,12 @@ variable "image_tag_mutability" {
   }
 }
 
+variable "scan_on_push" {
+  type        = bool
+  default     = true
+  description = "If true, images are scanned for vulnerabilities after being pushed to the repository."
+}
+
 variable "attach_lifecycle_policy" {
   default     = false
   type        = bool
