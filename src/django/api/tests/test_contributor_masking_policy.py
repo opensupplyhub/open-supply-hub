@@ -3,13 +3,17 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.gis.geos import Point
 from django.core.cache import caches
-from django.test import TestCase, override_settings
+from django.http import HttpResponse
+from django.test import RequestFactory, TestCase, override_settings
 
 from api.constants import MASKED_CONTRIBUTOR_LABEL
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_index import FacilityIndex
 from api.models.user import User
-from api.views.facility.facilities_view_set import FacilitiesViewSet
+from api.views.facility.facilities_view_set import (
+    FacilitiesViewSet,
+    cache_page_by_auth_tier,
+)
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
@@ -717,3 +721,76 @@ class FacilitiesListAnonymisedOnlyKeyTest(TestCase):
             response = self._make_list_response(request)
 
         self.assertIn('anonymised_only', response.data)
+
+
+@override_settings(CACHES={
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'view_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'auth-tier-cache-test',
+    },
+})
+class CachePageByAuthTierTest(TestCase):
+    """
+    `cache_page_by_auth_tier` collapses the `Authorization` dimension into two
+    buckets - `paid` (token API callers) and `regular` (everyone else) - so the
+    view is cached in at most two entries per URL instead of one per token.
+    """
+
+    def setUp(self):
+        caches['view_cache'].clear()
+        self.factory = RequestFactory()
+        self.seen = []
+
+        @cache_page_by_auth_tier(60, cache='view_cache')
+        def view(_self, request):
+            self.seen.append(request.META.get('HTTP_AUTHORIZATION'))
+            return HttpResponse('body-{}'.format(len(self.seen)))
+
+        self.view = view
+
+    def tearDown(self):
+        caches['view_cache'].clear()
+
+    def _get(self, auth_header=None, is_paid=False):
+        request = self.factory.get('/api/facilities/OS123/')
+        if auth_header is not None:
+            request.META['HTTP_AUTHORIZATION'] = auth_header
+        request.auth = 'token-obj' if is_paid else None
+        response = self.view(SimpleNamespace(), request)
+        return response, request
+
+    def test_two_tokens_share_one_paid_bucket(self):
+        response_a, _ = self._get(auth_header='Token AAA', is_paid=True)
+        response_b, _ = self._get(auth_header='Token BBB', is_paid=True)
+
+        # The view runs once; the second token is served from the same entry.
+        self.assertEqual(self.seen, ['paid'])
+        self.assertEqual(response_a.content, b'body-1')
+        self.assertEqual(response_b.content, b'body-1')
+
+    def test_regular_and_paid_use_separate_buckets(self):
+        paid_response, _ = self._get(auth_header='Token AAA', is_paid=True)
+        regular_response, _ = self._get()
+
+        # Two distinct buckets => the view runs twice with different content.
+        self.assertEqual(self.seen, ['paid', None])
+        self.assertEqual(paid_response.content, b'body-1')
+        self.assertEqual(regular_response.content, b'body-2')
+
+        # Subsequent same-bucket requests are served from cache.
+        cached_regular, _ = self._get()
+        self.assertEqual(self.seen, ['paid', None])
+        self.assertEqual(cached_regular.content, b'body-2')
+
+    def test_response_still_varies_on_authorization(self):
+        response, _ = self._get(auth_header='Token AAA', is_paid=True)
+
+        self.assertIn('Authorization', response.get('Vary', ''))
+
+    def test_original_authorization_header_is_restored(self):
+        _, request = self._get(auth_header='Token AAA', is_paid=True)
+
+        self.assertEqual(request.META['HTTP_AUTHORIZATION'], 'Token AAA')

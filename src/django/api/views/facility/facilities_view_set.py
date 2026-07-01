@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from functools import wraps
 
 from api.constants import (APIErrorMessages, FacilityClaimStatuses,
                            FacilityCreateQueryParams, FacilityMergeQueryParams,
@@ -72,6 +73,43 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
 
 log = logging.getLogger(__name__)
+
+
+def cache_page_by_auth_tier(timeout, cache):
+    """Cache the view response, collapsing ``Authorization`` to two buckets.
+
+    Masking on paid surfaces depends only on *whether* the caller is a token
+    (programmatic) API request, not on which token. Varying ``view_cache``
+    directly on the ``Authorization`` header would store one identical copy per
+    token, fragmenting the cache and lowering the hit rate. This normalises the
+    value the cache key is derived from to ``paid`` / ``regular`` - at most two
+    entries per URL - while still emitting ``Vary: Authorization`` on the
+    response so downstream caches (CDN/browser) stay correct.
+    """
+    def decorator(view_method):
+        cached = method_decorator([
+            cache_page(timeout, cache=cache),
+            vary_on_headers('Authorization'),
+        ])(view_method)
+
+        @wraps(view_method)
+        def wrapper(self, request, *args, **kwargs):
+            real_auth = request.META.get('HTTP_AUTHORIZATION')
+            if real_auth is not None:
+                # request.auth is already resolved by DRF authentication in
+                # dispatch().initial(), so this never re-triggers auth.
+                request.META['HTTP_AUTHORIZATION'] = (
+                    'paid' if getattr(request, 'auth', None) else 'regular'
+                )
+            try:
+                return cached(self, request, *args, **kwargs)
+            finally:
+                if real_auth is not None:
+                    request.META['HTTP_AUTHORIZATION'] = real_auth
+
+        return wrapper
+
+    return decorator
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -318,18 +356,14 @@ class FacilitiesViewSet(ListModelMixin,
 
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
-    @method_decorator(
-        cache_page(
-            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
-            cache="view_cache",
-        ),
+    # Masking depends only on whether the caller is a token (API) request, so
+    # the cached response is split into just two buckets - paid (union names
+    # masked) and regular (names shown) - instead of one per token. See
+    # cache_page_by_auth_tier.
+    @cache_page_by_auth_tier(
+        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+        cache="view_cache",
     )
-    # Trade union masking depends on whether the caller is a token (API)
-    # request, so the cached response must vary on the Authorization header.
-    # Otherwise an anonymous/web response (union names shown) and an API
-    # response (union names masked) would collide on the same cache key and
-    # serve whichever was cached first.
-    @method_decorator(vary_on_headers('Authorization'))
     def retrieve(self, request, pk=None):
         """
         Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
