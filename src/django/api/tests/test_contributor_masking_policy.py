@@ -48,9 +48,8 @@ class MaskedContributorsTest(TestCase):
         self.assertTrue(masked.should_mask({'id': 5, 'admin_id': 9}))
         self.assertFalse(masked.should_mask({'id': 5, 'admin_id': 8}))
 
-    def test_empty_is_falsy_and_never_masks(self):
+    def test_empty_never_masks(self):
         masked = MaskedContributors()
-        self.assertFalse(masked)
         self.assertFalse(masked.should_mask({'id': 1, 'admin_id': 1}))
 
     def test_does_not_mask_empty_contributor(self):
@@ -61,7 +60,6 @@ class MaskedContributorsTest(TestCase):
     def test_should_mask_name_for_created_from(self):
         # created_from_info carries only the contributor name.
         masked = MaskedContributors(names={'Union X'})
-        self.assertTrue(masked)
         self.assertTrue(masked.should_mask_name('Union X'))
         self.assertFalse(masked.should_mask_name('Brand Y'))
         self.assertFalse(masked.should_mask_name(None))
@@ -126,12 +124,12 @@ class ContributorMaskingPolicyServiceTest(TestCase):
 
     def test_for_facilities_api_is_empty_without_token(self):
         self._make_contributor(Contributor.UNION_CONTRIB_TYPE)
-        self.assertFalse(
-            ContributorMaskingPolicy.for_facilities_api(
-                SimpleNamespace(auth=None)
-            )
+        without_auth = ContributorMaskingPolicy.for_facilities_api(
+            SimpleNamespace(auth=None)
         )
-        self.assertFalse(ContributorMaskingPolicy.for_facilities_api(None))
+        self.assertFalse(without_auth.contributor_ids)
+        no_request = ContributorMaskingPolicy.for_facilities_api(None)
+        self.assertFalse(no_request.contributor_ids)
 
     def test_for_facilities_api_masks_for_token_user(self):
         contributor, _ = self._make_contributor(
@@ -140,7 +138,6 @@ class ContributorMaskingPolicyServiceTest(TestCase):
         masked = ContributorMaskingPolicy.for_facilities_api(
             SimpleNamespace(auth='a-token')
         )
-        self.assertTrue(masked)
         self.assertIn(contributor.id, masked.contributor_ids)
 
     def test_masked_contributors_are_cached(self):

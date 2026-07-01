@@ -26,9 +26,6 @@ class MaskedContributors:
         self.admin_ids = set(admin_ids or ())
         self.names = set(names or ())
 
-    def __bool__(self):
-        return bool(self.contributor_ids or self.admin_ids or self.names)
-
     def should_mask(self, contributor):
         """Whether this contributor's identity must be hidden.
 
