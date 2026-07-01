@@ -25,44 +25,42 @@ from api.serializers.facility.utils import (
     is_contribution_masked,
 )
 from api.serializers.utils import get_contributor_id, get_contributor_name
-from api.services.should_mask_contribution import (
-    MaskedContributors,
-    ShouldMaskContribution,
-)
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
+from api.services.masked_contributors import MaskedContributors
 
 
 class MaskedContributorsTest(TestCase):
-    """`MaskedContributors` matches a contribution by id or admin id."""
+    """`MaskedContributors` decides masking by id or admin id."""
 
-    def test_matches_by_contributor_id(self):
+    def test_should_mask_by_contributor_id(self):
         masked = MaskedContributors(contributor_ids={1})
-        self.assertTrue(masked.matches({'id': 1}))
-        self.assertFalse(masked.matches({'id': 2}))
+        self.assertTrue(masked.should_mask({'id': 1}))
+        self.assertFalse(masked.should_mask({'id': 2}))
 
-    def test_matches_by_admin_id_when_contributor_id_missing(self):
+    def test_should_mask_by_admin_id_when_contributor_id_missing(self):
         # facility_locations / facility_list_items only carry `admin_id`.
         masked = MaskedContributors(admin_ids={9})
-        self.assertTrue(masked.matches({'id': None, 'admin_id': 9}))
-        self.assertTrue(masked.matches({'id': 5, 'admin_id': 9}))
-        self.assertFalse(masked.matches({'id': 5, 'admin_id': 8}))
+        self.assertTrue(masked.should_mask({'id': None, 'admin_id': 9}))
+        self.assertTrue(masked.should_mask({'id': 5, 'admin_id': 9}))
+        self.assertFalse(masked.should_mask({'id': 5, 'admin_id': 8}))
 
-    def test_empty_is_falsy_and_never_matches(self):
-        masked = MaskedContributors()
+    def test_empty_is_falsy_and_never_masks(self):
+        masked = MaskedContributors.empty()
         self.assertFalse(masked)
-        self.assertFalse(masked.matches({'id': 1, 'admin_id': 1}))
+        self.assertFalse(masked.should_mask({'id': 1, 'admin_id': 1}))
 
-    def test_does_not_match_empty_contributor(self):
+    def test_does_not_mask_empty_contributor(self):
         masked = MaskedContributors(contributor_ids={1})
-        self.assertFalse(masked.matches(None))
-        self.assertFalse(masked.matches({}))
+        self.assertFalse(masked.should_mask(None))
+        self.assertFalse(masked.should_mask({}))
 
-    def test_masks_name_for_created_from(self):
+    def test_should_mask_name_for_created_from(self):
         # created_from_info carries only the contributor name.
         masked = MaskedContributors(names={'Union X'})
         self.assertTrue(masked)
-        self.assertTrue(masked.masks_name('Union X'))
-        self.assertFalse(masked.masks_name('Brand Y'))
-        self.assertFalse(masked.masks_name(None))
+        self.assertTrue(masked.should_mask_name('Union X'))
+        self.assertFalse(masked.should_mask_name('Brand Y'))
+        self.assertFalse(masked.should_mask_name(None))
 
 
 # The masked set is cached in ``view_cache``, which is a DummyCache in the
@@ -77,7 +75,7 @@ class MaskedContributorsTest(TestCase):
         'LOCATION': 'masking-test',
     },
 })
-class ShouldMaskContributionServiceTest(TestCase):
+class ContributorMaskingPolicyServiceTest(TestCase):
     """Resolving and caching the contributors to hide in paid products."""
 
     def setUp(self):
@@ -104,7 +102,7 @@ class ShouldMaskContributionServiceTest(TestCase):
         contributor, user = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE
         )
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(contributor.id, masked.contributor_ids)
         self.assertIn(user.id, masked.admin_ids)
         self.assertIn(contributor.name, masked.names)
@@ -113,27 +111,29 @@ class ShouldMaskContributionServiceTest(TestCase):
         contributor, _ = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE, anonymise=False
         )
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertNotIn(contributor.id, masked.contributor_ids)
 
     def test_non_union_with_flag_is_masked(self):
         # The flag is the sole control now - it is not limited to unions.
         contributor, _ = self._make_contributor('Brand / Retailer')
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(contributor.id, masked.contributor_ids)
 
-    def test_for_request_is_empty_without_token(self):
+    def test_for_facilities_api_is_empty_without_token(self):
         self._make_contributor(Contributor.UNION_CONTRIB_TYPE)
         self.assertFalse(
-            ShouldMaskContribution.for_request(SimpleNamespace(auth=None))
+            ContributorMaskingPolicy.for_facilities_api(
+                SimpleNamespace(auth=None)
+            )
         )
-        self.assertFalse(ShouldMaskContribution.for_request(None))
+        self.assertFalse(ContributorMaskingPolicy.for_facilities_api(None))
 
-    def test_for_request_masks_for_token_user(self):
+    def test_for_facilities_api_masks_for_token_user(self):
         contributor, _ = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE
         )
-        masked = ShouldMaskContribution.for_request(
+        masked = ContributorMaskingPolicy.for_facilities_api(
             SimpleNamespace(auth='a-token')
         )
         self.assertTrue(masked)
@@ -141,7 +141,7 @@ class ShouldMaskContributionServiceTest(TestCase):
 
     def test_masked_contributors_are_cached(self):
         first, _ = self._make_contributor(Contributor.UNION_CONTRIB_TYPE)
-        warm = ShouldMaskContribution.get_masked_contributors()
+        warm = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(first.id, warm.contributor_ids)
 
         # A non-masked contributor created after cache warm must not appear in
@@ -153,7 +153,7 @@ class ShouldMaskContributionServiceTest(TestCase):
             contrib_type='Brand / Retailer',
             anonymise_in_paid_products=False,
         )
-        still_cached = ShouldMaskContribution.get_masked_contributors()
+        still_cached = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(first.id, still_cached.contributor_ids)
         self.assertNotIn(non_masked.id, still_cached.contributor_ids)
 
@@ -161,7 +161,7 @@ class ShouldMaskContributionServiceTest(TestCase):
         contributor, _ = self._make_contributor(
             Contributor.UNION_CONTRIB_TYPE
         )
-        warm = ShouldMaskContribution.get_masked_contributors()
+        warm = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(contributor.id, warm.contributor_ids)
 
         # Disabling the flag must drop the cached set on save so the next
@@ -169,12 +169,12 @@ class ShouldMaskContributionServiceTest(TestCase):
         contributor.anonymise_in_paid_products = False
         contributor.save()
 
-        refreshed = ShouldMaskContribution.get_masked_contributors()
+        refreshed = ContributorMaskingPolicy.flagged_contributors()
         self.assertNotIn(contributor.id, refreshed.contributor_ids)
 
     def test_insert_with_flag_on_invalidates_cache(self):
         # Warm the cache with no masked contributors.
-        empty = ShouldMaskContribution.get_masked_contributors()
+        empty = ContributorMaskingPolicy.flagged_contributors()
         self.assertFalse(empty.contributor_ids)
 
         # Creating a new contributor with the flag already on must invalidate
@@ -187,7 +187,7 @@ class ShouldMaskContributionServiceTest(TestCase):
             anonymise_in_paid_products=True,
         )
 
-        refreshed = ShouldMaskContribution.get_masked_contributors()
+        refreshed = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(new_contributor.id, refreshed.contributor_ids)
 
     def test_name_change_on_anonymised_contributor_invalidates_cache(self):
@@ -195,7 +195,7 @@ class ShouldMaskContributionServiceTest(TestCase):
             Contributor.UNION_CONTRIB_TYPE
         )
         original_name = contributor.name
-        warm = ShouldMaskContribution.get_masked_contributors()
+        warm = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn(original_name, warm.names)
 
         # Renaming an anonymised contributor must refresh the cached names set
@@ -203,7 +203,7 @@ class ShouldMaskContributionServiceTest(TestCase):
         contributor.name = 'Renamed Masked Co'
         contributor.save()
 
-        refreshed = ShouldMaskContribution.get_masked_contributors()
+        refreshed = ContributorMaskingPolicy.flagged_contributors()
         self.assertIn('Renamed Masked Co', refreshed.names)
         self.assertNotIn(original_name, refreshed.names)
 
@@ -400,7 +400,8 @@ class CreateFlowContributorMaskingTest(TestCase):
     ``{'request': request}`` (see api.processing.handle_external_match_
     process_result) - it never pre-resolves ``masked_contributors`` the way the
     list view does. This guards that an API (token) caller still gets union
-    contributors masked on that path via the ``for_request`` fallback."""
+    contributors masked on that path via the ``for_facilities_api``
+    fallback."""
 
     def setUp(self):
         caches['view_cache'].clear()
@@ -594,7 +595,7 @@ class AnonymisedOnlyAggregateTest(TestCase):
     def test_all_anonymised_returns_true(self):
         self._make_index(1, [self.anonymised.id])
         queryset = FacilityIndex.objects.all()
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertTrue(
             self._is_anonymised_only(queryset, masked, queryset.count())
         )
@@ -603,7 +604,7 @@ class AnonymisedOnlyAggregateTest(TestCase):
         self._make_index(1, [self.anonymised.id])
         self._make_index(2, [self.anonymised.id, self.other.id])
         queryset = FacilityIndex.objects.all()
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertFalse(
             self._is_anonymised_only(queryset, masked, queryset.count())
         )
@@ -614,14 +615,14 @@ class AnonymisedOnlyAggregateTest(TestCase):
         caches['view_cache'].clear()
         self._make_index(1, [self.anonymised.id])
         queryset = FacilityIndex.objects.all()
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertFalse(
             self._is_anonymised_only(queryset, masked, queryset.count())
         )
 
     def test_empty_result_returns_false(self):
         self._make_index(1, [self.anonymised.id])
-        masked = ShouldMaskContribution.get_masked_contributors()
+        masked = ContributorMaskingPolicy.flagged_contributors()
         self.assertFalse(
             self._is_anonymised_only(FacilityIndex.objects.all(), masked, 0)
         )
@@ -646,7 +647,7 @@ class DownloadViewMaskingTest(TestCase):
 
         with patch(
             'api.facilities_download_view_set'
-            '.ShouldMaskContribution.get_masked_contributors',
+            '.ContributorMaskingPolicy.for_download',
             return_value=fake_masked,
         ) as mock_get, patch(
             'api.facilities_download_view_set.FacilityDownloadSerializer',
@@ -687,8 +688,8 @@ class FacilitiesListAnonymisedOnlyKeyTest(TestCase):
 
         with patch(
             'api.views.facility.facilities_view_set'
-            '.ShouldMaskContribution.get_masked_contributors',
-            return_value=MaskedContributors(),
+            '.ContributorMaskingPolicy.flagged_contributors',
+            return_value=MaskedContributors.empty(),
         ), patch(
             'api.views.facility.facilities_view_set.FacilityIndexSerializer'
         ) as mock_ser, patch(

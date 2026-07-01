@@ -5,6 +5,7 @@ from api.helpers.helpers import parse_download_date
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import \
     FacilityIndexNewManager
+from api.services.masked_contributors import MaskedContributors
 from countries.lib.countries import COUNTRY_NAMES
 from rest_framework.serializers import Serializer, SerializerMethodField
 
@@ -16,7 +17,9 @@ class FacilityDownloadSerializerBase(Serializer):
 
     def __init__(self, *args, masked_contributors=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.masked_contributors = masked_contributors
+        self.masked_contributors = (
+            masked_contributors or MaskedContributors.empty()
+        )
 
     class Meta:
         model = FacilityIndex()

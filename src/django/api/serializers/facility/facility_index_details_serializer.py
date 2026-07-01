@@ -362,7 +362,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             created_at = format_date(created_from_info['created_at'])
         # The created_from JSON has no contributor id, so a masked union is
         # matched by name and relabeled to the neutral "Other" label.
-        if masked.masks_name(created_from_info.get('contributor_name')):
+        if masked.should_mask_name(created_from_info.get('contributor_name')):
             contributor_name = MASKED_CONTRIBUTOR_LABEL
         elif (created_from_info['contributor_name'] is not None
                 and display_detail):

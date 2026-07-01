@@ -5,8 +5,8 @@ class MaskedContributors:
     contribution is attributed in the ``FacilityIndex`` JSON.
 
     This is pure data + matching - it never touches the database or the cache.
-    ``ShouldMaskContribution`` builds it from the cached lookup and hands it to
-    the serializers.
+    ``ContributorMaskingPolicy`` builds it from the cached lookup and hands it
+    to the serializers.
 
     A contribution can be attributed by either the contributor id
     (``contributors``, ``extended_fields``, ``facility_names``,
@@ -26,10 +26,20 @@ class MaskedContributors:
         self.admin_ids = set(admin_ids or ())
         self.names = set(names or ())
 
+    @classmethod
+    def empty(cls):
+        """An empty set that never masks anything."""
+        return cls()
+
     def __bool__(self):
         return bool(self.contributor_ids or self.admin_ids or self.names)
 
-    def matches(self, contributor):
+    def should_mask(self, contributor):
+        """Whether this contributor's identity must be hidden.
+
+        Self-guarding: a falsy ``contributor`` (or an empty set) yields
+        ``False``, so callers can apply it unconditionally.
+        """
         if not contributor:
             return False
         contributor_id = contributor.get('id')
@@ -39,8 +49,8 @@ class MaskedContributors:
         admin_id = contributor.get('admin_id')
         return admin_id is not None and admin_id in self.admin_ids
 
-    def masks_name(self, name):
-        """Match a contribution that is only attributed by name.
+    def should_mask_name(self, name):
+        """Whether a contribution attributed only by name must be hidden.
 
         Used for ``created_from_info``, whose JSON exposes the contributor
         name but no id.

@@ -113,9 +113,7 @@ def can_user_see_detail(serializer):
 
 
 def is_contribution_masked(contributor_data: dict, masked) -> bool:
-    if not masked or not contributor_data:
-        return False
-    return masked.matches(contributor_data)
+    return bool(masked) and masked.should_mask(contributor_data)
 
 
 def get_contributor_name_from_facilityindex(

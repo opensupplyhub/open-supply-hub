@@ -10,7 +10,6 @@ from api.csv_download import (
     format_download_claimed_fields,
 )
 from api.helpers.helpers import prefix_a_an
-from api.services.should_mask_contribution import ShouldMaskContribution
 from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
 )
@@ -127,14 +126,13 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         if claim is not None:
             claim_name = (
                 MASKED_CONTRIBUTOR_LABEL
-                if ShouldMaskContribution.is_masked(
-                    claim["contributor"], masked)
+                if masked.should_mask(claim["contributor"])
                 else claim["contributor"]["name"]
             )
             contributors.append("{} (Claimed)".format(claim_name))
 
         for contributor in facility.contributors:
-            if ShouldMaskContribution.is_masked(contributor, masked):
+            if masked.should_mask(contributor):
                 contributors.append(MASKED_CONTRIBUTOR_LABEL)
             elif contributor["should_display_associations"]:
                 contributors.append(contributor["name"])

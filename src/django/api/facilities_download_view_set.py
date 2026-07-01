@@ -7,7 +7,7 @@ from api.serializers.facility.facility_download_serializer_embed_mode import \
 from api.serializers.facility.utils import is_same_contributor_from_url_param
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
-from api.services.should_mask_contribution import ShouldMaskContribution
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from rest_framework import mixins, viewsets
 from rest_framework.response import Response
 from waffle import switch_is_active
@@ -36,7 +36,7 @@ class FacilitiesDownloadViewSet(
                 many=True,
                 contributor_id=contributor_id
             )
-        masked_contributors = ShouldMaskContribution.get_masked_contributors()
+        masked_contributors = ContributorMaskingPolicy.for_download()
         return FacilityDownloadSerializer(
             objs,
             many=True,

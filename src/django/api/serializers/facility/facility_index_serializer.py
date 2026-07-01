@@ -15,7 +15,7 @@ from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
 from ...models.facility.facility_index import FacilityIndex
 from ...models.nonstandard_field import NonstandardField
-from ...services.should_mask_contribution import ShouldMaskContribution
+from ...services.contributor_masking_policy import ContributorMaskingPolicy
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import \
     FacilityIndexExtendedFieldListSerializer
@@ -375,7 +375,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         )
 
         for contributor in valid_contributors:
-            if ShouldMaskContribution.is_masked(contributor, masked):
+            if masked.should_mask(contributor):
                 masked_contributor_ids.add(contributor['id'])
                 continue
 
@@ -461,7 +461,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         When ``masked_contributors`` is present in the serializer context it
         was already resolved by the view (avoiding a second cache round-trip);
-        otherwise it is resolved lazily via ``ShouldMaskContribution``.
+        otherwise it is resolved lazily via ``ContributorMaskingPolicy``.
         """
         cached = getattr(self, '_masked_contributors_cache', None)
         if cached is None:
@@ -469,7 +469,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             if 'masked_contributors' in ctx:
                 cached = ctx['masked_contributors']
             else:
-                cached = ShouldMaskContribution.for_request(
+                cached = ContributorMaskingPolicy.for_facilities_api(
                     self._get_request()
                 )
             self._masked_contributors_cache = cached
