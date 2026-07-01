@@ -1,3 +1,4 @@
+from ..constants import MASKED_CONTRIBUTOR_LABEL
 from ..helpers.helpers import prefix_a_an
 from ..models import Contributor, EmbedConfig
 
@@ -53,20 +54,28 @@ def prefer_contributor_name(serializer):
         return False
 
 
-def get_contributor_name(contributor, user_can_see_detail):
+def _is_contribution_masked(contributor, masked):
+    return bool(masked) and masked.should_mask(contributor)
+
+
+def get_contributor_name(contributor, user_can_see_detail, masked=None):
     if (
         (contributor is None)
         or (contributor["name"] is None)
         or (contributor["contrib_type"] is None)
     ):
         return None
+    if _is_contribution_masked(contributor, masked):
+        return MASKED_CONTRIBUTOR_LABEL
     if user_can_see_detail:
         return contributor["name"]
     name = prefix_a_an(contributor["contrib_type"])
     return name[0].lower() + name[1:]
 
 
-def get_contributor_id(contributor, user_can_see_detail):
+def get_contributor_id(contributor, user_can_see_detail, masked=None):
+    if _is_contribution_masked(contributor, masked):
+        return None
     if (
         contributor is not None
         and contributor["admin_id"] is not None

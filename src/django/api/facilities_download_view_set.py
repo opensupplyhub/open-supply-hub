@@ -1,16 +1,16 @@
-from rest_framework import viewsets, mixins
-from rest_framework.response import Response
-from waffle import switch_is_active
-
+from api.constants import PaginationConfig
 from api.models.facility.facility_index import FacilityIndex
 from api.serializers.facility.facility_download_serializer import \
     FacilityDownloadSerializer
 from api.serializers.facility.facility_download_serializer_embed_mode import \
     FacilityDownloadSerializerEmbedMode
+from api.serializers.facility.utils import is_same_contributor_from_url_param
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.services.facilities_download_service import FacilitiesDownloadService
-from api.serializers.facility.utils import is_same_contributor_from_url_param
-from api.constants import PaginationConfig
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
+from rest_framework import mixins, viewsets
+from rest_framework.response import Response
+from waffle import switch_is_active
 
 
 class FacilitiesDownloadViewSet(
@@ -36,7 +36,12 @@ class FacilitiesDownloadViewSet(
                 many=True,
                 contributor_id=contributor_id
             )
-        return FacilityDownloadSerializer(objs, many=True)
+        masked_contributors = ContributorMaskingPolicy.for_download()
+        return FacilityDownloadSerializer(
+            objs,
+            many=True,
+            masked_contributors=masked_contributors,
+        )
 
     def list(self, request):
         FacilitiesDownloadService.check_if_downloads_are_blocked()

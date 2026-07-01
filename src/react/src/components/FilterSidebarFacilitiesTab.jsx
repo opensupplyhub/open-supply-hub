@@ -348,6 +348,7 @@ function FilterSidebarFacilitiesTab({
                         setLoginRequiredDialogIsOpen={
                             setLoginRequiredDialogIsOpen
                         }
+                        anonymisedOnly={get(data, 'anonymised_only', false)}
                     />
                 )}
                 <CopySearch>

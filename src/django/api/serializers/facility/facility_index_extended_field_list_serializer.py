@@ -14,6 +14,10 @@ class FacilityIndexExtendedFieldListSerializer:
                  exclude_fields: list = []) -> None:
         self.extended_field_list = extended_field_list
         self.context = context
+        # The masked set is the same for every field in the list, so resolve
+        # it once instead of re-reading it from the context for each field's
+        # contributor_name and contributor_id.
+        self.masked_contributors = context.get('masked_contributor_ids')
 
         self.fields: list = ['id', 'is_verified', 'value', 'created_at',
                              'updated_at', 'contributor_name',
@@ -81,7 +85,8 @@ class FacilityIndexExtendedFieldListSerializer:
             return None
         return get_contributor_name_from_facilityindex(
             extended_field.get('contributor'),
-            self._should_display_contributor(extended_field))
+            self._should_display_contributor(extended_field),
+            self.masked_contributors)
 
     def _get_contributor_id(self, extended_field: dict) -> Union[None, int]:
         embed_mode_active = self.context.get('embed_mode_active')
@@ -89,7 +94,8 @@ class FacilityIndexExtendedFieldListSerializer:
             return None
         return get_contributor_id_from_facilityindex(
             extended_field.get('contributor'),
-            self._should_display_contributor(extended_field)
+            self._should_display_contributor(extended_field),
+            self.masked_contributors
         )
 
     def _get_is_from_claim(self, extended_field: dict) -> bool:

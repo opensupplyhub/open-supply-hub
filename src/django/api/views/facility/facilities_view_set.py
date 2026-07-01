@@ -1,111 +1,115 @@
 import logging
 import os
 from datetime import datetime
+from functools import wraps
+
+from api.constants import (APIErrorMessages, FacilityClaimStatuses,
+                           FacilityCreateQueryParams, FacilityMergeQueryParams,
+                           FeatureGroups, ProcessingAction,
+                           UpdateLocationParams)
+from api.exceptions import BadRequestException, ServiceUnavailableException
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
-from api.facility_actions.processing_facility_executor import (
+from api.facility_actions.processing_facility_executor import \
     ProcessingFacilityExecutor
-)
-from api.models.transactions.index_facilities_new import index_facilities_new
+from api.facility_history import (create_dissociate_match_change_reason,
+                                  create_facility_history_list)
+from api.mail import send_claim_facility_confirmation_email
+from api.models import (Contributor, ExtendedField, Facility,
+                        FacilityActivityReport, FacilityAlias, FacilityClaim,
+                        FacilityClaimAttachments, FacilityClaimReviewNote,
+                        FacilityListItem, FacilityLocation, FacilityMatch,
+                        Version)
 from api.models.facility.facility_index import FacilityIndex
+from api.models.transactions.index_facilities_new import index_facilities_new
+from api.os_id_lookup import OSIDLookup
+from api.pagination import FacilitiesGeoJSONPagination
+from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.sector_cache import SectorCache
+from api.serializers import (FacilityActivityReportSerializer,
+                             FacilityClaimSerializer,
+                             FacilityCreateClaimSerializer,
+                             FacilityCreateQueryParamsSerializer,
+                             FacilityIndexDetailsSerializer,
+                             FacilityIndexSerializer,
+                             FacilityMergeQueryParamsSerializer,
+                             FacilityQueryParamsSerializer,
+                             FacilityUpdateLocationParamsSerializer)
+from api.serializers.facility.facility_list_page_parameter_serializer import \
+    FacilityListPageParameterSerializer
+from api.serializers.facility.utils import is_same_contributor_from_url_param
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
+from api.throttles import DataUploadThrottle
+from api.views.disabled_pagination_inspector import DisabledPaginationInspector
+from api.views.facility.facility_parameters import (
+    facilities_create_parameters, facilities_list_parameters,
+    facility_parameters)
 from contricleaner.lib.contri_cleaner import ContriCleaner
-from contricleaner.lib.exceptions.handler_not_set_error \
-    import HandlerNotSetError
-
-from api.exceptions import ServiceUnavailableException
-
-from rest_framework.mixins import (
-    ListModelMixin,
-    RetrieveModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
-)
-from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
+from contricleaner.lib.exceptions.handler_not_set_error import \
+    HandlerNotSetError
+from drf_yasg.openapi import TYPE_OBJECT, Schema
+from drf_yasg.utils import no_body, swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    NotAuthenticated,
-    NotFound,
-    PermissionDenied,
-    ValidationError,
-    APIException
-)
-from waffle import switch_is_active, flag_is_active
-from django.contrib.gis.geos import Point
+from rest_framework.exceptions import (APIException, NotAuthenticated,
+                                       NotFound, PermissionDenied,
+                                       ValidationError)
+from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
+                                   ListModelMixin, RetrieveModelMixin)
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
+from waffle import flag_is_active, switch_is_active
+
+from django.conf import settings
 from django.contrib.gis.db.models import Extent
+from django.contrib.gis.geos import Point
 from django.core import exceptions as core_exceptions
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
-from django.utils.text import slugify
-from drf_yasg.openapi import Schema, TYPE_OBJECT
-from drf_yasg.utils import no_body, swagger_auto_schema
-from django.conf import settings
-from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
-
-from api.models import (
-    Contributor,
-    Facility,
-    FacilityActivityReport,
-    FacilityAlias,
-    FacilityClaim,
-    FacilityClaimAttachments,
-    FacilityClaimReviewNote,
-    FacilityListItem,
-    FacilityLocation,
-    FacilityMatch,
-    ExtendedField,
-    Version
-)
-from api.constants import (
-    FeatureGroups,
-    FacilityCreateQueryParams,
-    FacilityMergeQueryParams,
-    ProcessingAction,
-    UpdateLocationParams,
-    FacilityClaimStatuses,
-    APIErrorMessages,
-)
-from api.exceptions import BadRequestException
-from api.facility_history import (
-    create_dissociate_match_change_reason,
-    create_facility_history_list,
-)
-from api.mail import send_claim_facility_confirmation_email
-
-from api.pagination import FacilitiesGeoJSONPagination
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
-from api.sector_cache import SectorCache
-from api.os_id_lookup import OSIDLookup
-from api.serializers import (
-    FacilityIndexSerializer,
-    FacilityIndexDetailsSerializer,
-    FacilityActivityReportSerializer,
-    FacilityClaimSerializer,
-    FacilityCreateQueryParamsSerializer,
-    FacilityMergeQueryParamsSerializer,
-    FacilityQueryParamsSerializer,
-    FacilityUpdateLocationParamsSerializer,
-    FacilityCreateClaimSerializer
-)
-from api.serializers.facility.facility_list_page_parameter_serializer \
-    import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle
-from api.serializers.facility.utils import (
-    is_same_contributor_from_url_param,
-)
-
-from api.views.disabled_pagination_inspector import DisabledPaginationInspector
-
-from api.views.facility.facility_parameters import (
-    facility_parameters,
-    facilities_list_parameters,
-    facilities_create_parameters,
-)
+from django.utils.text import slugify
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_headers
 
 log = logging.getLogger(__name__)
+
+
+def cache_page_by_auth_tier(timeout, cache):
+    """Cache the view response, collapsing ``Authorization`` to two buckets.
+
+    Masking on paid surfaces depends only on *whether* the caller is a token
+    (programmatic) API request, not on which token. Varying ``view_cache``
+    directly on the ``Authorization`` header would store one identical copy per
+    token, fragmenting the cache and lowering the hit rate. This normalises the
+    value the cache key is derived from to ``paid`` / ``regular`` - at most two
+    entries per URL - while still emitting ``Vary: Authorization`` on the
+    response so downstream caches (CDN/browser) stay correct.
+    """
+    def decorator(view_method):
+        cached = method_decorator([
+            cache_page(timeout, cache=cache),
+            vary_on_headers('Authorization'),
+        ])(view_method)
+
+        @wraps(view_method)
+        def wrapper(self, request, *args, **kwargs):
+            real_auth = request.META.get('HTTP_AUTHORIZATION')
+            if real_auth is not None:
+                # request.auth is already resolved by DRF authentication in
+                # dispatch().initial(), so this never re-triggers auth.
+                request.META['HTTP_AUTHORIZATION'] = (
+                    'paid' if getattr(request, 'auth', None) else 'regular'
+                )
+            try:
+                return cached(self, request, *args, **kwargs)
+            finally:
+                if real_auth is not None:
+                    request.META['HTTP_AUTHORIZATION'] = real_auth
+
+        return wrapper
+
+    return decorator
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -280,6 +284,15 @@ class FacilitiesViewSet(ListModelMixin,
             request
         )
 
+        # Resolve the flagged set once and reuse it: __is_anonymised_only always
+        # needs the full set, while the serializer masks names only for API
+        # callers (empty for web clients). Passing `flagged` back into
+        # for_facilities_api avoids a second cache round-trip when serialising.
+        flagged = ContributorMaskingPolicy.flagged_contributors()
+        context['masked_contributors'] = (
+            ContributorMaskingPolicy.for_facilities_api(request, flagged)
+        )
+
         if page_queryset is not None:
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
@@ -289,6 +302,9 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['extent'] = extent
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
+            page.data['anonymised_only'] = self.__is_anonymised_only(
+                queryset, flagged, page.data.get('count')
+            )
             return page
 
         # Non-paginated response
@@ -300,19 +316,53 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
+            'anonymised_only': self.__is_anonymised_only(queryset, flagged),
         }
         if extent is not None:
             response['extent'] = extent
         response['params'] = params.validated_data
         return Response(response)
 
+    @staticmethod
+    def __is_anonymised_only(queryset, flagged, count=None):
+        """
+        Whether every facility in the (full, unpaginated) result set is
+        attributed only to anonymised contributors, so a download would carry
+        no real contributor attribution. The front-end disables the download
+        button in that case.
+
+        ``flagged`` is the pre-resolved full ``MaskedContributors`` from the
+        caller (already fetched from the cache) so this method never hits the
+        cache a second time.
+        """
+        anonymised_ids = list(flagged.contributor_ids)
+        if not anonymised_ids:
+            return False
+        # A facility is downloadable when it has at least one contributor
+        # outside the anonymised set, i.e. its contributors are NOT contained
+        # by that set. A single cheap EXISTS settles the common case (some
+        # facility is downloadable) without ever counting the result set.
+        has_downloadable = queryset.exclude(
+            contributors_id__contained_by=anonymised_ids
+        ).exists()
+        if has_downloadable:
+            return False
+        # No downloadable rows left: the result is anonymised-only as long as
+        # it is not empty. Reuse the paginator's count when it was already
+        # computed; otherwise fall back to a cheap EXISTS instead of COUNT(*).
+        if count is not None:
+            return count > 0
+        return queryset.exists()
+
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
-    @method_decorator(
-        cache_page(
-            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
-            cache="view_cache",
-        ),
+    # Masking depends only on whether the caller is a token (API) request, so
+    # the cached response is split into just two buckets - paid (union names
+    # masked) and regular (names shown) - instead of one per token. See
+    # cache_page_by_auth_tier.
+    @cache_page_by_auth_tier(
+        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+        cache="view_cache",
     )
     def retrieve(self, request, pk=None):
         """

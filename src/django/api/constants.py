@@ -310,6 +310,15 @@ MIT_LIVING_WAGE_COUNTRY_CODES = ('US', 'PR', 'VI')
 # entry behaves consistently no matter which caller warmed it.
 PARTNER_FIELD_LIST_CACHE_TTL_SECONDS = 60
 
+# Cache key + TTL (seconds) for the contributors whose identity must be hidden.
+MASKED_CONTRIBUTOR_IDS_CACHE_KEY = 'masked_contributor_ids'
+MASKED_CONTRIBUTOR_IDS_CACHE_TTL_SECONDS = 60
+
+# Label shown in place of a masked contributor's name in paid products. The
+# real contributor type (e.g. Union) is replaced by this neutral label in the
+# response only; the stored `Contributor.contrib_type` is never changed.
+MASKED_CONTRIBUTOR_LABEL = 'Other'
+
 CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_created_at', 'created_at'),
     ('claim_name_in_native_language', 'facility_name_native_language'),
