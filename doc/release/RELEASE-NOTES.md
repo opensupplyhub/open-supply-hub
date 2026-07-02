@@ -3,22 +3,82 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.27.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: July 10, 2026
+
+### Database changes
+
+#### Migrations
+* `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+
+### Code/API changes
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
+  * Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
+  * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
+  * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
+* [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
+* [OSDEV-2920](https://opensupplyhub.atlassian.net/browse/OSDEV-2920) - Aligned the `PATCH /v1/moderation-events/{moderation_id}/` response with the GET endpoints. `ModerationEventUpdateSerializer` now returns `os_id` coalesced to fall back to `os_id_snapshot` when the live `os` FK has been nulled by a facility delete/merge, and exposes `os_id_snapshot` as its own field (null when unset). Previously PATCH returned only the live FK and omitted the snapshot, so GET and PATCH returned different shapes for the same resource. Docs follow-up (in `open-supply-hub-api-docs`): add `os_id_snapshot` to the shared `moderation_event` schema and note the `os_id` fallback.
+
+### Bugfix
+* Fixed the flaky `test_geocoding_no_results` Django test that was failing on `main` and blocking all PR checks. The test relied on the live Google Geocoding API returning `ZERO_RESULTS` for a specific address; Google now geocodes that address, so the submission proceeded to matching and ended in `ERROR_MATCHING`. The geocoder response is now mocked with the existing `geocoding_no_results` fixture, making the test deterministic and independent of external API behavior.
+* [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). Regression from the Django 3.2→5.2 upgrade: Django 3 lazily filled defaults when a runtime database alias first connected, but Django 5 only normalizes aliases present at startup. The dynamically configured source connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
+
+### What's new
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+    * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
+* Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+
+
 ## Release 2.26.0
 
 ## Introduction
 * Product name: Open Supply Hub
 * Release date: June 26, 2026
 
+### Database changes
+
+#### Migrations
+* 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
+* `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
+* `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
+* `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
+
+#### Schema changes
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - Added `os_id_snapshot` field to `ModerationEvent`. The existing `os_id` FK uses `on_delete=SET_NULL`, which issues a bulk `UPDATE` that bypasses Django ORM signals and OpenSearch indexing. When a facility is deleted or merged, `os_id` is silently nulled with no audit trail. `os_id_snapshot` is a plain `CharField` written once at approval time and never modified, so it survives facility deletion or merging.
+
 ### Code/API changes
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_data_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
+* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
 
 ### Architecture/Environment changes
+* [OSDEV-2881](https://opensupplyhub.atlassian.net/browse/OSDEV-2881) - Deploy workflows now support selective OpenSearch clearing via **Which OpenSearch indexes and related templates to clear during deployment** (`none`, `production-locations`, `moderation-events`, or `both`) in `Deploy to AWS` and `[Release] Deploy`. This replaces the old all-or-nothing checkbox so a mapping change on one index does not force a full reindex of the other. On **Deploy to AWS**, enabling **Restore database to original state** always clears both indexes regardless of the selected target. **DB - Apply Anonymized DB** always clears both indexes after restoring the anonymized dump (unchanged behavior; no selective option).
 * [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
+* [OSDEV-2798](https://opensupplyhub.atlassian.net/browse/OSDEV-2798) - Enabled VPC Flow Logs (`ALL` traffic) for the environment VPC, delivered to a new dedicated S3 bucket (`opensupplyhub-<env>-vpc-flow-logs-<region>`) with a 365-day retention lifecycle, to satisfy the SOC 2 / Vanta "VPC Flow Logs enabled" test.
+
+### What's new
+* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
+* [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the list contribution and SLC contribution workflow pages.
+
+### Bugfix
+* [OSDEV-2197](https://opensupplyhub.atlassian.net/browse/OSDEV-2197) - Fixed promoted Single Location Contributions not being attributed as the source of a production location's name/address when the submitted value matched the existing one. The name/address index now flags the promoted (`created_from`) contribution and prioritizes it when ordering entries, so attribution follows the promoted contribution.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `backfill_moderation_event_os_id_snapshot_recovery` — one-time, **best-effort** recovery of `os_id_snapshot` for events where `os_id` was already nulled, from the linked `FacilityListItem`. **Remove from `post_deployment` after this release.** Note: low yield (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so most events have no usable link and stay unrecoverable.
+* The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Run `[Release] Deploy` with **Which OpenSearch indexes and related templates to clear during deployment** set to `moderation-events` so only that index is recreated — avoid `both`, which would also clear `production-locations` (~2.5M records, 6+ hours to refill). Related v1 GET endpoints return reduced data until Logstash finishes refilling the cleared index.
 
 
 ## Release 2.25.0
@@ -75,6 +135,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2788](https://opensupplyhub.atlassian.net/browse/OSDEV-2788) - A banner has been added to the "Add data" and "Claim a Production Location" pages notifying contributors about the upcoming data moderation pause, hidden behind the enable_moderation_pause_info waffle switch.
 * [OSDEV-2861](https://opensupplyhub.atlassian.net/browse/OSDEV-2861) - Renamed the platform search filter label from **Spotlight Data Partners** to **Spotlight Partners** on the homepage and facilities search sidebars, aligning with product terminology introduced in [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542).
 * [OSDEV-2768](https://opensupplyhub.atlassian.net/browse/OSDEV-2768) - Added a guidance banner to the post-registration success screen. If users do not receive their confirmation email within 24 hours, the banner instructs them to check their spam folder, allowlist `@opensupplyhub.org`, or contact their IT department — reducing support requests from users who miss the verification email.
+* [OSDEV-2789](https://opensupplyhub.atlassian.net/browse/OSDEV-2789) - Updated data submission confirmation emails for claims, SLCs, and list uploads to reflect the new data moderation pause SLAs.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:

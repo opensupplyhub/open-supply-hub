@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Thank You for Your Submission – It Is Now Being Reviewed
+        </title>
+    </head>
+    <body>
+        <p>Hello,</p>
+        <p>
+            Thank you for submitting {{ list_name }} to OS Hub! The admin view of your list is now available here: {{list_url}}.
+        </p>
+        <p>
+            The OS Hub Team will review your request and be in touch soon. For
+            information on expected processing times, please refer to our
+            <a href="https://info.opensupplyhub.org/resources/data-processing-timelines">standard review timelines</a>.
+
+            <div style="margin-left: 40px;">
+                <p>
+                    <b>Important:</b> From <b>Monday, June 29th to Friday, August
+                    7th 2026</b>, we are running an Automation Sprint and
+                    <b>processing times will be extended</b>. Requests to add
+                    data for a production location (OS ID) submitted during this
+                    window will take at least 6 additional weeks beyond our
+                    standard timelines to be processed. <a href="https://info.opensupplyhub.org/resources/automation-sprint-2026">Find out more.</a>
+                </p>
+            </div>
+        </p>
+        <p>
+            Once the review is complete, you will receive an email confirming that
+            your list has been published. If we have any questions or need you to
+            make corrections to your file, we will also reach out at this email address.
+        </p>
+        <p>
+            Thank you for your contribution! Your data helps open doors to safe and
+            sustainable supply chains.
+        </p>
+        <p>Best Regards,</p>
+        {% include "mail/signature_block.html" %}
+    </body>
+</html>
