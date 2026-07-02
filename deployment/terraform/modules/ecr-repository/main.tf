@@ -1,9 +1,9 @@
 #
 # ECR Resources
 #
-# Locally vendored copy of github.com/azavea/terraform-aws-ecr-repository (ref 1.0.0),
-# extended to expose image_tag_mutability so repositories can enforce immutable tags
-# (required by the Vanta "Fargate deploys version-controlled images" control).
+# Locally vendored copy of github.com/azavea/terraform-aws-ecr-repository (ref 1.0.0).
+# Modified from azavea/terraform-aws-ecr-repository to add image_tag_mutability
+# so repositories can enforce immutable tags.
 # Resource names are kept identical to the upstream module so existing Terraform
 # state addresses (module.<name>.aws_ecr_repository.default) are preserved.
 #

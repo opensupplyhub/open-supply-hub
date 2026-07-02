@@ -1,3 +1,5 @@
+# Modified from azavea/terraform-aws-ecr-repository to add image_tag_mutability
+# (and expose scan_on_push, which upstream hardcoded).
 variable "repository_name" {
   type        = string
   description = "Name of the repository"
@@ -5,8 +7,8 @@ variable "repository_name" {
 
 variable "image_tag_mutability" {
   type        = string
-  default     = "MUTABLE"
-  description = "The tag mutability setting for the repository. Must be one of MUTABLE or IMMUTABLE."
+  default     = "IMMUTABLE"
+  description = "The tag mutability setting for the repository. Must be one of MUTABLE or IMMUTABLE, all current call-sites set this explicitly."
 
   validation {
     condition     = contains(["MUTABLE", "IMMUTABLE"], var.image_tag_mutability)
