@@ -2,7 +2,8 @@ from rest_framework.serializers import (
     ModelSerializer,
     ValidationError,
     CharField,
-    IntegerField
+    IntegerField,
+    SerializerMethodField
 )
 from rest_framework.fields import empty
 from api.models.moderation_event \
@@ -19,7 +20,8 @@ class ModerationEventUpdateSerializer(ModelSerializer):
     contributor_id = IntegerField(source='contributor.id', read_only=True)
     contributor_name = CharField(source='contributor.name', read_only=True)
     source = CharField(read_only=True)
-    os_id = CharField(source='os.id', read_only=True)
+    os_id = SerializerMethodField()
+    os_id_snapshot = SerializerMethodField()
     claim_id = IntegerField(source='claim.id', read_only=True)
 
     class Meta:
@@ -29,6 +31,7 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             'created_at',
             'updated_at',
             'os_id',
+            'os_id_snapshot',
             'contributor_id',
             'contributor_name',
             'cleaned_data',
@@ -56,6 +59,24 @@ class ModerationEventUpdateSerializer(ModelSerializer):
             partial=partial,
             **kwargs
         )
+
+    def get_os_id(self, obj):
+        # Mirror the OpenSearch-backed GET endpoints, which serve
+        # COALESCE(NULLIF(os_id_snapshot, ''), os_id): the snapshot (written
+        # once at approval) takes precedence, falling back to the live os FK
+        # only when the snapshot is unset. Preserves the originally-approved
+        # OS ID after a facility delete/merge. See OSDEV-2920 / OSDEV-2696.
+        # obj.os_id reads the FK column directly: it is None once the facility
+        # is deleted/merged (SET_NULL), and avoids the extra query that os.id
+        # would trigger by dereferencing the related object.
+        return obj.os_id_snapshot or obj.os_id or None
+
+    def get_os_id_snapshot(self, obj):
+        # Expose the snapshot as its own field (null when unset), matching the
+        # GET endpoints which surface NULLIF(os_id_snapshot, '').
+        # `or None`: os_id_snapshot defaults to '' (falsy), so an unset
+        # snapshot serializes as JSON null rather than "", matching GET.
+        return obj.os_id_snapshot or None
 
     def to_internal_value(self, data):
         status = data.get('status')
