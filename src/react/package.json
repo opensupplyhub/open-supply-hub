@@ -68,7 +68,7 @@
         "eject": "craco eject"
     },
     "devDependencies": {
-        "@babel/core": "^7.18.9",
+        "@babel/core": "^7.29.7",
         "@babel/eslint-parser": "^7.18.9",
         "@babel/helper-builder-react-jsx": "^7.12.13",
         "@babel/helper-string-parser": "^7.23.4",
@@ -101,7 +101,10 @@
     "resolutions": {
         "qs": "6.14.2",
         "on-headers": "1.1.0",
-        "brace-expansion": "1.1.12",
+        "brace-expansion": "1.1.15",
+        "@tootallnate/once": "2.0.1",
+        "elliptic": "6.6.1",
+        "@babel/core": "7.29.7",
         "node-forge": "1.3.1",
         "express": "4.21.2",
         "serve-static": "1.16.2",
@@ -120,7 +123,7 @@
         "yaml": "1.10.3",
         "bn.js": "5.2.3",
         "ajv": "6.14.0",
-        "@babel/helpers": "7.26.10",
+        "@babel/helpers": "7.29.7",
         "@babel/runtime": "7.26.10",
         "@babel/runtime-corejs3": "7.26.10",
         "tar": "6.2.1",
