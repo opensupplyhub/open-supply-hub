@@ -35,11 +35,11 @@ SELECT
         af.name
       )
   ) AS name,
+  af.is_closed,
   afc.facility_name_native_language AS local_name_value,
   afc.facility_description AS description_value,
   afc.opening_date AS opened_at_value,
   afc.closing_date AS closed_at_value,
-  af.is_closed AS is_closed,
   afc.energy_coal AS energy_coal_value,
   afc.energy_natural_gas AS energy_natural_gas_value,
   afc.energy_diesel AS energy_diesel_value,
