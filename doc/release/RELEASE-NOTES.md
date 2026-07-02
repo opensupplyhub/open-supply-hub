@@ -37,6 +37,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
     * `reindex_promoted_locations` — one-time backfill (OSDEV-2896) so previously promoted locations reflect the corrected name/address attribution; remove from `post_deployment` after this release.
 * Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+* Expect `reindex_promoted_locations` to add roughly 1–3 minutes: ~4.8k facilities in 500-row batches, single-threaded, each batch a full `index_facilities_by` rebuild (the same operation the on-save trigger runs). It uses a single connection — much lighter than the 10-worker contributors backfill — and runs after it, so the two do not overlap; the combined post-deploy backfill window is on the order of 5–7 minutes with no application downtime. Confirm timing on Staging before Production.
 
 
 ## Release 2.26.0

@@ -7,7 +7,7 @@ from api.models.transactions.index_facilities_new import index_facilities_new
 
 class Command(BaseCommand):
     help = (
-        'Backfill (OSDEV-2197): reindexes locations whose canonical '
+        'Backfill (OSDEV-2896): reindexes locations whose canonical '
         '(created_from) contribution was promoted, so the name/address '
         'attribution reflects the promoted contributor. Only needed once, '
         'for locations promoted before the fix; new promotes self-heal via '
