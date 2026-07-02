@@ -11,6 +11,7 @@ from api.models import (
     Source,
     User,
 )
+from api.models.facility.facility_index import FacilityIndex
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
@@ -182,6 +183,36 @@ class ApprovedFacilityClaimTest(APITestCase):
         self.assertEqual(updated_description, "test_facility_description")
 
         self.assertEqual(len(mail.outbox), 1)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_updating_claim_profile_refreshes_indexed_claim_info(self):
+        # OSDEV-2679: editing an approved claim must re-run
+        # index_facilities_new so the indexed claim_info blob reflects the
+        # edit, and the blob must carry the claim's updated_at so the
+        # claimed section can show the latest edit date.
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
+        self.facility_claim.save()
+
+        response = self.client.put(
+            "/api/facility-claims/{}/claimed/".format(self.facility_claim.id),
+            {
+                "facility_description": "post-edit description",
+                "facility_phone_number_publicly_visible": False,
+                "point_of_contact_publicly_visible": False,
+                "office_info_publicly_visible": False,
+                "facility_website_publicly_visible": False,
+            },
+        )
+        self.assertEqual(200, response.status_code)
+
+        claim_info = FacilityIndex.objects.get(id=self.facility.id).claim_info
+        self.assertIsNotNone(claim_info)
+        self.assertIn("updated_at", claim_info)
+        self.assertIsNotNone(claim_info["updated_at"])
+        # The blob was rebuilt after the edit, not served stale.
+        self.assertEqual(
+            claim_info["facility"]["description"], "post-edit description"
+        )
 
     @override_switch("claim_a_facility", active=True)
     def test_non_visible_facility_phone_is_not_in_details_response(self):
