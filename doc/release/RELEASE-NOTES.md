@@ -9,13 +9,32 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: July 10, 2026
 
+### Database changes
+
+#### Migrations
+* `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+
+### Code/API changes
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
+  * Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
+  * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
+  * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
+* [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
+* [OSDEV-2920](https://opensupplyhub.atlassian.net/browse/OSDEV-2920) - Aligned the `PATCH /v1/moderation-events/{moderation_id}/` response with the GET endpoints. `ModerationEventUpdateSerializer` now returns `os_id` coalesced to fall back to `os_id_snapshot` when the live `os` FK has been nulled by a facility delete/merge, and exposes `os_id_snapshot` as its own field (null when unset). Previously PATCH returned only the live FK and omitted the snapshot, so GET and PATCH returned different shapes for the same resource. Docs follow-up (in `open-supply-hub-api-docs`): add `os_id_snapshot` to the shared `moderation_event` schema and note the `os_id` fallback.
+
 ### Bugfix
-* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Removed the inaccurate, hardcoded list of editable settings from the validation error shown when editing protected attributes of system-defined partner fields in Django admin, so the message no longer goes stale as editable fields change.
+* Fixed the flaky `test_geocoding_no_results` Django test that was failing on `main` and blocking all PR checks. The test relied on the live Google Geocoding API returning `ZERO_RESULTS` for a specific address; Google now geocodes that address, so the submission proceeded to matching and ended in `ERROR_MATCHING`. The geocoder response is now mocked with the existing `geocoding_no_results` fixture, making the test deterministic and independent of external API behavior.
+* [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). Regression from the Django 3.2→5.2 upgrade: Django 3 lazily filled defaults when a runtime database alias first connected, but Django 5 only normalizes aliases present at startup. The dynamically configured source connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
+
+### What's new
+* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
+    * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
+* Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
 
 
 ## Release 2.26.0
