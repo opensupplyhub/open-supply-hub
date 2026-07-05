@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
   * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
 * [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
+* [OSDEV-2896](https://opensupplyhub.atlassian.net/browse/OSDEV-2896) - Added the `reindex_promoted_locations` management command (with `--dry-run` and `--batch-size`) that reindexes production locations whose `created_from` contribution was promoted, backfilling name/address attribution for facilities promoted before the OSDEV-2197 fix.
 * [OSDEV-2920](https://opensupplyhub.atlassian.net/browse/OSDEV-2920) - Aligned the `PATCH /v1/moderation-events/{moderation_id}/` response with the GET endpoints. `ModerationEventUpdateSerializer` now returns `os_id` coalesced to fall back to `os_id_snapshot` when the live `os` FK has been nulled by a facility delete/merge, and exposes `os_id_snapshot` as its own field (null when unset). Previously PATCH returned only the live FK and omitted the snapshot, so GET and PATCH returned different shapes for the same resource. Docs follow-up (in `open-supply-hub-api-docs`): add `os_id_snapshot` to the shared `moderation_event` schema and note the `os_id` fallback.
 
 ### Architecture/Environment changes
@@ -38,7 +39,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
     * `reindex_database`
     * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
+    * `reindex_promoted_locations` — one-time backfill (OSDEV-2896) so previously promoted locations reflect the corrected name/address attribution; remove from `post_deployment` after this release.
 * Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+* Expect `reindex_promoted_locations` to add roughly 1–3 minutes: ~4.8k facilities in 500-row batches, single-threaded, each batch a full `index_facilities_by` rebuild (the same operation the on-save trigger runs). It uses a single connection — much lighter than the 10-worker contributors backfill — and runs after it, so the two do not overlap; the combined post-deploy backfill window is on the order of 5–7 minutes with no application downtime. Confirm timing on Staging before Production.
 
 
 ## Release 2.26.0
