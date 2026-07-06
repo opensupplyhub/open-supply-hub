@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from typing import Optional, Tuple
+from typing import Tuple
 
 from django.conf import settings
 from django.contrib.gis.db.models import Extent
@@ -29,7 +29,9 @@ class FacilitiesExtentCache:
     def __init__(self):
         self.cache = caches['view_cache']
         self.cache_key_prefix = FACILITIES_EXTENT_CACHE_KEY_PREFIX
-        self.cache_non_filter_params = FACILITIES_EXTENT_CACHE_NON_FILTER_PARAMS
+        self.cache_non_filter_params = (
+            FACILITIES_EXTENT_CACHE_NON_FILTER_PARAMS
+        )
         self.cache_timeout = settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS
 
     def __get_cache_key(self, query_params: QueryDict) -> str:
