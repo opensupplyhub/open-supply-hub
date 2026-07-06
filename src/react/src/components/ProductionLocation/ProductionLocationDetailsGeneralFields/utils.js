@@ -2,11 +2,13 @@ import get from 'lodash/get';
 import uniqBy from 'lodash/uniqBy';
 import partition from 'lodash/partition';
 import { formatAttribution, formatExtendedField } from '../../../util/util';
+import renderUniqueListItems from '../../../util/renderUtils';
 import {
     EXTENDED_FIELD_TYPES,
     ADDITIONAL_IDENTIFIERS,
 } from '../../../util/constants';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
+import { getV1HighlightedField, normalizeDisplayValue } from '../utils';
 import { ORDERED_GENERAL_FIELD_KEYS, FIELD_CONFIG } from '../constants.jsx';
 
 const toDrawerContribution = (item, value) => ({
@@ -54,7 +56,14 @@ const formatActivityReports = data => {
     return items;
 };
 
-const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
+const toV1PromotedContribution = (highlighted, displayValue) => ({
+    value: displayValue,
+    sourceName: highlighted.sourceName,
+    date: highlighted.date,
+    userId: highlighted.userId != null ? highlighted.userId : undefined,
+});
+
+const getOrderedFieldConfigs = (includeAdditionalIdentifiers, v1Data) => {
     const extendedTypes = includeAdditionalIdentifiers
         ? EXTENDED_FIELD_TYPES
         : EXTENDED_FIELD_TYPES.filter(
@@ -66,6 +75,43 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
         key: FIELD_CONFIG.name.key,
         getDataPointProps: data => {
             if (!data) return null;
+            const v1Highlighted = getV1HighlightedField(v1Data, 'name');
+            if (v1Highlighted) {
+                const highlightedComparable = normalizeDisplayValue(
+                    v1Highlighted.value,
+                );
+                const promotedContribution = toV1PromotedContribution(
+                    v1Highlighted,
+                    v1Highlighted.value,
+                );
+                const contributions = uniqBy(
+                    get(data, 'properties.extended_fields.name', []).filter(
+                        rawItem =>
+                            normalizeDisplayValue(
+                                formatExtendedField(rawItem).primary,
+                            ) !== highlightedComparable,
+                    ),
+                    rawItem => {
+                        const formatted = formatExtendedField(rawItem);
+                        return formatted.primary + formatted.secondary;
+                    },
+                ).map(rawItem =>
+                    toDrawerContribution(
+                        rawItem,
+                        formatExtendedField(rawItem).primary,
+                    ),
+                );
+                return {
+                    label: FIELD_CONFIG.name.label,
+                    value: v1Highlighted.value,
+                    tooltipText: FIELD_CONFIG.name.tooltipText,
+                    statusLabel: getStatusLabel(v1Highlighted.isClaimedData),
+                    contributorName: v1Highlighted.sourceName,
+                    userId: promotedContribution.userId,
+                    date: v1Highlighted.date,
+                    drawerData: { promotedContribution, contributions },
+                };
+            }
             const coreName = get(data, 'properties.name', '');
             const createdFrom = formatAttribution(
                 get(data, 'properties.created_from.created_at', ''),
@@ -144,6 +190,38 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
         getDataPointProps: data => {
             if (!data) return null;
             const sectors = get(data, 'properties.sector', []);
+            const v1Highlighted = getV1HighlightedField(v1Data, 'sector');
+            if (v1Highlighted) {
+                const highlightedComparable = normalizeDisplayValue(
+                    v1Highlighted.value,
+                );
+                const displayValue = Array.isArray(v1Highlighted.value)
+                    ? v1Highlighted.value.join(', ')
+                    : v1Highlighted.value;
+                const promotedContribution = toV1PromotedContribution(
+                    v1Highlighted,
+                    displayValue,
+                );
+                const contributions = sectors
+                    .filter(
+                        item =>
+                            normalizeDisplayValue(item.values) !==
+                            highlightedComparable,
+                    )
+                    .map(item =>
+                        toDrawerContribution(item, item.values.join(', ')),
+                    );
+                return {
+                    label: FIELD_CONFIG.sector.label,
+                    value: displayValue,
+                    tooltipText: FIELD_CONFIG.sector.tooltipText,
+                    statusLabel: getStatusLabel(v1Highlighted.isClaimedData),
+                    contributorName: v1Highlighted.sourceName,
+                    userId: promotedContribution.userId,
+                    date: v1Highlighted.date,
+                    drawerData: { promotedContribution, contributions },
+                };
+            }
             if (!sectors.length) return null;
             const first = sectors[0];
             const primary = first.values.join(', ');
@@ -187,6 +265,46 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
                         matchedValue => matchedValue[2],
                     ),
                 );
+            }
+            const v1Highlighted = getV1HighlightedField(v1Data, fieldName);
+            if (v1Highlighted) {
+                const highlightedComparable = normalizeDisplayValue(
+                    v1Highlighted.value,
+                );
+                const displayValue = renderUniqueListItems(
+                    v1Highlighted.value,
+                    fieldName,
+                );
+                const promotedContribution = toV1PromotedContribution(
+                    v1Highlighted,
+                    displayValue,
+                );
+                const contributions = values
+                    .filter(item => {
+                        try {
+                            return (
+                                normalizeDisplayValue(
+                                    formatValue(item.value, item.json_schema),
+                                ) !== highlightedComparable
+                            );
+                        } catch (err) {
+                            return true;
+                        }
+                    })
+                    .map(item => {
+                        const formatted = formatField(item);
+                        return toDrawerContribution(item, formatted.primary);
+                    });
+                return {
+                    label: FIELD_CONFIG[fieldName].label,
+                    value: displayValue,
+                    tooltipText: FIELD_CONFIG[fieldName].tooltipText,
+                    statusLabel: getStatusLabel(v1Highlighted.isClaimedData),
+                    contributorName: v1Highlighted.sourceName,
+                    userId: promotedContribution.userId,
+                    date: v1Highlighted.date,
+                    drawerData: { promotedContribution, contributions },
+                };
             }
             if (!values.length || !values[0]) return null;
             if (fieldName === 'isic_4') {
@@ -350,9 +468,9 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
     return keysToInclude.map(key => configMap[key]).filter(Boolean);
 };
 
-const getVisibleFields = (data, includeAdditionalIdentifiers) => {
+const getVisibleFields = (data, includeAdditionalIdentifiers, v1Data) => {
     if (!data) return [];
-    const configs = getOrderedFieldConfigs(includeAdditionalIdentifiers);
+    const configs = getOrderedFieldConfigs(includeAdditionalIdentifiers, v1Data);
     return configs
         .map(config => {
             const props = config.getDataPointProps(data);

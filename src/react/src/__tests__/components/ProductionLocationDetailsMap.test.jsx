@@ -97,15 +97,18 @@ const makeFacility = (overrides = {}) => ({
     ...overrides,
 });
 
-const makeStore = facilityData =>
+const makeStore = (facilityData, v1Data = {}) =>
     createStore(() => ({
         facilities: { singleFacility: { data: facilityData } },
+        contributeProductionLocation: {
+            singleProductionLocation: { data: v1Data },
+        },
         vectorTileLayer: { gridColorRamp: [] },
     }));
 
-const renderMap = (facilityData = null) =>
+const renderMap = (facilityData = null, v1Data = {}) =>
     render(
-        <Provider store={makeStore(facilityData)}>
+        <Provider store={makeStore(facilityData, v1Data)}>
             <MemoryRouter initialEntries={['/production-locations/OS12345']}>
                 <Route
                     path="/production-locations/:osID"

@@ -60,11 +60,19 @@ import getSelectedDrawerField from '../utils';
 const ProductionLocationDetailsMap = ({
     classes,
     singleFacilityData,
+    v1Data,
     gridColorRamp,
     history: { push },
     match: { params: { osID } = {} } = {},
 }) => {
     const mapRef = useRef(null);
+
+    // Guard against a stale v1 document while navigating between locations.
+    const v1DataForLocation =
+        v1Data?.os_id &&
+        v1Data.os_id === get(singleFacilityData, 'properties.os_id', null)
+            ? v1Data
+            : null;
 
     const coordinates = get(singleFacilityData, 'geometry.coordinates', null);
     const hasCoordinates =
@@ -90,8 +98,9 @@ const ProductionLocationDetailsMap = ({
             getFieldContributorInfo(
                 singleFacilityData,
                 FIELD_CONFIG.address.key,
+                v1DataForLocation,
             ),
-        [singleFacilityData],
+        [singleFacilityData, v1DataForLocation],
     );
 
     const coordinatesInfo = useMemo(
@@ -399,6 +408,7 @@ const ProductionLocationDetailsMap = ({
 ProductionLocationDetailsMap.propTypes = {
     classes: PropTypes.object.isRequired,
     singleFacilityData: PropTypes.object,
+    v1Data: PropTypes.object,
     gridColorRamp: PropTypes.arrayOf(PropTypes.array),
     history: PropTypes.shape({ push: PropTypes.func.isRequired }).isRequired,
     match: PropTypes.shape({
@@ -408,6 +418,7 @@ ProductionLocationDetailsMap.propTypes = {
 
 ProductionLocationDetailsMap.defaultProps = {
     singleFacilityData: null,
+    v1Data: null,
     gridColorRamp: [],
 };
 
@@ -415,10 +426,14 @@ function mapStateToProps({
     facilities: {
         singleFacility: { data: singleFacilityData },
     },
+    contributeProductionLocation: {
+        singleProductionLocation: { data: v1Data },
+    },
     vectorTileLayer: { gridColorRamp },
 }) {
     return {
         singleFacilityData: singleFacilityData || null,
+        v1Data: v1Data || null,
         gridColorRamp: gridColorRamp || [],
     };
 }

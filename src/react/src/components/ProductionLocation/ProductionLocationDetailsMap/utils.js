@@ -8,6 +8,7 @@ import uniqBy from 'lodash/uniqBy';
 import { formatExtendedField } from '../../../util/util';
 
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
+import { getV1HighlightedField, normalizeDisplayValue } from '../utils';
 import { FIELD_CONFIG } from '../constants';
 
 export const getContributorStatus = (
@@ -51,7 +52,11 @@ const getCorrespondingContributorId = data => {
  * drawerData: object
  * }}
  */
-export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
+export const getFieldContributorInfo = (
+    singleFacilityData,
+    fieldType,
+    v1Data = null,
+) => {
     switch (fieldType) {
         case FIELD_CONFIG.address.key: {
             const address =
@@ -61,6 +66,65 @@ export const getFieldContributorInfo = (singleFacilityData, fieldType) => {
                 'properties.extended_fields.address',
                 [],
             );
+
+            const v1Highlighted = getV1HighlightedField(v1Data, 'address');
+            if (v1Highlighted) {
+                const highlightedComparable = normalizeDisplayValue(
+                    v1Highlighted.value,
+                );
+                const countryName =
+                    get(singleFacilityData, 'properties.country_name', '') ||
+                    '';
+                const displayValue = trim(countryName)
+                    ? `${v1Highlighted.value} - ${countryName}`
+                    : v1Highlighted.value;
+                const promotedContribution = {
+                    value: displayValue,
+                    sourceName: v1Highlighted.sourceName,
+                    date: v1Highlighted.date,
+                    userId:
+                        v1Highlighted.userId != null
+                            ? v1Highlighted.userId
+                            : undefined,
+                };
+                const contributions = uniqBy(
+                    addressFields.filter(
+                        rawItem =>
+                            normalizeDisplayValue(
+                                formatExtendedField(rawItem).primary,
+                            ) !== highlightedComparable,
+                    ),
+                    rawItem => {
+                        const formatted = formatExtendedField(rawItem);
+                        return formatted.primary + formatted.secondary;
+                    },
+                ).map(rawItem => {
+                    const formatted = formatExtendedField(rawItem);
+                    return {
+                        value: formatted.primary,
+                        sourceName: rawItem.contributor_name || null,
+                        date:
+                            rawItem.created_at || rawItem.updated_at || null,
+                        userId:
+                            rawItem.contributor_id != null
+                                ? rawItem.contributor_id
+                                : undefined,
+                    };
+                });
+                return {
+                    key: 'address',
+                    label: FIELD_CONFIG.address.label,
+                    tooltipText: FIELD_CONFIG.address.tooltipText,
+                    displayValue,
+                    contributorName: v1Highlighted.sourceName || '',
+                    userId: promotedContribution.userId,
+                    date: v1Highlighted.date || '',
+                    status: v1Highlighted.isClaimedData
+                        ? STATUS_CLAIMED
+                        : STATUS_CROWDSOURCED,
+                    drawerData: { promotedContribution, contributions },
+                };
+            }
 
             const uniqueAddresses = uniqBy(
                 addressFields.map(formatExtendedField),

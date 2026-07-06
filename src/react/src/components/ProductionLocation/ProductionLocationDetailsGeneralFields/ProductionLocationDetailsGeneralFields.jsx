@@ -24,6 +24,7 @@ import productionLocationDetailsGeneralFieldsStyles from './styles';
 const ProductionLocationDetailsGeneralFields = ({
     classes,
     data,
+    v1Data,
     activeFeatureFlags,
     featureFlagsFetching,
 }) => {
@@ -47,9 +48,16 @@ const ProductionLocationDetailsGeneralFields = ({
     const showAdditionalIdentifiers =
         !featureFlagsFetching &&
         activeFeatureFlags.includes(SHOW_ADDITIONAL_IDENTIFIERS);
+    // Guard against a stale v1 document while navigating between locations:
+    // the highlighted values must describe the same location as the legacy
+    // facilities-API payload that fills the contribution drawers.
+    const v1DataForLocation = useMemo(() => {
+        const legacyOsId = data?.properties?.os_id;
+        return v1Data?.os_id && v1Data.os_id === legacyOsId ? v1Data : null;
+    }, [data, v1Data]);
     const visibleFields = useMemo(
-        () => getVisibleFields(data, showAdditionalIdentifiers),
-        [data, showAdditionalIdentifiers],
+        () => getVisibleFields(data, showAdditionalIdentifiers, v1DataForLocation),
+        [data, showAdditionalIdentifiers, v1DataForLocation],
     );
 
     const selectedDrawerField = useMemo(
@@ -137,17 +145,25 @@ const ProductionLocationDetailsGeneralFields = ({
 ProductionLocationDetailsGeneralFields.propTypes = {
     classes: object.isRequired,
     data: object,
+    v1Data: object,
     activeFeatureFlags: arrayOf(featureFlagPropType).isRequired,
     featureFlagsFetching: bool.isRequired,
 };
 
 ProductionLocationDetailsGeneralFields.defaultProps = {
     data: null,
+    v1Data: null,
 };
 
-const mapStateToProps = ({ featureFlags: { fetching, flags } }) => ({
+const mapStateToProps = ({
+    featureFlags: { fetching, flags },
+    contributeProductionLocation: {
+        singleProductionLocation: { data: v1Data },
+    },
+}) => ({
     activeFeatureFlags: convertFeatureFlagsObjectToListOfActiveFlags(flags),
     featureFlagsFetching: fetching,
+    v1Data,
 });
 
 export default connect(mapStateToProps)(

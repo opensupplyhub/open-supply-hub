@@ -890,3 +890,83 @@ describe('getFieldContributorInfo — default', () => {
         expect(result.drawerData.contributions).toEqual([]);
     });
 });
+
+describe('getFieldContributorInfo — ADDRESS with v1 highlighted data', () => {
+    const legacyData = {
+        properties: {
+            address: '123 Main St',
+            country_name: 'Country X',
+            extended_fields: {
+                address: [
+                    {
+                        value: '123 Main St',
+                        contributor_name: 'Canonical Org',
+                        contributor_id: 1,
+                        created_at: '2023-01-01T00:00:00Z',
+                        updated_at: '2023-01-01T00:00:00Z',
+                        is_from_claim: false,
+                    },
+                    {
+                        value: '456 Other St',
+                        contributor_name: 'Other Org',
+                        contributor_id: 2,
+                        created_at: '2023-02-01T00:00:00Z',
+                        updated_at: '2023-02-01T00:00:00Z',
+                        is_from_claim: false,
+                    },
+                ],
+            },
+        },
+    };
+
+    const v1Data = {
+        os_id: 'XX0000000000000',
+        address: '456 Other St',
+        address_source: {
+            contributor_id: 2,
+            contributor_name: 'Other Org',
+            contributed_at: '2023-02-01T00:00:00Z',
+            is_claimed_data: true,
+            is_promoted: false,
+            is_verified: false,
+        },
+    };
+
+    it('highlights the v1 address with claimed attribution', () => {
+        const result = getFieldContributorInfo(legacyData, ADDR, v1Data);
+
+        expect(result.displayValue).toBe('456 Other St - Country X');
+        expect(result.status).toBe(STATUS_CLAIMED);
+        expect(result.contributorName).toBe('Other Org');
+        expect(result.userId).toBe(2);
+        expect(result.date).toBe('2023-02-01T00:00:00Z');
+        expect(result.drawerData.promotedContribution.value).toBe(
+            '456 Other St - Country X',
+        );
+    });
+
+    it('excludes the highlighted address from the drawer contributions', () => {
+        const result = getFieldContributorInfo(legacyData, ADDR, v1Data);
+
+        expect(
+            result.drawerData.contributions.map(
+                contribution => contribution.value,
+            ),
+        ).toEqual(['123 Main St']);
+    });
+
+    it('falls back to legacy behavior when the address_source is missing', () => {
+        const withoutSource = { os_id: 'XX0000000000000', address: '456 Other St' };
+        const result = getFieldContributorInfo(legacyData, ADDR, withoutSource);
+
+        expect(result.contributorName).toBe('Canonical Org');
+        expect(result.displayValue).toBe('123 Main St - Country X');
+    });
+
+    it('falls back to legacy behavior when v1 data is null', () => {
+        const result = getFieldContributorInfo(legacyData, ADDR, null);
+
+        expect(result.contributorName).toBe('Canonical Org');
+        expect(result.displayValue).toBe('123 Main St - Country X');
+    });
+});

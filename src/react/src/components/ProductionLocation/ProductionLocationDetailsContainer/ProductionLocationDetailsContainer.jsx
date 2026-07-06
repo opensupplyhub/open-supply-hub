@@ -25,6 +25,10 @@ import {
     fetchFacilities,
     resetSingleFacility,
 } from '../../../actions/facilities';
+import {
+    fetchProductionLocationByOsId,
+    resetSingleProductionLocation,
+} from '../../../actions/contributeProductionLocation';
 import { fetchPartnerFieldGroups } from '../../../actions/partnerFieldGroups';
 import {
     setFiltersFromQueryString,
@@ -47,6 +51,8 @@ function ProductionLocationDetailsContainer({
     embed,
     fetchFacility,
     clearFacility,
+    fetchProductionLocation,
+    clearProductionLocation,
     getPartnerFieldGroups,
     partnerFieldGroupsData,
     hydrateFiltersFromQueryString,
@@ -62,6 +68,10 @@ function ProductionLocationDetailsContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         fetchFacility(normalizedOsID, contributors);
+        // The v1 document provides the highlighted (promoted) value and its
+        // attribution for each General Information field; the legacy fetch
+        // above still provides the full contribution lists for the drawers.
+        fetchProductionLocation(normalizedOsID);
     }, [normalizedOsID]);
 
     useEffect(() => {
@@ -85,6 +95,7 @@ function ProductionLocationDetailsContainer({
     useEffect(
         () => () => {
             clearFacility();
+            clearProductionLocation();
             resetNavigation();
         },
         [],
@@ -186,6 +197,8 @@ const mapDispatchToProps = dispatch => ({
         return dispatch(fetchSingleFacility(id, 0, contributors, true));
     },
     clearFacility: () => dispatch(resetSingleFacility()),
+    fetchProductionLocation: id => dispatch(fetchProductionLocationByOsId(id)),
+    clearProductionLocation: () => dispatch(resetSingleProductionLocation()),
     resetNavigation: () => dispatch(resetSectionNavigation()),
     getPartnerFieldGroups: () => dispatch(fetchPartnerFieldGroups()),
     hydrateFiltersFromQueryString: qs =>

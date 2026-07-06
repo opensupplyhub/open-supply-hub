@@ -144,6 +144,52 @@ class TestProductionLocationsViewSet(APITestCase):
             ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
         )
 
+    def test_single_location_mapping_includes_source_attribution_fields(self):
+        expected_source_fields = [
+            "name_source",
+            "local_name_source",
+            "address_source",
+            "sector_source",
+            "parent_company_source",
+            "product_type_source",
+            "location_type_source",
+            "processing_type_source",
+            "number_of_workers_source",
+            "rba_id_source",
+            "duns_id_source",
+            "lei_id_source",
+        ]
+        mapping = ProductionLocationsResponseMapping
+        for field in expected_source_fields:
+            self.assertIn(field, mapping.PRODUCTION_LOCATION_BY_OS_ID)
+            # Attribution objects are only served for single-location lookups.
+            self.assertNotIn(field, mapping.PRODUCTION_LOCATIONS)
+
+    def test_get_single_production_location_includes_source_attribution(self):
+        name_source = {
+            "contributor_id": 42,
+            "contributor_name": "Claimant Org",
+            "contributed_at": "2024-05-01T00:00:00+00:00",
+            "is_claimed_data": True,
+            "is_promoted": False,
+            "is_verified": False,
+        }
+        self.search_index_mock.return_value = {
+            "count": 1,
+            "data": [
+                {
+                    "os_id": self.os_id,
+                    "name": "Claimant Facility Name",
+                    "name_source": name_source,
+                }
+            ],
+        }
+        url = f"/api/v1/production-locations/{self.os_id}/"
+        api_res = self.client.get(url)
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(api_res.data.get("name"), "Claimant Facility Name")
+        self.assertEqual(api_res.data.get("name_source"), name_source)
+
     def _create_facility_with_partner_data(self):
         cache.clear()
         user = User.objects.create(email="partner@example.com")
