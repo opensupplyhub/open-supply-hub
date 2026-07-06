@@ -339,10 +339,114 @@ class FacilitiesViewSet(ListModelMixin,
                             "id": 1,
                             "name": "Brand A (2019 Q1 List)",
                             "is_verified": true,
+                            "contributor_name": "Brand A",
                             "contributor_type": "Brand/Retailer",
-                            "count": 1
+                            "list_name": "2019 Q1 List",
+                            "count": 1,
+                            "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                            "list_uploaded_at": "2022-01-27T17:36:54.597482Z"
                         }
                     ],
+                    "is_closed": null,
+                    "new_os_id": null,
+                    "has_inexact_coordinates": false,
+                    "is_claimed": true,
+                    "created_from": {
+                        "created_at": "2022-01-27T17:36:54.597482Z",
+                        "contributor": "Brand A"
+                    },
+                    "sector": [
+                        {
+                            "updated_at": "2022-01-27T17:36:54.597482Z",
+                            "contributor_id": 1,
+                            "contributor_name": "Brand A",
+                            "values": ["Apparel"],
+                            "is_from_claim": false
+                        }
+                    ],
+                    "extended_fields": {
+                        "name": [
+                            {
+                                "value": "Facility Name",
+                                "field_name": "name",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "is_from_created_from": false
+                            }
+                        ],
+                        "number_of_workers": [
+                            {
+                                "id": 10,
+                                "is_verified": false,
+                                "value": {"min": 1000, "max": 5000},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "number_of_workers"
+                            }
+                        ]
+                    },
+                    "contributor_fields": [],
+                    "activity_reports": [],
+                    "other_locations": [
+                        {
+                            "lat": 1.0,
+                            "lng": 1.0,
+                            "contributor_id": 1,
+                            "contributor_name": "Brand A",
+                            "notes": null
+                        }
+                    ],
+                    "claim_info": {
+                        "id": 1,
+                        "created_at": "2022-01-27T17:36:54.597482Z",
+                        "contributor": "Brand A",
+                        "user_id": 1,
+                        "facility": {
+                            "description": "Facility description",
+                            "name_english": "Facility Name",
+                            "name_native_language": null,
+                            "address": "Facility address",
+                            "website": "https://example.com",
+                            "parent_company": {
+                                "id": 1,
+                                "name": "Parent Company"
+                            },
+                            "phone_number": null,
+                            "minimum_order": null,
+                            "average_lead_time": null,
+                            "workers_count": "1000",
+                            "female_workers_percentage": "50",
+                            "facility_type": null,
+                            "other_facility_type": null,
+                            "affiliations": null,
+                            "certifications": null,
+                            "product_types": null,
+                            "production_types": null,
+                            "sector": ["Apparel"],
+                            "location": null,
+                            "opening_date": null,
+                            "closing_date": null,
+                            "estimated_annual_throughput": null,
+                            "actual_annual_energy_consumption": {
+                                "coal": null,
+                                "natural_gas": null,
+                                "diesel": null,
+                                "kerosene": null,
+                                "biomass": null,
+                                "charcoal": null,
+                                "animal_waste": null,
+                                "electricity": null,
+                                "other": null
+                            }
+                        },
+                        "contact": null,
+                        "office": null
+                    },
                     "partner_fields": {
                         "worldly_assessment_data": [
                             {
