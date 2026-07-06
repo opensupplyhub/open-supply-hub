@@ -57,6 +57,7 @@ from django.views.decorators.vary import vary_on_headers
 
 from api.facilities_extent_cache import FacilitiesExtentCache
 from api.facilities_visibility_token import facilities_visibility_token
+from api.services.claim_campaign_service import resolve_claim_campaign
 from api.models import (
     Contributor,
     Facility,
@@ -2414,9 +2415,16 @@ class FacilitiesViewSet(ListModelMixin,
             serializer.is_valid(raise_exception=True)
             validated_data = serializer.validated_data
 
+            campaign, via_link = resolve_claim_campaign(
+                facility,
+                validated_data.get("campaign"),
+            )
+
             facility_claim = FacilityClaim.objects.create(
                 facility=facility,
                 contributor=contributor,
+                campaign=campaign,
+                via_link=via_link,
                 contact_person=validated_data.get("your_name"),
                 job_title=validated_data.get("your_title"),
                 point_of_contact_person_name=validated_data.get(

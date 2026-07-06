@@ -9,6 +9,7 @@ from api.models import (
     User,
 )
 from rest_framework.test import APITestCase
+from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
 from django.db import IntegrityError, transaction
@@ -111,3 +112,121 @@ class ClaimCampaignTest(ClaimCampaignBaseTest):
         self.create_claim(campaign=self.campaign)
         with self.assertRaises(ProtectedError):
             self.campaign.delete()
+
+
+@override_switch("claim_campaigns", active=True)
+class ClaimCampaignAttributionTest(ClaimCampaignBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        self.password = "example123"
+        self.user.set_password(self.password)
+        self.user.save()
+
+        # Matched list items carry the facility reference; the roster
+        # lookup relies on it.
+        self.list_item.facility = self.facility
+        self.list_item.save()
+
+        self.claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        self.claim_data = {
+            "your_name": "John Doe",
+            "your_title": "Facility Manager",
+            "your_business_website": "https://example.com",
+            "business_website": "https://facility.com",
+            "business_linkedin_profile": "",
+            "facility_description": "description",
+        }
+
+        self.client.login(email=self.user.email, password=self.password)
+
+    def post_claim(self, **extra):
+        response = self.client.post(
+            self.claim_url, {**self.claim_data, **extra}
+        )
+        self.assertEqual(200, response.status_code)
+        return FacilityClaim.objects.get(facility=self.facility)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_claim_with_valid_code_is_attributed_via_link(self):
+        claim = self.post_claim(campaign="EXAMPLE-FRESH-26")
+        self.assertEqual(self.campaign, claim.campaign)
+        self.assertTrue(claim.via_link)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_claim_without_code_is_attributed_from_single_roster(self):
+        claim = self.post_claim()
+        self.assertEqual(self.campaign, claim.campaign)
+        self.assertFalse(claim.via_link)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_claim_without_code_and_ambiguous_rosters_is_not_attributed(
+        self,
+    ):
+        other_user = User.objects.create(email="other@example.com")
+        other_contributor = Contributor.objects.create(
+            admin=other_user,
+            name="other contributor",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        other_list = FacilityList.objects.create(
+            header="header", file_name="two", name="Other list"
+        )
+        other_source = Source.objects.create(
+            facility_list=other_list,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=other_contributor,
+        )
+        FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=other_source,
+            facility=self.facility,
+        )
+        ClaimCampaign.objects.create(
+            contributor=other_contributor,
+            name="Other campaign",
+            code="OTHER-26",
+        )
+
+        claim = self.post_claim()
+        self.assertIsNone(claim.campaign)
+        self.assertFalse(claim.via_link)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_claim_with_unusable_code_is_created_without_campaign(self):
+        self.campaign.status = ClaimCampaign.Status.CLOSED
+        self.campaign.save()
+
+        claim = self.post_claim(campaign="UNKNOWN-CODE")
+        self.assertIsNone(claim.campaign)
+        self.assertFalse(claim.via_link)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_claim_from_replaced_list_is_not_attributed(self):
+        self.source.is_active = False
+        self.source.save()
+
+        claim = self.post_claim()
+        self.assertIsNone(claim.campaign)
+        self.assertFalse(claim.via_link)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_unknown_code_falls_back_to_roster_attribution(self):
+        claim = self.post_claim(campaign="TYPO-CODE")
+        self.assertEqual(self.campaign, claim.campaign)
+        self.assertFalse(claim.via_link)
+
+    @override_switch("claim_a_facility", active=True)
+    @override_switch("claim_campaigns", active=False)
+    def test_no_attribution_while_switch_is_off(self):
+        claim = self.post_claim(campaign="EXAMPLE-FRESH-26")
+        self.assertIsNone(claim.campaign)
+        self.assertFalse(claim.via_link)
