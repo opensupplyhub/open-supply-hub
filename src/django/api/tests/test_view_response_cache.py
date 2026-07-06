@@ -106,6 +106,17 @@ class TestCompressedResponseCache(TestCase):
 
         self.assertNotEqual(first, second)
 
+    def test_view_kwargs_separate_resources(self):
+        request = make_request('detail=true')
+        with patched_caches(FakeCache()):
+            response_cache = CompressedResponseCache('test')
+            first = response_cache.build_key(request, '', {'pk': 'US123'})
+            second = response_cache.build_key(request, '', {'pk': 'US999'})
+            same = response_cache.build_key(request, '', {'pk': 'US123'})
+
+        self.assertNotEqual(first, second)
+        self.assertEqual(first, same)
+
     def test_vary_token_separates_users(self):
         request = make_request('countries=US')
         with patched_caches(FakeCache()):
@@ -168,6 +179,11 @@ class FakeView:
             status=self.status_code,
         )
 
+    @cache_view_response('fake_detail')
+    def retrieve(self, request, pk=None):
+        self.call_count += 1
+        return Response({'id': pk}, status=self.status_code)
+
 
 class TestCacheViewResponseDecorator(TestCase):
     """Verifies the decorator's hit, miss, and bypass behavior."""
@@ -204,6 +220,17 @@ class TestCacheViewResponseDecorator(TestCase):
             view.list(make_request(method='post'))
 
         self.assertEqual(2, view.call_count)
+
+    def test_detail_requests_are_cached_per_resource(self):
+        view = FakeView()
+        with patched_caches(FakeCache()):
+            first = view.retrieve(make_request(), pk='US123')
+            cached = view.retrieve(make_request(), pk='US123')
+            other = view.retrieve(make_request(), pk='US999')
+
+        self.assertEqual(2, view.call_count)
+        self.assertEqual(first.data, cached.data)
+        self.assertEqual({'id': 'US999'}, other.data)
 
 
 class TestFacilitiesVisibilityToken(TestCase):

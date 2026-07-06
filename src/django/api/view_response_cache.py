@@ -35,15 +35,29 @@ class CompressedResponseCache:
         self.timeout = settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS
         self.max_bytes = settings.VIEW_RESPONSE_CACHE_MAX_BYTES
 
-    def build_key(self, request: HttpRequest, vary_token: str = '') -> str:
-        """Return a cache key for the request's query params + vary token."""
+    def build_key(
+        self,
+        request: HttpRequest,
+        vary_token: str = '',
+        view_kwargs: Optional[dict] = None,
+    ) -> str:
+        """Return a cache key for the request's query params, URL kwargs,
+        and vary token.
+
+        URL kwargs (e.g. ``pk``) are included so detail endpoints keyed on
+        a path variable do not collide across resources.
+        """
         query_params = request.query_params
         canonical_params = [
             [key, sorted(query_params.getlist(key))]
             for key in sorted(query_params)
         ]
+        canonical_kwargs = sorted(
+            (str(key), str(value))
+            for key, value in (view_kwargs or {}).items()
+        )
         payload = json.dumps(
-            [canonical_params, vary_token],
+            [canonical_params, canonical_kwargs, vary_token],
             separators=(',', ':'),
         )
         params_hash = hashlib.sha256(payload.encode('utf-8')).hexdigest()
@@ -82,8 +96,8 @@ def cache_view_response(
 
     Works on any DRF class-based view or viewset method. Only GET requests
     are cached, and only responses with a 200 status. URL kwargs (e.g.
-    ``pk``) are not part of the cache key, so views whose output depends
-    on them need a distinct key_prefix or a vary_on covering them.
+    ``pk``) are part of the cache key, so detail endpoints keyed on a path
+    variable are cached per resource.
 
     Arguments:
     key_prefix (str) -- Namespace for this view's cache entries.
@@ -99,7 +113,9 @@ def cache_view_response(
 
             response_cache = CompressedResponseCache(key_prefix)
             vary_token = vary_on(request) if vary_on else ''
-            cache_key = response_cache.build_key(request, vary_token)
+            cache_key = response_cache.build_key(
+                request, vary_token, kwargs
+            )
 
             cached_data = response_cache.get(cache_key)
             if cached_data is not None:

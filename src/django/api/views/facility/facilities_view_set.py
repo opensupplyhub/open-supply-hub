@@ -41,10 +41,6 @@ from django.utils import timezone
 from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
-from django.conf import settings
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
-
 from api.models import (
     Contributor,
     Facility,
@@ -333,11 +329,9 @@ class FacilitiesViewSet(ListModelMixin,
 
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
-    @method_decorator(
-        cache_page(
-            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
-            cache="view_cache",
-        ),
+    @cache_view_response(
+        'facility_detail',
+        vary_on=facilities_visibility_token,
     )
     def retrieve(self, request, pk=None):
         """
