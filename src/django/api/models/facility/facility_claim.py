@@ -512,6 +512,15 @@ class FacilityClaim(models.Model):
         verbose_name='claimant linkedin profile url',
         help_text="Claimant's LinkedIn profile URL."
     )
+    campaign = models.ForeignKey(
+        'ClaimCampaign',
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        help_text='The claim campaign this claim is attributed to.')
+    via_link = models.BooleanField(
+        default=False,
+        help_text='Whether the claim was submitted via a campaign link.')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
