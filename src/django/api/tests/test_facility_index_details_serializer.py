@@ -1099,3 +1099,49 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         ]
 
         self.assertEqual(len(anonymized), 0)
+
+    def test_anonymized_null_last_contributed_at_serializes_none(self):
+        contributors = [
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': 100,
+                'name': 'Brand A',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': False,
+                'last_contributed_at': None,
+            },
+        ]
+
+        result = self._get_contributors(contributors)
+        anonymized = [
+            contributor for contributor in result
+            if contributor.get('contributor_type') == 'Brand'
+        ]
+
+        self.assertEqual(len(anonymized), 1)
+        self.assertIsNone(anonymized[0]['last_contributed_at'])
+
+    def test_public_null_last_contributed_at_serializes_none(self):
+        contributors = [
+            {
+                'id': 1,
+                'admin_id': 10,
+                'fl_id': None,
+                'name': 'Brand A',
+                'contributor_name': 'Brand A',
+                'contrib_type': 'Brand',
+                'should_display_associations': True,
+                'last_contributed_at': None,
+            },
+        ]
+
+        result = self._get_contributors(contributors)
+        public = [
+            contributor for contributor in result
+            if contributor.get('id') == 10
+        ]
+
+        self.assertEqual(len(public), 1)
+        self.assertIsNone(public[0]['last_contributed_at'])
