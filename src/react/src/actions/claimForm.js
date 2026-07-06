@@ -97,6 +97,10 @@ export function submitClaimFormData(osID, freeEmissionsEstimateHasErrors) {
             ...filteredFormData
         } = filterFreeEmissionsEstimateFields(formData);
 
+        if (!filteredFormData.campaign) {
+            delete filteredFormData.campaign;
+        }
+
         const postData = new FormData();
         toPairs(filteredFormData).forEach(([key, value]) => {
             appendFormField(postData, key, value);

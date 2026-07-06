@@ -625,6 +625,7 @@ export const ENABLE_CLAIM_NAME_ADDRESS_EDIT = 'enable_claim_name_address_edit';
 export const CLAIM_INVITE = 'claim_invite';
 // Industry Classification (ISIC) on search and profiles (OSDEV-3340).
 export const ENABLE_ISIC_TAXONOMY = 'enable_isic_taxonomy';
+export const CLAIM_CAMPAIGNS = 'claim_campaigns';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
