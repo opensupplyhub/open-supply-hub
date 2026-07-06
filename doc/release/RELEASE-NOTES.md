@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: *Provide release date*
 
 ### Code/API changes
-* [OSDEV-XXXX](https://opensupplyhub.atlassian.net/browse/OSDEV-XXXX) - Claimant-first promotion logic for the production location page, served from the v1 API:
+* [OSDEV-2964](https://opensupplyhub.atlassian.net/browse/OSDEV-2964) - Claimant-first promotion logic for the production location page, served from the v1 API:
   * Reworked `src/logstash/sql/sync_production_locations.sql` so every promoted field (`name`, `address`, `sector`, `parent_company`, `product_type`, `location_type`, `processing_type`, `number_of_workers`, `local_name`, `rba_id`, `duns_id`, `lei_id`) is selected by a single ranked `LATERAL` subquery with the new tier order: **claimant data (approved-claim fields OR any contribution from the claimant's contributor account, e.g. SLC — most recent wins within the tier) → moderator-promoted (`created_from` + `promote_match`) → verified contributor → most recent → canonical value** (name/address only). Previously a claimant's own SLC/list contributions received no special treatment and competed on recency with all other contributors.
   * List-item-sourced candidates are now only eligible when they have an active match (`AUTOMATIC`/`CONFIRMED`/`MERGED`, `is_active`) from an active, public source; the old "most recent list item" tier considered deactivated and private contributions.
   * Each promoted field now also emits a sibling `*_source` attribution object (`contributor_id`, `contributor_name`, `contributed_at`, `is_claimed_data`, `is_promoted`, `is_verified`) into the `production-locations` OpenSearch index (new mappings in `src/logstash/indexes/production_locations.json`, JSON filters in `sync_production_locations.conf`).
@@ -18,7 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * The new production location page now fetches the v1 document alongside the legacy facilities API response: highlighted values and their attribution (contributor, date, Claimed/Crowdsourced chip) come from the v1 fields, while the contribution drawers continue to list the other data sources from the legacy `extended_fields`, excluding the highlighted entry. When the v1 document or its attribution is unavailable (e.g. not yet re-synced), the page falls back to the previous legacy-only behavior.
 
 ### What's new
-* [OSDEV-XXXX](https://opensupplyhub.atlassian.net/browse/OSDEV-XXXX) - Data submitted by claimants — via the claim forms or their own SLC/list contributions — is now shown as the highlighted data source on the production location page, with a "Claimed" chip and contributor attribution on each General Information field and on the address.
+* [OSDEV-2964](https://opensupplyhub.atlassian.net/browse/OSDEV-2964) - Data submitted by claimants — via the claim forms or their own SLC/list contributions — is now shown as the highlighted data source on the production location page, with a "Claimed" chip and contributor attribution on each General Information field and on the address.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
