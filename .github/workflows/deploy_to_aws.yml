@@ -332,9 +332,41 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Check for existing image tags (ECR repos are IMMUTABLE)
+        # ECR repos enforce IMMUTABLE tags and images are tagged by commit SHA, so
+        # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
+        # after a later step like terraform apply fails) would otherwise fail at
+        # `docker push` with ImageTagAlreadyExistsException. Check each repo up
+        # front and skip the corresponding push step below if that SHA tag is
+        # already present.
+        run: |
+          set -e
+          check_tag () {
+            local repo="$1"
+            local env_var="$2"
+            if aws ecr describe-images --repository-name "$repo" --image-ids imageTag="${{ env.GIT_COMMIT }}" >/dev/null 2>&1; then
+              echo "Tag ${{ env.GIT_COMMIT }} already exists in $repo, skipping push."
+              echo "$env_var=true" >> "$GITHUB_ENV"
+            else
+              echo "$env_var=false" >> "$GITHUB_ENV"
+            fi
+          }
+
+          check_tag "${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_KAFKA
+          check_tag "${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DJANGO
+          check_tag "${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_BATCH
+          check_tag "${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DEDUPE
+          check_tag "${{ vars.IMAGE_NAME }}-logstash-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_LOGSTASH
+          if [ "${{ steps.get_env_name.outputs.lowercase }}" = "production" ]; then
+            check_tag "${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DB_ANONYMIZER
+          fi
+          if [ "${{ steps.get_env_name.outputs.lowercase }}" = "test" ]; then
+            check_tag "${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_ANON_DUMP
+          fi
 
       - name: Build and push Kafka Tools Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
+        if: ${{ env.SKIP_PUSH_KAFKA != 'true' }}
         with:
           context: src/kafka-tools/
           file: src/kafka-tools/Dockerfile
@@ -343,6 +375,7 @@ jobs:
 
       - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
+        if: ${{ env.SKIP_PUSH_DJANGO != 'true' }}
         with:
           context: src/django
           file: src/django/Dockerfile
@@ -351,6 +384,7 @@ jobs:
 
       - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
+        if: ${{ env.SKIP_PUSH_BATCH != 'true' }}
         with:
           context: src/batch
           file: src/batch/Dockerfile
@@ -363,6 +397,7 @@ jobs:
 
       - name: Build and push Dedupe Hub Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
+        if: ${{ env.SKIP_PUSH_DEDUPE != 'true' }}
         with:
           context: src/dedupe-hub/api
           file: src/dedupe-hub/api/Dockerfile
@@ -371,6 +406,7 @@ jobs:
 
       - name: Build and push Logstash Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
+        if: ${{ env.SKIP_PUSH_LOGSTASH != 'true' }}
         with:
           context: src/logstash
           file: src/logstash/Dockerfile
@@ -379,7 +415,7 @@ jobs:
 
       - name: Build and push Database Anonymizer Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'production' }}
+        if: ${{ steps.get_env_name.outputs.lowercase == 'production' && env.SKIP_PUSH_DB_ANONYMIZER != 'true' }}
         with:
           context: deployment/terraform/database_anonymizer_scheduled_task/docker
           file: deployment/terraform/database_anonymizer_scheduled_task/docker/Dockerfile
@@ -388,7 +424,7 @@ jobs:
 
       - name: Build and push Anonymize Database Dump Docker image to ECR for ${{ vars.ENV_NAME }}
         uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'test' }}
+        if: ${{ steps.get_env_name.outputs.lowercase == 'test' && env.SKIP_PUSH_ANON_DUMP != 'true' }}
         with:
           context: deployment/terraform/anonymized_database_dump_scheduled_task/docker
           file: deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile
