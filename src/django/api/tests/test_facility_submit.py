@@ -1,8 +1,10 @@
 import json
+from unittest.mock import patch
 
 from api.models import FacilityListItem, NonstandardField
 from api.constants import APIErrorMessages
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_data import geocoding_no_results
 
 from django.http import QueryDict
 from django.urls import reverse
@@ -210,7 +212,10 @@ class FacilitySubmitTest(FacilityAPITestCaseBase):
         )
         self.assertEqual(response_two.status_code, 400)
 
-    def test_geocoding_no_results(self):
+    @patch("api.geocoding.requests.get")
+    def test_geocoding_no_results(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = geocoding_no_results
         self.join_group_and_login()
         url_with_query = "{}?public=true".format(self.url)
         response = self.client.post(
