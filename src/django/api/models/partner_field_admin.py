@@ -78,10 +78,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
                             field_name,
                             f'{field_label} cannot be modified for '
                             'system-defined fields. Editing this field may '
-                            'break the application or data display for users. '
-                            'Only label, unit, source by, base url, display '
-                            'text, active, and availability settings can be '
-                            'edited.'
+                            'break the application or data display for users.'
                         )
 
             except PartnerField.DoesNotExist:

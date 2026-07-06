@@ -42,3 +42,7 @@ class Command(BaseCommand):
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )
+        # Temporary for 2.27.0 (OSDEV-2896) — one-time backfill of name/address
+        # attribution for facilities promoted before the OSDEV-2197 fix. Remove
+        # after the release has been deployed everywhere.
+        call_command('reindex_promoted_locations')
