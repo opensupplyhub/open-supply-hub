@@ -181,6 +181,61 @@ describe('ClaimIntro component', () => {
             expect(state.claimForm.completedSteps).toEqual([]);
         });
 
+        test('stores the campaign code and shows the banner when the flag is on', () => {
+            history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
+            const preloadedState = {
+                auth: { user: { user: { isAnon: false } } },
+                featureFlags: {
+                    fetching: false,
+                    flags: { claim_campaigns: true },
+                },
+            };
+
+            const { reduxStore, getByText } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimIntro match={mockMatch} />
+                </Router>,
+                { preloadedState }
+            );
+
+            expect(reduxStore.getState().claimForm.formData.campaign).toBe(
+                'EXAMPLE-FRESH-26'
+            );
+            expect(getByText(/part of a claims campaign/)).toBeInTheDocument();
+            expect(getByText('EXAMPLE-FRESH-26')).toBeInTheDocument();
+        });
+
+        test('ignores the campaign code when the flag is off', () => {
+            history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
+            const preloadedState = {
+                auth: { user: { user: { isAnon: false } } },
+                featureFlags: {
+                    fetching: false,
+                    flags: { claim_campaigns: false },
+                },
+            };
+
+            const { reduxStore, queryByText } = renderWithProviders(
+                <Router history={history}>
+                    <ClaimIntro match={mockMatch} />
+                </Router>,
+                { preloadedState }
+            );
+
+            expect(reduxStore.getState().claimForm.formData.campaign).toBe('');
+            expect(
+                queryByText(/part of a claims campaign/)
+            ).not.toBeInTheDocument();
+        });
+
+        test('shows no banner without a campaign parameter', () => {
+            const { queryByText } = renderComponent();
+
+            expect(
+                queryByText(/part of a claims campaign/)
+            ).not.toBeInTheDocument();
+        });
+
         test('updates osIdToClaim when it is not set initially', () => {
             const testOsID = 'LOCATION_003';
             const preloadedState = {
