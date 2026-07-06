@@ -34,7 +34,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `reindex_database`
     * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
 * Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
-* [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - The `is_closed` field appears on existing production locations only after the `production-locations` OpenSearch index is rebuilt (Logstash re-sync / index clear + refill). New/updated locations pick it up on the next sync.
+* [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - **Release step required:** the `production-locations` OpenSearch index must be rebuilt during this release (index clear + full Logstash re-sync) for `is_closed` to appear on existing locations — the JDBC sync tracks `updated_at`, so old rows never pick it up on their own. The full re-sync takes **~4 hours**; schedule it within the release window and verify afterwards that `is_closed` is present on a known location via `GET /api/v1/production-locations/{os_id}/`. New/updated locations pick the field up on the next incremental sync regardless.
 
 
 ## Release 2.26.0
