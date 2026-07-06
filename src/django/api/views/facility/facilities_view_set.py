@@ -96,6 +96,7 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
+from api.view_response_cache import cache_view_response
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
 
@@ -106,6 +107,26 @@ from api.views.facility.facility_parameters import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def facilities_visibility_token(request):
+    """Return a cache key token for the user's response-visibility class.
+
+    The facilities list response varies by user: contributor names are
+    anonymized unless the user can view full contributor details, and the
+    is_same_contributor flag depends on the user's own contributor. Users
+    in the same visibility class receive byte-identical responses and can
+    safely share a cache entry.
+    """
+    user = getattr(request, 'user', None)
+    contributor = getattr(user, 'contributor', None)
+    contributor_id = getattr(contributor, 'id', None)
+    can_view_full = (
+        True if user is None or user.is_anonymous
+        else user.can_view_full_contrib_details
+    )
+    detail_level = 'full' if can_view_full else 'limited'
+    return f"{contributor_id or 'anon'}:{detail_level}"
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -125,6 +146,10 @@ class FacilitiesViewSet(ListModelMixin,
         return super().get_throttles()
 
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
+    @cache_view_response(
+        'facilities_list',
+        vary_on=facilities_visibility_token,
+    )
     def list(self, request):
         """
         Returns a list of facilities in GeoJSON format for a given query.
