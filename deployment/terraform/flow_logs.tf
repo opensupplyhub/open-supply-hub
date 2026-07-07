@@ -122,6 +122,33 @@ data "aws_iam_policy_document" "vpc_flow_logs_s3" {
       values   = ["arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:*"]
     }
   }
+
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      aws_s3_bucket.vpc_flow_logs.arn,
+      "${aws_s3_bucket.vpc_flow_logs.arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values = [
+        "false"
+      ]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "vpc_flow_logs" {
