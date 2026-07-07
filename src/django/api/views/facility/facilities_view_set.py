@@ -8,6 +8,7 @@ from api.constants import (APIErrorMessages, FacilityClaimStatuses,
                            FeatureGroups, ProcessingAction,
                            UpdateLocationParams)
 from api.exceptions import BadRequestException, ServiceUnavailableException
+from api.facilities_extent_cache import FacilitiesExtentCache
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import \
     ProcessingFacilityExecutor
@@ -60,7 +61,6 @@ from rest_framework.viewsets import GenericViewSet
 from waffle import flag_is_active, switch_is_active
 
 from django.conf import settings
-from django.contrib.gis.db.models import Extent
 from django.contrib.gis.geos import Point
 from django.core import exceptions as core_exceptions
 from django.db import transaction
@@ -262,8 +262,8 @@ class FacilitiesViewSet(ListModelMixin,
 
         page_queryset = self.paginate_queryset(queryset)
 
-        extent = queryset.aggregate(Extent('location'))['location__extent']
-
+        extent_cache = FacilitiesExtentCache()
+        extent = extent_cache.get(queryset, request.query_params)
         context = {'request': request}
 
         should_serialize_details = params.validated_data['detail']

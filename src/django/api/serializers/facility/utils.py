@@ -275,7 +275,10 @@ def regroup_claims_for_sector_field(claims: list,
     return result
 
 
-def format_date(date: str) -> str:
+def format_date(date: str) -> Union[str, None]:
+    if not date:
+        return None
+
     # Parse the datetime string into a datetime object.
     original_datetime = parser.isoparse(date)
 
