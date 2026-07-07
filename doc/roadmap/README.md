@@ -58,6 +58,7 @@ These were the central discovery of this work — once you have these IDs, you c
 | **Project Health**      | `customfield_10499`     | cascading-select       | On Track / At Risk / Off Track / Complete / Not Started — drives bar color |
 | **Product Execution Update** | `customfield_10498` | textarea (ADF)         | Per-Epic narrative shown when the bar is clicked                          |
 | **Funding Mechanism**   | `customfield_10245`     | multi-select           | PJM / HSF / General Paying Customer(s) / General No Donor / etc.          |
+| **Prioritized Quarter** | `customfield_10731`     | multi-select           | FY26Q2 / FY26Q3 / … — an epic can belong to several quarters. Replaced the single-select `customfield_10533` ("Prioritized Quarter (old)") on 2026-07-06; the page stores it as a `quarter` array and the Quarter filter matches with `includes()`. |
 | **Start date**          | `customfield_10015`     | datepicker             | Bar start position                                                        |
 | **Due date**            | `duedate` (system)      | date                   | Bar end position; right-anchored chip on each Epic                        |
 | Target start (alt)      | `customfield_10022`     | JPO baseline-start     | Available, not used. Could swap in if Plans is preferred over Start date. |

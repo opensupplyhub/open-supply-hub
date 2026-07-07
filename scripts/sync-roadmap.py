@@ -3,11 +3,15 @@
 Sync delivery-roadmap.html with current Jira data.
 
 Updates per-epic fields from Jira: status, health, dueDate, startDate,
-execUpdate, teamMembers, funding, lastCommentDate.
+execUpdate, teamMembers, funding, quarter, lastCommentDate.
 Also updates LAST_SYNC to today's date.
 
+quarter comes from the multi-select "Prioritized Quarter" field
+(customfield_10731) and is stored as a JS array — an epic can belong to
+several quarters (e.g. FY26Q2 and FY26Q3).
+
 Leaves untouched: aiSummary, epicSummary, backlogDone, backlogTotal,
-priority, quarter, owner, title — these require human judgment.
+priority, owner, title — these require human judgment.
 
 Usage:
     JIRA_EMAIL=you@example.com JIRA_API_TOKEN=xxx python scripts/sync-roadmap.py
@@ -29,7 +33,7 @@ EPIC_KEYS = [
     "OSDEV-2546", "OSDEV-2677", "OSDEV-2675", "OSDEV-2553",
     "OSDEV-2548", "OSDEV-2673", "OSDEV-2543", "OSDEV-2270",
     "OSDEV-2676", "OSDEV-2653", "OSDEV-2655", "OSDEV-2656",
-    "OSDEV-392",
+    "OSDEV-392", "OSDEV-2632", "OSDEV-2719", "OSDEV-2822",
 ]
 
 JIRA_FIELDS = [
@@ -39,6 +43,7 @@ JIRA_FIELDS = [
     "customfield_10499",  # Project Health
     "customfield_10245",  # Funder
     "customfield_10465",  # Team Members
+    "customfield_10731",  # Prioritized Quarter (multi-select)
     "comment",
 ]
 
@@ -105,6 +110,7 @@ def fetch_jira(email: str, token: str) -> dict:
             "execUpdate":      adf_to_text(exec_obj).strip() if exec_obj else None,
             "teamMembers":     [m.get("displayName", "") for m in (f.get("customfield_10465") or [])],
             "funding":         [v.get("value", "") for v in (f.get("customfield_10245") or [])],
+            "quarter":         [v.get("value", "") for v in (f.get("customfield_10731") or [])],
             "lastCommentDate": comments[-1]["created"][:10] if comments else None,
         }
     return result
@@ -188,7 +194,8 @@ def main():
                     changes.append(f"{key}.{field_name}: {current_raw[:60]} → {new_raw[:60]}")
 
             for field_name, new_vals in [("teamMembers", data["teamMembers"]),
-                                          ("funding",     data["funding"])]:
+                                          ("funding",     data["funding"]),
+                                          ("quarter",     data["quarter"])]:
                 m = re.search(rf'{re.escape(field_name)}:({JS_STR_ARRAY})', updated)
                 if not m:
                     continue
