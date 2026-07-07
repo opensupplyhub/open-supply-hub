@@ -508,8 +508,10 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 'name': source.get('name'),
                 'contributor_type': source.get('contributor_type') or None,
                 'count': source.get('count', 1),
-                'last_contributed_at': format_date(
-                    source.get('last_contributed_at')
+                'last_contributed_at': (
+                    format_date(source.get('last_contributed_at'))
+                    if source.get('last_contributed_at') is not None
+                    else None
                 ),
             }
         return {
@@ -520,8 +522,10 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             or '[Unknown Contributor]',
             'contributor_type': source.get('contrib_type') or None,
             'list_name': source.get('list_name') or None,
-            'last_contributed_at': format_date(
-                source.get('last_contributed_at')
+            'last_contributed_at': (
+                format_date(source.get('last_contributed_at'))
+                if source.get('last_contributed_at') is not None
+                else None
             ),
             'list_uploaded_at': (
                 format_date(source.get('list_uploaded_at'))
