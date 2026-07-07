@@ -37,11 +37,55 @@
             }
           }
         },
+        "name_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
+        },
         "local_name": {
           "type": "text",
           "fields": {
             "keyword": {
               "type": "keyword"
+            }
+          }
+        },
+        "local_name_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
             }
           }
         },
@@ -59,6 +103,28 @@
           "fields": {
             "keyword": {
               "type": "keyword"
+            }
+          }
+        },
+        "address_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
             }
           }
         },
@@ -90,11 +156,55 @@
             }
           }
         },
+        "sector_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
+        },
         "parent_company": {
           "type": "text",
           "fields": {
             "keyword": {
               "type": "keyword"
+            }
+          }
+        },
+        "parent_company_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
             }
           }
         },
@@ -106,11 +216,55 @@
             }
           }
         },
+        "product_type_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
+        },
         "location_type": {
           "type": "text",
           "fields": {
             "keyword": {
               "type": "keyword"
+            }
+          }
+        },
+        "location_type_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
             }
           }
         },
@@ -122,6 +276,28 @@
             }
           }
         },
+        "processing_type_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
+        },
         "number_of_workers": {
           "properties": {
             "min": {
@@ -129,6 +305,28 @@
             },
             "max": {
               "type": "integer"
+            }
+          }
+        },
+        "number_of_workers_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
             }
           }
         },
@@ -213,11 +411,77 @@
         "rba_id": {
           "type": "keyword"
         },
+        "rba_id_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
+        },
         "duns_id": {
           "type": "keyword"
         },
+        "duns_id_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
+        },
         "lei_id": {
           "type": "keyword"
+        },
+        "lei_id_source": {
+          "properties": {
+            "contributor_id": {
+              "type": "integer"
+            },
+            "contributor_name": {
+              "type": "keyword"
+            },
+            "contributed_at": {
+              "type": "date"
+            },
+            "is_claimed_data": {
+              "type": "boolean"
+            },
+            "is_promoted": {
+              "type": "boolean"
+            },
+            "is_verified": {
+              "type": "boolean"
+            }
+          }
         },
         "opened_at": {
           "type": "date",

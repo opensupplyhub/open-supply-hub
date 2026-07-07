@@ -464,3 +464,112 @@ describe('getVisibleFields', () => {
         });
     });
 });
+
+describe('getVisibleFields with v1 highlighted data', () => {
+    const makeV1Source = overrides => ({
+        contributor_id: 42,
+        contributor_name: 'Claimant Org',
+        contributed_at: '2024-05-01T00:00:00Z',
+        is_claimed_data: true,
+        is_promoted: false,
+        is_verified: false,
+        ...overrides,
+    });
+
+    const v1Fixture = {
+        os_id: 'XX0000000000000',
+        name: 'Claimant Facility Name',
+        name_source: makeV1Source(),
+        sector: ['Electronics'],
+        sector_source: makeV1Source(),
+        number_of_workers: { min: 100, max: 200 },
+        number_of_workers_source: makeV1Source({
+            is_claimed_data: false,
+            contributor_name: 'Recent Org',
+            contributor_id: 7,
+        }),
+    };
+
+    it('highlights the v1 name with claimed attribution and keeps legacy names in the drawer', () => {
+        const result = getVisibleFields(fullFacilityFixture, false, v1Fixture);
+        const nameField = result.find(field => field.key === 'name');
+
+        expect(nameField.value).toBe('Claimant Facility Name');
+        expect(nameField.statusLabel).toBe('Claimed');
+        expect(nameField.contributorName).toBe('Claimant Org');
+        expect(nameField.userId).toBe(42);
+        expect(nameField.date).toBe('2024-05-01T00:00:00Z');
+        expect(nameField.drawerData.promotedContribution).toEqual({
+            value: 'Claimant Facility Name',
+            sourceName: 'Claimant Org',
+            date: '2024-05-01T00:00:00Z',
+            userId: 42,
+        });
+        // Neither legacy name matches the highlighted value, so both stay
+        // in the drawer (they come from different contributors).
+        expect(
+            nameField.drawerData.contributions.map(
+                contribution => contribution.value,
+            ),
+        ).toEqual(['Facility A', 'FACILITY A']);
+    });
+
+    it('highlights the v1 sector and excludes the matching legacy entry from the drawer', () => {
+        const result = getVisibleFields(fullFacilityFixture, false, v1Fixture);
+        const sectorField = result.find(field => field.key === 'sector');
+
+        expect(sectorField.value).toBe('Electronics');
+        expect(sectorField.statusLabel).toBe('Claimed');
+        expect(
+            sectorField.drawerData.contributions.map(
+                contribution => contribution.value,
+            ),
+        ).toEqual(['Apparel']);
+    });
+
+    it('highlights the v1 number_of_workers range with crowdsourced attribution', () => {
+        const result = getVisibleFields(fullFacilityFixture, false, v1Fixture);
+        const workersField = result.find(
+            field => field.key === 'number_of_workers',
+        );
+
+        expect(workersField.value).toBe('100-200');
+        expect(workersField.statusLabel).toBe('Crowdsourced');
+        expect(workersField.contributorName).toBe('Recent Org');
+        expect(workersField.drawerData.contributions).toHaveLength(1);
+    });
+
+    it('excludes the legacy entry matching the highlighted value from the drawer', () => {
+        const matchingV1 = {
+            os_id: 'XX0000000000000',
+            number_of_workers: { min: 500, max: 500 },
+            number_of_workers_source: makeV1Source(),
+        };
+        const result = getVisibleFields(fullFacilityFixture, false, matchingV1);
+        const workersField = result.find(
+            field => field.key === 'number_of_workers',
+        );
+
+        expect(workersField.value).toBe('500');
+        expect(workersField.drawerData.contributions).toEqual([]);
+    });
+
+    it('falls back to legacy behavior when the *_source object is missing', () => {
+        const withoutSources = { os_id: 'XX0000000000000', name: 'V1 Name' };
+        const result = getVisibleFields(
+            fullFacilityFixture,
+            false,
+            withoutSources,
+        );
+        const nameField = result.find(field => field.key === 'name');
+
+        expect(nameField.value).toBe('Facility A');
+    });
+
+    it('falls back to legacy behavior when v1 data is null', () => {
+        const result = getVisibleFields(fullFacilityFixture, false, null);
+        const nameField = result.find(field => field.key === 'name');
+
+        expect(nameField.value).toBe('Facility A');
+    });
+});
