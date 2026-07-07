@@ -186,10 +186,12 @@ class ApprovedFacilityClaimTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_updating_claim_profile_refreshes_indexed_claim_info(self):
-        # OSDEV-2679: editing an approved claim must re-run
-        # index_facilities_new so the indexed claim_info blob reflects the
-        # edit, and the blob must carry the claim's updated_at so the
-        # claimed section can show the latest edit date.
+        # OSDEV-2679: editing an approved claim must refresh the indexed
+        # claim_info blob (this happens via the DB trigger
+        # facility_claim_post_update_insert_indexing_trigger, installed by
+        # the 0170 migration — no explicit reindex call in the view), and
+        # the blob must carry the claim's updated_at so the claimed section
+        # can show the latest edit date.
         self.facility_claim.status = FacilityClaimStatuses.APPROVED
         self.facility_claim.save()
 
