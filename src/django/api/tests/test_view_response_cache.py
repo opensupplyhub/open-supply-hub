@@ -227,4 +227,3 @@ class TestCacheViewResponseDecorator(TestCase):
         self.assertEqual(2, view.call_count)
         self.assertEqual(first.data, cached.data)
         self.assertEqual({'id': 'US999'}, other.data)
-
