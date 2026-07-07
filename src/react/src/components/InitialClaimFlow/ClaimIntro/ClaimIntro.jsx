@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -10,26 +10,45 @@ import ClaimInfoSection from './ClaimInfoSection';
 import AppOverflow from '../../AppOverflow';
 import ModerationPauseBanner from '../../ModerationPauseBanner';
 import RequireAuthNotice from '../../RequireAuthNotice';
+import ClaimCampaignBanner from '../ClaimCampaignBanner/ClaimCampaignBanner';
 import { claimIntroStyles } from './styles';
 import withScrollReset from '../HOCs/withScrollReset';
-import { resetClaimForm, updateOsIdToClaim } from '../../../actions/claimForm';
+import {
+    resetClaimForm,
+    updateOsIdToClaim,
+    updateClaimFormField,
+} from '../../../actions/claimForm';
 import {
     claimDetailsRoute,
     facilityDetailsRoute,
+    CLAIM_CAMPAIGNS,
 } from '../../../util/constants';
+import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
 import useClaimIntroOsIdTracking from './hooks';
 
 const ClaimIntro = ({
     classes,
     history,
+    location,
     osID,
     userHasSignedIn,
     resetForm,
     updateOsId,
     osIdToClaim,
+    campaignCode,
+    campaignFlagActive,
+    setCampaignCode,
 }) => {
     // Track OS ID changes and reset form when switching between locations.
     useClaimIntroOsIdTracking(osID, osIdToClaim, updateOsId, resetForm);
+
+    // Attach an optional claim campaign code from the URL to the form.
+    useEffect(() => {
+        const campaign = new URLSearchParams(location.search).get('campaign');
+        if (campaign && campaignFlagActive) {
+            setCampaignCode(campaign);
+        }
+    }, [location.search, campaignFlagActive, setCampaignCode]);
 
     if (!userHasSignedIn) {
         return (
@@ -55,6 +74,7 @@ const ClaimIntro = ({
             <ModerationPauseBanner />
             <AppOverflow>
                 <div className={classes.container}>
+                    <ClaimCampaignBanner campaignCode={campaignCode} />
                     <div className={classes.heroSection}>
                         <Typography
                             variant="title"
@@ -103,9 +123,15 @@ ClaimIntro.propTypes = {
         goBack: PropTypes.func.isRequired,
         push: PropTypes.func.isRequired,
     }).isRequired,
+    location: PropTypes.shape({
+        search: PropTypes.string.isRequired,
+    }).isRequired,
     resetForm: PropTypes.func.isRequired,
     updateOsId: PropTypes.func.isRequired,
     osIdToClaim: PropTypes.string.isRequired,
+    campaignCode: PropTypes.string.isRequired,
+    campaignFlagActive: PropTypes.bool.isRequired,
+    setCampaignCode: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (
@@ -113,7 +139,8 @@ const mapStateToProps = (
         auth: {
             user: { user },
         },
-        claimForm: { osIdToClaim },
+        claimForm: { osIdToClaim, formData: { campaign } = {} },
+        featureFlags: { flags },
     },
     {
         match: {
@@ -124,11 +151,17 @@ const mapStateToProps = (
     osID,
     userHasSignedIn: !user.isAnon,
     osIdToClaim,
+    campaignCode: campaign || '',
+    campaignFlagActive: convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    ).includes(CLAIM_CAMPAIGNS),
 });
 
 export const mapDispatchToProps = dispatch => ({
     resetForm: () => dispatch(resetClaimForm()),
     updateOsId: osID => dispatch(updateOsIdToClaim(osID)),
+    setCampaignCode: value =>
+        dispatch(updateClaimFormField({ field: 'campaign', value })),
 });
 
 export default connect(

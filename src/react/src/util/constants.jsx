@@ -591,6 +591,7 @@ export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
 export const ENABLE_PRODUCTION_LOCATION_PAGE =
     'enable_production_location_page';
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
+export const CLAIM_CAMPAIGNS = 'claim_campaigns';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
