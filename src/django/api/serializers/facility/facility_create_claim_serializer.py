@@ -103,6 +103,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
     )
+    campaign = serializers.CharField(
+        max_length=50,
+        required=False,
+        allow_blank=True,
+    )
     point_of_contact_person_name = serializers.CharField(
         max_length=200,
         required=False,
