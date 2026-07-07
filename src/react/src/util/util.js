@@ -642,10 +642,12 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
     const {
         countries,
         statuses = dashboardClaimsListParamsDefaults.claimStatuses,
+        campaigns,
     } = querystring.parse(parseFilterQueryString(qs));
 
     const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
     const countriesArray = Array.isArray(countries) ? countries : [countries];
+    const campaignsArray = Array.isArray(campaigns) ? campaigns : [campaigns];
 
     return Object.freeze({
         countries: uniq(compact(countriesArray)),
@@ -653,6 +655,7 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
             uniq(compact(statusesArray)),
             map(facilityClaimStatusChoices, 'value'),
         ),
+        campaigns: uniq(compact(campaignsArray)),
     });
 };
 
@@ -995,7 +998,11 @@ export const makeDashboardContributorListLink = ({
     }`;
 };
 
-export const makeDashboardClaimListLink = ({ statuses, countries }) => {
+export const makeDashboardClaimListLink = ({
+    statuses,
+    countries,
+    campaigns,
+}) => {
     const createClaimFilterParams = (key, claimParamValues) =>
         claimParamValues && claimParamValues.length > 0
             ? join(
@@ -1006,8 +1013,9 @@ export const makeDashboardClaimListLink = ({ statuses, countries }) => {
 
     const statusParams = createClaimFilterParams('statuses', statuses);
     const countryParams = createClaimFilterParams('countries', countries);
+    const campaignParams = createClaimFilterParams('campaigns', campaigns);
 
-    const params = [statusParams, countryParams]
+    const params = [statusParams, countryParams, campaignParams]
         .filter(param => param)
         .join('&');
 
