@@ -350,6 +350,7 @@ export const productionLocationsRoute = '/production-locations';
 export const productionLocationDetailsRoute = '/production-locations/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';
 export const claimIntroRoute = '/claim/:osID';
+export const claimCampaignsRoute = '/claim-campaigns';
 export const claimDetailsRoute = '/claim/:osID/details';
 export const profileRoute = '/profile/:id';
 export const aboutProcessingRoute = `${InfoLink}/${InfoPaths.dataQuality}`;
