@@ -5,11 +5,9 @@ from rest_framework_gis.serializers import (
     GeoFeatureModelSerializer,
     GeometrySerializerMethodField,
 )
-from rest_framework import serializers
 from rest_framework.serializers import (
     SerializerMethodField,
 )
-from drf_yasg.utils import swagger_serializer_method
 
 from countries.lib.countries import COUNTRY_NAMES
 from ...models import Contributor
@@ -22,12 +20,6 @@ from ...helpers.helpers import parse_raw_data, get_csv_values
 from ..utils import is_embed_mode_active
 from .facility_index_extended_field_list_serializer import (
     FacilityIndexExtendedFieldListSerializer
-)
-from .facility_index_details_schema_serializers import (
-    ContributorEntrySerializer,
-    ContributorFieldEntrySerializer,
-    ExtendedFieldsSerializer,
-    SectorEntrySerializer,
 )
 from .utils import (
     can_user_see_detail,
@@ -92,9 +84,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     def get_location(self, facility):
         return facility.location
 
-    @swagger_serializer_method(
-        serializer_or_field=serializers.CharField(allow_null=True)
-    )
     def get_address(self, facility):
         claim = facility.approved_claim
         if claim is not None:
@@ -103,20 +92,13 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 return format_field(claim['facility_address'])
         return format_field(facility.address)
 
-    @swagger_serializer_method(serializer_or_field=serializers.CharField())
     def get_os_id(self, facility):
         return facility.id
 
-    @swagger_serializer_method(
-        serializer_or_field=serializers.CharField(allow_null=True)
-    )
     def get_name(self, facility):
         name = get_facility_name(self, facility)
         return format_field(name)
 
-    @swagger_serializer_method(
-        serializer_or_field=ContributorFieldEntrySerializer(many=True)
-    )
     def get_contributor_fields(self, facility):
         contributor_id = get_embed_contributor_id(self)
         if contributor_id is None or not is_embed_mode_active(self):
@@ -228,7 +210,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             except EmbedConfig.DoesNotExist:
                 return fields
 
-    @swagger_serializer_method(serializer_or_field=ExtendedFieldsSerializer())
     def get_extended_fields(self, facility):
         request = self._get_request()
 
@@ -311,9 +292,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         return grouped_data
 
-    @swagger_serializer_method(
-        serializer_or_field=SectorEntrySerializer(many=True)
-    )
     def get_sector(self, facility):
         user_can_see_detail = can_user_see_detail(self)
 
@@ -347,21 +325,15 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                               use_main_created_at,
                               user_can_see_detail)
 
-    @swagger_serializer_method(serializer_or_field=serializers.BooleanField())
     def get_has_approved_claim(self, facility):
         return len(facility.approved_claim_ids) > 0
 
-    @swagger_serializer_method(serializer_or_field=serializers.CharField())
     def get_country_name(self, facility):
         return COUNTRY_NAMES.get(facility.country_code, '')
 
-    @swagger_serializer_method(serializer_or_field=serializers.IntegerField())
     def get_number_of_public_contributors(self, facility):
         return facility.contributors_count
 
-    @swagger_serializer_method(
-        serializer_or_field=ContributorEntrySerializer(many=True)
-    )
     def get_contributors(self, facility):
         if is_embed_mode_active(self):
             return []

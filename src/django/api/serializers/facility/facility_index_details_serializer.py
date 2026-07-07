@@ -1,6 +1,5 @@
 from collections import defaultdict
 from typing import Dict, List, Any
-from rest_framework import serializers
 from rest_framework.serializers import (
   SerializerMethodField,
 )
@@ -37,13 +36,6 @@ from .utils import (
     is_created_at_main_date
 )
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
-from .facility_index_details_schema_serializers import (
-    ActivityReportEntrySerializer,
-    ClaimInfoSerializer,
-    ContributorFieldEntrySerializer,
-    CreatedFromSerializer,
-    OtherLocationSerializer,
-)
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -85,11 +77,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         )
         geo_field = 'location'
 
-    @swagger_serializer_method(
-        serializer_or_field=serializers.ListField(
-            child=serializers.CharField()
-        )
-    )
     def get_other_names(self, facility):
         if is_embed_mode_active(self):
             return []
@@ -101,11 +88,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         return other_names
 
-    @swagger_serializer_method(
-        serializer_or_field=serializers.ListField(
-            child=serializers.CharField()
-        )
-    )
     def get_other_addresses(self, facility):
         if is_embed_mode_active(self):
             return []
@@ -121,9 +103,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         return other_addresses
 
-    @swagger_serializer_method(
-        serializer_or_field=OtherLocationSerializer(many=True)
-    )
     def get_other_locations(self, facility):
         if is_embed_mode_active(self):
             return []
@@ -193,9 +172,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         return claim_locations + facility_locations + facility_items_location
 
-    @swagger_serializer_method(
-        serializer_or_field=ClaimInfoSerializer(allow_null=True)
-    )
     def get_claim_info(self, facility):
         if not switch_is_active('claim_a_facility'):
             return None
@@ -230,9 +206,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
         return claim_info
 
-    @swagger_serializer_method(
-        serializer_or_field=ActivityReportEntrySerializer(many=True)
-    )
     def get_activity_reports(self, facility):
         return [
             {
@@ -261,9 +234,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             for item in facility.activity_reports_info
         ]
 
-    @swagger_serializer_method(
-        serializer_or_field=ContributorFieldEntrySerializer(many=True)
-    )
     def get_contributor_fields(self, facility):
         request = self.context.get('request') \
             if self.context is not None else []
@@ -358,7 +328,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             else:
                 return []
 
-    @swagger_serializer_method(serializer_or_field=CreatedFromSerializer())
     def get_created_from(self, facility):
         created_from_info = facility.created_from_info
         user_can_see_detail = can_user_see_detail(self)
@@ -389,11 +358,9 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'contributor': contributor_name
         }
 
-    @swagger_serializer_method(serializer_or_field=serializers.BooleanField())
     def get_has_inexact_coordinates(self, facility):
         return False
 
-    @swagger_serializer_method(serializer_or_field=serializers.BooleanField())
     def get_is_claimed(self, facility):
         return facility.approved_claim is not None
 
