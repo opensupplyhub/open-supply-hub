@@ -13,6 +13,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+* `0218_add_historical_id_history_date_indexes.py` - Adds composite `(id, history_date)` indexes to `api_historicalfacility`, `api_historicalextendedfield`, and `api_historicalfacilityclaim` for the Change Intelligence Phase 1 signal queries (`LAG() OVER (PARTITION BY id ORDER BY history_date)`). Built with `CREATE INDEX CONCURRENTLY` (non-atomic migration, no table locks) as database-only operations, since the auto-generated simple-history models do not declare these indexes. See OSDEV-2843/OSDEV-2897.
 
 ### Code/API changes
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
