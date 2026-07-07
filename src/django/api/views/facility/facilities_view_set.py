@@ -134,65 +134,86 @@ class FacilitiesViewSet(ListModelMixin,
         ### Sample Response
             {
                 "type": "FeatureCollection",
+                "count": 2,
+                "next": null,
+                "previous": null,
                 "features": [
                     {
-                        "id": "OS_ID_1",
+                        "id": "CN2019303BQ3FZP",
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [1, 1]
+                            "coordinates": [120.596047, 32.172013]
                         },
                         "properties": {
-                            "name": "facility_name_1",
-                            "address" "facility address_1",
-                            "country_code": "US",
-                            "country_name": "United States",
-                            "os_id": "OS_ID_1",
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "country_name": "China",
+                            "has_approved_claim": false,
+                            "is_closed": null
                         }
                     },
                     {
-                        "id": "OS_ID_2",
+                        "id": "US2020123ABC456",
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [2, 2]
+                            "coordinates": [-77.03687, 38.907192]
                         },
                         "properties": {
-                            "name": "facility_name_2",
-                            "address" "facility address_2",
+                            "name": "Example Manufacturing LLC",
+                            "address": "100 Main Street, Washington, DC",
                             "country_code": "US",
+                            "os_id": "US2020123ABC456",
                             "country_name": "United States",
-                            "os_id": "OS_ID_2"
+                            "has_approved_claim": true,
+                            "is_closed": null
                         }
                     }
-                ]
+                ],
+                "extent": [-77.03687, 32.172013, 120.596047, 38.907192],
+                "params": {
+                    "contributors": [],
+                    "detail": false,
+                    "number_of_public_contributors": false,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
             }
 
         ### Sample Response - parameter 'detail' equal 'true'
             {
                 "type": "FeatureCollection",
+                "count": 1,
+                "next": null,
+                "previous": null,
                 "features": [
                     {
-                        "id": "OS_ID_1",
+                        "id": "CN2019303BQ3FZP",
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [1, 1]
+                            "coordinates": [120.596047, 32.172013]
                         },
                         "properties": {
-                            "name": "facility_name_1",
-                            "address" "facility address_1",
-                            "country_code": "US",
-                            "country_name": "United States",
-                            "os_id": "OS_ID_1",
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "country_name": "China",
                             "contributors": [
                                 {
                                     "id": 1,
-                                    "name": "contributor_list_name",
-                                    "is_verified": false,
-                                    "contributor_name": "contributor_name",
-                                    "list_name": "list_name",
-                                    "contributor_type": "contributor_type",
+                                    "name": "Brand A (2019 Q1 List)",
+                                    "is_verified": true,
+                                    "contributor_name": "Brand A",
+                                    "contributor_type": "Brand/Retailer",
+                                    "list_name": "2019 Q1 List",
+                                    "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                                    "list_uploaded_at": "2022-01-27T17:36:54.597482Z",
                                     "count": 1
                                 }
                             ],
@@ -200,30 +221,89 @@ class FacilitiesViewSet(ListModelMixin,
                             "is_closed": null,
                             "contributor_fields": [],
                             "extended_fields": {
-                                "field_name": [
+                                "name": [
                                     {
-                                        "value": "field_value",
-                                        "field_name": "field_name",
+                                        "value": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                                        "field_name": "name",
                                         "contributor_id": 1,
-                                        "contributor_name": "contributor_name",
-                                        "updated_at": "0000-00-00T00:00:00"
+                                        "contributor_name": "Brand A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
+                                "number_of_workers": [
+                                    {
+                                        "id": 10,
+                                        "is_verified": false,
+                                        "value": {"min": 1000, "max": 5000},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "number_of_workers"
                                     }
                                 ]
-                            }
+                            },
                             "sector": [
                                 {
-                                    "updated_at": "0000-00-00T00:00:00",
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
                                     "contributor_id": 1,
-                                    "contributor_name": "contributor_name",
-                                    "values": [
-                                        "sector_value"
-                                    ],
+                                    "contributor_name": "Brand A",
+                                    "values": ["Apparel"],
                                     "is_from_claim": false
                                 }
                             ]
                         }
                     }
-                ]
+                ],
+                "extent": [120.596047, 32.172013, 120.596047, 32.172013],
+                "params": {
+                    "contributors": [],
+                    "detail": true,
+                    "number_of_public_contributors": false,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
+            }
+
+        ### Sample Response - parameter 'number_of_public_contributors' equal 'true'
+            {
+                "type": "FeatureCollection",
+                "count": 1,
+                "next": null,
+                "previous": null,
+                "features": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "country_name": "China",
+                            "number_of_public_contributors": 2,
+                            "has_approved_claim": false,
+                            "is_closed": null
+                        }
+                    }
+                ],
+                "extent": [120.596047, 32.172013, 120.596047, 32.172013],
+                "params": {
+                    "contributors": [],
+                    "detail": false,
+                    "number_of_public_contributors": true,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
             }
         """
         page_serializer = FacilityListPageParameterSerializer(
@@ -636,11 +716,10 @@ class FacilitiesViewSet(ListModelMixin,
         ## Sample Request Body
 
             {
-                "sector_product_type": "Apparel"
+                "sector_product_type": "Apparel",
                 "country": "China",
                 "name": "Nantong Jackbeanie Headwear & Garment Co. Ltd.",
                 "address": "No.808,the third industry park,Guoyuan Town,Nantong 226500."
-
             }
 
         ## Sample Responses
@@ -648,223 +727,238 @@ class FacilitiesViewSet(ListModelMixin,
         ### Automatic Match
 
             {
-              "matches": [
-                {
-                  "id": "CN2019303BQ3FZP",
-                  "type": "Feature",
-                  "geometry": {
+                "matches": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "other_names": [],
+                            "other_addresses": [],
+                            "contributors": [
+                                {
+                                    "id": 4,
+                                    "name": "Researcher A (Summer 2019 Affiliate List)",
+                                    "is_verified": false,
+                                    "contributor_name": "Researcher A",
+                                    "contributor_type": "Academic/Researcher",
+                                    "list_name": "Summer 2019 Affiliate List",
+                                    "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                                    "list_uploaded_at": "2022-01-27T17:36:54.597482Z",
+                                    "count": 1
+                                }
+                            ],
+                            "country_name": "China",
+                            "claim_info": null,
+                            "other_locations": [],
+                            "is_closed": null,
+                            "activity_reports": [],
+                            "contributor_fields": [],
+                            "new_os_id": null,
+                            "has_inexact_coordinates": false,
+                            "extended_fields": {},
+                            "created_from": {
+                                "created_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor": "Researcher A"
+                            },
+                            "sector": [
+                                {
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
+                                    "contributor_id": 4,
+                                    "contributor_name": "Researcher A",
+                                    "values": ["Apparel"],
+                                    "is_from_claim": false
+                                }
+                            ],
+                            "is_claimed": false,
+                            "partner_fields": {}
+                        },
+                        "confidence": 0.8153
+                    }
+                ],
+                "item_id": 964,
+                "geocoded_geometry": {
                     "type": "Point",
-                    "coordinates": [
-                      120.596047,
-                      32.172013
-                    ]
-                  },
-                  "properties": {
-                    "sector": [
-                      {
-                        "updated_at": "2022-01-27T17:36:54.597482Z",
-                        "contributor_id": 4,
-                        "contributor_name": "Researcher A",
-                        "values": [
-                          "Apparel"
-                        ]
-                      }
-                    ],
-                    "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
-                    "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
-                    "country_code": "CN",
-                    "os_id": "CN2019303BQ3FZP",
-                    "other_names": [],
-                    "other_addresses": [],
-                    "contributors": [
-                      {
-                        "id": 4,
-                        "name": "Researcher A (Summer 2019 Affiliate List)",
-                        "is_verified": false
-                      },
-                      {
-                        "id": 12,
-                        "name": "Brand B",
-                        "is_verified": false
-                      }
-
-                    ],
-                    "country_name": "China",
-                    "claim_info": null,
-                    "other_locations": [],
-                  },
-                  "confidence": 0.8153
-                }
-              ],
-              "item_id": 964,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  120.596047,
-                  32.172013
-                ]
-              },
-              "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
-              "status": "MATCHED",
-              "os_id": "CN2019303BQ3FZP"
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "MATCHED",
+                "os_id": "CN2019303BQ3FZP"
             }
 
         ### Potential Match
 
             {
-              "matches": [
-                {
-                  "id": "CN2019303BQ3FZP",
-                  "type": "Feature",
-                  "geometry": {
+                "matches": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "other_names": [],
+                            "other_addresses": [],
+                            "contributors": [
+                                {
+                                    "id": 4,
+                                    "name": "Researcher A (Summer 2019 Affiliate List)",
+                                    "is_verified": false,
+                                    "contributor_name": "Researcher A",
+                                    "contributor_type": "Academic/Researcher",
+                                    "list_name": "Summer 2019 Affiliate List",
+                                    "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                                    "list_uploaded_at": "2022-01-27T17:36:54.597482Z",
+                                    "count": 1
+                                }
+                            ],
+                            "country_name": "China",
+                            "claim_info": null,
+                            "other_locations": [],
+                            "is_closed": null,
+                            "activity_reports": [],
+                            "contributor_fields": [],
+                            "new_os_id": null,
+                            "has_inexact_coordinates": false,
+                            "extended_fields": {},
+                            "created_from": {
+                                "created_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor": "Researcher A"
+                            },
+                            "sector": [
+                                {
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
+                                    "contributor_id": 4,
+                                    "contributor_name": "Researcher A",
+                                    "values": ["Apparel"],
+                                    "is_from_claim": false
+                                }
+                            ],
+                            "is_claimed": false,
+                            "partner_fields": {}
+                        },
+                        "confidence": 0.7686,
+                        "confirm_match_url": "/api/facility-matches/135005/confirm/",
+                        "reject_match_url": "/api/facility-matches/135005/reject/"
+                    }
+                ],
+                "item_id": 959,
+                "geocoded_geometry": {
                     "type": "Point",
-                    "coordinates": [
-                      120.596047,
-                      32.172013
-                    ]
-                  },
-                  "properties": {
-                    "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
-                    "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
-                    "sector": [
-                      {
-                        "updated_at": "2022-01-27T17:36:54.597482Z",
-                        "contributor_id": 4,
-                        "contributor_name": "Researcher A",
-                        "values": [
-                          "Apparel"
-                        ]
-                      }
-                    ],
-                    "country_code": "CN",
-                    "os_id": "CN2019303BQ3FZP",
-                    "other_names": [],
-                    "other_addresses": [],
-                    "contributors": [
-                      {
-                        "id": 4,
-                        "name": "Researcher A (Summer 2019 Affiliate List)",
-                        "is_verified": false
-                      }
-                    ],
-                    "country_name": "China",
-                    "claim_info": null,
-                    "other_locations": []
-                  },
-                  "confidence": 0.7686,
-                  "confirm_match_url": "/api/facility-matches/135005/confirm/",
-                  "reject_match_url": "/api/facility-matches/135005/reject/"
-                }
-              ],
-              "item_id": 959,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  120.596047,
-                  32.172013
-                ]
-              },
-              "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
-              "status": "POTENTIAL_MATCH"
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "POTENTIAL_MATCH"
             }
 
 
         ### Potential Text Only Match
 
             {
-              "matches": [
-                {
-                  "id": "CN2019303BQ3FZP",
-                  "type": "Feature",
-                  "geometry": {
+                "matches": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "other_names": [],
+                            "other_addresses": [],
+                            "contributors": [],
+                            "country_name": "China",
+                            "claim_info": null,
+                            "other_locations": [],
+                            "is_closed": null,
+                            "activity_reports": [],
+                            "contributor_fields": [],
+                            "new_os_id": null,
+                            "has_inexact_coordinates": false,
+                            "extended_fields": {},
+                            "created_from": {
+                                "created_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor": "an academic/researcher"
+                            },
+                            "sector": [
+                                {
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
+                                    "contributor_id": null,
+                                    "contributor_name": "an academic/researcher",
+                                    "values": ["Apparel"],
+                                    "is_from_claim": false
+                                }
+                            ],
+                            "is_claimed": false,
+                            "partner_fields": {}
+                        },
+                        "confidence": 0,
+                        "confirm_match_url": "/api/facility-matches/135005/confirm/",
+                        "reject_match_url": "/api/facility-matches/135005/reject/"
+                    }
+                ],
+                "item_id": 959,
+                "geocoded_geometry": {
                     "type": "Point",
-                    "coordinates": [
-                      120.596047,
-                      32.172013
-                    ]
-                  },
-                  "properties": {
-                    "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
-                    "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
-                    "country_code": "CN",
-                    "sector": [
-                      {
-                        "updated_at": "2022-01-27T17:36:54.597482Z",
-                        "contributor_id": 4,
-                        "contributor_name": "Researcher A",
-                        "values": [
-                          "Apparel"
-                        ]
-                      }
-                    ],
-                    "os_id": "CN2019303BQ3FZP",
-                    "other_names": [],
-                    "other_addresses": [],
-                    "contributors": [
-                      {
-                        "id": 4,
-                        "name": "Researcher A (Summer 2019 Affiliate List)",
-                        "is_verified": false
-                      }
-                    ],
-                    "country_name": "China",
-                    "claim_info": null,
-                    "other_locations": []
-                  },
-                  "confidence": 0,
-                  "confirm_match_url": "/api/facility-matches/135005/confirm/",
-                  "reject_match_url": "/api/facility-matches/135005/reject/"
-                  "text_only_match": true
-                }
-              ],
-              "item_id": 959,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  120.596047,
-                  32.172013
-                ]
-              },
-              "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
-              "status": "POTENTIAL_MATCH"
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "POTENTIAL_MATCH"
             }
 
 
         ### New Facility
 
             {
-              "matches": [],
-              "item_id": 954,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  119.2221539,
-                  33.79772
-                ]
-              },
-              "geocoded_address": "30, 32 Yanhuang Ave, Lianshui Xian, Huaian Shi, Jiangsu Sheng, China, 223402",
-              "status": "NEW_FACILITY"
+                "matches": [],
+                "item_id": 954,
+                "geocoded_geometry": {
+                    "type": "Point",
+                    "coordinates": [119.2221539, 33.79772]
+                },
+                "geocoded_address": "30, 32 Yanhuang Ave, Lianshui Xian, Huaian Shi, Jiangsu Sheng, China, 223402",
+                "status": "NEW_FACILITY",
+                "os_id": "CN2020123ABC456"
             }
 
         ### No Match
 
             {
-              "matches": [],
-              "item_id": 965,
-              "geocoded_geometry": null,
-              "geocoded_address": null,
-              "status": "ERROR_MATCHING"
+                "matches": [],
+                "item_id": 965,
+                "geocoded_geometry": {
+                    "type": "Point",
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "ERROR_MATCHING"
             }
 
         ### Geocoder Returned No Results
 
             {
-              "matches": [],
-              "item_id": 965,
-              "geocoded_geometry": null,
-              "geocoded_address": null,
-              "status": "GEOCODED_NO_RESULTS",
-              "message": "The address you submitted can not be geocoded."
+                "matches": [],
+                "item_id": 965,
+                "geocoded_geometry": null,
+                "geocoded_address": null,
+                "status": "GEOCODED_NO_RESULTS",
+                "message": "The address you submitted can not be geocoded."
             }
         """  # noqa
         # Adding the @permission_classes decorator was not working so we
