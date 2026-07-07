@@ -1,3 +1,9 @@
+> **Moved (2026-07-07):** this dashboard now lives at
+> https://product-delivery-roadmap-ashen.vercel.app
+> (repo: https://github.com/TylerHeath1/product-delivery-roadmap — live Jira
+> data on every visit, no sync script). The HTML file here is kept only as a
+> redirect; this README remains for the history of the design decisions.
+
 # OS Hub Working Product Roadmap — Handoff
 
 A live-from-Jira product roadmap that powers the weekly product execution meeting. Currently in **Draft 2.6**.
