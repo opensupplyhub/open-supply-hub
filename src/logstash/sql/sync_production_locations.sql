@@ -35,6 +35,7 @@ SELECT
         af.name
       )
   ) AS name,
+  af.is_closed,
   afc.facility_name_native_language AS local_name_value,
   afc.facility_description AS description_value,
   afc.opening_date AS opened_at_value,

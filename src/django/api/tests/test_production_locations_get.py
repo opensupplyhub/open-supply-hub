@@ -144,6 +144,19 @@ class TestProductionLocationsViewSet(APITestCase):
             ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
         )
 
+    def test_is_closed_included_in_response_mappings(self):
+        # The v1 endpoints filter the OpenSearch _source through these
+        # allowlists, so a field missing here is silently dropped from the
+        # response even if it is indexed (OSDEV-1149).
+        self.assertIn(
+            "is_closed",
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATIONS,
+        )
+        self.assertIn(
+            "is_closed",
+            ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
+        )
+
     def _create_facility_with_partner_data(self):
         cache.clear()
         user = User.objects.create(email="partner@example.com")

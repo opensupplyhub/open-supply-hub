@@ -37,6 +37,7 @@ class ProductionLocationsResponseMapping:
         "country.numeric",
         "claim_status",
         "claimed_at",
+        "is_closed",
         "historical_os_id",
         "rba_id",
         "duns_id",
