@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import map from 'lodash/map';
+import uniq from 'lodash/uniq';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -24,6 +25,7 @@ import {
 
 import ClaimStatusFilter from './Filters/ClaimStatusFilter';
 import CountryNameFilter from './Filters/CountryNameFilter';
+import StyledSelect from './Filters/StyledSelect';
 import {
     updateClaimStatusFilter,
     updateCountryFilter,
@@ -87,8 +89,13 @@ const DashboardClaims = ({
     downloadClaims,
     downloadClaimsError,
 }) => {
-    const { countries, statuses } = getDashboardClaimsListParamsFromQueryString(
-        search,
+    const {
+        countries,
+        statuses,
+        campaigns,
+    } = getDashboardClaimsListParamsFromQueryString(search);
+    const [campaignFilter, setCampaignFilter] = useState(
+        campaigns.map(code => ({ value: code, label: code })),
     );
 
     useEffect(() => {
@@ -106,6 +113,7 @@ const DashboardClaims = ({
                 makeDashboardClaimListLink({
                     statuses,
                     countries,
+                    campaigns,
                 }),
             );
         }
@@ -140,6 +148,7 @@ const DashboardClaims = ({
             makeDashboardClaimListLink({
                 statuses: finalStatuses,
                 countries: finalCountries,
+                campaigns: map(campaignFilter, 'value'),
             }),
         );
     }, [countriesData]);
@@ -149,6 +158,19 @@ const DashboardClaims = ({
             makeDashboardClaimListLink({
                 countries: map(c, 'value'),
                 statuses: map(s, 'value'),
+                campaigns: map(campaignFilter, 'value'),
+            }),
+        );
+    };
+
+    const onCampaignFilterUpdate = selected => {
+        const next = selected || [];
+        setCampaignFilter(next);
+        push(
+            makeDashboardClaimListLink({
+                statuses,
+                countries,
+                campaigns: map(next, 'value'),
             }),
         );
     };
@@ -157,7 +179,22 @@ const DashboardClaims = ({
         return <Typography>{error}</Typography>;
     }
 
-    const claimsCount = data && data.length;
+    // The claims endpoint returns the full (unpaginated) result set for
+    // the selected statuses/countries, so the campaign filter is applied
+    // client-side rather than through the shared search filters store.
+    // The backend also supports ?campaigns= for API consumers.
+    const campaignCodes = uniq(
+        map(data || [], 'campaign_code').filter(Boolean),
+    );
+    const selectedCampaignCodes = map(campaignFilter, 'value');
+    const visibleData =
+        !data || selectedCampaignCodes.length === 0
+            ? data
+            : data.filter(claim =>
+                  selectedCampaignCodes.includes(claim.campaign_code),
+              );
+
+    const claimsCount = visibleData && visibleData.length;
 
     return (
         <Paper className={classes.container}>
@@ -165,7 +202,7 @@ const DashboardClaims = ({
                 <div className={classes.dashboardClaimsFilters}>
                     <DashboardDownloadDataButton
                         fetching={fetching}
-                        downloadPayload={data || []}
+                        downloadPayload={visibleData || []}
                         downloadData={downloadClaims}
                         downloadError={downloadClaimsError}
                     />
@@ -175,13 +212,28 @@ const DashboardClaims = ({
                         isDisabled={fetching}
                     />
                     <CountryNameFilter isDisabled={fetching} />
+                    {campaignCodes.length > 0 && (
+                        <div className="form__field">
+                            <StyledSelect
+                                label="Campaign"
+                                name="CAMPAIGNS"
+                                options={campaignCodes.map(code => ({
+                                    value: code,
+                                    label: code,
+                                }))}
+                                value={campaignFilter}
+                                onChange={onCampaignFilterUpdate}
+                                isDisabled={fetching}
+                            />
+                        </div>
+                    )}
                     <Grid item className={classes.numberResults}>
                         {claimsCount} results
                     </Grid>
                 </div>
                 <DashboardClaimsListTable
                     fetching={fetching}
-                    data={data}
+                    data={visibleData}
                     handleSortClaims={sortClaims}
                     handleGetClaims={getClaims}
                     handleGetCountries={fetchCountries}

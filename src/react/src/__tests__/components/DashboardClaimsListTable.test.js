@@ -16,7 +16,8 @@ const data = [
         "facility_name": "Facility Beta",
         "facility_address": "456 Beta Avenue, Beta City, Türkiye",
         "facility_country_name": "Türkiye",
-        "status": "APPROVED"
+        "status": "APPROVED",
+        "campaign_code": "EXAMPLE-FRESH-26"
     },
     {
         "id": 45,
@@ -158,6 +159,16 @@ describe('DashboardClaimsListTable component', () => {
                 </Route>
             </Router>
         );
+    });
+
+    it('shows a campaign column with the code or a placeholder', async () => {
+        expect(screen.getByText('Campaign')).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText('EXAMPLE-FRESH-26')).toBeInTheDocument();
+        });
+        // Claims without a campaign fall back to the placeholder.
+        expect(screen.getAllByText('N/A').length).toBeGreaterThan(0);
     });
 
     it('sort by claim id in ascending order', async () => {

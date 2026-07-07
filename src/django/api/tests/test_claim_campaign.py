@@ -232,6 +232,42 @@ class ClaimCampaignAttributionTest(ClaimCampaignBaseTest):
         self.assertFalse(claim.via_link)
 
 
+class ClaimsQueueCampaignFilterTest(ClaimCampaignBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        self.superuser = User.objects.create_superuser(
+            "superuser@example.com", "superuser"
+        )
+        self.client.login(
+            email="superuser@example.com", password="superuser"
+        )
+
+        self.campaign_claim = self.create_claim(
+            campaign=self.campaign, via_link=True
+        )
+        self.plain_claim = self.create_claim()
+
+        self.url = "/api/facility-claims/"
+
+    def test_filters_queue_by_campaign_code(self):
+        response = self.client.get(
+            self.url, {"campaigns": "EXAMPLE-FRESH-26"}
+        )
+        self.assertEqual(200, response.status_code)
+
+        rows = response.json()
+        self.assertEqual([self.campaign_claim.id], [r["id"] for r in rows])
+        self.assertEqual("EXAMPLE-FRESH-26", rows[0]["campaign_code"])
+
+    def test_unfiltered_queue_includes_campaign_column(self):
+        response = self.client.get(self.url)
+        self.assertEqual(200, response.status_code)
+
+        codes = {r["campaign_code"] for r in response.json()}
+        self.assertEqual({"EXAMPLE-FRESH-26", None}, codes)
+
+
 class ClaimCampaignEndpointTest(ClaimCampaignBaseTest):
     def setUp(self):
         super().setUp()

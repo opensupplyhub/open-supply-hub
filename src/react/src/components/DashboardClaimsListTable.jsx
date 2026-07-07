@@ -207,6 +207,9 @@ function DashboardClaimsListTable({
                                 {claim.facility_country_name}
                             </TableCell>
                             <TableCell padding="dense">
+                                {claim.campaign_code || EMPTY_PLACEHOLDER}
+                            </TableCell>
+                            <TableCell padding="dense">
                                 {moment(claim.created_at).format('LL')}
                             </TableCell>
                             <TableCell padding="dense">

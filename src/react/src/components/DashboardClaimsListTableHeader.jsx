@@ -32,6 +32,12 @@ const claimsListHeadCells = [
         label: 'Country',
     },
     {
+        id: 'campaign_code',
+        numeric: false,
+        disablePadding: true,
+        label: 'Campaign',
+    },
+    {
         id: 'created_at',
         numeric: false,
         disablePadding: true,
