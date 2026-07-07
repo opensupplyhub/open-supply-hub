@@ -114,6 +114,33 @@ data "aws_iam_policy_document" "alb_access_logging" {
       "${aws_s3_bucket.logs.arn}/ALB/*",
     ]
   }
+
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      aws_s3_bucket.logs.arn,
+      "${aws_s3_bucket.logs.arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values = [
+        "false"
+      ]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "alb_access_logging" {
