@@ -8,24 +8,18 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 const mockUpdateModerationEvent = jest.fn();
 const mockCloseDialog = jest.fn();
 
-jest.mock("react-draft-wysiwyg", () => {
-    // eslint-disable-next-line global-require
-    const { EditorState, ContentState } = require("draft-js");
-    return {
-        Editor: ({ editorState, onEditorStateChange }) => (
-            <textarea
-                data-testid="fake-editor"
-                value={editorState.getCurrentContent().getPlainText()}
-                onChange={(e) => {
-                    const newState = EditorState.createWithContent(
-                        ContentState.createFromText(e.target.value),
-                    );
-                    onEditorStateChange(newState);
-                }}
-            />
-        ),
-    };
-});
+jest.mock('react-quill-new', () => ({ value, onChange }) => (
+    <textarea
+        data-testid="fake-editor"
+        value={value.replace(/<\/?p>/g, '')}
+        onChange={(e) => {
+            const text = e.target.value;
+            onChange(`<p>${text}</p>`, null, 'user', {
+                getText: () => `${text}\n`,
+            });
+        }}
+    />
+));
 
 jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, onClose }) => (
     <div
@@ -100,7 +94,7 @@ describe('RejectModerationEventDialog component', () => {
         expect(mockUpdateModerationEvent).toHaveBeenCalledWith(
             MODERATION_STATUSES_ENUM.REJECTED,
             validText,
-            `<p>${validText}</p>\n`,
+            `<p>${validText}</p>`,
         );
         expect(mockCloseDialog).toHaveBeenCalledTimes(1);
     });

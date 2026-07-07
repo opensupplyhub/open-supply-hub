@@ -1717,16 +1717,19 @@ export const makeRejectModerationEventDialogStyles = () =>
             overflowX: 'hidden',
         }),
         editorContainerStyles: Object.freeze({
-            border: `1px solid ${COLOURS.GREY}`,
-            borderRadius: '5px',
             minHeight: '320px',
             marginTop: '10px',
-            padding: '5px',
+            display: 'flex',
+            flexDirection: 'column',
         }),
         editorStyles: Object.freeze({
-            padding: '5px',
-            maxHeight: '230px',
-            minHeight: '230px',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            '& .ql-container': Object.freeze({
+                flex: 1,
+                overflowY: 'auto',
+            }),
         }),
         dialogActionsStyles: Object.freeze({
             display: 'flex',
