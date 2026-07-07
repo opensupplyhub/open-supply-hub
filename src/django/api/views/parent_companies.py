@@ -3,7 +3,9 @@ from rest_framework.decorators import (
     throttle_classes,
 )
 from rest_framework.response import Response
+from django.conf import settings
 from django.db.models import F, Func
+from django.views.decorators.cache import cache_page
 
 from ..models.contributor.contributor import Contributor
 from ..models.facility.facility_index import FacilityIndex
@@ -11,6 +13,10 @@ from ..models.facility.facility_index import FacilityIndex
 
 @api_view(['GET'])
 @throttle_classes([])
+@cache_page(
+    settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+    cache="view_cache",
+)
 def parent_companies(_):
     """
     Returns list parent companies submitted by contributors, as a list of
