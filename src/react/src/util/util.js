@@ -60,6 +60,8 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
+    CLAIM_CAMPAIGNS,
+    claimCampaignsRoute,
     inputTypesEnum,
     registrationFieldsEnum,
     registrationFormFields,
@@ -1549,6 +1551,15 @@ export const createUserDropdownLinks = (
             Object.freeze({
                 label: 'My Facilities',
                 href: '/claimed',
+            }),
+        );
+    }
+
+    if (includes(activeFeatureFlags, CLAIM_CAMPAIGNS)) {
+        links.push(
+            Object.freeze({
+                label: 'Claims Campaigns',
+                href: claimCampaignsRoute,
             }),
         );
     }

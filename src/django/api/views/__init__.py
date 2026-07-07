@@ -30,6 +30,7 @@ from .country.all_countries import all_countries
 from .facility.facility_activity_report_view_set import (
     FacilityActivityReportViewSet
 )
+from .facility.claim_campaign_view_set import ClaimCampaignViewSet
 from .facility.facility_claim_view_set import FacilityClaimViewSet
 from .facility.facilities_view_set import FacilitiesViewSet
 from .facility.facility_list_view_set import FacilityListViewSet

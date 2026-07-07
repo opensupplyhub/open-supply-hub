@@ -42,6 +42,8 @@ router.register('facility-lists', views.FacilityListViewSet, 'facility-list')
 router.register('facilities', views.FacilitiesViewSet, 'facility')
 router.register('facility-claims', views.FacilityClaimViewSet,
                 'facility-claim')
+router.register('claim-campaigns', views.ClaimCampaignViewSet,
+                'claim-campaign')
 router.register('facility-matches', views.FacilityMatchViewSet,
                 'facility-match')
 router.register('api-blocks', views.ApiBlockViewSet, 'api-block')

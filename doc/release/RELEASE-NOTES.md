@@ -18,6 +18,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API changes
 * [OSDEV-2967](https://opensupplyhub.atlassian.net/browse/OSDEV-2967) - Added the `ClaimCampaign` model (contributor-owned claims campaigns with a unique human-readable code), `campaign`/`via_link` fields on `FacilityClaim`, Django admin registration (campaign code locked after creation), and the `claim_campaigns` feature switch. The new fields are excluded from `sync_databases`.
 * [OSDEV-2968](https://opensupplyhub.atlassian.net/browse/OSDEV-2968) - Claim submissions accept an optional `campaign` code and are auto-attributed to active claims campaigns: a valid link code wins (`via_link=true`); otherwise a claim is attributed only when exactly one active campaign's currently-active uploaded list contains the facility. Runs only while the `claim_campaigns` switch is on; an invalid code never blocks a claim.
+* [OSDEV-2970](https://opensupplyhub.atlassian.net/browse/OSDEV-2970) - Added `GET /api/claim-campaigns/`: a read-only, switch-gated (404 when off) endpoint returning the requesting user's own claims campaigns with per-supplier claim statuses (only already-public values: unclaimed/pending/claimed) computed from the contributor's currently-active uploaded lists.
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
   * Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
   * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
@@ -38,6 +39,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * [OSDEV-2969](https://opensupplyhub.atlassian.net/browse/OSDEV-2969) - The claim form at `/claim/{os_id}` reads an optional `?campaign=` parameter (behind the `claim_campaigns` flag): it shows a campaign banner on the intro step and includes the code in the claim submission payload. Without the parameter (or with the flag off) the form is unchanged.
+* [OSDEV-2970](https://opensupplyhub.atlassian.net/browse/OSDEV-2970) - New Claims Campaigns dashboard at `/claim-campaigns` (behind the `claim_campaigns` flag): per-campaign KPI tiles, a campaign progress bar, a supplier table with claim statuses and copyable per-supplier claim links, and an outreach CSV download.
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
 
 ### Release instructions
