@@ -191,6 +191,9 @@
             }
           }
         },
+        "number_of_contributors": {
+          "type": "integer"
+        },
         "claim_status": {
           "type": "text",
           "fields": {

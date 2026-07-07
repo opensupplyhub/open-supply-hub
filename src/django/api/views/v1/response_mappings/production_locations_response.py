@@ -38,6 +38,7 @@ class ProductionLocationsResponseMapping:
         "claim_status",
         "claimed_at",
         "historical_os_id",
+        "number_of_contributors",
         "rba_id",
         "duns_id",
         "lei_id",
