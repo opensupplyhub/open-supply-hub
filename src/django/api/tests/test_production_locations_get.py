@@ -144,6 +144,15 @@ class TestProductionLocationsViewSet(APITestCase):
             ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
         )
 
+    def test_response_mapping_includes_number_of_contributors(self):
+        self.search_index_mock.return_value = {"count": 0, "data": []}
+
+        api_res = self.client.get("/api/v1/production-locations/")
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+
+        query_body = self.search_index_mock.call_args[0][1]
+        self.assertIn("number_of_contributors", query_body["_source"])
+
     def _create_facility_with_partner_data(self):
         cache.clear()
         user = User.objects.create(email="partner@example.com")

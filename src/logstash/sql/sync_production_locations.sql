@@ -653,6 +653,24 @@ SELECT
     WHERE
       afa.facility_id = af.id
   ) AS historical_os_id_value,
+  (
+    SELECT
+      CAST(COUNT(DISTINCT as1.contributor_id) AS INTEGER)
+    FROM
+      api_source as1
+    WHERE
+      as1.id IN (
+        SELECT
+          fli.source_id
+        FROM
+          api_facilitylistitem fli
+          LEFT JOIN api_facilitymatch afm ON afm.facility_list_item_id = fli.id
+        WHERE
+          fli.facility_id = af.id
+          AND afm.is_active
+          AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
+      )
+  ) AS number_of_contributors,
   af.updated_at,
   (
     SELECT
