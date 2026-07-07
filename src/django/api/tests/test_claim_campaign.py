@@ -230,3 +230,102 @@ class ClaimCampaignAttributionTest(ClaimCampaignBaseTest):
         claim = self.post_claim(campaign="EXAMPLE-FRESH-26")
         self.assertIsNone(claim.campaign)
         self.assertFalse(claim.via_link)
+
+
+class ClaimCampaignEndpointTest(ClaimCampaignBaseTest):
+    def setUp(self):
+        super().setUp()
+
+        self.password = "example123"
+        self.user.set_password(self.password)
+        self.user.save()
+
+        # Matched list items carry the facility reference; the roster
+        # lookup relies on it.
+        self.list_item.facility = self.facility
+        self.list_item.save()
+
+        self.url = "/api/claim-campaigns/"
+        self.client.login(email=self.user.email, password=self.password)
+
+    @override_switch("claim_campaigns", active=False)
+    def test_returns_not_found_when_switch_is_off(self):
+        response = self.client.get(self.url)
+        self.assertEqual(404, response.status_code)
+
+    @override_switch("claim_campaigns", active=True)
+    def test_requires_authentication(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(401, response.status_code)
+
+    @override_switch("claim_campaigns", active=True)
+    def test_lists_own_campaign_with_unclaimed_supplier(self):
+        response = self.client.get(self.url)
+        self.assertEqual(200, response.status_code)
+
+        [campaign] = response.json()
+        self.assertEqual("EXAMPLE-FRESH-26", campaign["code"])
+        self.assertEqual("ACTIVE", campaign["status"])
+
+        [supplier] = campaign["suppliers"]
+        self.assertEqual(self.facility.id, supplier["os_id"])
+        self.assertEqual("unclaimed", supplier["claim_status"])
+
+    @override_switch("claim_campaigns", active=True)
+    def test_supplier_statuses_follow_claims(self):
+        claim = FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            contact_person="Name",
+            company_name="Test",
+            facility_description="description",
+        )
+
+        [supplier] = self.client.get(self.url).json()[0]["suppliers"]
+        self.assertEqual("pending", supplier["claim_status"])
+
+        claim.status = "APPROVED"
+        claim.save()
+
+        [supplier] = self.client.get(self.url).json()[0]["suppliers"]
+        self.assertEqual("claimed", supplier["claim_status"])
+
+    @override_switch("claim_campaigns", active=True)
+    def test_does_not_list_other_contributors_campaigns(self):
+        other_user = User.objects.create(email="other2@example.com")
+        other_contributor = Contributor.objects.create(
+            admin=other_user,
+            name="other contributor 2",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        ClaimCampaign.objects.create(
+            contributor=other_contributor,
+            name="Not mine",
+            code="NOT-MINE-26",
+        )
+
+        codes = [c["code"] for c in self.client.get(self.url).json()]
+        self.assertEqual(["EXAMPLE-FRESH-26"], codes)
+
+    @override_switch("claim_campaigns", active=True)
+    def test_replaced_list_items_leave_the_roster(self):
+        self.source.is_active = False
+        self.source.save()
+
+        [campaign] = self.client.get(self.url).json()
+        self.assertEqual([], campaign["suppliers"])
+
+    @override_switch("claim_campaigns", active=True)
+    def test_campaigns_share_the_contributor_roster(self):
+        ClaimCampaign.objects.create(
+            contributor=self.contributor,
+            name="Second campaign",
+            code="EXAMPLE-SECOND-26",
+        )
+
+        campaigns = self.client.get(self.url).json()
+        self.assertEqual(2, len(campaigns))
+        self.assertEqual(
+            campaigns[0]["suppliers"], campaigns[1]["suppliers"]
+        )
