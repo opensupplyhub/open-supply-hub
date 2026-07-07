@@ -32,7 +32,6 @@ from rest_framework.exceptions import (
 )
 from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
-from django.contrib.gis.db.models import Extent
 from django.core import exceptions as core_exceptions
 from django.db import transaction
 from django.db.models import F, Q
@@ -92,6 +91,7 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
+from api.facilities_extent_cache import FacilitiesExtentCache
 from api.view_response_cache import cache_view_response
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -279,8 +279,8 @@ class FacilitiesViewSet(ListModelMixin,
 
         page_queryset = self.paginate_queryset(queryset)
 
-        extent = queryset.aggregate(Extent('location'))['location__extent']
-
+        extent_cache = FacilitiesExtentCache()
+        extent = extent_cache.get(queryset, request.query_params)
         context = {'request': request}
 
         should_serialize_details = params.validated_data['detail']

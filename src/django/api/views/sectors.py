@@ -1,4 +1,6 @@
 from django.db.models import F, Func
+from django.conf import settings
+from django.views.decorators.cache import cache_page
 
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view, throttle_classes
@@ -22,6 +24,10 @@ from ..models.facility.facility_list_item import FacilityListItem
 )
 @api_view(['GET'])
 @throttle_classes([])
+@cache_page(
+    settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+    cache="view_cache",
+)
 def sectors(request):
 
     embed = request.query_params.get('embed')
