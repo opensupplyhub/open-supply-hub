@@ -40,6 +40,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * [OSDEV-2969](https://opensupplyhub.atlassian.net/browse/OSDEV-2969) - The claim form at `/claim/{os_id}` reads an optional `?campaign=` parameter (behind the `claim_campaigns` flag): it shows a campaign banner on the intro step and includes the code in the claim submission payload. Without the parameter (or with the flag off) the form is unchanged.
 * [OSDEV-2970](https://opensupplyhub.atlassian.net/browse/OSDEV-2970) - New Claims Campaigns dashboard at `/claim-campaigns` (behind the `claim_campaigns` flag): per-campaign KPI tiles, a campaign progress bar, a supplier table with claim statuses and copyable per-supplier claim links, and an outreach CSV download.
+* [OSDEV-2971](https://opensupplyhub.atlassian.net/browse/OSDEV-2971) - The claims moderation dashboard (`/dashboard/claims`) gains a Campaign column and a shareable campaign filter (`?campaigns=`); the superuser-only `/api/facility-claims/` endpoint accepts an optional `campaigns` query parameter. Permissions unchanged.
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
 
 ### Release instructions

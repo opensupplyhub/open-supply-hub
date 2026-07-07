@@ -163,7 +163,7 @@ function DashboardClaimsListTable({
             {loading || fetching ? (
                 <TableBody>
                     <TableRow>
-                        <TableCell colSpan={8}>
+                        <TableCell colSpan={9}>
                             <CircularProgress
                                 size={25}
                                 className={classes.loaderStyle}
@@ -205,6 +205,9 @@ function DashboardClaimsListTable({
                             </TableCell>
                             <TableCell padding="dense">
                                 {claim.facility_country_name}
+                            </TableCell>
+                            <TableCell padding="dense">
+                                {claim.campaign_code || EMPTY_PLACEHOLDER}
                             </TableCell>
                             <TableCell padding="dense">
                                 {moment(claim.created_at).format('LL')}
