@@ -42,11 +42,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `reindex_database`
-    * `backfill_facility_index --fields contributors --parallel 10 --batch-size 10000`
+    * `backfill_facility_index --fields contributors,claim_info --parallel 10 --batch-size 10000`
     * `reindex_promoted_locations` — one-time backfill (OSDEV-2896) so previously promoted locations reflect the corrected name/address attribution; remove from `post_deployment` after this release.
-* Expect the contributors backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+* Expect the `contributors,claim_info` backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. The two field groups run sequentially; the `claim_info` group only touches already-claimed rows (`claim_info IS NOT NULL`), so it is much shorter than the `contributors` pass. See `src/django/api/facility_index_backfill/README.md` for operational notes.
 * Expect `reindex_promoted_locations` to add roughly 1–3 minutes: ~4.8k facilities in 500-row batches, single-threaded, each batch a full `index_facilities_by` rebuild (the same operation the on-save trigger runs). It uses a single connection — much lighter than the 10-worker contributors backfill — and runs after it, so the two do not overlap; the combined post-deploy backfill window is on the order of 5–7 minutes with no application downtime. Confirm timing on Staging before Production.
-* [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - The new `updated_at` in `claim_info` only appears for existing approved claims after a re-index (covered by `reindex_database` above). New claim edits refresh automatically via the added `index_facilities_new` call.
+* [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - The new `updated_at` in `claim_info` only appears for existing approved claims once their indexed blob is recomputed. This is a one-time targeted backfill via the `claim_info` field group added to `backfill_facility_index` above — `reindex_database` (a Postgres `REINDEX`) does **not** recompute `claim_info`. New claim edits refresh automatically via the `index_facilities_new` call added to the edit endpoint. Remove the `claim_info` field group from the `post_deployment` backfill after this release, per `facility_index_backfill/README.md`.
 
 
 ## Release 2.26.0

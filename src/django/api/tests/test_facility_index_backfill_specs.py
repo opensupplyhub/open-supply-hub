@@ -44,6 +44,25 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertIn('hashtext', sql)
         self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
+    def test_list_field_names_includes_claim_info(self):
+        self.assertIn('claim_info', list_field_names())
+
+    def test_build_update_sql_includes_claim_info_column(self):
+        spec = get_field_spec('claim_info')
+        sql = build_update_sql(spec)
+
+        self.assertIn('claim_info =', sql)
+        self.assertIn('index_claim_info(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_claim_info_filter(self):
+        spec = get_field_spec('claim_info')
+        sql = build_count_sql(spec)
+
+        self.assertIn('claim_info IS NOT NULL', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
     def test_build_count_sql_omits_filter_when_not_configured(self):
         spec = {
             'columns': {'foo': 'bar'},
