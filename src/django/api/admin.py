@@ -165,6 +165,18 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
     readonly_fields = ('claim', 'author')
 
 
+class ClaimCampaignAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'contributor', 'status')
+    search_fields = ('name', 'code')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+
+    def get_readonly_fields(self, request, obj=None):
+        # The code is used in live campaign links; lock it after creation.
+        if obj:
+            return self.readonly_fields + ('code',)
+        return self.readonly_fields
+
+
 class FacilityAliasAdmin(SimpleHistoryAdmin):
     history_list_display = ('os_id', 'facility')
     readonly_fields = ('os_id', 'facility', 'reason')
@@ -399,6 +411,7 @@ admin_site.register(models.FacilityMatch, FacilityMatchAdmin)
 admin_site.register(models.FacilityClaim, FacilityClaimAdmin)
 admin_site.register(models.FacilityClaimReviewNote,
                     FacilityClaimReviewNoteAdmin)
+admin_site.register(models.ClaimCampaign, ClaimCampaignAdmin)
 admin_site.register(models.FacilityAlias, FacilityAliasAdmin)
 admin_site.register(Flag, FlagAdmin)
 admin_site.register(Sample, SampleAdmin)

@@ -13,8 +13,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+* `0218_create_claim_campaign.py` - Creates the `api_claimcampaign` table, adds nullable `campaign` FK and `via_link` boolean columns to `api_facilityclaim` (and its history table), and creates the `claim_campaigns` waffle switch (off by default).
 
 ### Code/API changes
+* [OSDEV-2967](https://opensupplyhub.atlassian.net/browse/OSDEV-2967) - Added the `ClaimCampaign` model (contributor-owned claims campaigns with a unique human-readable code), `campaign`/`via_link` fields on `FacilityClaim`, Django admin registration (campaign code locked after creation), and the `claim_campaigns` feature switch. The new fields are excluded from `sync_databases`.
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
   * Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
   * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
