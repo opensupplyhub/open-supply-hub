@@ -42,7 +42,8 @@ docker compose exec django python manage.py test
 ## Release notes & PR descriptions
 
 - To write the description for each PR, use the [pr-description](.agent/skills/pr-description/SKILL.md) skill.
-- To update the release notes, use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
+- To update the GitHub engineering release notes, use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
+- To create Confluence release notes and a Slack post draft, use the [confluence-release-notes](.agent/skills/confluence-release-notes/SKILL.md) skill.
 
 IMPORTANT: Before creating a PR, always check whether `doc/release/RELEASE-NOTES.md` has been updated on the current branch. If it has not been updated, prompt the user to update it before opening the PR.
 
