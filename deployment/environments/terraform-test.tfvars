@@ -26,6 +26,7 @@ rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_type = "gp3"
+rds_iops = 12000
 rds_storage_encrypted = true
 
 anonymized_database_instance_type = "db.t3.2xlarge"
