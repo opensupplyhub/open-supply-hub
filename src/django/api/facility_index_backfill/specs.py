@@ -8,6 +8,11 @@ NON_EMPTY_CONTRIBUTORS_FILTER = (
     "cardinality(COALESCE(contributors, '{}')) > 0"
 )
 
+# Only facilities that already have an indexed claim need the claim_info
+# refresh; index_claim_info() returns NULL for everything else, so this skips
+# the millions of unclaimed rows.
+CLAIMED_FACILITIES_FILTER = "claim_info IS NOT NULL"
+
 
 class FacilityIndexFieldSpec(TypedDict, total=False):
     """Configuration for backfilling one logical field group."""
@@ -37,6 +42,16 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': NON_EMPTY_CONTRIBUTORS_FILTER,
+    },
+    'claim_info': {
+        'columns': {
+            'claim_info': (
+                "COALESCE("
+                "(SELECT claim_info FROM index_claim_info(afi.id))"
+                ")"
+            ),
+        },
+        'filter_sql': CLAIMED_FACILITIES_FILTER,
     },
 }
 
