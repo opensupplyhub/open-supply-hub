@@ -83,6 +83,7 @@ module "database_enc" {
   engine_version              = var.rds_engine_version
   instance_type               = var.rds_instance_type
   storage_type                = var.rds_storage_type
+  iops                        = var.rds_iops
   database_identifier         = var.rds_database_identifier
   database_name               = var.rds_database_name
   database_username           = var.rds_database_username
