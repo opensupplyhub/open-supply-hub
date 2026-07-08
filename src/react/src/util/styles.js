@@ -1717,7 +1717,7 @@ export const makeRejectModerationEventDialogStyles = () =>
             overflowX: 'hidden',
         }),
         editorContainerStyles: Object.freeze({
-            minHeight: '320px',
+            height: '320px',
             marginTop: '10px',
             display: 'flex',
             flexDirection: 'column',
@@ -1726,8 +1726,10 @@ export const makeRejectModerationEventDialogStyles = () =>
             display: 'flex',
             flexDirection: 'column',
             flex: 1,
+            minHeight: 0,
             '& .ql-container': Object.freeze({
                 flex: 1,
+                minHeight: 0,
                 overflowY: 'auto',
             }),
         }),
