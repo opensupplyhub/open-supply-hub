@@ -33,3 +33,11 @@ terraform {
   }
 }
 
+# Ensures every new EBS volume (and therefore every snapshot taken from it) in
+# this account/region is encrypted by default, without requiring encryption
+# settings on individual resources (e.g. the VPN EC2 instance or the AWS Batch
+# Spot compute environments, none of which set this explicitly today).
+resource "aws_ebs_encryption_by_default" "this" {
+  enabled = true
+}
+
