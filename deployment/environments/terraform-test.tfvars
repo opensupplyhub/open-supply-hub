@@ -18,13 +18,15 @@ api_production_locations_cache_max_ttl     = 60
 bastion_ami = "ami-03a25ed280b358f5b"
 bastion_instance_type = "t3.nano"
 
-rds_allocated_storage = "256"
+rds_allocated_storage = "400"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
 rds_instance_type = "db.t3.2xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
+rds_storage_type = "gp3"
+rds_iops = 12000
 rds_storage_encrypted = true
 
 anonymized_database_instance_type = "db.t3.2xlarge"
