@@ -13,11 +13,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
-* `0218_add_contributor_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (defaulting to `False`) to the `Contributor` model (and its `HistoricalContributor` mirror).
+* `0218_add_updated_at_to_index_claim_info.py` - Updates the `index_claim_info()` SQL function to include the claim's `updated_at` timestamp in the indexed `claim_info` JSON, so the claimed section can display the latest edit date instead of the original claim date. See OSDEV-2679.
+* `0219_add_contributor_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (defaulting to `False`) to the `Contributor` model (and its `HistoricalContributor` mirror).
 
 #### Schema changes
 * [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Added `anonymise_in_paid_products` boolean column to `api_contributor` (defaults to `False`). When enabled for a contributor, that contributor is anonymised in OS Hub's paid products regardless of contributor type. No reindex is required — masking happens at response build time.
-* `0218_add_updated_at_to_index_claim_info.py` - Updates the `index_claim_info()` SQL function to include the claim's `updated_at` timestamp in the indexed `claim_info` JSON, so the claimed section can display the latest edit date instead of the original claim date. See OSDEV-2679.
 
 ### Code/API changes
 * [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
