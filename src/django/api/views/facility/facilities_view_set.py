@@ -233,6 +233,16 @@ class FacilitiesViewSet(ListModelMixin,
                                         "is_from_created_from": true
                                     }
                                 ],
+                                "address": [
+                                    {
+                                        "value": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                                        "field_name": "address",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
                                 "number_of_workers": [
                                     {
                                         "id": 10,
@@ -244,9 +254,126 @@ class FacilitiesViewSet(ListModelMixin,
                                         "value_count": 1,
                                         "verified_count": 0,
                                         "is_from_claim": false,
-                                        "field_name": "number_of_workers"
+                                        "field_name": "number_of_workers",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
                                     }
-                                ]
+                                ],
+                                "native_language_name": [
+                                    {
+                                        "id": 11,
+                                        "is_verified": false,
+                                        "value": {"raw_value": "Nantong Jackbeanie Native Name"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "native_language_name",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "facility_type": [
+                                    {
+                                        "id": 12,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Final Product Assembly"],
+                                            "matched_values": ["Final Product Assembly"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "facility_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "processing_type": [
+                                    {
+                                        "id": 13,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Cut and Sew"],
+                                            "matched_values": ["Cut and Sew"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "processing_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "product_type": [
+                                    {
+                                        "id": 14,
+                                        "is_verified": false,
+                                        "value": {"raw_values": ["Headwear", "Garments"]},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "product_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company": [
+                                    {
+                                        "id": 15,
+                                        "is_verified": false,
+                                        "value": {"name": "Parent Company"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "parent_company",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company_os_id": [],
+                                "duns_id": [],
+                                "lei_id": [],
+                                "rba_id": [],
+                                "isic_4": []
                             },
                             "sector": [
                                 {
@@ -455,6 +582,16 @@ class FacilitiesViewSet(ListModelMixin,
                                 "is_from_created_from": false
                             }
                         ],
+                        "address": [
+                            {
+                                "value": "Facility address",
+                                "field_name": "address",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "is_from_created_from": false
+                            }
+                        ],
                         "number_of_workers": [
                             {
                                 "id": 10,
@@ -466,9 +603,126 @@ class FacilitiesViewSet(ListModelMixin,
                                 "value_count": 1,
                                 "verified_count": 0,
                                 "is_from_claim": false,
-                                "field_name": "number_of_workers"
+                                "field_name": "number_of_workers",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
                             }
-                        ]
+                        ],
+                        "native_language_name": [
+                            {
+                                "id": 11,
+                                "is_verified": false,
+                                "value": {"raw_value": "Facility Native Name"},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "native_language_name",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "facility_type": [
+                            {
+                                "id": 12,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": ["Final Product Assembly"],
+                                    "matched_values": ["Final Product Assembly"]
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "facility_type",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "processing_type": [
+                            {
+                                "id": 13,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": ["Cut and Sew"],
+                                    "matched_values": ["Cut and Sew"]
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "processing_type",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "product_type": [
+                            {
+                                "id": 14,
+                                "is_verified": false,
+                                "value": {"raw_values": ["Shirts", "Pants"]},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "product_type",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "parent_company": [
+                            {
+                                "id": 15,
+                                "is_verified": false,
+                                "value": {"name": "Parent Company"},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "parent_company",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "parent_company_os_id": [],
+                        "duns_id": [],
+                        "lei_id": [],
+                        "rba_id": [],
+                        "isic_4": []
                     },
                     "contributor_fields": [],
                     "activity_reports": [],
@@ -528,22 +782,64 @@ class FacilitiesViewSet(ListModelMixin,
                         "office": null
                     },
                     "partner_fields": {
-                        "worldly_assessment_data": [
+                        "climate_trace_emissions": [
                             {
+                                "id": 20,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
-                                        "fem_assessment": {
-                                            "verification_status": "pending",
-                                            "assessment_url": "https://example.com/assessment-id",
-                                            "last_date": "2026-03-09T13:52:43Z",
-                                            "reporting_year": 2025
-                                        }
+                                        "estimated_emissions": 1250500,
+                                        "estimated_annual_throughput": 450000,
+                                        "emissions_model": "Partially Modeled"
                                     }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "climate_trace_emissions",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Climate TRACE Emissions",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Climate TRACE Estimated Emissions",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "estimated_emissions": {
+                                            "type": "integer",
+                                            "title": "Estimated Emissions (t CO2e-100)"
+                                        },
+                                        "estimated_annual_throughput": {
+                                            "type": "integer",
+                                            "title": "Estimated Annual Throughput (kg/yr)"
+                                        },
+                                        "emissions_model": {
+                                            "type": "string",
+                                            "title": "Emissions Model",
+                                            "enum": [
+                                                "Facility Reported",
+                                                "Partially Reported",
+                                                "Partially Modeled",
+                                                "Fully Modeled"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "estimated_emissions",
+                                        "emissions_model"
+                                    ]
                                 }
                             }
                         ],
                         "slcp_assessment": [
                             {
+                                "id": 21,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "most_recent_assessment_status": "Assessment Completed",
@@ -552,128 +848,103 @@ class FacilitiesViewSet(ListModelMixin,
                                         "verifier_body": "Bureau Veritas",
                                         "slcp_facility_id": "FA1000010"
                                     }
-                                }
-                            }
-                        ],
-                        "accord_inspections_and_remediation_program": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "first_inspection_date": "2022-06-01",
-                                        "rsc_presence": "Yes"
-                                    }
-                                }
-                            }
-                        ],
-                        "amfori_compliance_status": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "bepi_audit": {
-                                            "submission_date": "2023-10-28",
-                                            "expiration_date": "2025-10-30"
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "slcp_assessment",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "SLCP Assessment",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "SLCP Assessment",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "most_recent_assessment_status": {
+                                            "type": "string",
+                                            "title": "Assessment Status"
                                         },
-                                        "bsci_audit": {
-                                            "submission_date": "2023-10-28",
-                                            "expiration_date": "2025-10-28"
+                                        "most_recent_assessment_date": {
+                                            "type": "string",
+                                            "title": "Assessment Date",
+                                            "format": "date"
                                         },
-                                        "environmental_risk_assessment": {
-                                            "completion_date": "2025-10-28",
-                                            "expiration_date": "2025-10-30"
+                                        "assessment_platform": {
+                                            "type": "string",
+                                            "title": "Assessment Platform"
+                                        },
+                                        "verifier_body": {
+                                            "type": "string",
+                                            "title": "Verifier Body"
+                                        },
+                                        "slcp_facility_id": {
+                                            "type": "string",
+                                            "title": "SLCP Facility ID"
                                         }
-                                    }
-                                }
-                            }
-                        ],
-                        "climate_trace_emissions": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "estimated_emissions": 1250500,
-                                        "estimated_annual_throughput": 450000,
-                                        "emissions_model": "Partially Modeled"
-                                    }
-                                }
-                            }
-                        ],
-                        "estimated_annual_activity": [
-                            {
-                                "value": {
-                                    "raw_value": 450000
-                                }
-                            }
-                        ],
-                        "estimated_emissions": [
-                            {
-                                "value": {
-                                    "raw_value": 32833
-                                }
-                            }
-                        ],
-                        "wage_indicator": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "living_wage_link_national": "https://paywizard.org/salary/living-wages",
-                                        "living_wage_link_national_text": "View Living Wages in national language",
-                                        "minimum_wage_link_english": "https://wageindicator.org/salary/minimum-wage/united-states-of-america",
-                                        "minimum_wage_link_english_text": "View Minimum Wage in English",
-                                        "minimum_wage_link_national": "https://paywizard.org/salary/minimum-wage",
-                                        "minimum_wage_link_national_text": "View Minimum Wage in national language"
                                     }
                                 }
                             }
                         ],
                         "mit_living_wage": [
                             {
+                                "id": 22,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "county_id": "24033"
                                     }
-                                }
-                            }
-                        ],
-                        "ulula_grievance_mechanism": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "status": "active",
-                                        "start_date": "2026-01-29",
-                                        "end_date": "2026-01-29"
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "mit_living_wage",
+                                "verified_count": 0,
+                                "source_by": "<p>County estimates match U.S. audit benchmark needs.</p>",
+                                "unit": "",
+                                "label": "Living Wage Institute: Local Living Wage",
+                                "base_url": "https://livingwage.mit.edu/counties/",
+                                "display_text": "View local living wage",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Some Data",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "county_id": {
+                                            "type": "string",
+                                            "format": "uri-reference"
+                                        }
                                     }
                                 }
                             }
                         ],
-                        "rsc_grievance_mechanism": [
+                        "name_ja": [
                             {
+                                "id": 23,
+                                "is_verified": false,
                                 "value": {
-                                    "raw_values": {
-                                        "status": "active",
-                                        "active_since": "2022-06-01",
-                                        "end_date": "2022-06-01"
-                                    }
-                                }
-                            }
-                        ],
-                        "labor_solutions_grievance_mechanism": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "wovo_active": "active",
-                                        "wovo_established_date": "2022-06-01"
-                                    }
-                                }
-                            }
-                        ],
-                        "wrap_certification": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "certification_status": "active",
-                                        "issue_date": "2022-06-01",
-                                        "expiration_date": "2022-12-01"
-                                    }
-                                }
+                                    "raw_value": "Facility Name in Japanese"
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "name_ja",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Japanese Name",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": null
                             }
                         ]
                     }
@@ -763,7 +1034,159 @@ class FacilitiesViewSet(ListModelMixin,
                             "contributor_fields": [],
                             "new_os_id": null,
                             "has_inexact_coordinates": false,
-                            "extended_fields": {},
+                            "extended_fields": {
+                                "name": [
+                                    {
+                                        "value": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                                        "field_name": "name",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
+                                "address": [
+                                    {
+                                        "value": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                                        "field_name": "address",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
+                                "number_of_workers": [
+                                    {
+                                        "id": 10,
+                                        "is_verified": false,
+                                        "value": {"min": 1000, "max": 5000},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "number_of_workers",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "native_language_name": [
+                                    {
+                                        "id": 11,
+                                        "is_verified": false,
+                                        "value": {"raw_value": "Nantong Jackbeanie Native Name"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "native_language_name",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "facility_type": [
+                                    {
+                                        "id": 12,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Final Product Assembly"],
+                                            "matched_values": ["Final Product Assembly"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "facility_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "processing_type": [
+                                    {
+                                        "id": 13,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Cut and Sew"],
+                                            "matched_values": ["Cut and Sew"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "processing_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "product_type": [
+                                    {
+                                        "id": 14,
+                                        "is_verified": false,
+                                        "value": {"raw_values": ["Headwear", "Garments"]},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "product_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company": [
+                                    {
+                                        "id": 15,
+                                        "is_verified": false,
+                                        "value": {"name": "Parent Company"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "parent_company",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company_os_id": [],
+                                "duns_id": [],
+                                "lei_id": [],
+                                "rba_id": [],
+                                "isic_4": []
+                            },
                             "created_from": {
                                 "created_at": "2022-01-27T17:36:54.597482Z",
                                 "contributor": "Researcher A"
@@ -778,7 +1201,62 @@ class FacilitiesViewSet(ListModelMixin,
                                 }
                             ],
                             "is_claimed": false,
-                            "partner_fields": {}
+                            "partner_fields": {
+                                "climate_trace_emissions": [
+                                    {
+                                        "id": 12,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": {
+                                                "estimated_emissions": 1250500,
+                                                "estimated_annual_throughput": 450000,
+                                                "emissions_model": "Partially Modeled"
+                                            }
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_name": "Researcher A",
+                                        "contributor_id": 4,
+                                        "value_count": 1,
+                                        "is_from_claim": false,
+                                        "field_name": "climate_trace_emissions",
+                                        "verified_count": 0,
+                                        "source_by": "",
+                                        "unit": "",
+                                        "label": "Climate TRACE Emissions",
+                                        "base_url": "",
+                                        "display_text": "",
+                                        "json_schema": {
+                                            "type": "object",
+                                            "title": "Climate TRACE Estimated Emissions",
+                                            "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                            "properties": {
+                                                "estimated_emissions": {
+                                                    "type": "integer",
+                                                    "title": "Estimated Emissions (t CO2e-100)"
+                                                },
+                                                "estimated_annual_throughput": {
+                                                    "type": "integer",
+                                                    "title": "Estimated Annual Throughput (kg/yr)"
+                                                },
+                                                "emissions_model": {
+                                                    "type": "string",
+                                                    "title": "Emissions Model",
+                                                    "enum": [
+                                                        "Facility Reported",
+                                                        "Partially Reported",
+                                                        "Partially Modeled",
+                                                        "Fully Modeled"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "estimated_emissions",
+                                                "emissions_model"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
                         },
                         "confidence": 0.8153
                     }
@@ -832,7 +1310,21 @@ class FacilitiesViewSet(ListModelMixin,
                             "contributor_fields": [],
                             "new_os_id": null,
                             "has_inexact_coordinates": false,
-                            "extended_fields": {},
+                            "extended_fields": {
+                                "name": [],
+                                "address": [],
+                                "number_of_workers": [],
+                                "native_language_name": [],
+                                "facility_type": [],
+                                "processing_type": [],
+                                "product_type": [],
+                                "parent_company": [],
+                                "parent_company_os_id": [],
+                                "duns_id": [],
+                                "lei_id": [],
+                                "rba_id": [],
+                                "isic_4": []
+                            },
                             "created_from": {
                                 "created_at": "2022-01-27T17:36:54.597482Z",
                                 "contributor": "Researcher A"
@@ -891,7 +1383,21 @@ class FacilitiesViewSet(ListModelMixin,
                             "contributor_fields": [],
                             "new_os_id": null,
                             "has_inexact_coordinates": false,
-                            "extended_fields": {},
+                            "extended_fields": {
+                                "name": [],
+                                "address": [],
+                                "number_of_workers": [],
+                                "native_language_name": [],
+                                "facility_type": [],
+                                "processing_type": [],
+                                "product_type": [],
+                                "parent_company": [],
+                                "parent_company_os_id": [],
+                                "duns_id": [],
+                                "lei_id": [],
+                                "rba_id": [],
+                                "isic_4": []
+                            },
                             "created_from": {
                                 "created_at": "2022-01-27T17:36:54.597482Z",
                                 "contributor": "an academic/researcher"
