@@ -1329,6 +1329,76 @@ class FacilitiesViewSet(ListModelMixin,
                                 }
                             }
                         ],
+                        "ulula_grievance_mechanism": [
+                            {
+                                "id": 32,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "start_date": "2021-05-01"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "ulula_grievance_mechanism",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Ulula Grievance Mechanism",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Ulula Grievance Mechanism",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["status"],
+                                    "properties": {
+                                        "status": {
+                                            "enum": ["active", "inactive"],
+                                            "type": "string",
+                                            "title": "Status",
+                                            "description": "The current operational status."
+                                        },
+                                        "start_date": {
+                                            "type": "string",
+                                            "title": "Active since",
+                                            "format": "date",
+                                            "description": "The date the grievance mechanism was established."
+                                        },
+                                        "end_date": {
+                                            "type": "string",
+                                            "title": "End Date",
+                                            "format": "date",
+                                            "description": "The date the grievance mechanism stopped operating."
+                                        },
+                                        "thematic_coverage": {
+                                            "type": "string",
+                                            "title": "Thematic Coverage",
+                                            "default": "Multi-issue"
+                                        },
+                                        "mechanism_type_ownership": {
+                                            "type": "string",
+                                            "title": "Mechanism Type / Ownership",
+                                            "default": "Ownership differs by facility"
+                                        },
+                                        "access_modality": {
+                                            "type": "string",
+                                            "title": "Access / Modality",
+                                            "default": "Hotline; Digital platform (app/web)"
+                                        },
+                                        "coverage": {
+                                            "type": "string",
+                                            "title": "Coverage",
+                                            "default": "Access differs by facility"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
                         "wrap_certification": [
                             {
                                 "id": 31,
