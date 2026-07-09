@@ -422,6 +422,7 @@ class FacilitiesViewSet(ListModelMixin,
     @cache_page_by_auth_tier(
         settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
         cache="view_cache",
+    )
     @cache_view_response(
         'facility_detail',
         vary_on=facilities_visibility_token,
