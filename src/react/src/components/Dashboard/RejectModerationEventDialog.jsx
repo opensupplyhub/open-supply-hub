@@ -56,7 +56,7 @@ const RejectModerationEventDialog = ({
         updateModerationEvent(
             MODERATION_STATUSES_ENUM.REJECTED,
             cleanedText,
-            htmlContent,
+            htmlContent.replace(/&nbsp;/g, ' '),
         );
         closeDialog();
     };

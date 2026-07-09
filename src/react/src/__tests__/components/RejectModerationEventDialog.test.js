@@ -11,10 +11,13 @@ const mockCloseDialog = jest.fn();
 jest.mock('react-quill-new', () => ({ value, onChange }) => (
     <textarea
         data-testid="fake-editor"
-        value={value.replace(/<\/?p>/g, '')}
+        value={value.replace(/<\/?p>/g, '').replace(/&nbsp;/g, ' ')}
         onChange={(e) => {
             const text = e.target.value;
-            onChange(`<p>${text}</p>`, null, 'user', {
+            // Mimic Quill's getSemanticHTML(), which encodes every
+            // space as &nbsp; in the emitted HTML.
+            const html = `<p>${text.replace(/ /g, '&nbsp;')}</p>`;
+            onChange(html, null, 'user', {
                 getText: () => `${text}\n`,
             });
         }}
@@ -97,6 +100,28 @@ describe('RejectModerationEventDialog component', () => {
             `<p>${validText}</p>`,
         );
         expect(mockCloseDialog).toHaveBeenCalledTimes(1);
+    });
+
+    test('decodes quill &nbsp; space encoding in the submitted HTML', () => {
+        const { getByRole, getByTestId } = renderWithProviders(
+            <RejectModerationEventDialog {...defaultProps} />
+        );
+        const fakeEditor = getByTestId('fake-editor');
+        const textWithSpaces = 'just a few fixes are needed before we accept';
+
+        fireEvent.change(fakeEditor, { target: { value: textWithSpaces } });
+
+        // Typing spaces must not be swallowed by the value round-trip.
+        expect(fakeEditor).toHaveValue(textWithSpaces);
+
+        fireEvent.click(getByRole('button', { name: /Reject/i }));
+
+        // The submitted HTML uses regular spaces, not &nbsp;.
+        expect(mockUpdateModerationEvent).toHaveBeenCalledWith(
+            MODERATION_STATUSES_ENUM.REJECTED,
+            textWithSpaces,
+            `<p>${textWithSpaces}</p>`,
+        );
     });
 
     test('displays tooltip on hover when reject button is disabled', () => {
