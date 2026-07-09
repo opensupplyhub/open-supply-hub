@@ -1,14 +1,28 @@
-from datetime import timezone as dt_timezone
+from typing import (Union)
 from itertools import groupby
-from typing import Union
+from datetime import timezone as dt_timezone
 
-from api.constants import (MASKED_CONTRIBUTOR_LABEL, FacilitiesQueryParams,
-                           FacilityClaimStatuses)
+from api.constants import (
+    FacilityClaimStatuses,
+    FacilitiesQueryParams,
+    MASKED_CONTRIBUTOR_LABEL
+)
 from dateutil import parser
-
-from ...helpers.helpers import cleanup_data, prefix_a_an, replace_invalid_data
-from ...models import ExtendedField, Facility, FacilityListItem, FacilityMatch
-from ..utils import get_embed_contributor_id, prefer_contributor_name
+from ...helpers.helpers import (
+    cleanup_data,
+    replace_invalid_data,
+    prefix_a_an
+)
+from ...models import (
+    ExtendedField,
+    FacilityListItem,
+    FacilityMatch,
+    Facility,
+)
+from ..utils import (
+    get_embed_contributor_id,
+    prefer_contributor_name,
+)
 
 
 def _get_parent_company(claim):
