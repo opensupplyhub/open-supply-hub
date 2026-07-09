@@ -707,9 +707,15 @@ BLEACH_ALLOWED_TAGS = [
 ]
 
 BLEACH_ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'target', 'title'],
+    'a': ['href', 'target', 'title', 'class'],
     'p': ['class'],
     'span': ['class'],
+    'strong': ['class'],
+    'em': ['class'],
+    'u': ['class'],
+    's': ['class'],
+    'sub': ['class'],
+    'sup': ['class'],
 }
 
 BLEACH_STRIP_TAGS = True

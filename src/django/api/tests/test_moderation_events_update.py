@@ -216,8 +216,14 @@ class ModerationEventsUpdateTest(APITestCase):
             '<blockquote>Quote</blockquote>'
             '<pre data-language="plain">code</pre>'
             '<p class="ql-direction-rtl">'
-            'text <u>underlined</u> <s>struck</s> '
-            '<span class="ql-font-monospace">mono</span>'
+            'text <u class="ql-font-serif">underlined</u> '
+            '<s class="ql-font-monospace">struck</s> '
+            '<span class="ql-font-monospace">mono</span> '
+            '<strong class="ql-font-serif">bold</strong> '
+            '<em class="ql-font-monospace">italic</em> '
+            '<sub class="ql-font-serif">low</sub>'
+            '<sup class="ql-font-monospace">high</sup> '
+            '<a href="https://example.com" class="ql-link">link</a>'
             '<script>alert(1)</script></p>'
         )
         response = self.client.patch(
@@ -238,15 +244,23 @@ class ModerationEventsUpdateTest(APITestCase):
         raw = self.moderation_event.action_reason_text_raw
 
         # Quill formatting tags survive sanitization.
-        self.assertIn('<u>underlined</u>', raw)
-        self.assertIn('<s>struck</s>', raw)
         self.assertIn('<blockquote>Quote</blockquote>', raw)
         self.assertIn('<pre>code</pre>', raw)
-        # Quill class-based formats (font, direction) survive on <p>.
+        # class survives on every inline tag allowed in
+        # BLEACH_ALLOWED_ATTRIBUTES.
         self.assertIn('class="ql-direction-rtl"', raw)
+        self.assertIn('<u class="ql-font-serif">underlined</u>', raw)
+        self.assertIn('<s class="ql-font-monospace">struck</s>', raw)
         self.assertIn(
             '<span class="ql-font-monospace">mono</span>', raw
         )
+        self.assertIn('<strong class="ql-font-serif">bold</strong>', raw)
+        self.assertIn('<em class="ql-font-monospace">italic</em>', raw)
+        self.assertIn('<sub class="ql-font-serif">low</sub>', raw)
+        self.assertIn('<sup class="ql-font-monospace">high</sup>', raw)
+        # <a> keeps href and class.
+        self.assertIn('href="https://example.com"', raw)
+        self.assertIn('class="ql-link"', raw)
         # Disallowed markup is stripped.
         self.assertNotIn('<script', raw)
         self.assertNotIn('data-language', raw)
