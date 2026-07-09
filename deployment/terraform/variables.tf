@@ -182,6 +182,14 @@ variable "rds_storage_type" {
   default = "gp2"
 }
 
+variable "rds_iops" {
+  # Required by AWS when rds_storage_type is "gp3" and allocated storage is at
+  # or above the striping threshold (>= 400 GiB for PostgreSQL), where the valid
+  # range is 12000-64000 and the 12000 baseline is included at no extra cost.
+  # Leave at 0 for gp2, where IOPS scale automatically with storage size.
+  default = 0
+}
+
 variable "rds_database_identifier" {
 }
 
