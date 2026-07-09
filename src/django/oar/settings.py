@@ -353,6 +353,11 @@ MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
 MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS = int(
     os.getenv('MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS', 60 * 10)
 )
+# Compressed payloads over this size are not cached, leaving headroom
+# below memcached's ~5 MB per-item limit for key and protocol overhead.
+VIEW_RESPONSE_CACHE_MAX_BYTES = int(
+    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 4 * 1024 * 1024)
+)
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
 CACHES = {

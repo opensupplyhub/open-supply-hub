@@ -32,7 +32,6 @@ from rest_framework.exceptions import (
 )
 from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
-from django.contrib.gis.db.models import Extent
 from django.core import exceptions as core_exceptions
 from django.db import transaction
 from django.db.models import F, Q
@@ -41,10 +40,6 @@ from django.utils import timezone
 from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
-from django.conf import settings
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
-
 from api.models import (
     Contributor,
     Facility,
@@ -96,6 +91,9 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
+from api.facilities_extent_cache import FacilitiesExtentCache
+from api.facilities_visibility_token import facilities_visibility_token
+from api.view_response_cache import cache_view_response
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
 
@@ -125,6 +123,10 @@ class FacilitiesViewSet(ListModelMixin,
         return super().get_throttles()
 
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
+    @cache_view_response(
+        'facilities_list',
+        vary_on=facilities_visibility_token,
+    )
     def list(self, request):
         """
         Returns a list of facilities in GeoJSON format for a given query.
@@ -258,8 +260,8 @@ class FacilitiesViewSet(ListModelMixin,
 
         page_queryset = self.paginate_queryset(queryset)
 
-        extent = queryset.aggregate(Extent('location'))['location__extent']
-
+        extent_cache = FacilitiesExtentCache()
+        extent = extent_cache.get(queryset, request.query_params)
         context = {'request': request}
 
         should_serialize_details = params.validated_data['detail']
@@ -308,11 +310,9 @@ class FacilitiesViewSet(ListModelMixin,
 
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
-    @method_decorator(
-        cache_page(
-            settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
-            cache="view_cache",
-        ),
+    @cache_view_response(
+        'facility_detail',
+        vary_on=facilities_visibility_token,
     )
     def retrieve(self, request, pk=None):
         """

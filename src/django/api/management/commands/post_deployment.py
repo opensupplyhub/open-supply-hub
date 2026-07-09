@@ -35,10 +35,17 @@ class Command(BaseCommand):
         call_command('migrate')
         call_command('reindex_database')
         # Temporary for 2.27.0 — remove after the code freeze is complete and
-        # the release has been deployed everywhere.
+        # the release has been deployed everywhere. One-time targeted backfills
+        # for the index_*() functions changed this release:
+        #   contributors -> OSDEV-2390 (list/last-contributed dates)
+        #   claim_info   -> OSDEV-2679 (claim updated_at)
         call_command(
             'backfill_facility_index',
-            fields='contributors',
+            fields='contributors,claim_info',
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )
+        # Temporary for 2.27.0 (OSDEV-2896) — one-time backfill of name/address
+        # attribution for facilities promoted before the OSDEV-2197 fix. Remove
+        # after the release has been deployed everywhere.
+        call_command('reindex_promoted_locations')
