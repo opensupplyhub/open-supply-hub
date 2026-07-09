@@ -305,7 +305,9 @@ export const makeGetClaimedFacilitiesURL = () => '/api/facilities/claimed/';
 export const makeClaimedFacilityDetailsLink = claimID => `/claimed/${claimID}/`;
 
 export const makeLogDownloadUrl = (path, recordCount) =>
-    `/api/log-download/?path=${path}&record_count=${recordCount}`;
+    `/api/log-download/?path=${encodeURIComponent(
+        path,
+    )}&record_count=${recordCount}`;
 
 export const makeUpdateFacilityLocationURL = osID =>
     `/api/facilities/${osID}/update-location/`;
