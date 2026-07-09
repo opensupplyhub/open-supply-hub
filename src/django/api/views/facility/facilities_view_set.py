@@ -782,15 +782,17 @@ class FacilitiesViewSet(ListModelMixin,
                         "office": null
                     },
                     "partner_fields": {
-                        "climate_trace_emissions": [
+                        "worldly_assessment_data": [
                             {
                                 "id": 20,
                                 "is_verified": false,
                                 "value": {
                                     "raw_values": {
-                                        "estimated_emissions": 1250500,
-                                        "estimated_annual_throughput": 450000,
-                                        "emissions_model": "Partially Modeled"
+                                        "fem_assessment": {
+                                            "verification_status": "pending",
+                                            "last_date": "2026-03-09T13:52:43Z",
+                                            "reporting_year": 2025
+                                        }
                                     }
                                 },
                                 "updated_at": "2022-01-27T17:36:54.597482Z",
@@ -798,41 +800,40 @@ class FacilitiesViewSet(ListModelMixin,
                                 "contributor_id": 1,
                                 "value_count": 1,
                                 "is_from_claim": false,
-                                "field_name": "climate_trace_emissions",
+                                "field_name": "worldly_assessment_data",
                                 "verified_count": 0,
-                                "source_by": "",
+                                "source_by": "<p>Learn more about Cascale's Higg Index on Worldly.</p>",
                                 "unit": "",
-                                "label": "Climate TRACE Emissions",
+                                "label": "Worldly",
                                 "base_url": "",
                                 "display_text": "",
                                 "json_schema": {
                                     "type": "object",
-                                    "title": "Climate TRACE Estimated Emissions",
+                                    "title": "Worldly Assessments Data Update",
                                     "$schema": "https://json-schema.org/draft/2020-12/schema",
                                     "properties": {
-                                        "estimated_emissions": {
-                                            "type": "integer",
-                                            "title": "Estimated Emissions (t CO2e-100)"
-                                        },
-                                        "estimated_annual_throughput": {
-                                            "type": "integer",
-                                            "title": "Estimated Annual Throughput (kg/yr)"
-                                        },
-                                        "emissions_model": {
-                                            "type": "string",
-                                            "title": "Emissions Model",
-                                            "enum": [
-                                                "Facility Reported",
-                                                "Partially Reported",
-                                                "Partially Modeled",
-                                                "Fully Modeled"
-                                            ]
+                                        "fem_assessment": {
+                                            "type": "object",
+                                            "title": "Higg Facility Environmental Module (Higg FEM)",
+                                            "properties": {
+                                                "last_date": {
+                                                    "type": "string",
+                                                    "title": "Last Date",
+                                                    "format": "date-time"
+                                                },
+                                                "reporting_year": {
+                                                    "type": "integer",
+                                                    "title": "Reporting Year",
+                                                    "minimum": 1970
+                                                },
+                                                "verification_status": {
+                                                    "type": "string",
+                                                    "title": "Status",
+                                                    "enum": ["verified", "unverified", "pending"]
+                                                }
+                                            }
                                         }
-                                    },
-                                    "required": [
-                                        "estimated_emissions",
-                                        "emissions_model"
-                                    ]
+                                    }
                                 }
                             }
                         ],
@@ -891,9 +892,286 @@ class FacilitiesViewSet(ListModelMixin,
                                 }
                             }
                         ],
-                        "mit_living_wage": [
+                        "accord_inspections_and_remediation_program": [
                             {
                                 "id": 22,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "first_inspection_date": "2022-06-01",
+                                        "rsc_presence": "Yes"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "accord_inspections_and_remediation_program",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Accord Inspections & Remediation Program",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Accord Inspections and Remediation Program",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "rsc_presence": {
+                                            "type": "string",
+                                            "title": "Accord/RSC Presence",
+                                            "enum": ["Yes", "No"]
+                                        },
+                                        "first_inspection_date": {
+                                            "type": "string",
+                                            "title": "First Inspection Date",
+                                            "format": "date"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "amfori_compliance_status": [
+                            {
+                                "id": 23,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "bsci_audit": {
+                                            "submission_date": "2023-10-28",
+                                            "expiration_date": "2025-10-28"
+                                        },
+                                        "bepi_audit": {
+                                            "submission_date": "2023-10-28",
+                                            "expiration_date": "2025-10-30"
+                                        },
+                                        "environmental_risk_assessment": {
+                                            "completion_date": "2025-10-28",
+                                            "expiration_date": "2025-10-30"
+                                        }
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "amfori_compliance_status",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "amfori Assessment & Audits",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Amfori Compliance Status",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "bsci_audit": {
+                                            "type": "object",
+                                            "properties": {
+                                                "submission_date": {
+                                                    "type": "string",
+                                                    "title": "Submission Date",
+                                                    "format": "date"
+                                                },
+                                                "expiration_date": {
+                                                    "type": "string",
+                                                    "title": "Expiration Date",
+                                                    "format": "date"
+                                                }
+                                            }
+                                        },
+                                        "bepi_audit": {
+                                            "type": "object",
+                                            "properties": {
+                                                "submission_date": {
+                                                    "type": "string",
+                                                    "title": "Submission Date",
+                                                    "format": "date"
+                                                },
+                                                "expiration_date": {
+                                                    "type": "string",
+                                                    "title": "Expiration Date",
+                                                    "format": "date"
+                                                }
+                                            }
+                                        },
+                                        "environmental_risk_assessment": {
+                                            "type": "object",
+                                            "properties": {
+                                                "completion_date": {
+                                                    "type": "string",
+                                                    "title": "Completion Date",
+                                                    "format": "date"
+                                                },
+                                                "expiration_date": {
+                                                    "type": "string",
+                                                    "title": "Expiration Date",
+                                                    "format": "date"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "climate_trace_emissions": [
+                            {
+                                "id": 24,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "estimated_emissions": 1250500,
+                                        "estimated_annual_throughput": 450000,
+                                        "emissions_model": "Partially Modeled"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "climate_trace_emissions",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Climate TRACE Emissions",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Climate TRACE Estimated Emissions",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "estimated_emissions": {
+                                            "type": "integer",
+                                            "title": "Estimated Emissions (t CO2e-100)"
+                                        },
+                                        "estimated_annual_throughput": {
+                                            "type": "integer",
+                                            "title": "Estimated Annual Throughput (kg/yr)"
+                                        },
+                                        "emissions_model": {
+                                            "type": "string",
+                                            "title": "Emissions Model",
+                                            "enum": [
+                                                "Facility Reported",
+                                                "Partially Reported",
+                                                "Partially Modeled",
+                                                "Fully Modeled"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "estimated_emissions",
+                                        "emissions_model"
+                                    ]
+                                }
+                            }
+                        ],
+                        "estimated_annual_activity": [
+                            {
+                                "id": 25,
+                                "is_verified": false,
+                                "value": {"raw_value": 450000},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "estimated_annual_activity",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Estimated Annual Activity",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": null
+                            }
+                        ],
+                        "estimated_emissions": [
+                            {
+                                "id": 26,
+                                "is_verified": false,
+                                "value": {"raw_value": 32833},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "estimated_emissions",
+                                "verified_count": 0,
+                                "source_by": "<p>Based on Emissions Models from Climate TRACE.</p>",
+                                "unit": "t CO2e-100",
+                                "label": "Estimated Annual Emissions",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": null
+                            }
+                        ],
+                        "wage_indicator": [
+                            {
+                                "id": 27,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "living_wage_link_national": "https://paywizard.org/salary/living-wages",
+                                        "living_wage_link_national_text": "View Living Wages in national language",
+                                        "minimum_wage_link_english": "https://wageindicator.org/salary/minimum-wage/united-states-of-america",
+                                        "minimum_wage_link_english_text": "View Minimum Wage in English",
+                                        "minimum_wage_link_national": "https://paywizard.org/salary/minimum-wage",
+                                        "minimum_wage_link_national_text": "View Minimum Wage in national language"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "wage_indicator",
+                                "verified_count": 0,
+                                "source_by": "<p>2025 Minimum and Living Wages Database.</p>",
+                                "unit": "",
+                                "label": "WageIndicator: Minimum & Living Wages",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Wage indicator reference links",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "living_wage_link_national": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "minimum_wage_link_english": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "minimum_wage_link_national": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "living_wage_link_national_text": {
+                                            "type": "string"
+                                        },
+                                        "minimum_wage_link_english_text": {
+                                            "type": "string"
+                                        },
+                                        "minimum_wage_link_national_text": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "mit_living_wage": [
+                            {
+                                "id": 28,
                                 "is_verified": false,
                                 "value": {
                                     "raw_values": {
@@ -925,26 +1203,178 @@ class FacilitiesViewSet(ListModelMixin,
                                 }
                             }
                         ],
-                        "name_ja": [
+                        "rsc_grievance_mechanism": [
                             {
-                                "id": 23,
+                                "id": 29,
                                 "is_verified": false,
                                 "value": {
-                                    "raw_value": "Facility Name in Japanese"
+                                    "raw_values": {
+                                        "status": "Active",
+                                        "thematic_coverage": "Multi-issue",
+                                        "mechanism_type_ownership": "Multi-stakeholder led",
+                                        "access_modality": "Hotline; Email; In-person",
+                                        "coverage": "All workers (factory-level)"
+                                    }
                                 },
                                 "updated_at": "2022-01-27T17:36:54.597482Z",
                                 "contributor_name": "Brand A",
                                 "contributor_id": 1,
                                 "value_count": 1,
                                 "is_from_claim": false,
-                                "field_name": "name_ja",
+                                "field_name": "rsc_grievance_mechanism",
+                                "verified_count": 0,
+                                "source_by": "<p>Mechanism Active in Bangladesh Since August 1, 2014</p>",
+                                "unit": "",
+                                "label": "Accord/RSC Grievance Mechanism",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "RSC Grievance Mechanism",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["status"],
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "title": "Status",
+                                            "enum": ["Active", "Inactive"]
+                                        },
+                                        "thematic_coverage": {
+                                            "type": "string",
+                                            "title": "Thematic Coverage",
+                                            "default": "Multi-issue"
+                                        },
+                                        "mechanism_type_ownership": {
+                                            "type": "string",
+                                            "title": "Mechanism Type / Ownership",
+                                            "default": "Multi-stakeholder led"
+                                        },
+                                        "access_modality": {
+                                            "type": "string",
+                                            "title": "Access / Modality",
+                                            "default": "Hotline; Email; In-person"
+                                        },
+                                        "coverage": {
+                                            "type": "string",
+                                            "title": "Coverage",
+                                            "default": "All workers (factory-level)"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "labor_solutions_grievance_mechanism": [
+                            {
+                                "id": 30,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "wovo_active": "active",
+                                        "wovo_active_date": "2022-06-01",
+                                        "thematic_coverage": "Multi-issue",
+                                        "mechanism_type_ownership": "Facility or brand-led",
+                                        "access_modality": "Digital platform (app/web)",
+                                        "coverage": "All workers (factory-level)"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "labor_solutions_grievance_mechanism",
+                                "verified_count": 0,
+                                "source_by": "<p>WOVO Facility-Level Grievance Mechanism Data</p>",
+                                "unit": "",
+                                "label": "WOVO",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Labor Solutions Grievance Mechanism",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["wovo_active"],
+                                    "properties": {
+                                        "wovo_active": {
+                                            "type": "string",
+                                            "title": "Status",
+                                            "enum": ["active", "inactive"]
+                                        },
+                                        "wovo_active_date": {
+                                            "type": "string",
+                                            "title": "Active Since",
+                                            "format": "date"
+                                        },
+                                        "thematic_coverage": {
+                                            "type": "string",
+                                            "title": "Thematic Coverage",
+                                            "default": "Multi-issue"
+                                        },
+                                        "mechanism_type_ownership": {
+                                            "type": "string",
+                                            "title": "Mechanism Type / Ownership",
+                                            "default": "Facility or brand-led"
+                                        },
+                                        "access_modality": {
+                                            "type": "string",
+                                            "title": "Access / Modality",
+                                            "default": "Digital platform (app/web)"
+                                        },
+                                        "coverage": {
+                                            "type": "string",
+                                            "title": "Coverage",
+                                            "default": "All workers (factory-level)"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "wrap_certification": [
+                            {
+                                "id": 31,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "certification_status": "active",
+                                        "issue_date": "2022-06-01",
+                                        "expiration_date": "2022-12-01"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "wrap_certification",
                                 "verified_count": 0,
                                 "source_by": "",
                                 "unit": "",
-                                "label": "Japanese Name",
+                                "label": "WRAP Certification",
                                 "base_url": "",
                                 "display_text": "",
-                                "json_schema": null
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "WRAP Certification",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["certification_status"],
+                                    "properties": {
+                                        "certification_status": {
+                                            "type": "string",
+                                            "title": "Status",
+                                            "enum": ["active", "inactive"]
+                                        },
+                                        "issue_date": {
+                                            "type": "string",
+                                            "title": "Issue Date",
+                                            "format": "date"
+                                        },
+                                        "expiration_date": {
+                                            "type": "string",
+                                            "title": "Expiration Date",
+                                            "format": "date"
+                                        }
+                                    }
+                                }
                             }
                         ]
                     }
