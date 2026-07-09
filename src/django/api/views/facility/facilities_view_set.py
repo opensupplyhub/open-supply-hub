@@ -369,11 +369,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "json_schema": null
                                     }
                                 ],
-                                "parent_company_os_id": [],
-                                "duns_id": [],
-                                "lei_id": [],
-                                "rba_id": [],
-                                "isic_4": []
+                                "parent_company_os_id": []
                             },
                             "sector": [
                                 {
@@ -718,11 +714,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "json_schema": null
                             }
                         ],
-                        "parent_company_os_id": [],
-                        "duns_id": [],
-                        "lei_id": [],
-                        "rba_id": [],
-                        "isic_4": []
+                        "parent_company_os_id": []
                     },
                     "contributor_fields": [],
                     "activity_reports": [],
@@ -1681,11 +1673,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "json_schema": null
                                     }
                                 ],
-                                "parent_company_os_id": [],
-                                "duns_id": [],
-                                "lei_id": [],
-                                "rba_id": [],
-                                "isic_4": []
+                                "parent_company_os_id": []
                             },
                             "created_from": {
                                 "created_at": "2022-01-27T17:36:54.597482Z",
@@ -1819,11 +1807,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "processing_type": [],
                                 "product_type": [],
                                 "parent_company": [],
-                                "parent_company_os_id": [],
-                                "duns_id": [],
-                                "lei_id": [],
-                                "rba_id": [],
-                                "isic_4": []
+                                "parent_company_os_id": []
                             },
                             "created_from": {
                                 "created_at": "2022-01-27T17:36:54.597482Z",
@@ -1892,11 +1876,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "processing_type": [],
                                 "product_type": [],
                                 "parent_company": [],
-                                "parent_company_os_id": [],
-                                "duns_id": [],
-                                "lei_id": [],
-                                "rba_id": [],
-                                "isic_4": []
+                                "parent_company_os_id": []
                             },
                             "created_from": {
                                 "created_at": "2022-01-27T17:36:54.597482Z",

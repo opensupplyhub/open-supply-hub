@@ -78,7 +78,7 @@ If serializers, tests, and docstrings disagree, prefer runtime behavior from the
 6. Treat `extended_fields` as a full grouped object, not a sparse example:
    - Derive the top-level keys from `ExtendedField.FIELD_CHOICES`.
    - Include per-contributor history for `name`, `address`, `number_of_workers`, `facility_type`, `processing_type`, `product_type`, `parent_company`, and `native_language_name` when documenting a populated response.
-   - Include empty arrays for fields with no values, especially `duns_id`, `lei_id`, `rba_id`, and `isic_4`.
+   - Omit `duns_id`, `lei_id`, `rba_id`, and `isic_4` from the sample. Even though the serializer emits them as empty arrays in the live response, they are intentionally left out of the documented sample. Include empty arrays for other fields with no values.
    - Include `parent_company_os_id` because it is in `ExtendedField.FIELD_CHOICES`, even when the ticket only calls out `parent_company`.
    - For `name` and `address`, follow the helper output from `create_name_field_from_facility_name` and `create_address_field_from_facility_address`.
    - For all other populated extended-field entries, follow `FacilityIndexExtendedFieldListSerializer.fields`: include `id`, `is_verified`, `value`, `updated_at`, `contributor_name`, `contributor_id`, `value_count`, `is_from_claim`, `field_name`, `verified_count`, `source_by`, `unit`, `label`, `base_url`, `display_text`, and `json_schema`. Include `created_at` only when the request/sample explicitly covers `created_at_of_data_points=true`.
