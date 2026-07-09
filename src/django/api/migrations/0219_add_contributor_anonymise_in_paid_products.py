@@ -20,22 +20,74 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='contributor',
-            name='anonymise_in_paid_products',
-            field=models.BooleanField(
-                default=False,
-                help_text=ANONYMISE_IN_PAID_PRODUCTS_HELP_TEXT,
-                verbose_name=ANONYMISE_IN_PAID_PRODUCTS_VERBOSE_NAME,
-            ),
-        ),
-        migrations.AddField(
-            model_name='historicalcontributor',
-            name='anonymise_in_paid_products',
-            field=models.BooleanField(
-                default=False,
-                help_text=ANONYMISE_IN_PAID_PRODUCTS_HELP_TEXT,
-                verbose_name=ANONYMISE_IN_PAID_PRODUCTS_VERBOSE_NAME,
-            ),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql=[
+                        '''
+                        ALTER TABLE api_contributor
+                        ADD COLUMN IF NOT EXISTS
+                        anonymise_in_paid_products boolean;
+                        ''',
+                        '''
+                        UPDATE api_contributor
+                        SET anonymise_in_paid_products = false
+                        WHERE anonymise_in_paid_products IS NULL;
+                        ''',
+                        '''
+                        ALTER TABLE api_contributor
+                        ALTER COLUMN anonymise_in_paid_products SET NOT NULL;
+                        ''',
+                        '''
+                        ALTER TABLE api_historicalcontributor
+                        ADD COLUMN IF NOT EXISTS
+                        anonymise_in_paid_products boolean;
+                        ''',
+                        '''
+                        UPDATE api_historicalcontributor
+                        SET anonymise_in_paid_products = false
+                        WHERE anonymise_in_paid_products IS NULL;
+                        ''',
+                        '''
+                        ALTER TABLE api_historicalcontributor
+                        ALTER COLUMN anonymise_in_paid_products SET NOT NULL;
+                        ''',
+                    ],
+                    reverse_sql=[
+                        '''
+                        ALTER TABLE api_historicalcontributor
+                        DROP COLUMN IF EXISTS anonymise_in_paid_products;
+                        ''',
+                        '''
+                        ALTER TABLE api_contributor
+                        DROP COLUMN IF EXISTS anonymise_in_paid_products;
+                        ''',
+                    ],
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='contributor',
+                    name='anonymise_in_paid_products',
+                    field=models.BooleanField(
+                        default=False,
+                        help_text=ANONYMISE_IN_PAID_PRODUCTS_HELP_TEXT,
+                        verbose_name=(
+                            ANONYMISE_IN_PAID_PRODUCTS_VERBOSE_NAME
+                        ),
+                    ),
+                ),
+                migrations.AddField(
+                    model_name='historicalcontributor',
+                    name='anonymise_in_paid_products',
+                    field=models.BooleanField(
+                        default=False,
+                        help_text=ANONYMISE_IN_PAID_PRODUCTS_HELP_TEXT,
+                        verbose_name=(
+                            ANONYMISE_IN_PAID_PRODUCTS_VERBOSE_NAME
+                        ),
+                    ),
+                ),
+            ],
         ),
     ]

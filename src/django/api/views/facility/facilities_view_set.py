@@ -2,77 +2,52 @@ import logging
 import os
 from datetime import datetime
 from functools import wraps
-
-from api.constants import (APIErrorMessages, FacilityClaimStatuses,
-                           FacilityCreateQueryParams, FacilityMergeQueryParams,
-                           FeatureGroups, ProcessingAction,
-                           UpdateLocationParams)
-from api.exceptions import BadRequestException, ServiceUnavailableException
-from api.facilities_extent_cache import FacilitiesExtentCache
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
-from api.facility_actions.processing_facility_executor import \
+from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
-from api.facility_history import (create_dissociate_match_change_reason,
-                                  create_facility_history_list)
-from api.mail import send_claim_facility_confirmation_email
-from api.models import (Contributor, ExtendedField, Facility,
-                        FacilityActivityReport, FacilityAlias, FacilityClaim,
-                        FacilityClaimAttachments, FacilityClaimReviewNote,
-                        FacilityListItem, FacilityLocation, FacilityMatch,
-                        Version)
-from api.models.facility.facility_index import FacilityIndex
+)
 from api.models.transactions.index_facilities_new import index_facilities_new
-from api.os_id_lookup import OSIDLookup
-from api.pagination import FacilitiesGeoJSONPagination
-from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
-from api.sector_cache import SectorCache
-from api.serializers import (FacilityActivityReportSerializer,
-                             FacilityClaimSerializer,
-                             FacilityCreateClaimSerializer,
-                             FacilityCreateQueryParamsSerializer,
-                             FacilityIndexDetailsSerializer,
-                             FacilityIndexSerializer,
-                             FacilityMergeQueryParamsSerializer,
-                             FacilityQueryParamsSerializer,
-                             FacilityUpdateLocationParamsSerializer)
-from api.serializers.facility.facility_list_page_parameter_serializer import \
-    FacilityListPageParameterSerializer
-from api.serializers.facility.utils import is_same_contributor_from_url_param
-from api.services.contributor_masking_policy import ContributorMaskingPolicy
-from api.throttles import DataUploadThrottle
-from api.views.disabled_pagination_inspector import DisabledPaginationInspector
-from api.views.facility.facility_parameters import (
-    facilities_create_parameters, facilities_list_parameters,
-    facility_parameters)
+from api.models.facility.facility_index import FacilityIndex
 from contricleaner.lib.contri_cleaner import ContriCleaner
-from contricleaner.lib.exceptions.handler_not_set_error import \
-    HandlerNotSetError
-from drf_yasg.openapi import TYPE_OBJECT, Schema
-from drf_yasg.utils import no_body, swagger_auto_schema
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.exceptions import (APIException, NotAuthenticated,
-                                       NotFound, PermissionDenied,
-                                       ValidationError)
-from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
-                                   ListModelMixin, RetrieveModelMixin)
+from contricleaner.lib.exceptions.handler_not_set_error \
+    import HandlerNotSetError
+
+from api.exceptions import ServiceUnavailableException
+
+from rest_framework.mixins import (
+    ListModelMixin,
+    RetrieveModelMixin,
+    DestroyModelMixin,
+    CreateModelMixin,
+)
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from waffle import flag_is_active, switch_is_active
-
-from django.conf import settings
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import (
+    NotAuthenticated,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+    APIException
+)
+from waffle import switch_is_active, flag_is_active
 from django.contrib.gis.geos import Point
 from django.core import exceptions as core_exceptions
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.utils.text import slugify
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
+from django.conf import settings
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers
+
+from api.facilities_extent_cache import FacilitiesExtentCache
+from api.facilities_visibility_token import facilities_visibility_token
 from api.models import (
     Contributor,
     Facility,
@@ -124,11 +99,19 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
-from api.facilities_extent_cache import FacilitiesExtentCache
-from api.facilities_visibility_token import facilities_visibility_token
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
 
+from api.views.disabled_pagination_inspector import DisabledPaginationInspector
+
+from api.views.facility.facility_parameters import (
+    facility_parameters,
+    facilities_list_parameters,
+    facilities_create_parameters,
+)
+
 log = logging.getLogger(__name__)
+
 
 def cache_page_by_auth_tier(timeout, cache):
     """Cache the view response, collapsing ``Authorization`` to two buckets.
