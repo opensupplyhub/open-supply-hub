@@ -507,6 +507,12 @@ class FacilityClaimViewSet(ModelViewSet):
                     )
                     claim.facility.save()
 
+            # No explicit reindex needed here: the DB trigger
+            # facility_claim_post_update_insert_indexing_trigger fires on the
+            # claim UPDATE and refreshes the claim-derived FacilityIndex
+            # columns (including claim_info) via
+            # perform_facility_claim_indexing. See OSDEV-2679.
+
             try:
                 send_claim_update_notice_to_list_contributors(request, claim)
             except Exception:

@@ -71,9 +71,64 @@ from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.views.decorators.cache import cache_page
 from django.views.decorators.vary import vary_on_headers
+from drf_yasg.openapi import Schema, TYPE_OBJECT
+from drf_yasg.utils import no_body, swagger_auto_schema
+from api.models import (
+    Contributor,
+    Facility,
+    FacilityActivityReport,
+    FacilityAlias,
+    FacilityClaim,
+    FacilityClaimAttachments,
+    FacilityClaimReviewNote,
+    FacilityListItem,
+    FacilityLocation,
+    FacilityMatch,
+    ExtendedField,
+    Version
+)
+from api.constants import (
+    FeatureGroups,
+    FacilityCreateQueryParams,
+    FacilityMergeQueryParams,
+    ProcessingAction,
+    UpdateLocationParams,
+    FacilityClaimStatuses,
+    APIErrorMessages,
+)
+from api.exceptions import BadRequestException
+from api.facility_history import (
+    create_dissociate_match_change_reason,
+    create_facility_history_list,
+)
+from api.mail import send_claim_facility_confirmation_email
+
+from api.pagination import FacilitiesGeoJSONPagination
+from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
+from api.sector_cache import SectorCache
+from api.os_id_lookup import OSIDLookup
+from api.serializers import (
+    FacilityIndexSerializer,
+    FacilityIndexDetailsSerializer,
+    FacilityActivityReportSerializer,
+    FacilityClaimSerializer,
+    FacilityCreateQueryParamsSerializer,
+    FacilityMergeQueryParamsSerializer,
+    FacilityQueryParamsSerializer,
+    FacilityUpdateLocationParamsSerializer,
+    FacilityCreateClaimSerializer
+)
+from api.serializers.facility.facility_list_page_parameter_serializer \
+    import FacilityListPageParameterSerializer
+from api.throttles import DataUploadThrottle
+from api.serializers.facility.utils import (
+    is_same_contributor_from_url_param,
+)
+from api.facilities_extent_cache import FacilitiesExtentCache
+from api.facilities_visibility_token import facilities_visibility_token
+from api.view_response_cache import cache_view_response
 
 log = logging.getLogger(__name__)
-
 
 def cache_page_by_auth_tier(timeout, cache):
     """Cache the view response, collapsing ``Authorization`` to two buckets.
@@ -129,6 +184,10 @@ class FacilitiesViewSet(ListModelMixin,
         return super().get_throttles()
 
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
+    @cache_view_response(
+        'facilities_list',
+        vary_on=facilities_visibility_token,
+    )
     def list(self, request):
         """
         Returns a list of facilities in GeoJSON format for a given query.
@@ -363,6 +422,9 @@ class FacilitiesViewSet(ListModelMixin,
     @cache_page_by_auth_tier(
         settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
         cache="view_cache",
+    @cache_view_response(
+        'facility_detail',
+        vary_on=facilities_visibility_token,
     )
     def retrieve(self, request, pk=None):
         """
