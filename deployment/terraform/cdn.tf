@@ -152,16 +152,16 @@ resource "aws_cloudfront_function" "homepage_host_rewrite" {
   name    = "func${local.short}HomepageHostRewrite"
   runtime = "cloudfront-js-1.0"
   publish = true
-  comment = "Rewrites URI to /team for Craft CMS homepage proxy"
+  comment = "Rewrites URI to /home-page for Craft CMS homepage proxy"
   code    = <<-EOT
     function handler(event) {
       var request = event.request;
       // Rewrite URI so Craft serves the correct page.
       // Note: do NOT set request.headers['host'] here — it is read-only in
       // CloudFront Functions and will cause a 502. CloudFront automatically
-      // uses the origin domain (info.opensupplyhub.org) as the Host header
+      // uses the origin domain (open-supply.staging.servd.dev) as the Host header
       // when forwarding to a custom origin, so no override is needed.
-      request.uri = '/team';
+      request.uri = '/home-page';
       return request;
     }
   EOT
@@ -214,7 +214,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   dynamic "origin" {
     for_each = var.enable_homepage_proxy ? [1] : []
     content {
-      domain_name = "info.opensupplyhub.org"
+      domain_name = "open-supply.staging.servd.dev"
       origin_id   = "originCraft"
 
       custom_origin_config {
@@ -888,7 +888,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 }
 
 #
-# info.openapparel.org → https://info.opensupplyhub.org redirect (Production only)
+# info.openapparel.org → https://open-supply.staging.servd.dev redirect (Production only)
 #
 data "aws_route53_zone" "openapparel" {
   count = var.enable_legacy_info_site_redirect ? 1 : 0
@@ -937,7 +937,7 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
   code    = <<-EOT
     function handler(event) {
       var qs = event.request.querystring;
-      var location = "https://info.opensupplyhub.org" + event.request.uri + (qs ? "?" + qs : "");
+      var location = "https://open-supply.staging.servd.dev" + event.request.uri + (qs ? "?" + qs : "");
       return {
         statusCode: 301,
         statusDescription: "Moved Permanently",
@@ -953,11 +953,11 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
   count           = var.enable_legacy_info_site_redirect ? 1 : 0
   enabled         = true
   is_ipv6_enabled = true
-  comment         = "Redirect info.openapparel.org to info.opensupplyhub.org"
+  comment         = "Redirect info.openapparel.org to open-supply.staging.servd.dev"
   aliases         = ["info.openapparel.org"]
 
   origin {
-    domain_name = "info.opensupplyhub.org"
+    domain_name = "open-supply.staging.servd.dev"
     origin_id   = "info-opensupplyhub-origin"
     custom_origin_config {
       http_port              = 80

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bool, func } from 'prop-types';
-import { Router, Route, Switch } from 'react-router-dom';
+import { Router, Route, Switch, Redirect } from 'react-router-dom';
 import { ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // eslint-disable-line import/first
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -47,6 +47,7 @@ import { setFacilityGridRamp } from './actions/vectorTileLayer';
 
 import {
     mainRoute,
+    mapRoute,
     authLoginFormRoute,
     authRegisterFormRoute,
     authResetPasswordFormRoute,
@@ -273,7 +274,7 @@ class Routes extends Component {
                                 </Route>
                                 <Route
                                     exact
-                                    path={mainRoute}
+                                    path={mapRoute}
                                     render={() => {
                                         if (fetchingFeatureFlags) {
                                             return <CircularProgress />;
@@ -281,6 +282,11 @@ class Routes extends Component {
 
                                         return <Route component={Homepage} />;
                                     }}
+                                />
+                                <Route
+                                    exact
+                                    path={mainRoute}
+                                    render={() => <Redirect to={mapRoute} />}
                                 />
                                 <Route
                                     path={mainRoute}

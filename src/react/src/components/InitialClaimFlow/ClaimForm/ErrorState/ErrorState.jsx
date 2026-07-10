@@ -8,7 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 
-import { mainRoute } from '../../../../util/constants';
+import { mapRoute } from '../../../../util/constants';
 import { resetClaimForm } from '../../../../actions/claimForm';
 import { resetFilterOptions } from '../../../../actions/filterOptions';
 import { resetSingleProductionLocation } from '../../../../actions/contributeProductionLocation';
@@ -28,7 +28,7 @@ const ErrorState = ({
         resetForm();
         resetFilters();
         resetProductionLocation();
-        history.push(mainRoute);
+        history.push(mapRoute);
     };
 
     return (
