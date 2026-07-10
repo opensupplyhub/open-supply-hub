@@ -18,6 +18,7 @@ const {
     makeGetFacilityByOSIdURL,
     makeClaimFacilityAPIURL,
     makeMergeTwoFacilitiesAPIURL,
+    makeLogDownloadUrl,
     makeGetFacilitiesURLWithQueryString,
     getValueFromObject,
     createQueryStringFromSearchFilters,
@@ -3131,5 +3132,60 @@ describe('splitContributorsIntoPublicAndNonPublic', () => {
 
         expect(result.publicContributors).toEqual([]);
         expect(result.nonPublicContributors).toEqual([anonymizedContributor]);
+    });
+});
+
+describe('makeLogDownloadUrl', () => {
+    it('encodes the path so multi-filter searches survive as a single param', () => {
+        const path =
+            '/facilities?contributors=123&contributors=456&combine_contributors=AND&countries=BD';
+        const url = makeLogDownloadUrl(path, 50);
+
+        // The path is percent-encoded, so its internal `&`/`=`/`?` cannot be
+        // mistaken for the log-download request's own query-string delimiters.
+        expect(url).toBe(
+            `/api/log-download/?path=${encodeURIComponent(path)}&record_count=50`,
+        );
+
+        // Parsing the request the way the server does must recover the FULL
+        // path, including combine_contributors (previously dropped because the
+        // path was truncated at its first ampersand).
+        const params = new URLSearchParams(url.substring(url.indexOf('?') + 1));
+        expect(params.get('path')).toBe(path);
+        expect(params.get('record_count')).toBe('50');
+    });
+
+    it('does not truncate the path at the first ampersand', () => {
+        const path = '/facilities?contributors=123&countries=BD';
+        const url = makeLogDownloadUrl(path, 1);
+        const recoveredPath = new URLSearchParams(
+            url.substring(url.indexOf('?') + 1),
+        ).get('path');
+        expect(recoveredPath).toBe(path);
+        expect(recoveredPath).toContain('countries=BD');
+    });
+
+    it('preserves every filter when the search has many ampersand-separated params', () => {
+        const path =
+            '/facilities?contributors=1&contributors=2&contributors=3&combine_contributors=AND&countries=BD&countries=IN&sectors=Apparel';
+        const url = makeLogDownloadUrl(path, 500);
+        const recoveredPath = new URLSearchParams(
+            url.substring(url.indexOf('?') + 1),
+        ).get('path');
+
+        // The whole path round-trips: nothing after the first `&` is lost.
+        expect(recoveredPath).toBe(path);
+        // Every `&`-separated segment is still present after decoding.
+        const countAmpersands = str => (str.match(/&/g) || []).length;
+        expect(countAmpersands(recoveredPath)).toBe(countAmpersands(path));
+        [
+            'contributors=1',
+            'contributors=2',
+            'contributors=3',
+            'combine_contributors=AND',
+            'countries=BD',
+            'countries=IN',
+            'sectors=Apparel',
+        ].forEach(fragment => expect(recoveredPath).toContain(fragment));
     });
 });
