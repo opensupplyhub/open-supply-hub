@@ -33,7 +33,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        call_command('reindex_database')
         # Temporary for 2.27.0 — remove after the code freeze is complete and
         # the release has been deployed everywhere. One-time targeted backfills
         # for the index_*() functions changed this release:

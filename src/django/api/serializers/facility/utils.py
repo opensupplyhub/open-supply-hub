@@ -4,7 +4,8 @@ from datetime import timezone as dt_timezone
 
 from api.constants import (
     FacilityClaimStatuses,
-    FacilitiesQueryParams
+    FacilitiesQueryParams,
+    MASKED_CONTRIBUTOR_LABEL
 )
 from dateutil import parser
 from ...helpers.helpers import (
@@ -20,6 +21,7 @@ from ...models import (
 )
 from ..utils import (
     get_embed_contributor_id,
+    is_contribution_masked,
     prefer_contributor_name,
 )
 
@@ -127,9 +129,12 @@ def can_user_see_detail(serializer):
 
 def get_contributor_name_from_facilityindex(
         contributor_data: dict,
-        user_can_see_detail: bool) -> Union[None, str]:
+        user_can_see_detail: bool,
+        masked=None) -> Union[None, str]:
     if contributor_data.get('id') is None:
         return None
+    if is_contribution_masked(contributor_data, masked):
+        return MASKED_CONTRIBUTOR_LABEL
     if user_can_see_detail:
         return contributor_data.get('name')
     name = prefix_a_an(contributor_data.get('contrib_type'))
@@ -138,14 +143,21 @@ def get_contributor_name_from_facilityindex(
 
 def get_contributor_id_from_facilityindex(
         contributor: dict,
-        user_can_see_detail: bool) -> Union[None, int]:
+        user_can_see_detail: bool,
+        masked=None) -> Union[None, int]:
+    if is_contribution_masked(contributor, masked):
+        return None
     if contributor.get('id') is not None and user_can_see_detail:
         return contributor.get('admin_id')
     return None
 
 
 def get_user_id_from_facilityindex(
-        contributor: dict, user_can_see_detail: bool) -> Union[None, int]:
+        contributor: dict,
+        user_can_see_detail: bool,
+        masked=None) -> Union[None, int]:
+    if is_contribution_masked(contributor, masked):
+        return None
     if contributor.get('id') is not None and user_can_see_detail:
         return contributor.get('user_id')
     return None
@@ -166,16 +178,17 @@ def create_name_field_from_facility_name(name: str,
                                          created_at: Union[str, bool],
                                          updated_at: str,
                                          user_can_see_detail: bool,
-                                         is_from_created_from: bool = False
+                                         is_from_created_from: bool = False,
+                                         masked_ids: Union[None, set] = None
                                          ) -> dict:
     """Create name field from facility name of the FacilityIndex model."""
     field_data = {
         'value': name,
         'field_name': ExtendedField.NAME,
         'contributor_id': get_contributor_id_from_facilityindex(
-            contributor, user_can_see_detail),
+            contributor, user_can_see_detail, masked_ids),
         'contributor_name': get_contributor_name_from_facilityindex(
-            contributor, user_can_see_detail),
+            contributor, user_can_see_detail, masked_ids),
         'updated_at': format_date(updated_at),
         'is_from_created_from': is_from_created_from,
     }
@@ -194,6 +207,7 @@ def create_address_field_from_facility_address(
     user_can_see_detail: bool,
     is_from_claim: bool = False,
     is_from_created_from: bool = False,
+    masked_ids: Union[None, set] = None,
 ) -> dict:
     """Create address field from facility address of the FacilityIndex
     model.
@@ -202,9 +216,9 @@ def create_address_field_from_facility_address(
         'value': address,
         'field_name': ExtendedField.ADDRESS,
         'contributor_id': get_contributor_id_from_facilityindex(
-            contributor, user_can_see_detail),
+            contributor, user_can_see_detail, masked_ids),
         'contributor_name': get_contributor_name_from_facilityindex(
-            contributor, user_can_see_detail),
+            contributor, user_can_see_detail, masked_ids),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_from_claim,
         'is_from_created_from': is_from_created_from,
@@ -322,7 +336,8 @@ def format_sectors(items,
                    claims,
                    date_field_to_sort,
                    use_main_created_at,
-                   user_can_see_detail):
+                   user_can_see_detail,
+                   masked_ids=None):
     def is_contributor_visible(entity, is_claim):
         if is_claim:
             return user_can_see_detail
@@ -335,10 +350,12 @@ def format_sectors(items,
             'updated_at': format_date(entity['updated_at']),
             'contributor_id': get_contributor_id_from_facilityindex(
                 entity['contributor'],
-                is_contributor_visible(entity, is_claim)),
+                is_contributor_visible(entity, is_claim),
+                masked_ids),
             'contributor_name': get_contributor_name_from_facilityindex(
                 entity['contributor'],
-                is_contributor_visible(entity, is_claim)),
+                is_contributor_visible(entity, is_claim),
+                masked_ids),
             'values': entity['sector'],
             'is_from_claim': is_claim
         }
