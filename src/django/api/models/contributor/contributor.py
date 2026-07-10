@@ -1,8 +1,10 @@
 import uuid
 from simple_history.models import HistoricalRecords
+from django.core.cache import caches
 from django.db import models
 
 from api.constants import (
+    MASKED_CONTRIBUTOR_IDS_CACHE_KEY,
     MatchResponsibility,
     OriginSource
 )
@@ -19,6 +21,7 @@ class Contributor(models.Model):
     # These choices must be kept in sync with the identical list kept in the
     # React client's constants file
     OTHER_CONTRIB_TYPE = 'Other'
+    UNION_CONTRIB_TYPE = 'Union'
 
     CONTRIB_TYPE_CHOICES = (
         ('Academic / Researcher / Journalist / Student',
@@ -30,7 +33,7 @@ class Contributor(models.Model):
         ('Facility / Factory / Manufacturing Group / Supplier / Vendor',
          'Facility / Factory / Manufacturing Group / Supplier / Vendor'),
         ('Multi-Stakeholder Initiative', 'Multi-Stakeholder Initiative'),
-        ('Union', 'Union'),
+        (UNION_CONTRIB_TYPE, UNION_CONTRIB_TYPE),
         (OTHER_CONTRIB_TYPE, OTHER_CONTRIB_TYPE),
     )
 
@@ -135,6 +138,17 @@ class Contributor(models.Model):
         blank=True,
         help_text='Partner fields that this contributor can access'
     )
+    anonymise_in_paid_products = models.BooleanField(
+        'Anonymise contributor name in paid products',
+        default=False,
+        help_text=(
+            "When enabled, this contributor's name is anonymised in OS Hub "
+            'paid products - the bulk data download and the programmatic API '
+            '- so the data cannot be attributed to them at scale. Their '
+            'contributions stay visible on the public web app and facility '
+            'profiles.'
+        )
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -143,6 +157,41 @@ class Contributor(models.Model):
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source', 'partner_fields']
     )
+
+    def save(self, *args, **kwargs):
+        should_invalidate = False
+        if self._state.adding:
+            # A new contributor whose flag is on immediately affects the
+            # cached masked set, so invalidate before the first request hits.
+            should_invalidate = self.anonymise_in_paid_products
+        else:
+            try:
+                previous = Contributor.objects.values(
+                    'anonymise_in_paid_products', 'admin_id', 'name'
+                ).get(pk=self.pk)
+                was_masked = previous['anonymise_in_paid_products']
+                is_masked = self.anonymise_in_paid_products
+                if was_masked != is_masked:
+                    should_invalidate = True
+                elif is_masked:
+                    # Already anonymised: invalidate when any field that the
+                    # cached set holds changes (id is the PK, immutable).
+                    should_invalidate = (
+                        previous['admin_id'] != self.admin_id
+                        or previous['name'] != self.name
+                    )
+            except Contributor.DoesNotExist:
+                should_invalidate = True
+
+        super().save(*args, **kwargs)
+
+        if should_invalidate:
+            # Drop only the masked-contributor set (not the whole view_cache)
+            # so an admin toggle takes effect on the next list API / download
+            # request. The per-facility detail responses cached by cache_page
+            # can't be enumerated for targeted deletion in memcached, so they
+            # fall back to their own short TTL.
+            caches['view_cache'].delete(MASKED_CONTRIBUTOR_IDS_CACHE_KEY)
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)
