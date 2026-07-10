@@ -6,6 +6,7 @@ from api.models.facility.facility_manager_index_new import (
 from countries.lib.countries import COUNTRY_NAMES
 from api.csv_download import format_download_extended_fields
 from api.helpers.helpers import parse_download_date
+from api.services.masked_contributors import MaskedContributors
 from rest_framework.serializers import Serializer, SerializerMethodField
 
 
@@ -13,6 +14,14 @@ class FacilityDownloadSerializerBase(Serializer):
     """Shared CSV row helpers for full and embed facility downloads."""
 
     row = SerializerMethodField()
+
+    def __init__(self, *args, masked_contributors=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.masked_contributors = (
+            masked_contributors
+            if masked_contributors is not None
+            else MaskedContributors()
+        )
 
     class Meta:
         model = FacilityIndex()
