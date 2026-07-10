@@ -211,6 +211,60 @@ def build_primitive_field_cell(
     return separator.join(values)
 
 
+def filter_value_to_schema(
+    value: Any,
+    schema: Optional[Dict[str, Any]],
+) -> Any:
+    '''
+    Return a copy of `value` that keeps only the keys declared in the
+    partner field's JSON Schema, recursively. Keys that are not present
+    in the schema's `properties` (e.g. an extra `internal_ID` that a
+    contributor tucked into the payload) are dropped so they never reach
+    the public API.
+
+    The schema is the single source of truth for what a partner field
+    publishes, mirroring what the CSV download and the front end already
+    do. If `schema` is not a usable object schema (missing, not a dict,
+    or without a `properties` dict) the value is returned unchanged, so
+    partner fields that do not declare a schema are never stripped.
+    '''
+    if not isinstance(schema, dict):
+        return value
+
+    if isinstance(value, list):
+        # Prefer an explicit array `items` schema. Fall back to an
+        # object-style schema (with `properties`) applied per item, which
+        # covers list values stored under a schema that omits `type` or
+        # that bypassed contribution-time validation.
+        items_schema = schema.get("items")
+        if not isinstance(items_schema, dict):
+            if isinstance(schema.get("properties"), dict):
+                items_schema = schema
+            else:
+                return value
+        return [
+            filter_value_to_schema(item, items_schema) for item in value
+        ]
+
+    if not isinstance(value, dict):
+        return value
+
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        return value
+
+    filtered: Dict[str, Any] = {}
+    for key, sub_value in value.items():
+        if key not in properties:
+            continue
+        sub_schema = properties[key]
+        if isinstance(sub_schema, dict):
+            filtered[key] = filter_value_to_schema(sub_value, sub_schema)
+        else:
+            filtered[key] = sub_value
+    return filtered
+
+
 def apply_schema_defaults(
     value: Any,
     schema: Optional[Dict[str, Any]],

@@ -14,6 +14,7 @@ from api.models.source import Source
 from api.models.user import User
 from api.models.us_county_tigerline import USCountyTigerline
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
+from api.models.extended_field import ExtendedField
 
 
 OPEN_SEARCH_SERVICE = "api.views.v1.production_locations.OpenSearchService"
@@ -328,6 +329,93 @@ class TestProductionLocationsViewSet(APITestCase):
         self.assertEqual(api_res.status_code, status.HTTP_200_OK)
         self.assertNotIn("wage_indicator", api_res.data)
         self.assertIn("mit_living_wage", api_res.data)
+
+    def test_undeclared_partner_field_key_is_stripped_from_api(self):
+        cache.clear()
+        user = User.objects.create(email="rsc@example.com")
+        contributor = Contributor.objects.create(
+            admin=user,
+            name="RSC Contributor",
+            description="",
+            website="",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        rsc_field, _ = PartnerField.objects.get_or_create(
+            name="rsc_grievance_mechanism",
+            defaults={
+                "type": PartnerField.OBJECT,
+                "available_in_api": True,
+                "json_schema": {
+                    "type": "object",
+                    "required": ["status"],
+                    "properties": {
+                        "status": {"type": "string"},
+                        "coverage": {"type": "string"},
+                    },
+                },
+            },
+        )
+        contributor.partner_fields.add(rsc_field)
+
+        facility_list = FacilityList.objects.create(
+            name="RSC List",
+            file_name="rsc.csv",
+            header="name,address,country",
+        )
+        source = Source.objects.create(
+            source_type=Source.LIST,
+            facility_list=facility_list,
+            contributor=contributor,
+        )
+        facility_list_item = FacilityListItem.objects.create(
+            name="RSC Facility",
+            address="1 RSC St",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=0,
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source,
+            raw_data="RSC Facility,1 RSC St,US",
+            raw_header="name,address,country",
+            raw_json={},
+            processing_results=[],
+        )
+        facility = Facility.objects.create(
+            id=self.os_id,
+            name="RSC Facility",
+            address="1 RSC St",
+            country_code="US",
+            location=Point(-73.935242, 40.73061, srid=4326),
+            created_from=facility_list_item,
+        )
+        ExtendedField.objects.create(
+            contributor=contributor,
+            facility=facility,
+            facility_list_item=facility_list_item,
+            field_name="rsc_grievance_mechanism",
+            value={
+                "raw_values": {
+                    "status": "Active",
+                    "coverage": "All workers",
+                    "internal_ID": "SECRET-123",
+                }
+            },
+        )
+
+        self.search_index_mock.return_value = {
+            "count": 1,
+            "data": [{"os_id": facility.id, "name": "location1"}],
+        }
+
+        url = f"/api/v1/production-locations/{facility.id}/"
+        api_res = self.client.get(url)
+
+        self.assertEqual(api_res.status_code, status.HTTP_200_OK)
+        self.assertIn("rsc_grievance_mechanism", api_res.data)
+        rsc_value = api_res.data["rsc_grievance_mechanism"]
+        self.assertEqual(rsc_value.get("status"), "Active")
+        self.assertEqual(rsc_value.get("coverage"), "All workers")
+        self.assertNotIn("internal_ID", rsc_value)
 
     def test_partner_field_filtered_when_inactive(self):
         facility = self._create_facility_with_partner_data()

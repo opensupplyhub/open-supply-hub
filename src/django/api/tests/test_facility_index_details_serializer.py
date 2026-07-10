@@ -844,6 +844,65 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             }
         )
 
+    def test_partner_fields_strip_keys_not_in_schema(self):
+        self.partner_field_1.type = PartnerField.OBJECT
+        self.partner_field_1.json_schema = {
+            'type': 'object',
+            'properties': {
+                'status': {'type': 'string'},
+                'coverage': {'type': 'string'},
+            },
+        }
+        self.partner_field_1.save()
+
+        stored_value = {
+            'raw_values': {
+                'status': 'Active',
+                'coverage': 'All workers',
+                'internal_ID': 'SECRET-123',
+            }
+        }
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value=stored_value,
+            contributor=self.contrib_one
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': stored_value,
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+
+        data = FacilityIndexDetailsSerializer(facility_index).data
+        partner_fields = data["properties"]["partner_fields"]
+        test_data_field = partner_fields['test_data_field']
+
+        self.assertEqual(len(test_data_field), 1)
+        self.assertEqual(
+            test_data_field[0]['value']['raw_values'],
+            {'status': 'Active', 'coverage': 'All workers'},
+        )
+        self.assertNotIn(
+            'internal_ID',
+            test_data_field[0]['value']['raw_values'],
+        )
+
     def test_partner_fields_json_schema_none(self):
         self.partner_field_1.json_schema = None
         self.partner_field_1.save()

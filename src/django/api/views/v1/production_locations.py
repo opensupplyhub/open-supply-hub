@@ -1,5 +1,4 @@
 import logging
-import copy
 from typing import Tuple, List, Any, Optional, Dict
 
 from django.http import QueryDict
@@ -53,6 +52,7 @@ from api.views.v1.response_mappings.production_locations_response import \
 from api.partner_fields.registry import system_partner_field_registry
 from api.serializers.facility.partner_field_helper import (
     apply_schema_defaults,
+    filter_value_to_schema,
     get_cached_all_partner_fields,
 )
 
@@ -389,12 +389,13 @@ class ProductionLocations(ViewSet):
         raw_values = value.get("raw_values")
 
         if isinstance(raw_values, list):
-            return raw_values
+            return filter_value_to_schema(raw_values, schema)
 
         if isinstance(raw_values, dict):
-            return apply_schema_defaults(
-                copy.deepcopy(raw_values),
-                schema,
-            )
+            # filter_value_to_schema builds a fresh dict, so the
+            # subsequent in-place apply_schema_defaults never touches the
+            # original queryset row — no deepcopy needed.
+            filtered = filter_value_to_schema(raw_values, schema)
+            return apply_schema_defaults(filtered, schema)
 
         return value.get("raw_value")

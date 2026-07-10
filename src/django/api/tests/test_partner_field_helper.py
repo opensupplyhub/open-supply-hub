@@ -2,7 +2,155 @@ from django.test import SimpleTestCase
 
 from api.serializers.facility.partner_field_helper import (
     apply_schema_defaults,
+    filter_value_to_schema,
 )
+
+
+RSC_GRIEVANCE_SCHEMA = {
+    "type": "object",
+    "title": "RSC Grievance Mechanism",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "required": ["status"],
+    "properties": {
+        "status": {
+            "enum": ["Active", "Inactive"],
+            "type": "string",
+            "title": "Status",
+        },
+        "thematic_coverage": {
+            "type": "string",
+            "title": "Thematic Coverage",
+            "default": "Multi-issue",
+        },
+        "mechanism_type_ownership": {
+            "type": "string",
+            "title": "Mechanism Type / Ownership",
+            "default": "Multi-stakeholder led",
+        },
+        "access_modality": {
+            "type": "string",
+            "title": "Access / Modality",
+            "default": "Hotline; Email; In-person",
+        },
+        "coverage": {
+            "type": "string",
+            "title": "Coverage",
+            "default": "All workers (factory-level)",
+        },
+    },
+}
+
+
+class FilterValueToSchemaTest(SimpleTestCase):
+    """filter_value_to_schema keeps only schema-declared keys."""
+
+    def test_strips_internal_id_from_rsc_grievance(self):
+        value = {
+            "status": "Active",
+            "coverage": "All workers (factory-level)",
+            "internal_ID": "SECRET-123",
+        }
+        result = filter_value_to_schema(value, RSC_GRIEVANCE_SCHEMA)
+        self.assertEqual(
+            result,
+            {
+                "status": "Active",
+                "coverage": "All workers (factory-level)",
+            },
+        )
+        self.assertNotIn("internal_ID", result)
+
+    def test_declared_keys_are_kept(self):
+        value = {"status": "Inactive", "thematic_coverage": "Wages"}
+        result = filter_value_to_schema(value, RSC_GRIEVANCE_SCHEMA)
+        self.assertEqual(result, value)
+
+    def test_does_not_mutate_original_value(self):
+        value = {"status": "Active", "internal_ID": "SECRET"}
+        filter_value_to_schema(value, RSC_GRIEVANCE_SCHEMA)
+        self.assertIn("internal_ID", value)
+
+    def test_none_schema_returns_value_unchanged(self):
+        value = {"status": "Active", "internal_ID": "SECRET"}
+        result = filter_value_to_schema(value, None)
+        self.assertEqual(result, value)
+
+    def test_schema_without_properties_returns_value_unchanged(self):
+        value = {"status": "Active", "internal_ID": "SECRET"}
+        result = filter_value_to_schema(value, {"type": "object"})
+        self.assertEqual(result, value)
+
+    def test_non_dict_properties_returns_value_unchanged(self):
+        value = {"status": "Active", "internal_ID": "SECRET"}
+        result = filter_value_to_schema(value, {"properties": "bad"})
+        self.assertEqual(result, value)
+
+    def test_non_dict_value_returned_unchanged(self):
+        self.assertEqual(
+            filter_value_to_schema("hello", RSC_GRIEVANCE_SCHEMA), "hello"
+        )
+        self.assertIsNone(
+            filter_value_to_schema(None, RSC_GRIEVANCE_SCHEMA)
+        )
+
+    def test_nested_object_extras_stripped_recursively(self):
+        schema = {
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "properties": {"city": {"type": "string"}},
+                }
+            }
+        }
+        value = {
+            "details": {"city": "Paris", "secret": "x"},
+            "extra": "drop me",
+        }
+        result = filter_value_to_schema(value, schema)
+        self.assertEqual(result, {"details": {"city": "Paris"}})
+
+    def test_list_items_filtered_against_items_schema(self):
+        schema = {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}},
+            },
+        }
+        value = [
+            {"name": "a", "secret": 1},
+            {"name": "b", "secret": 2},
+        ]
+        result = filter_value_to_schema(value, schema)
+        self.assertEqual(result, [{"name": "a"}, {"name": "b"}])
+
+    def test_list_filtered_against_object_schema_without_items(self):
+        # RSC schema is an object schema (properties, no `items`). A list
+        # value stored under it should have each item filtered against the
+        # object's properties.
+        value = [
+            {"status": "Active", "internal_ID": "SECRET"},
+            {"status": "Inactive", "coverage": "All", "extra": 1},
+        ]
+        result = filter_value_to_schema(value, RSC_GRIEVANCE_SCHEMA)
+        self.assertEqual(
+            result,
+            [
+                {"status": "Active"},
+                {"status": "Inactive", "coverage": "All"},
+            ],
+        )
+
+    def test_list_without_items_or_properties_returned_unchanged(self):
+        value = [{"name": "a", "secret": 1}]
+        result = filter_value_to_schema(value, {"type": "array"})
+        self.assertEqual(result, value)
+
+    def test_non_dict_sub_schema_keeps_value_as_is(self):
+        schema = {"properties": {"a": "not a dict"}}
+        value = {"a": {"nested": 1}, "b": 2}
+        result = filter_value_to_schema(value, schema)
+        self.assertEqual(result, {"a": {"nested": 1}})
 
 
 class ApplySchemaDefaultsNonDictValueTest(SimpleTestCase):

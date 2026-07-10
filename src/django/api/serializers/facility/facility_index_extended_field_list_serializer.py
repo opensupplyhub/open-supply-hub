@@ -1,5 +1,6 @@
 from typing import Union
 
+from .partner_field_helper import filter_value_to_schema
 from .utils import (
     get_contributor_name_from_facilityindex,
     get_contributor_id_from_facilityindex,
@@ -68,9 +69,41 @@ class FacilityIndexExtendedFieldListSerializer:
                         serialized_extended_field[field] = context_value
                         continue
 
+                if field == 'value':
+                    serialized_extended_field[field] = self._get_value(
+                        extended_field
+                    )
+                    continue
+
                 serialized_extended_field[field] = extended_field.get(field)
 
             self.data.append(serialized_extended_field)
+
+    def _get_value(self, extended_field: dict) -> Union[None, dict, list]:
+        '''
+        Emit the stored `value` payload, but for object-typed partner
+        fields drop any `raw_values` keys that the field's JSON Schema
+        does not declare, so contributor-supplied extras (e.g. an
+        `internal_ID`) are never exposed through the API. The schema is
+        the single source of truth for what a partner field publishes.
+        '''
+        value = extended_field.get('value')
+        json_schema = self.context.get('json_schema')
+
+        if not isinstance(value, dict) or not isinstance(json_schema, dict):
+            return value
+
+        raw_values = value.get('raw_values')
+        if raw_values is None:
+            return value
+
+        # filter_value_to_schema returns a fresh structure and never
+        # mutates raw_values, so a shallow copy of the outer dict is
+        # enough to avoid touching the indexed payload — no deepcopy.
+        return {
+            **value,
+            'raw_values': filter_value_to_schema(raw_values, json_schema),
+        }
 
     def _should_display_contributor(self, extended_field: dict) -> bool:
         user_can_see_detail = self.context.get('user_can_see_detail')
