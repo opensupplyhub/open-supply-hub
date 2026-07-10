@@ -331,6 +331,7 @@ export const profileFormFields = Object.freeze([
 ]);
 
 export const mainRoute = '/';
+export const mapRoute = '/map';
 export const settingsRoute = '/settings';
 export const authLoginFormRoute = '/auth/login';
 export const authRegisterFormRoute = '/auth/register';
