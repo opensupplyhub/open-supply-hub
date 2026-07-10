@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from functools import wraps
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
@@ -40,6 +41,13 @@ from django.utils import timezone
 from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
+from django.conf import settings
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers
+
+from api.facilities_extent_cache import FacilitiesExtentCache
+from api.facilities_visibility_token import facilities_visibility_token
 from api.models import (
     Contributor,
     Facility,
@@ -91,8 +99,7 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
-from api.facilities_extent_cache import FacilitiesExtentCache
-from api.facilities_visibility_token import facilities_visibility_token
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -104,6 +111,43 @@ from api.views.facility.facility_parameters import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def cache_page_by_auth_tier(timeout, cache):
+    """Cache the view response, collapsing ``Authorization`` to two buckets.
+
+    Masking on paid surfaces depends only on *whether* the caller is a token
+    (programmatic) API request, not on which token. Varying ``view_cache``
+    directly on the ``Authorization`` header would store one identical copy per
+    token, fragmenting the cache and lowering the hit rate. This normalises the
+    value the cache key is derived from to ``paid`` / ``regular`` - at most two
+    entries per URL - while still emitting ``Vary: Authorization`` on the
+    response so downstream caches (CDN/browser) stay correct.
+    """
+    def decorator(view_method):
+        cached = method_decorator([
+            cache_page(timeout, cache=cache),
+            vary_on_headers('Authorization'),
+        ])(view_method)
+
+        @wraps(view_method)
+        def wrapper(self, request, *args, **kwargs):
+            real_auth = request.META.get('HTTP_AUTHORIZATION')
+            if real_auth is not None:
+                # request.auth is already resolved by DRF authentication in
+                # dispatch().initial(), so this never re-triggers auth.
+                request.META['HTTP_AUTHORIZATION'] = (
+                    'paid' if getattr(request, 'auth', None) else 'regular'
+                )
+            try:
+                return cached(self, request, *args, **kwargs)
+            finally:
+                if real_auth is not None:
+                    request.META['HTTP_AUTHORIZATION'] = real_auth
+
+        return wrapper
+
+    return decorator
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -282,6 +326,15 @@ class FacilitiesViewSet(ListModelMixin,
             request
         )
 
+        # Resolve the flagged set once and reuse it: __is_anonymised_only always
+        # needs the full set, while the serializer masks names only for API
+        # callers (empty for web clients). Passing `flagged` back into
+        # for_facilities_api avoids a second cache round-trip when serialising.
+        flagged = ContributorMaskingPolicy.flagged_contributors()
+        context['masked_contributors'] = (
+            ContributorMaskingPolicy.for_facilities_api(request, flagged)
+        )
+
         if page_queryset is not None:
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
@@ -291,6 +344,9 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['extent'] = extent
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
+            page.data['anonymised_only'] = self.__is_anonymised_only(
+                queryset, flagged, page.data.get('count')
+            )
             return page
 
         # Non-paginated response
@@ -302,14 +358,54 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
+            'anonymised_only': self.__is_anonymised_only(queryset, flagged),
         }
         if extent is not None:
             response['extent'] = extent
         response['params'] = params.validated_data
         return Response(response)
 
+    @staticmethod
+    def __is_anonymised_only(queryset, flagged, count=None):
+        """
+        Whether every facility in the (full, unpaginated) result set is
+        attributed only to anonymised contributors, so a download would carry
+        no real contributor attribution. The front-end disables the download
+        button in that case.
+
+        ``flagged`` is the pre-resolved full ``MaskedContributors`` from the
+        caller (already fetched from the cache) so this method never hits the
+        cache a second time.
+        """
+        anonymised_ids = list(flagged.contributor_ids)
+        if not anonymised_ids:
+            return False
+        # A facility is downloadable when it has at least one contributor
+        # outside the anonymised set, i.e. its contributors are NOT contained
+        # by that set. A single cheap EXISTS settles the common case (some
+        # facility is downloadable) without ever counting the result set.
+        has_downloadable = queryset.exclude(
+            contributors_id__contained_by=anonymised_ids
+        ).exists()
+        if has_downloadable:
+            return False
+        # No downloadable rows left: the result is anonymised-only as long as
+        # it is not empty. Reuse the paginator's count when it was already
+        # computed; otherwise fall back to a cheap EXISTS instead of COUNT(*).
+        if count is not None:
+            return count > 0
+        return queryset.exists()
+
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
+    # Masking depends only on whether the caller is a token (API) request, so
+    # the cached response is split into just two buckets - paid (union names
+    # masked) and regular (names shown) - instead of one per token. See
+    # cache_page_by_auth_tier.
+    @cache_page_by_auth_tier(
+        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+        cache="view_cache",
+    )
     @cache_view_response(
         'facility_detail',
         vary_on=facilities_visibility_token,
