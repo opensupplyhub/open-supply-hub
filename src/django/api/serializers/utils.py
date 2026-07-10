@@ -54,7 +54,7 @@ def prefer_contributor_name(serializer):
         return False
 
 
-def _is_contribution_masked(contributor, masked):
+def is_contribution_masked(contributor, masked):
     return bool(masked) and masked.should_mask(contributor)
 
 
@@ -65,7 +65,7 @@ def get_contributor_name(contributor, user_can_see_detail, masked=None):
         or (contributor["contrib_type"] is None)
     ):
         return None
-    if _is_contribution_masked(contributor, masked):
+    if is_contribution_masked(contributor, masked):
         return MASKED_CONTRIBUTOR_LABEL
     if user_can_see_detail:
         return contributor["name"]
@@ -74,7 +74,7 @@ def get_contributor_name(contributor, user_can_see_detail, masked=None):
 
 
 def get_contributor_id(contributor, user_can_see_detail, masked=None):
-    if _is_contribution_masked(contributor, masked):
+    if is_contribution_masked(contributor, masked):
         return None
     if (
         contributor is not None

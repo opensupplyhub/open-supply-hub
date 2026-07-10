@@ -458,7 +458,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         embed_mode_active: bool,
         use_main_created_at: bool,
         date_field_to_sort: str,
-        masked
+        masked: List[int]
     ) -> Dict[str, List[Dict[str, Any]]]:
         import logging
         logger = logging.getLogger(__name__)

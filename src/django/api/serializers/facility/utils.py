@@ -21,6 +21,7 @@ from ...models import (
 )
 from ..utils import (
     get_embed_contributor_id,
+    is_contribution_masked,
     prefer_contributor_name,
 )
 
@@ -124,10 +125,6 @@ def can_user_see_detail(serializer):
         return user.can_view_full_contrib_details
     else:
         return True
-
-
-def is_contribution_masked(contributor_data: dict, masked) -> bool:
-    return bool(masked) and masked.should_mask(contributor_data)
 
 
 def get_contributor_name_from_facilityindex(
