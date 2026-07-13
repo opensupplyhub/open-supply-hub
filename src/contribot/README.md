@@ -8,6 +8,8 @@ The current process consists of the following three steps:
 2. For each list, download the file from S3, run the ContriCleaner report, and upload the report to Google Drive.
 3. Send notifications to Slack and Monday so that data moderators can review the report.
 
+The solution leverages AWS Step Functions to orchestrate these steps. Each step is implemented as a Lambda task; processing individual lists runs in a Map state over the newly fetched lists.
+
 The following environment variables are required:
 
 ### Secrets Manager
@@ -27,3 +29,4 @@ Nonsensitive configuration can be set as plain Lambda environment variables:
 2. `MONDAY_API_URL` — Base URL of the Monday.com API.
 3. `AWS_STORAGE_BUCKET_NAME` — S3 bucket where uploaded facility list files are stored.
 4. `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` — Google Drive folder ID where ContriCleaner reports are uploaded.
+5. `MONDAY_BOARD_ID` — ID of the Monday board to post the update.
