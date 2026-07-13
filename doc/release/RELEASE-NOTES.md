@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Architecture/Environment changes
+* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id`, three placeholder Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Handlers are stubs only; secret values must be populated manually in AWS before real processing can run. Lambda dependency bundling for production handler code is not yet wired into the deploy pipeline.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - After deploy, populate the four ContriBot Secrets Manager stores for each environment (`contribot{Environment}OsHubApiToken`, `MondayApiKey`, `SlackApiUrl`, `GoogleDriveServiceKey`). The scheduled Step Functions workflow will run automatically but handlers return stub data until follow-up implementation work lands.
+
+
 ## Release 2.27.0
 
 ## Introduction
