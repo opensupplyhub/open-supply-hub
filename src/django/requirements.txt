@@ -38,7 +38,7 @@ django-slowtests==1.1.1
 django-allauth==65.14.1
 opensearch-py==2.8.0
 gunicorn==22.0.0
-django==5.2.14
+django==5.2.15
 psycopg2==2.9.9
 gevent==24.2.1
 google-api-python-client==2.156.0
