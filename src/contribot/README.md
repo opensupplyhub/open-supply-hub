@@ -1,32 +1,57 @@
 # ContriBot Lambda Functions
 
-In this directory you'll find Lambda functions that validate list uploads.
+Lambda functions that validate facility list uploads and notify data moderators when reports are ready for review.
 
-The current process consists of the following three steps:
+## Overview
 
-1. Fetch newly processed lists and queue them for processing. Lists are retrieved via the `GET /api/admin-facility-lists/` endpoint.
-2. For each list, download the file from S3, run the ContriCleaner report, and upload the report to Google Drive.
-3. Send notifications to Slack and Monday so that data moderators can review the report.
+ContriBot polls Open Supply Hub for newly processed facility lists, generates ContriCleaner reports, uploads them to Google Drive, and notifies moderators via Slack and Monday.
 
-The solution leverages AWS Step Functions to orchestrate these steps. Each step is implemented as a Lambda task; processing individual lists runs in a Map state over the newly fetched lists.
+## Architecture
 
-The following environment variables are required:
+The solution leverages **AWS Step Functions** to orchestrate the workflow. Each step is implemented as a Lambda task; processing individual lists runs in a **Map** state over the newly fetched lists.
+
+```mermaid
+flowchart LR
+  SFN[Step Functions] --> Fetch[fetch_lists]
+  Fetch --> Map[Map state]
+  Map --> Process[process_list]
+  Process --> Notify[notify]
+  Fetch --> API[Open Supply Hub API]
+  Process --> S3[(S3)]
+  Process --> GDrive[Google Drive]
+  Notify --> Slack[Slack]
+  Notify --> Monday[Monday]
+```
+
+## Process
+
+| Step | Description                                                                                                          |
+| ---- | -------------------------------------------------------------------------------------------------------------------- |
+| 1    | Fetch newly processed lists and queue them for processing. Lists are retrieved via `GET /api/admin-facility-lists/`. |
+| 2    | For each list, download the file from S3, run the ContriCleaner report, and upload the report to Google Drive.       |
+| 3    | Send notifications to Slack and Monday so that data moderators can review the report.                                |
+
+## Configuration
 
 ### Secrets Manager
 
-Store sensitive values in AWS Secrets Manager and inject them at runtime:
+Store sensitive values in AWS Secrets Manager and inject them at runtime.
 
-1. `OS_HUB_API_TOKEN` — API token used to authenticate requests to Open Supply Hub.
-2. `MONDAY_API_KEY` — API token used to post items to the Monday board.
-3. `SLACK_API_URL` — Webhook URL used to send Slack notifications.
-4. `GOOGLE_DRIVE_SERVICE_KEY` — Google service account credentials used to upload reports to Google Drive.
+| Variable                   | Description                                                                |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `OS_HUB_API_TOKEN`         | API token used to authenticate requests to Open Supply Hub.                |
+| `MONDAY_API_KEY`           | API token used to post items to the Monday board.                          |
+| `SLACK_API_URL`            | Webhook URL used to send Slack notifications.                              |
+| `GOOGLE_DRIVE_SERVICE_KEY` | Google service account credentials used to upload reports to Google Drive. |
 
-### Environment Variables
+### Environment variables
 
-Nonsensitive configuration can be set as plain Lambda environment variables:
+Non-sensitive configuration can be set as plain Lambda environment variables.
 
-1. `OS_HUB_API_URL` — Base URL of the Open Supply Hub API.
-2. `MONDAY_API_URL` — Base URL of the Monday.com API.
-3. `AWS_STORAGE_BUCKET_NAME` — S3 bucket where uploaded facility list files are stored.
-4. `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` — Google Drive folder ID where ContriCleaner reports are uploaded.
-5. `MONDAY_BOARD_ID` — ID of the Monday board to post the update.
+| Variable                           | Description                                                      |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| `OS_HUB_API_URL`                   | Base URL of the Open Supply Hub API.                             |
+| `MONDAY_API_URL`                   | Base URL of the Monday.com API.                                  |
+| `AWS_STORAGE_BUCKET_NAME`          | S3 bucket where uploaded facility list files are stored.         |
+| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | Google Drive folder ID where ContriCleaner reports are uploaded. |
+| `MONDAY_BOARD_ID`                  | ID of the Monday board to post the update.                       |
