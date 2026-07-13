@@ -43,3 +43,33 @@ resource "aws_secretsmanager_secret" "contribot_google_drive_service_key" {
     Name = "contribotGoogleDriveServiceKey"
   })
 }
+
+#
+# ContriBot DynamoDB state table
+#
+# Tracks processed facility lists by list ID. Lambdas read this table via
+# CONTRIBOT_STATE_TABLE_NAME to skip already-handled lists and resume after failures.
+#
+
+resource "aws_dynamodb_table" "contribot_state" {
+  name         = "contribot${local.short}State"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "list_id"
+
+  attribute {
+    name = "list_id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  tags = merge(local.default_tags, {
+    Name = "contribotState"
+  })
+}
