@@ -27,30 +27,14 @@ class Migration(migrations.Migration):
                         '''
                         ALTER TABLE api_contributor
                         ADD COLUMN IF NOT EXISTS
-                        anonymise_in_paid_products boolean;
-                        ''',
-                        '''
-                        UPDATE api_contributor
-                        SET anonymise_in_paid_products = false
-                        WHERE anonymise_in_paid_products IS NULL;
-                        ''',
-                        '''
-                        ALTER TABLE api_contributor
-                        ALTER COLUMN anonymise_in_paid_products SET NOT NULL;
+                        anonymise_in_paid_products boolean
+                        NOT NULL DEFAULT false;
                         ''',
                         '''
                         ALTER TABLE api_historicalcontributor
                         ADD COLUMN IF NOT EXISTS
-                        anonymise_in_paid_products boolean;
-                        ''',
-                        '''
-                        UPDATE api_historicalcontributor
-                        SET anonymise_in_paid_products = false
-                        WHERE anonymise_in_paid_products IS NULL;
-                        ''',
-                        '''
-                        ALTER TABLE api_historicalcontributor
-                        ALTER COLUMN anonymise_in_paid_products SET NOT NULL;
+                        anonymise_in_paid_products boolean
+                        NOT NULL DEFAULT false;
                         ''',
                     ],
                     reverse_sql=[
@@ -71,6 +55,7 @@ class Migration(migrations.Migration):
                     name='anonymise_in_paid_products',
                     field=models.BooleanField(
                         default=False,
+                        db_default=False,
                         help_text=ANONYMISE_IN_PAID_PRODUCTS_HELP_TEXT,
                         verbose_name=(
                             ANONYMISE_IN_PAID_PRODUCTS_VERBOSE_NAME
@@ -82,6 +67,7 @@ class Migration(migrations.Migration):
                     name='anonymise_in_paid_products',
                     field=models.BooleanField(
                         default=False,
+                        db_default=False,
                         help_text=ANONYMISE_IN_PAID_PRODUCTS_HELP_TEXT,
                         verbose_name=(
                             ANONYMISE_IN_PAID_PRODUCTS_VERBOSE_NAME

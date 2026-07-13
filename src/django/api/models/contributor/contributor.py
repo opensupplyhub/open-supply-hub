@@ -141,6 +141,7 @@ class Contributor(models.Model):
     anonymise_in_paid_products = models.BooleanField(
         'Anonymise contributor name in paid products',
         default=False,
+        db_default=False,
         help_text=(
             "When enabled, this contributor's name is anonymised in OS Hub "
             'paid products - the bulk data download and the programmatic API '
