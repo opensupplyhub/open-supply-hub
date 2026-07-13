@@ -1,0 +1,30 @@
+{
+    "StartAt": "FetchLists",
+    "States": {
+        "FetchLists": {
+            "Type": "Task",
+            "Resource": "${fetch_lists_lambda_arn}",
+            "Next": "ProcessLists"
+        },
+        "ProcessLists": {
+            "Type": "Map",
+            "ItemsPath": "$.lists",
+            "Iterator": {
+                "StartAt": "ProcessList",
+                "States": {
+                    "ProcessList": {
+                        "Type": "Task",
+                        "Resource": "${process_list_lambda_arn}",
+                        "Next": "Notify"
+                    },
+                    "Notify": {
+                        "Type": "Task",
+                        "Resource": "${notify_lambda_arn}",
+                        "End": true
+                    }
+                }
+            },
+            "End": true
+        }
+    }
+}
