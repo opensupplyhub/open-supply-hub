@@ -739,7 +739,7 @@ export const OARSecondaryColor = '#FFA6D0';
 // when the width is set to 100%
 export const minimum100PercentWidthEmbedHeight = '500px';
 
-export const DONATE_LINK = 'https://givebutter.com/opensupplyhub2022';
+export const DONATE_LINK = 'https://info.opensupplyhub.org/resources/donations';
 
 export const OS_HUB_BLOG_LINK = 'https://blog.opensupplyhub.org';
 

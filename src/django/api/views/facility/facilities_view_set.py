@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from functools import wraps
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
@@ -40,6 +41,13 @@ from django.utils import timezone
 from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
+from django.conf import settings
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_headers
+
+from api.facilities_extent_cache import FacilitiesExtentCache
+from api.facilities_visibility_token import facilities_visibility_token
 from api.models import (
     Contributor,
     Facility,
@@ -91,8 +99,7 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
-from api.facilities_extent_cache import FacilitiesExtentCache
-from api.facilities_visibility_token import facilities_visibility_token
+from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -104,6 +111,43 @@ from api.views.facility.facility_parameters import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def cache_page_by_auth_tier(timeout, cache):
+    """Cache the view response, collapsing ``Authorization`` to two buckets.
+
+    Masking on paid surfaces depends only on *whether* the caller is a token
+    (programmatic) API request, not on which token. Varying ``view_cache``
+    directly on the ``Authorization`` header would store one identical copy per
+    token, fragmenting the cache and lowering the hit rate. This normalises the
+    value the cache key is derived from to ``paid`` / ``regular`` - at most two
+    entries per URL - while still emitting ``Vary: Authorization`` on the
+    response so downstream caches (CDN/browser) stay correct.
+    """
+    def decorator(view_method):
+        cached = method_decorator([
+            cache_page(timeout, cache=cache),
+            vary_on_headers('Authorization'),
+        ])(view_method)
+
+        @wraps(view_method)
+        def wrapper(self, request, *args, **kwargs):
+            real_auth = request.META.get('HTTP_AUTHORIZATION')
+            if real_auth is not None:
+                # request.auth is already resolved by DRF authentication in
+                # dispatch().initial(), so this never re-triggers auth.
+                request.META['HTTP_AUTHORIZATION'] = (
+                    'paid' if getattr(request, 'auth', None) else 'regular'
+                )
+            try:
+                return cached(self, request, *args, **kwargs)
+            finally:
+                if real_auth is not None:
+                    request.META['HTTP_AUTHORIZATION'] = real_auth
+
+        return wrapper
+
+    return decorator
 
 
 class FacilitiesViewSet(ListModelMixin,
@@ -136,65 +180,86 @@ class FacilitiesViewSet(ListModelMixin,
         ### Sample Response
             {
                 "type": "FeatureCollection",
+                "count": 2,
+                "next": null,
+                "previous": null,
                 "features": [
                     {
-                        "id": "OS_ID_1",
+                        "id": "CN2019303BQ3FZP",
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [1, 1]
+                            "coordinates": [120.596047, 32.172013]
                         },
                         "properties": {
-                            "name": "facility_name_1",
-                            "address" "facility address_1",
-                            "country_code": "US",
-                            "country_name": "United States",
-                            "os_id": "OS_ID_1",
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "country_name": "China",
+                            "has_approved_claim": false,
+                            "is_closed": null
                         }
                     },
                     {
-                        "id": "OS_ID_2",
+                        "id": "US2020123ABC456",
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [2, 2]
+                            "coordinates": [-77.03687, 38.907192]
                         },
                         "properties": {
-                            "name": "facility_name_2",
-                            "address" "facility address_2",
+                            "name": "Example Manufacturing LLC",
+                            "address": "100 Main Street, Washington, DC",
                             "country_code": "US",
+                            "os_id": "US2020123ABC456",
                             "country_name": "United States",
-                            "os_id": "OS_ID_2"
+                            "has_approved_claim": true,
+                            "is_closed": null
                         }
                     }
-                ]
+                ],
+                "extent": [-77.03687, 32.172013, 120.596047, 38.907192],
+                "params": {
+                    "contributors": [],
+                    "detail": false,
+                    "number_of_public_contributors": false,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
             }
 
         ### Sample Response - parameter 'detail' equal 'true'
             {
                 "type": "FeatureCollection",
+                "count": 1,
+                "next": null,
+                "previous": null,
                 "features": [
                     {
-                        "id": "OS_ID_1",
+                        "id": "CN2019303BQ3FZP",
                         "type": "Feature",
                         "geometry": {
                             "type": "Point",
-                            "coordinates": [1, 1]
+                            "coordinates": [120.596047, 32.172013]
                         },
                         "properties": {
-                            "name": "facility_name_1",
-                            "address" "facility address_1",
-                            "country_code": "US",
-                            "country_name": "United States",
-                            "os_id": "OS_ID_1",
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "country_name": "China",
                             "contributors": [
                                 {
                                     "id": 1,
-                                    "name": "contributor_list_name",
-                                    "is_verified": false,
-                                    "contributor_name": "contributor_name",
-                                    "list_name": "list_name",
-                                    "contributor_type": "contributor_type",
+                                    "name": "Brand A (2019 Q1 List)",
+                                    "is_verified": true,
+                                    "contributor_name": "Brand A",
+                                    "contributor_type": "Brand/Retailer",
+                                    "list_name": "2019 Q1 List",
+                                    "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                                    "list_uploaded_at": "2022-01-27T17:36:54.597482Z",
                                     "count": 1
                                 }
                             ],
@@ -202,30 +267,212 @@ class FacilitiesViewSet(ListModelMixin,
                             "is_closed": null,
                             "contributor_fields": [],
                             "extended_fields": {
-                                "field_name": [
+                                "name": [
                                     {
-                                        "value": "field_value",
-                                        "field_name": "field_name",
+                                        "value": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                                        "field_name": "name",
                                         "contributor_id": 1,
-                                        "contributor_name": "contributor_name",
-                                        "updated_at": "0000-00-00T00:00:00"
+                                        "contributor_name": "Brand A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
                                     }
-                                ]
-                            }
+                                ],
+                                "address": [
+                                    {
+                                        "value": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                                        "field_name": "address",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
+                                "number_of_workers": [
+                                    {
+                                        "id": 10,
+                                        "is_verified": false,
+                                        "value": {"min": 1000, "max": 5000},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "number_of_workers",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "native_language_name": [
+                                    {
+                                        "id": 11,
+                                        "is_verified": false,
+                                        "value": {"raw_value": "Nantong Jackbeanie Native Name"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "native_language_name",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "facility_type": [
+                                    {
+                                        "id": 12,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Final Product Assembly"],
+                                            "matched_values": ["Final Product Assembly"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "facility_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "processing_type": [
+                                    {
+                                        "id": 13,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Cut and Sew"],
+                                            "matched_values": ["Cut and Sew"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "processing_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "product_type": [
+                                    {
+                                        "id": 14,
+                                        "is_verified": false,
+                                        "value": {"raw_values": ["Headwear", "Garments"]},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "product_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company": [
+                                    {
+                                        "id": 15,
+                                        "is_verified": false,
+                                        "value": {"name": "Parent Company"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Brand A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "parent_company",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company_os_id": []
+                            },
                             "sector": [
                                 {
-                                    "updated_at": "0000-00-00T00:00:00",
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
                                     "contributor_id": 1,
-                                    "contributor_name": "contributor_name",
-                                    "values": [
-                                        "sector_value"
-                                    ],
+                                    "contributor_name": "Brand A",
+                                    "values": ["Apparel"],
                                     "is_from_claim": false
                                 }
                             ]
                         }
                     }
-                ]
+                ],
+                "extent": [120.596047, 32.172013, 120.596047, 32.172013],
+                "params": {
+                    "contributors": [],
+                    "detail": true,
+                    "number_of_public_contributors": false,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
+            }
+
+        ### Sample Response - parameter 'number_of_public_contributors' equal 'true'
+            {
+                "type": "FeatureCollection",
+                "count": 1,
+                "next": null,
+                "previous": null,
+                "features": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "country_name": "China",
+                            "number_of_public_contributors": 2,
+                            "has_approved_claim": false,
+                            "is_closed": null
+                        }
+                    }
+                ],
+                "extent": [120.596047, 32.172013, 120.596047, 32.172013],
+                "params": {
+                    "contributors": [],
+                    "detail": false,
+                    "number_of_public_contributors": true,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
             }
         """
         page_serializer = FacilityListPageParameterSerializer(
@@ -282,6 +529,15 @@ class FacilitiesViewSet(ListModelMixin,
             request
         )
 
+        # Resolve the flagged set once and reuse it: __is_anonymised_only always
+        # needs the full set, while the serializer masks names only for API
+        # callers (empty for web clients). Passing `flagged` back into
+        # for_facilities_api avoids a second cache round-trip when serialising.
+        flagged = ContributorMaskingPolicy.flagged_contributors()
+        context['masked_contributors'] = (
+            ContributorMaskingPolicy.for_facilities_api(request, flagged)
+        )
+
         if page_queryset is not None:
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
@@ -291,6 +547,9 @@ class FacilitiesViewSet(ListModelMixin,
             page.data['extent'] = extent
             page.data['params'] = params.validated_data
             page.data['is_same_contributor'] = is_same_contributor
+            page.data['anonymised_only'] = self.__is_anonymised_only(
+                queryset, flagged, page.data.get('count')
+            )
             return page
 
         # Non-paginated response
@@ -302,14 +561,54 @@ class FacilitiesViewSet(ListModelMixin,
             'type': 'FeatureCollection',
             'features': serializer.data,
             'is_same_contributor': is_same_contributor,
+            'anonymised_only': self.__is_anonymised_only(queryset, flagged),
         }
         if extent is not None:
             response['extent'] = extent
         response['params'] = params.validated_data
         return Response(response)
 
+    @staticmethod
+    def __is_anonymised_only(queryset, flagged, count=None):
+        """
+        Whether every facility in the (full, unpaginated) result set is
+        attributed only to anonymised contributors, so a download would carry
+        no real contributor attribution. The front-end disables the download
+        button in that case.
+
+        ``flagged`` is the pre-resolved full ``MaskedContributors`` from the
+        caller (already fetched from the cache) so this method never hits the
+        cache a second time.
+        """
+        anonymised_ids = list(flagged.contributor_ids)
+        if not anonymised_ids:
+            return False
+        # A facility is downloadable when it has at least one contributor
+        # outside the anonymised set, i.e. its contributors are NOT contained
+        # by that set. A single cheap EXISTS settles the common case (some
+        # facility is downloadable) without ever counting the result set.
+        has_downloadable = queryset.exclude(
+            contributors_id__contained_by=anonymised_ids
+        ).exists()
+        if has_downloadable:
+            return False
+        # No downloadable rows left: the result is anonymised-only as long as
+        # it is not empty. Reuse the paginator's count when it was already
+        # computed; otherwise fall back to a cheap EXISTS instead of COUNT(*).
+        if count is not None:
+            return count > 0
+        return queryset.exists()
+
     @swagger_auto_schema(manual_parameters=facility_parameters,
                          responses={200: FacilityIndexDetailsSerializer})
+    # Masking depends only on whether the caller is a token (API) request, so
+    # the cached response is split into just two buckets - paid (union names
+    # masked) and regular (names shown) - instead of one per token. See
+    # cache_page_by_auth_tier.
+    @cache_page_by_auth_tier(
+        settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+        cache="view_cache",
+    )
     @cache_view_response(
         'facility_detail',
         vary_on=facilities_visibility_token,
@@ -339,20 +638,288 @@ class FacilitiesViewSet(ListModelMixin,
                             "id": 1,
                             "name": "Brand A (2019 Q1 List)",
                             "is_verified": true,
+                            "contributor_name": "Brand A",
                             "contributor_type": "Brand/Retailer",
-                            "count": 1
+                            "list_name": "2019 Q1 List",
+                            "count": 1,
+                            "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                            "list_uploaded_at": "2022-01-27T17:36:54.597482Z"
                         }
                     ],
+                    "is_closed": null,
+                    "new_os_id": null,
+                    "has_inexact_coordinates": false,
+                    "is_claimed": true,
+                    "created_from": {
+                        "created_at": "2022-01-27T17:36:54.597482Z",
+                        "contributor": "Brand A"
+                    },
+                    "sector": [
+                        {
+                            "updated_at": "2022-01-27T17:36:54.597482Z",
+                            "contributor_id": 1,
+                            "contributor_name": "Brand A",
+                            "values": ["Apparel"],
+                            "is_from_claim": false
+                        }
+                    ],
+                    "extended_fields": {
+                        "name": [
+                            {
+                                "value": "Facility Name",
+                                "field_name": "name",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "is_from_created_from": false
+                            }
+                        ],
+                        "address": [
+                            {
+                                "value": "Facility address",
+                                "field_name": "address",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "is_from_created_from": false
+                            }
+                        ],
+                        "number_of_workers": [
+                            {
+                                "id": 10,
+                                "is_verified": false,
+                                "value": {"min": 1000, "max": 5000},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "number_of_workers",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "native_language_name": [
+                            {
+                                "id": 11,
+                                "is_verified": false,
+                                "value": {"raw_value": "Facility Native Name"},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "native_language_name",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "facility_type": [
+                            {
+                                "id": 12,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": ["Final Product Assembly"],
+                                    "matched_values": ["Final Product Assembly"]
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "facility_type",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "processing_type": [
+                            {
+                                "id": 13,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": ["Cut and Sew"],
+                                    "matched_values": ["Cut and Sew"]
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "processing_type",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "product_type": [
+                            {
+                                "id": 14,
+                                "is_verified": false,
+                                "value": {"raw_values": ["Shirts", "Pants"]},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "product_type",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "parent_company": [
+                            {
+                                "id": 15,
+                                "is_verified": false,
+                                "value": {"name": "Parent Company"},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_id": 1,
+                                "contributor_name": "Brand A",
+                                "value_count": 1,
+                                "verified_count": 0,
+                                "is_from_claim": false,
+                                "field_name": "parent_company",
+                                "source_by": null,
+                                "unit": null,
+                                "label": null,
+                                "base_url": null,
+                                "display_text": null,
+                                "json_schema": null
+                            }
+                        ],
+                        "parent_company_os_id": []
+                    },
+                    "contributor_fields": [],
+                    "activity_reports": [],
+                    "other_locations": [
+                        {
+                            "lat": 1.0,
+                            "lng": 1.0,
+                            "contributor_id": 1,
+                            "contributor_name": "Brand A",
+                            "notes": null
+                        }
+                    ],
+                    "claim_info": {
+                        "id": 1,
+                        "created_at": "2022-01-27T17:36:54.597482Z",
+                        "contributor": "Brand A",
+                        "user_id": 1,
+                        "facility": {
+                            "description": "Facility description",
+                            "name_english": "Facility Name",
+                            "name_native_language": null,
+                            "address": "Facility address",
+                            "website": "https://example.com",
+                            "parent_company": {
+                                "id": 1,
+                                "name": "Parent Company"
+                            },
+                            "phone_number": null,
+                            "minimum_order": null,
+                            "average_lead_time": null,
+                            "workers_count": "1000",
+                            "female_workers_percentage": "50",
+                            "facility_type": null,
+                            "other_facility_type": null,
+                            "affiliations": null,
+                            "certifications": null,
+                            "product_types": null,
+                            "production_types": null,
+                            "sector": ["Apparel"],
+                            "location": null,
+                            "opening_date": null,
+                            "closing_date": null,
+                            "estimated_annual_throughput": null,
+                            "actual_annual_energy_consumption": {
+                                "coal": null,
+                                "natural_gas": null,
+                                "diesel": null,
+                                "kerosene": null,
+                                "biomass": null,
+                                "charcoal": null,
+                                "animal_waste": null,
+                                "electricity": null,
+                                "other": null
+                            }
+                        },
+                        "contact": null,
+                        "office": null
+                    },
                     "partner_fields": {
                         "worldly_assessment_data": [
                             {
+                                "id": 20,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "fem_assessment": {
                                             "verification_status": "pending",
-                                            "assessment_url": "https://example.com/assessment-id",
                                             "last_date": "2026-03-09T13:52:43Z",
                                             "reporting_year": 2025
+                                        }
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "worldly_assessment_data",
+                                "verified_count": 0,
+                                "source_by": "<p>Learn more about Cascale's Higg Index on Worldly.</p>",
+                                "unit": "",
+                                "label": "Worldly",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Worldly Assessments Data Update",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "fem_assessment": {
+                                            "type": "object",
+                                            "title": "Higg Facility Environmental Module (Higg FEM)",
+                                            "properties": {
+                                                "last_date": {
+                                                    "type": "string",
+                                                    "title": "Last Date",
+                                                    "format": "date-time"
+                                                },
+                                                "reporting_year": {
+                                                    "type": "integer",
+                                                    "title": "Reporting Year",
+                                                    "minimum": 1970
+                                                },
+                                                "verification_status": {
+                                                    "type": "string",
+                                                    "title": "Status",
+                                                    "enum": ["verified", "unverified", "pending"]
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -360,6 +927,8 @@ class FacilitiesViewSet(ListModelMixin,
                         ],
                         "slcp_assessment": [
                             {
+                                "id": 21,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "most_recent_assessment_status": "Assessment Completed",
@@ -368,34 +937,171 @@ class FacilitiesViewSet(ListModelMixin,
                                         "verifier_body": "Bureau Veritas",
                                         "slcp_facility_id": "FA1000010"
                                     }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "slcp_assessment",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "SLCP Assessment",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "SLCP Assessment",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "most_recent_assessment_status": {
+                                            "type": "string",
+                                            "title": "Assessment Status"
+                                        },
+                                        "most_recent_assessment_date": {
+                                            "type": "string",
+                                            "title": "Assessment Date",
+                                            "format": "date"
+                                        },
+                                        "assessment_platform": {
+                                            "type": "string",
+                                            "title": "Assessment Platform"
+                                        },
+                                        "verifier_body": {
+                                            "type": "string",
+                                            "title": "Verifier Body"
+                                        },
+                                        "slcp_facility_id": {
+                                            "type": "string",
+                                            "title": "SLCP Facility ID"
+                                        }
+                                    }
                                 }
                             }
                         ],
                         "accord_inspections_and_remediation_program": [
                             {
+                                "id": 22,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "first_inspection_date": "2022-06-01",
                                         "rsc_presence": "Yes"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "accord_inspections_and_remediation_program",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Accord Inspections & Remediation Program",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Accord Inspections and Remediation Program",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "rsc_presence": {
+                                            "type": "string",
+                                            "title": "Accord/RSC Presence",
+                                            "enum": ["Yes", "No"]
+                                        },
+                                        "first_inspection_date": {
+                                            "type": "string",
+                                            "title": "First Inspection Date",
+                                            "format": "date"
+                                        }
                                     }
                                 }
                             }
                         ],
                         "amfori_compliance_status": [
                             {
+                                "id": 23,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
-                                        "bepi_audit": {
-                                            "submission_date": "2023-10-28",
-                                            "expiration_date": "2025-10-30"
-                                        },
                                         "bsci_audit": {
                                             "submission_date": "2023-10-28",
                                             "expiration_date": "2025-10-28"
                                         },
+                                        "bepi_audit": {
+                                            "submission_date": "2023-10-28",
+                                            "expiration_date": "2025-10-30"
+                                        },
                                         "environmental_risk_assessment": {
                                             "completion_date": "2025-10-28",
                                             "expiration_date": "2025-10-30"
+                                        }
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "amfori_compliance_status",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "amfori Assessment & Audits",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Amfori Compliance Status",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "bsci_audit": {
+                                            "type": "object",
+                                            "properties": {
+                                                "submission_date": {
+                                                    "type": "string",
+                                                    "title": "Submission Date",
+                                                    "format": "date"
+                                                },
+                                                "expiration_date": {
+                                                    "type": "string",
+                                                    "title": "Expiration Date",
+                                                    "format": "date"
+                                                }
+                                            }
+                                        },
+                                        "bepi_audit": {
+                                            "type": "object",
+                                            "properties": {
+                                                "submission_date": {
+                                                    "type": "string",
+                                                    "title": "Submission Date",
+                                                    "format": "date"
+                                                },
+                                                "expiration_date": {
+                                                    "type": "string",
+                                                    "title": "Expiration Date",
+                                                    "format": "date"
+                                                }
+                                            }
+                                        },
+                                        "environmental_risk_assessment": {
+                                            "type": "object",
+                                            "properties": {
+                                                "completion_date": {
+                                                    "type": "string",
+                                                    "title": "Completion Date",
+                                                    "format": "date"
+                                                },
+                                                "expiration_date": {
+                                                    "type": "string",
+                                                    "title": "Expiration Date",
+                                                    "format": "date"
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -403,31 +1109,102 @@ class FacilitiesViewSet(ListModelMixin,
                         ],
                         "climate_trace_emissions": [
                             {
+                                "id": 24,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "estimated_emissions": 1250500,
                                         "estimated_annual_throughput": 450000,
                                         "emissions_model": "Partially Modeled"
                                     }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "climate_trace_emissions",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Climate TRACE Emissions",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Climate TRACE Estimated Emissions",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "estimated_emissions": {
+                                            "type": "integer",
+                                            "title": "Estimated Emissions (t CO2e-100)"
+                                        },
+                                        "estimated_annual_throughput": {
+                                            "type": "integer",
+                                            "title": "Estimated Annual Throughput (kg/yr)"
+                                        },
+                                        "emissions_model": {
+                                            "type": "string",
+                                            "title": "Emissions Model",
+                                            "enum": [
+                                                "Facility Reported",
+                                                "Partially Reported",
+                                                "Partially Modeled",
+                                                "Fully Modeled"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "estimated_emissions",
+                                        "emissions_model"
+                                    ]
                                 }
                             }
                         ],
                         "estimated_annual_activity": [
                             {
-                                "value": {
-                                    "raw_value": 450000
-                                }
+                                "id": 25,
+                                "is_verified": false,
+                                "value": {"raw_value": 450000},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "estimated_annual_activity",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Estimated Annual Activity",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": null
                             }
                         ],
                         "estimated_emissions": [
                             {
-                                "value": {
-                                    "raw_value": 32833
-                                }
+                                "id": 26,
+                                "is_verified": false,
+                                "value": {"raw_value": 32833},
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "estimated_emissions",
+                                "verified_count": 0,
+                                "source_by": "<p>Based on Emissions Models from Climate TRACE.</p>",
+                                "unit": "t CO2e-100",
+                                "label": "Estimated Annual Emissions",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": null
                             }
                         ],
                         "wage_indicator": [
                             {
+                                "id": 27,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "living_wage_link_national": "https://paywizard.org/salary/living-wages",
@@ -437,57 +1214,323 @@ class FacilitiesViewSet(ListModelMixin,
                                         "minimum_wage_link_national": "https://paywizard.org/salary/minimum-wage",
                                         "minimum_wage_link_national_text": "View Minimum Wage in national language"
                                     }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "wage_indicator",
+                                "verified_count": 0,
+                                "source_by": "<p>2025 Minimum and Living Wages Database.</p>",
+                                "unit": "",
+                                "label": "WageIndicator: Minimum & Living Wages",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Wage indicator reference links",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "living_wage_link_national": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "minimum_wage_link_english": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "minimum_wage_link_national": {
+                                            "type": "string",
+                                            "format": "uri"
+                                        },
+                                        "living_wage_link_national_text": {
+                                            "type": "string"
+                                        },
+                                        "minimum_wage_link_english_text": {
+                                            "type": "string"
+                                        },
+                                        "minimum_wage_link_national_text": {
+                                            "type": "string"
+                                        }
+                                    }
                                 }
                             }
                         ],
                         "mit_living_wage": [
                             {
+                                "id": 28,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "county_id": "24033"
                                     }
-                                }
-                            }
-                        ],
-                        "ulula_grievance_mechanism": [
-                            {
-                                "value": {
-                                    "raw_values": {
-                                        "status": "active",
-                                        "start_date": "2026-01-29",
-                                        "end_date": "2026-01-29"
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "mit_living_wage",
+                                "verified_count": 0,
+                                "source_by": "<p>County estimates match U.S. audit benchmark needs.</p>",
+                                "unit": "",
+                                "label": "Living Wage Institute: Local Living Wage",
+                                "base_url": "https://livingwage.mit.edu/counties/",
+                                "display_text": "View local living wage",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Some Data",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "properties": {
+                                        "county_id": {
+                                            "type": "string",
+                                            "format": "uri-reference"
+                                        }
                                     }
                                 }
                             }
                         ],
                         "rsc_grievance_mechanism": [
                             {
+                                "id": 29,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
-                                        "status": "active",
-                                        "active_since": "2022-06-01",
-                                        "end_date": "2022-06-01"
+                                        "status": "Active",
+                                        "thematic_coverage": "Multi-issue",
+                                        "mechanism_type_ownership": "Multi-stakeholder led",
+                                        "access_modality": "Hotline; Email; In-person",
+                                        "coverage": "All workers (factory-level)"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "rsc_grievance_mechanism",
+                                "verified_count": 0,
+                                "source_by": "<p>Mechanism Active in Bangladesh Since August 1, 2014</p>",
+                                "unit": "",
+                                "label": "Accord/RSC Grievance Mechanism",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "RSC Grievance Mechanism",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["status"],
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "title": "Status",
+                                            "enum": ["Active", "Inactive"]
+                                        },
+                                        "thematic_coverage": {
+                                            "type": "string",
+                                            "title": "Thematic Coverage",
+                                            "default": "Multi-issue"
+                                        },
+                                        "mechanism_type_ownership": {
+                                            "type": "string",
+                                            "title": "Mechanism Type / Ownership",
+                                            "default": "Multi-stakeholder led"
+                                        },
+                                        "access_modality": {
+                                            "type": "string",
+                                            "title": "Access / Modality",
+                                            "default": "Hotline; Email; In-person"
+                                        },
+                                        "coverage": {
+                                            "type": "string",
+                                            "title": "Coverage",
+                                            "default": "All workers (factory-level)"
+                                        }
                                     }
                                 }
                             }
                         ],
                         "labor_solutions_grievance_mechanism": [
                             {
+                                "id": 30,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "wovo_active": "active",
-                                        "wovo_established_date": "2022-06-01"
+                                        "wovo_active_date": "2022-06-01",
+                                        "thematic_coverage": "Multi-issue",
+                                        "mechanism_type_ownership": "Facility or brand-led",
+                                        "access_modality": "Digital platform (app/web)",
+                                        "coverage": "All workers (factory-level)"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "labor_solutions_grievance_mechanism",
+                                "verified_count": 0,
+                                "source_by": "<p>WOVO Facility-Level Grievance Mechanism Data</p>",
+                                "unit": "",
+                                "label": "WOVO",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Labor Solutions Grievance Mechanism",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["wovo_active"],
+                                    "properties": {
+                                        "wovo_active": {
+                                            "type": "string",
+                                            "title": "Status",
+                                            "enum": ["active", "inactive"]
+                                        },
+                                        "wovo_active_date": {
+                                            "type": "string",
+                                            "title": "Active Since",
+                                            "format": "date"
+                                        },
+                                        "thematic_coverage": {
+                                            "type": "string",
+                                            "title": "Thematic Coverage",
+                                            "default": "Multi-issue"
+                                        },
+                                        "mechanism_type_ownership": {
+                                            "type": "string",
+                                            "title": "Mechanism Type / Ownership",
+                                            "default": "Facility or brand-led"
+                                        },
+                                        "access_modality": {
+                                            "type": "string",
+                                            "title": "Access / Modality",
+                                            "default": "Digital platform (app/web)"
+                                        },
+                                        "coverage": {
+                                            "type": "string",
+                                            "title": "Coverage",
+                                            "default": "All workers (factory-level)"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "ulula_grievance_mechanism": [
+                            {
+                                "id": 32,
+                                "is_verified": false,
+                                "value": {
+                                    "raw_values": {
+                                        "status": "active",
+                                        "start_date": "2021-05-01"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "ulula_grievance_mechanism",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "Ulula Grievance Mechanism",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "Ulula Grievance Mechanism",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["status"],
+                                    "properties": {
+                                        "status": {
+                                            "enum": ["active", "inactive"],
+                                            "type": "string",
+                                            "title": "Status",
+                                            "description": "The current operational status."
+                                        },
+                                        "start_date": {
+                                            "type": "string",
+                                            "title": "Active since",
+                                            "format": "date",
+                                            "description": "The date the grievance mechanism was established."
+                                        },
+                                        "end_date": {
+                                            "type": "string",
+                                            "title": "End Date",
+                                            "format": "date",
+                                            "description": "The date the grievance mechanism stopped operating."
+                                        },
+                                        "thematic_coverage": {
+                                            "type": "string",
+                                            "title": "Thematic Coverage",
+                                            "default": "Multi-issue"
+                                        },
+                                        "mechanism_type_ownership": {
+                                            "type": "string",
+                                            "title": "Mechanism Type / Ownership",
+                                            "default": "Ownership differs by facility"
+                                        },
+                                        "access_modality": {
+                                            "type": "string",
+                                            "title": "Access / Modality",
+                                            "default": "Hotline; Digital platform (app/web)"
+                                        },
+                                        "coverage": {
+                                            "type": "string",
+                                            "title": "Coverage",
+                                            "default": "Access differs by facility"
+                                        }
                                     }
                                 }
                             }
                         ],
                         "wrap_certification": [
                             {
+                                "id": 31,
+                                "is_verified": false,
                                 "value": {
                                     "raw_values": {
                                         "certification_status": "active",
                                         "issue_date": "2022-06-01",
                                         "expiration_date": "2022-12-01"
+                                    }
+                                },
+                                "updated_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor_name": "Brand A",
+                                "contributor_id": 1,
+                                "value_count": 1,
+                                "is_from_claim": false,
+                                "field_name": "wrap_certification",
+                                "verified_count": 0,
+                                "source_by": "",
+                                "unit": "",
+                                "label": "WRAP Certification",
+                                "base_url": "",
+                                "display_text": "",
+                                "json_schema": {
+                                    "type": "object",
+                                    "title": "WRAP Certification",
+                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                    "required": ["certification_status"],
+                                    "properties": {
+                                        "certification_status": {
+                                            "type": "string",
+                                            "title": "Status",
+                                            "enum": ["active", "inactive"]
+                                        },
+                                        "issue_date": {
+                                            "type": "string",
+                                            "title": "Issue Date",
+                                            "format": "date"
+                                        },
+                                        "expiration_date": {
+                                            "type": "string",
+                                            "title": "Expiration Date",
+                                            "format": "date"
+                                        }
                                     }
                                 }
                             }
@@ -532,11 +1575,10 @@ class FacilitiesViewSet(ListModelMixin,
         ## Sample Request Body
 
             {
-                "sector_product_type": "Apparel"
+                "sector_product_type": "Apparel",
                 "country": "China",
                 "name": "Nantong Jackbeanie Headwear & Garment Co. Ltd.",
                 "address": "No.808,the third industry park,Guoyuan Town,Nantong 226500."
-
             }
 
         ## Sample Responses
@@ -544,223 +1586,461 @@ class FacilitiesViewSet(ListModelMixin,
         ### Automatic Match
 
             {
-              "matches": [
-                {
-                  "id": "CN2019303BQ3FZP",
-                  "type": "Feature",
-                  "geometry": {
+                "matches": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "other_names": [],
+                            "other_addresses": [],
+                            "contributors": [
+                                {
+                                    "id": 4,
+                                    "name": "Researcher A (Summer 2019 Affiliate List)",
+                                    "is_verified": false,
+                                    "contributor_name": "Researcher A",
+                                    "contributor_type": "Academic/Researcher",
+                                    "list_name": "Summer 2019 Affiliate List",
+                                    "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                                    "list_uploaded_at": "2022-01-27T17:36:54.597482Z",
+                                    "count": 1
+                                }
+                            ],
+                            "country_name": "China",
+                            "claim_info": null,
+                            "other_locations": [],
+                            "is_closed": null,
+                            "activity_reports": [],
+                            "contributor_fields": [],
+                            "new_os_id": null,
+                            "has_inexact_coordinates": false,
+                            "extended_fields": {
+                                "name": [
+                                    {
+                                        "value": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                                        "field_name": "name",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
+                                "address": [
+                                    {
+                                        "value": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                                        "field_name": "address",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "is_from_created_from": true
+                                    }
+                                ],
+                                "number_of_workers": [
+                                    {
+                                        "id": 10,
+                                        "is_verified": false,
+                                        "value": {"min": 1000, "max": 5000},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "number_of_workers",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "native_language_name": [
+                                    {
+                                        "id": 11,
+                                        "is_verified": false,
+                                        "value": {"raw_value": "Nantong Jackbeanie Native Name"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "native_language_name",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "facility_type": [
+                                    {
+                                        "id": 12,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Final Product Assembly"],
+                                            "matched_values": ["Final Product Assembly"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "facility_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "processing_type": [
+                                    {
+                                        "id": 13,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": ["Cut and Sew"],
+                                            "matched_values": ["Cut and Sew"]
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "processing_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "product_type": [
+                                    {
+                                        "id": 14,
+                                        "is_verified": false,
+                                        "value": {"raw_values": ["Headwear", "Garments"]},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "product_type",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company": [
+                                    {
+                                        "id": 15,
+                                        "is_verified": false,
+                                        "value": {"name": "Parent Company"},
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_id": 4,
+                                        "contributor_name": "Researcher A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "parent_company",
+                                        "source_by": null,
+                                        "unit": null,
+                                        "label": null,
+                                        "base_url": null,
+                                        "display_text": null,
+                                        "json_schema": null
+                                    }
+                                ],
+                                "parent_company_os_id": []
+                            },
+                            "created_from": {
+                                "created_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor": "Researcher A"
+                            },
+                            "sector": [
+                                {
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
+                                    "contributor_id": 4,
+                                    "contributor_name": "Researcher A",
+                                    "values": ["Apparel"],
+                                    "is_from_claim": false
+                                }
+                            ],
+                            "is_claimed": false,
+                            "partner_fields": {
+                                "climate_trace_emissions": [
+                                    {
+                                        "id": 12,
+                                        "is_verified": false,
+                                        "value": {
+                                            "raw_values": {
+                                                "estimated_emissions": 1250500,
+                                                "estimated_annual_throughput": 450000,
+                                                "emissions_model": "Partially Modeled"
+                                            }
+                                        },
+                                        "updated_at": "2022-01-27T17:36:54.597482Z",
+                                        "contributor_name": "Researcher A",
+                                        "contributor_id": 4,
+                                        "value_count": 1,
+                                        "is_from_claim": false,
+                                        "field_name": "climate_trace_emissions",
+                                        "verified_count": 0,
+                                        "source_by": "",
+                                        "unit": "",
+                                        "label": "Climate TRACE Emissions",
+                                        "base_url": "",
+                                        "display_text": "",
+                                        "json_schema": {
+                                            "type": "object",
+                                            "title": "Climate TRACE Estimated Emissions",
+                                            "$schema": "https://json-schema.org/draft/2020-12/schema",
+                                            "properties": {
+                                                "estimated_emissions": {
+                                                    "type": "integer",
+                                                    "title": "Estimated Emissions (t CO2e-100)"
+                                                },
+                                                "estimated_annual_throughput": {
+                                                    "type": "integer",
+                                                    "title": "Estimated Annual Throughput (kg/yr)"
+                                                },
+                                                "emissions_model": {
+                                                    "type": "string",
+                                                    "title": "Emissions Model",
+                                                    "enum": [
+                                                        "Facility Reported",
+                                                        "Partially Reported",
+                                                        "Partially Modeled",
+                                                        "Fully Modeled"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "estimated_emissions",
+                                                "emissions_model"
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "confidence": 0.8153
+                    }
+                ],
+                "item_id": 964,
+                "geocoded_geometry": {
                     "type": "Point",
-                    "coordinates": [
-                      120.596047,
-                      32.172013
-                    ]
-                  },
-                  "properties": {
-                    "sector": [
-                      {
-                        "updated_at": "2022-01-27T17:36:54.597482Z",
-                        "contributor_id": 4,
-                        "contributor_name": "Researcher A",
-                        "values": [
-                          "Apparel"
-                        ]
-                      }
-                    ],
-                    "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
-                    "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
-                    "country_code": "CN",
-                    "os_id": "CN2019303BQ3FZP",
-                    "other_names": [],
-                    "other_addresses": [],
-                    "contributors": [
-                      {
-                        "id": 4,
-                        "name": "Researcher A (Summer 2019 Affiliate List)",
-                        "is_verified": false
-                      },
-                      {
-                        "id": 12,
-                        "name": "Brand B",
-                        "is_verified": false
-                      }
-
-                    ],
-                    "country_name": "China",
-                    "claim_info": null,
-                    "other_locations": [],
-                  },
-                  "confidence": 0.8153
-                }
-              ],
-              "item_id": 964,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  120.596047,
-                  32.172013
-                ]
-              },
-              "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
-              "status": "MATCHED",
-              "os_id": "CN2019303BQ3FZP"
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "MATCHED",
+                "os_id": "CN2019303BQ3FZP"
             }
 
         ### Potential Match
 
             {
-              "matches": [
-                {
-                  "id": "CN2019303BQ3FZP",
-                  "type": "Feature",
-                  "geometry": {
+                "matches": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "other_names": [],
+                            "other_addresses": [],
+                            "contributors": [
+                                {
+                                    "id": 4,
+                                    "name": "Researcher A (Summer 2019 Affiliate List)",
+                                    "is_verified": false,
+                                    "contributor_name": "Researcher A",
+                                    "contributor_type": "Academic/Researcher",
+                                    "list_name": "Summer 2019 Affiliate List",
+                                    "last_contributed_at": "2022-01-27T17:36:54.597482Z",
+                                    "list_uploaded_at": "2022-01-27T17:36:54.597482Z",
+                                    "count": 1
+                                }
+                            ],
+                            "country_name": "China",
+                            "claim_info": null,
+                            "other_locations": [],
+                            "is_closed": null,
+                            "activity_reports": [],
+                            "contributor_fields": [],
+                            "new_os_id": null,
+                            "has_inexact_coordinates": false,
+                            "extended_fields": {
+                                "name": [],
+                                "address": [],
+                                "number_of_workers": [],
+                                "native_language_name": [],
+                                "facility_type": [],
+                                "processing_type": [],
+                                "product_type": [],
+                                "parent_company": [],
+                                "parent_company_os_id": []
+                            },
+                            "created_from": {
+                                "created_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor": "Researcher A"
+                            },
+                            "sector": [
+                                {
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
+                                    "contributor_id": 4,
+                                    "contributor_name": "Researcher A",
+                                    "values": ["Apparel"],
+                                    "is_from_claim": false
+                                }
+                            ],
+                            "is_claimed": false,
+                            "partner_fields": {}
+                        },
+                        "confidence": 0.7686,
+                        "confirm_match_url": "/api/facility-matches/135005/confirm/",
+                        "reject_match_url": "/api/facility-matches/135005/reject/"
+                    }
+                ],
+                "item_id": 959,
+                "geocoded_geometry": {
                     "type": "Point",
-                    "coordinates": [
-                      120.596047,
-                      32.172013
-                    ]
-                  },
-                  "properties": {
-                    "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
-                    "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
-                    "sector": [
-                      {
-                        "updated_at": "2022-01-27T17:36:54.597482Z",
-                        "contributor_id": 4,
-                        "contributor_name": "Researcher A",
-                        "values": [
-                          "Apparel"
-                        ]
-                      }
-                    ],
-                    "country_code": "CN",
-                    "os_id": "CN2019303BQ3FZP",
-                    "other_names": [],
-                    "other_addresses": [],
-                    "contributors": [
-                      {
-                        "id": 4,
-                        "name": "Researcher A (Summer 2019 Affiliate List)",
-                        "is_verified": false
-                      }
-                    ],
-                    "country_name": "China",
-                    "claim_info": null,
-                    "other_locations": []
-                  },
-                  "confidence": 0.7686,
-                  "confirm_match_url": "/api/facility-matches/135005/confirm/",
-                  "reject_match_url": "/api/facility-matches/135005/reject/"
-                }
-              ],
-              "item_id": 959,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  120.596047,
-                  32.172013
-                ]
-              },
-              "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
-              "status": "POTENTIAL_MATCH"
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "POTENTIAL_MATCH"
             }
 
 
         ### Potential Text Only Match
 
             {
-              "matches": [
-                {
-                  "id": "CN2019303BQ3FZP",
-                  "type": "Feature",
-                  "geometry": {
+                "matches": [
+                    {
+                        "id": "CN2019303BQ3FZP",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [120.596047, 32.172013]
+                        },
+                        "properties": {
+                            "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
+                            "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
+                            "country_code": "CN",
+                            "os_id": "CN2019303BQ3FZP",
+                            "other_names": [],
+                            "other_addresses": [],
+                            "contributors": [],
+                            "country_name": "China",
+                            "claim_info": null,
+                            "other_locations": [],
+                            "is_closed": null,
+                            "activity_reports": [],
+                            "contributor_fields": [],
+                            "new_os_id": null,
+                            "has_inexact_coordinates": false,
+                            "extended_fields": {
+                                "name": [],
+                                "address": [],
+                                "number_of_workers": [],
+                                "native_language_name": [],
+                                "facility_type": [],
+                                "processing_type": [],
+                                "product_type": [],
+                                "parent_company": [],
+                                "parent_company_os_id": []
+                            },
+                            "created_from": {
+                                "created_at": "2022-01-27T17:36:54.597482Z",
+                                "contributor": "an academic/researcher"
+                            },
+                            "sector": [
+                                {
+                                    "updated_at": "2022-01-27T17:36:54.597482Z",
+                                    "contributor_id": null,
+                                    "contributor_name": "an academic/researcher",
+                                    "values": ["Apparel"],
+                                    "is_from_claim": false
+                                }
+                            ],
+                            "is_claimed": false,
+                            "partner_fields": {}
+                        },
+                        "confidence": 0,
+                        "confirm_match_url": "/api/facility-matches/135005/confirm/",
+                        "reject_match_url": "/api/facility-matches/135005/reject/"
+                    }
+                ],
+                "item_id": 959,
+                "geocoded_geometry": {
                     "type": "Point",
-                    "coordinates": [
-                      120.596047,
-                      32.172013
-                    ]
-                  },
-                  "properties": {
-                    "name": "Nantong Jackbeanie Headwear Garment Co. Ltd.",
-                    "address": "No. 808, The Third Industry Park, Guoyuan Town, Rugao City Nantong",
-                    "country_code": "CN",
-                    "sector": [
-                      {
-                        "updated_at": "2022-01-27T17:36:54.597482Z",
-                        "contributor_id": 4,
-                        "contributor_name": "Researcher A",
-                        "values": [
-                          "Apparel"
-                        ]
-                      }
-                    ],
-                    "os_id": "CN2019303BQ3FZP",
-                    "other_names": [],
-                    "other_addresses": [],
-                    "contributors": [
-                      {
-                        "id": 4,
-                        "name": "Researcher A (Summer 2019 Affiliate List)",
-                        "is_verified": false
-                      }
-                    ],
-                    "country_name": "China",
-                    "claim_info": null,
-                    "other_locations": []
-                  },
-                  "confidence": 0,
-                  "confirm_match_url": "/api/facility-matches/135005/confirm/",
-                  "reject_match_url": "/api/facility-matches/135005/reject/"
-                  "text_only_match": true
-                }
-              ],
-              "item_id": 959,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  120.596047,
-                  32.172013
-                ]
-              },
-              "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
-              "status": "POTENTIAL_MATCH"
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "POTENTIAL_MATCH"
             }
 
 
         ### New Facility
 
             {
-              "matches": [],
-              "item_id": 954,
-              "geocoded_geometry": {
-                "type": "Point",
-                "coordinates": [
-                  119.2221539,
-                  33.79772
-                ]
-              },
-              "geocoded_address": "30, 32 Yanhuang Ave, Lianshui Xian, Huaian Shi, Jiangsu Sheng, China, 223402",
-              "status": "NEW_FACILITY"
+                "matches": [],
+                "item_id": 954,
+                "geocoded_geometry": {
+                    "type": "Point",
+                    "coordinates": [119.2221539, 33.79772]
+                },
+                "geocoded_address": "30, 32 Yanhuang Ave, Lianshui Xian, Huaian Shi, Jiangsu Sheng, China, 223402",
+                "status": "NEW_FACILITY",
+                "os_id": "CN2020123ABC456"
             }
 
         ### No Match
 
             {
-              "matches": [],
-              "item_id": 965,
-              "geocoded_geometry": null,
-              "geocoded_address": null,
-              "status": "ERROR_MATCHING"
+                "matches": [],
+                "item_id": 965,
+                "geocoded_geometry": {
+                    "type": "Point",
+                    "coordinates": [120.596047, 32.172013]
+                },
+                "geocoded_address": "Guoyuanzhen, Rugao, Nantong, Jiangsu, China",
+                "status": "ERROR_MATCHING"
             }
 
         ### Geocoder Returned No Results
 
             {
-              "matches": [],
-              "item_id": 965,
-              "geocoded_geometry": null,
-              "geocoded_address": null,
-              "status": "GEOCODED_NO_RESULTS",
-              "message": "The address you submitted can not be geocoded."
+                "matches": [],
+                "item_id": 965,
+                "geocoded_geometry": null,
+                "geocoded_address": null,
+                "status": "GEOCODED_NO_RESULTS",
+                "message": "The address you submitted can not be geocoded."
             }
         """  # noqa
         # Adding the @permission_classes decorator was not working so we
