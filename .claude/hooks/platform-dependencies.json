@@ -280,12 +280,68 @@
       "review_questions": [
         "Is the migration backward compatible and safe on large production datasets?",
         "Does it need a data backfill or multi-step deploy?",
-        "Will RBA and Pre-prod receive the same migration without downtime issues (OSDEV-1428)?"
+        "Will RBA and Pre-prod receive the same migration without downtime issues (OSDEV-1428)?",
+        "If the migration touches indexed tables, did the automated indexation checks pass (see migration_db_indexation)?"
       ],
       "related_tests": [],
       "related_jira": [
         "OSDEV-1428"
       ]
+    },
+    {
+      "id": "migration_db_indexation",
+      "name": "Migration DB indexation triggers",
+      "summary": "Migrations on indexed tables must avoid per-row reindexing and full-table backfills. This area is only evaluated when a migration file is part of the pushed commits. See PR #1123 and migration 0219 for the reference fix.",
+      "patterns": [],
+      "keywords": [],
+      "review_questions": [
+        "If altering an indexed table (api_contributor, api_facility, api_extendedfield, etc.), does the migration DROP the table's post_insert_update_indexing_trigger BEFORE the schema change and recreate it AFTER?",
+        "Avoid full-table backfills: use ADD COLUMN ... NOT NULL DEFAULT <value> (PostgreSQL 11+ metadata-only) instead of ADD nullable -> UPDATE ... SET -> SET NOT NULL.",
+        "When keeping a DB default, declare db_default on the Django field and in state_operations so makemigrations --check stays clean.",
+        "Only disable/recreate triggers for the tables you are migrating - do not blanket-disable indexing across unrelated tables.",
+        "After the migration, verify manage.py migrate and makemigrations --check pass; confirm no accidental facility/contributor reindex was triggered."
+      ],
+      "related_tests": [],
+      "related_jira": [
+        "OSDEV-2786",
+        "OSDEV-1428"
+      ],
+      "reference": {
+        "pr": "https://github.com/opensupplyhub/open-supply-hub/pull/1123",
+        "example_migration": "src/django/api/migrations/0219_add_contributor_anonymise_in_paid_products.py"
+      }
     }
-  ]
+  ],
+  "migration_indexation": {
+    "indexed_tables": {
+      "api_contributor": {
+        "insert_update_trigger": "contributor_post_insert_update_indexing_trigger",
+        "models": ["contributor"]
+      },
+      "api_extendedfield": {
+        "insert_update_trigger": "extended_field_post_update_insert_indexing_trigger",
+        "models": ["extendedfield"]
+      },
+      "api_facility": {
+        "insert_update_trigger": "facility_post_update_insert_indexing_trigger",
+        "models": ["facility"]
+      },
+      "api_facilityclaim": {
+        "insert_update_trigger": "facility_claim_post_update_insert_indexing_trigger",
+        "models": ["facilityclaim"]
+      },
+      "api_facilitylistitem": {
+        "insert_update_trigger": "facility_list_item_post_update_insert_indexing_trigger",
+        "models": ["facilitylistitem"]
+      },
+      "api_facilitymatch": {
+        "insert_update_trigger": "facility_match_post_update_insert_indexing_trigger",
+        "models": ["facilitymatch"]
+      },
+      "api_source": {
+        "insert_update_trigger": "source_post_update_insert_indexing_trigger",
+        "models": ["source"]
+      }
+    }
+  }
 }

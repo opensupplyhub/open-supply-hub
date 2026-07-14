@@ -7,6 +7,10 @@ Hook mode (stdin JSON from Claude Code):
 
 Manual mode:
   .claude/hooks/check-platform-dependencies.py --manual [--base main]
+
+The migration DB-indexation checks are STATIC ONLY: they read migration file
+text and match patterns. They never import, run, or apply migrations, and they
+are skipped entirely unless a migration file is part of the pushed commits.
 """
 
 from __future__ import annotations
@@ -23,6 +27,8 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = Path(__file__).resolve().parent / "platform-dependencies.json"
+MIGRATION_FILE_RE = re.compile(r"src/django/.+/migrations/\d{4}_[^/]+\.py$")
+MIGRATION_INDEXATION_AREA_ID = "migration_db_indexation"
 
 
 @dataclass
@@ -30,6 +36,13 @@ class AreaMatch:
     area: dict
     matched_files: set[str] = field(default_factory=set)
     matched_keywords: set[str] = field(default_factory=set)
+
+
+@dataclass
+class MigrationWarning:
+    severity: str
+    file: str
+    message: str
 
 
 def run_git(args: list[str]) -> str:
@@ -134,7 +147,239 @@ def find_area_matches(changed_files: Iterable[str], diff_text: str, areas: list[
     return matches
 
 
-def format_manual_report(matches: list[AreaMatch], changed_files: list[str], base_ref: str | None) -> str:
+# ---------------------------------------------------------------------------
+# Migration DB-indexation checks (static; migration-gated)
+# ---------------------------------------------------------------------------
+
+
+def migration_files_from(changed_files: Iterable[str]) -> list[str]:
+    return sorted(
+        path
+        for path in changed_files
+        if MIGRATION_FILE_RE.match(path.replace("\\", "/"))
+    )
+
+
+def read_migration_text(relative_path: str) -> str:
+    """Read migration file text without executing anything.
+
+    Prefers the working-tree copy; falls back to the committed HEAD blob.
+    """
+    absolute_path = ROOT / relative_path
+    if absolute_path.is_file():
+        return absolute_path.read_text(encoding="utf-8")
+    return run_git(["show", f"HEAD:{relative_path}"])
+
+
+def table_has_write_signal(content: str, table: str, models: list[str]) -> bool:
+    """Return True only when the migration physically writes to the table.
+
+    A metadata-only ``AlterField`` (help_text/verbose_name/choices) does not
+    rewrite rows and does not fire the per-row indexing trigger, so it must not
+    be flagged. Write signals are, purely by static text matching:
+
+    - raw SQL DML/DDL against the physical table
+      (``ALTER TABLE`` / ``UPDATE`` / ``INSERT INTO`` / ``DELETE FROM``);
+    - Django operations that add, remove, or rename a physical column;
+    - a data migration (``RunPython``) that references the model.
+    """
+    sql_signals = (
+        rf"ALTER\s+TABLE\s+(?:ONLY\s+)?{re.escape(table)}\b",
+        rf"UPDATE\s+{re.escape(table)}\b",
+        rf"INSERT\s+INTO\s+{re.escape(table)}\b",
+        rf"DELETE\s+FROM\s+{re.escape(table)}\b",
+    )
+    for pattern in sql_signals:
+        if re.search(pattern, content, re.IGNORECASE):
+            return True
+
+    has_column_op = re.search(
+        r"migrations\.(AddField|RemoveField|RenameField)\b", content
+    ) is not None
+    has_run_python = re.search(r"migrations\.RunPython\b", content) is not None
+
+    for model in models:
+        model_ref = rf"model_name\s*=\s*['\"]{re.escape(model)}['\"]"
+        if not re.search(model_ref, content, re.IGNORECASE):
+            continue
+        if has_column_op or has_run_python:
+            return True
+
+    return False
+
+
+def trigger_lifecycle_ok(content: str, trigger_name: str) -> bool:
+    drop_match = re.search(
+        rf"DROP\s+TRIGGER(?:\s+IF\s+EXISTS)?\s+{re.escape(trigger_name)}\b",
+        content,
+        re.IGNORECASE,
+    )
+    create_match = re.search(
+        rf"CREATE\s+TRIGGER\s+{re.escape(trigger_name)}\b",
+        content,
+        re.IGNORECASE,
+    )
+    if not drop_match or not create_match:
+        return False
+    return drop_match.start() < create_match.start()
+
+
+def migration_indexation_reference(config: dict) -> tuple[str, str]:
+    reference = next(
+        (
+            area.get("reference", {})
+            for area in config.get("areas", [])
+            if area.get("id") == MIGRATION_INDEXATION_AREA_ID
+        ),
+        {},
+    )
+    example_migration = reference.get(
+        "example_migration",
+        "src/django/api/migrations/0219_add_contributor_anonymise_in_paid_products.py",
+    )
+    pr_url = reference.get(
+        "pr",
+        "https://github.com/opensupplyhub/open-supply-hub/pull/1123",
+    )
+    return example_migration, pr_url
+
+
+def analyze_migration_indexation(
+    migration_files: list[str],
+    config: dict,
+) -> list[MigrationWarning]:
+    indexed_tables = config.get("migration_indexation", {}).get("indexed_tables", {})
+    if not indexed_tables or not migration_files:
+        return []
+
+    example_migration, pr_url = migration_indexation_reference(config)
+    warnings: list[MigrationWarning] = []
+
+    for relative_path in migration_files:
+        content = read_migration_text(relative_path)
+        if not content:
+            continue
+
+        written_tables = [
+            table
+            for table, table_config in indexed_tables.items()
+            if table_has_write_signal(content, table, table_config.get("models", []))
+        ]
+
+        for table in sorted(written_tables):
+            trigger_name = indexed_tables[table]["insert_update_trigger"]
+            if not trigger_lifecycle_ok(content, trigger_name):
+                warnings.append(
+                    MigrationWarning(
+                        severity="high",
+                        file=relative_path,
+                        message=(
+                            f"Writes to indexed table `{table}` but does not drop and "
+                            f"recreate `{trigger_name}` around the schema change. "
+                            f"Without this, INSERT/UPDATE triggers can fire per-row "
+                            f"reindexing during migration. Follow {example_migration} "
+                            f"and {pr_url}."
+                        ),
+                    )
+                )
+
+        if re.search(r"UPDATE\s+api_[a-z_]+\s+SET\b", content, re.IGNORECASE):
+            warnings.append(
+                MigrationWarning(
+                    severity="high",
+                    file=relative_path,
+                    message=(
+                        "Contains a full-table `UPDATE ... SET` on an api_* table. "
+                        "Prefer `ADD COLUMN ... NOT NULL DEFAULT <value>` (PostgreSQL 11+) "
+                        f"to avoid rewriting every row. See {pr_url}."
+                    ),
+                )
+            )
+
+        for statement in re.finditer(r"ADD\s+COLUMN[\s\S]*?;", content, re.IGNORECASE):
+            text = statement.group(0)
+            if re.search(r"NOT\s+NULL", text, re.IGNORECASE) and not re.search(
+                r"DEFAULT", text, re.IGNORECASE
+            ):
+                warnings.append(
+                    MigrationWarning(
+                        severity="high",
+                        file=relative_path,
+                        message=(
+                            "Adds a `NOT NULL` column without a `DEFAULT`. This fails "
+                            "on already-populated tables. Use `ADD COLUMN ... NOT NULL "
+                            f"DEFAULT <value>` (metadata-only on PostgreSQL 11+). See "
+                            f"{example_migration}."
+                        ),
+                    )
+                )
+                break
+
+        if re.search(
+            r"ALTER\s+COLUMN[\s\S]{0,120}SET\s+NOT\s+NULL",
+            content,
+            re.IGNORECASE,
+        ) and re.search(r"UPDATE\s+api_[a-z_]+\s+SET\b", content, re.IGNORECASE):
+            warnings.append(
+                MigrationWarning(
+                    severity="high",
+                    file=relative_path,
+                    message=(
+                        "Uses nullable column + UPDATE backfill + SET NOT NULL pattern. "
+                        "Replace with a single metadata-only `ADD COLUMN ... NOT NULL DEFAULT`. "
+                        f"See {pr_url}."
+                    ),
+                )
+            )
+
+    return warnings
+
+
+def attach_migration_indexation_area(
+    matches: list[AreaMatch],
+    migration_files: list[str],
+    migration_warnings: list[MigrationWarning],
+    config: dict,
+) -> list[AreaMatch]:
+    """Surface the indexation area only when a migration is being pushed."""
+    if not migration_files:
+        return matches
+
+    area = next(
+        (
+            item
+            for item in config.get("areas", [])
+            if item.get("id") == MIGRATION_INDEXATION_AREA_ID
+        ),
+        None,
+    )
+    if area is None:
+        return matches
+
+    area_match = AreaMatch(area=area)
+    area_match.matched_files.update(migration_files)
+    for warning in migration_warnings:
+        area_match.matched_files.add(warning.file)
+    return [*matches, area_match]
+
+
+def format_migration_warnings(warnings: list[MigrationWarning]) -> list[str]:
+    if not warnings:
+        return []
+
+    lines = ["## Automated migration indexation checks", ""]
+    for warning in warnings:
+        lines.append(f"- **[{warning.severity}]** `{warning.file}`: {warning.message}")
+    lines.append("")
+    return lines
+
+
+def format_manual_report(
+    matches: list[AreaMatch],
+    changed_files: list[str],
+    base_ref: str | None,
+    migration_warnings: list[MigrationWarning],
+) -> str:
     lines = [
         "# Platform dependency check",
         "",
@@ -154,7 +399,7 @@ def format_manual_report(matches: list[AreaMatch], changed_files: list[str], bas
         )
         return "\n".join(lines)
 
-    if not matches:
+    if not matches and not migration_warnings:
         lines.extend(
             [
                 "No cross-cutting platform dependency areas were triggered.",
@@ -165,14 +410,26 @@ def format_manual_report(matches: list[AreaMatch], changed_files: list[str], bas
         )
         return "\n".join(lines)
 
-    lines.append(f"Triggered areas: {len(matches)}")
-    lines.append("")
+    if migration_warnings:
+        lines.extend(format_migration_warnings(migration_warnings))
+
+    if matches:
+        lines.append(f"Triggered areas: {len(matches)}")
+        lines.append("")
 
     for match in matches:
         area = match.area
         lines.append(f"## {area['name']} ({area['id']})")
         lines.append(area["summary"])
         lines.append("")
+
+        reference = area.get("reference")
+        if reference:
+            if reference.get("pr"):
+                lines.append(f"Reference PR: {reference['pr']}")
+            if reference.get("example_migration"):
+                lines.append(f"Example migration: `{reference['example_migration']}`")
+            lines.append("")
 
         if match.matched_files:
             lines.append("Matched files:")
@@ -214,7 +471,11 @@ def format_manual_report(matches: list[AreaMatch], changed_files: list[str], bas
     return "\n".join(lines)
 
 
-def format_hook_messages(matches: list[AreaMatch], changed_files: list[str]) -> tuple[str, str]:
+def format_hook_messages(
+    matches: list[AreaMatch],
+    changed_files: list[str],
+    migration_warnings: list[MigrationWarning],
+) -> tuple[str, str]:
     area_names = ", ".join(match.area["name"] for match in matches)
     user_message = (
         f"Platform dependency check: {len(matches)} area(s) may be affected "
@@ -228,6 +489,12 @@ def format_hook_messages(matches: list[AreaMatch], changed_files: list[str]) -> 
         + (" ..." if len(changed_files) > 20 else ""),
         "",
     ]
+
+    if migration_warnings:
+        agent_lines.append("### Automated migration indexation checks")
+        for warning in migration_warnings:
+            agent_lines.append(f"- [{warning.severity}] {warning.file}: {warning.message}")
+        agent_lines.append("")
 
     for match in matches:
         area = match.area
@@ -264,12 +531,25 @@ def load_config() -> dict:
         return json.load(handle)
 
 
-def analyze(base_ref: str | None, include_worktree: bool = True) -> tuple[list[str], list[AreaMatch]]:
+def analyze(
+    base_ref: str | None,
+    include_worktree: bool = True,
+) -> tuple[list[str], list[AreaMatch], list[MigrationWarning]]:
     config = load_config()
     changed_files = collect_changed_files(base_ref, include_worktree=include_worktree)
     diff_text = load_diff_text(base_ref, include_worktree=include_worktree)
     matches = find_area_matches(changed_files, diff_text, config["areas"])
-    return changed_files, matches
+
+    # Indexation checks run ONLY when a migration file is part of the changes.
+    migration_files = migration_files_from(changed_files)
+    migration_warnings: list[MigrationWarning] = []
+    if migration_files:
+        migration_warnings = analyze_migration_indexation(migration_files, config)
+        matches = attach_migration_indexation_area(
+            matches, migration_files, migration_warnings, config
+        )
+
+    return changed_files, matches, migration_warnings
 
 
 def is_git_push(command: str) -> bool:
@@ -294,12 +574,14 @@ def hook_mode(base_ref: str | None) -> int:
     # Pre-push review must reflect only what is actually being pushed:
     # the outgoing commits from base_ref to HEAD. Dirty/staged worktree
     # files are intentionally excluded so they do not trigger the check.
-    changed_files, matches = analyze(base_ref, include_worktree=False)
+    changed_files, matches, migration_warnings = analyze(base_ref, include_worktree=False)
 
     if not matches:
         return 0
 
-    user_message, agent_message = format_hook_messages(matches, changed_files)
+    user_message, agent_message = format_hook_messages(
+        matches, changed_files, migration_warnings
+    )
     reason = f"{user_message}\n\n{agent_message}"
     print(
         json.dumps(
@@ -316,9 +598,10 @@ def hook_mode(base_ref: str | None) -> int:
 
 
 def manual_mode(base_ref: str | None) -> int:
-    changed_files, matches = analyze(base_ref)
-    print(format_manual_report(matches, changed_files, base_ref))
-    return 1 if matches else 0
+    changed_files, matches, migration_warnings = analyze(base_ref)
+    print(format_manual_report(matches, changed_files, base_ref, migration_warnings))
+    has_high_severity = any(warning.severity == "high" for warning in migration_warnings)
+    return 1 if has_high_severity else 0
 
 
 def main() -> int:
