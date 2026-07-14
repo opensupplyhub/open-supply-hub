@@ -1,3 +1,13 @@
+"""Validate Open Supply Hub facility list uploads and produce ContriCleaner reports.
+
+ContriBot reads a contributor Excel workbook, runs table- and column-level quality
+checks, applies optional auto-fixes, and writes an annotated output workbook with
+Summary, Findings, Similarities, and Fixes sheets.
+
+Error codes and severities come from an external configuration workbook
+(``0000.error_codes.xlsx`` by default). Codes starting with ``T`` are table-level;
+codes starting with ``C`` are column-level.
+"""
 import datetime
 import json
 import os
@@ -28,7 +38,33 @@ from utils import map_n_dataframe_cols_to_excel_cols
 
 
 class ContriBot:
+    """Validate a facility list workbook and build a ContriCleaner report.
+
+    Typical usage::
+
+        bot = ContriBot("contribution.xlsx")
+        bot.check_table()
+        bot.check_columns()
+        bot._add_comments_to_excel_sheets()
+        bot.save(targetfolder="./output")
+
+    Attributes:
+        df: Normalised facility data (column names lowercased, index offset for Excel rows).
+        wb: The openpyxl workbook, including generated report sheets.
+        diagnostics_table: Table-level findings (``T*`` codes).
+        diagnostics_column: Cell-level findings (``C*`` codes).
+        summary: Run statistics populated by :meth:`populate_summary`.
+    """
+
     def __init__(self, filename, streamlit=False, config_file="0000.error_codes.xlsx"):
+        """Load a workbook and prepare report sheets.
+
+        Args:
+            filename: Path to the contributor ``.xlsx`` file.
+            streamlit: When True, use Streamlit-friendly progress bars during
+                duplicate detection.
+            config_file: Path to the error-codes configuration workbook.
+        """
         warnings.filterwarnings("ignore", module="openpyxl")
         self.START = datetime.datetime.now()
         self.sourcepath, self.sourcefilename = os.path.split(filename)
@@ -99,6 +135,12 @@ class ContriBot:
             self._add_diagnosis(code="T0015", existing_sheets=",".join(existing_tables))
 
     def _get_config(self):
+        """Load error-code definitions from the config or fallback file.
+
+        Sets ``self.df_config``, ``self.df_config_string``, and ``self.have_config``.
+        Falls back to ``error_codes.xlsx`` in the working directory, then to an empty
+        config if neither file exists.
+        """
         if os.path.exists(self.config_file):
             self.df_config = pd.read_excel(
                 self.config_file, sheet_name="Definitions"
@@ -146,6 +188,17 @@ class ContriBot:
         table_name="t_contribot",
         write_to_jsonl=True,
     ):
+        """Write the processed workbook and persist diagnostics.
+
+        Args:
+            targetfolder: Directory for the output ``.~PROCESSED.xlsx`` file.
+            engine: Optional SQLAlchemy engine for storing diagnostics rows.
+            table_name: Database table name when persisting diagnostics.
+            write_to_jsonl: Append run summary to ``contribot.output.jsonl``.
+
+        Returns:
+            dict: Summary with ``error_ratio``, ``num_lines``, and ``num_errors``.
+        """
         Path(targetfolder).mkdir(exist_ok=True, parents=True)
         self.populate_summary(write_to_jsonl=write_to_jsonl)
         self.fixes_sheet_fontsize()
@@ -186,6 +239,7 @@ class ContriBot:
         return self.summary
 
     def fixes_sheet_fontsize(self):
+        """Copy font and row heights from the source sheet to the Fixes sheet."""
         ws_source = self.wb[self.sourcesheet]  #####
         ws = self.wb[self.fixessheet]
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
@@ -204,6 +258,17 @@ class ContriBot:
             ws.row_dimensions[i + 1].height = self._get_height_for_row(ws, i)
 
     def populate_summary(self, write_to_jsonl=True):
+        """Fill the Summary sheet with findings grouped by severity.
+
+        Sections include Critical Errors, Please Check, Key Metrics, Possible
+        Glitches, and Other Observations. Also sets ``self.summary``.
+
+        Args:
+            write_to_jsonl: When True, append the summary dict to a JSONL log file.
+
+        Returns:
+            dict: The same summary stored on ``self.summary``.
+        """
         row = 1
         skip_rows = [1]
         ws = self.wb["Summary"]
@@ -520,6 +585,14 @@ class ContriBot:
         return self.summary
 
     def copy_values_and_layout(self, wb, df, source, target):
+        """Copy data and cell styling from one sheet to another.
+
+        Args:
+            wb: The openpyxl workbook.
+            df: DataFrame whose rows are written to the target sheet.
+            source: Name of the sheet to copy layout from.
+            target: Name of the sheet to populate.
+        """
         self.widths = [
             wb[source].column_dimensions[c].width for c in self.mapping.values()
         ]
@@ -567,22 +640,26 @@ class ContriBot:
                 wb[target][f"{c}{r}"].number_format = number_format
 
     def normalise_column_names(self, df):
+        """Return a copy of ``df`` with lowercased column names."""
         rename = {}
         for column in df.columns:
             rename[column] = column.lower()
         return df.rename(columns=rename)
 
     def _add_stats(self, level="", name="", metric="", value=0):
+        """Record a summary statistic for the Summary sheet."""
         self.statistics.append(
             {"level": level, "name": name, "metric": metric, "value": value}
         )
 
     def _add_metrics(self, level="", name="", metric="", value=0):
+        """Record a column- or table-level metric during validation."""
         self.metrics.append(
             {"level": level, "name": name, "metric": metric, "value": value}
         )
 
     def _decide_autofix(self, code):
+        """Return whether the config enables auto-fix for ``code``."""
         ddf = self.df_config[self.df_config.code == code]
         if len(ddf) > 0:
             return ddf.auto_fix.values[0]
@@ -590,6 +667,7 @@ class ContriBot:
             return False
 
     def _get_style_findings(self, code):
+        """Return the Excel style name for highlighting a finding cell."""
         if self.df_config[self.df_config.code == code].style_findings.values[0] in [
             "Good",
             "Note",
@@ -601,6 +679,7 @@ class ContriBot:
             return ""
 
     def _get_style_fixed(self, code):
+        """Return the Excel style name for a cell after auto-fix."""
         if self.df_config[self.df_config.code == code].style_fixed.values[0] in [
             "Good",
             "Note",
@@ -612,6 +691,7 @@ class ContriBot:
             return ""
 
     def _get_highest_severity_style_fixed(self, codes):
+        """Return the fixed-cell style for the highest-severity code in ``codes``."""
         ddf = self.df_config[self.df_config.code.isin(codes)].sort_values(
             "severity", ascending=False
         )
@@ -622,6 +702,7 @@ class ContriBot:
                 return ""
 
     def _get_severity(self, code):
+        """Return the configured severity for ``code``, or ``-1`` if unknown."""
         try:
             severity = self.df_config[self.df_config.code == code].severity.values[0]
         except:
@@ -629,6 +710,18 @@ class ContriBot:
         return severity
 
     def _add_diagnosis(self, code="", column_name="", row="", **kwparams):
+        """Record a table- or column-level finding and render its message.
+
+        Message templates come from the config workbook and are rendered with
+        Jinja2 using ``kwparams``. Table codes (``T*``) go to ``diagnostics_table``;
+        column codes (``C*``) go to ``diagnostics_column``.
+
+        Args:
+            code: Error code (e.g. ``T0001``, ``C0001``).
+            column_name: Column or context label for the finding.
+            row: Excel row number or row pair for duplicate findings.
+            **kwparams: Template variables for the error message.
+        """
         env = NativeEnvironment()
         diagnostic_text = {"error": "", "corrective_action": "", "fixes_comment": ""}
         if code in self.df_config.code.values:
@@ -712,6 +805,7 @@ class ContriBot:
         pass
 
     def _add_fix_comment(self, coordinates, code):
+        """Queue a fix comment for a cell when auto-fix is enabled for ``code``."""
         if self._decide_autofix(code):
             self.fixes.append(
                 {
@@ -723,6 +817,11 @@ class ContriBot:
             )
 
     def check_table(self):
+        """Run table-level checks and collect column statistics.
+
+        Validates required columns, lat/lng pairing, unrecognised columns, and
+        empty tables. Populates ``diagnostics_table`` with ``T*`` codes.
+        """
         self._add_stats(
             level="table", name=self.sourcesheet, metric="num_rows", value=len(self.df)
         )
@@ -823,6 +922,7 @@ class ContriBot:
             self._add_diagnosis(code="T0009", column_name=self.sourcesheet)
 
     def _add_comments_to_excel_sheets(self):
+        """Attach finding and fix comments to the Findings and Fixes sheets."""
         if len(self.diagnostics_column) > 0:
             df = pd.DataFrame(self.diagnostics_column).sort_values(
                 ["severity", "name", "row"], ascending=[False, True, False]
@@ -876,6 +976,11 @@ class ContriBot:
             )
 
     def check_columns(self):
+        """Run all column-level validators on the facility data.
+
+        Delegates to individual ``check_column_*`` methods and duplicate detection.
+        Call after :meth:`check_table`.
+        """
         self.check_column_country()
         self.check_for_country_name_in_address()
         for column in [
@@ -974,6 +1079,7 @@ class ContriBot:
         self.check_name_address_duplicates()
 
     def check_column_country(self):
+        """Validate country values against the known-countries list (``C0001``–``C0002``)."""
         if "country" in self.df.columns:
             row = 0
             # 2022-12-07 check for floats in column
@@ -1030,6 +1136,7 @@ class ContriBot:
             )
 
     def check_for_country_name_in_address(self):
+        """Flag addresses whose trailing word looks like a mismatched country (``C0003``–``C0025``)."""
         us_states_of_concern = [
             "AL",
             "AZ",
@@ -1150,6 +1257,11 @@ class ContriBot:
             )
 
     def check_column_unusual_characters(self, column):
+        """Flag non-Latin or unusual Unicode characters in ``column`` (``C0007``).
+
+        Args:
+            column: Lowercased column name to inspect.
+        """
         cells_with_warnings = 0
 
         values = self.df[column].values
@@ -1198,6 +1310,11 @@ class ContriBot:
         return
 
     def check_column_double_quotes(self, column):
+        """Detect and optionally remove double quotes in ``column`` (``C0008``).
+
+        Args:
+            column: Lowercased column name to inspect.
+        """
         cells_with_errors = 0
         values = self.df[column].values
         for row in range(len(values)):
@@ -1230,6 +1347,11 @@ class ContriBot:
         return self.comments
 
     def check_column_po_box(self, column):
+        """Detect post-office box patterns in ``column`` (``C0009``).
+
+        Args:
+            column: Lowercased column name to inspect (typically ``address``).
+        """
         cells_with_errors = 0
         values = self.df[column].values
         for row in range(len(values)):
@@ -1262,10 +1384,19 @@ class ContriBot:
         return self.comments
 
     def _tokens_above_threshold(self, pair, threshold=1):
+        """Return True when the numeric value in ``pair`` exceeds ``threshold``."""
         k, v = pair
         return v > threshold
 
     def check_column_leading_trailing_blanks(self, column):
+        """Detect whitespace issues in ``column`` and apply auto-fixes (``C0010``–``C0015``).
+
+        Checks for leading/trailing spaces, double spaces, tabs, carriage returns,
+        and embedded newlines.
+
+        Args:
+            column: Lowercased column name to inspect.
+        """
         cells_with_warnings = 0
         values = self.df[column].values
         codes = set()
@@ -1372,6 +1503,11 @@ class ContriBot:
         return self.comments
 
     def check_column_lengths(self, column):
+        """Flag values that are too long or too short for ``column`` (``C0016``–``C0018``).
+
+        Args:
+            column: Lowercased column name to inspect.
+        """
         cells_with_errors = 0
         values = self.df[column].values
         for row in range(len(values)):
@@ -1414,6 +1550,11 @@ class ContriBot:
         return self.comments
 
     def check_column_excel_error_codes_na(self, column):
+        """Detect Excel error tokens such as ``#N/A`` in ``column`` (``C0019``).
+
+        Args:
+            column: Lowercased column name to inspect.
+        """
         cells_with_warnings = 0
         values = self.df[column].values
         invalid_tokens = [
@@ -1459,6 +1600,11 @@ class ContriBot:
         return self.comments
 
     def check_column_multiple_commas(self, column):
+        """Detect and normalise consecutive or empty comma-separated segments (``C0020``).
+
+        Args:
+            column: Lowercased column name to inspect (typically ``name`` or ``address``).
+        """
         cells_with_warnings = 0
         values = self.df[column].values
 
@@ -1504,6 +1650,13 @@ class ContriBot:
         return self.comments
 
     def check_column_correctly_delimited(self, column):
+        """Validate pipe-delimited multi-value fields in ``column`` (``C0021``–``C0024``).
+
+        Ensures sector and facility-type columns use ``|`` rather than commas.
+
+        Args:
+            column: Lowercased column name to inspect.
+        """
         cells_with_warnings = 0
         values = self.df[column].values
 
@@ -1591,6 +1744,16 @@ class ContriBot:
         return self.comments
 
     def _get_height_for_row(self, sheet, row_number, font_size=12):
+        """Estimate row height from wrapped cell content and column width.
+
+        Args:
+            sheet: openpyxl worksheet.
+            row_number: Zero-based row index.
+            font_size: Font size used to pick height heuristics.
+
+        Returns:
+            float: Row height in Excel units.
+        """
         factor_of_font_size_to_width = {
             # TODO: other sizes
             12: {
@@ -1624,6 +1787,12 @@ class ContriBot:
         return height
 
     def check_name_address_duplicates(self):
+        """Find similar or duplicate name/address pairs and populate Similarities (``T0010``–``T0014``).
+
+        Compares all row pairs using fuzzy matching on normalised names and
+        addresses. Writes results to the Similarities sheet and records table-level
+        duplicate findings.
+        """
         if len(self.df) <= 1:
             return
 
