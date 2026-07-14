@@ -15,6 +15,10 @@ def dissociate_contributor_matches(facility, contributor):
     ``api_facilityindex`` triggers and the Logstash ``production-locations``
     sync) picks up the change.
 
+    The ``updated_at`` bump only happens when at least one match is actually
+    deactivated, so callers can treat a return value of ``0`` as "nothing was
+    changed".
+
     Returns the number of matches that were deactivated.
     """
     matches = FacilityMatch.objects.filter(
@@ -36,6 +40,7 @@ def dissociate_contributor_matches(facility, contributor):
             match.save()
             dissociated_count += 1
 
-    Facility.update_facility_updated_at_field(facility.id)
+    if dissociated_count > 0:
+        Facility.update_facility_updated_at_field(facility.id)
 
     return dissociated_count
