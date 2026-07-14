@@ -353,6 +353,11 @@ MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
 MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS = int(
     os.getenv('MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS', 60 * 10)
 )
+# Compressed payloads over this size are not cached, leaving headroom
+# below memcached's ~5 MB per-item limit for key and protocol overhead.
+VIEW_RESPONSE_CACHE_MAX_BYTES = int(
+    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 4 * 1024 * 1024)
+)
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
 CACHES = {
@@ -696,13 +701,21 @@ KAFKA_TOPIC_DEDUPE_BASIC_NAME = os.getenv('KAFKA_TOPIC_DEDUPE_BASIC_NAME', '') #
 # Django Bleach settings
 # https://django-bleach.readthedocs.io/en/latest/
 BLEACH_ALLOWED_TAGS = [
-    'p', 'br', 'em', 'strong', 'ins', 'del', 'code', 'sup', 'sub',
+    'p', 'br', 'em', 'strong', 'ins', 'del', 'u', 's', 'code', 'sup', 'sub',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre',
-    'ul', 'ol', 'li', 'a',
+    'ul', 'ol', 'li', 'a', 'span',
 ]
 
 BLEACH_ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'target', 'title'],
+    'a': ['href', 'target', 'title', 'class'],
+    'p': ['class'],
+    'span': ['class'],
+    'strong': ['class'],
+    'em': ['class'],
+    'u': ['class'],
+    's': ['class'],
+    'sub': ['class'],
+    'sup': ['class'],
 }
 
 BLEACH_STRIP_TAGS = True

@@ -207,6 +207,64 @@ class ModerationEventsUpdateTest(APITestCase):
             "Raw reason text with 30 characters"
         )
 
+    def test_moderation_event_rejected_sanitizes_raw_html(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        quill_html = (
+            '<blockquote>Quote</blockquote>'
+            '<pre data-language="plain">code</pre>'
+            '<p class="ql-direction-rtl">'
+            'text <u class="ql-font-serif">underlined</u> '
+            '<s class="ql-font-monospace">struck</s> '
+            '<span class="ql-font-monospace">mono</span> '
+            '<strong class="ql-font-serif">bold</strong> '
+            '<em class="ql-font-monospace">italic</em> '
+            '<sub class="ql-font-serif">low</sub>'
+            '<sup class="ql-font-monospace">high</sup> '
+            '<a href="https://example.com" class="ql-link">link</a>'
+            '<script>alert(1)</script></p>'
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({
+                "status": "REJECTED",
+                "action_reason_text_cleaned": (
+                    "Cleaned reason text with 30 characters"
+                ),
+                "action_reason_text_raw": quill_html
+            }),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.moderation_event.refresh_from_db()
+        raw = self.moderation_event.action_reason_text_raw
+
+        # Quill formatting tags survive sanitization.
+        self.assertIn('<blockquote>Quote</blockquote>', raw)
+        self.assertIn('<pre>code</pre>', raw)
+        # class survives on every inline tag allowed in
+        # BLEACH_ALLOWED_ATTRIBUTES.
+        self.assertIn('class="ql-direction-rtl"', raw)
+        self.assertIn('<u class="ql-font-serif">underlined</u>', raw)
+        self.assertIn('<s class="ql-font-monospace">struck</s>', raw)
+        self.assertIn(
+            '<span class="ql-font-monospace">mono</span>', raw
+        )
+        self.assertIn('<strong class="ql-font-serif">bold</strong>', raw)
+        self.assertIn('<em class="ql-font-monospace">italic</em>', raw)
+        self.assertIn('<sub class="ql-font-serif">low</sub>', raw)
+        self.assertIn('<sup class="ql-font-monospace">high</sup>', raw)
+        # <a> keeps href and class.
+        self.assertIn('href="https://example.com"', raw)
+        self.assertIn('class="ql-link"', raw)
+        # Disallowed markup is stripped.
+        self.assertNotIn('<script', raw)
+        self.assertNotIn('data-language', raw)
+
     def test_moderation_event_rejected_with_invalid_reason_text(self):
         self.client.login(
             email=self.superemail,
