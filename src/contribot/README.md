@@ -4,7 +4,17 @@ Lambda functions that validate facility list uploads and notify data moderators 
 
 ## Overview
 
-ContriBot polls Open Supply Hub for newly processed facility lists, generates ContriCleaner reports, uploads them to Google Drive, and notifies moderators via Slack and Monday.
+ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack and Monday.
+
+## Facility List Validation
+
+Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py). The `ContriBot` class reads a contributor Excel workbook, runs table- and column-level quality checks (missing columns, bad countries, whitespace issues, duplicate rows, and more), applies optional auto-fixes, and writes an annotated output workbook with **Summary**, **Findings**, **Similarities**, and **Fixes** sheets. Findings are driven by error codes in a configuration workbook (`0000.error_codes.xlsx`).
+
+Run the unit tests locally:
+
+```bash
+cd src/contribot/lib && python -m pytest tests/test_contribot.py
+```
 
 ## Lambda Source Code
 
@@ -56,7 +66,7 @@ Each processed facility list is recorded in DynamoDB (keyed by list ID). The `fe
 | Step | Description                                                                                                          |
 | ---- | -------------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch newly processed lists and queue them for processing. Lists are retrieved via `GET /api/admin-facility-lists/`. |
-| 2    | For each list, download the file from S3, run the ContriCleaner report, and upload the report to Google Drive.       |
+| 2    | For each list, download the file from S3, run facility list validation, and upload the report to Google Drive.       |
 | 3    | Send notifications to Slack and Monday so that data moderators can review the report.                                |
 
 ## Configuration
@@ -81,6 +91,6 @@ Nonsensitive configuration can be set as plain Lambda environment variables.
 | `OS_HUB_API_URL`                   | Base URL of the Open Supply Hub API.                              |
 | `MONDAY_API_URL`                   | Base URL of the Monday.com API.                                   |
 | `AWS_STORAGE_BUCKET_NAME`          | S3 bucket where uploaded facility list files are stored.          |
-| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | Google Drive folder ID where ContriCleaner reports are uploaded.  |
+| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | Google Drive folder ID where validation reports are uploaded.     |
 | `MONDAY_BOARD_ID`                  | ID of the Monday board to post the update.                        |
 | `CONTRIBOT_STATE_TABLE_NAME`       | DynamoDB table that stores the state of processed facility lists. |

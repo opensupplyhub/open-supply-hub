@@ -1,4 +1,4 @@
-"""Validate Open Supply Hub facility list uploads and produce ContriCleaner reports.
+"""Validate Open Supply Hub facility list uploads and produce annotated workbooks.
 
 ContriBot reads a contributor Excel workbook, runs table- and column-level quality
 checks, applies optional auto-fixes, and writes an annotated output workbook with
@@ -38,7 +38,7 @@ from utils import map_n_dataframe_cols_to_excel_cols
 
 
 class ContriBot:
-    """Validate a facility list workbook and build a ContriCleaner report.
+    """Validate a facility list workbook and build an annotated output workbook.
 
     Typical usage::
 
