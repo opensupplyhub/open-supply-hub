@@ -1,35 +1,29 @@
-import sys
-import pandas as pd
-from glob import glob
-import openpyxl
-from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl.styles import Font, Color, Fill, Alignment
-from openpyxl.formatting.rule import ColorScale, FormatObject, Rule
-from openpyxl.comments import Comment
-from glob import glob
-import re
-import unicodedata
-import os
-from copy import copy
-from known_countries import known_countries, COUNTRY_CODES
-from pathlib import Path
+import datetime
 import json
-import rapidfuzz
+import os
+import re
 import string
-
-try:
-    from stqdm import stqdm as tqdm
-except:
-    from tqdm import tqdm
-import cleanco
+import sys
+import unicodedata
+import warnings
+from copy import copy
 from math import ceil
+from pathlib import Path
+
+import cleanco
+import openpyxl
+import pandas as pd
+import rapidfuzz
 from jinja2.nativetypes import NativeEnvironment
 from jinja2.nodes import TemplateData
-import datetime
-import warnings
-from sqlalchemy import create_engine, text
-import collections
+from openpyxl.comments import Comment
+from openpyxl.formatting.rule import ColorScale, FormatObject, Rule
+from openpyxl.styles import Alignment, Color, Font
+from openpyxl.utils.dataframe import dataframe_to_rows
+from sqlalchemy import create_engine
 from unidecode import unidecode
+
+from known_countries import COUNTRY_CODES, known_countries
 from utils import map_n_dataframe_cols_to_excel_cols
 
 
