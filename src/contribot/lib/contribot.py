@@ -51,7 +51,6 @@ class ContriBot:
         self.wb.create_sheet("Similarities")
         similarities_sheet_no = len(self.wb._sheets) - 1
         self.fixessheet = f"{self.sourcesheet:.25s}~Fixes"
-        # self.wb.create_sheet("Fixes")
         self.wb.create_sheet(self.fixessheet)
         fixes_sheet_no = len(self.wb._sheets) - 1
 
@@ -137,9 +136,8 @@ class ContriBot:
                     "fixes_comment": [],
                 }
             )
-            self.df_config_string = f"No valid configuration found"
+            self.df_config_string = "No valid configuration found"
             self.have_config = False
-        print(self.df_config_string)
 
     def save(
         self,
@@ -214,7 +212,7 @@ class ContriBot:
 
         row += 1
         skip_rows.append(row)
-        ws[f"A{row}"] = f"Critical Errors"
+        ws[f"A{row}"] = "Critical Errors"
         for c in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
             ws[f"{c}{row}"].style = "Note"
 
@@ -266,7 +264,6 @@ class ContriBot:
             "num_lines": len(self.df),
             "num_errors": len(df),
         }
-        print(self.summary)
         if write_to_jsonl:
             with open("contribot.output.jsonl", "a+t") as f:
                 f.write(json.dumps(self.summary) + "\n")
@@ -550,8 +547,6 @@ class ContriBot:
         # https://openpyxl.readthedocs.io/en/latest/styles.html#applying-styles
         # Styles can also applied to columns and rows but note that this applies
         # only to cells created (in Excel) after the file is closed.
-        print(f"populated columns: {self.populated_columns}")
-        print(f"populated rows: {self.populated_rows}")
         for r in self.populated_rows:
             for c in self.populated_columns:
                 print(f"values: {c} and {r}")
@@ -1631,7 +1626,6 @@ class ContriBot:
     def check_name_address_duplicates(self):
         if len(self.df) <= 1:
             return
-        cells_with_warnings = 0
 
         addresses = []
         for a in self.df.address.values:
@@ -1686,10 +1680,6 @@ class ContriBot:
                 names_diff_contains_numbers = any(
                     c.isdigit()
                     for c in set(names_cleaned[i]).difference(names_cleaned[j])
-                )
-                addresses_diff_contains_numbers = any(
-                    c.isdigit()
-                    for c in set(addresses_lc[i]).difference(addresses_lc[j])
                 )
                 addresses_ratio = (
                     rapidfuzz.fuzz.token_set_ratio(
