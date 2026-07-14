@@ -73,7 +73,6 @@ from api.constants import (
 )
 from api.exceptions import BadRequestException
 from api.facility_history import (
-    create_dissociate_match_change_reason,
     create_facility_history_list,
 )
 from api.mail import send_claim_facility_confirmation_email
@@ -100,6 +99,9 @@ from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
+from api.services.facility_dissociation_service import (
+    dissociate_contributor_matches,
+)
 from api.view_response_cache import cache_view_response
 
 from api.views.disabled_pagination_inspector import DisabledPaginationInspector
@@ -3119,24 +3121,7 @@ class FacilitiesViewSet(ListModelMixin,
         except Facility.DoesNotExist as exc:
             raise NotFound(f'Facility with OS ID {pk} not found') from exc
 
-        contributor = request.user.contributor
-        matches = FacilityMatch.objects.filter(
-            facility=facility,
-            facility_list_item__source__contributor=contributor)
-
-        # Call `save` in a loop rather than use `update` to make sure that
-        # django-simple-history can log the changes
-        if matches.count() > 0:
-            for match in matches:
-                if match.is_active:
-                    match.is_active = False
-                    match._change_reason = \
-                        create_dissociate_match_change_reason(
-                            match.facility_list_item,
-                            facility)
-                    match.save()
-
-        Facility.update_facility_updated_at_field(facility.id)
+        dissociate_contributor_matches(facility, request.user.contributor)
 
         context = {'request': request}
         facility_index = FacilityIndex.objects.get(id=facility.id)
