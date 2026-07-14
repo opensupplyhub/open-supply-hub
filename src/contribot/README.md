@@ -6,6 +6,26 @@ Lambda functions that validate facility list uploads and notify data moderators 
 
 ContriBot polls Open Supply Hub for newly processed facility lists, generates ContriCleaner reports, uploads them to Google Drive, and notifies moderators via Slack and Monday.
 
+## Lambda Source Code
+
+Handler code lives under `src/contribot/`. Each Lambda is a single `handler.py` module packaged into a zip for deployment.
+
+| Lambda         | Handler source                                       | Deployment package                                                                                                                     |
+| -------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `fetch_lists`  | [`fetch_lists/handler.py`](fetch_lists/handler.py)   | [`deployment/terraform/lambda-functions/contribot_fetch_lists/`](../../deployment/terraform/lambda-functions/contribot_fetch_lists/)   |
+| `process_list` | [`process_list/handler.py`](process_list/handler.py) | [`deployment/terraform/lambda-functions/contribot_process_list/`](../../deployment/terraform/lambda-functions/contribot_process_list/) |
+| `notify`       | [`notify/handler.py`](notify/handler.py)             | [`deployment/terraform/lambda-functions/contribot_notify/`](../../deployment/terraform/lambda-functions/contribot_notify/)             |
+
+Shared Python dependencies are listed in [`requirements.txt`](requirements.txt) (runtime) and [`requirements-dev.txt`](requirements-dev.txt) (local development).
+
+Build all deployment zips from this directory:
+
+```bash
+make -C src/contribot
+```
+
+Each package Makefile zips its handler into `deployment/terraform/lambda-functions/<name>/<name>.zip`. Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
+
 ## Architecture
 
 The solution leverages **AWS Step Functions** to orchestrate the workflow. Each step is implemented as a Lambda task; processing individual lists runs in a **Map** state over the newly fetched lists.
