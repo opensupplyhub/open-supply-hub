@@ -15,7 +15,16 @@
                     "ProcessList": {
                         "Type": "Task",
                         "Resource": "${process_list_lambda_arn}",
-                        "Next": "Notify"
+                        "Next": "Notify",
+                        "Catch": [
+                            {
+                                "ErrorEquals": [
+                                    "States.ALL"
+                                ],
+                                "ResultPath": "$.error",
+                                "Next": "Notify"
+                            }
+                        ]
                     },
                     "Notify": {
                         "Type": "Task",
