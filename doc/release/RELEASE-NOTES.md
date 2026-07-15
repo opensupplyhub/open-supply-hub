@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Code/API changes
+* [OSDEV-2949](https://opensupplyhub.atlassian.net/browse/OSDEV-2949) - Added the `remove_rsc_grievance_mechanism_nested_internal_ids` management command. It removes the nested `internal_ID` key from `rsc_grievance_mechanism` partner field values (`ExtendedField.value['raw_values']['internal_ID']`) and reindexes only the affected production locations via `index_facilities_by` (targeted, never a full reindex), so the key is no longer returned by `GET /api/facilities/` or `GET /api/v1/production-locations/`. It uses `bulk_update` on `value` only (no `updated_at` change, no new history rows), is idempotent, and supports `--dry-run`, `--batch-size`, and `--no-reindex`.
+
+### Bugfix
+* [OSDEV-2949](https://opensupplyhub.atlassian.net/browse/OSDEV-2949) - Fixed the `internal_ID` field being exposed in the API for the `rsc_grievance_mechanism` partner field. The key had been ingested from the partner's list contribution (used only to map their IDs to OS IDs) but is not part of the partner field's JSON Schema, and the partner explicitly asked us not to share it. Two parts: (1) all object-type partner field JSON Schemas were guarded in Django admin with `additionalProperties: false` placed as a sibling of `properties` (at the root and, where applicable, inside each nested object) — not just `rsc_grievance_mechanism` — so redundant keys like `internal_ID` are rejected on future contributions across every partner field; previously `additionalProperties` had been either absent or mistakenly nested *inside* `properties`, where JSON Schema treats it as a property definition rather than the keyword, so it had no effect. (2) The `remove_rsc_grievance_mechanism_nested_internal_ids` command strips `internal_ID` from the ~1.7k already-stored `rsc_grievance_mechanism` values and reindexes the affected locations, so the data looks as if the key was never contributed.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `remove_rsc_grievance_mechanism_nested_internal_ids` — one-time cleanup (OSDEV-2949) that strips the nested `internal_ID` from `rsc_grievance_mechanism` values and reindexes the affected locations; remove from `post_deployment` after this release has been deployed everywhere.
+* Expect `remove_rsc_grievance_mechanism_nested_internal_ids` to update on the order of ~1.7k `ExtendedField` rows and then run a targeted `index_facilities_by` rebuild for the affected locations (roughly the same number of locations, single-connection, batched). This is bounded to the affected rows only — it never triggers a full `index_facilities` reindex — and runs with no application downtime. Confirm timing on Staging before Production.
+
+
 ## Release 2.27.0
 
 ## Introduction
