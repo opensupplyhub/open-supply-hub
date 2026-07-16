@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from api.serializers.facility.facility_index_extended_field_list_serializer \
     import FacilityIndexExtendedFieldListSerializer
+from api.services.masked_contributors import MaskedContributors
 
 
 def make_extended_field(**overrides):
@@ -68,4 +69,19 @@ class IsFromClaimTest(SimpleTestCase):
         # No claimant in context (unclaimed facility, or callers that do
         # not resolve a claim) keeps the previous behavior.
         data = serialize_one(make_extended_field())
+        self.assertFalse(data['is_from_claim'])
+
+    def test_masked_claimant_contribution_is_not_from_claim(self):
+        # A masked (anonymized) contribution must not be linked to the
+        # publicly named claimant by the badge, even when the contributor
+        # ids match.
+        data = serialize_one(
+            make_extended_field(),
+            context_overrides={
+                'claimant_contributor_id': 10,
+                'masked_contributor_ids': MaskedContributors(
+                    contributor_ids={10},
+                ),
+            },
+        )
         self.assertFalse(data['is_from_claim'])

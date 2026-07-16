@@ -406,6 +406,64 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertEqual(len(other_addresses), 2)
         self.assertIn(self.facility.address, other_addresses)
 
+    def test_claimant_contribution_marked_and_promoted(self):
+        # The approved claimant's list-upload contribution is marked
+        # is_from_claim and, because is_from_claim is a sort key
+        # (_sort_order), promoted above other contributors' newer values.
+        # Exercises the claimant_contributor_id wiring from
+        # facility.approved_claim through get_extended_fields.
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual(
+            facility_index.approved_claim['contributor_id'],
+            self.contrib_one.id,
+        )
+
+        def worker_field(field_id, contributor, list_item_id, updated_at):
+            return {
+                'id': field_id,
+                'field_name': 'number_of_workers',
+                'value': {'min': 100, 'max': 100},
+                'contributor': {
+                    'id': contributor.id,
+                    'admin_id': contributor.admin_id,
+                    'name': contributor.name,
+                    'contrib_type': contributor.contrib_type,
+                    'is_verified': False,
+                },
+                'created_at': '2026-01-01T00:00:00Z',
+                'updated_at': updated_at,
+                'is_verified': False,
+                'facility_list_item_id': list_item_id,
+                'should_display_association': True,
+                'value_count': 1,
+            }
+
+        # The claimant's contribution is older; without the is_from_claim
+        # promotion the other contributor's newer value would sort first.
+        facility_index.extended_fields.append(worker_field(
+            9001, self.contrib_one, self.list_item_one.id,
+            '2026-01-02T00:00:00Z',
+        ))
+        facility_index.extended_fields.append(worker_field(
+            9002, self.contrib_three, self.list_item_tree.id,
+            '2026-06-01T00:00:00Z',
+        ))
+        facility_index.save()
+        facility_index.refresh_from_db()
+
+        data = FacilityIndexDetailsSerializer(facility_index).data
+        workers = data['properties']['extended_fields']['number_of_workers']
+
+        self.assertEqual(len(workers), 2)
+        self.assertTrue(workers[0]['is_from_claim'])
+        self.assertEqual(
+            workers[0]['contributor_name'], self.contrib_one.name
+        )
+        self.assertFalse(workers[1]['is_from_claim'])
+        self.assertEqual(
+            workers[1]['contributor_name'], self.contrib_three.name
+        )
+
     def test_get_other_names(self):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         serializer = FacilityIndexDetailsSerializer()

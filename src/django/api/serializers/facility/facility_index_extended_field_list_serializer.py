@@ -1,5 +1,6 @@
 from typing import Union
 
+from ..utils import is_contribution_masked
 from .utils import (
     get_contributor_name_from_facilityindex,
     get_contributor_id_from_facilityindex,
@@ -109,6 +110,11 @@ class FacilityIndexExtendedFieldListSerializer:
         if claimant_contributor_id is None:
             return False
         contributor = extended_field.get('contributor') or {}
+        # A masked (anonymized) contribution must not be attributed to the
+        # claim: the claimant is publicly named, so the badge would undo
+        # the masking by inference.
+        if is_contribution_masked(contributor, self.masked_contributors):
+            return False
         return contributor.get('id') == claimant_contributor_id
 
     def _get_verified_count(self, extended_field: dict) -> int:
