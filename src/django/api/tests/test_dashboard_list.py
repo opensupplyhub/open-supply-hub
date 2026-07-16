@@ -188,3 +188,82 @@ class DashboardListTest(BaseFacilityListTest):
             "A PENDING list with no replacement must still appear in the "
             "Pending filter.",
         )
+
+    def test_default_ordering_is_created_at_ascending(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get("/api/admin-facility-lists/")
+
+        self.assertEqual(200, response.status_code)
+        created_ats = [
+            item["created_at"] for item in response.json()["results"]
+        ]
+        self.assertEqual(sorted(created_ats), created_ats)
+
+    def test_ordering_by_id(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?ordering=id"
+        )
+
+        self.assertEqual(200, response.status_code)
+        ids = [item["id"] for item in response.json()["results"]]
+        self.assertEqual(sorted(ids), ids)
+
+    def test_ordering_by_negative_id(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?ordering=-id"
+        )
+
+        self.assertEqual(200, response.status_code)
+        ids = [item["id"] for item in response.json()["results"]]
+        self.assertEqual(sorted(ids, reverse=True), ids)
+
+    def test_returns_contributor_name_and_email(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get(
+            "/api/admin-facility-lists/?contributor={}".format(
+                self.contributor.id
+            )
+        )
+
+        self.assertEqual(200, response.status_code)
+
+        for item in response.json()["results"]:
+            self.assertEqual(self.contributor.id, item["contributor_id"])
+            self.assertEqual(self.contributor.name, item["contributor_name"])
+            self.assertEqual(self.user_email, item["contributor_email"])
+
+    def test_id_gt_filter_excludes_earlier_lists(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        first_list_id = self.list.id
+
+        response = self.client.get(
+            "/api/admin-facility-lists/?id__gt={}&ordering=id".format(
+                first_list_id
+            )
+        )
+
+        self.assertEqual(200, response.status_code)
+        ids = [item["id"] for item in response.json()["results"]]
+        self.assertNotIn(first_list_id, ids)
+        self.assertTrue(all(list_id > first_list_id for list_id in ids))
+
+    def test_id_gt_filter_is_optional(self):
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+        response = self.client.get("/api/admin-facility-lists/")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(4, len(response.json()["results"]))
