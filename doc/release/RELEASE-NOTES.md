@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Code/API changes
+* [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Bumped `django` 5.2.14 → 5.2.16 (security patch releases on the 5.2 LTS line). 5.2.15 fixes CVE-2026-7666 — the SMTP email backend no longer reuses a partially-initialized connection after a failed STARTTLS handshake (production uses the Amazon SES backend, so no behavior change expected); 5.2.16 adds three low-severity cache-related fixes.
+
+### Architecture/Environment changes
+* [OSDEV-2995](https://opensupplyhub.atlassian.net/browse/OSDEV-2995) - Upgraded the react container from `node:14-slim` to `node:22-slim`:
+  * `src/react/Dockerfile.local` now sets `NODE_OPTIONS=--openssl-legacy-provider` — webpack 4 (inside react-scripts 4) uses MD4 hashing, removed from OpenSSL 3; without the flag `start`/`build`/`test` fail with `ERR_OSSL_EVP_UNSUPPORTED`. Remove the flag when react-scripts 4 is retired ([OSDEV-2996](https://opensupplyhub.atlassian.net/browse/OSDEV-2996)). The `build_and_push_react_app` job in `deploy_to_aws.yml` moves to node 22 with the same flag scoped to the `yarn run build` step; `code_quality.yml` inherits the change via the docker image.
+  * Bumped the vulnerability pins the node 14 engine had blocked: `tar` 6.2.1 → 7.5.19 (clears 7 advisories), `serialize-javascript` 4.0.0 → 7.0.7 (clears GHSA-5c6j-r48x-rmvq), and direct `uuid` ^9.0.1 → ^11.1.1 (clears GHSA-w5hq-g745-h8pq; uuid 11 uses node ≥15 syntax that previously broke jest/webpack on node 14).
+  * Added scoped resolution `**/postcss-safe-parser/postcss: 8.5.16` — node 22 enforces package `exports` maps that node 14 ignored, and the nested `postcss` 8.2.6's legacy exports map crashed `craco start` with `ERR_PACKAGE_PATH_NOT_EXPORTED` on the `postcss/lib/tokenize` deep require. Also clears the four postcss advisories on that path; the remaining postcss 7.x findings stay with [OSDEV-2996](https://opensupplyhub.atlassian.net/browse/OSDEV-2996).
+
 ## Release 2.27.0
 
 ## Introduction
