@@ -258,6 +258,8 @@ class APIV1CommonErrorMessages:
     NO_ACTIVE_CONTRIBUTION_TO_DISSOCIATE = (
         'You have no active contribution to this location to dissociate.'
     )
+    FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
+    LIST_ALREADY_INACTIVE = 'This list is already inactive.'
 
 
 class APIV1LocationContributionErrorMessages:

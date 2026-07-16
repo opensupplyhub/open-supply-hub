@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Code/API changes
+* [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added a v1 API endpoint that lets a contributor disassociate their contribution from a single production location: `POST /api/v1/production-locations/{os_id}/dissociate/`. Requires an authenticated, confirmed contributor (`IsRegisteredAndConfirmed`) and is scoped to the caller's own `FacilityMatch` records via `facility_list_item__source__contributor`, so a caller can never affect another contributor's data. It deactivates (never deletes) the caller's active matches to that location — the contribution is anonymized (contributor name replaced with contributor type) through the existing `api_facilityindex` DB triggers — and bumps `Facility.updated_at` only when a match is actually deactivated. Returns `{os_id, dissociated_contributions}` on success, `404` when the location is unknown or when the caller has no active contribution to dissociate (so "no changes made" stays truthful). The shared logic was extracted into `api/services/facility_dissociation_service.py`, and the legacy `POST /api/facilities/{id}/dissociate/` endpoint was refactored to reuse it (behavior unchanged).
+* [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added a v1 API endpoint that lets a contributor deactivate a list they uploaded: `POST /api/v1/facility-lists/{list_id}/deactivate/` (new `FacilityLists` viewset registered on the v1 router). Requires an authenticated, confirmed contributor and is gated by list ownership (`source.contributor`); missing and non-owned lists both return the same `404` so list ownership is not leaked. It reuses the platform's existing whole-list deactivation mechanic — the superuser reject path minus the rejection email — by setting `FacilityList.status = REJECTED`, which fires `manual_list_reject_revert_trigger` to set the list's `Source.is_active = False`, anonymizing every contribution from that list. Setting the status (not just the source flag) is what makes the deactivation durable: the trigger re-syncs `Source.is_active` from the list status on every list update. Returns `{list_id, deactivated}` on success, `404` when the list is already inactive. Note: because deactivation reuses the `REJECTED` status, a deactivated list cannot subsequently be used as a replacement (`replaces`) target, consistent with existing rejected-list behavior.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No reindex is required: dissociation and list deactivation propagate through the existing `api_facilitymatch` / `api_source` indexing triggers.
+
+---
+
+
 ## Release 2.27.0
 
 ## Introduction
