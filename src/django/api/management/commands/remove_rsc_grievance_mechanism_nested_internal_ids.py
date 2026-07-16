@@ -59,6 +59,7 @@ class Command(BaseCommand):
             )
         )
 
+    @transaction.atomic
     def handle(self, *args, **options):
         batch_size = options['batch_size']
         dry_run = options['dry_run']
@@ -108,10 +109,9 @@ class Command(BaseCommand):
                 to_update.clear()
                 return
             try:
-                with transaction.atomic():
-                    ExtendedField.objects.bulk_update(
-                        to_update, ['value'], batch_size=batch_size
-                    )
+                ExtendedField.objects.bulk_update(
+                    to_update, ['value'], batch_size=batch_size
+                )
                 stats['updated'] += len(to_update)
             except DatabaseError as exc:
                 self.stderr.write(self.style.ERROR(
