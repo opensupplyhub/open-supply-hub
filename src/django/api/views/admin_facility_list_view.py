@@ -32,8 +32,17 @@ class AdminFacilityListView(ListAPIView):
         if not params.is_valid():
             raise ValidationError(params.errors)
 
+        ordering = params.validated_data.get(
+            FacilityListQueryParams.ORDERING,
+            'created_at',
+        )
+
         facility_lists = FacilityList.objects.select_related(
-            'replaced_by').order_by('created_at')
+            'replaced_by',
+            'source',
+            'source__contributor',
+            'source__contributor__admin',
+        ).order_by(ordering)
 
         contributor = params.data.get(FacilityListQueryParams.CONTRIBUTOR)
         if contributor:
@@ -66,5 +75,9 @@ class AdminFacilityListView(ListAPIView):
             )
         elif status is not None:
             facility_lists = facility_lists.filter(status=status)
+
+        id_gt = params.validated_data.get(FacilityListQueryParams.ID_GT)
+        if id_gt is not None:
+            facility_lists = facility_lists.filter(id__gt=id_gt)
 
         return facility_lists

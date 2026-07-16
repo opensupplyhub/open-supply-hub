@@ -106,9 +106,10 @@ public_apis = [
     path('api/claim-statuses/', views.claim_statuses, name='claim_statuses'),
     path('api/facility-processing-types/', views.facility_processing_types,
          name='facility_processing_types'),
-    path('api/parent-companies/', views.parent_companies,
+    path('api/parent-companies/', views.ParentCompanies.as_view(),
          name='parent_companies'),
-    path('api/product-types/', views.product_types, name='product_types'),
+    path('api/product-types/', views.ProductTypes.as_view(),
+         name='product_types'),
     path('api/sectors/', views.sectors, name='sectors'),
     path(
         'api/partner-fields/',
