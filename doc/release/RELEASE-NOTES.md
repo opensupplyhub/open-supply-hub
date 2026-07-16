@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: TBD
+* Release date: August 7, 2026
 
 ### Code/API changes
 * Data downloads (`GET /api/facilities-downloads/`) now use the approved claim's address for the `address` column when the claimant has provided one, matching the existing claim-first behavior of the `name` column. Previously the download address ignored claim data entirely, so a claimant's corrected address never appeared in exports. Facilities without an approved claim (or whose claim has no address) are unchanged.
