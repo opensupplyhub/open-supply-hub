@@ -47,6 +47,8 @@ class FacilityListQueryParams:
     CONTRIBUTOR = 'contributor'
     STATUS = 'status'
     MATCH_RESPONSIBILITY = 'match_responsibility'
+    ORDERING = 'ordering'
+    ID_GT = 'id__gt'
 
 
 class FacilityListItemsQueryParams:
