@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Bumped `django` 5.2.14 → 5.2.16 (security patch releases on the 5.2 LTS line). 5.2.15 fixes CVE-2026-7666 — the SMTP email backend no longer reuses a partially-initialized connection after a failed STARTTLS handshake (production uses the Amazon SES backend, so no behavior change expected); 5.2.16 adds three low-severity cache-related fixes.
+* The "Claimed" data attribution (`is_from_claim` on extended fields) now recognizes data the approved claimant contributed through any channel. Previously only fields created directly on the `FacilityClaim` were marked as claim data, so a claimant's SLC or list-upload contributions were labeled "Crowdsourced" on the production location page and in API responses. `FacilityIndexExtendedFieldListSerializer` now also marks a field as claim data when its contributor matches the facility's approved claim contributor (`approved_claim.contributor_id`, passed via serializer context from `get_extended_fields`). Unclaimed facilities and other contributors' fields are unchanged.
 
 ### Architecture/Environment changes
 * [OSDEV-2995](https://opensupplyhub.atlassian.net/browse/OSDEV-2995) - Upgraded the react container from `node:14-slim` to `node:22-slim`:
@@ -25,7 +26,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-
 
 ## Release 2.27.0
 

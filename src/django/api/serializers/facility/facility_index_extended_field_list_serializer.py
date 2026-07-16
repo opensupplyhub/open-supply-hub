@@ -99,7 +99,17 @@ class FacilityIndexExtendedFieldListSerializer:
         )
 
     def _get_is_from_claim(self, extended_field: dict) -> bool:
-        return extended_field.get('facility_list_item_id') is None
+        # Fields created directly from a FacilityClaim have no list item.
+        if extended_field.get('facility_list_item_id') is None:
+            return True
+        # Fields the approved claimant contributed through other channels
+        # (SLC, list upload) are also claimant data. See the Promotion
+        # Logic Q3 plan.
+        claimant_contributor_id = self.context.get('claimant_contributor_id')
+        if claimant_contributor_id is None:
+            return False
+        contributor = extended_field.get('contributor') or {}
+        return contributor.get('id') == claimant_contributor_id
 
     def _get_verified_count(self, extended_field: dict) -> int:
         count = 0
