@@ -59,9 +59,9 @@ class TestFacilityListsDeactivate(APITestCase):
         return user, contributor
 
     @staticmethod
-    def __create_list(contributor, name):
+    def __create_list(contributor, name, status=FacilityList.APPROVED):
         facility_list = FacilityList.objects.create(
-            header='header', file_name='file', name=name
+            header='header', file_name='file', name=name, status=status
         )
         source = Source.objects.create(
             source_type=Source.LIST,
@@ -190,6 +190,27 @@ class TestFacilityListsDeactivate(APITestCase):
         self.other_list.refresh_from_db()
         self.assertTrue(self.other_source.is_active)
         self.assertNotEqual(self.other_list.status, FacilityList.REJECTED)
+
+    def test_cannot_deactivate_pending_list(self):
+        # A list still awaiting moderator approval must not be deactivated:
+        # a later approve would revert the REJECTED status and reactivate the
+        # source, silently undoing the contributor's request.
+        pending_list, pending_source = self.__create_list(
+            self.contributor, 'Pending List', status=FacilityList.PENDING
+        )
+        self.login(self.user_email, self.user_password)
+
+        response = self.client.post(self.__deactivate_url(pending_list.id))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            json.loads(response.content)['detail'],
+            'Only an approved list can be deactivated.',
+        )
+        pending_source.refresh_from_db()
+        pending_list.refresh_from_db()
+        self.assertTrue(pending_source.is_active)
+        self.assertEqual(pending_list.status, FacilityList.PENDING)
 
     def test_404_when_list_unknown(self):
         self.login(self.user_email, self.user_password)

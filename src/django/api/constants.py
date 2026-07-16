@@ -260,6 +260,7 @@ class APIV1CommonErrorMessages:
     )
     FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
     LIST_ALREADY_INACTIVE = 'This list is already inactive.'
+    LIST_NOT_APPROVED = 'Only an approved list can be deactivated.'
 
 
 class APIV1LocationContributionErrorMessages:

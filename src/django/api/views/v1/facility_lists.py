@@ -55,6 +55,13 @@ class FacilityLists(ViewSet):
         type across the affected location profiles. Scoping to the caller's
         contributor guarantees a caller can only ever deactivate their own
         list.
+
+        Only an approved (live) list can be deactivated. Deactivation rides on
+        ``FacilityList.status = REJECTED``, but a list still awaiting moderator
+        approval would have that status silently reverted by a later
+        ``approve`` (which fires ``manual_list_reject_revert_trigger`` and
+        reactivates the source). Restricting to approved lists keeps the
+        deactivation durable.
         '''
         facility_list = (
             FacilityList.objects
@@ -72,6 +79,16 @@ class FacilityLists(ViewSet):
             return Response(
                 {'detail': APIV1CommonErrorMessages.FACILITY_LIST_NOT_FOUND},
                 status=status.HTTP_404_NOT_FOUND
+            )
+
+        # A not-yet-approved list can have its REJECTED status reverted by a
+        # later approve, so refuse to deactivate anything that is not live.
+        if facility_list.status not in (
+                FacilityList.APPROVED,
+                FacilityList.MATCHED):
+            return Response(
+                {'detail': APIV1CommonErrorMessages.LIST_NOT_APPROVED},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         deactivated = deactivate_contributor_source(
