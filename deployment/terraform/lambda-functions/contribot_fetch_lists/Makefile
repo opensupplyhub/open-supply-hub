@@ -1,13 +1,7 @@
 CONTRIBOT_SRC = ../../../../src/contribot
-# Fixed mtime so plan/apply CI jobs produce identical zip hashes.
-ZIP_MTIME = 198001010000.00
 
 all:
-	rm -rf .build contribot_fetch_lists.zip
-	mkdir -p .build
-	cp $(CONTRIBOT_SRC)/fetch_lists/handler.py .build/handler.py
-	touch -t $(ZIP_MTIME) .build/handler.py
-	(cd .build && zip -qXr ../contribot_fetch_lists.zip handler.py)
-	rm -rf .build
+	rm -f contribot_fetch_lists.zip
+	(cd $(CONTRIBOT_SRC)/fetch_lists && zip -qXr ../../../deployment/terraform/lambda-functions/contribot_fetch_lists/contribot_fetch_lists.zip handler.py)
 
 .PHONY: all

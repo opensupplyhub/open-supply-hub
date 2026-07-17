@@ -12,6 +12,40 @@ Execute Terraform subcommands with remote state management.
 "
 }
 
+CONTRIBOT_LAMBDAS=(
+    contribot_fetch_lists
+    contribot_process_list
+    contribot_notify
+)
+
+function upload_contribot_lambda_zips() {
+    local lambda
+    echo "Uploading ContriBot Lambda archives to s3://${SETTINGS_BUCKET}/terraform/lambda/"
+    for lambda in "${CONTRIBOT_LAMBDAS[@]}"; do
+        aws s3 cp \
+            "lambda-functions/${lambda}/${lambda}.zip" \
+            "s3://${SETTINGS_BUCKET}/terraform/lambda/${lambda}.zip"
+    done
+}
+
+function download_contribot_lambda_zips() {
+    local lambda
+    echo "Downloading ContriBot Lambda archives from s3://${SETTINGS_BUCKET}/terraform/lambda/"
+    for lambda in "${CONTRIBOT_LAMBDAS[@]}"; do
+        aws s3 cp \
+            "s3://${SETTINGS_BUCKET}/terraform/lambda/${lambda}.zip" \
+            "lambda-functions/${lambda}/${lambda}.zip"
+    done
+}
+
+function delete_contribot_lambda_zips() {
+    local lambda
+    echo "Deleting ContriBot Lambda archives from s3://${SETTINGS_BUCKET}/terraform/lambda/"
+    for lambda in "${CONTRIBOT_LAMBDAS[@]}"; do
+        aws s3 rm "s3://${SETTINGS_BUCKET}/terraform/lambda/${lambda}.zip" || true
+    done
+}
+
 # # Temporary solution
 # GIT_COMMIT="latest"
 
@@ -42,7 +76,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             plan)
                 # DEFAULT_BATCH_CE_DESIRED_CPU=$(aws batch describe-compute-environments --output text --compute-environments "batch${OAR_DEPLOYMENT_ENVIRONMENT^}DefaultComputeEnvironment" --query "computeEnvironments[].computeResources.desiredvCpus")
 
-                #                 # Build Lambda function archives
+                # Build Lambda function archives
                 make -sC lambda-functions/alert_batch_failures
                 make -sC lambda-functions/alert_sfn_failures
                 make -sC lambda-functions/contribot_fetch_lists
@@ -63,12 +97,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                           -var-file="${SETTINGS_BUCKET}.tfvars" \
                           -out="${SETTINGS_BUCKET}.tfplan" \
                           > "${SETTINGS_BUCKET}.tfplan.log.txt" 2>&1
+
+                # Pass gitignored ContriBot zips to the apply job (same bytes as plan)
+                upload_contribot_lambda_zips
                 ;;
             apply)
-                # ContriBot zips are gitignored; rebuild for apply's fresh checkout
-                make -sC lambda-functions/contribot_fetch_lists
-                make -sC lambda-functions/contribot_process_list
-                make -sC lambda-functions/contribot_notify
+                # Use the exact archives hashed during plan
+                download_contribot_lambda_zips
 
                 echo "Terraform init"
                 rm -rf .terraform terraform.tfstate*
@@ -78,6 +113,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 echo "Terraform apply"
                 ls -la
                 terraform apply "${SETTINGS_BUCKET}.tfplan"
+                delete_contribot_lambda_zips
                 ;;
             destroy)
                 terraform init \
