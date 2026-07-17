@@ -15,8 +15,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-    * `reindex_database`
-* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - After deploy, populate the four ContriBot Secrets Manager stores for each environment (`contribot{Environment}OsHubApiToken`, `MondayApiKey`, `SlackApiUrl`, `GoogleDriveServiceKey`). The scheduled Step Functions workflow will run automatically but handlers return stub data until follow-up implementation work lands.
 
 
 ## Release 2.27.0
