@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: _Provide release date_
+
+### Bugfix
+* [OSDEV-2949](https://opensupplyhub.atlassian.net/browse/OSDEV-2949) - Fixed object-typed partner fields leaking contributor-supplied keys (e.g. `internal_ID` on `rsc_grievance_mechanism`) through the API even though they are absent from the field's JSON Schema. The schema is now enforced as an output whitelist: a new `filter_value_to_schema` helper (`api/serializers/facility/partner_field_helper.py`) recursively drops any `raw_values` keys not declared in the schema's `properties`, and it is applied in both `GET /api/facilities/{os_id}/` (`FacilityIndexExtendedFieldListSerializer`) and `GET /api/v1/production-locations/{os_id}` (`ProductionLocationsViewSet.__get_partner_field_value`). Fields without a usable object schema are returned unchanged, so nothing is stripped by accident. This matches the existing behavior of the CSV/Excel download and the front end, which already render only schema-defined fields.
+
+
 ## Release 2.27.0
 
 ## Introduction
