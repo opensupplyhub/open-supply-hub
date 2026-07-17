@@ -220,6 +220,26 @@ class ApprovedFacilityClaimTest(APITestCase):
             updated_at_after_first_save,
         )
 
+        # Changing a single field must still save: a false "no change"
+        # here would silently drop the claimant's edit.
+        changed_payload = dict(
+            payload, facility_description="a different description"
+        )
+        third_response = self.client.put(api_url, changed_payload)
+        self.assertEqual(200, third_response.status_code)
+        self.assertEqual(len(mail.outbox), 2)
+        claim_after_change = FacilityClaim.objects.get(
+            pk=self.facility_claim.id
+        )
+        self.assertEqual(
+            claim_after_change.facility_description,
+            "a different description",
+        )
+        self.assertGreater(
+            claim_after_change.updated_at,
+            updated_at_after_first_save,
+        )
+
     @override_switch("claim_a_facility", active=True)
     def test_updating_claim_profile_refreshes_indexed_claim_info(self):
         # OSDEV-2679: editing an approved claim must refresh the indexed
