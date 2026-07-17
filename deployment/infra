@@ -65,10 +65,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                           > "${SETTINGS_BUCKET}.tfplan.log.txt" 2>&1
                 ;;
             apply)
-                # Build Lambda function archives (required: plan/apply run in
-                # separate CI jobs with fresh checkouts, and zips are gitignored)
-                make -sC lambda-functions/alert_batch_failures
-                make -sC lambda-functions/alert_sfn_failures
+                # ContriBot zips are gitignored; rebuild for apply's fresh checkout
                 make -sC lambda-functions/contribot_fetch_lists
                 make -sC lambda-functions/contribot_process_list
                 make -sC lambda-functions/contribot_notify
