@@ -7,16 +7,11 @@ ENV NODE_OPTIONS=--openssl-legacy-provider
 
 WORKDIR /usr/local/src
 
-# Run as the unprivileged 'node' user (uid 1000) built into the node images,
-# so yarn install's postinstall scripts and the dev server don't run as root.
-RUN chown node:node /usr/local/src
-USER node
-
-COPY --chown=node:node package.json yarn.lock ./
+COPY package.json yarn.lock ./
 
 RUN yarn install
 
-COPY --chown=node:node . .
+COPY . .
 
 ENV REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest} \
     CHOKIDAR_USEPOLLING=true \
