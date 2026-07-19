@@ -44,7 +44,7 @@ import startCase from 'lodash/startCase';
 import toLower from 'lodash/toLower';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
-import hash from 'object-hash';
+import hash from './stableHash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
