@@ -68,12 +68,19 @@ class TestFacilityListsDeactivate(APITestCase):
             facility_list=facility_list,
             contributor=contributor,
         )
+        TestFacilityListsDeactivate.__create_facility_for_source(
+            source, 'Plant', 0
+        )
+        return facility_list, source
+
+    @staticmethod
+    def __create_facility_for_source(source, name, row_index):
         list_item = FacilityListItem.objects.create(
-            name='Plant',
+            name=name,
             address='1 St',
             country_code='US',
             sector=['Apparel'],
-            row_index=0,
+            row_index=row_index,
             status=FacilityListItem.CONFIRMED_MATCH,
             source=source,
         )
@@ -84,6 +91,8 @@ class TestFacilityListsDeactivate(APITestCase):
             location=Point(0, 0),
             created_from=list_item,
         )
+        list_item.facility = facility
+        list_item.save()
         FacilityMatch.objects.create(
             status=FacilityMatch.AUTOMATIC,
             facility=facility,
@@ -91,13 +100,20 @@ class TestFacilityListsDeactivate(APITestCase):
             facility_list_item=list_item,
             is_active=True,
         )
-        return facility_list, source
+        return facility
 
     def __deactivate_url(self, list_id):
         return reverse(
             URLNames.FACILITY_LISTS + '-deactivate',
             args=[list_id],
         )
+
+    def __facility_contributors(self, facility):
+        response = self.client.get(
+            reverse('facility-detail', args=[facility.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        return json.loads(response.content)['properties']['contributors']
 
     def login(self, email, password):
         self.client.logout()
@@ -119,6 +135,42 @@ class TestFacilityListsDeactivate(APITestCase):
         self.facility_list.refresh_from_db()
         self.assertFalse(self.source.is_active)
         self.assertEqual(self.facility_list.status, FacilityList.REJECTED)
+
+    def test_anonymizes_profiles_without_deleting_facilities(self):
+        first_facility = FacilityMatch.objects.get(
+            facility_list_item__source=self.source
+        ).facility
+        second_facility = self.__create_facility_for_source(
+            self.source, 'Second Plant', 1
+        )
+        facility_ids = [first_facility.id, second_facility.id]
+        self.login(self.user_email, self.user_password)
+
+        response = self.client.post(
+            self.__deactivate_url(self.facility_list.id)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Facility.objects.filter(id__in=facility_ids).count(),
+            len(facility_ids),
+        )
+
+        # Verify every affected public profile displays the contributor type
+        # rather than the contributor name.
+        self.client.logout()
+        for facility in (first_facility, second_facility):
+            contributors = self.__facility_contributors(facility)
+            self.assertEqual(len(contributors), 1)
+            self.assertEqual(contributors[0]['name'], 'One Other')
+            self.assertEqual(
+                contributors[0]['contributor_type'],
+                Contributor.OTHER_CONTRIB_TYPE,
+            )
+            self.assertNotEqual(
+                contributors[0].get('contributor_name'),
+                self.contributor.name,
+            )
 
     def test_deactivation_is_durable_across_list_updates(self):
         # The whole reason we set status=REJECTED (not just the source flag):

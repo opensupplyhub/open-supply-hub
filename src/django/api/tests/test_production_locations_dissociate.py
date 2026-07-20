@@ -96,6 +96,13 @@ class TestProductionLocationsDissociate(APITestCase):
             args=[os_id],
         )
 
+    def __facility_contributors(self, facility):
+        response = self.client.get(
+            reverse('facility-detail', args=[facility.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        return json.loads(response.content)['properties']['contributors']
+
     def login(self, email, password):
         self.client.logout()
         self.client.login(email=email, password=password)
@@ -116,6 +123,21 @@ class TestProductionLocationsDissociate(APITestCase):
 
         self.facility.refresh_from_db()
         self.assertGreater(self.facility.updated_at, original_updated_at)
+
+        # Verify the public facility profile reflects the anonymization, not
+        # only the underlying FacilityMatch state.
+        self.client.logout()
+        contributors = self.__facility_contributors(self.facility)
+        self.assertEqual(len(contributors), 1)
+        self.assertEqual(contributors[0]['name'], 'One Other')
+        self.assertEqual(
+            contributors[0]['contributor_type'],
+            Contributor.OTHER_CONTRIB_TYPE,
+        )
+        self.assertNotEqual(
+            contributors[0].get('contributor_name'),
+            self.contributor.name,
+        )
 
     def test_404_and_no_change_when_no_active_contribution(self):
         self.match.is_active = False
