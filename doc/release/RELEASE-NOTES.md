@@ -7,13 +7,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: August 7, 2026
 
 ### Code/API changes
 * [OSDEV-2949](https://opensupplyhub.atlassian.net/browse/OSDEV-2949) - Added the `remove_rsc_grievance_mechanism_nested_internal_ids` management command. It removes the nested `internal_ID` key from `rsc_grievance_mechanism` partner field values (`ExtendedField.value['raw_values']['internal_ID']`) so the key is no longer returned by `GET /api/facilities/` or `GET /api/v1/production-locations/`. It uses `bulk_update` on `value` only (no `updated_at` change and no new history rows), while the existing `ExtendedField` database trigger refreshes the affected `FacilityIndex.extended_fields` values automatically. The command is idempotent and supports `--dry-run` and `--batch-size`.
 
 ### Bugfix
 * [OSDEV-2949](https://opensupplyhub.atlassian.net/browse/OSDEV-2949) - Fixed the `internal_ID` field being exposed in the API for the `rsc_grievance_mechanism` partner field. The key had been ingested from the partner's list contribution (used only to map their IDs to OS IDs) but is not part of the partner field's JSON Schema, and the partner explicitly asked us not to share it. Two parts: (1) all object-type partner field JSON Schemas were guarded in Django admin with `additionalProperties: false` placed as a sibling of `properties` (at the root and, where applicable, inside each nested object) — not just `rsc_grievance_mechanism` — so redundant keys like `internal_ID` are rejected on future contributions across every partner field; previously `additionalProperties` had been either absent or mistakenly nested *inside* `properties`, where JSON Schema treats it as a property definition rather than the keyword, so it had no effect. (2) The `remove_rsc_grievance_mechanism_nested_internal_ids` command strips `internal_ID` from the ~1.7k already-stored `rsc_grievance_mechanism` values, with the existing database trigger refreshing the affected facility index data, so the data looks as if the key was never contributed.
+
+### Architecture/Environment changes
+* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id`, three placeholder Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Handlers are stubs only; secret values must be populated manually in AWS before real processing can run. Lambda dependency bundling for production handler code is not yet wired into the deploy pipeline.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
