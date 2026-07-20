@@ -8,8 +8,8 @@ Error codes and severities come from an external configuration workbook
 (``0000.error_codes.xlsx`` by default). Codes starting with ``T`` are table-level;
 codes starting with ``C`` are column-level.
 """
+
 import datetime
-import json
 import os
 import re
 import string
@@ -30,7 +30,6 @@ from openpyxl.comments import Comment
 from openpyxl.formatting.rule import ColorScale, FormatObject, Rule
 from openpyxl.styles import Alignment, Color, Font
 from openpyxl.utils.dataframe import dataframe_to_rows
-from sqlalchemy import create_engine
 from tqdm import tqdm
 from unidecode import unidecode
 
@@ -178,26 +177,18 @@ class ContriBot:
             self.df_config_string = "No valid configuration found"
             self.have_config = False
 
-    def save(
-        self,
-        targetfolder="./sun",
-        engine=None,
-        table_name="t_contribot",
-        write_to_jsonl=True,
-    ):
-        """Write the processed workbook and persist diagnostics.
+    def save(self, targetfolder="./sun"):
+        """Write the processed workbook.
 
         Args:
             targetfolder: Directory for the output ``.~PROCESSED.xlsx`` file.
-            engine: Optional SQLAlchemy engine for storing diagnostics rows.
-            table_name: Database table name when persisting diagnostics.
-            write_to_jsonl: Append run summary to ``contribot.output.jsonl``.
 
         Returns:
-            dict: Summary with ``error_ratio``, ``num_lines``, and ``num_errors``.
+            dict: Summary with ``error_ratio``, ``num_lines``, ``num_errors``,
+            and runtime fields.
         """
         Path(targetfolder).mkdir(exist_ok=True, parents=True)
-        self.populate_summary(write_to_jsonl=write_to_jsonl)
+        self.populate_summary()
         self.fixes_sheet_fontsize()
         filepath = f"{targetfolder}/{self.targetfilename}".replace("//", "/")
         print(
@@ -207,31 +198,10 @@ class ContriBot:
         self.wb.active = self.wb["Summary"]
         self.wb.save(filepath)
 
-        df = pd.DataFrame(self.diagnostics_table + self.diagnostics_column)
-        df["datetime_date_start"] = self.START
-        END = datetime.datetime.now()
-        df["datetime_date_end"] = END
-        df["runtime_total_seconds"] = (END - self.START).total_seconds()
-        df["sourcefile"] = self.sourcefilename
-        df["error_ratio"] = self.summary["error_ratio"]
-        df["num_lines"] = self.summary["num_lines"]
-        df["num_errors"] = self.summary["num_errors"]
-
-        try:
-            if engine:
-                with engine.connect() as conn:
-                    df.to_sql(table_name, con=conn, index=False, if_exists="append")
-            else:
-                with create_engine(
-                    "mysql+mysqlconnector://opensupplyhub:secret@localhost/opensupplyhub"
-                ).connect() as conn:
-                    df.to_sql(table_name, con=conn, index=False, if_exists="append")
-        except:
-            try:
-                conn = create_engine("sqlite:///database.db")
-                df.to_sql(table_name, con=conn, index=False, if_exists="append")
-            except:
-                pass
+        end = datetime.datetime.now()
+        self.summary["datetime_started"] = self.START.isoformat()
+        self.summary["datetime_completed"] = end.isoformat()
+        self.summary["runtime_total_seconds"] = (end - self.START).total_seconds()
 
         return self.summary
 
@@ -254,14 +224,11 @@ class ContriBot:
             # [i + 1] - because the lines are numbered starting at 1
             ws.row_dimensions[i + 1].height = self._get_height_for_row(ws, i)
 
-    def populate_summary(self, write_to_jsonl=True):
+    def populate_summary(self):
         """Fill the Summary sheet with findings grouped by severity.
 
         Sections include Critical Errors, Please Check, Key Metrics, Possible
         Glitches, and Other Observations. Also sets ``self.summary``.
-
-        Args:
-            write_to_jsonl: When True, append the summary dict to a JSONL log file.
 
         Returns:
             dict: The same summary stored on ``self.summary``.
@@ -326,9 +293,6 @@ class ContriBot:
             "num_lines": len(self.df),
             "num_errors": len(df),
         }
-        if write_to_jsonl:
-            with open("contribot.output.jsonl", "a+t") as f:
-                f.write(json.dumps(self.summary) + "\n")
         row += 1
         if len(df) > 0:
             cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
