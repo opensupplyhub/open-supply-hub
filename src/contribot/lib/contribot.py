@@ -1081,7 +1081,6 @@ class ContriBot:
                 )
 
             cells_with_errors = 0
-            ws = self.wb["Findings"]
             for row in range(len(countries)):
                 if countries[row] not in self.known_countries:
                     self._add_diagnosis(
@@ -1091,7 +1090,6 @@ class ContriBot:
                         country=countries[row],
                     )
                     cells_with_errors += 1
-                    column = self.mapping["country"]
                     row = self.df.index[row]
         else:
             cells_with_errors = len(self.df)
@@ -1355,7 +1353,7 @@ class ContriBot:
 
     def _tokens_above_threshold(self, pair, threshold=1):
         """Return True when the numeric value in ``pair`` exceeds ``threshold``."""
-        k, v = pair
+        _, v = pair
         return v > threshold
 
     def check_column_leading_trailing_blanks(self, column):
