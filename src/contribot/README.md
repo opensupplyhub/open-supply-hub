@@ -13,12 +13,13 @@ Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py
 Run the unit tests locally:
 
 ```bash
-cd src/contribot/lib && python -m pytest tests/test_contribot.py
+cd src/contribot/lib && python -m pytest tests/test_contribot.py tests/test_lists_repository.py tests/test_os_hub_api.py
+cd src/contribot/fetch_lists && python -m pytest tests/test_handler.py
 ```
 
 ## Lambda Source Code
 
-Handler code lives under `src/contribot/`. Each Lambda is a single `handler.py` module packaged into a zip for deployment.
+Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py) and [`os_hub_api.py`](lib/os_hub_api.py) for `fetch_lists`).
 
 | Lambda         | Handler source                                       | Deployment package                                                                                                                     |
 | -------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,7 +35,7 @@ Build all deployment zips from this directory:
 make -C src/contribot
 ```
 
-Each package Makefile zips its handler into `deployment/terraform/lambda-functions/<name>/<name>.zip`. Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
+Each package Makefile builds `deployment/terraform/lambda-functions/<name>/<name>.zip` (for `fetch_lists`, the zip includes `handler.py` plus shared `lib/` modules). Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
 
 ## Architecture
 
@@ -59,13 +60,22 @@ flowchart LR
 
 ### State Management
 
-Each processed facility list is recorded in DynamoDB (keyed by list ID). The `fetch_lists` task reads this table to determine which lists still need processing; `process_list` updates it after a list is handled successfully.
+DynamoDB stores one item per facility list (hash key `list_id`) with `contributor_id`, `list_name`, `status`, `started_at`, and `finished_at`.
+
+On each run, `fetch_lists`:
+
+1. Reads a dedicated `__CURSOR__` DynamoDB item (`last_list_id`) for the resume watermark (`0` when missing).
+2. Queries `GET /api/admin-facility-lists/?id__gt={last_id}&ordering=id`.
+3. Writes each returned list as a `PENDING` row **before** returning Map items to Step Functions.
+4. Conditionally advances `__CURSOR__.last_list_id` to the highest fetched id.
+
+`process_list` later updates `status` / `finished_at` after a list is handled.
 
 ## Process
 
 | Step | Description                                                                                                          |
 | ---- | -------------------------------------------------------------------------------------------------------------------- |
-| 1    | Fetch newly processed lists and queue them for processing. Lists are retrieved via `GET /api/admin-facility-lists/`. |
+| 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`. |
 | 2    | For each list, download the file from S3, run facility list validation, and upload the report to Google Drive.       |
 | 3    | Send notifications to Slack and Monday so that data moderators can review the report.                                |
 
@@ -73,14 +83,14 @@ Each processed facility list is recorded in DynamoDB (keyed by list ID). The `fe
 
 ### Secrets Manager
 
-Store sensitive values in AWS Secrets Manager and inject them at runtime.
+Store sensitive values in AWS Secrets Manager. Lambdas receive each secret's ARN as an environment variable and load the value at runtime via `GetSecretValue`.
 
-| Variable                   | Description                                                                |
-| -------------------------- | -------------------------------------------------------------------------- |
-| `OS_HUB_API_TOKEN`         | API token used to authenticate requests to Open Supply Hub.                |
-| `MONDAY_API_KEY`           | API token used to post items to the Monday board.                          |
-| `SLACK_API_URL`            | Webhook URL used to send Slack notifications.                              |
-| `GOOGLE_DRIVE_SERVICE_KEY` | Google service account credentials used to upload reports to Google Drive. |
+| Secret (Secrets Manager)   | Environment variable                  | Description                                                                |
+| -------------------------- | ------------------------------------- | -------------------------------------------------------------------------- |
+| OS Hub API token           | `OS_HUB_API_TOKEN_SECRET_ARN`         | API token used to authenticate requests to Open Supply Hub.                |
+| Monday API key             | `MONDAY_API_KEY_SECRET_ARN`           | API token used to post items to the Monday board.                          |
+| Slack webhook URL          | `SLACK_API_URL_SECRET_ARN`            | Webhook URL used to send Slack notifications.                              |
+| Google Drive service key   | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
 
