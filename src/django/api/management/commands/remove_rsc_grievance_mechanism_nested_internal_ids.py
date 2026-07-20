@@ -79,19 +79,6 @@ class Command(BaseCommand):
             .order_by('id')
         )
 
-        total = base_qs.count()
-        if total == 0:
-            self.stdout.write(self.style.SUCCESS(
-                f"No '{self.FIELD_NAME}' records contain a nested "
-                f"'{self.INTERNAL_ID_KEY}'; nothing to do."
-            ))
-            return
-
-        self.stdout.write(
-            f"Found {total} '{self.FIELD_NAME}' record(s) with a nested "
-            f"'{self.INTERNAL_ID_KEY}'."
-        )
-
         stats = {
             'scanned': 0,
             'updated': 0,
@@ -154,7 +141,7 @@ class Command(BaseCommand):
             now = timezone.now()
             if (now - last_log).total_seconds() >= 10:
                 self.stdout.write(
-                    f"Progress: scanned={stats['scanned']}/{total} "
+                    f"Progress: scanned={stats['scanned']} "
                     f"updated={stats['updated']} "
                     f"would_update={stats['would_update']} "
                     f"skipped={stats['skipped']}"
@@ -162,6 +149,13 @@ class Command(BaseCommand):
                 last_log = now
 
         flush_batch()
+
+        if stats['scanned'] == 0:
+            self.stdout.write(self.style.SUCCESS(
+                f"No '{self.FIELD_NAME}' records contain a nested "
+                f"'{self.INTERNAL_ID_KEY}'; nothing to do."
+            ))
+            return
 
         self._reindex(affected_facility_ids, dry_run, reindex)
 
