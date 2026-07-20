@@ -39,7 +39,7 @@ variable "compute_type" {
 
 variable "build_image" {
   type    = string
-  default = "aws/codebuild/standard:7.0"
+  default = "aws/codebuild/standard:8.0"
 }
 
 variable "build_timeout" {

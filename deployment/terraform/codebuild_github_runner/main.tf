@@ -11,7 +11,7 @@
 
 resource "aws_cloudwatch_log_group" "github_runner" {
   name              = "log${local.short}GitHubActionsRunner"
-  retention_in_days = 90
+  retention_in_days = 365
 }
 
 data "aws_iam_policy_document" "github_runner_assume_role" {
@@ -38,15 +38,13 @@ data "aws_iam_policy_document" "github_runner" {
   }
 
   # Required for CodeBuild to authenticate to GitHub through the
-  # CodeConnections connection (both service namespaces are needed because
-  # the connection ARN may use either prefix depending on when it was created).
+  # CodeConnections connection. The connection ARN must use the
+  # arn:aws:codeconnections: prefix (see README).
   statement {
     actions = [
       "codeconnections:GetConnection",
       "codeconnections:GetConnectionToken",
-      "codestar-connections:GetConnection",
-      "codestar-connections:GetConnectionToken",
-      "codestar-connections:UseConnection"
+      "codeconnections:UseConnection"
     ]
     resources = [var.github_connection_arn]
   }
