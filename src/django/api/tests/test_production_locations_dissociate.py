@@ -55,7 +55,10 @@ class TestProductionLocationsDissociate(APITestCase):
     @staticmethod
     def __create_contribution(contributor, name, address):
         facility_list = FacilityList.objects.create(
-            header='header', file_name='file', name=f'{name} List'
+            header='header',
+            file_name='file',
+            name=f'{name} List',
+            status=FacilityList.APPROVED,
         )
         source = Source.objects.create(
             source_type=Source.LIST,
@@ -124,8 +127,26 @@ class TestProductionLocationsDissociate(APITestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             json.loads(response.content)['detail'],
-            'You have no active contribution to this location to dissociate.',
+            'You have no active contribution from an approved list to '
+            'dissociate from this location.',
         )
+
+    def test_does_not_dissociate_contribution_from_pending_list(self):
+        facility_list = self.match.facility_list_item.source.facility_list
+        facility_list.status = FacilityList.PENDING
+        facility_list.save()
+        self.login(self.user_email, self.user_password)
+
+        response = self.client.post(self.__dissociate_url(self.facility.id))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            json.loads(response.content)['detail'],
+            'You have no active contribution from an approved list to '
+            'dissociate from this location.',
+        )
+        self.match.refresh_from_db()
+        self.assertTrue(self.match.is_active)
 
     def test_cannot_affect_another_contributors_data(self):
         self.login(self.user_email, self.user_password)

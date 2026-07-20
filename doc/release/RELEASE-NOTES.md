@@ -13,9 +13,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added v1 API support for contributors to disassociate production-location contributions and deactivate uploaded lists:
     * **Production-location contribution dissociation:** `POST /api/v1/production-locations/{os_id}/dissociate/`
         * Requires an authenticated, confirmed contributor (`IsRegisteredAndConfirmed`).
+        * Only contributions originating from lists approved by an admin are eligible for dissociation.
         * Scoped to the caller's own `FacilityMatch` records via `facility_list_item__source__contributor`, so a caller can never affect another contributor's data.
         * Deactivates (never deletes) the caller's active matches — the contribution is anonymized (contributor name replaced with contributor type) through the existing `api_facilityindex` DB triggers — and bumps `Facility.updated_at` only when a match is actually deactivated.
-        * Returns `{os_id, dissociated_contributions}` on success; `404` when the location is unknown or when the caller has no active contribution to dissociate (so "no changes made" stays truthful).
+        * Returns `{os_id, dissociated_contributions}` on success; `404` when the location is unknown or when the caller has no active contribution from an approved list to dissociate (so "no changes made" stays truthful).
         * Shared logic was extracted into `api/services/facility_dissociation_service.py`, and the legacy `POST /api/facilities/{id}/dissociate/` endpoint was refactored to reuse it (behavior unchanged).
     * **Uploaded-list deactivation:** `POST /api/v1/facility-lists/{list_id}/deactivate/`
         * Added a new `FacilityLists` viewset to the v1 router.

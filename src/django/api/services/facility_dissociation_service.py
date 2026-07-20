@@ -4,15 +4,20 @@ from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_match import FacilityMatch
 
 
-def dissociate_contributor_matches(facility, contributor):
+def dissociate_contributor_matches(
+        facility, contributor, require_approved_list=False):
     """
     Deactivate every active match linking ``contributor`` to ``facility``.
 
     This is the shared core of contributor dissociation, used by both the
     legacy ``POST /api/facilities/{id}/dissociate/`` endpoint and the v1 API.
-    It sets ``FacilityMatch.is_active = False`` (never deletes), records a
-    django-simple-history change reason for each affected match, and bumps the
-    facility's ``updated_at`` so downstream indexing (the Postgres
+    The v1 endpoint sets ``require_approved_list=True`` so only contributions
+    from lists approved by an admin can be dissociated. The legacy endpoint
+    retains its existing behavior for contributor-responsibility lists.
+
+    The service sets ``FacilityMatch.is_active = False`` (never deletes),
+    records a django-simple-history change reason for each affected match, and
+    bumps the facility's ``updated_at`` so downstream indexing (the Postgres
     ``api_facilityindex`` triggers and the Logstash ``production-locations``
     sync) picks up the change.
 
@@ -26,6 +31,13 @@ def dissociate_contributor_matches(facility, contributor):
         facility=facility,
         facility_list_item__source__contributor=contributor,
     )
+
+    if require_approved_list:
+        matches = matches.filter(
+            facility_list_item__source__facility_list__status=(
+                FacilityList.APPROVED
+            )
+        )
 
     dissociated_count = 0
 

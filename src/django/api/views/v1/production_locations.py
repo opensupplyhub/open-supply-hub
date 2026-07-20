@@ -295,7 +295,8 @@ class ProductionLocations(ViewSet):
         Deactivate the authenticated contributor's contributions to the
         production location identified by ``pk`` (an ``os_id``).
 
-        The contribution is anonymized, not deleted: the contributor's active
+        Only contributions from lists approved by an admin are eligible. The
+        contribution is anonymized, not deleted: the contributor's active
         matches are set inactive, so their name is replaced with their
         contributor type on the location profile. Scoping to
         ``request.user.contributor`` guarantees a caller can only ever affect
@@ -310,7 +311,8 @@ class ProductionLocations(ViewSet):
 
         dissociated_count = dissociate_contributor_matches(
             facility,
-            request.user.contributor
+            request.user.contributor,
+            require_approved_list=True
         )
 
         if dissociated_count == 0:
