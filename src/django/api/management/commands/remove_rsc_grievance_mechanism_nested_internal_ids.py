@@ -3,7 +3,6 @@ from django.db import DatabaseError, transaction
 from django.utils import timezone
 
 from api.models.extended_field import ExtendedField
-from api.models.transactions.index_facilities_new import index_facilities_new
 
 
 class Command(BaseCommand):
@@ -25,8 +24,8 @@ class Command(BaseCommand):
 
     help = (
         "Remove the nested '{key}' key from '{field}' partner field values "
-        "(ExtendedField.value['{raw}']['{key}']) and reindex the affected "
-        "production locations so the key is no longer returned by "
+        "(ExtendedField.value['{raw}']['{key}']) so the key is no longer "
+        "returned by "
         "GET /api/facilities and GET /api/v1/production-locations."
     ).format(
         key=INTERNAL_ID_KEY,
@@ -47,23 +46,11 @@ class Command(BaseCommand):
             default=False,
             help='Report what would change without writing to the database.'
         )
-        parser.add_argument(
-            '--no-reindex',
-            action='store_false',
-            dest='reindex',
-            default=True,
-            help=(
-                'Skip reindexing the affected locations (the heaviest step). '
-                'The ExtendedField rows are still cleaned, but the API keeps '
-                'serving the stale index until a reindex runs.'
-            )
-        )
 
     @transaction.atomic
     def handle(self, *args, **options):
         batch_size = options['batch_size']
         dry_run = options['dry_run']
-        reindex = options['reindex']
 
         if dry_run:
             self.stdout.write(self.style.WARNING(
@@ -85,7 +72,6 @@ class Command(BaseCommand):
             'would_update': 0,
             'skipped': 0,
         }
-        affected_facility_ids = set()
         to_update = []
 
         def flush_batch():
@@ -132,9 +118,6 @@ class Command(BaseCommand):
             extended_field.value = value
             to_update.append(extended_field)
 
-            if extended_field.facility_id is not None:
-                affected_facility_ids.add(extended_field.facility_id)
-
             if len(to_update) >= batch_size:
                 flush_batch()
 
@@ -157,44 +140,11 @@ class Command(BaseCommand):
             ))
             return
 
-        self._reindex(affected_facility_ids, dry_run, reindex)
-
         style = self.style.WARNING if dry_run else self.style.SUCCESS
         self.stdout.write(style(
             f"Done{' [DRY-RUN]' if dry_run else ''}. "
             f"scanned={stats['scanned']} "
             f"updated={stats['updated']} "
             f"would_update={stats['would_update']} "
-            f"skipped={stats['skipped']} "
-            f"affected_locations={len(affected_facility_ids)}"
-        ))
-
-    def _reindex(self, facility_ids, dry_run, reindex):
-        if not facility_ids:
-            return
-
-        # Reindex ONLY the affected locations. Never fall through to
-        # index_facilities_new([]), which would reindex every facility.
-        facility_ids = list(facility_ids)
-
-        if not reindex:
-            self.stdout.write(self.style.WARNING(
-                f'Skipping reindex (--no-reindex) for {len(facility_ids)} '
-                'location(s). Run a targeted reindex to refresh the API '
-                'index.'
-            ))
-            return
-
-        if dry_run:
-            self.stdout.write(self.style.WARNING(
-                f'[DRY-RUN] Would reindex {len(facility_ids)} location(s).'
-            ))
-            return
-
-        self.stdout.write(
-            f'Reindexing {len(facility_ids)} affected location(s)...'
-        )
-        index_facilities_new(facility_ids)
-        self.stdout.write(self.style.SUCCESS(
-            f'Reindexed {len(facility_ids)} location(s).'
+            f"skipped={stats['skipped']}"
         ))

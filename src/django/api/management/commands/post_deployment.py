@@ -35,7 +35,7 @@ class Command(BaseCommand):
         call_command('migrate')
         # Temporary for 2.28.0 (OSDEV-2949) — one-time cleanup that strips the
         # nested 'internal_ID' (not part of the partner field JSON Schema) from
-        # 'rsc_grievance_mechanism' values and reindexes the affected
-        # locations, so the key is no longer exposed by the API. Remove after
-        # the release has been deployed everywhere.
+        # 'rsc_grievance_mechanism' values. The ExtendedField database trigger
+        # refreshes the affected FacilityIndex rows. Remove after the release
+        # has been deployed everywhere.
         call_command('remove_rsc_grievance_mechanism_nested_internal_ids')
