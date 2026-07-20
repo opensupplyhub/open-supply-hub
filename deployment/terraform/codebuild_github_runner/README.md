@@ -62,7 +62,7 @@ Also verify on GitHub that runner registration is allowed for the public
 repository: the org-level runner group setting **Allow public repositories**
 (Settings → Actions → Runner groups) must permit it.
 
-## Post-merge validation runbook
+## Validation runbook
 
 1. Complete the one-time CodeConnections setup above and apply Terraform to
    Test via the **Deploy to AWS** workflow (plan, then apply).
@@ -75,9 +75,6 @@ repository: the org-level runner group setting **Allow public repositories**
 5. During the first dump run, check disk usage in the build logs; if it fits
    comfortably within 128 GB, `codebuild_github_runner_compute_type` can be
    downgraded to `BUILD_GENERAL1_MEDIUM` to cut cost roughly in half.
-6. After a burn-in period, remove the legacy self-hosted runner from the
-   repository's runner list (GitHub → Settings → Actions → Runners) and
-   decommission the machine.
 
 Note on concurrency: CodeBuild starts one ephemeral build per queued job, so
 two runs targeting the same environment would execute in parallel. Do not
