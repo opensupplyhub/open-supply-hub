@@ -271,6 +271,22 @@ class TestFacilityListsDeactivate(APITestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_404_when_list_id_not_numeric(self):
+        self.login(self.user_email, self.user_password)
+
+        response = self.client.post(
+            reverse(
+                URLNames.FACILITY_LISTS + '-deactivate',
+                args=['abc'],
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            json.loads(response.content)['detail'],
+            'The list with the given id was not found.',
+        )
+
     def test_requires_authentication(self):
         response = self.client.post(
             self.__deactivate_url(self.facility_list.id)

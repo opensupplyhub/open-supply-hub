@@ -63,6 +63,12 @@ class FacilityLists(ViewSet):
         reactivates the source). Restricting to approved lists keeps the
         deactivation durable.
         '''
+        if pk is None or not str(pk).isdecimal():
+            return Response(
+                {'detail': APIV1CommonErrorMessages.FACILITY_LIST_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         facility_list = (
             FacilityList.objects
             .filter(id=pk)
