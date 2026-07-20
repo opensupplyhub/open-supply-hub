@@ -56,13 +56,11 @@ class ContriBot:
         summary: Run statistics populated by :meth:`populate_summary`.
     """
 
-    def __init__(self, filename, streamlit=False, config_file="0000.error_codes.xlsx"):
+    def __init__(self, filename, config_file="0000.error_codes.xlsx"):
         """Load a workbook and prepare report sheets.
 
         Args:
             filename: Path to the contributor ``.xlsx`` file.
-            streamlit: When True, use Streamlit-friendly progress bars during
-                duplicate detection.
             config_file: Path to the error-codes configuration workbook.
         """
         warnings.filterwarnings("ignore", module="openpyxl")
@@ -128,8 +126,6 @@ class ContriBot:
 
         self.config_file = config_file
         self._get_config()
-
-        self.streamlit = streamlit
 
         if len(existing_tables) > 1:
             self._add_diagnosis(code="T0015", existing_sheets=",".join(existing_tables))
@@ -1838,11 +1834,7 @@ class ContriBot:
 
         alldata = []
 
-        # Slightly dirty override
-        if self.streamlit:
-            from stqdm import stqdm as tqdm
-        else:
-            from tqdm import tqdm
+        from tqdm import tqdm
 
         for i in tqdm(range(len(self.df))):
             for j in range(i + 1, len(self.df)):
