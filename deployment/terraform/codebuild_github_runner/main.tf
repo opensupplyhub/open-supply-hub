@@ -73,7 +73,7 @@ resource "aws_codebuild_source_credential" "github" {
 
 resource "aws_codebuild_project" "github_runner" {
   name           = var.codebuild_project_name
-  description    = "Ephemeral GitHub Actions runner for jobs previously bound to the self-hosted MacBook runner (DB dump/restore)"
+  description    = "Ephemeral GitHub Actions runner for long-running DB dump/restore workflow jobs"
   service_role   = aws_iam_role.github_runner.arn
   build_timeout  = var.build_timeout
   queued_timeout = 480
