@@ -384,6 +384,16 @@ PRINTING_PROCESSING = 'printing product dyeing and laundering'
 ASSEMBLY_PROCESSING = 'final product assembly'
 WAREHOUSING_PROCESSING = 'warehousing distribution'
 OFFICE_PROCESSING = 'office hq'
+DATA_CENTER = 'data center'
+
+# Cleaned input variants that should resolve to the Data Center facility type.
+DATA_CENTER_ALIASES = {
+    'data center',
+    'data centre',
+    'datacenter',
+    'datacentre',
+    'dc',
+}
 
 ALL_FACILITY_TYPES = {
     RAW_MATERIAL_PROCESSING: 'Raw Material Processing or Production',
@@ -392,6 +402,7 @@ ALL_FACILITY_TYPES = {
     ASSEMBLY_PROCESSING: 'Final Product Assembly',
     WAREHOUSING_PROCESSING: 'Warehousing / Distribution',
     OFFICE_PROCESSING: 'Office / HQ',
+    DATA_CENTER: 'Data Center'
 }
 
 ALL_FACILITY_TYPE_CHOICES = [(k, v) for k, v in
@@ -404,6 +415,7 @@ FACILITY_PROCESSING_TYPES = {
     ASSEMBLY_PROCESSING: ASSEMBLY_PROCESSING_TYPES,
     WAREHOUSING_PROCESSING: WAREHOUSING_PROCESSING_TYPES,
     OFFICE_PROCESSING: OFFICE_PROCESSING_TYPES,
+    DATA_CENTER: {},
 }
 
 # Create a look-up of processing type -> facility type for
@@ -480,6 +492,12 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
 
     if cleaned_input is None:
         return (None, None, None, None)
+
+    # Data centers are classified regardless of the sector taxonomy below,
+    # which only covers apparel/goods-production sectors.
+    if cleaned_input in DATA_CENTER_ALIASES:
+        return (FACILITY_TYPE, EXACT_MATCH, ALL_FACILITY_TYPES[DATA_CENTER],
+                None)
 
     if sector is None or 'Apparel' not in sector:
         # No taxonomy for non-apparel sectors has been created.
