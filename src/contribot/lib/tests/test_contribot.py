@@ -2,14 +2,12 @@
 
 The suite constructs real :class:`contribot.ContriBot` instances from
 small temporary workbooks (see ``conftest.py``) and exercises each checker /
-helper in isolation. No database or network access happens; ``save`` is tested
-against an in-memory SQLite engine.
+helper in isolation. No database or network access happens.
 """
 
 import openpyxl
 import pandas as pd
 import pytest
-from sqlalchemy import create_engine
 
 import contribot
 from utils import map_n_dataframe_cols_to_excel_cols
@@ -546,12 +544,54 @@ def test_check_columns_runs_end_to_end(contribution):
 
 
 # --------------------------------------------------------------------------- #
+# process
+# --------------------------------------------------------------------------- #
+class TestProcess:
+    def test_process_runs_pipeline_steps_in_order(self, contribution, monkeypatch):
+        calls = []
+
+        monkeypatch.setattr(
+            contribution, "check_table", lambda: calls.append("check_table")
+        )
+        monkeypatch.setattr(
+            contribution, "check_columns", lambda: calls.append("check_columns")
+        )
+        monkeypatch.setattr(
+            contribution,
+            "_add_comments_to_excel_sheets",
+            lambda: calls.append("add_comments"),
+        )
+
+        contribution.process()
+
+        assert calls == ["check_table", "check_columns", "add_comments"]
+
+    def test_process_runs_full_validation_pipeline(self, make_contribution):
+        df = pd.DataFrame(
+            {
+                "country": ["Neverland", "Germany"],
+                "name": ["Acme Textiles Ltd", "Globex Manufacturing GmbH"],
+                "address": ["123 Road City", "45 Fabrikstrasse Berlin"],
+            }
+        )
+        osh = make_contribution(df=df)
+        osh.process()
+
+        metrics = {(s["metric"], s["value"]) for s in osh.statistics}
+        assert ("num_rows", 2) in metrics
+        assert hasattr(osh, "df_similarity")
+        assert any(d["code"] == "C0001" for d in osh.diagnostics_column)
+        assert osh.wb["Findings"]["A2"].comment is not None
+        assert "neverland" in osh.wb["Findings"]["A2"].comment.text.lower()
+
+
+# --------------------------------------------------------------------------- #
 # populate_summary / save
 # --------------------------------------------------------------------------- #
 class TestSummaryAndSave:
     def test_populate_summary_builds_summary(self, contribution):
         contribution.check_table()
-        summary = contribution.populate_summary(write_to_jsonl=False)
+        summary = contribution.populate_summary()
         assert set(summary) == {
             "sourcefilename",
             "targetfilename",
@@ -562,11 +602,11 @@ class TestSummaryAndSave:
         assert summary["num_lines"] == 2
 
     def test_save_writes_file_and_returns_summary(self, contribution, tmp_path):
-        contribution.check_table()
-        engine = create_engine("sqlite://")
+        contribution.process()
         target = tmp_path / "out"
-        summary = contribution.save(
-            targetfolder=str(target), engine=engine, write_to_jsonl=False
-        )
+        summary = contribution.save(targetfolder=str(target))
         assert (target / contribution.targetfilename).exists()
         assert summary["sourcefilename"] == "contribution.xlsx"
+        assert summary["runtime_total_seconds"] >= 0
+        assert summary["datetime_started"] == contribution.START.isoformat()
+        assert "datetime_completed" in summary
