@@ -118,7 +118,7 @@ resource "aws_lambda_function" "contribot_fetch_lists" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = 900
   memory_size      = 256
 
   environment {
@@ -143,7 +143,7 @@ resource "aws_lambda_function" "contribot_process_list" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 300
+  timeout          = 900
   memory_size      = 512
 
   environment {
@@ -168,7 +168,7 @@ resource "aws_lambda_function" "contribot_notify" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = 900
   memory_size      = 256
 
   environment {
