@@ -31,6 +31,7 @@ from openpyxl.formatting.rule import ColorScale, FormatObject, Rule
 from openpyxl.styles import Alignment, Color, Font
 from openpyxl.utils.dataframe import dataframe_to_rows
 from sqlalchemy import create_engine
+from tqdm import tqdm
 from unidecode import unidecode
 
 from known_countries import COUNTRY_CODES, known_countries
@@ -1833,8 +1834,6 @@ class ContriBot:
         df.unit_no.fillna(" ", inplace=True)
 
         alldata = []
-
-        from tqdm import tqdm
 
         for i in tqdm(range(len(self.df))):
             for j in range(i + 1, len(self.df)):
