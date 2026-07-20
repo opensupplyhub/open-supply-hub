@@ -7,7 +7,7 @@ import os
 import boto3
 from typing import Any, Optional
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 
@@ -55,8 +55,15 @@ class OSHubAPI:
             next_url = payload.get("next")
             if not next_url:
                 break
-            # DRF may return an absolute URL; keep relative ones rooted on api_url.
+            # DRF may return an absolute URL; only follow same-origin links.
             if next_url.startswith("http"):
+                parsed_next = urlparse(next_url)
+                parsed_api = urlparse(self._api_url)
+                if (
+                    parsed_next.scheme != parsed_api.scheme
+                    or parsed_next.netloc != parsed_api.netloc
+                ):
+                    break
                 url = next_url
             else:
                 url = urljoin(self._api_url.rstrip("/") + "/", next_url.lstrip("/"))
