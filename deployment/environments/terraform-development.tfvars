@@ -17,6 +17,13 @@ api_production_locations_cache_max_ttl     = 60
 bastion_ami = "ami-03a25ed280b358f5b"
 bastion_instance_type = "t3.nano"
 
+# TEMPORARY (OSDEV-2417): the CodeBuild GitHub Actions runner is enabled here
+# for initial testing while the Test environment is busy. Once validated,
+# remove this and re-enable it in terraform-test.tfvars. The CodeConnections
+# connection ARN comes from the private ci-deployment repo tfvars
+# (codebuild_github_runner_connection_arn).
+codebuild_github_runner_enabled = true
+
 rds_allocated_storage = "128"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"

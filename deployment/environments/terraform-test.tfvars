@@ -38,7 +38,10 @@ anonymized_database_dump_enabled = true
 # The CodeConnections connection ARN is provided via the private
 # ci-deployment repo tfvars (codebuild_github_runner_connection_arn)
 # after the one-time OAuth setup.
-codebuild_github_runner_enabled = true
+# TEMPORARY: disabled here and enabled in terraform-development.tfvars for
+# initial testing while the Test environment is busy (OSDEV-2417). Re-enable
+# here (and remove from Development) for the final test.
+codebuild_github_runner_enabled = false
 
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
