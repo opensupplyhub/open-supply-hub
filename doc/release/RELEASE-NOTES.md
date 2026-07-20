@@ -9,7 +9,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: August 7, 2026
 
+### Code/API changes
+* [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Bumped `django` 5.2.14 → 5.2.16 (security patch releases on the 5.2 LTS line). 5.2.15 fixes CVE-2026-7666 — the SMTP email backend no longer reuses a partially-initialized connection after a failed STARTTLS handshake (production uses the Amazon SES backend, so no behavior change expected); 5.2.16 adds three low-severity cache-related fixes.
+
 ### Architecture/Environment changes
+* [OSDEV-2995](https://opensupplyhub.atlassian.net/browse/OSDEV-2995) - Upgraded the react container from `node:14-slim` to `node:22-slim`:
+  * `src/react/Dockerfile.local` now sets `NODE_OPTIONS=--openssl-legacy-provider` — webpack 4 (inside react-scripts 4) uses MD4 hashing, removed from OpenSSL 3; without the flag `start`/`build`/`test` fail with `ERR_OSSL_EVP_UNSUPPORTED`. Remove the flag when react-scripts 4 is retired ([OSDEV-2996](https://opensupplyhub.atlassian.net/browse/OSDEV-2996)). The `build_and_push_react_app` job in `deploy_to_aws.yml` moves to node 22 with the same flag scoped to the `yarn run build` step; `code_quality.yml` inherits the change via the docker image.
+  * Bumped the vulnerability pins the node 14 engine had blocked: `tar` 6.2.1 → 7.5.19 (clears 7 advisories), `serialize-javascript` 4.0.0 → 7.0.7 (clears GHSA-5c6j-r48x-rmvq), and direct `uuid` ^9.0.1 → ^11.1.1 (clears GHSA-w5hq-g745-h8pq; uuid 11 uses node ≥15 syntax that previously broke jest/webpack on node 14).
+  * Added scoped resolution `**/postcss-safe-parser/postcss: 8.5.16` — node 22 enforces package `exports` maps that node 14 ignored, and the nested `postcss` 8.2.6's legacy exports map crashed `craco start` with `ERR_PACKAGE_PATH_NOT_EXPORTED` on the `postcss/lib/tokenize` deep require. Also clears the four postcss advisories on that path; the remaining postcss 7.x findings stay with [OSDEV-2996](https://opensupplyhub.atlassian.net/browse/OSDEV-2996).
 * [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id`, three placeholder Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Handlers are stubs only; secret values must be populated manually in AWS before real processing can run. Lambda dependency bundling for production handler code is not yet wired into the deploy pipeline.
 
 ### Bugfix
