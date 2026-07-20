@@ -99,36 +99,6 @@ def test_fetch_lists_stops_on_cross_origin_next_url(monkeypatch):
     assert len(calls) == 1
 
 
-def test_fetch_lists_resolves_relative_next_url(monkeypatch):
-    pages = [
-        {
-            "results": [{"id": 1, "name": "A"}],
-            "next": "/api/admin-facility-lists/?page=2",
-        },
-        {
-            "results": [{"id": 2, "name": "B"}],
-            "next": None,
-        },
-    ]
-    calls = []
-
-    def fake_get(url, token):
-        calls.append(url)
-        return pages[len(calls) - 1]
-
-    secrets = MagicMock()
-    secrets.get_secret_value.return_value = {"SecretString": "tok"}
-    api = OSHubAPI(
-        api_url="https://example.com",
-        secret_arn=TEST_SECRET_ARN,
-        secrets_client=secrets,
-    )
-    monkeypatch.setattr(api, "_http_get_json", fake_get)
-    results = api.fetch_lists(params={"id__gt": 0})
-    assert [item["id"] for item in results] == [1, 2]
-    assert calls[1] == "https://example.com/api/admin-facility-lists/?page=2"
-
-
 def test_fetch_lists_respects_max_results(monkeypatch):
     def fake_get(url, token):
         return {

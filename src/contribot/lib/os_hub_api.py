@@ -7,7 +7,7 @@ import os
 import boto3
 from typing import Any, Optional
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 
@@ -29,10 +29,7 @@ class OSHubAPI:
         response = self._secrets_client.get_secret_value(SecretId=self._secret_arn)
         if "SecretString" not in response:
             raise RuntimeError(f"Secret {self._secret_arn} has no SecretString")
-        token = response["SecretString"].strip()
-        if token.lower().startswith("token "):
-            token = token[6:].strip()
-        return token
+        return response["SecretString"].strip()
 
     def fetch_lists(
         self,
@@ -52,24 +49,24 @@ class OSHubAPI:
             payload = self._http_get_json(url, self._token)
             page = payload.get("results") or []
             remaining = max_results - len(results)
+
             results.extend(page[:remaining])
             if len(results) >= max_results:
                 break
+
             next_url = payload.get("next")
             if not next_url:
                 break
-            # DRF may return an absolute URL; only follow same-origin links.
-            if next_url.startswith("http"):
-                parsed_next = urlparse(next_url)
-                parsed_api = urlparse(self._api_url)
-                if (
-                    parsed_next.scheme != parsed_api.scheme
-                    or parsed_next.netloc != parsed_api.netloc
-                ):
-                    break
-                url = next_url
-            else:
-                url = urljoin(self._api_url.rstrip("/") + "/", next_url.lstrip("/"))
+
+            parsed_next = urlparse(next_url)
+            parsed_api = urlparse(self._api_url)
+            if (
+                parsed_next.scheme != parsed_api.scheme
+                or parsed_next.netloc != parsed_api.netloc
+            ):
+                break
+
+            url = next_url
 
         return results
 

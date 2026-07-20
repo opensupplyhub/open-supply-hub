@@ -1090,5 +1090,5 @@ variable "contribot_schedule_expression" {
 variable "contribot_last_list_id" {
   type        = string
   description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."
-  default     = "9418"
+  default     = "NaN"
 }
