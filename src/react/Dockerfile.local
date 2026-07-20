@@ -1,4 +1,9 @@
-FROM node:14-slim
+FROM node:22-slim
+
+# webpack 4 (react-scripts 4) uses MD4 hashing, removed from OpenSSL 3.
+# Without this flag start/build/test fail with ERR_OSSL_EVP_UNSUPPORTED.
+# Remove when migrating off react-scripts 4 (OSDEV-2996).
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 WORKDIR /usr/local/src
 
