@@ -18,7 +18,14 @@ const stableStringify = value => {
         return `[${value.map(stableStringify).join(',')}]`;
     }
 
-    const keys = Object.keys(value).sort();
+    // Deliberately NOT localeCompare: key order must be deterministic
+    // across every runtime and locale for hashes to be stable. Code-unit
+    // comparison is locale-independent; localeCompare is not.
+    const keys = Object.keys(value).sort((a, b) => {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+    });
     const entries = keys.map(
         k => `${JSON.stringify(k)}:${stableStringify(value[k])}`,
     );
