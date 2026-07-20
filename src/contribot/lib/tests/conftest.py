@@ -163,15 +163,13 @@ def make_contribution(tmp_path, config_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     created = {}
 
-    def _make(df=None, with_config=True, streamlit=False, filename="contribution.xlsx"):
+    def _make(df=None, with_config=True, filename="contribution.xlsx"):
         if df is None:
             df = _default_frame()
         source_path = tmp_path / filename
         df.to_excel(source_path, index=False)
         cfg = config_path if with_config else str(tmp_path / "does-not-exist.xlsx")
-        instance = contribot.ContriBot(
-            str(source_path), streamlit=streamlit, config_file=cfg
-        )
+        instance = contribot.ContriBot(str(source_path), config_file=cfg)
         created["last"] = instance
         return instance
 

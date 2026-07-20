@@ -8,8 +8,8 @@ Error codes and severities come from an external configuration workbook
 (``0000.error_codes.xlsx`` by default). Codes starting with ``T`` are table-level;
 codes starting with ``C`` are column-level.
 """
+
 import datetime
-import json
 import os
 import re
 import string
@@ -30,7 +30,7 @@ from openpyxl.comments import Comment
 from openpyxl.formatting.rule import ColorScale, FormatObject, Rule
 from openpyxl.styles import Alignment, Color, Font
 from openpyxl.utils.dataframe import dataframe_to_rows
-from sqlalchemy import create_engine
+from tqdm import tqdm
 from unidecode import unidecode
 
 from known_countries import COUNTRY_CODES, known_countries
@@ -43,9 +43,7 @@ class ContriBot:
     Typical usage::
 
         bot = ContriBot("contribution.xlsx")
-        bot.check_table()
-        bot.check_columns()
-        bot._add_comments_to_excel_sheets()
+        bot.process()
         bot.save(targetfolder="./output")
 
     Attributes:
@@ -56,13 +54,11 @@ class ContriBot:
         summary: Run statistics populated by :meth:`populate_summary`.
     """
 
-    def __init__(self, filename, streamlit=False, config_file="0000.error_codes.xlsx"):
+    def __init__(self, filename, config_file="0000.error_codes.xlsx"):
         """Load a workbook and prepare report sheets.
 
         Args:
             filename: Path to the contributor ``.xlsx`` file.
-            streamlit: When True, use Streamlit-friendly progress bars during
-                duplicate detection.
             config_file: Path to the error-codes configuration workbook.
         """
         warnings.filterwarnings("ignore", module="openpyxl")
@@ -129,8 +125,6 @@ class ContriBot:
         self.config_file = config_file
         self._get_config()
 
-        self.streamlit = streamlit
-
         if len(existing_tables) > 1:
             self._add_diagnosis(code="T0015", existing_sheets=",".join(existing_tables))
 
@@ -181,26 +175,29 @@ class ContriBot:
             self.df_config_string = "No valid configuration found"
             self.have_config = False
 
-    def save(
-        self,
-        targetfolder="./sun",
-        engine=None,
-        table_name="t_contribot",
-        write_to_jsonl=True,
-    ):
-        """Write the processed workbook and persist diagnostics.
+    def process(self):
+        """Run the full validation pipeline on the loaded workbook.
+
+        Calls :meth:`check_table`, :meth:`check_columns`, and
+        :meth:`_add_comments_to_excel_sheets` in order. Does not write output;
+        call :meth:`save` afterward to produce the annotated workbook.
+        """
+        self.check_table()
+        self.check_columns()
+        self._add_comments_to_excel_sheets()
+
+    def save(self, targetfolder="./sun"):
+        """Write the processed workbook.
 
         Args:
             targetfolder: Directory for the output ``.~PROCESSED.xlsx`` file.
-            engine: Optional SQLAlchemy engine for storing diagnostics rows.
-            table_name: Database table name when persisting diagnostics.
-            write_to_jsonl: Append run summary to ``contribot.output.jsonl``.
 
         Returns:
-            dict: Summary with ``error_ratio``, ``num_lines``, and ``num_errors``.
+            dict: Summary with ``error_ratio``, ``num_lines``, ``num_errors``,
+            and runtime fields.
         """
         Path(targetfolder).mkdir(exist_ok=True, parents=True)
-        self.populate_summary(write_to_jsonl=write_to_jsonl)
+        self.populate_summary()
         self.fixes_sheet_fontsize()
         filepath = f"{targetfolder}/{self.targetfilename}".replace("//", "/")
         print(
@@ -210,31 +207,10 @@ class ContriBot:
         self.wb.active = self.wb["Summary"]
         self.wb.save(filepath)
 
-        df = pd.DataFrame(self.diagnostics_table + self.diagnostics_column)
-        df["datetime_date_start"] = self.START
-        END = datetime.datetime.now()
-        df["datetime_date_end"] = END
-        df["runtime_total_seconds"] = (END - self.START).total_seconds()
-        df["sourcefile"] = self.sourcefilename
-        df["error_ratio"] = self.summary["error_ratio"]
-        df["num_lines"] = self.summary["num_lines"]
-        df["num_errors"] = self.summary["num_errors"]
-
-        try:
-            if engine:
-                with engine.connect() as conn:
-                    df.to_sql(table_name, con=conn, index=False, if_exists="append")
-            else:
-                with create_engine(
-                    "mysql+mysqlconnector://opensupplyhub:secret@localhost/opensupplyhub"
-                ).connect() as conn:
-                    df.to_sql(table_name, con=conn, index=False, if_exists="append")
-        except:
-            try:
-                conn = create_engine("sqlite:///database.db")
-                df.to_sql(table_name, con=conn, index=False, if_exists="append")
-            except:
-                pass
+        end = datetime.datetime.now()
+        self.summary["datetime_started"] = self.START.isoformat()
+        self.summary["datetime_completed"] = end.isoformat()
+        self.summary["runtime_total_seconds"] = (end - self.START).total_seconds()
 
         return self.summary
 
@@ -257,14 +233,11 @@ class ContriBot:
             # [i + 1] - because the lines are numbered starting at 1
             ws.row_dimensions[i + 1].height = self._get_height_for_row(ws, i)
 
-    def populate_summary(self, write_to_jsonl=True):
+    def populate_summary(self):
         """Fill the Summary sheet with findings grouped by severity.
 
         Sections include Critical Errors, Please Check, Key Metrics, Possible
         Glitches, and Other Observations. Also sets ``self.summary``.
-
-        Args:
-            write_to_jsonl: When True, append the summary dict to a JSONL log file.
 
         Returns:
             dict: The same summary stored on ``self.summary``.
@@ -329,9 +302,6 @@ class ContriBot:
             "num_lines": len(self.df),
             "num_errors": len(df),
         }
-        if write_to_jsonl:
-            with open("contribot.output.jsonl", "a+t") as f:
-                f.write(json.dumps(self.summary) + "\n")
         row += 1
         if len(df) > 0:
             cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
@@ -979,7 +949,7 @@ class ContriBot:
         """Run all column-level validators on the facility data.
 
         Delegates to individual ``check_column_*`` methods and duplicate detection.
-        Call after :meth:`check_table`.
+        Normally invoked via :meth:`process` after :meth:`check_table`.
         """
         self.check_column_country()
         self.check_for_country_name_in_address()
@@ -1111,7 +1081,6 @@ class ContriBot:
                 )
 
             cells_with_errors = 0
-            ws = self.wb["Findings"]
             for row in range(len(countries)):
                 if countries[row] not in self.known_countries:
                     self._add_diagnosis(
@@ -1121,7 +1090,6 @@ class ContriBot:
                         country=countries[row],
                     )
                     cells_with_errors += 1
-                    column = self.mapping["country"]
                     row = self.df.index[row]
         else:
             cells_with_errors = len(self.df)
@@ -1385,7 +1353,7 @@ class ContriBot:
 
     def _tokens_above_threshold(self, pair, threshold=1):
         """Return True when the numeric value in ``pair`` exceeds ``threshold``."""
-        k, v = pair
+        _, v = pair
         return v > threshold
 
     def check_column_leading_trailing_blanks(self, column):
@@ -1838,12 +1806,6 @@ class ContriBot:
 
         alldata = []
 
-        # Slightly dirty override
-        if self.streamlit:
-            from stqdm import stqdm as tqdm
-        else:
-            from tqdm import tqdm
-
         for i in tqdm(range(len(self.df))):
             for j in range(i + 1, len(self.df)):
                 names_diff_contains_numbers = any(
@@ -2037,9 +1999,7 @@ if __name__ == "__main__":
         print(f"skipping processed file {filename}")
     elif os.path.exists(filename):
         bot = ContriBot(filename)
-        bot.check_table()
-        bot.check_columns()
-        bot._add_comments_to_excel_sheets()
+        bot.process()
         bot.save()
         pass
     else:
