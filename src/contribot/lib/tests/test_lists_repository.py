@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
 from botocore.exceptions import ClientError
 
 from lists_repository import (
@@ -12,12 +13,38 @@ from lists_repository import (
 )
 
 
-def test_get_last_list_id_missing_cursor():
+def test_get_last_list_id_missing_cursor_raises_when_last_list_id_unset():
     table = MagicMock()
     table.get_item.return_value = {}
     repo = ListsRepository(table=table)
-    assert repo.get_last_list_id() == 0
+    with pytest.raises(KeyError, match="LAST_LIST_ID"):
+        repo.get_last_list_id()
     table.get_item.assert_called_once_with(Key={"list_id": CURSOR_LIST_ID})
+
+
+def test_get_last_list_id_missing_cursor_uses_last_list_id_env(monkeypatch):
+    monkeypatch.setenv("LAST_LIST_ID", "500")
+    table = MagicMock()
+    table.get_item.return_value = {}
+    repo = ListsRepository(table=table)
+    assert repo.get_last_list_id() == 500
+
+
+def test_get_last_list_id_invalid_cursor_uses_last_list_id_env(monkeypatch):
+    monkeypatch.setenv("LAST_LIST_ID", "250")
+    table = MagicMock()
+    table.get_item.return_value = {
+        "Item": {"list_id": CURSOR_LIST_ID, "last_list_id": "not-a-number"}
+    }
+    repo = ListsRepository(table=table)
+    assert repo.get_last_list_id() == 250
+
+
+def test_last_list_id_from_env_raises_for_invalid_value(monkeypatch):
+    monkeypatch.setenv("LAST_LIST_ID", "not-a-number")
+    repo = ListsRepository(table=MagicMock())
+    with pytest.raises(ValueError, match="Invalid LAST_LIST_ID"):
+        repo._last_list_id_from_env()
 
 
 def test_get_last_list_id_reads_cursor_item():

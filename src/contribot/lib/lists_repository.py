@@ -1,4 +1,5 @@
 """DynamoDB persistence for ContriBot facility-list processing state."""
+
 from __future__ import annotations
 
 import logging
@@ -33,8 +34,20 @@ class ListsRepository:
         resource = dynamodb_resource or boto3.resource("dynamodb")
         self._table = resource.Table(name)
 
+    def _last_list_id_from_env(self) -> int:
+        """Return ``LAST_LIST_ID`` from the environment."""
+        raw = os.environ["LAST_LIST_ID"]
+        try:
+            return int(raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid LAST_LIST_ID={raw!r}") from exc
+
     def get_last_list_id(self) -> int:
-        """Return the resume cursor from the ``__CURSOR__`` item, or ``0``.
+        """Return the resume cursor from the ``__CURSOR__`` item, or ``LAST_LIST_ID``.
+
+        When the cursor item is missing or invalid, falls back to the
+        ``LAST_LIST_ID`` environment variable so runs can resume from a configured
+        watermark without reprocessing from the beginning.
 
         O(1) ``GetItem`` — avoids scanning every enqueued facility-list row.
         """
@@ -42,14 +55,16 @@ class ListsRepository:
         item = response.get("Item") or {}
         last_list_id = item.get("last_list_id")
         if last_list_id is None:
-            return 0
+            return self._last_list_id_from_env()
+
         try:
             return int(last_list_id)
         except (TypeError, ValueError):
             logger.warning(
-                "Invalid cursor last_list_id=%r; treating as 0", last_list_id
+                "Invalid cursor last_list_id=%r; falling back to LAST_LIST_ID",
+                last_list_id,
             )
-            return 0
+            return self._last_list_id_from_env()
 
     def advance_cursor(self, list_id: int) -> None:
         """Advance the watermark when ``list_id`` is greater than the stored value.
@@ -109,8 +124,6 @@ class ListsRepository:
             return True
         except ClientError as exc:
             if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                logger.info(
-                    "List %s already enqueued; skipping PutItem", list_id
-                )
+                logger.info("List %s already enqueued; skipping PutItem", list_id)
                 return False
             raise
