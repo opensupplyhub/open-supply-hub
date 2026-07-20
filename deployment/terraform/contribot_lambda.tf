@@ -6,6 +6,7 @@ locals {
   contribot_lambda_environment = {
     ENVIRONMENT                         = var.environment
     CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
+    LAST_LIST_ID                        = var.contribot_last_list_id
     AWS_STORAGE_BUCKET_NAME             = local.files_bucket_name
     OS_HUB_API_URL                      = "https://${var.r53_public_hosted_zone}"
     MONDAY_API_URL                      = "https://api.monday.com/v2"
