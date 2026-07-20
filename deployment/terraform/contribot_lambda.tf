@@ -3,12 +3,14 @@
 #
 
 locals {
+  contribot_os_hub_api_url = var.environment == "Production" ? "https://${var.r53_public_hosted_zone}" : "https://${local.domain_name}"
+
   contribot_lambda_environment = {
     ENVIRONMENT                         = var.environment
     CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
     LAST_LIST_ID                        = var.contribot_last_list_id
     AWS_STORAGE_BUCKET_NAME             = local.files_bucket_name
-    OS_HUB_API_URL                      = "https://${var.r53_public_hosted_zone}"
+    OS_HUB_API_URL                      = local.contribot_os_hub_api_url
     MONDAY_API_URL                      = "https://api.monday.com/v2"
     MONDAY_BOARD_ID                     = var.contribot_monday_board_id
     GOOGLE_DRIVE_SHARED_DIRECTORY_ID    = var.contribot_google_drive_shared_directory_id

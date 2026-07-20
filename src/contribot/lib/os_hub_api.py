@@ -27,9 +27,12 @@ class OSHubAPI:
 
     def _load_token(self) -> str:
         response = self._secrets_client.get_secret_value(SecretId=self._secret_arn)
-        if "SecretString" in response:
-            return response["SecretString"].strip()
-        raise RuntimeError(f"Secret {self._secret_arn} has no SecretString")
+        if "SecretString" not in response:
+            raise RuntimeError(f"Secret {self._secret_arn} has no SecretString")
+        token = response["SecretString"].strip()
+        if token.lower().startswith("token "):
+            token = token[6:].strip()
+        return token
 
     def fetch_lists(
         self,
@@ -89,7 +92,7 @@ class OSHubAPI:
         except HTTPError as exc:
             error_body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(
-                f"OS Hub API request failed ({exc.code}): {error_body}"
+                f"OS Hub API request failed ({exc.code}) for {url}: {error_body}"
             ) from exc
         except URLError as exc:
             raise RuntimeError(f"OS Hub API request failed: {exc}") from exc
