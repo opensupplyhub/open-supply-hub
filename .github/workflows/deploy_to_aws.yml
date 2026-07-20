@@ -86,6 +86,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
+          # TODO: revert to the default branch once
+          # https://github.com/opensupplyhub/ci-deployment/pull/66 is merged.
+          ref: 'OSDEV-2417-add-codebuild-runner-connection-arn'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
           persist-credentials: false
@@ -159,6 +162,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
+          # TODO: revert to the default branch once
+          # https://github.com/opensupplyhub/ci-deployment/pull/66 is merged.
+          ref: 'OSDEV-2417-add-codebuild-runner-connection-arn'
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
           persist-credentials: false
