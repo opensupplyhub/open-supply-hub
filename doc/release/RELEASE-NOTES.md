@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.28.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Architecture/Environment changes
+* [OSDEV-2417](https://opensupplyhub.atlassian.net/browse/OSDEV-2417) - Migrated the GitHub Actions jobs that ran on the self-hosted MacBook runner — **DB - Save Anonymized DB**, **DB - Apply Anonymized DB**, and the `restore_database` job of **Deploy to AWS** — to AWS CodeBuild acting as an ephemeral GitHub Actions runner. A new `codebuild_github_runner` Terraform module (enabled only in the Test environment via `codebuild_github_runner_enabled`) provisions the `osh-github-actions-runner` CodeBuild project (`BUILD_GENERAL1_LARGE`, Docker privileged mode, 300-minute build timeout) with a `WORKFLOW_JOB_QUEUED` webhook; the three workflow jobs now use `runs-on: codebuild-osh-github-actions-runner-...` labels. Each queued job gets a fresh CodeBuild container that registers as a just-in-time runner and is destroyed afterwards, so nothing runs (or bills) between jobs. The DB access pattern is unchanged (SSH tunnel through the target environment's public bastion; per-environment credentials still come from GitHub environment secrets). Requires a one-time manual CodeConnections connection to the `opensupplyhub` GitHub org in the Test AWS account, with its ARN supplied as `codebuild_github_runner_connection_arn` via the private `ci-deployment` tfvars — see `deployment/terraform/codebuild_github_runner/README.md`. Also bumped the Terraform AWS provider constraint from `~> 5.8.0` to `~> 5.91` (required for the `WORKFLOW_JOB_QUEUED` webhook filter and `CODECONNECTIONS` source credentials). After a burn-in period, the MacBook runner can be removed from the repository's runner list.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* Before applying Terraform to Test, complete the one-time CodeConnections setup described in `deployment/terraform/codebuild_github_runner/README.md` and set `codebuild_github_runner_connection_arn` in the private `ci-deployment` Test tfvars.
+
+
 ## Release 2.27.0
 
 ## Introduction

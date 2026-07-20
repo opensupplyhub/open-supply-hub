@@ -479,7 +479,9 @@ jobs:
 
   restore_database:
     needs: stop_logstash
-    runs-on: self-hosted
+    # Ephemeral GitHub Actions runner on AWS CodeBuild (Test account); the
+    # project is managed by deployment/terraform/codebuild_github_runner.
+    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
