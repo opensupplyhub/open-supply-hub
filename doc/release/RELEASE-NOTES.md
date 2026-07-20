@@ -7,7 +7,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: August 7, 2026
+
+### Architecture/Environment changes
+* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id`, three placeholder Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Handlers are stubs only; secret values must be populated manually in AWS before real processing can run. Lambda dependency bundling for production handler code is not yet wired into the deploy pipeline.
 
 ### Code/API changes
 * [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added v1 API support for contributors to disassociate production-location contributions and deactivate uploaded lists:
