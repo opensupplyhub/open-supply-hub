@@ -24,6 +24,7 @@ variable "github_repository_url" {
 variable "github_connection_arn" {
   description = "ARN of the CodeConnections connection to the GitHub organization (created manually, OAuth handshake completed in the console)"
   type        = string
+  sensitive   = true
 
   validation {
     condition     = length(var.github_connection_arn) > 0

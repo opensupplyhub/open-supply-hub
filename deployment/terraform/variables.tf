@@ -833,6 +833,7 @@ variable "codebuild_github_runner_connection_arn" {
   description = "ARN of the manually created CodeConnections connection to the opensupplyhub GitHub org"
   type        = string
   default     = ""
+  sensitive   = true
 }
 
 variable "codebuild_github_runner_compute_type" {

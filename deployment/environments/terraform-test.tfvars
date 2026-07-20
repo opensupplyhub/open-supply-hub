@@ -36,7 +36,7 @@ anonymized_database_dump_enabled = true
 
 # Ephemeral GitHub Actions runner on CodeBuild for DB dump/restore jobs.
 # The CodeConnections connection ARN is provided via the private
-# terraform-config repo tfvars (codebuild_github_runner_connection_arn)
+# ci-deployment repo tfvars (codebuild_github_runner_connection_arn)
 # after the one-time OAuth setup.
 codebuild_github_runner_enabled = true
 

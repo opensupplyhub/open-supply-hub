@@ -55,7 +55,7 @@ connection must be created manually **in the Test AWS account**:
 4. The connection status becomes **Available**. Copy its ARN
    (`arn:aws:codeconnections:eu-west-1:<account-id>:connection/<uuid>`).
 5. Set `codebuild_github_runner_connection_arn = "<the ARN>"` in the Test
-   tfvars of the private `terraform-config` repository (the deploy workflow
+   tfvars of the private `ci-deployment` repository (the deploy workflow
    concatenates it with `deployment/environments/terraform-test.tfvars`).
 
 Also verify on GitHub that runner registration is allowed for the public
