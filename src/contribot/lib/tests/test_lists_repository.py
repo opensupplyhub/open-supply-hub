@@ -88,6 +88,9 @@ def test_put_list_writes_expected_item():
         99,
         list_name="Acme List",
         contributor_id=7,
+        contributor_name="Acme Corp",
+        contributor_email="admin@acme.com",
+        file_name="acme.csv",
     )
     assert written is True
     kwargs = table.put_item.call_args.kwargs
@@ -95,6 +98,9 @@ def test_put_list_writes_expected_item():
     assert item["list_id"] == "99"
     assert item["contributor_id"] == "7"
     assert item["list_name"] == "Acme List"
+    assert item["contributor_name"] == "Acme Corp"
+    assert item["contributor_email"] == "admin@acme.com"
+    assert item["file_name"] == "acme.csv"
     assert item["status"] == STATUS_PENDING
     assert item["started_at"]
     assert item["finished_at"] == ""
@@ -110,6 +116,9 @@ def test_put_list_fills_defaults():
     assert item == {
         "list_id": "42",
         "list_name": "",
+        "contributor_name": "",
+        "contributor_email": "",
+        "file_name": "",
         "status": STATUS_PENDING,
         "started_at": item["started_at"],
         "finished_at": "",

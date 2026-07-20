@@ -39,6 +39,9 @@ def handler(event, context):
             facility_list["id"],
             list_name=facility_list.get("name") or "",
             contributor_id=facility_list.get("contributor_id"),
+            contributor_name=facility_list.get("contributor_name") or "",
+            contributor_email=facility_list.get("contributor_email") or "",
+            file_name=facility_list.get("file_name") or "",
         )
         list_id = int(facility_list["id"])
         max_fetched_id = max(max_fetched_id, list_id)

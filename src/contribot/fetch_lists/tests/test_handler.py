@@ -57,8 +57,22 @@ def test_handler_uses_cursor_and_enqueues(mock_repo_cls, mock_api_cls, env):
     api = MagicMock()
     mock_api_cls.return_value = api
     api.fetch_lists.return_value = [
-        {"id": 101, "name": "One", "contributor_id": 5},
-        {"id": 102, "name": "Two", "contributor_id": 6},
+        {
+            "id": 101,
+            "name": "One",
+            "contributor_id": 5,
+            "contributor_name": "Contributor One",
+            "contributor_email": "one@example.com",
+            "file_name": "one.csv",
+        },
+        {
+            "id": 102,
+            "name": "Two",
+            "contributor_id": 6,
+            "contributor_name": "Contributor Two",
+            "contributor_email": "two@example.com",
+            "file_name": "two.csv",
+        },
     ]
 
     result = handler.handler({}, None)
@@ -81,7 +95,14 @@ def test_handler_enqueues_before_advancing_cursor(mock_repo_cls, mock_api_cls, e
     mock_repo_cls.return_value = repo
     api = MagicMock()
     mock_api_cls.return_value = api
-    facility_list = {"id": 6, "name": "New", "contributor_id": 1}
+    facility_list = {
+        "id": 6,
+        "name": "New",
+        "contributor_id": 1,
+        "contributor_name": "Acme Corp",
+        "contributor_email": "admin@acme.com",
+        "file_name": "facilities.csv",
+    }
     api.fetch_lists.return_value = [facility_list]
     order = []
 
@@ -103,6 +124,9 @@ def test_handler_enqueues_before_advancing_cursor(mock_repo_cls, mock_api_cls, e
         6,
         list_name="New",
         contributor_id=1,
+        contributor_name="Acme Corp",
+        contributor_email="admin@acme.com",
+        file_name="facilities.csv",
     )
     repo.advance_cursor.assert_called_once_with(6)
     assert result == {"lists": [{"list_id": "6"}]}
