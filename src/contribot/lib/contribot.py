@@ -43,9 +43,7 @@ class ContriBot:
     Typical usage::
 
         bot = ContriBot("contribution.xlsx")
-        bot.check_table()
-        bot.check_columns()
-        bot._add_comments_to_excel_sheets()
+        bot.process()
         bot.save(targetfolder="./output")
 
     Attributes:
@@ -176,6 +174,17 @@ class ContriBot:
             )
             self.df_config_string = "No valid configuration found"
             self.have_config = False
+
+    def process(self):
+        """Run the full validation pipeline on the loaded workbook.
+
+        Calls :meth:`check_table`, :meth:`check_columns`, and
+        :meth:`_add_comments_to_excel_sheets` in order. Does not write output;
+        call :meth:`save` afterward to produce the annotated workbook.
+        """
+        self.check_table()
+        self.check_columns()
+        self._add_comments_to_excel_sheets()
 
     def save(self, targetfolder="./sun"):
         """Write the processed workbook.
@@ -940,7 +949,7 @@ class ContriBot:
         """Run all column-level validators on the facility data.
 
         Delegates to individual ``check_column_*`` methods and duplicate detection.
-        Call after :meth:`check_table`.
+        Normally invoked via :meth:`process` after :meth:`check_table`.
         """
         self.check_column_country()
         self.check_for_country_name_in_address()
@@ -1992,9 +2001,7 @@ if __name__ == "__main__":
         print(f"skipping processed file {filename}")
     elif os.path.exists(filename):
         bot = ContriBot(filename)
-        bot.check_table()
-        bot.check_columns()
-        bot._add_comments_to_excel_sheets()
+        bot.process()
         bot.save()
         pass
     else:
