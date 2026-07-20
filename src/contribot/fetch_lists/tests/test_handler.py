@@ -106,3 +106,24 @@ def test_handler_enqueues_before_advancing_cursor(mock_repo_cls, mock_api_cls, e
     )
     repo.advance_cursor.assert_called_once_with(6)
     assert result == {"lists": [{"list_id": "6"}]}
+
+
+@patch("handler.OSHubAPI")
+@patch("handler.ListsRepository")
+def test_handler_skips_duplicate_list_in_response(mock_repo_cls, mock_api_cls, env):
+    repo = MagicMock()
+    repo.get_last_list_id.return_value = 5
+    mock_repo_cls.return_value = repo
+    api = MagicMock()
+    mock_api_cls.return_value = api
+    api.fetch_lists.return_value = [
+        {"id": 6, "name": "New", "contributor_id": 1},
+        {"id": 7, "name": "Dup", "contributor_id": 2},
+    ]
+    repo.put_list.side_effect = [True, False]
+
+    result = handler.handler({}, None)
+
+    assert result == {"lists": [{"list_id": "6"}]}
+    assert repo.put_list.call_count == 2
+    repo.advance_cursor.assert_called_once_with(7)

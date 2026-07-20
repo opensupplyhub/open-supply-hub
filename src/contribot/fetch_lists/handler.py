@@ -35,14 +35,15 @@ def handler(event, context):
     max_fetched_id = last_id
 
     for facility_list in facility_lists:
-        repository.put_list(
+        inserted = repository.put_list(
             facility_list["id"],
             list_name=facility_list.get("name") or "",
             contributor_id=facility_list.get("contributor_id"),
         )
         list_id = int(facility_list["id"])
         max_fetched_id = max(max_fetched_id, list_id)
-        lists.append({"list_id": str(list_id)})
+        if inserted:
+            lists.append({"list_id": str(list_id)})
 
     if facility_lists:
         repository.advance_cursor(max_fetched_id)
