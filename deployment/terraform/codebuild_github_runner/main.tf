@@ -12,6 +12,10 @@
 resource "aws_cloudwatch_log_group" "github_runner" {
   name              = "log${local.short}GitHubActionsRunner"
   retention_in_days = 365
+
+  tags = {
+    Name = "logGitHubActionsRunner"
+  }
 }
 
 data "aws_iam_policy_document" "github_runner_assume_role" {
@@ -53,6 +57,10 @@ data "aws_iam_policy_document" "github_runner" {
 resource "aws_iam_role" "github_runner" {
   name               = "codebuild${local.short}GitHubActionsRunner"
   assume_role_policy = data.aws_iam_policy_document.github_runner_assume_role.json
+
+  tags = {
+    Name = "roleGitHubActionsRunner"
+  }
 }
 
 resource "aws_iam_role_policy" "github_runner" {
@@ -101,6 +109,10 @@ resource "aws_codebuild_project" "github_runner" {
     cloudwatch_logs {
       group_name = aws_cloudwatch_log_group.github_runner.name
     }
+  }
+
+  tags = {
+    Name = "codebuildGitHubActionsRunner"
   }
 
   depends_on = [aws_codebuild_source_credential.github]

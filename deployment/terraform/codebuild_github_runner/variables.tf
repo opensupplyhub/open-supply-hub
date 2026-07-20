@@ -3,7 +3,7 @@ variable "project" {
 }
 
 variable "environment" {
-  default = "Staging"
+  default = "Test"
 }
 
 variable "aws_region" {
