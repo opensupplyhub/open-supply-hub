@@ -1,4 +1,4 @@
-import querystring from 'querystring';
+import querystring from '../util/qs';
 import { createAction } from 'redux-act';
 import startsWith from 'lodash/startsWith';
 

@@ -99,6 +99,7 @@
         "not op_mini all"
     ],
     "resolutions": {
+        "**/node-notifier/uuid": "11.1.1",
         "qs": "6.15.3",
         "lodash": "4.18.1",
         "lodash-es": "4.18.1",

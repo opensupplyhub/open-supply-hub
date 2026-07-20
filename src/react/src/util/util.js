@@ -1,4 +1,4 @@
-import querystring from 'querystring';
+import querystring from './qs';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
