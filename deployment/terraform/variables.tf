@@ -1101,3 +1101,23 @@ variable "database_private_link_vpc_endpoint_service_name" {
   description = "The name of the VPC endpoint service in the provider VPC"
   default     = ""
 }
+
+# ContriBot variables
+
+variable "contribot_monday_board_id" {
+  type        = string
+  description = "ID of the Monday board where ContriBot posts updates."
+  default     = ""
+}
+
+variable "contribot_google_drive_shared_directory_id" {
+  type        = string
+  description = "Google Drive folder ID where ContriBot uploads ContriCleaner reports."
+  default     = ""
+}
+
+variable "contribot_schedule_expression" {
+  type        = string
+  description = "Schedule expression for the ContriBot Step Functions workflow."
+  default     = "rate(5 minutes)"
+}
