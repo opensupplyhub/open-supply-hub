@@ -216,10 +216,7 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 #### Smoke testing on release day
 
-Smoke testing is the responsibility of the person performing the release. On release day, the release performer runs the automated smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against the environment being released:
-
-1. `Sandbox Environment:` Verify the release changes after deployment to Sandbox.
-2. `Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
+Smoke testing is the responsibility of the person performing the release. On release day, the release performer runs the automated smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against both the Sandbox and Production environments.
 
 See Confluence for the documentation on how to set up and run the smoke tests: [Automated Playwright tests](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1059749889/Automated+Playwright+tests).
 
