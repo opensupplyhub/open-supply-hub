@@ -6,1782 +6,1993 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ## Release 2.28.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: August 7, 2026
+
+- Product name: Open Supply Hub
+- Release date: August 7, 2026
 
 ### Architecture/Environment changes
-* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id` (plus a reserved `__CURSOR__` item for resume), three Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Secret values must be populated manually in AWS before real processing can run. `process_list` and `notify` handlers remain stubs.
+
+- [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id` (plus a reserved `__CURSOR__` item for resume), three Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Secret values must be populated manually in AWS before real processing can run. `process_list` and `notify` handlers remain stubs.
+- [OSDEV-2995](https://opensupplyhub.atlassian.net/browse/OSDEV-2995) - Upgraded the react container from `node:14-slim` to `node:22-slim`:
+  - `src/react/Dockerfile.local` now sets `NODE_OPTIONS=--openssl-legacy-provider` — webpack 4 (inside react-scripts 4) uses MD4 hashing, removed from OpenSSL 3; without the flag `start`/`build`/`test` fail with `ERR_OSSL_EVP_UNSUPPORTED`. Remove the flag when react-scripts 4 is retired ([OSDEV-2996](https://opensupplyhub.atlassian.net/browse/OSDEV-2996)). The `build_and_push_react_app` job in `deploy_to_aws.yml` moves to node 22 with the same flag scoped to the `yarn run build` step; `code_quality.yml` inherits the change via the docker image.
+  - Bumped the vulnerability pins the node 14 engine had blocked: `tar` 6.2.1 → 7.5.19 (clears 7 advisories), `serialize-javascript` 4.0.0 → 7.0.7 (clears GHSA-5c6j-r48x-rmvq), and direct `uuid` ^9.0.1 → ^11.1.1 (clears GHSA-w5hq-g745-h8pq; uuid 11 uses node ≥15 syntax that previously broke jest/webpack on node 14).
+  - Added scoped resolution `**/postcss-safe-parser/postcss: 8.5.16` — node 22 enforces package `exports` maps that node 14 ignored, and the nested `postcss` 8.2.6's legacy exports map crashed `craco start` with `ERR_PACKAGE_PATH_NOT_EXPORTED` on the `postcss/lib/tokenize` deep require. Also clears the four postcss advisories on that path; the remaining postcss 7.x findings stay with [OSDEV-2996](https://opensupplyhub.atlassian.net/browse/OSDEV-2996).
 
 ### Code/API changes
-* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Implemented the ContriBot `fetch_lists` Lambda: reads the DynamoDB resume cursor, paginates `GET /api/admin-facility-lists/` with `id__gt` ordering, writes each new list as `PENDING` in DynamoDB, and returns Map-state items for Step Functions. Shared `lib/lists_repository.py` and `lib/os_hub_api.py` modules are bundled into the deployment zip.
+
+- [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Implemented the ContriBot `fetch_lists` Lambda: reads the DynamoDB resume cursor, paginates `GET /api/admin-facility-lists/` with `id__gt` ordering, writes each new list as `PENDING` in DynamoDB, and returns Map-state items for Step Functions. Shared `lib/lists_repository.py` and `lib/os_hub_api.py` modules are bundled into the deployment zip.
+- [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Bumped `django` 5.2.14 → 5.2.16 (security patch releases on the 5.2 LTS line). 5.2.15 fixes CVE-2026-7666 — the SMTP email backend no longer reuses a partially-initialized connection after a failed STARTTLS handshake (production uses the Amazon SES backend, so no behavior change expected); 5.2.16 adds three low-severity cache-related fixes.
+
+### Bugfix
+
+- Fixed the anonymized DB dump/restore workflows ("DB - Apply Anonymized DB", "DB - Save Anonymized DB", and the restore step of the deploy workflow) failing on all self-hosted runners with `Error relocating .../pyexpat...so: XML_SetAllocTrackerActivationThreshold: symbol not found`. The `postgis/postgis:16-3.4-alpine` base image ships libexpat 2.6.3, while the python3 pulled in by `apk add aws-cli` from Alpine's current package repository is built against expat >= 2.7.2, so the AWS CLI crashed at runtime and the dump/restore scripts failed. The same base image and `apk add aws-cli` pattern is used by the scheduled anonymized-dump ECS task (`deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile`), which was affected as well. `src/anon-tools/Dockerfile.restore`, `src/anon-tools/Dockerfile.dump`, and that scheduled-task Dockerfile now install `--upgrade libexpat` alongside `aws-cli`. Reproduced and verified on native x86_64 (Linux) and ARM64 Macs (amd64 image under emulation); runners with a warm Docker build cache were unaffected only until the cached `apk add` layer was invalidated.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
 
 ## Release 2.27.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: July 17, 2026
+
+- Product name: Open Supply Hub
+- Release date: July 17, 2026
 
 ### Database changes
 
 #### Migrations
-* `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
-* `0218_add_updated_at_to_index_claim_info.py` - Updates the `index_claim_info()` SQL function to include the claim's `updated_at` timestamp in the indexed `claim_info` JSON, so the claimed section can display the latest edit date instead of the original claim date. See OSDEV-2679.
-* `0219_add_contributor_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (`NOT NULL`, `db_default=False`) to the `Contributor` model (and its `HistoricalContributor` mirror). The column is added in a single `ADD COLUMN ... NOT NULL DEFAULT false` statement per table (a PostgreSQL 11+ metadata-only operation), avoiding a full-table `UPDATE` backfill.
+
+- `0217_add_contribution_dates_to_index_contributors.py` - Updates the `index_contributors()` SQL function to include `list_uploaded_at` (from `FacilityList.created_at`) and `last_contributed_at` (from `FacilityListItem.updated_at`) in the indexed contributor JSON.
+- `0218_add_updated_at_to_index_claim_info.py` - Updates the `index_claim_info()` SQL function to include the claim's `updated_at` timestamp in the indexed `claim_info` JSON, so the claimed section can display the latest edit date instead of the original claim date. See OSDEV-2679.
+- `0219_add_contributor_anonymise_in_paid_products.py` - Adds the `anonymise_in_paid_products` boolean field (`NOT NULL`, `db_default=False`) to the `Contributor` model (and its `HistoricalContributor` mirror). The column is added in a single `ADD COLUMN ... NOT NULL DEFAULT false` statement per table (a PostgreSQL 11+ metadata-only operation), avoiding a full-table `UPDATE` backfill.
 
 #### Schema changes
-* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Added `anonymise_in_paid_products` boolean column to `api_contributor` (defaults to `False`). When enabled for a contributor, that contributor is anonymised in OS Hub's paid products regardless of contributor type. No reindex is required — masking happens at response build time.
+
+- [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Added `anonymise_in_paid_products` boolean column to `api_contributor` (defaults to `False`). When enabled for a contributor, that contributor is anonymised in OS Hub's paid products regardless of contributor type. No reindex is required — masking happens at response build time.
 
 ### Code/API changes
-* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
-  * Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
-  * Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
-  * Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
-* [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
-* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Contributors flagged for anonymisation are now withheld from OS Hub's paid products while staying visible on the public web app. A new `ShouldMaskContribution` service caches the set of contributors with `anonymise_in_paid_products` enabled (the flag is the sole control, applied to any contributor type), matching contributions by contributor `id`, `admin_id`, or name. When a contribution is masked it is relabeled to `Other`, its contributor id is dropped, and its list name/description and other list metadata are stripped. This covers the `contributors` array, extended fields, names, addresses, sectors, claim info, alternate locations, and the `created_from` attribution. `GET /api/facilities/` (list + detail) masks anonymised contributions for programmatic (token-authenticated) requests only, so the public web app and facility profiles still show contributor names. The `GET /api/facilities-downloads/` CSV/XLSX export always masks anonymised contributions (web client and API alike). The `GET /api/facilities/` list response now also carries an `anonymised_only` flag, computed cheaply from the denormalized `contributors_id` array (GIN-indexed) against the cached anonymised set — no reindex — indicating whether every facility in the result is attributed only to anonymised contributors. The search-page download button is disabled (with an explanatory tooltip) when `anonymised_only` is true; a search that includes any non-anonymised facility stays downloadable with the anonymised rows relabeled to `Other`.
-* [OSDEV-2896](https://opensupplyhub.atlassian.net/browse/OSDEV-2896) - Added the `reindex_promoted_locations` management command (with `--dry-run` and `--batch-size`) that reindexes production locations whose `created_from` contribution was promoted, backfilling name/address attribution for facilities promoted before the OSDEV-2197 fix.
-* [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Added application-level caching for the `GET /api/facilities/` list and `GET /api/facilities/{os_id}/` detail endpoints. A new reusable `cache_view_response` decorator (`api/view_response_cache.py`) stores the response data zlib-compressed in the memcached `view_cache`, keyed by normalized query params (order-insensitive, multi-values sorted), URL kwargs (so detail requests are cached per `os_id`), and a per-user visibility token (`anon`/contributor id + full/limited contributor-detail access), so users never share cache entries whose content differs. This replaces the previous `cache_page` on the detail endpoint, which keyed only by URL and could serve one user's contributor-detail visibility to another. Payloads whose compressed size exceeds the new `VIEW_RESPONSE_CACHE_MAX_BYTES` setting (default 4 MB, env-overridable) are served uncached instead of failing on memcached's ~5 MB item limit, and all cache errors fail open. Only 200 responses to GET requests are cached; TTL follows `MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS` (10 minutes).
-* [OSDEV-2920](https://opensupplyhub.atlassian.net/browse/OSDEV-2920) - Aligned the `PATCH /v1/moderation-events/{moderation_id}/` response with the GET endpoints. `ModerationEventUpdateSerializer` now returns `os_id` coalesced to fall back to `os_id_snapshot` when the live `os` FK has been nulled by a facility delete/merge, and exposes `os_id_snapshot` as its own field (null when unset). Previously PATCH returned only the live FK and omitted the snapshot, so GET and PATCH returned different shapes for the same resource. Docs follow-up (in `open-supply-hub-api-docs`): add `os_id_snapshot` to the shared `moderation_event` schema and note the `os_id` fallback.
-* [OSDEV-2952](https://opensupplyhub.atlassian.net/browse/OSDEV-2952) - Updated the legacy Swagger/OpenAPI documentation for the facility endpoints by refreshing sample responses for `GET /api/facilities/`, `GET /api/facilities/{id}/`, and `POST /api/facilities/` so they parse as valid JSON and match the current serializer and facility create response shapes. Added the OS Hub Facility Sample Response Writer agent to derive future facility response examples from serializers, view logic, and tests instead of hand-maintaining stale samples.
-* [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Reduced repeated database work on `/facilities` by caching expensive facility search extent calculations by filter parameters and by caching stable filter option endpoints (`active_countries_count`, `parent_companies`, `product_types`, and `sectors`) in the existing view cache.
-* [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Removed `reindex_database` from the `post_deployment` command to avoid a full Postgres `REINDEX` during deploy, which can cause prolonged RDS I/O pressure and application stuttering. Targeted `backfill_facility_index` and `reindex_promoted_locations` calls remain for the one-time 2.27.0 index updates.
-* [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - Added `is_closed` (boolean) to the `production-locations` OpenSearch index and the `GET /api/v1/production-locations/` responses, sourced from `Facility.is_closed`. Lets API consumers and the search page determine whether a location is closed directly, rather than inferring it from `opened_at`/`closed_at`. Implemented in the `sync_production_locations.sql` Logstash query, the `production_locations` index mapping, and the v1 `ProductionLocationsResponseMapping` `_source` allowlist (no Django migration). Locations whose closure status was never recorded omit the field — `Facility.is_closed` is nullable and the v1 API strips null values from responses. Docs follow-up (`open-supply-hub-api-docs`): document `is_closed` in the production-locations response schema.
-* [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Backend follow-ups for the moderation-event rejection editor swap (Quill):
-  * Expanded the django-bleach sanitization config in `oar/settings.py`: `BLEACH_ALLOWED_TAGS` gains `u`, `s` (Quill's underline/strike; the old editor's `ins`/`del` remain allowed so historical rejection reasons still render), and `span`; `BLEACH_ALLOWED_ATTRIBUTES` now allows `class` on `a`, `p`, `span`, `strong`, `em`, `u`, `s`, `sub`, and `sup` so Quill's class-based formats (fonts, RTL direction) survive `BleachField` sanitization on `ModerationEvent.action_reason_text_raw`.
-  * Added a style block to `mail/slc_contribution_rejected_body.html` defining `ql-font-monospace`, `ql-font-serif`, `ql-direction-rtl`, `blockquote`, and `pre`/`ql-code-block`, so moderator formatting actually renders in the rejection email, matching the editor's appearance.
-  * Added `test_moderation_event_rejected_sanitizes_raw_html` to `test_moderation_events_update.py`, locking in the allowlist: Quill tags and `class` attributes survive on every allowed tag (including `href` + `class` on links).
-* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Extended `GET /api/admin-facility-lists/` for superuser list-moderation workflows: optional `ordering` query param (`created_at`, `-created_at`, `id`, `-id`; default `created_at`), optional `id__gt` cursor filter for id-based pagination, and new response fields `contributor_name` and `contributor_email` (from the list's `Source` contributor and admin user). The queryset joins `source`, `contributor`, and `admin` via `select_related`. Existing clients are unchanged when the new query params are omitted.
+
+- [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - Contribution dates for the Supply Chain Network drawer:
+  - Extended `index_contributors()` and `FacilityIndexDetailsSerializer.get_contributors()` to expose `list_uploaded_at` and `last_contributed_at` on public and anonymized contributor entries in the production location API response.
+  - Added the `facility_index_backfill` package and `backfill_facility_index` management command for batched, parallel refresh of selected `FacilityIndex` fields using existing `index_*()` SQL functions, as a faster alternative to full `index_facilities_new` reindexing at scale.
+  - Updated `splitContributorsIntoPublicAndNonPublic` to group public contributor list names into a `lists[]` array with per-list `uploaded_at` timestamps and to merge `last_contributed_at` across duplicate contributor rows.
+- [OSDEV-2820](https://opensupplyhub.atlassian.net/browse/OSDEV-2820) - Migrated django-allauth settings from deprecated `ACCOUNT_AUTHENTICATION_METHOD` / `ACCOUNT_EMAIL_REQUIRED` to `ACCOUNT_LOGIN_METHODS` and `ACCOUNT_SIGNUP_FIELDS` in `src/django/oar/settings.py`, preserving email-only login and mandatory email verification. Bumped `dj-rest-auth` from 7.0.2 to 7.1.0 so registration serializers use the new allauth settings and no longer emit deprecation warnings on Django startup.
+- [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - Contributors flagged for anonymisation are now withheld from OS Hub's paid products while staying visible on the public web app. A new `ShouldMaskContribution` service caches the set of contributors with `anonymise_in_paid_products` enabled (the flag is the sole control, applied to any contributor type), matching contributions by contributor `id`, `admin_id`, or name. When a contribution is masked it is relabeled to `Other`, its contributor id is dropped, and its list name/description and other list metadata are stripped. This covers the `contributors` array, extended fields, names, addresses, sectors, claim info, alternate locations, and the `created_from` attribution. `GET /api/facilities/` (list + detail) masks anonymised contributions for programmatic (token-authenticated) requests only, so the public web app and facility profiles still show contributor names. The `GET /api/facilities-downloads/` CSV/XLSX export always masks anonymised contributions (web client and API alike). The `GET /api/facilities/` list response now also carries an `anonymised_only` flag, computed cheaply from the denormalized `contributors_id` array (GIN-indexed) against the cached anonymised set — no reindex — indicating whether every facility in the result is attributed only to anonymised contributors. The search-page download button is disabled (with an explanatory tooltip) when `anonymised_only` is true; a search that includes any non-anonymised facility stays downloadable with the anonymised rows relabeled to `Other`.
+- [OSDEV-2896](https://opensupplyhub.atlassian.net/browse/OSDEV-2896) - Added the `reindex_promoted_locations` management command (with `--dry-run` and `--batch-size`) that reindexes production locations whose `created_from` contribution was promoted, backfilling name/address attribution for facilities promoted before the OSDEV-2197 fix.
+- [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Added application-level caching for the `GET /api/facilities/` list and `GET /api/facilities/{os_id}/` detail endpoints. A new reusable `cache_view_response` decorator (`api/view_response_cache.py`) stores the response data zlib-compressed in the memcached `view_cache`, keyed by normalized query params (order-insensitive, multi-values sorted), URL kwargs (so detail requests are cached per `os_id`), and a per-user visibility token (`anon`/contributor id + full/limited contributor-detail access), so users never share cache entries whose content differs. This replaces the previous `cache_page` on the detail endpoint, which keyed only by URL and could serve one user's contributor-detail visibility to another. Payloads whose compressed size exceeds the new `VIEW_RESPONSE_CACHE_MAX_BYTES` setting (default 4 MB, env-overridable) are served uncached instead of failing on memcached's ~5 MB item limit, and all cache errors fail open. Only 200 responses to GET requests are cached; TTL follows `MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS` (10 minutes).
+- [OSDEV-2920](https://opensupplyhub.atlassian.net/browse/OSDEV-2920) - Aligned the `PATCH /v1/moderation-events/{moderation_id}/` response with the GET endpoints. `ModerationEventUpdateSerializer` now returns `os_id` coalesced to fall back to `os_id_snapshot` when the live `os` FK has been nulled by a facility delete/merge, and exposes `os_id_snapshot` as its own field (null when unset). Previously PATCH returned only the live FK and omitted the snapshot, so GET and PATCH returned different shapes for the same resource. Docs follow-up (in `open-supply-hub-api-docs`): add `os_id_snapshot` to the shared `moderation_event` schema and note the `os_id` fallback.
+- [OSDEV-2952](https://opensupplyhub.atlassian.net/browse/OSDEV-2952) - Updated the legacy Swagger/OpenAPI documentation for the facility endpoints by refreshing sample responses for `GET /api/facilities/`, `GET /api/facilities/{id}/`, and `POST /api/facilities/` so they parse as valid JSON and match the current serializer and facility create response shapes. Added the OS Hub Facility Sample Response Writer agent to derive future facility response examples from serializers, view logic, and tests instead of hand-maintaining stale samples.
+- [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Reduced repeated database work on `/facilities` by caching expensive facility search extent calculations by filter parameters and by caching stable filter option endpoints (`active_countries_count`, `parent_companies`, `product_types`, and `sectors`) in the existing view cache.
+- [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Removed `reindex_database` from the `post_deployment` command to avoid a full Postgres `REINDEX` during deploy, which can cause prolonged RDS I/O pressure and application stuttering. Targeted `backfill_facility_index` and `reindex_promoted_locations` calls remain for the one-time 2.27.0 index updates.
+- [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - Added `is_closed` (boolean) to the `production-locations` OpenSearch index and the `GET /api/v1/production-locations/` responses, sourced from `Facility.is_closed`. Lets API consumers and the search page determine whether a location is closed directly, rather than inferring it from `opened_at`/`closed_at`. Implemented in the `sync_production_locations.sql` Logstash query, the `production_locations` index mapping, and the v1 `ProductionLocationsResponseMapping` `_source` allowlist (no Django migration). Locations whose closure status was never recorded omit the field — `Facility.is_closed` is nullable and the v1 API strips null values from responses. Docs follow-up (`open-supply-hub-api-docs`): document `is_closed` in the production-locations response schema.
+- [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Backend follow-ups for the moderation-event rejection editor swap (Quill):
+  - Expanded the django-bleach sanitization config in `oar/settings.py`: `BLEACH_ALLOWED_TAGS` gains `u`, `s` (Quill's underline/strike; the old editor's `ins`/`del` remain allowed so historical rejection reasons still render), and `span`; `BLEACH_ALLOWED_ATTRIBUTES` now allows `class` on `a`, `p`, `span`, `strong`, `em`, `u`, `s`, `sub`, and `sup` so Quill's class-based formats (fonts, RTL direction) survive `BleachField` sanitization on `ModerationEvent.action_reason_text_raw`.
+  - Added a style block to `mail/slc_contribution_rejected_body.html` defining `ql-font-monospace`, `ql-font-serif`, `ql-direction-rtl`, `blockquote`, and `pre`/`ql-code-block`, so moderator formatting actually renders in the rejection email, matching the editor's appearance.
+  - Added `test_moderation_event_rejected_sanitizes_raw_html` to `test_moderation_events_update.py`, locking in the allowlist: Quill tags and `class` attributes survive on every allowed tag (including `href` + `class` on links).
+- [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Extended `GET /api/admin-facility-lists/` for superuser list-moderation workflows: optional `ordering` query param (`created_at`, `-created_at`, `id`, `-id`; default `created_at`), optional `id__gt` cursor filter for id-based pagination, and new response fields `contributor_name` and `contributor_email` (from the list's `Source` contributor and admin user). The queryset joins `source`, `contributor`, and `admin` via `select_related`. Existing clients are unchanged when the new query params are omitted.
 
 ### Architecture/Environment changes
-* [OSDEV-2941](https://opensupplyhub.atlassian.net/browse/OSDEV-2941) - Added bucket policies denying non-HTTPS requests (`aws:SecureTransport: false`) to the `logs`, `files`, and `vpc_flow_logs` S3 buckets in `deployment/terraform`, to satisfy the SOC 2 / Vanta "S3 buckets allow only HTTPS traffic" test. Created a new `aws_s3_bucket_policy` for the `files` bucket, which previously had none, and extended the existing `logs` (ALB access logging) and `vpc_flow_logs` (flow log delivery) policies with a `denyInsecureTransport` deny statement, matching the pattern already in place on the frontend/CDN bucket.
-* [OSDEV-2942](https://opensupplyhub.atlassian.net/browse/OSDEV-2942) - Added `aws_ebs_encryption_by_default` (enabled = true) in `deployment/terraform/config.tf` to satisfy the SOC 2 / Vanta "EBS snapshots are encrypted" test. This makes every new EBS volume, and every snapshot taken from it, encrypted by default account/region-wide, without needing per-resource encryption settings on the two EC2-backed resources that create EBS volumes today (the Rba VPN instance and the 5 AWS Batch Spot compute environments, neither of which set `encrypted` explicitly). Only affects volumes/snapshots created after this change is applied — existing volumes, snapshots, and AMIs are not retroactively encrypted.
-* [OSDEV-2943](https://opensupplyhub.atlassian.net/browse/OSDEV-2943) - Changed the `ssl_policy` on the app ALB's HTTPS listener (`aws_lb_listener.app` in `deployment/terraform/container_service.tf`) from `ELBSecurityPolicy-TLS13-1-2-Res-2021-06` to `ELBSecurityPolicy-TLS13-1-2-Res-FIPS-2023-04`, to satisfy the SOC 2 / Vanta "AWS application load balancers enforce FIPS TLS 1.2+" test. The new policy uses AWS's FIPS 140-validated crypto module while keeping the same TLS 1.2/1.3 and session-resumption support as before.
-* [OSDEV-2925](https://opensupplyhub.atlassian.net/browse/OSDEV-2925) - Set `image_tag_mutability = "IMMUTABLE"` on all ECS Fargate ECR repositories (app, deduplicate, batch, kafka, logstash, and the two database-anonymizer scheduled-task repos) to satisfy the SOC 2 / Vanta "Fargate deploys version-controlled images" test. The upstream `azavea/terraform-aws-ecr-repository` module does not expose tag mutability, so it was vendored locally as `deployment/terraform/modules/ecr-repository` with an added `image_tag_mutability` variable (now defaulting to `IMMUTABLE`). This also enables `scan_on_push` on all 7 repositories for the first time (the vendored module defaults it to `true`, whereas upstream never configured it, so it was implicitly `false`). Since images are now pushed with immutable, commit-SHA tags, re-running a failed deploy job on an unchanged commit would otherwise fail at `docker push` with `ImageTagAlreadyExistsException`; `deploy_to_aws.yml` now checks each ECR repo for the current commit's tag before each push step and skips the push if it already exists.
-* [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Configured the Test RDS instance to trial `400 GiB` `gp3` storage, giving RDS PostgreSQL the higher gp3 baseline storage performance before considering the same change for production.
-* [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Frontend dependency vulnerability remediation:
-  * Added/updated the yarn `resolutions` pins in `src/react/package.json` to remediate scanner findings across the react-scripts 4 dependency tree — notably `elliptic` 6.6.1, `@babel/core`/`@babel/helpers` 7.29.7, `minimatch` 3.1.5, `form-data` 4.0.6, `node-forge` 1.4.0, `js-yaml` 3.15.0, `lodash`/`lodash-es`/`lodash.template` 4.18.1, `shell-quote` 1.9.0, `http-proxy-middleware` 2.0.10, `serialize-javascript` 4.0.0, `@tootallnate/once` 2.0.1, `qs` 6.15.3, `ws` 8.21.0, `is-svg` 4.4.0 (pulls the patched `fast-xml-parser` 4.x), and `immutable` 4.3.8 — and regenerated `yarn.lock`. Fixed a silently broken scoped resolution (`react-dev-utils/immer` → `**/react-dev-utils/immer`; yarn v1 only applies unprefixed paths to direct dependencies), which had left a vulnerable `immer` 8.0.1 in the tree.
-  * Replaced `react-draft-wysiwyg` (unfixable XSS, [CVE-2025-3191](https://github.com/advisories/GHSA-fq5x-7292-2p5r)) with `react-quill-new` (quill 2) in `RejectModerationEventDialog`. This also removes `draft-js` (archived by Meta) and `draftjs-to-html`. The `updateModerationEvent(status, text, html)` contract and the 30-character minimum are unchanged; rejection reason HTML is still sanitized server-side by the `BleachField` on `ModerationEvent.action_reason_text_raw`. Quill's `getSemanticHTML()` encodes spaces as `&nbsp;`; the dialog decodes them to regular spaces at submit time so emails wrap normally.
-  * Eliminated the abandoned `request` package (CVE-2023-28155, no fix exists) by pinning `jsdom` to 18.1.1 — jsdom 18 dropped it, and jest runs with `--env=node` so the jsdom environment is unused.
+
+- [OSDEV-2941](https://opensupplyhub.atlassian.net/browse/OSDEV-2941) - Added bucket policies denying non-HTTPS requests (`aws:SecureTransport: false`) to the `logs`, `files`, and `vpc_flow_logs` S3 buckets in `deployment/terraform`, to satisfy the SOC 2 / Vanta "S3 buckets allow only HTTPS traffic" test. Created a new `aws_s3_bucket_policy` for the `files` bucket, which previously had none, and extended the existing `logs` (ALB access logging) and `vpc_flow_logs` (flow log delivery) policies with a `denyInsecureTransport` deny statement, matching the pattern already in place on the frontend/CDN bucket.
+- [OSDEV-2942](https://opensupplyhub.atlassian.net/browse/OSDEV-2942) - Added `aws_ebs_encryption_by_default` (enabled = true) in `deployment/terraform/config.tf` to satisfy the SOC 2 / Vanta "EBS snapshots are encrypted" test. This makes every new EBS volume, and every snapshot taken from it, encrypted by default account/region-wide, without needing per-resource encryption settings on the two EC2-backed resources that create EBS volumes today (the Rba VPN instance and the 5 AWS Batch Spot compute environments, neither of which set `encrypted` explicitly). Only affects volumes/snapshots created after this change is applied — existing volumes, snapshots, and AMIs are not retroactively encrypted.
+- [OSDEV-2943](https://opensupplyhub.atlassian.net/browse/OSDEV-2943) - Changed the `ssl_policy` on the app ALB's HTTPS listener (`aws_lb_listener.app` in `deployment/terraform/container_service.tf`) from `ELBSecurityPolicy-TLS13-1-2-Res-2021-06` to `ELBSecurityPolicy-TLS13-1-2-Res-FIPS-2023-04`, to satisfy the SOC 2 / Vanta "AWS application load balancers enforce FIPS TLS 1.2+" test. The new policy uses AWS's FIPS 140-validated crypto module while keeping the same TLS 1.2/1.3 and session-resumption support as before.
+- [OSDEV-2925](https://opensupplyhub.atlassian.net/browse/OSDEV-2925) - Set `image_tag_mutability = "IMMUTABLE"` on all ECS Fargate ECR repositories (app, deduplicate, batch, kafka, logstash, and the two database-anonymizer scheduled-task repos) to satisfy the SOC 2 / Vanta "Fargate deploys version-controlled images" test. The upstream `azavea/terraform-aws-ecr-repository` module does not expose tag mutability, so it was vendored locally as `deployment/terraform/modules/ecr-repository` with an added `image_tag_mutability` variable (now defaulting to `IMMUTABLE`). This also enables `scan_on_push` on all 7 repositories for the first time (the vendored module defaults it to `true`, whereas upstream never configured it, so it was implicitly `false`). Since images are now pushed with immutable, commit-SHA tags, re-running a failed deploy job on an unchanged commit would otherwise fail at `docker push` with `ImageTagAlreadyExistsException`; `deploy_to_aws.yml` now checks each ECR repo for the current commit's tag before each push step and skips the push if it already exists.
+- [OSDEV-2948](https://opensupplyhub.atlassian.net/browse/OSDEV-2948) - Configured the Test RDS instance to trial `400 GiB` `gp3` storage, giving RDS PostgreSQL the higher gp3 baseline storage performance before considering the same change for production.
+- [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Frontend dependency vulnerability remediation:
+  - Added/updated the yarn `resolutions` pins in `src/react/package.json` to remediate scanner findings across the react-scripts 4 dependency tree — notably `elliptic` 6.6.1, `@babel/core`/`@babel/helpers` 7.29.7, `minimatch` 3.1.5, `form-data` 4.0.6, `node-forge` 1.4.0, `js-yaml` 3.15.0, `lodash`/`lodash-es`/`lodash.template` 4.18.1, `shell-quote` 1.9.0, `http-proxy-middleware` 2.0.10, `serialize-javascript` 4.0.0, `@tootallnate/once` 2.0.1, `qs` 6.15.3, `ws` 8.21.0, `is-svg` 4.4.0 (pulls the patched `fast-xml-parser` 4.x), and `immutable` 4.3.8 — and regenerated `yarn.lock`. Fixed a silently broken scoped resolution (`react-dev-utils/immer` → `**/react-dev-utils/immer`; yarn v1 only applies unprefixed paths to direct dependencies), which had left a vulnerable `immer` 8.0.1 in the tree.
+  - Replaced `react-draft-wysiwyg` (unfixable XSS, [CVE-2025-3191](https://github.com/advisories/GHSA-fq5x-7292-2p5r)) with `react-quill-new` (quill 2) in `RejectModerationEventDialog`. This also removes `draft-js` (archived by Meta) and `draftjs-to-html`. The `updateModerationEvent(status, text, html)` contract and the 30-character minimum are unchanged; rejection reason HTML is still sanitized server-side by the `BleachField` on `ModerationEvent.action_reason_text_raw`. Quill's `getSemanticHTML()` encodes spaces as `&nbsp;`; the dialog decodes them to regular spaces at submit time so emails wrap normally.
+  - Eliminated the abandoned `request` package (CVE-2023-28155, no fix exists) by pinning `jsdom` to 18.1.1 — jsdom 18 dropped it, and jest runs with `--env=node` so the jsdom environment is unused.
 
 ### Bugfix
-* [OSDEV-2960](https://opensupplyhub.atlassian.net/browse/OSDEV-2960) - Fixed a 500 error (`TypeError: object of type 'NoneType' has no len()`) on `GET /api/facilities/{os_id}/` for production locations with contributors that have no contribution date. Regression from [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390): `FacilityIndexSerializer._format_source` passed a `None` `last_contributed_at` straight to `format_date`, which called `dateutil.parser.isoparse(None)`. The field is now null-guarded in both the public and anonymized contributor branches (mirroring the existing `list_uploaded_at` guard), and `format_date` returns `None` for empty input as defense in depth.
-* [Follow-up][OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Removed the stale, hardcoded list of editable fields ("Only label, unit, source by, base url, display text, active, and availability settings can be edited.") from the system-defined `PartnerField` validation error message in Django admin. The list had drifted out of sync with the actual editable fields and could mislead moderators; the message now states only that the field cannot be modified for system-defined fields.
-* [OSDEV-2953](https://opensupplyhub.atlassian.net/browse/OSDEV-2953) - Fixed the flaky `test_geocoding_no_results` Django test that was failing on `main` and blocking all PR checks. The test relied on the live Google Geocoding API returning `ZERO_RESULTS` for a specific address; Google now geocodes that address, so the submission proceeded to matching and ended in `ERROR_MATCHING`. The geocoder response is now mocked with the existing `geocoding_no_results` fixture, making the test deterministic and independent of external API behavior.
-* [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). Regression from the Django 3.2→5.2 upgrade: Django 3 lazily filled defaults when a runtime database alias first connected, but Django 5 only normalizes aliases present at startup. The dynamically configured source connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
-* [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - Fixed the claimed "Operational Details Submitted by Management" section showing the original claim date instead of the latest edit date. Two causes were addressed: (1) the indexed `claim_info` blob now includes `updated_at` — the blob was already refreshed on every claim edit by the existing `facility_claim_post_update_insert_indexing_trigger` DB trigger, but never contained the timestamp; and (2) `claimDataSelectors` now prefers `updated_at` for the displayed date. No view-side reindex call is needed — the DB trigger covers all claim-edit paths, including claim reassignment during facility merges. This surfaces one claim-level "last edited" date for the whole section (not a per-field date).
-* [OSDEV-3017](https://opensupplyhub.atlassian.net/browse/OSDEV-3017) - Fixed download logging silently truncating the recorded search path at the first `&`, so only the first filter of each search was stored in `api_downloadlog.path`. `makeLogDownloadUrl` (`src/react/src/util/util.js`) now URL-encodes the browser path with `encodeURIComponent` before embedding it in the `/api/log-download/` request, so the full query string — including `combine_contributors` ("Show only shared facilities") and all other filters — is recorded. No backend change; the server already stored whatever `path` value it received. Fixes forward-going data only — existing rows remain truncated. Surfaced by [OSDEV-2891](https://opensupplyhub.atlassian.net/browse/OSDEV-2891).
-* [OSDEV-3062](https://opensupplyhub.atlassian.net/browse/OSDEV-3062) - Fixed `GET /api/product-types/` raising `pylibmc.TooBig` on every request: the response payload (standard product types plus all distinct contributor-submitted values) exceeds memcached's per-item size limit, so the `cache_page` write failed and the endpoint was never cached. The endpoint was converted from a function-based `api_view` to a `ProductTypes(APIView)` class using the reusable `cache_view_response` decorator (`api/view_response_cache.py`), which zlib-compresses the response before caching and serves it uncached (fail-open) if the compressed payload still exceeds `VIEW_RESPONSE_CACHE_MAX_BYTES`. The URL name `product_types` is unchanged. Mirrors the fix applied to `/api/parent-companies/` in [OSDEV-3030](https://opensupplyhub.atlassian.net/browse/OSDEV-3030).
+
+- [OSDEV-2960](https://opensupplyhub.atlassian.net/browse/OSDEV-2960) - Fixed a 500 error (`TypeError: object of type 'NoneType' has no len()`) on `GET /api/facilities/{os_id}/` for production locations with contributors that have no contribution date. Regression from [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390): `FacilityIndexSerializer._format_source` passed a `None` `last_contributed_at` straight to `format_date`, which called `dateutil.parser.isoparse(None)`. The field is now null-guarded in both the public and anonymized contributor branches (mirroring the existing `list_uploaded_at` guard), and `format_date` returns `None` for empty input as defense in depth.
+- [Follow-up][OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Removed the stale, hardcoded list of editable fields ("Only label, unit, source by, base url, display text, active, and availability settings can be edited.") from the system-defined `PartnerField` validation error message in Django admin. The list had drifted out of sync with the actual editable fields and could mislead moderators; the message now states only that the field cannot be modified for system-defined fields.
+- [OSDEV-2953](https://opensupplyhub.atlassian.net/browse/OSDEV-2953) - Fixed the flaky `test_geocoding_no_results` Django test that was failing on `main` and blocking all PR checks. The test relied on the live Google Geocoding API returning `ZERO_RESULTS` for a specific address; Google now geocodes that address, so the submission proceeded to matching and ended in `ERROR_MATCHING`. The geocoder response is now mocked with the existing `geocoding_no_results` fixture, making the test deterministic and independent of external API behavior.
+- [OSDEV-2907](https://opensupplyhub.atlassian.net/browse/OSDEV-2907) - Fixed the RBA `sync_databases` AWS Batch job failing on every model with `KeyError` for missing database settings (e.g. `OPTIONS`, `TIME_ZONE`). Regression from the Django 3.2→5.2 upgrade: Django 3 lazily filled defaults when a runtime database alias first connected, but Django 5 only normalizes aliases present at startup. The dynamically configured source connection now inherits the normalized `default` database config and overrides only connection credentials, so Django's PostgreSQL backend can open connections and iterate via `chunked_cursor()`.
+- [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - Fixed the claimed "Operational Details Submitted by Management" section showing the original claim date instead of the latest edit date. Two causes were addressed: (1) the indexed `claim_info` blob now includes `updated_at` — the blob was already refreshed on every claim edit by the existing `facility_claim_post_update_insert_indexing_trigger` DB trigger, but never contained the timestamp; and (2) `claimDataSelectors` now prefers `updated_at` for the displayed date. No view-side reindex call is needed — the DB trigger covers all claim-edit paths, including claim reassignment during facility merges. This surfaces one claim-level "last edited" date for the whole section (not a per-field date).
+- [OSDEV-3017](https://opensupplyhub.atlassian.net/browse/OSDEV-3017) - Fixed download logging silently truncating the recorded search path at the first `&`, so only the first filter of each search was stored in `api_downloadlog.path`. `makeLogDownloadUrl` (`src/react/src/util/util.js`) now URL-encodes the browser path with `encodeURIComponent` before embedding it in the `/api/log-download/` request, so the full query string — including `combine_contributors` ("Show only shared facilities") and all other filters — is recorded. No backend change; the server already stored whatever `path` value it received. Fixes forward-going data only — existing rows remain truncated. Surfaced by [OSDEV-2891](https://opensupplyhub.atlassian.net/browse/OSDEV-2891).
+- [OSDEV-3062](https://opensupplyhub.atlassian.net/browse/OSDEV-3062) - Fixed `GET /api/product-types/` raising `pylibmc.TooBig` on every request: the response payload (standard product types plus all distinct contributor-submitted values) exceeds memcached's per-item size limit, so the `cache_page` write failed and the endpoint was never cached. The endpoint was converted from a function-based `api_view` to a `ProductTypes(APIView)` class using the reusable `cache_view_response` decorator (`api/view_response_cache.py`), which zlib-compresses the response before caching and serves it uncached (fail-open) if the compressed payload still exceeds `VIEW_RESPONSE_CACHE_MAX_BYTES`. The URL name `product_types` is unchanged. Mirrors the fix applied to `/api/parent-companies/` in [OSDEV-3030](https://opensupplyhub.atlassian.net/browse/OSDEV-3030).
 
 ### What's new
-* [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
-* [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - The Reject Moderation Event dialog has a new rich-text editor (Quill). The toolbar gains strikethrough, blockquote, code block, sub/superscript, a font selector (serif and monospace), header levels 1-6, and an RTL text-direction toggle, and the typing area now fills the dialog with internal scrolling instead of leaving dead space. Moderator formatting — including fonts, quotes, code blocks, and text direction — now renders in the rejection email the contributor receives. The rejection flow and stored data shape are unchanged.
-* [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - OS Hub admins can now toggle **Anonymise contributor name in paid products** per contributor in Django admin (`/admin/api/contributor/<id>/change/`), defaulting to off. This keeps the contributor's contributions visible on facility profiles while anonymising their identity in the API and data downloads to protect contributors and workers.
-* [OSDEV-3019](https://opensupplyhub.atlassian.net/browse/OSDEV-3019) - Update "Donate" button on the footer in the landing page to point to new donations page (https://info.opensupplyhub.org/resources/donations).
+
+- [OSDEV-2390](https://opensupplyhub.atlassian.net/browse/OSDEV-2390) - The Supply Chain Network drawer on production location pages now shows list upload dates under each uploaded list and a "Last contributed" date for API-only public contributors and anonymized contributor types.
+- [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - The Reject Moderation Event dialog has a new rich-text editor (Quill). The toolbar gains strikethrough, blockquote, code block, sub/superscript, a font selector (serif and monospace), header levels 1-6, and an RTL text-direction toggle, and the typing area now fills the dialog with internal scrolling instead of leaving dead space. Moderator formatting — including fonts, quotes, code blocks, and text direction — now renders in the rejection email the contributor receives. The rejection flow and stored data shape are unchanged.
+- [OSDEV-2786](https://opensupplyhub.atlassian.net/browse/OSDEV-2786) - OS Hub admins can now toggle **Anonymise contributor name in paid products** per contributor in Django admin (`/admin/api/contributor/<id>/change/`), defaulting to off. This keeps the contributor's contributions visible on facility profiles while anonymising their identity in the API and data downloads to protect contributors and workers.
+- [OSDEV-3019](https://opensupplyhub.atlassian.net/browse/OSDEV-3019) - Update "Donate" button on the footer in the landing page to point to new donations page (https://info.opensupplyhub.org/resources/donations).
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `backfill_facility_index --fields contributors,claim_info --parallel 10 --batch-size 10000`
-    * `reindex_promoted_locations` — one-time backfill (OSDEV-2896) so previously promoted locations reflect the corrected name/address attribution; remove from `post_deployment` after this release.
-* Expect the `contributors,claim_info` backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. The two field groups run sequentially; the `claim_info` group only touches already-claimed rows (`claim_info IS NOT NULL`), so it is much shorter than the `contributors` pass. See `src/django/api/facility_index_backfill/README.md` for operational notes.
-* Expect `reindex_promoted_locations` to add roughly 1–3 minutes: ~4.8k facilities in 500-row batches, single-threaded, each batch a full `index_facilities_by` rebuild (the same operation the on-save trigger runs). It uses a single connection — much lighter than the 10-worker contributors backfill — and runs after it, so the two do not overlap; the combined post-deploy backfill window is on the order of 5–7 minutes with no application downtime. Confirm timing on Staging before Production.
-* [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - The new `updated_at` in `claim_info` only appears for existing approved claims once their indexed blob is recomputed. This is a one-time targeted backfill via the `claim_info` field group added to `backfill_facility_index` above — `reindex_database` (a Postgres `REINDEX`) does **not** recompute `claim_info`. New claim edits refresh automatically via the existing `facility_claim_post_update_insert_indexing_trigger` DB trigger. Remove the `claim_info` field group from the `post_deployment` backfill after this release, per `facility_index_backfill/README.md`.
-* [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - **Release step required:** the `production-locations` OpenSearch index must be rebuilt during this release — run the `[Release] Deploy` workflow with `clear-opensearch-target` set to `production-locations` (index clear + full Logstash re-sync) — for `is_closed` to appear on existing locations — the JDBC sync tracks `updated_at`, so old rows never pick it up on their own. The full re-sync takes **~4 hours**; schedule it within the release window and verify afterwards that `is_closed` is present on a known location via `GET /api/v1/production-locations/{os_id}/`. New/updated locations pick the field up on the next incremental sync regardless.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `backfill_facility_index --fields contributors,claim_info --parallel 10 --batch-size 10000`
+  - `reindex_promoted_locations` — one-time backfill (OSDEV-2896) so previously promoted locations reflect the corrected name/address attribution; remove from `post_deployment` after this release.
+- Expect the `contributors,claim_info` backfill to add moderate RDS load (~+30% CPU, ~+10 connections for 10 workers) for roughly 3–4 minutes with no application downtime. The two field groups run sequentially; the `claim_info` group only touches already-claimed rows (`claim_info IS NOT NULL`), so it is much shorter than the `contributors` pass. See `src/django/api/facility_index_backfill/README.md` for operational notes.
+- Expect `reindex_promoted_locations` to add roughly 1–3 minutes: ~4.8k facilities in 500-row batches, single-threaded, each batch a full `index_facilities_by` rebuild (the same operation the on-save trigger runs). It uses a single connection — much lighter than the 10-worker contributors backfill — and runs after it, so the two do not overlap; the combined post-deploy backfill window is on the order of 5–7 minutes with no application downtime. Confirm timing on Staging before Production.
+- [OSDEV-2679](https://opensupplyhub.atlassian.net/browse/OSDEV-2679) - The new `updated_at` in `claim_info` only appears for existing approved claims once their indexed blob is recomputed. This is a one-time targeted backfill via the `claim_info` field group added to `backfill_facility_index` above — `reindex_database` (a Postgres `REINDEX`) does **not** recompute `claim_info`. New claim edits refresh automatically via the existing `facility_claim_post_update_insert_indexing_trigger` DB trigger. Remove the `claim_info` field group from the `post_deployment` backfill after this release, per `facility_index_backfill/README.md`.
+- [OSDEV-1149](https://opensupplyhub.atlassian.net/browse/OSDEV-1149) - **Release step required:** the `production-locations` OpenSearch index must be rebuilt during this release — run the `[Release] Deploy` workflow with `clear-opensearch-target` set to `production-locations` (index clear + full Logstash re-sync) — for `is_closed` to appear on existing locations — the JDBC sync tracks `updated_at`, so old rows never pick it up on their own. The full re-sync takes **~4 hours**; schedule it within the release window and verify afterwards that `is_closed` is present on a known location via `GET /api/v1/production-locations/{os_id}/`. New/updated locations pick the field up on the next incremental sync regardless.
 
 ## Release 2.26.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 26, 2026
+
+- Product name: Open Supply Hub
+- Release date: June 26, 2026
 
 ### Database changes
 
 #### Migrations
-* 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
-* `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
-* `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
-* `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
+
+- 0213_add_partner_field_availability_flags.py - Adds the `available_in_api` and `available_in_data_downloads` boolean fields (both defaulting to `True`) to the `PartnerField` model.
+- `0214_add_os_id_snapshot_to_moderation_event.py` - Schema change. Adds `os_id_snapshot` (CharField, max 32, blank/default empty) to `ModerationEvent`.
+- `0215_attribute_promoted_contribution_name_address.py` - Updates the facility name and address index functions to flag the promoted (`created_from`) contribution.
+- `0216_backfill_moderation_event_os_id_snapshot.py` - Data migration. Forward-fills `os_id_snapshot = os_id` for approved `ModerationEvent` rows where the snapshot is still empty but `os_id` is present (~298k rows). Idempotent and reversible (reverse is a no-op).
 
 #### Schema changes
-* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
-* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - Added `os_id_snapshot` field to `ModerationEvent`. The existing `os_id` FK uses `on_delete=SET_NULL`, which issues a bulk `UPDATE` that bypasses Django ORM signals and OpenSearch indexing. When a facility is deleted or merged, `os_id` is silently nulled with no audit trail. `os_id_snapshot` is a plain `CharField` written once at approval time and never modified, so it survives facility deletion or merging.
+
+- [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Added `available_in_api` and `available_in_data_downloads` boolean columns to `api_partnerfield`, allowing each partner field to be individually toggled on or off for API responses and data downloads.
+- [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - Added `os_id_snapshot` field to `ModerationEvent`. The existing `os_id` FK uses `on_delete=SET_NULL`, which issues a bulk `UPDATE` that bypasses Django ORM signals and OpenSearch indexing. When a facility is deleted or merged, `os_id` is silently nulled with no audit trail. `os_id_snapshot` is a plain `CharField` written once at approval time and never modified, so it survives facility deletion or merging.
 
 ### Code/API changes
-* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_data_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
-* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
-* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
-* [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
+
+- [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Partner fields can now be hidden from API responses and data downloads independently. `FacilityIndexDetailsSerializer.get_partner_fields` now filters out fields where `available_in_api=False` for authenticated API requests, and `FacilityDownloadSerializer` only includes fields where `available_in_data_downloads=True`. System partner fields are only fetched and serialized when their field name is among the active, available fields, avoiding unnecessary provider lookups.
+- [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Made `PartnerDataFileUpload.status` read-only in Django admin so moderators cannot manually change processing state; status continues to be set automatically on create and updated by the AWS Batch worker.
+- [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - `EventApprovalTemplate.__update_event` now sets `os_id_snapshot = item.facility_id` at approval time alongside `os_id`.
+- [OSDEV-2696](https://opensupplyhub.atlassian.net/browse/OSDEV-2696) - The moderation-events Logstash pipeline now indexes `os_id` as `COALESCE(NULLIF(os_id_snapshot, ''), os_id)` and exposes `os_id_snapshot` as its own keyword field on the `moderation-events` index. This makes the contribution record page fall back to the durable snapshot when the live `os_id` FK has been nulled by a facility deletion or merge.
 
 ### Architecture/Environment changes
-* [OSDEV-2881](https://opensupplyhub.atlassian.net/browse/OSDEV-2881) - Deploy workflows now support selective OpenSearch clearing via **Which OpenSearch indexes and related templates to clear during deployment** (`none`, `production-locations`, `moderation-events`, or `both`) in `Deploy to AWS` and `[Release] Deploy`. This replaces the old all-or-nothing checkbox so a mapping change on one index does not force a full reindex of the other. On **Deploy to AWS**, enabling **Restore database to original state** always clears both indexes regardless of the selected target. **DB - Apply Anonymized DB** always clears both indexes after restoring the anonymized dump (unchanged behavior; no selective option).
-* [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
-* [OSDEV-2798](https://opensupplyhub.atlassian.net/browse/OSDEV-2798) - Enabled VPC Flow Logs (`ALL` traffic) for the environment VPC, delivered to a new dedicated S3 bucket (`opensupplyhub-<env>-vpc-flow-logs-<region>`) with a 365-day retention lifecycle, to satisfy the SOC 2 / Vanta "VPC Flow Logs enabled" test.
+
+- [OSDEV-2881](https://opensupplyhub.atlassian.net/browse/OSDEV-2881) - Deploy workflows now support selective OpenSearch clearing via **Which OpenSearch indexes and related templates to clear during deployment** (`none`, `production-locations`, `moderation-events`, or `both`) in `Deploy to AWS` and `[Release] Deploy`. This replaces the old all-or-nothing checkbox so a mapping change on one index does not force a full reindex of the other. On **Deploy to AWS**, enabling **Restore database to original state** always clears both indexes regardless of the selected target. **DB - Apply Anonymized DB** always clears both indexes after restoring the anonymized dump (unchanged behavior; no selective option).
+- [Follow-up][OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Right-sized AWS Batch resources for partner Google Sheet uploads after monitoring showed the original 2 vCPU / 4096 MB allocation was excessive for workloads up to 10k rows per sheet (~0.1 CPU and ~400 MB observed in Development). Reduced the partner data file upload job definition to 512 MB memory (from 4096 MB) and set both the job definition and compute environment to 2 vCPUs so Batch can launch a standard `.large` Spot instance while still running only one upload job at a time (`max_vcpus` and per-job `vcpus` both 2). Restored `c5`/`m5` alongside `c4`/`m4` instance families to improve Spot capacity after jobs were stuck in `RUNNABLE` with `c4`/`m4` only. Serial execution is required because all jobs share the same Google Service Account and a single job already runs close to the Sheets write quota (60 requests/min per user).
+- [OSDEV-2798](https://opensupplyhub.atlassian.net/browse/OSDEV-2798) - Enabled VPC Flow Logs (`ALL` traffic) for the environment VPC, delivered to a new dedicated S3 bucket (`opensupplyhub-<env>-vpc-flow-logs-<region>`) with a 365-day retention lifecycle, to satisfy the SOC 2 / Vanta "VPC Flow Logs enabled" test.
 
 ### What's new
-* [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
-* [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the list contribution and SLC contribution workflow pages.
+
+- [OSDEV-2732](https://opensupplyhub.atlassian.net/browse/OSDEV-2732) - Moderators can now hide individual partner fields from the API and from data downloads via the **Available in API** and **Available in downloads** toggles on each partner field in Django admin. This lets a field be exposed on the production location profile while being withheld from the API and/or CSV/Excel exports.
+- [OSDEV-2880](https://opensupplyhub.atlassian.net/browse/OSDEV-2880) - The data moderation pause banner has been added to the list contribution and SLC contribution workflow pages.
 
 ### Bugfix
-* [OSDEV-2197](https://opensupplyhub.atlassian.net/browse/OSDEV-2197) - Fixed promoted Single Location Contributions not being attributed as the source of a production location's name/address when the submitted value matched the existing one. The name/address index now flags the promoted (`created_from`) contribution and prioritizes it when ordering entries, so attribution follows the promoted contribution.
+
+- [OSDEV-2197](https://opensupplyhub.atlassian.net/browse/OSDEV-2197) - Fixed promoted Single Location Contributions not being attributed as the source of a production location's name/address when the submitted value matched the existing one. The name/address index now flags the promoted (`created_from`) contribution and prioritizes it when ordering entries, so attribution follows the promoted contribution.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `backfill_moderation_event_os_id_snapshot_recovery` — one-time, **best-effort** recovery of `os_id_snapshot` for events where `os_id` was already nulled, from the linked `FacilityListItem`. **Remove from `post_deployment` after this release.** Note: low yield (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so most events have no usable link and stay unrecoverable.
-* The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Run `[Release] Deploy` with **Which OpenSearch indexes and related templates to clear during deployment** set to `moderation-events` so only that index is recreated — avoid `both`, which would also clear `production-locations` (~2.5M records, 6+ hours to refill). Related v1 GET endpoints return reduced data until Logstash finishes refilling the cleared index.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `backfill_moderation_event_os_id_snapshot_recovery` — one-time, **best-effort** recovery of `os_id_snapshot` for events where `os_id` was already nulled, from the linked `FacilityListItem`. **Remove from `post_deployment` after this release.** Note: low yield (~16 of ~36k on the Apr 2026 prod dump) — the `FacilityListItem`↔event link was only added in 2.21.0 with no backfill, so most events have no usable link and stay unrecoverable.
+- The `moderation-events` OpenSearch index template changed (new `os_id_snapshot` field + `os_id` fallback). Run `[Release] Deploy` with **Which OpenSearch indexes and related templates to clear during deployment** set to `moderation-events` so only that index is recreated — avoid `both`, which would also clear `production-locations` (~2.5M records, 6+ hours to refill). Related v1 GET endpoints return reduced data until Logstash finishes refilling the cleared index.
 
 ## Release 2.25.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 12, 2026
+
+- Product name: Open Supply Hub
+- Release date: June 12, 2026
 
 ### Database changes
 
 #### Migrations
-* 0211_create_partner_data_file_upload.py - Creates the `PartnerDataFileUpload` model for tracking Google Sheet uploads queued for partner-field moderation event ingestion.
+
+- 0211_create_partner_data_file_upload.py - Creates the `PartnerDataFileUpload` model for tracking Google Sheet uploads queued for partner-field moderation event ingestion.
 
 #### Schema changes
-* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added `api_partnerdatafileupload` with `uuid` (PK), `google_drive_file_link`, `contributor_id`, `created_by_id`, `status` (`PENDING`/`PROCESSING`/`PROCESSED`/`FAILED`), `batch_job_id`, `processed_at`, `processing_error`, and timestamps.
+
+- [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added `api_partnerdatafileupload` with `uuid` (PK), `google_drive_file_link`, `contributor_id`, `created_by_id`, `status` (`PENDING`/`PROCESSING`/`PROCESSED`/`FAILED`), `batch_job_id`, `processed_at`, `processing_error`, and timestamps.
 
 ### Code/API changes
-* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added partner Google Sheet upload processing for partner-field production location updates:
-  * Added `api.partner_data_file_upload` with Google Sheets I/O, sheet/header/column parsing, AWS Batch submission, and row processing that creates pending `UPDATE` moderation events via the existing `LocationContribution` pipeline.
-  * Added `process_partner_data_file_uploads` management command (run via AWS Batch) to validate partner field columns against contributor permissions and JSON schemas, create moderation events per row, and write per-row `error` and `moderation_id` feedback back to the sheet.
-  * Registered `PartnerDataFileUpload` in Django admin; saving a new upload submits an AWS Batch job, sets status to `PROCESSING`, and stores the returned job ID.
+
+- [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added partner Google Sheet upload processing for partner-field production location updates:
+  - Added `api.partner_data_file_upload` with Google Sheets I/O, sheet/header/column parsing, AWS Batch submission, and row processing that creates pending `UPDATE` moderation events via the existing `LocationContribution` pipeline.
+  - Added `process_partner_data_file_uploads` management command (run via AWS Batch) to validate partner field columns against contributor permissions and JSON schemas, create moderation events per row, and write per-row `error` and `moderation_id` feedback back to the sheet.
+  - Registered `PartnerDataFileUpload` in Django admin; saving a new upload submits an AWS Batch job, sets status to `PROCESSING`, and stores the returned job ID.
 
 ### Architecture/Environment changes
-* [OSDEV-2665](https://opensupplyhub.atlassian.net/browse/OSDEV-2665) - Added DMARC `_dmarc` TXT records in Route 53 to enable external compliance monitoring via `inbound.axl.net`: `opensupplyhub.org` (`p=reject`, replaces the previous `aws-accounting@opensupplyhub.org` `rua` address), `openapparel.org` (`p=none`, adds `rua` reporting address), and `os-hub.net` (`p=none`). Each record is owned by a single Terraform environment to avoid duplicate Route 53 entries when multiple envs share the same hosted zone: `opensupplyhub.org` and `openapparel.org` are provisioned on `Production` deploy only; `os-hub.net` is provisioned on `Test` deploy only. All other environments (`Development`, `Preprod`, `Staging`, `Rba`) skip these resources via `count = 0`.
-* [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days (1 year) for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
-* [OSDEV-2782](https://opensupplyhub.atlassian.net/browse/OSDEV-2782) - Added an `aws_s3_bucket_public_access_block` resource for the React frontend S3 bucket in `deployment/terraform/cdn.tf` to enable all four Block Public Access flags (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`). No functional impact: the bucket is fronted by CloudFront via an Origin Access Identity, so BPA does not affect the read path.
-* [OSDEV-2662](https://opensupplyhub.atlassian.net/browse/OSDEV-2662) - Added a dedicated CloudFront distribution with a CloudFront Function to permanently redirect `info.openapparel.org` to `https://info.opensupplyhub.org`, resolving a subdomain takeover risk flagged in the SOC 2 external vulnerability scan (the subdomain previously pointed to a decommissioned Servd host returning 404). Includes a new ACM certificate for `info.openapparel.org` and Route 53 A/AAAA alias records in the `openapparel.org` hosted zone.
-* [OSDEV-2663](https://opensupplyhub.atlassian.net/browse/OSDEV-2663) - Updated TLS security policy on all endpoints to disallow TLSv1.0 and TLSv1.1, flagged in the April SOC 2 vulnerability scan. ALB HTTPS listeners now enforce `ELBSecurityPolicy-TLS13-1-2-Res-2021-06` (TLS 1.2 minimum, TLS 1.3 supported) via `ssl_policy` on `aws_lb_listener.app` in `container_service.tf`. CloudFront distributions now use `TLSv1.2_2021` as the minimum viewer protocol version (up from `TLSv1.2_2018`) and restrict the CloudFront-to-ALB origin connection to `TLSv1.2` only.
-* [OSDEV-2726](https://opensupplyhub.atlassian.net/browse/OSDEV-2726) - Patched the SOC 2 / Dependabot batch of low-severity vulnerabilities across the repo. Changes by area:
-  * **Docker base images** — Bumped `src/dedupe-hub/api/Dockerfile` from `python:3.7` to `python:3.10` (and added a `cython<3` pip constraint so `dedupe`'s legacy build still compiles), bumped `src/tests/Dockerfile` from `python:3.7` to `python:3.11-slim-bookworm`, and bumped `src/e2e/Dockerfile` from `mcr.microsoft.com/playwright:v1.48.1` to `v1.60.0` to keep the bundled browser binaries in sync with the upgraded Playwright JS library.
-  * **Backend Python deps** — `src/django/requirements.txt`: `django` 5.2.10 → 5.2.14, `django-allauth` 64.0.0 → 65.14.1, `requests` 2.32.3 → 2.33.0. `src/dedupe-hub/api/requirements.txt`: `numpy` 1.21.6 → 1.22.4. `src/tests/requirements.txt`: `requests` 2.31.0 → 2.33.0. `deployment/terraform/database_anonymizer_scheduled_task/docker/requirements.txt`: `pg8000` 1.31.2 → 1.31.5.
-  * **Frontend direct deps** (`src/react/package.json`) — `axios` 0.28.0 → 1.16.1, `lodash` 4.17.21 → 4.17.23, `validator` 13.7.0 → 13.15.22, `xlsx` 0.18.5 → SheetJS CDN tarball 0.20.3 (npm registry no longer ships patched releases), `http-proxy-middleware` 0.19.1 → ^2.0.7.
-  * **Frontend Yarn `resolutions` block** (`src/react/package.json`) — Added a `resolutions` block to pin vulnerable transitive deps that cannot be reached via direct `dependencies` bumps because they're pulled in deep by `react-scripts`/CRA. Covers: `qs` 6.14.2, `on-headers` 1.1.0, `brace-expansion` 1.1.12, `node-forge` 1.3.1, `express` 4.21.2, `serve-static` 1.16.2, `send` 0.19.0, `cookie` 0.7.2, `pbkdf2` 3.1.3, `shell-quote` 1.8.1, `cipher-base` 1.0.6, `sha.js` 2.4.12, `form-data` 4.0.4, `loader-utils` 2.0.4, `ejs` 3.1.10, `json-schema` 0.4.0, `react-dev-utils/immer` 9.0.21, `tmp` 0.2.5, `yaml` 1.10.3, `bn.js` 5.2.3, `ajv` 6.14.0, `@babel/helpers` 7.26.10, `@babel/runtime` 7.26.10, `@babel/runtime-corejs3` 7.26.10, `tar` 6.2.1, `browserslist` 4.24.4, `tough-cookie` 4.1.4, `nanoid` 3.3.8, `micromatch` 4.0.8, `picomatch` 2.3.2, `follow-redirects` 1.16.0, `protocol-buffers-schema` 3.6.1, `minimatch` 3.1.3, scoped `express/path-to-regexp` 0.1.13 and `react-router/path-to-regexp` 1.9.0 (two coexisting major lines), `flatted` 3.4.2, `immutable` 3.8.3, `rollup` 2.80.0, `ansi-html` 0.0.8, `semver` 7.5.2, `node-fetch` 2.6.7, `is-svg` 4.3.0, `nth-check` 2.0.1, `ws` 8.17.1, `braces` 3.0.3, `cross-spawn` 7.0.5, `body-parser` 1.20.3, `@babel/plugin-transform-modules-systemjs` 7.29.4, `http-proxy-middleware` 2.0.7, and `node-releases` 2.0.14 (held at the last Node 14-compatible release so the existing `node:14-slim` dev image keeps working).
-  * **Frontend code change** — `src/react/src/setupProxy.js` migrated from the legacy default-export `http-proxy-middleware` 0.x API (`proxy(path, options)`) to the v2.x named-export API (`createProxyMiddleware(options)` passed to `app.use(path, …)`), so the upgraded library functions without behavior change.
-  * **E2E tests** — `src/e2e/package.json` bumps `@playwright/test` from `^1.48.1` to `^1.55.1` (resolves to 1.60.0) to patch CVE-2025-59288; `src/e2e/package-lock.json` regenerated to match so `npm ci` succeeds in the e2e Dockerfile build.
-* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added dedicated AWS Batch infrastructure for partner Google Sheet uploads:
-  * Provisioned a dedicated compute environment, job queue (`queue*PartnerDataFileUpload`), and job definition (`job*PartnerDataFileUpload`) for partner sheet processing, replacing the unused direct data load batch job definition.
-  * Added `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME` and `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME` to the ECS app task definition so admin Batch submission uses the partner job definition (`queueentryuuid`) instead of the default facility-list job definition (`listid`/`action`).
-  * Trimmed the partner Batch worker job definition to essential environment variables and skipped Batch submit-setting validation in Django when `BATCH_MODE=True`.
+
+- [OSDEV-2665](https://opensupplyhub.atlassian.net/browse/OSDEV-2665) - Added DMARC `_dmarc` TXT records in Route 53 to enable external compliance monitoring via `inbound.axl.net`: `opensupplyhub.org` (`p=reject`, replaces the previous `aws-accounting@opensupplyhub.org` `rua` address), `openapparel.org` (`p=none`, adds `rua` reporting address), and `os-hub.net` (`p=none`). Each record is owned by a single Terraform environment to avoid duplicate Route 53 entries when multiple envs share the same hosted zone: `opensupplyhub.org` and `openapparel.org` are provisioned on `Production` deploy only; `os-hub.net` is provisioned on `Test` deploy only. All other environments (`Development`, `Preprod`, `Staging`, `Rba`) skip these resources via `count = 0`.
+- [OSDEV-2783](https://opensupplyhub.atlassian.net/browse/OSDEV-2783) - Increased CloudWatch Log Group retention to 365 days (1 year) for all Terraform-managed log groups (`app`, `cli`, `dd`, `kafka`, `app_logstash`, `opensearch`, `redirect_to_s3_origin`, `add_security_headers`, `nlb_targets_registrar`, `anonymized_database_dump`, `database_anonymizer`).
+- [OSDEV-2782](https://opensupplyhub.atlassian.net/browse/OSDEV-2782) - Added an `aws_s3_bucket_public_access_block` resource for the React frontend S3 bucket in `deployment/terraform/cdn.tf` to enable all four Block Public Access flags (`BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`). No functional impact: the bucket is fronted by CloudFront via an Origin Access Identity, so BPA does not affect the read path.
+- [OSDEV-2662](https://opensupplyhub.atlassian.net/browse/OSDEV-2662) - Added a dedicated CloudFront distribution with a CloudFront Function to permanently redirect `info.openapparel.org` to `https://info.opensupplyhub.org`, resolving a subdomain takeover risk flagged in the SOC 2 external vulnerability scan (the subdomain previously pointed to a decommissioned Servd host returning 404). Includes a new ACM certificate for `info.openapparel.org` and Route 53 A/AAAA alias records in the `openapparel.org` hosted zone.
+- [OSDEV-2663](https://opensupplyhub.atlassian.net/browse/OSDEV-2663) - Updated TLS security policy on all endpoints to disallow TLSv1.0 and TLSv1.1, flagged in the April SOC 2 vulnerability scan. ALB HTTPS listeners now enforce `ELBSecurityPolicy-TLS13-1-2-Res-2021-06` (TLS 1.2 minimum, TLS 1.3 supported) via `ssl_policy` on `aws_lb_listener.app` in `container_service.tf`. CloudFront distributions now use `TLSv1.2_2021` as the minimum viewer protocol version (up from `TLSv1.2_2018`) and restrict the CloudFront-to-ALB origin connection to `TLSv1.2` only.
+- [OSDEV-2726](https://opensupplyhub.atlassian.net/browse/OSDEV-2726) - Patched the SOC 2 / Dependabot batch of low-severity vulnerabilities across the repo. Changes by area:
+  - **Docker base images** — Bumped `src/dedupe-hub/api/Dockerfile` from `python:3.7` to `python:3.10` (and added a `cython<3` pip constraint so `dedupe`'s legacy build still compiles), bumped `src/tests/Dockerfile` from `python:3.7` to `python:3.11-slim-bookworm`, and bumped `src/e2e/Dockerfile` from `mcr.microsoft.com/playwright:v1.48.1` to `v1.60.0` to keep the bundled browser binaries in sync with the upgraded Playwright JS library.
+  - **Backend Python deps** — `src/django/requirements.txt`: `django` 5.2.10 → 5.2.14, `django-allauth` 64.0.0 → 65.14.1, `requests` 2.32.3 → 2.33.0. `src/dedupe-hub/api/requirements.txt`: `numpy` 1.21.6 → 1.22.4. `src/tests/requirements.txt`: `requests` 2.31.0 → 2.33.0. `deployment/terraform/database_anonymizer_scheduled_task/docker/requirements.txt`: `pg8000` 1.31.2 → 1.31.5.
+  - **Frontend direct deps** (`src/react/package.json`) — `axios` 0.28.0 → 1.16.1, `lodash` 4.17.21 → 4.17.23, `validator` 13.7.0 → 13.15.22, `xlsx` 0.18.5 → SheetJS CDN tarball 0.20.3 (npm registry no longer ships patched releases), `http-proxy-middleware` 0.19.1 → ^2.0.7.
+  - **Frontend Yarn `resolutions` block** (`src/react/package.json`) — Added a `resolutions` block to pin vulnerable transitive deps that cannot be reached via direct `dependencies` bumps because they're pulled in deep by `react-scripts`/CRA. Covers: `qs` 6.14.2, `on-headers` 1.1.0, `brace-expansion` 1.1.12, `node-forge` 1.3.1, `express` 4.21.2, `serve-static` 1.16.2, `send` 0.19.0, `cookie` 0.7.2, `pbkdf2` 3.1.3, `shell-quote` 1.8.1, `cipher-base` 1.0.6, `sha.js` 2.4.12, `form-data` 4.0.4, `loader-utils` 2.0.4, `ejs` 3.1.10, `json-schema` 0.4.0, `react-dev-utils/immer` 9.0.21, `tmp` 0.2.5, `yaml` 1.10.3, `bn.js` 5.2.3, `ajv` 6.14.0, `@babel/helpers` 7.26.10, `@babel/runtime` 7.26.10, `@babel/runtime-corejs3` 7.26.10, `tar` 6.2.1, `browserslist` 4.24.4, `tough-cookie` 4.1.4, `nanoid` 3.3.8, `micromatch` 4.0.8, `picomatch` 2.3.2, `follow-redirects` 1.16.0, `protocol-buffers-schema` 3.6.1, `minimatch` 3.1.3, scoped `express/path-to-regexp` 0.1.13 and `react-router/path-to-regexp` 1.9.0 (two coexisting major lines), `flatted` 3.4.2, `immutable` 3.8.3, `rollup` 2.80.0, `ansi-html` 0.0.8, `semver` 7.5.2, `node-fetch` 2.6.7, `is-svg` 4.3.0, `nth-check` 2.0.1, `ws` 8.17.1, `braces` 3.0.3, `cross-spawn` 7.0.5, `body-parser` 1.20.3, `@babel/plugin-transform-modules-systemjs` 7.29.4, `http-proxy-middleware` 2.0.7, and `node-releases` 2.0.14 (held at the last Node 14-compatible release so the existing `node:14-slim` dev image keeps working).
+  - **Frontend code change** — `src/react/src/setupProxy.js` migrated from the legacy default-export `http-proxy-middleware` 0.x API (`proxy(path, options)`) to the v2.x named-export API (`createProxyMiddleware(options)` passed to `app.use(path, …)`), so the upgraded library functions without behavior change.
+  - **E2E tests** — `src/e2e/package.json` bumps `@playwright/test` from `^1.48.1` to `^1.55.1` (resolves to 1.60.0) to patch CVE-2025-59288; `src/e2e/package-lock.json` regenerated to match so `npm ci` succeeds in the e2e Dockerfile build.
+- [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Added dedicated AWS Batch infrastructure for partner Google Sheet uploads:
+  - Provisioned a dedicated compute environment, job queue (`queue*PartnerDataFileUpload`), and job definition (`job*PartnerDataFileUpload`) for partner sheet processing, replacing the unused direct data load batch job definition.
+  - Added `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_QUEUE_NAME` and `BATCH_PARTNER_DATA_FILE_UPLOAD_JOB_DEF_NAME` to the ECS app task definition so admin Batch submission uses the partner job definition (`queueentryuuid`) instead of the default facility-list job definition (`listid`/`action`).
+  - Trimmed the partner Batch worker job definition to essential environment variables and skipped Batch submit-setting validation in Django when `BATCH_MODE=True`.
 
 ### Bugfix
-* [OSDEV-2862](https://opensupplyhub.atlassian.net/browse/OSDEV-2862) - Fixed the password reset link failing to open the reset form when the token contained a hyphen. The `authResetPasswordFormRoute` pattern (`/accounts/password/reset/key/:uid-:token/`) matched `:uid` greedily, so tokens containing `-` were split incorrectly and the route did not resolve. The route now uses explicit regex constraints (`:uid([^-]+)-:token([^/]+)`) to capture the uid up to the first hyphen and the full token up to the trailing slash.
-* [OSDEV-2805](https://opensupplyhub.atlassian.net/browse/OSDEV-2805) - Fixed dedupe-hub service crashing on startup with `Initial Gazetteer Build Error: module 'time' has no attribute 'clock'`. `dedupe==1.9.4` calls `time.clock()` internally, which was removed in Python 3.8. Added a compatibility shim in `src/dedupe-hub/api/app/main.py` that assigns `time.perf_counter` as a drop-in replacement before any dedupe imports run.
-* [OSDEV-2804](https://opensupplyhub.atlassian.net/browse/OSDEV-2804) - Fixed the Deploy to AWS pipeline failing during `terraform init` with a 504 Gateway Timeout from GitHub when installing the unused `zywillc/kafka` provider (v1.0.1). Removed the provider declaration from `deployment/terraform/versions.tf` — all `kafka_topic` resources and the `provider "kafka"` block in `kafka.tf` were already commented out, making the declaration dead code.
-* [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
-  * The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
-  * The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
-  * The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
-  * The Admin Dashboard Pending and Approved filters now correctly isolate lists by their actual status; previously, active non-replaced lists of any status could appear in either filter.
-* [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
+
+- [OSDEV-2862](https://opensupplyhub.atlassian.net/browse/OSDEV-2862) - Fixed the password reset link failing to open the reset form when the token contained a hyphen. The `authResetPasswordFormRoute` pattern (`/accounts/password/reset/key/:uid-:token/`) matched `:uid` greedily, so tokens containing `-` were split incorrectly and the route did not resolve. The route now uses explicit regex constraints (`:uid([^-]+)-:token([^/]+)`) to capture the uid up to the first hyphen and the full token up to the trailing slash.
+- [OSDEV-2805](https://opensupplyhub.atlassian.net/browse/OSDEV-2805) - Fixed dedupe-hub service crashing on startup with `Initial Gazetteer Build Error: module 'time' has no attribute 'clock'`. `dedupe==1.9.4` calls `time.clock()` internally, which was removed in Python 3.8. Added a compatibility shim in `src/dedupe-hub/api/app/main.py` that assigns `time.perf_counter` as a drop-in replacement before any dedupe imports run.
+- [OSDEV-2804](https://opensupplyhub.atlassian.net/browse/OSDEV-2804) - Fixed the Deploy to AWS pipeline failing during `terraform init` with a 504 Gateway Timeout from GitHub when installing the unused `zywillc/kafka` provider (v1.0.1). Removed the provider declaration from `deployment/terraform/versions.tf` — all `kafka_topic` resources and the `provider "kafka"` block in `kafka.tf` were already commented out, making the declaration dead code.
+- [OSDEV-555](https://opensupplyhub.atlassian.net/browse/OSDEV-555) - Fixed several bugs in the list replacement workflow:
+  - The Admin Dashboard Pending filter no longer shows lists that are in a REPLACED state (have an active replacement link) or are inactive (`is_active=False`).
+  - The Admin Dashboard Approved filter no longer shows lists that have been replaced; a replaced list must only appear in the Replaced filter.
+  - The "Select a list to replace" dropdown on the Upload screen now only shows eligible lists (status `PENDING`, or `APPROVED` with an active source). Replaced, Rejected, and inactive lists are hidden. A matching backend guard was added to enforce this via the API.
+  - The Admin Dashboard Pending and Approved filters now correctly isolate lists by their actual status; previously, active non-replaced lists of any status could appear in either filter.
+- [OSDEV-2779](https://opensupplyhub.atlassian.net/browse/OSDEV-2779) - Fixed embedded map location profiles showing only Name and Sector after opening a facility from the map. `getFilteredSearchForEmbed()` (introduced in OSDEV-2352) preserved only the `contributor` query parameter when building embed detail URLs, but embed list URLs use `contributors`. Clicking a facility dropped the contributor ID from the URL, so embed config was not loaded and the facility API was not called with embed contributor context. The helper now preserves `contributors` so configured embed fields render on the profile again.
 
 ### What's new
-* [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Moderators can submit partner Google Sheets through Django admin (**Partner Data File Uploads**) to apply partner-field production location updates without using the API. Each row with a valid `os_id` creates a pending moderation event; row-level outcomes appear in `error` and `moderation_id` columns added to the sheet.
-* [OSDEV-2788](https://opensupplyhub.atlassian.net/browse/OSDEV-2788) - A banner has been added to the "Add data" and "Claim a Production Location" pages notifying contributors about the upcoming data moderation pause, hidden behind the enable_moderation_pause_info waffle switch.
-* [OSDEV-2861](https://opensupplyhub.atlassian.net/browse/OSDEV-2861) - Renamed the platform search filter label from **Spotlight Data Partners** to **Spotlight Partners** on the homepage and facilities search sidebars, aligning with product terminology introduced in [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542).
-* [OSDEV-2768](https://opensupplyhub.atlassian.net/browse/OSDEV-2768) - Added a guidance banner to the post-registration success screen. If users do not receive their confirmation email within 24 hours, the banner instructs them to check their spam folder, allowlist `@opensupplyhub.org`, or contact their IT department — reducing support requests from users who miss the verification email.
-* [OSDEV-2789](https://opensupplyhub.atlassian.net/browse/OSDEV-2789) - Updated data submission confirmation emails for claims, SLCs, and list uploads to reflect the new data moderation pause SLAs.
+
+- [OSDEV-2657](https://opensupplyhub.atlassian.net/browse/OSDEV-2657) - Moderators can submit partner Google Sheets through Django admin (**Partner Data File Uploads**) to apply partner-field production location updates without using the API. Each row with a valid `os_id` creates a pending moderation event; row-level outcomes appear in `error` and `moderation_id` columns added to the sheet.
+- [OSDEV-2788](https://opensupplyhub.atlassian.net/browse/OSDEV-2788) - A banner has been added to the "Add data" and "Claim a Production Location" pages notifying contributors about the upcoming data moderation pause, hidden behind the enable_moderation_pause_info waffle switch.
+- [OSDEV-2861](https://opensupplyhub.atlassian.net/browse/OSDEV-2861) - Renamed the platform search filter label from **Spotlight Data Partners** to **Spotlight Partners** on the homepage and facilities search sidebars, aligning with product terminology introduced in [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542).
+- [OSDEV-2768](https://opensupplyhub.atlassian.net/browse/OSDEV-2768) - Added a guidance banner to the post-registration success screen. If users do not receive their confirmation email within 24 hours, the banner instructs them to check their spam folder, allowlist `@opensupplyhub.org`, or contact their IT department — reducing support requests from users who miss the verification email.
+- [OSDEV-2789](https://opensupplyhub.atlassian.net/browse/OSDEV-2789) - Updated data submission confirmation emails for claims, SLCs, and list uploads to reflect the new data moderation pause SLAs.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.24.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 29, 2026
+
+- Product name: Open Supply Hub
+- Release date: May 29, 2026
 
 ### Code/API changes
-* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added Spotlight partner-contributor filtering support to platform search and facilities APIs. Introduced `partner_contributor` filtering on `GET /api/facilities/` and added a new `GET /api/partner-group-contributors/` endpoint to provide grouped filter options for the UI. Also made partner-contributor filtering logic reusable across both facility managers.
+
+- [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added Spotlight partner-contributor filtering support to platform search and facilities APIs. Introduced `partner_contributor` filtering on `GET /api/facilities/` and added a new `GET /api/partner-group-contributors/` endpoint to provide grouped filter options for the UI. Also made partner-contributor filtering logic reusable across both facility managers.
 
 ### Architecture/Environment changes
-* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). RBA `vpn_ec2_ami` remains `ami-0940c95b23a1f7cac`; the existing VPN instance already runs OpenSSH 8.7 with Terrapin mitigations (verified with Terrapin-Scanner).
-* [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Standardized SSH key secret usage in restore workflows by replacing `secrets.KEY_FILE` with `secrets.SSH_PRIVATE_KEY` in `.github/workflows/deploy_to_aws.yml` and `.github/workflows/db_apply_anonimized.yml`, removing duplicated secret management for the same bastion access key.
-* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a dedicated CloudFront cache behavior for `api/partner-group-contributors*` with configurable default/max TTL Terraform variables to reduce repeated origin traffic for the Spotlight Data Partners options endpoint.
+
+- [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Updated `bastion_ami` across all environments (Staging, Production, Pre-prod, Test, Development, RBA) from Amazon Linux 2 (`ami-0bb3fad3c0286ebd5`, OpenSSH 7.4p1) to Amazon Linux 2023 (`ami-03a25ed280b358f5b`) to patch CVE-2023-48795 (Terrapin SSH). RBA `vpn_ec2_ami` remains `ami-0940c95b23a1f7cac`; the existing VPN instance already runs OpenSSH 8.7 with Terrapin mitigations (verified with Terrapin-Scanner).
+- [OSDEV-2664](https://opensupplyhub.atlassian.net/browse/OSDEV-2664) - Standardized SSH key secret usage in restore workflows by replacing `secrets.KEY_FILE` with `secrets.SSH_PRIVATE_KEY` in `.github/workflows/deploy_to_aws.yml` and `.github/workflows/db_apply_anonimized.yml`, removing duplicated secret management for the same bastion access key.
+- [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a dedicated CloudFront cache behavior for `api/partner-group-contributors*` with configurable default/max TTL Terraform variables to reduce repeated origin traffic for the Spotlight Data Partners options endpoint.
 
 ### Bugfix
-* [OSDEV-1521](https://opensupplyhub.atlassian.net/browse/OSDEV-1521) - Fixed the email verification page showing a generic "Not found" error when a user clicks an already-used confirmation link. The backend now detects that the email address is already verified and returns an `already_confirmed` code (HTTP 400), and the frontend renders a clear "Your account is already active. Please log in with your username and password." message with a link to the login page.
-* [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
-* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
-* [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
-* [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
-* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
-* [Follow-up][OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Fixed `sync_databases` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` when no last-run timestamp file exists for a model. Replaced the invalid `django.utils.timezone.utc` reference with the stdlib `datetime.timezone.utc` for the default epoch fallback date.
 
-* [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Added a banner to the post-registration screen with guidance on what to do if the activation email is not received within 24 hours.
+- [OSDEV-1521](https://opensupplyhub.atlassian.net/browse/OSDEV-1521) - Fixed the email verification page showing a generic "Not found" error when a user clicks an already-used confirmation link. The backend now detects that the email address is already verified and returns an `already_confirmed` code (HTTP 400), and the frontend renders a clear "Your account is already active. Please log in with your username and password." message with a link to the login page.
+- [OSDEV-2416](https://opensupplyhub.atlassian.net/browse/OSDEV-2416) - Fixed percent-formatted columns in XLSX uploads being stored as raw decimals (e.g. `0.5`) when the column's second row was blank. The parser now checks the percent format on every cell individually, so values like `0.5` and `0.75` are correctly saved as `50%` and `75%`, and blank cells stay empty.
+- [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a `NotFoundError` on `insertBefore` that blocked facility claims when browser auto-translation (e.g. Google Translate) was active, by marking the root of the claim flow components (`ClaimFacility`, `ClaimIntro`, `ClaimForm`) with `translate="no"` / `notranslate` so the browser skips them for auto-traslation.
+- [OSDEV-1940](https://opensupplyhub.atlassian.net/browse/OSDEV-1940) - Fixed embedded map field-visibility being ignored: `EmbedConfigSerializer.get_extended_fields` previously returned every distinct `ExtendedField.field_name` for the contributor regardless of the user's checkbox selections, so columns like Facility Type and Processing Type kept rendering in the embedded map after being unchecked. The serializer now intersects those field names with `EmbedField` rows for the current embed config where `visible=True`, so hidden fields are properly excluded from the serialized output.
+- [OSDEV-2724](https://opensupplyhub.atlassian.net/browse/OSDEV-2724) - Fixed facility list table header displaying "1" as a row number instead of being blank. Data rows are now numbered sequentially starting from 1. The total row count was always correct and remains unaffected.
+- [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Updated activation email copy to be clearer and more action-oriented, and replaced the plain text URL with a styled button.
+- [Follow-up][OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Fixed `sync_databases` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` when no last-run timestamp file exists for a model. Replaced the invalid `django.utils.timezone.utc` reference with the stdlib `datetime.timezone.utc` for the default epoch fallback date.
+
+- [OSDEV-2528](https://opensupplyhub.atlassian.net/browse/OSDEV-2528) - Added a banner to the post-registration screen with guidance on what to do if the activation email is not received within 24 hours.
 
 ### What's new
-* [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied. The filter is hidden when the `private_instance` feature flag is active (for example, private instances such as RBA).
-* [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
-* [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
+
+- [OSDEV-2542](https://opensupplyhub.atlassian.net/browse/OSDEV-2542) - Added a new two-level **Spotlight Data Partners** search filter to the platform homepage and facilities page so users can find production locations by Spotlight contributors. The filter lazy-loads grouped contributors (for example, by partner field group) and keeps selections in the URL query string, including map/tile result consistency when filters are applied. The filter is hidden when the `private_instance` feature flag is active (for example, private instances such as RBA).
+- [OSDEV-2694](https://opensupplyhub.atlassian.net/browse/OSDEV-2694) - Removed the sentence "This site was designed for low energy usage and is hosted on data centers using 100% renewable energy." from the platform footer. This copy applies to the info site only and was inadvertently included in the product footer.
+- [OSDEV-2695](https://opensupplyhub.atlassian.net/browse/OSDEV-2695) - Updated in-platform links previously pointing to `info.opensupplyhub.org/data-integrations` to point to `info.opensupplyhub.org/spotlight`, reflecting the superseded info site page.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.23.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 15, 2026
+
+- Product name: Open Supply Hub
+- Release date: May 15, 2026
 
 ### Bugfix
-* [OSDEV-2717](https://opensupplyhub.atlassian.net/browse/OSDEV-2717) - Fixed HTTP 500 (`pylibmc.TooBig`) on `GET /api/facilities/` by removing the `cache_page` decorator from `FacilitiesViewSet.list`. When `detail=true` is passed, the response includes four additional fields per facility (`contributors`, `extended_fields`, `contributor_fields`, `sector`), causing the serialized page to exceed Memcached's 1 MB item size limit. Removing caching from this endpoint resolves the crash for all requests to the facilities list.
+
+- [OSDEV-2717](https://opensupplyhub.atlassian.net/browse/OSDEV-2717) - Fixed HTTP 500 (`pylibmc.TooBig`) on `GET /api/facilities/` by removing the `cache_page` decorator from `FacilitiesViewSet.list`. When `detail=true` is passed, the response includes four additional fields per facility (`contributors`, `extended_fields`, `contributor_fields`, `sector`), causing the serialized page to exceed Memcached's 1 MB item size limit. Removing caching from this endpoint resolves the crash for all requests to the facilities list.
 
 ### Release instructions
-* Ensure that no commands are included in the `post_deployment` command.
 
+- Ensure that no commands are included in the `post_deployment` command.
 
 ## Release 2.23.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 15, 2026
+
+- Product name: Open Supply Hub
+- Release date: May 15, 2026
 
 ### Database changes
 
 #### Migrations
-* `0208_deactivate_replaced_list_sources.py` - Data migration that retroactively deactivates the `Source.is_active` flag for all facility lists that were already replaced by an approved list, fixing pre-existing stale active sources.
-* `0209_clear_replaces_on_rejected_lists.py` - Data migration that clears the `replaces` FK on all facility lists whose replacement was already rejected, restoring the original list to a non-replaced state.
-* `0210_deactivate_rejected_list_sources.py` - Data migration that sets `Source.is_active = False` for any rejected facility list whose source was never deactivated, fixing a small number of pre-existing anomalies where rejected lists remained active.
+
+- `0208_deactivate_replaced_list_sources.py` - Data migration that retroactively deactivates the `Source.is_active` flag for all facility lists that were already replaced by an approved list, fixing pre-existing stale active sources.
+- `0209_clear_replaces_on_rejected_lists.py` - Data migration that clears the `replaces` FK on all facility lists whose replacement was already rejected, restoring the original list to a non-replaced state.
+- `0210_deactivate_rejected_list_sources.py` - Data migration that sets `Source.is_active = False` for any rejected facility list whose source was never deactivated, fixing a small number of pre-existing anomalies where rejected lists remained active.
 
 ### Bugfix
-* [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
-* [OSDEV-2704](https://opensupplyhub.atlassian.net/browse/OSDEV-2704) - Fixed `check_api_limits` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` since the Django 3.2→5.2 upgrade. Replaced the removed `django.utils.timezone.utc` with the stdlib `datetime.timezone.utc`. Added a regression test that invokes the command via `call_command()` to cover the entry point.
+
+- [OSDEV-463](https://opensupplyhub.atlassian.net/browse/OSDEV-463) - Fixed two bugs in replaced list handling: (1) approving a replacement list now sets `Source.is_active = False` on the original (replaced) list so it no longer appears active; (2) rejecting a replacement list now clears the `replaces` FK so the original list is no longer marked as replaced and can be replaced again.
+- [OSDEV-2704](https://opensupplyhub.atlassian.net/browse/OSDEV-2704) - Fixed `check_api_limits` management command crashing with `AttributeError: module 'django.utils.timezone' has no attribute 'utc'` since the Django 3.2→5.2 upgrade. Replaced the removed `django.utils.timezone.utc` with the stdlib `datetime.timezone.utc`. Added a regression test that invokes the command via `call_command()` to cover the entry point.
 
 ### Code/API changes
-* Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
-* [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Updated download limits logic: exempt API-token requests from data download limits, add idempotent duplicate webhook handling, and use `get_or_create` for `FacilityDownloadLimit` in the checkout webhook.
-* [OSDEV-2589](https://opensupplyhub.atlassian.net/browse/OSDEV-2589) - Added `apply_schema_defaults` to populate missing partner field values from JSON Schema defaults in both the Production Locations API response and the CSV download serializer. Refactored `ProductionLocations` view to use `get_cached_all_partner_fields()` instead of the removed `PARTNER_FIELD_NAMES_KEY` cache, and deep-copy raw values before applying defaults to avoid mutating stored data.
-* [OSDEV-2654](https://opensupplyhub.atlassian.net/browse/OSDEV-2654) - Added 'Existing OSID' section to the SLC moderation dashboard for all UPDATE SLC submissions.
+
+- Added configurable view-level caching (`MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS`, defaults to 600s) to contributor and facility endpoints (`all_contributors`, `ContributorFacilityListSortedViewSet`, `ContributorFacilityListViewSet`, `FacilitiesViewSet.list`, `FacilitiesViewSet.retrieve`, `UserProfileFacilities`, `UserProfileFacilityLists`) to reduce database load.
+- [OSDEV-2659](https://opensupplyhub.atlassian.net/browse/OSDEV-2659) - Updated download limits logic: exempt API-token requests from data download limits, add idempotent duplicate webhook handling, and use `get_or_create` for `FacilityDownloadLimit` in the checkout webhook.
+- [OSDEV-2589](https://opensupplyhub.atlassian.net/browse/OSDEV-2589) - Added `apply_schema_defaults` to populate missing partner field values from JSON Schema defaults in both the Production Locations API response and the CSV download serializer. Refactored `ProductionLocations` view to use `get_cached_all_partner_fields()` instead of the removed `PARTNER_FIELD_NAMES_KEY` cache, and deep-copy raw values before applying defaults to avoid mutating stored data.
+- [OSDEV-2654](https://opensupplyhub.atlassian.net/browse/OSDEV-2654) - Added 'Existing OSID' section to the SLC moderation dashboard for all UPDATE SLC submissions.
 
 ### What's new
-* [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
-* [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
-* [OSDEV-2547](https://opensupplyhub.atlassian.net/browse/OSDEV-2547) - Refactored field tests and added warning pop-ups for the SLC submission form.
-* [OSDEV-2360](https://opensupplyhub.atlassian.net/browse/OSDEV-2360) - Updated how we write os_id for moderation events so we are not dependent on Logstash to write the os_id.
-* [OSDEV-2591](https://opensupplyhub.atlassian.net/browse/OSDEV-2591) - Fixed missing `processing_type_facility_type_raw`, `facility_type`, `processing_type`, and `product_type` values in data downloads for claimed facilities. The old `get_extended_fields_raw` filtering excluded extended fields from non-claimant contributors, causing these columns to appear blank in exports despite being visible on the location profile page.
+
+- [OSDEV-1227](https://opensupplyhub.atlassian.net/browse/OSDEV-1227) - Replaced "Rejected" with "Feedback Phase" on user-facing list status pages (My Lists table, list detail page, and status summary message) to use more welcoming language.
+- [OSDEV-2121](https://opensupplyhub.atlassian.net/browse/OSDEV-2121) - Updated the data download limits lead-in copy to not display when a user performs an unfiltered search without any search criteria or filters selected.
+- [OSDEV-2547](https://opensupplyhub.atlassian.net/browse/OSDEV-2547) - Refactored field tests and added warning pop-ups for the SLC submission form.
+- [OSDEV-2360](https://opensupplyhub.atlassian.net/browse/OSDEV-2360) - Updated how we write os_id for moderation events so we are not dependent on Logstash to write the os_id.
+- [OSDEV-2591](https://opensupplyhub.atlassian.net/browse/OSDEV-2591) - Fixed missing `processing_type_facility_type_raw`, `facility_type`, `processing_type`, and `product_type` values in data downloads for claimed facilities. The old `get_extended_fields_raw` filtering excluded extended fields from non-claimant contributors, causing these columns to appear blank in exports despite being visible on the location profile page.
 
 ### Architecture/Environment changes
-* Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.
+
+- Increased the RDS `work_mem` parameter from 20000 KB to 65536 KB (64 MB) in Terraform configuration to improve query performance for memory-intensive operations.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `backfill_moderation_event_os_id`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `backfill_moderation_event_os_id`
 
 ## Release 2.22.2
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 29, 2026
+
+- Product name: Open Supply Hub
+- Release date: April 29, 2026
 
 ### Bugfix
-* [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
+
+- [OSDEV-2563](https://opensupplyhub.atlassian.net/browse/OSDEV-2563) - Fix partner fields in facility download to use unfiltered extended fields, and add 10-minute cache to the all_contributors endpoint.
 
 ### What's new
-* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Hyphenate Spotlight Partners description text in the **Understanding Data Sources** section.
-* [OSDEV-2564](https://opensupplyhub.atlassian.net/browse/OSDEV-2564) - Renamed navbar labels ('Premium Features' → 'Featured Solutions', 'Data Cleaning Service' → 'Embedded Map', 'Pricing' → 'Solutions') and updated corresponding InfoPaths to align with new feature naming.
+
+- [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Hyphenate Spotlight Partners description text in the **Understanding Data Sources** section.
+- [OSDEV-2564](https://opensupplyhub.atlassian.net/browse/OSDEV-2564) - Renamed navbar labels ('Premium Features' → 'Featured Solutions', 'Data Cleaning Service' → 'Embedded Map', 'Pricing' → 'Solutions') and updated corresponding InfoPaths to align with new feature naming.
 
 ### Release instructions
-* Ensure that no commands are included in the `post_deployment` command.
 
+- Ensure that no commands are included in the `post_deployment` command.
 
 ## Release 2.22.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 28, 2026
+
+- Product name: Open Supply Hub
+- Release date: April 28, 2026
 
 ### What's new
-* [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Updated Production Location page copy in the Spotlight section and in **Understanding Data Sources** so language stays inclusive as Spotlight expands beyond strictly social or environmental data:
-    * **Spotlight (data present)** — The section subheading no longer limits partner-hosted data to “social or environmental”; it now describes additional data about the location, its context, and/or operations in general terms.
-    * **Spotlight (no partner data)** — The empty state text no longer describes partner data as “social and environmental”; it now uses the same broader “additional data” wording, with the “no partner data” callout unchanged.
-    * **Understanding Data Sources → Spotlight Partners** — The short description for Spotlight Partners now reads: *Additional information about facility operations or context shared by third party platforms* (replacing the prior “social or environmental” framing). These are text-only changes intended for a midweek hotfix.
+
+- [OSDEV-2557](https://opensupplyhub.atlassian.net/browse/OSDEV-2557) - Updated Production Location page copy in the Spotlight section and in **Understanding Data Sources** so language stays inclusive as Spotlight expands beyond strictly social or environmental data:
+  - **Spotlight (data present)** — The section subheading no longer limits partner-hosted data to “social or environmental”; it now describes additional data about the location, its context, and/or operations in general terms.
+  - **Spotlight (no partner data)** — The empty state text no longer describes partner data as “social and environmental”; it now uses the same broader “additional data” wording, with the “no partner data” callout unchanged.
+  - **Understanding Data Sources → Spotlight Partners** — The short description for Spotlight Partners now reads: _Additional information about facility operations or context shared by third party platforms_ (replacing the prior “social or environmental” framing). These are text-only changes intended for a midweek hotfix.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `reindex_locations_with_approved_claim`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `reindex_locations_with_approved_claim`
 
 ## Release 2.22.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 25, 2026
+
+- Product name: Open Supply Hub
+- Release date: April 25, 2026
 
 ### Database changes
 
 #### Migrations
-* 0207_add_energy_and_throughput_to_index_approved_claim.py — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
+
+- 0207_add_energy_and_throughput_to_index_approved_claim.py — Updates the `index_approved_claim` SQL function to include `point_of_contact_email`, `opening_date`, `closing_date`, `estimated_annual_throughput`, and all energy consumption fields in the approved claim JSON, enabling their exposure as dedicated download columns. Also fixes `parent_company_name` to be resolved via a live JOIN against `api_contributor` when a FK is set, preventing stale values in the download when the parent company is updated.
 
 ### What's new
-* [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
-  * `claim_created_at` — date the claim was created (auto-calculated, not entered by the claimant).
-  * **Claim step 2 - Contact Information**
-    * `claim_point_of_contact` — **Contact Name** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
-    * `claim_point_of_contact_email` — **Contact Email** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
-  * **Claim step 4 - Profile information**
-    * `claim_name_in_native_language` — **Production Location Name in Native Language** field.
-    * `claim_company_phone` — **Company Phone** field; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.
-    * `claim_company_website` — **Company Website** field; only included when the **Facility website publicly visible** flag is enabled in Django Admin.
-    * `claim_description` — **Production Location Description** field.
-    * `claim_parent_company` — **Parent Company Name / Supplier Group** field.
-    * `claim_office_name` — **Office Name** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
-    * `claim_office_address` — **Office Address** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
-    * `claim_office_country_code` — **Office Country** field (country code); only included when the **Office info publicly visible** flag is enabled in Django Admin.
-    * `claim_office_phone_number` — office phone number; only included when the **Office info publicly visible** flag is enabled in Django Admin. Not collected via the current claim form; settable in Django Admin only.
-    * `claim_industry_sectors` — **Industry / Sectors** field.
-    * `claim_location_types` — **Location Type(s)** field.
-    * `claim_other_location_type` — free-text other location type when a non-standard value is entered in the **Location Type(s)** field.
-    * `claim_product_types` — **Product Types** field.
-    * `claim_processing_types` — **Processing Type(s)** field.
-    * `claim_number_of_workers` — **Number of Workers** field.
-    * `claim_female_workers_percentage` — **Percentage of Female Workers** field.
-    * `claim_minimum_order_quantity` — **Minimum Order Quantity** field.
-    * `claim_average_lead_time` — **Average Lead Time** field.
-    * `claim_affiliations` — **Affiliations** field.
-    * `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** field.
-  * **Actual Annual Energy Consumption (Django Admin only)**
-    * `claim_opening_date` — facility opening date.
-    * `claim_closing_date` — facility closing date.
-    * `claim_estimated_annual_throughput_kg_year` — estimated annual throughput (unit: kg/year).
-    * `claim_energy_coal_j` — annual coal energy consumption (unit: Joules).
-    * `claim_energy_natural_gas_j` — annual natural gas energy consumption (unit: Joules).
-    * `claim_energy_diesel_j` — annual diesel energy consumption (unit: Joules).
-    * `claim_energy_kerosene_j` — annual kerosene energy consumption (unit: Joules).
-    * `claim_energy_biomass_j` — annual biomass energy consumption (unit: Joules).
-    * `claim_energy_charcoal_j` — annual charcoal energy consumption (unit: Joules).
-    * `claim_energy_animal_waste_j` — annual animal waste energy consumption (unit: Joules).
-    * `claim_energy_electricity_mwh` — annual electricity consumption (unit: MWh).
-    * `claim_energy_other_j` — annual other energy source consumption (unit: Joules).
-* [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
-    * **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
-    * **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
-    * **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
-    * Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `contributor_user_id`, `viewer_user_id` where applicable). The user id is sent as `contributor_user_id` (not `user_id`) so it does not collide with GA4’s reserved User-ID field; `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
-* [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
-* [OSDEV-2525](https://opensupplyhub.atlassian.net/browse/OSDEV-2525) - Added a "Spotlight Locations" section to user profiles that displays production locations associated with the contributor, with support for pagination and spotlight filtering based on partner fields.
-* [OSDEV-2423](https://opensupplyhub.atlassian.net/browse/OSDEV-2423) - Updated Swagger/OpenAPI documentation for `GET api/facilities/{os_id}/` to describe the `partner_fields` response property. Added `PartnerFieldEntrySerializer` for the schema, annotated the serializer method with `@swagger_serializer_method`, declared an explicit `200` response type, and included a `partner_fields` sample in the docstring.
-* [OSDEV-2273](https://opensupplyhub.atlassian.net/browse/OSDEV-2273) - Updated copy on the Claims Intro screen (eligibility requirements, step headings) and the Free Emissions Estimate section (title, description with Climate TRACE hyperlinks). Fixed backward quotation mark in Contact Info toggle text.
-* [OSDEV-2424](https://opensupplyhub.atlassian.net/browse/OSDEV-2424) - Added partner-field columns to CSV and XLSX facility downloads. Every `PartnerField` with `active=True` and `system_field=False` is appended after the `is_closed` column, followed by download-only columns for the two system partner fields (MIT Living Wage and WageIndicator).
-    * **Object-typed fields** (with a JSON Schema) flatten into one column per leaf using `.`-joined paths (e.g. `bsci_audit.submission_date`); nested schemas are walked in declaration order for deterministic column order.
-    * **Primitive fields** become a single column named after the field.
-    * **Multiple contributions** for the same field on one location are joined with `|`, matching existing `number_of_workers` / `product_type` behavior.
-    * **MIT Living Wage (download-only, 2 columns)** — `mit_living_wage.county_link` (`base_url` + FIPS county code, e.g. `https://livingwage.mit.edu/counties/25017`) and `mit_living_wage.county_link_text` (`display_text`) are synthesized at export time from `MITLivingWageProvider` output and the shared partner-field cache.
-    * **WageIndicator (download-only, 6 columns)** — For each link type on `WageIndicatorCountryData.LinkType` (`living_wage_link_national`, `minimum_wage_link_english`, `minimum_wage_link_national`) one URL column (`wage_indicator.<link_type>`) and one display-text column (`wage_indicator.<link_type>_text`) are projected from `WageIndicatorProvider.raw_values`.
-    * Both system-field blocks are synthesized via dedicated download-only helpers (`mit_living_wage_download_helper`, `wage_indicator_download_helper`) wired through `FacilityDownloadSerializerBase.get_mit_living_wage_*` / `get_wage_indicator_*`.
-    * **Download fast path** — System-field helpers call a new `SystemPartnerFieldProvider.fetch_only_raw_values()` method that skips the per-row `PartnerField` + `Contributor` lookups `fetch_data` does for the details endpoint (the download never renders provenance, so those queries are pure waste). As a consequence, the download no longer gates system-field cells on contributor assignment: if the underlying raw data exists (county match for MIT, `WageIndicatorCountryData` row for WI), the cells are populated.
-    * **Per-request dedup (WageIndicator only)** — The WageIndicator helper memoizes `fetch_only_raw_values` on the serializer instance, keyed by `country_code`, so a paginated download issues at most one `WageIndicatorCountryData` lookup per distinct country (typically 1–30) rather than one per row; both hits and misses are cached.
-    * **Caching** — `FacilitiesDownloadService.get_active_partner_fields()` and `FacilityIndexDetailsSerializer` share a `get_cached_all_partner_fields()` helper that caches the full `PartnerField` superset under `PARTNER_FIELD_LIST_KEY` (TTL: `PARTNER_FIELD_LIST_CACHE_TTL_SECONDS`) and filters in memory, so cache contents are consistent regardless of which caller warms it.
-* [OSDEV-2426](https://opensupplyhub.atlassian.net/browse/OSDEV-2426) - Added a site-wide maintenance banner that is displayed automatically when the `disable_list_uploading` waffle switch is active in Django Admin. The banner informs users that planned maintenance is in progress, that data uploads are temporarily unavailable, and that full service will resume shortly. Feature flags are now silently re-fetched on every React Router navigation, so the banner appears and disappears dynamically as the switch is toggled — without requiring a page refresh.
+
+- [OSDEV-2425](https://opensupplyhub.atlassian.net/browse/OSDEV-2425) - Added claim data columns to CSV and XLSX facility downloads. When a production location has an approved claim, the following columns are appended to the download.
+  - `claim_created_at` — date the claim was created (auto-calculated, not entered by the claimant).
+  - **Claim step 2 - Contact Information**
+    - `claim_point_of_contact` — **Contact Name** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+    - `claim_point_of_contact_email` — **Contact Email** field under "Production Location Contact Person"; only included when the **Point of contact publicly visible** flag is enabled in Django Admin.
+  - **Claim step 4 - Profile information**
+    - `claim_name_in_native_language` — **Production Location Name in Native Language** field.
+    - `claim_company_phone` — **Company Phone** field; only included when the **Facility phone number publicly visible** flag is enabled in Django Admin.
+    - `claim_company_website` — **Company Website** field; only included when the **Facility website publicly visible** flag is enabled in Django Admin.
+    - `claim_description` — **Production Location Description** field.
+    - `claim_parent_company` — **Parent Company Name / Supplier Group** field.
+    - `claim_office_name` — **Office Name** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    - `claim_office_address` — **Office Address** field; only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    - `claim_office_country_code` — **Office Country** field (country code); only included when the **Office info publicly visible** flag is enabled in Django Admin.
+    - `claim_office_phone_number` — office phone number; only included when the **Office info publicly visible** flag is enabled in Django Admin. Not collected via the current claim form; settable in Django Admin only.
+    - `claim_industry_sectors` — **Industry / Sectors** field.
+    - `claim_location_types` — **Location Type(s)** field.
+    - `claim_other_location_type` — free-text other location type when a non-standard value is entered in the **Location Type(s)** field.
+    - `claim_product_types` — **Product Types** field.
+    - `claim_processing_types` — **Processing Type(s)** field.
+    - `claim_number_of_workers` — **Number of Workers** field.
+    - `claim_female_workers_percentage` — **Percentage of Female Workers** field.
+    - `claim_minimum_order_quantity` — **Minimum Order Quantity** field.
+    - `claim_average_lead_time` — **Average Lead Time** field.
+    - `claim_affiliations` — **Affiliations** field.
+    - `claim_certifications_standards_regulations` — **Certifications / Standards / Regulations** field.
+  - **Actual Annual Energy Consumption (Django Admin only)**
+    - `claim_opening_date` — facility opening date.
+    - `claim_closing_date` — facility closing date.
+    - `claim_estimated_annual_throughput_kg_year` — estimated annual throughput (unit: kg/year).
+    - `claim_energy_coal_j` — annual coal energy consumption (unit: Joules).
+    - `claim_energy_natural_gas_j` — annual natural gas energy consumption (unit: Joules).
+    - `claim_energy_diesel_j` — annual diesel energy consumption (unit: Joules).
+    - `claim_energy_kerosene_j` — annual kerosene energy consumption (unit: Joules).
+    - `claim_energy_biomass_j` — annual biomass energy consumption (unit: Joules).
+    - `claim_energy_charcoal_j` — annual charcoal energy consumption (unit: Joules).
+    - `claim_energy_animal_waste_j` — annual animal waste energy consumption (unit: Joules).
+    - `claim_energy_electricity_mwh` — annual electricity consumption (unit: MWh).
+    - `claim_energy_other_j` — annual other energy source consumption (unit: Joules).
+- [OSDEV-2340](https://opensupplyhub.atlassian.net/browse/OSDEV-2340) - Added Google Analytics 4 (gtag) custom events for Spotlight partner and contributor link engagement, only after the user accepts analytics cookies:
+  - **`LOCATION_PARTNER_PROFILE_LINK_CLICK`** — partner profile links from the Spotlight contribution line or the related contributions drawer (More).
+  - **`LOCATION_PARTNER_EXTERNAL_LINK_CLICK`** — partner external links in Spotlight (including URL/URI field formats and delegated clicks on Source-by HTML).
+  - **`CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK`** — website link on the contributor profile.
+  - Events send the agreed parameters (e.g. `contributor_name`, `partner_group`, `link_placement`, `destination_url`, `destination_domain`, `os_id`, `partner_field_name`, `contributor_user_id`, `viewer_user_id` where applicable). The user id is sent as `contributor_user_id` (not `user_id`) so it does not collide with GA4’s reserved User-ID field; `page_location` is not sent as a custom parameter. Analytics helpers live under `src/react/src/util/analytics/` (consent gating, shared event names, `window.gtag` setup on accept).
+- [OSDEV-2396](https://opensupplyhub.atlassian.net/browse/OSDEV-2396) - The Spotlight (partner data) section on the Production Location page always displays, showing info about OS Hub's third-party data partnerships and a link to learn more when no partner data is available.
+- [OSDEV-2525](https://opensupplyhub.atlassian.net/browse/OSDEV-2525) - Added a "Spotlight Locations" section to user profiles that displays production locations associated with the contributor, with support for pagination and spotlight filtering based on partner fields.
+- [OSDEV-2423](https://opensupplyhub.atlassian.net/browse/OSDEV-2423) - Updated Swagger/OpenAPI documentation for `GET api/facilities/{os_id}/` to describe the `partner_fields` response property. Added `PartnerFieldEntrySerializer` for the schema, annotated the serializer method with `@swagger_serializer_method`, declared an explicit `200` response type, and included a `partner_fields` sample in the docstring.
+- [OSDEV-2273](https://opensupplyhub.atlassian.net/browse/OSDEV-2273) - Updated copy on the Claims Intro screen (eligibility requirements, step headings) and the Free Emissions Estimate section (title, description with Climate TRACE hyperlinks). Fixed backward quotation mark in Contact Info toggle text.
+- [OSDEV-2424](https://opensupplyhub.atlassian.net/browse/OSDEV-2424) - Added partner-field columns to CSV and XLSX facility downloads. Every `PartnerField` with `active=True` and `system_field=False` is appended after the `is_closed` column, followed by download-only columns for the two system partner fields (MIT Living Wage and WageIndicator).
+  - **Object-typed fields** (with a JSON Schema) flatten into one column per leaf using `.`-joined paths (e.g. `bsci_audit.submission_date`); nested schemas are walked in declaration order for deterministic column order.
+  - **Primitive fields** become a single column named after the field.
+  - **Multiple contributions** for the same field on one location are joined with `|`, matching existing `number_of_workers` / `product_type` behavior.
+  - **MIT Living Wage (download-only, 2 columns)** — `mit_living_wage.county_link` (`base_url` + FIPS county code, e.g. `https://livingwage.mit.edu/counties/25017`) and `mit_living_wage.county_link_text` (`display_text`) are synthesized at export time from `MITLivingWageProvider` output and the shared partner-field cache.
+  - **WageIndicator (download-only, 6 columns)** — For each link type on `WageIndicatorCountryData.LinkType` (`living_wage_link_national`, `minimum_wage_link_english`, `minimum_wage_link_national`) one URL column (`wage_indicator.<link_type>`) and one display-text column (`wage_indicator.<link_type>_text`) are projected from `WageIndicatorProvider.raw_values`.
+  - Both system-field blocks are synthesized via dedicated download-only helpers (`mit_living_wage_download_helper`, `wage_indicator_download_helper`) wired through `FacilityDownloadSerializerBase.get_mit_living_wage_*` / `get_wage_indicator_*`.
+  - **Download fast path** — System-field helpers call a new `SystemPartnerFieldProvider.fetch_only_raw_values()` method that skips the per-row `PartnerField` + `Contributor` lookups `fetch_data` does for the details endpoint (the download never renders provenance, so those queries are pure waste). As a consequence, the download no longer gates system-field cells on contributor assignment: if the underlying raw data exists (county match for MIT, `WageIndicatorCountryData` row for WI), the cells are populated.
+  - **Per-request dedup (WageIndicator only)** — The WageIndicator helper memoizes `fetch_only_raw_values` on the serializer instance, keyed by `country_code`, so a paginated download issues at most one `WageIndicatorCountryData` lookup per distinct country (typically 1–30) rather than one per row; both hits and misses are cached.
+  - **Caching** — `FacilitiesDownloadService.get_active_partner_fields()` and `FacilityIndexDetailsSerializer` share a `get_cached_all_partner_fields()` helper that caches the full `PartnerField` superset under `PARTNER_FIELD_LIST_KEY` (TTL: `PARTNER_FIELD_LIST_CACHE_TTL_SECONDS`) and filters in memory, so cache contents are consistent regardless of which caller warms it.
+- [OSDEV-2426](https://opensupplyhub.atlassian.net/browse/OSDEV-2426) - Added a site-wide maintenance banner that is displayed automatically when the `disable_list_uploading` waffle switch is active in Django Admin. The banner informs users that planned maintenance is in progress, that data uploads are temporarily unavailable, and that full service will resume shortly. Feature flags are now silently re-fetched on every React Router navigation, so the banner appears and disappears dynamically as the switch is toggled — without requiring a page refresh.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `reindex_locations_with_approved_claim`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `reindex_locations_with_approved_claim`
 
 ## Release 2.21.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 4, 2026
+
+- Product name: Open Supply Hub
+- Release date: April 4, 2026
 
 ### Database changes
 
 #### Migrations
-* 0204_add_backfilled_fields_to_moderation_event.py - Adds the `backfilled_fields` column (PostgreSQL array of text) to `api_moderationevent` to store which fields (name, address, country) were backfilled from existing production location data when an API user submits a PATCH api/v1/production-locations/{os_id}/ without them.
-* 0205_add_facilitylistitem_moderation_event.py - Adds nullable `moderation_event_id` on `api_facilitylistitem` as a one-to-one toward `api_moderationevent` (unique when set), so at most one list item can reference a given moderation event.
-* 0206_backfill_claim_types_from_extended_fields.py - Backfills `FacilityClaim.facility_type` and `FacilityClaim.facility_production_types` from related `ExtendedField` matched values (`facility_type` and `processing_type`) so values displayed in the General Information and Operation Details Submitted by Management sections match; updates only changed claim rows using batched updates for better migration performance.
+
+- 0204_add_backfilled_fields_to_moderation_event.py - Adds the `backfilled_fields` column (PostgreSQL array of text) to `api_moderationevent` to store which fields (name, address, country) were backfilled from existing production location data when an API user submits a PATCH api/v1/production-locations/{os_id}/ without them.
+- 0205_add_facilitylistitem_moderation_event.py - Adds nullable `moderation_event_id` on `api_facilitylistitem` as a one-to-one toward `api_moderationevent` (unique when set), so at most one list item can reference a given moderation event.
+- 0206_backfill_claim_types_from_extended_fields.py - Backfills `FacilityClaim.facility_type` and `FacilityClaim.facility_production_types` from related `ExtendedField` matched values (`facility_type` and `processing_type`) so values displayed in the General Information and Operation Details Submitted by Management sections match; updates only changed claim rows using batched updates for better migration performance.
 
 ### Code/API changes
-* [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled-field tracking on production location moderation and linked approval-created `FacilityListItem` rows to their moderation event.
-    * **Backfilled fields on PATCH** — For `PATCH api/v1/production-locations/{os_id}/`, when an API user omits name, address, and country, the system backfills them from the existing production location and records which fields were backfilled. Those names are stored on the moderation event and returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled values from values supplied by the API user.
-    * **`FacilityListItem` ↔ moderation event** — When approval creates a `FacilityListItem`, it is linked to the moderation event (`FacilityListItem.moderation_event`). That linkage is necessary so we can tell which data contributions shown on the location profile were backfilled (via the list item, moderation event, and recorded backfilled fields).
-* [OSDEV-2430](https://opensupplyhub.atlassian.net/browse/OSDEV-2430) - Fixed mobile responsiveness issues on the Production Location page:
-    * **Layout reorder** — On small screens the main content now appears above the sidebar (`column-reverse`), the `BackToSearch` link and `NavBar` are hidden, and a purple top border separates the sidebar from the content area.
-    * **OsIdBadge** — Reduced padding and font size on narrow viewports (<450 px); OS ID value uses `word-break: break-all`; action buttons stack full-width below the ID.
-    * **LocationTitle** — Scaled down font size and line height on small screens for better readability.
-    * **Section titles** — `Understanding Data Sources` and `Operational Details Submitted by Management` display shortened versions ("Data Sources" / "Operational Details") on mobile.
-    * **DataPoint** — Label width adapts to content on extra-small screens; tooltip icons are always visible (opacity 1) instead of hover-only.
-    * **Map & info grid** — Adjusted divider spacing and section padding so the map area uses full width on mobile.
-    * **IconComponent** — Increased tooltip icon font size on extra-small screens.
+
+- [OSDEV-2401](https://opensupplyhub.atlassian.net/browse/OSDEV-2401) - Added backfilled-field tracking on production location moderation and linked approval-created `FacilityListItem` rows to their moderation event.
+  - **Backfilled fields on PATCH** — For `PATCH api/v1/production-locations/{os_id}/`, when an API user omits name, address, and country, the system backfills them from the existing production location and records which fields were backfilled. Those names are stored on the moderation event and returned by `GET api/v1/moderation-events/{moderation_id}/` and `GET api/v1/moderation-events/`, so moderators can distinguish backfilled values from values supplied by the API user.
+  - **`FacilityListItem` ↔ moderation event** — When approval creates a `FacilityListItem`, it is linked to the moderation event (`FacilityListItem.moderation_event`). That linkage is necessary so we can tell which data contributions shown on the location profile were backfilled (via the list item, moderation event, and recorded backfilled fields).
+- [OSDEV-2430](https://opensupplyhub.atlassian.net/browse/OSDEV-2430) - Fixed mobile responsiveness issues on the Production Location page:
+  - **Layout reorder** — On small screens the main content now appears above the sidebar (`column-reverse`), the `BackToSearch` link and `NavBar` are hidden, and a purple top border separates the sidebar from the content area.
+  - **OsIdBadge** — Reduced padding and font size on narrow viewports (<450 px); OS ID value uses `word-break: break-all`; action buttons stack full-width below the ID.
+  - **LocationTitle** — Scaled down font size and line height on small screens for better readability.
+  - **Section titles** — `Understanding Data Sources` and `Operational Details Submitted by Management` display shortened versions ("Data Sources" / "Operational Details") on mobile.
+  - **DataPoint** — Label width adapts to content on extra-small screens; tooltip icons are always visible (opacity 1) instead of hover-only.
+  - **Map & info grid** — Adjusted divider spacing and section padding so the map area uses full width on mobile.
+  - **IconComponent** — Increased tooltip icon font size on extra-small screens.
 
 ### Bugfix
-* [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page:
-    * **Address** provenance uses `properties.extended_fields.address` (via formatted extended-field rows) against the displayed core address (`properties.address`).
-    * **Coordinates** provenance does not use extended fields: entries in `properties.other_locations` are matched to the map feature’s point in `geometry.coordinates` (lat/lng compared with a small tolerance), so the canonical contributor reflects the coordinate pair actually rendered on the map. This yields accurate provenance when multiple address submissions or alternate `other_locations` exist.
-* [OSDEV-2420](https://opensupplyhub.atlassian.net/browse/OSDEV-2420) - Made sure that all fields that can be updated through the post-claim form, as well as those that can be updated through the initial claim form - excluding the ones that cannot be updated through the post-claim form - are displayed in the **Operational Details Submitted by Management** section. This fix includes:
-    * updated the claim extended-field sync logic so that approving or updating claim extended fields keeps normalized `facility_type` and `facility_production_types` on `FacilityClaim` in sync
-    * fixed the Claimed Facility Details form value mapping for **Facility / Processing Types** so that saved labels correctly resolve to selectable option values and render properly in the multiselect input
-    * fixed the ordering and display in **Operational Details Submitted by Management** to include **Name in Native Language** and to parse pipe-delimited claim `facility_type` values into clean list items for **Location Type(s)**
-    * backfilled existing `FacilityClaim.facility_type` and `FacilityClaim.facility_production_types` from claim-related `ExtendedField` matched values, so the values shown in the **General Information** and **Operational Details Submitted by Management** sections are aligned
-* [Follow-up] [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Geographic Information section: show `Crowdsourced` badge, date of contribution and contributor name near the `Address` field if `extended_fields` contains only empty records.
-* [OSDEV-2418](https://opensupplyhub.atlassian.net/browse/OSDEV-2418) - Aligned Production Location page copy with "production location" wording: closure banners (pending, moved, closed), the report closure/reopen dialog, the map control’s accessible label for centering on the location, and operational-details labels for location type fields in the claim section.
-* [OSDEV-2422](https://opensupplyhub.atlassian.net/browse/OSDEV-2422) - Geographic Information section: added error text labels for invalid coordinates contributions; introduced additional user id fallback based on `contributors` list and `created_from` properties from GET `api/facilities/{os_id}/` response. This is needed to create a link to the user profile page when we take values from `created_from`.
-* [Hotfix][OSDEV-2529](https://opensupplyhub.atlassian.net/browse/OSDEV-2529) - Fixed duplicate throttle logic for production location creation and updates:
-    * Added `pk` to the duplicate throttle cache key to prevent collisions when the same user makes multiple requests for the same production location.
+
+- [OSDEV-2415](https://opensupplyhub.atlassian.net/browse/OSDEV-2415) - Fixed contributor attribution logic for address and coordinates fields on the Production Location page:
+  - **Address** provenance uses `properties.extended_fields.address` (via formatted extended-field rows) against the displayed core address (`properties.address`).
+  - **Coordinates** provenance does not use extended fields: entries in `properties.other_locations` are matched to the map feature’s point in `geometry.coordinates` (lat/lng compared with a small tolerance), so the canonical contributor reflects the coordinate pair actually rendered on the map. This yields accurate provenance when multiple address submissions or alternate `other_locations` exist.
+- [OSDEV-2420](https://opensupplyhub.atlassian.net/browse/OSDEV-2420) - Made sure that all fields that can be updated through the post-claim form, as well as those that can be updated through the initial claim form - excluding the ones that cannot be updated through the post-claim form - are displayed in the **Operational Details Submitted by Management** section. This fix includes:
+  - updated the claim extended-field sync logic so that approving or updating claim extended fields keeps normalized `facility_type` and `facility_production_types` on `FacilityClaim` in sync
+  - fixed the Claimed Facility Details form value mapping for **Facility / Processing Types** so that saved labels correctly resolve to selectable option values and render properly in the multiselect input
+  - fixed the ordering and display in **Operational Details Submitted by Management** to include **Name in Native Language** and to parse pipe-delimited claim `facility_type` values into clean list items for **Location Type(s)**
+  - backfilled existing `FacilityClaim.facility_type` and `FacilityClaim.facility_production_types` from claim-related `ExtendedField` matched values, so the values shown in the **General Information** and **Operational Details Submitted by Management** sections are aligned
+- [Follow-up] [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Geographic Information section: show `Crowdsourced` badge, date of contribution and contributor name near the `Address` field if `extended_fields` contains only empty records.
+- [OSDEV-2418](https://opensupplyhub.atlassian.net/browse/OSDEV-2418) - Aligned Production Location page copy with "production location" wording: closure banners (pending, moved, closed), the report closure/reopen dialog, the map control’s accessible label for centering on the location, and operational-details labels for location type fields in the claim section.
+- [OSDEV-2422](https://opensupplyhub.atlassian.net/browse/OSDEV-2422) - Geographic Information section: added error text labels for invalid coordinates contributions; introduced additional user id fallback based on `contributors` list and `created_from` properties from GET `api/facilities/{os_id}/` response. This is needed to create a link to the user profile page when we take values from `created_from`.
+- [Hotfix][OSDEV-2529](https://opensupplyhub.atlassian.net/browse/OSDEV-2529) - Fixed duplicate throttle logic for production location creation and updates:
+  - Added `pk` to the duplicate throttle cache key to prevent collisions when the same user makes multiple requests for the same production location.
 
 ### What's new
-* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
-* [OSDEV-2412](https://opensupplyhub.atlassian.net/browse/OSDEV-2412) - Render `ContributionsDrawer` inside the legacy `FacilityDetailsItem` component for Partner fields on the new Production Location page when additional contributions are present.
-* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Production Location UI polish:
-    * Switches → chevrons with `aria-expanded` (Understanding Data Sources, Partner Data).
-    * Purple top border and spacing between Partner Data groups.
-    * Dropped external-link icons on contributor links (contributions drawer, Supply Chain drawer).
-    * Changed data sources info and partner data section titles to use the theme primary color.
-    * Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
-    * Removed the unnecessary spacing for the empty Partner Data groups.
-* [OSDEV-2451](https://opensupplyhub.atlassian.net/browse/OSDEV-2451) - Updated `Partner Data` under `Understanding data sources` to `Spotlight Partners`; updated the title of the `Partner Data` section to `Spotlight`.
-* [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
+
+- [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Increased font size to 1rem for `IconComponent` tooltips and Data Sources subsection text (now using theme primary color) on the Production Location page.
+- [OSDEV-2412](https://opensupplyhub.atlassian.net/browse/OSDEV-2412) - Render `ContributionsDrawer` inside the legacy `FacilityDetailsItem` component for Partner fields on the new Production Location page when additional contributions are present.
+- [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Production Location UI polish:
+  - Switches → chevrons with `aria-expanded` (Understanding Data Sources, Partner Data).
+  - Purple top border and spacing between Partner Data groups.
+  - Dropped external-link icons on contributor links (contributions drawer, Supply Chain drawer).
+  - Changed data sources info and partner data section titles to use the theme primary color.
+  - Added new `ExpandToggleChevron` component and updated the `DataSourcesInfo` and `PartnerSectionItem` components to use it.
+  - Removed the unnecessary spacing for the empty Partner Data groups.
+- [OSDEV-2451](https://opensupplyhub.atlassian.net/browse/OSDEV-2451) - Updated `Partner Data` under `Understanding data sources` to `Spotlight Partners`; updated the title of the `Partner Data` section to `Spotlight`.
+- [OSDEV-2316](https://opensupplyhub.atlassian.net/browse/OSDEV-2316) - Added a registered trademark notice for Open Supply Hub (OS Hub)® to the site footer.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `moderation-events` index after adding `backfilled_fields` to the index.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `moderation-events` index after adding `backfilled_fields` to the index.
 
 ## Release 2.20.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: March 21, 2026
+
+- Product name: Open Supply Hub
+- Release date: March 21, 2026
 
 ### Database changes
 
 #### Migrations
-* 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
-* 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
-* 0202_add_alter_partnerfield_to_use_json.py - Alters `PartnerField.json_schema` from `jsonb` to PostgreSQL `json` type (via the new `JSONTextField`) to preserve the key order defined in partner field schemas, ensuring consistent field rendering on the frontend.
-* 0203_add_user_id_to_index_claim_info.py - Updates the `index_claim_info` function to include `user_id` (contributor admin id) in the contributor object of the `claim_info` JSON in `api_facilityindex`, enabling the contributor name to be rendered as a profile link in the Operational Details Submitted by Management section.
+
+- 0199_add_production_location_page_switch.py - Adds `enable_production_location_page` feature flag to redirect FE route of `facilities/:osID` to the `production-locations/:osID`.
+- 0200_introduce_indexing_of_the_creation_date_of_the_claim_request.py - Updated the `index_claim_info` function to include the claim request creation date in the `api_facilityindex.claim_info` column.
+- 0202_add_alter_partnerfield_to_use_json.py - Alters `PartnerField.json_schema` from `jsonb` to PostgreSQL `json` type (via the new `JSONTextField`) to preserve the key order defined in partner field schemas, ensuring consistent field rendering on the frontend.
+- 0203_add_user_id_to_index_claim_info.py - Updates the `index_claim_info` function to include `user_id` (contributor admin id) in the contributor object of the `claim_info` JSON in `api_facilityindex`, enabling the contributor name to be rendered as a profile link in the Operational Details Submitted by Management section.
 
 ### Code/API changes
-* [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
-    * Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
-    * Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
-* [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - Moved single-facility data loading and redirect logic into the Production Location details container so the sidebar (including the "Contribute to this profile" section) and main content render with consistent facility data.
-* [OSDEV-2370](https://opensupplyhub.atlassian.net/browse/OSDEV-2370) - Created reusable data point and drawer components for the Production Location page redesign:
-    * Introduced shared `IconComponent` (interactive tooltip with icon) and `LearnMoreLink`; refactored OS ID badge, Data Sources, and Claim status to use them.
-    * Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
-    * Claim form profile step and related tooltips now use `IconComponent`.
-* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
-* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Extracted section navigation state (`scrollTargetId`, `openSectionIds`) from `PartnerFieldGroupsReducer` into a dedicated `SectionNavigationReducer`. Added memoized claim data selectors (`claimDataSelectors.js`) so both `ClaimDataContainer` and `NavBar` derive claimed status from the store.
+
+- [OSDEV-2355](https://opensupplyhub.atlassian.net/browse/OSDEV-2355) - The following changes have been made:
+  - Updated the GET `api/facilities/` and `api/facilities/{os_id}/` endpoints to include `contributor_type` (the raw type from the database) for both public and anonymous sources. Each contributor entry now also includes a `count` field (1 for public contributors and an aggregated count for anonymous entries of the same type), allowing the front end to display and sum counts by type (e.g., “18 Brands”, “9 Suppliers”).
+  - Additionally, updated GET `api/facilities/{os_id}/` to return the claim request creation date. All of this information is required for the redesigned Production Location page - specifically for the claim banner - as well as for the supply chain network.
+- [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - Moved single-facility data loading and redirect logic into the Production Location details container so the sidebar (including the "Contribute to this profile" section) and main content render with consistent facility data.
+- [OSDEV-2370](https://opensupplyhub.atlassian.net/browse/OSDEV-2370) - Created reusable data point and drawer components for the Production Location page redesign:
+  - Introduced shared `IconComponent` (interactive tooltip with icon) and `LearnMoreLink`; refactored OS ID badge, Data Sources, and Claim status to use them.
+  - Added `DataPoint` component (label, value, status, contributor link, date, and optional "data sources" drawer trigger) and `ContributionsDrawer` with promoted source and list of contribution cards linking to contributor profiles.
+  - Claim form profile step and related tooltips now use `IconComponent`.
+- [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Introduced a custom `JSONTextField` (`api/fields.py`) that uses PostgreSQL `json` type instead of `jsonb` to preserve the key ordering defined in partner field schemas, ensuring fields render in the intended order on the frontend.
+- [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Extracted section navigation state (`scrollTargetId`, `openSectionIds`) from `PartnerFieldGroupsReducer` into a dedicated `SectionNavigationReducer`. Added memoized claim data selectors (`claimDataSelectors.js`) so both `ClaimDataContainer` and `NavBar` derive claimed status from the store.
 
 ### Architecture/Environment changes
-* Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
+
+- Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Test` environment.
 
 ### Bugfix
-* [OSDEV-2381](https://opensupplyhub.atlassian.net/browse/OSDEV-2381) - Updated the `Kafka 3.8.0` download URL to use the Apache archive repository instead of the primary distribution server.
+
+- [OSDEV-2381](https://opensupplyhub.atlassian.net/browse/OSDEV-2381) - Updated the `Kafka 3.8.0` download URL to use the Apache archive repository instead of the primary distribution server.
 
 ### What's new
-* [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
-    * Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
-    * If `embed=1` is present, redirect to the `/facilities/:osID?sort_by=contributors_desc&embed=1` (with preserving other URL parameters) regardless of active `enable_production_location_page` flag.
-    * Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
-    * When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
-* [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Production Location page redesign.
-* [OSDEV-2374](https://opensupplyhub.atlassian.net/browse/OSDEV-2374) - Created UI for Claim and Closure status banners.
-* [OSDEV-2356](https://opensupplyhub.atlassian.net/browse/OSDEV-2356) - Added `GET api/partner-field-groups/` endpoint to retrieve partner field groups with pagination support and CDN caching for the endpoint (and additional endpoints for partner fields and contributors).
-* [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
-* [OSDEV-2375](https://opensupplyhub.atlassian.net/browse/OSDEV-2375) - Created UI for the location name, OS ID, and "Understanding Data Sources" sections. Introduced `doc/frontend.md` with UI development considerations.
-* [OSDEV-2366](https://opensupplyhub.atlassian.net/browse/OSDEV-2366) - Added "Jump to" section to the sidebar with links to the different sections of the Production Location page.
-* [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Implemented the Geographical Information section on the Production Location page, displaying an interactive satellite map with zoom controls, location centering, and "Open in Google Maps" link. Added Address and Coordinates data points below the map, each with contributor metadata and a drawer showing all contributions for that field.
-* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Integrated the Partner Data section into the Production Location page:
-    * Added `PartnerDataContainer` that fetches partner field groups from the API and renders them when partner data is available for a production location.
-    * Each partner group is displayed as a collapsible `PartnerSectionItem` with a toggle switch, partner icon, helper text tooltip, and a two-column layout of partner fields.
-    * Sidebar "Jump to" navigation links to individual partner groups; clicking a link opens the corresponding section and smoothly scrolls it into view.
-    * Added `UrlProperty` format component and `url` format type support for partner field JSON schemas, enabling clickable links with customizable link text.
-    * Includes loading state with a spinner while partner field groups are being fetched.
-    * Makes the partner field contributor link clickable and opens the contributor profile in a new tab.
-* [OSDEV-2372](https://opensupplyhub.atlassian.net/browse/OSDEV-2372) - Implemented the Operational Details section on the Production Location page:
-    * Added `ClaimDataContainer` component that displays operational details submitted by management through the claim process for claimed production locations.
-    * The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
-    * Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
-        * The contributor name is a link to the contributor’s profile when a user ID is available.
-    * The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
-* [OSDEV-2371](https://opensupplyhub.atlassian.net/browse/OSDEV-2371) - Implemented the General Information section on the new Production Location page:
-    * Displays core identifying fields (name, sector, parent company, processing type, facility type (shown as location type on this page), product type, number of workers, optional identifiers, ISIC 4, closure status) as data points with status, contributor, and date.
-    * Each field can open a "Data sources" drawer showing the promoted contribution and all other contributions for that field.
-    * Section includes an informational tooltip with a "Learn more about each data point" link. Additional identifiers (DUNS, LEI, RBA ID) are shown when the feature flag is enabled.
-* [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Enhanced partner field property components:
-    * Extracted a reusable `PartnerFieldLabel` component with bold, dark-slate-grey styling, replacing inline title rendering across all property components (`DateProperty`, `DateTimeProperty`, `UriProperty`, `UrlProperty`, `DefaultProperty`, `IntegerProperty`).
-    * Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
-    * Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
-    * Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
-* [OSDEV-2367](https://opensupplyhub.atlassian.net/browse/OSDEV-2367) - Implemented the Supply Chain Network section on the new Production Location page sidebar:
-    * Displays a breakdown of contributing organizations by type with counts (e.g. "3 Brands", "1 Auditor") and pluralized type labels; public contributors are listed as named links sorted by type.
-    * "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
-        * An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
-* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
-* [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Updated section icon colors, improved responsive layout and breakpoints across General Information, Geographical Information, Partner Data, and DataPoint components, updated the Partner Data tooltip with a data-integrations "Learn More" link, and capped the Supply Chain sidebar to 7 visible contributors.
+
+- [OSDEV-2352](https://opensupplyhub.atlassian.net/browse/OSDEV-2352) - Added feature flag named `enable_production_location_page` to enable production location pages with the new design. When the feature flag is enabled in the Django admin panel:
+  - Clicking on facility list items or map markers redirects to `/production-locations/:osID` instead of `/facilities/:osID`.
+  - If `embed=1` is present, redirect to the `/facilities/:osID?sort_by=contributors_desc&embed=1` (with preserving other URL parameters) regardless of active `enable_production_location_page` flag.
+  - Previously opened facility pages at `/facilities/:osID` will redirect to `/production-locations/:osID` after page refresh.
+  - When the feature flag is disabled, accessing `/production-locations/:osID` routes will result in a "Not found" page with no automatic redirection to the legacy `/facilities/:osID` route.
+- [OSDEV-2353](https://opensupplyhub.atlassian.net/browse/OSDEV-2353) - Created basic layout components for new Production Location page redesign.
+- [OSDEV-2374](https://opensupplyhub.atlassian.net/browse/OSDEV-2374) - Created UI for Claim and Closure status banners.
+- [OSDEV-2356](https://opensupplyhub.atlassian.net/browse/OSDEV-2356) - Added `GET api/partner-field-groups/` endpoint to retrieve partner field groups with pagination support and CDN caching for the endpoint (and additional endpoints for partner fields and contributors).
+- [OSDEV-2369](https://opensupplyhub.atlassian.net/browse/OSDEV-2369) - As part of the Production Location page redesign, implemented the "Contribute to this profile" section in the sidebar. The section includes: Suggest Correction (link to the contribute flow), Report Duplicate and Dispute Claim (mailto links; Dispute Claim is shown only when the facility is claimed by someone else), and Report Closed / Report Reopened. Report Closed/Reopened opens a dialog where logged-in users can submit a reason; anonymous users see a prompt to log in.
+- [OSDEV-2375](https://opensupplyhub.atlassian.net/browse/OSDEV-2375) - Created UI for the location name, OS ID, and "Understanding Data Sources" sections. Introduced `doc/frontend.md` with UI development considerations.
+- [OSDEV-2366](https://opensupplyhub.atlassian.net/browse/OSDEV-2366) - Added "Jump to" section to the sidebar with links to the different sections of the Production Location page.
+- [OSDEV-2373](https://opensupplyhub.atlassian.net/browse/OSDEV-2373) - Implemented the Geographical Information section on the Production Location page, displaying an interactive satellite map with zoom controls, location centering, and "Open in Google Maps" link. Added Address and Coordinates data points below the map, each with contributor metadata and a drawer showing all contributions for that field.
+- [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Integrated the Partner Data section into the Production Location page:
+  - Added `PartnerDataContainer` that fetches partner field groups from the API and renders them when partner data is available for a production location.
+  - Each partner group is displayed as a collapsible `PartnerSectionItem` with a toggle switch, partner icon, helper text tooltip, and a two-column layout of partner fields.
+  - Sidebar "Jump to" navigation links to individual partner groups; clicking a link opens the corresponding section and smoothly scrolls it into view.
+  - Added `UrlProperty` format component and `url` format type support for partner field JSON schemas, enabling clickable links with customizable link text.
+  - Includes loading state with a spinner while partner field groups are being fetched.
+  - Makes the partner field contributor link clickable and opens the contributor profile in a new tab.
+- [OSDEV-2372](https://opensupplyhub.atlassian.net/browse/OSDEV-2372) - Implemented the Operational Details section on the Production Location page:
+  - Added `ClaimDataContainer` component that displays operational details submitted by management through the claim process for claimed production locations.
+  - The section includes a "Claimed Profile" badge, informational tooltip with a "Learn More" link, and renders claim data fields (e.g., facility description, parent company, website, contact information) as data points with contributor metadata and timestamps.
+  - Each data point shows the claim status, contributor name, and claim approval/creation date, maintaining consistency with other sections on the page.
+    - The contributor name is a link to the contributor’s profile when a user ID is available.
+  - The section only appears when the production location has a non-pending claim (i.e., `claim_info` is present and its status is not `PENDING`) and contains displayable claim data.
+- [OSDEV-2371](https://opensupplyhub.atlassian.net/browse/OSDEV-2371) - Implemented the General Information section on the new Production Location page:
+  - Displays core identifying fields (name, sector, parent company, processing type, facility type (shown as location type on this page), product type, number of workers, optional identifiers, ISIC 4, closure status) as data points with status, contributor, and date.
+  - Each field can open a "Data sources" drawer showing the promoted contribution and all other contributions for that field.
+  - Section includes an informational tooltip with a "Learn more about each data point" link. Additional identifiers (DUNS, LEI, RBA ID) are shown when the feature flag is enabled.
+- [OSDEV-2368](https://opensupplyhub.atlassian.net/browse/OSDEV-2368) - Enhanced partner field property components:
+  - Extracted a reusable `PartnerFieldLabel` component with bold, dark-slate-grey styling, replacing inline title rendering across all property components (`DateProperty`, `DateTimeProperty`, `UriProperty`, `UrlProperty`, `DefaultProperty`, `IntegerProperty`).
+  - Added schema `default` value fallback: property components now display the schema-defined default when the value object does not contain the property key.
+  - Added external link icon (`OpenInNewIcon`) to `UriProperty`, `UrlProperty`, and `UriReferenceProperty` link components with inline-flex styling.
+  - Updated `getLinkTextFromSchema` to support a `text` field on schema properties as custom link text, with a `defaultValue` fallback parameter.
+- [OSDEV-2367](https://opensupplyhub.atlassian.net/browse/OSDEV-2367) - Implemented the Supply Chain Network section on the new Production Location page sidebar:
+  - Displays a breakdown of contributing organizations by type with counts (e.g. "3 Brands", "1 Auditor") and pluralized type labels; public contributors are listed as named links sorted by type.
+  - "View all N data sources" button opens a slide-out drawer ("All Data Sources") with total count, an info box about the open data model and a "Learn more" link, type summary chips, and public contributor cards with profile links and uploaded list names.
+    - An "Anonymized Data Sources" section groups non-public contributors by type and count; the section is hidden when no contributors exist.
+- [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - The sidebar "Jump to" navigation on the Production Location page now conditionally shows the "Operational Details" link only when displayable claim data exists. Clicking collapsible sections automatically expands and scrolls to them.
+- [OSDEV-2399](https://opensupplyhub.atlassian.net/browse/OSDEV-2399) - Updated section icon colors, improved responsive layout and breakpoints across General Information, Geographical Information, Partner Data, and DataPoint components, updated the Partner Data tooltip with a data-integrations "Learn More" link, and capped the Supply Chain sidebar to 7 visible contributors.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `reindex_locations_with_approved_claim`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `reindex_locations_with_approved_claim`
 
 ## Release 2.19.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: February 14, 2026
+
+- Product name: Open Supply Hub
+- Release date: February 14, 2026
 
 ### Database changes
 
 #### Migrations
-* 0196_switch_partner_field_source_by_editor.py - Migrates `PartnerField.source_by` to CKEditor5 so the rich-text content works after replacing `django-ckeditor` with `django-ckeditor-5` (required for Django 5); keeps existing source descriptions editable with formatting and links.
-* 0197_add_event_index.py - Adds an explicit index on `Event(content_type, object_id)` to replace the legacy `index_together` removed in Django 5, keeping the existing schema intact without editing old migrations.
-* 0198_add_rainforest_alliance_certification.py - This migration introduces new certification named `Rainforest Alliance` for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
+
+- 0196_switch_partner_field_source_by_editor.py - Migrates `PartnerField.source_by` to CKEditor5 so the rich-text content works after replacing `django-ckeditor` with `django-ckeditor-5` (required for Django 5); keeps existing source descriptions editable with formatting and links.
+- 0197_add_event_index.py - Adds an explicit index on `Event(content_type, object_id)` to replace the legacy `index_together` removed in Django 5, keeping the existing schema intact without editing old migrations.
+- 0198_add_rainforest_alliance_certification.py - This migration introduces new certification named `Rainforest Alliance` for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
 
 ### Code/API changes
-* [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
-* [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
+
+- [OSDEV-2329](https://opensupplyhub.atlassian.net/browse/OSDEV-2329) - Pass `wage_indicator` and `mit_living_wage` fields to `GET api/v1/production-locations/?os_id` endpoint.
+- [OSDEV-2357](https://opensupplyhub.atlassian.net/browse/OSDEV-2357) - Add `GET api/partner-fields/` endpoint to retrieve partner active fields with pagination support.
 
 ### Bugfix
-* [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
+
+- [OSDEV-2334](https://opensupplyhub.atlassian.net/browse/OSDEV-2334) - Fixed a JavaScript error in the claim attachments uploader by changing the hidden space element from a `div` to the `li` element. This prevents `insertBefore` errors that occurred when the DOM structure was inconsistent with the parent `ul` element's expected children.
 
 ### What's new
-* [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
-    * Upgraded Python from `3.8` to `3.11`.
-    * Upgraded Django from `3.2.17` to `5.2.10`.
-    * Upgraded Python and Django packages to maintain compatibility.
-* [OSDEV-2359](https://opensupplyhub.atlassian.net/browse/OSDEV-2359) - Refactored password reset functionality to use `dj_rest_auth` with `allauth.account.forms.ResetPasswordForm`, aligning with Django's base36-encoded reset tokens and keeping compatibility with the updated authentication flow.
-* [OSDEV-2349](https://opensupplyhub.atlassian.net/browse/OSDEV-2349) - Added additional `Rainforest Alliance` certification to `Certifications/Standards/Regulations` on `Claim Profile`.
-* [OSDEV-2331](https://opensupplyhub.atlassian.net/browse/OSDEV-2331) - The following changes have been made:
-    * Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
-    * Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
-    * Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
+
+- [OSDEV-814](https://opensupplyhub.atlassian.net/browse/OSDEV-814) - Major upgrade of Django application backend services:
+  - Upgraded Python from `3.8` to `3.11`.
+  - Upgraded Django from `3.2.17` to `5.2.10`.
+  - Upgraded Python and Django packages to maintain compatibility.
+- [OSDEV-2359](https://opensupplyhub.atlassian.net/browse/OSDEV-2359) - Refactored password reset functionality to use `dj_rest_auth` with `allauth.account.forms.ResetPasswordForm`, aligning with Django's base36-encoded reset tokens and keeping compatibility with the updated authentication flow.
+- [OSDEV-2349](https://opensupplyhub.atlassian.net/browse/OSDEV-2349) - Added additional `Rainforest Alliance` certification to `Certifications/Standards/Regulations` on `Claim Profile`.
+- [OSDEV-2331](https://opensupplyhub.atlassian.net/browse/OSDEV-2331) - The following changes have been made:
+  - Added support for displaying nested objects, integer, date, and date-time properties in partner fields with JSON schema. Updated system partner field constraints to allow modifications to inactive partner fields through the Django admin panel, enabling safe updates while maintaining data integrity for active fields.
+  - Improved CKEditor integration by automatically cleaning empty placeholder content (`<p>&nbsp;</p>`) from rich text fields on save, preventing meaningless HTML from being stored in the database.
+  - Fixed styling for nested HTML elements in partner field source descriptions to ensure consistent margins and padding across all nested tags.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `delete_emailaddress_for_deleted_users`
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `delete_emailaddress_for_deleted_users`
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.18.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 22, 2026
+
+- Product name: Open Supply Hub
+- Release date: January 22, 2026
 
 ### Bugfix
+
 [Hotfix][OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Hotfix: Add `Host` header to fix infinite production locations scroll on the main search page.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.18.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 17, 2026
+
+- Product name: Open Supply Hub
+- Release date: January 17, 2026
 
 ### Database changes
 
 #### Migrations
-* 0190_add_active_system_field_to_partnerfield.py - This migration adds two boolean fields to the `PartnerField` model: `active` (default True) to control whether a partner field is available for contributions and appears in listings, and `system_field` (default False) to mark system-managed fields that cannot be deleted and have restricted editing permissions. Along with the migration, a custom `PartnerFieldManager` class is introduced, which automatically filters queries to return only active partner fields by default, with an `all_including_inactive()` method to access all fields when needed.
-* 0191_create_wage_indicator_partner_field.py - This data migration creates the `wage_indicator` system partner field with type `object` and a comprehensive JSON schema defining six properties for wage indicator reference links. The field is marked as `system_field=True` and `active=True`, and includes source attribution.
-* 0192_create_wage_indicator_models.py - This migration creates two new models: `WageIndicatorCountryData` to store wage indicator URLs (living wage and minimum wage links in national and English languages) for each country indexed by ISO 3166-1 alpha-2 country code, and `WageIndicatorLinkTextConfig` to store customizable display text for each link type. The models support system-generated partner field data that will be automatically displayed on production location profiles based on the location's country.
-* 0193_populate_wage_indicator_data.py - This data migration populates the `WageIndicatorCountryData` table with wage indicator reference links for 171 countries. Each country entry includes URLs for living wage benchmarks and minimum wage information in both national languages and English where available. The migration also populates the `WageIndicatorLinkTextConfig` table with default display text for all three link types.
-* 0194_create_and_populate_us_county_tigerline.py - This migration creates the `USCountyTigerline` model to store US county boundary data with geometry in EPSG:5070 (Albers Equal Area projection). The model includes fields for geoid (primary key), county name, and MultiPolygon geometry. The migration attempts to populate the table with data from a CSV file stored in S3 (or MinIO for local development). If the CSV file is not available, the migration completes successfully with an empty table, allowing data to be populated later. The migration supports downloading the CSV file from S3 buckets with MinIO endpoint configuration for local development environments.
-* 0195_add_mit_livingwage_partner_field.py - This data migration creates the `mit_living_wage` system partner field with type `object` and a JSON schema defining a single property for county ID with uri-reference format. The field is marked as `system_field=True` and `active=True`, and includes a base URL pointing to the MIT Living Wage website and display text for the link. This partner field enables automatic display of MIT Living Wage data links on US production location profiles based on the facility's geographic location.
+
+- 0190_add_active_system_field_to_partnerfield.py - This migration adds two boolean fields to the `PartnerField` model: `active` (default True) to control whether a partner field is available for contributions and appears in listings, and `system_field` (default False) to mark system-managed fields that cannot be deleted and have restricted editing permissions. Along with the migration, a custom `PartnerFieldManager` class is introduced, which automatically filters queries to return only active partner fields by default, with an `all_including_inactive()` method to access all fields when needed.
+- 0191_create_wage_indicator_partner_field.py - This data migration creates the `wage_indicator` system partner field with type `object` and a comprehensive JSON schema defining six properties for wage indicator reference links. The field is marked as `system_field=True` and `active=True`, and includes source attribution.
+- 0192_create_wage_indicator_models.py - This migration creates two new models: `WageIndicatorCountryData` to store wage indicator URLs (living wage and minimum wage links in national and English languages) for each country indexed by ISO 3166-1 alpha-2 country code, and `WageIndicatorLinkTextConfig` to store customizable display text for each link type. The models support system-generated partner field data that will be automatically displayed on production location profiles based on the location's country.
+- 0193_populate_wage_indicator_data.py - This data migration populates the `WageIndicatorCountryData` table with wage indicator reference links for 171 countries. Each country entry includes URLs for living wage benchmarks and minimum wage information in both national languages and English where available. The migration also populates the `WageIndicatorLinkTextConfig` table with default display text for all three link types.
+- 0194_create_and_populate_us_county_tigerline.py - This migration creates the `USCountyTigerline` model to store US county boundary data with geometry in EPSG:5070 (Albers Equal Area projection). The model includes fields for geoid (primary key), county name, and MultiPolygon geometry. The migration attempts to populate the table with data from a CSV file stored in S3 (or MinIO for local development). If the CSV file is not available, the migration completes successfully with an empty table, allowing data to be populated later. The migration supports downloading the CSV file from S3 buckets with MinIO endpoint configuration for local development environments.
+- 0195_add_mit_livingwage_partner_field.py - This data migration creates the `mit_living_wage` system partner field with type `object` and a JSON schema defining a single property for county ID with uri-reference format. The field is marked as `system_field=True` and `active=True`, and includes a base URL pointing to the MIT Living Wage website and display text for the link. This partner field enables automatic display of MIT Living Wage data links on US production location profiles based on the facility's geographic location.
 
 #### Schema changes
-* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Added wage indicator system partner field infrastructure: The `PartnerField` model has been updated with two new boolean fields (`active` and `system_field`) to support system-managed partner fields. Two new models were introduced: `WageIndicatorCountryData` (stores wage indicator URLs for 171 countries) and `WageIndicatorLinkTextConfig` (stores customizable display text for wage indicator links). A new `wage_indicator` system partner field was created to display country-specific living wage and minimum wage reference links on production location profiles. The implementation includes a custom manager for filtering active partner fields, a provider registry pattern for system-generated fields, and admin panel protections to prevent deletion or unauthorized modification of system fields.
-* [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Added infrastructure for MIT Living Wage data: The `USCountyTigerline` model was added to store US county boundary geometries for geographic lookups, and a `mit_living_wage` system partner field was created to display MIT Living Wage data links for US production locations based on their county location. The migration supports downloading CSV files from S3 buckets (with MinIO support for local development) and gracefully handles missing files by skipping data population without failing the migration.
+
+- [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Added wage indicator system partner field infrastructure: The `PartnerField` model has been updated with two new boolean fields (`active` and `system_field`) to support system-managed partner fields. Two new models were introduced: `WageIndicatorCountryData` (stores wage indicator URLs for 171 countries) and `WageIndicatorLinkTextConfig` (stores customizable display text for wage indicator links). A new `wage_indicator` system partner field was created to display country-specific living wage and minimum wage reference links on production location profiles. The implementation includes a custom manager for filtering active partner fields, a provider registry pattern for system-generated fields, and admin panel protections to prevent deletion or unauthorized modification of system fields.
+- [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Added infrastructure for MIT Living Wage data: The `USCountyTigerline` model was added to store US county boundary geometries for geographic lookups, and a `mit_living_wage` system partner field was created to display MIT Living Wage data links for US production locations based on their county location. The migration supports downloading CSV files from S3 buckets (with MinIO support for local development) and gracefully handles missing files by skipping data population without failing the migration.
 
 ### Code/API changes
-* [Follow-up][OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Removed the `reindex_locations_with_environmental_data` Django management command from the parent `post_deployment` command so it no longer runs, as it was only needed for the `2.17.0` release.
-* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support system-generated partner fields. The `partner_fields` object in the response now includes the `wage_indicator` field when a contributor is assigned to it, automatically providing country-specific wage indicator reference links (living wage and minimum wage URLs in both national language and English) based on the production location's country code. System partner fields are populated dynamically through a provider registry pattern and follow the same structure as user-contributed partner fields, appearing alongside them in the API response.
-* [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support MIT Living Wage system-generated partner fields. For US production locations, the `mit_living_wage` field is included when a contributor is assigned, automatically providing links to MIT Living Wage data based on the facility's geographic location (county). The field is populated dynamically through a provider registry pattern and follows the same structure as user-contributed partner fields.
-* Removed unused `ExtendedFieldListSerializer` and related code to clean up the codebase and eliminate obsolete serializer components.
-* [OSDEV-2330](https://opensupplyhub.atlassian.net/browse/OSDEV-2330) - Replaced US County Tigerline data from 2025 to 2021 version to align with MIT Living Wage Calculator data requirements. The migration now uses 2021 Tigerline CSV data which contains geometries in WGS84 (EPSG:4326) format that are automatically transformed to EPSG:5070 (Albers Equal Area) during import.
-* Created a new Django management command `populate_tigerline_data` to populate Tigerline data from S3 CSV files after migration if the data was not available during migration. The command supports configurable source SRID and can optionally clear existing data before populating.
+
+- [Follow-up][OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Removed the `reindex_locations_with_environmental_data` Django management command from the parent `post_deployment` command so it no longer runs, as it was only needed for the `2.17.0` release.
+- [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support system-generated partner fields. The `partner_fields` object in the response now includes the `wage_indicator` field when a contributor is assigned to it, automatically providing country-specific wage indicator reference links (living wage and minimum wage URLs in both national language and English) based on the production location's country code. System partner fields are populated dynamically through a provider registry pattern and follow the same structure as user-contributed partner fields, appearing alongside them in the API response.
+- [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Enhanced the `GET /api/facilities/{os_id}` endpoint to support MIT Living Wage system-generated partner fields. For US production locations, the `mit_living_wage` field is included when a contributor is assigned, automatically providing links to MIT Living Wage data based on the facility's geographic location (county). The field is populated dynamically through a provider registry pattern and follows the same structure as user-contributed partner fields.
+- Removed unused `ExtendedFieldListSerializer` and related code to clean up the codebase and eliminate obsolete serializer components.
+- [OSDEV-2330](https://opensupplyhub.atlassian.net/browse/OSDEV-2330) - Replaced US County Tigerline data from 2025 to 2021 version to align with MIT Living Wage Calculator data requirements. The migration now uses 2021 Tigerline CSV data which contains geometries in WGS84 (EPSG:4326) format that are automatically transformed to EPSG:5070 (Albers Equal Area) during import.
+- Created a new Django management command `populate_tigerline_data` to populate Tigerline data from S3 CSV files after migration if the data was not available during migration. The command supports configurable source SRID and can optionally clear existing data before populating.
 
 ### Architecture/Environment changes
-* [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
-* [OSDEV-2318](https://opensupplyhub.atlassian.net/browse/OSDEV-2318) - Updated Terraform version from `1.5` to `1.13.3`. Upgraded Kafka from the `3.4.0` to `3.9.0` to align with the current AWS MSK supported version.
-* [OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Added CloudFront caching for the facilities and production-location OS ID endpoints, refactored the Terraform config to use endpoint-specific TTL variables, and set per-environment durations (30 minutes for Prod/RBA/Preprod/Staging, 1 minute for Dev/Test). CloudFront still caches only GET/HEAD/OPTIONS while allowing all HTTP methods to reach the origin.
+
+- [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Removed all Terraform configurations and ECS service definitions related to the deprecated standalone ContriCleaner service. Cleaned up the repository by deleting unused code and references, as ContriCleaner now operates exclusively as an internal Django library.
+- [OSDEV-2318](https://opensupplyhub.atlassian.net/browse/OSDEV-2318) - Updated Terraform version from `1.5` to `1.13.3`. Upgraded Kafka from the `3.4.0` to `3.9.0` to align with the current AWS MSK supported version.
+- [OSDEV-2328](https://opensupplyhub.atlassian.net/browse/OSDEV-2328) - Added CloudFront caching for the facilities and production-location OS ID endpoints, refactored the Terraform config to use endpoint-specific TTL variables, and set per-environment durations (30 minutes for Prod/RBA/Preprod/Staging, 1 minute for Dev/Test). CloudFront still caches only GET/HEAD/OPTIONS while allowing all HTTP methods to reach the origin.
 
 ### Bugfix
-* [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
+
+- [OSDEV-2047](https://opensupplyhub.atlassian.net/browse/OSDEV-2047) - Previously, there were two security groups with the same tags: one for the Django app and another for ContriCleaner. After removing the ContriCleaner service infrastructure, a bug was eliminated in which the Django CLI task in the Development environment selected the wrong security group - the one without database access, belonging to ContriCleaner - which prevented Django management commands from running against the database in the Development environment.
 
 ### What's new
-* [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Introduced automatic wage indicator reference links on production location profiles for 171 countries. Each production location now displays country-specific links to authoritative living wage and minimum wage information and its regional partner sites. The wage indicator data is presented in both the national language and English, providing users with easy access to benchmarking information for fair wage assessments. The links appear automatically based on the production location's country and are managed as a system-generated partner field that cannot be manually edited or deleted, ensuring data consistency and reliability across the platform.
-* [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Introduced automatic MIT Living Wage data links on US production location profiles. Each US production location now displays county-specific links to MIT Living Wage Calculator data based on the facility's geographic location. The links provide access to county-specific living wage calculations and data, helping users assess fair wage benchmarks for US locations. The links appear automatically based on the facility's county location and are managed as a system-generated partner field that cannot be manually edited or deleted.
-* [OSDEV-2221](https://opensupplyhub.atlassian.net/browse/OSDEV-2221) - Updated post claim page `claimed/{claim-id}/`. This update includes:
-    * Added emission data input fields with checkboxes. UI is consitent with other input fields in the `ClaimedFacilitiesDetails` component.
-    * Applied Yup validation schema for `facility_website`, `point_of_contact_email`, `facility_workers_count`.
-    * Used FE mocked sectors for the Sector input field.
-    * Removed the FE request to `GET /api/parent-companies/`.
-    * Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
-* [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
-* [OSDEV-2332](https://opensupplyhub.atlassian.net/browse/OSDEV-2332) - Partner fields are now displayed in a dedicated "New Pilot Data Integrations" section on the production location page, visually separated with borders and including a "Learn More" link. This section only appears on the main location details page and is excluded from embedded map views.
+
+- [OSDEV-2305](https://opensupplyhub.atlassian.net/browse/OSDEV-2305) - Introduced automatic wage indicator reference links on production location profiles for 171 countries. Each production location now displays country-specific links to authoritative living wage and minimum wage information and its regional partner sites. The wage indicator data is presented in both the national language and English, providing users with easy access to benchmarking information for fair wage assessments. The links appear automatically based on the production location's country and are managed as a system-generated partner field that cannot be manually edited or deleted, ensuring data consistency and reliability across the platform.
+- [OSDEV-2304](https://opensupplyhub.atlassian.net/browse/OSDEV-2304) - Introduced automatic MIT Living Wage data links on US production location profiles. Each US production location now displays county-specific links to MIT Living Wage Calculator data based on the facility's geographic location. The links provide access to county-specific living wage calculations and data, helping users assess fair wage benchmarks for US locations. The links appear automatically based on the facility's county location and are managed as a system-generated partner field that cannot be manually edited or deleted.
+- [OSDEV-2221](https://opensupplyhub.atlassian.net/browse/OSDEV-2221) - Updated post claim page `claimed/{claim-id}/`. This update includes:
+  - Added emission data input fields with checkboxes. UI is consitent with other input fields in the `ClaimedFacilitiesDetails` component.
+  - Applied Yup validation schema for `facility_website`, `point_of_contact_email`, `facility_workers_count`.
+  - Used FE mocked sectors for the Sector input field.
+  - Removed the FE request to `GET /api/parent-companies/`.
+  - Refactored `Parent Company / Supplier Group` to act as a regular text input field (not a dropdown). Prepopulate only value that has been assisgned to a particular claim.
+- [OSDEV-2295](https://opensupplyhub.atlassian.net/browse/OSDEV-2295) - UI: added divider between each record of the `isic-4` field from the same contribution.
+- [OSDEV-2332](https://opensupplyhub.atlassian.net/browse/OSDEV-2332) - Partner fields are now displayed in a dedicated "New Pilot Data Integrations" section on the production location page, visually separated with borders and including a "Learn More" link. This section only appears on the main location details page and is excluded from embedded map views.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.17.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: December 15, 2025
+
+- Product name: Open Supply Hub
+- Release date: December 15, 2025
 
 ### Bugfix
-* [OSDEV-2315](https://opensupplyhub.atlassian.net/browse/OSDEV-2315) - Hotfix: Refactor extended field values check.
+
+- [OSDEV-2315](https://opensupplyhub.atlassian.net/browse/OSDEV-2315) - Hotfix: Refactor extended field values check.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `reindex_locations_with_environmental_data`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `reindex_locations_with_environmental_data`
 
 ## Release 2.17.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: December 13, 2025
+
+- Product name: Open Supply Hub
+- Release date: December 13, 2025
 
 ### Database changes
 
 #### Migrations
-* 0187_remove_null_from_contributor_partner_fields.py - This migration removes the unnecessary `null=True` parameter from the `partner_fields` ManyToManyField on the Contributor model.
-* 0188_introduce_indexing_for_new_operational_and_environmental_data.py - Updated the `index_claim_info` function to collect new environmental data (opening_date, closing_date, estimated_annual_throughput, actual_annual_energy_consumption) for the `api_facilityindex.claim_info` column.
+
+- 0187_remove_null_from_contributor_partner_fields.py - This migration removes the unnecessary `null=True` parameter from the `partner_fields` ManyToManyField on the Contributor model.
+- 0188_introduce_indexing_for_new_operational_and_environmental_data.py - Updated the `index_claim_info` function to collect new environmental data (opening_date, closing_date, estimated_annual_throughput, actual_annual_energy_consumption) for the `api_facilityindex.claim_info` column.
 
 ### Code/API changes
-* [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Introduced a new reusable `ImportantNote` component in the new claim flow to replace custom implementations of important notes across multiple components (`BusinessStep`, `ContactInfoStep`, and `ClaimInfoSection`), improving code maintainability and consistency.
-* [Follow-up][OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Removed the `null=True` parameter from the `Contributor.partner_fields` ManyToManyField definition in the model class to resolve Django system check warning W340. The parameter had no effect on the field behavior as ManyToManyFields store relationships in an intermediary table rather than as a database column that could contain NULL values.
-* [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Added the `reindex_locations_with_environmental_data` management command to perform a one-time reindexing of locations that have approved claims containing the new environmental data fields (opening/closing dates, throughput, energy consumption). This ensures that the already contributed environmental data will be displayed on the location profile once the environmental data display feature is released in version `2.17.0`. The command also includes a `--dry-run` flag to preview the affected location IDs before execution.
-* [OSDEV-2225](https://opensupplyhub.atlassian.net/browse/OSDEV-2225) - Apart from implementing the clear button for the opening and closing dates in the environmental data section within the claim form, the `ShowOnly` React component was also rewritten and made fully functional.
-* [OSDEV-2292](https://opensupplyhub.atlassian.net/browse/OSDEV-2292) - Enhanced ISIC-4 validation in `ISIC4EntrySerializer` and `ProductionLocationSchemaSerializer` for `POST /v1/production-locations/` and `PATCH /v1/production-locations/{os_id}` requests to reject empty ISIC-4 objects (at least one field from section, division, group, or class must be provided), enforce strict type checking to ensure all ISIC-4 field values are strings, reject unrecognized fields that are not one of the four valid ISIC-4 field names, and reject duplicate ISIC-4 objects within the same array (duplicates are detected regardless of field order).
+
+- [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Introduced a new reusable `ImportantNote` component in the new claim flow to replace custom implementations of important notes across multiple components (`BusinessStep`, `ContactInfoStep`, and `ClaimInfoSection`), improving code maintainability and consistency.
+- [Follow-up][OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Removed the `null=True` parameter from the `Contributor.partner_fields` ManyToManyField definition in the model class to resolve Django system check warning W340. The parameter had no effect on the field behavior as ManyToManyFields store relationships in an intermediary table rather than as a database column that could contain NULL values.
+- [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Added the `reindex_locations_with_environmental_data` management command to perform a one-time reindexing of locations that have approved claims containing the new environmental data fields (opening/closing dates, throughput, energy consumption). This ensures that the already contributed environmental data will be displayed on the location profile once the environmental data display feature is released in version `2.17.0`. The command also includes a `--dry-run` flag to preview the affected location IDs before execution.
+- [OSDEV-2225](https://opensupplyhub.atlassian.net/browse/OSDEV-2225) - Apart from implementing the clear button for the opening and closing dates in the environmental data section within the claim form, the `ShowOnly` React component was also rewritten and made fully functional.
+- [OSDEV-2292](https://opensupplyhub.atlassian.net/browse/OSDEV-2292) - Enhanced ISIC-4 validation in `ISIC4EntrySerializer` and `ProductionLocationSchemaSerializer` for `POST /v1/production-locations/` and `PATCH /v1/production-locations/{os_id}` requests to reject empty ISIC-4 objects (at least one field from section, division, group, or class must be provided), enforce strict type checking to ensure all ISIC-4 field values are strings, reject unrecognized fields that are not one of the four valid ISIC-4 field names, and reject duplicate ISIC-4 objects within the same array (duplicates are detected regardless of field order).
 
 ### Bugfix
-* [OSDEV-2277](https://opensupplyhub.atlassian.net/browse/OSDEV-2277) - Introduced a reusable `FormFieldHint` component to display helper text below form field titles. Applied to `Affiliations` and `Certifications` fields to improve user guidance.
-* [OSDEV-2293](https://opensupplyhub.atlassian.net/browse/OSDEV-2293) - Fixed the `ISIC-4` section displaying on production location profiles when submitted objects contained no valid `ISIC-4` fields (section, division, group, class). Enhanced filtering logic to only render the `ISIC-4` section when at least one valid field contains data.
+
+- [OSDEV-2277](https://opensupplyhub.atlassian.net/browse/OSDEV-2277) - Introduced a reusable `FormFieldHint` component to display helper text below form field titles. Applied to `Affiliations` and `Certifications` fields to improve user guidance.
+- [OSDEV-2293](https://opensupplyhub.atlassian.net/browse/OSDEV-2293) - Fixed the `ISIC-4` section displaying on production location profiles when submitted objects contained no valid `ISIC-4` fields (section, division, group, class). Enhanced filtering logic to only render the `ISIC-4` section when at least one valid field contains data.
 
 ### What's new
-* [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
-* [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information.
-* [OSDEV-2269](https://opensupplyhub.atlassian.net/browse/OSDEV-2269) - Added URI format support for partner fields with JSON schema. Properties defined with `"format": "uri"` are rendered as clickable links on production location profile pages.
-* [OSDEV-2225](https://opensupplyhub.atlassian.net/browse/OSDEV-2225) - Added a clear button to the opening and closing date inputs in the environmental data section within the claim form to allow users to remove selected opening and closing dates.
-* [OSDEV-2268](https://opensupplyhub.atlassian.net/browse/OSDEV-2268) - Added URI-Reference format support for partner fields with JSON schema. Properties defined with `"format": "uri-reference"` are rendered on production location profile pages as clickable links wrapped by the text from admin `Partner field` configuration page.
-* [OSDEV-2292](https://opensupplyhub.atlassian.net/browse/OSDEV-2292) - Improved ISIC-4 validation for `POST /v1/production-locations/` and `PATCH /v1/production-locations/{os_id}` endpoints to provide clearer error messages when invalid data is submitted, including rejection of empty ISIC-4 objects, non-string values, unrecognized fields, and duplicate entries. API consumers will now receive specific validation errors for previously accepted but invalid ISIC-4 taxonomy data, ensuring only properly formatted ISIC-4 classification objects (with string values for section, division, group, or class fields) are stored in the system.
+
+- [OSDEV-2280](https://opensupplyhub.atlassian.net/browse/OSDEV-2280) - Added prominent PII (Personally Identifiable Information) warning notes at file upload stages throughout the new claim flow to inform users that they should NOT submit documents containing personal information, home addresses, personal utility bills, or personal phone numbers, enhancing data security and user privacy protection.
+- [OSDEV-2114](https://opensupplyhub.atlassian.net/browse/OSDEV-2114) - Extended the `GET api/facilities/{os_id}/` endpoint with additional claim environmental data including opening date, closing date, estimated annual throughput, and actual annual energy consumption. The production location profile page now displays these new environmental data points as part of the claim information.
+- [OSDEV-2269](https://opensupplyhub.atlassian.net/browse/OSDEV-2269) - Added URI format support for partner fields with JSON schema. Properties defined with `"format": "uri"` are rendered as clickable links on production location profile pages.
+- [OSDEV-2225](https://opensupplyhub.atlassian.net/browse/OSDEV-2225) - Added a clear button to the opening and closing date inputs in the environmental data section within the claim form to allow users to remove selected opening and closing dates.
+- [OSDEV-2268](https://opensupplyhub.atlassian.net/browse/OSDEV-2268) - Added URI-Reference format support for partner fields with JSON schema. Properties defined with `"format": "uri-reference"` are rendered on production location profile pages as clickable links wrapped by the text from admin `Partner field` configuration page.
+- [OSDEV-2292](https://opensupplyhub.atlassian.net/browse/OSDEV-2292) - Improved ISIC-4 validation for `POST /v1/production-locations/` and `PATCH /v1/production-locations/{os_id}` endpoints to provide clearer error messages when invalid data is submitted, including rejection of empty ISIC-4 objects, non-string values, unrecognized fields, and duplicate entries. API consumers will now receive specific validation errors for previously accepted but invalid ISIC-4 taxonomy data, ensuring only properly formatted ISIC-4 classification objects (with string values for section, division, group, or class fields) are stored in the system.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-    * `reindex_locations_with_environmental_data`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+  - `reindex_locations_with_environmental_data`
 
 ## Release 2.16.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 29, 2025
+
+- Product name: Open Supply Hub
+- Release date: November 29, 2025
 
 ### Database changes
 
 #### Migrations
-* 0186_add_json_schema_to_partner_field.py - This migration adds a `json_schema` JSONField to the `PartnerField` model, allowing administrators to define JSON schemas for validating object type partner fields. The field is optional and is used to validate the structure and content of contributed data when the partner field type is `object`.
+
+- 0186_add_json_schema_to_partner_field.py - This migration adds a `json_schema` JSONField to the `PartnerField` model, allowing administrators to define JSON schemas for validating object type partner fields. The field is optional and is used to validate the structure and content of contributed data when the partner field type is `object`.
 
 #### Schema changes
-* [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - The `PartnerField` model has been updated. Field `json_schema` added with a type JSONField.
+
+- [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - The `PartnerField` model has been updated. Field `json_schema` added with a type JSONField.
 
 ### Architecture/Environment changes
-* [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Added `backfill_isic_4_extended_fields.py` to insert `isic_4` to `api_extendedfield` table of RBA instance. Show `isic_4` field in `GET api/facilities` response.
-* [OSDEV-2281](https://opensupplyhub.atlassian.net/browse/OSDEV-2281) - Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Production`, `Pre-prod`, and `RBA` environments.
+
+- [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Added `backfill_isic_4_extended_fields.py` to insert `isic_4` to `api_extendedfield` table of RBA instance. Show `isic_4` field in `GET api/facilities` response.
+- [OSDEV-2281](https://opensupplyhub.atlassian.net/browse/OSDEV-2281) - Increased the CPU and memory allocation for the DedupeHub container to `8 CPU` and `40 GB` in the Terraform deployment configuration to address memory overload issues during production location reindexing for the `Production`, `Pre-prod`, and `RBA` environments.
 
 ### Bugfix
-* [OSDEV-2284](https://opensupplyhub.atlassian.net/browse/OSDEV-2284) - Temporarily increase heap size for logstash plugin installation.
+
+- [OSDEV-2284](https://opensupplyhub.atlassian.net/browse/OSDEV-2284) - Temporarily increase heap size for logstash plugin installation.
 
 ### What's new
-* [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
-* [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Implemented frontend formatting for the ISIC 4 extended field to display Section, Division, Group, and Class as separate labeled entries, building the full ISIC 4 hierarchy on production location profile pages.
-* [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - Added JSON schema validation support for object type partner fields. Partner fields with object type can now have an associated JSON schema that validates the structure and content of contributed data, providing detailed error messages for validation failures.
+
+- [OSDEV-2112](https://opensupplyhub.atlassian.net/browse/OSDEV-2112) - Moved "Recruitment Agency" (previously classified as a location type) under the "Office / HQ" location type as a processing type. Also introduced a new processing type, "Union Headquarters/Office", under the "Office / HQ" location type. This update affects both search and newly contributed data: from now on, "Union Headquarters/Office" and "Recruitment Agency" will appear under the "Office / HQ" location type when displayed in search dropdowns or shown on location profiles for **newly** added locations.
+- [OSDEV-2244](https://opensupplyhub.atlassian.net/browse/OSDEV-2244) - Implemented frontend formatting for the ISIC 4 extended field to display Section, Division, Group, and Class as separate labeled entries, building the full ISIC 4 hierarchy on production location profile pages.
+- [OSDEV-2266](https://opensupplyhub.atlassian.net/browse/OSDEV-2266) - Added JSON schema validation support for object type partner fields. Partner fields with object type can now have an associated JSON schema that validates the structure and content of contributed data, providing detailed error messages for validation failures.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Connect to the RBA Django container using `django-ecsmanage` to run backfill script for RBA environment. Follow these steps:
-    1. Run dry-run `isic_4` backfilling using this command for single field: `backfill_isic_4_extended_fields --singleisic --dry-run`.
-    2. Make sure no errors appear.
-    3. Run real `isic_4` backfilling using this command for the single field: `backfill_isic_4_extended_fields --singleisic`.
-    4. You'll get an updated production location os id in logs. Verify that it contains `isic_4` field(s).
-    5. Run dry-run `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields --dry-run`.
-    6. Make sure no errors appear.
-    7. Finally, run real `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields`.
-    8. Make sure no errors appear.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Connect to the RBA Django container using `django-ecsmanage` to run backfill script for RBA environment. Follow these steps:
+  1. Run dry-run `isic_4` backfilling using this command for single field: `backfill_isic_4_extended_fields --singleisic --dry-run`.
+  2. Make sure no errors appear.
+  3. Run real `isic_4` backfilling using this command for the single field: `backfill_isic_4_extended_fields --singleisic`.
+  4. You'll get an updated production location os id in logs. Verify that it contains `isic_4` field(s).
+  5. Run dry-run `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields --dry-run`.
+  6. Make sure no errors appear.
+  7. Finally, run real `isic_4` backfilling using this command for all fields: `backfill_isic_4_extended_fields`.
+  8. Make sure no errors appear.
 
 ## Release 2.15.2
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 21, 2025
+
+- Product name: Open Supply Hub
+- Release date: November 21, 2025
 
 ### Bugfix
-* [OSDEV-2240](https://opensupplyhub.atlassian.net/browse/OSDEV-2240) - Implemented form state reset in the new claim flow when the OS ID changes or after a successful submission, ensuring that users do not see previously entered data when they start a new form for another OS ID or begin a new claim flow for location A in the same browser tab session - even if they were previously completing the form for location B and exited mid-form. However, if the user exits mid-form for location A without refreshing the page and then returns to the claim form for the same location A in the same tab session, the previously entered data will still be present.
+
+- [OSDEV-2240](https://opensupplyhub.atlassian.net/browse/OSDEV-2240) - Implemented form state reset in the new claim flow when the OS ID changes or after a successful submission, ensuring that users do not see previously entered data when they start a new form for another OS ID or begin a new claim flow for location A in the same browser tab session - even if they were previously completing the form for location B and exited mid-form. However, if the user exits mid-form for location A without refreshing the page and then returns to the claim form for the same location A in the same tab session, the previously entered data will still be present.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.15.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 14, 2025
+
+- Product name: Open Supply Hub
+- Release date: November 14, 2025
 
 ### Database changes
 
 #### Migrations
-* 0185_add_source_by_to_partner_field.py - This migration adds a `source_by` RichTextField to the `PartnerField` model, allowing administrators to document the data source for each partner field using rich text formatting (bold, italic, links, lists). The field is optional and uses CKEditor for content editing.
+
+- 0185_add_source_by_to_partner_field.py - This migration adds a `source_by` RichTextField to the `PartnerField` model, allowing administrators to document the data source for each partner field using rich text formatting (bold, italic, links, lists). The field is optional and uses CKEditor for content editing.
 
 ### What's new
-* [OSDEV-2185](https://opensupplyhub.atlassian.net/browse/OSDEV-2185) - Enhanced partner field display on production location profiles by adding a `source_by` field to the `PartnerField` model. This allows administrators to provide rich text descriptions of data sources. The source information is displayed on the facility details page below each partner field value, supporting HTML formatting for links, emphasis, and lists. Updated the facility index serializer to include `source_by` in the partner fields response only when the field contains content.
-* [OSDEV-2199](https://opensupplyhub.atlassian.net/browse/OSDEV-2199) - Added `unit` and `label` metadata from `PartnerField` to the serialized partner fields payload. Production Location detail pages now render the `unit` inline with field values and display custom partner field `label`.
+
+- [OSDEV-2185](https://opensupplyhub.atlassian.net/browse/OSDEV-2185) - Enhanced partner field display on production location profiles by adding a `source_by` field to the `PartnerField` model. This allows administrators to provide rich text descriptions of data sources. The source information is displayed on the facility details page below each partner field value, supporting HTML formatting for links, emphasis, and lists. Updated the facility index serializer to include `source_by` in the partner fields response only when the field contains content.
+- [OSDEV-2199](https://opensupplyhub.atlassian.net/browse/OSDEV-2199) - Added `unit` and `label` metadata from `PartnerField` to the serialized partner fields payload. Production Location detail pages now render the `unit` inline with field values and display custom partner field `label`.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.15.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 8, 2025
+
+- Product name: Open Supply Hub
+- Release date: November 8, 2025
 
 ### Database changes
 
 #### Migrations
-* 0184_remove_facilityclaim_facility_type_choices.py - This migration removed the `choices` constraint from the `facility_type` field of the FacilityClaim model to allow the display of location types that may differ from the predefined taxonomy options in the Django admin panel.
+
+- 0184_remove_facilityclaim_facility_type_choices.py - This migration removed the `choices` constraint from the `facility_type` field of the FacilityClaim model to allow the display of location types that may differ from the predefined taxonomy options in the Django admin panel.
 
 ### Code/API changes
-* [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Removed the usage of the claim flow link in the `FacilityDetailsContent.jsx` React component, as the claim link was unused and only silently passed to its child component.
+
+- [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Removed the usage of the claim flow link in the `FacilityDetailsContent.jsx` React component, as the claim link was unused and only silently passed to its child component.
 
 ### Architecture/Environment changes
-* [Follow-up][OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Disabled the `debug_logging` setting for the RDS proxy connected to the Production Postgres database. This feature was generating detailed SQL statement logs that were not being utilized or monitored. Disabling this unnecessary logging will reduce CloudWatch log volume and associated costs without impacting proxy functionality. Reduced the AWS Batch job resources for the RBA database sync script from 8GB memory and 4 vCPUs to 2GB memory and 1 vCPU. Monitoring data showed that the task was only reserving about 25% of allocated resources, making this a 75% reduction in compute costs with no performance impact.
+
+- [Follow-up][OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Disabled the `debug_logging` setting for the RDS proxy connected to the Production Postgres database. This feature was generating detailed SQL statement logs that were not being utilized or monitored. Disabling this unnecessary logging will reduce CloudWatch log volume and associated costs without impacting proxy functionality. Reduced the AWS Batch job resources for the RBA database sync script from 8GB memory and 4 vCPUs to 2GB memory and 1 vCPU. Monitoring data showed that the task was only reserving about 25% of allocated resources, making this a 75% reduction in compute costs with no performance impact.
 
 ### Bugfix
-* [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Company Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
-* [OSDEV-2262](https://opensupplyhub.atlassian.net/browse/OSDEV-2262) - Prevented unintended submission of the last-step claim form when pressing Enter in an input while the Submit button is not focused. Updated `src/react/src/components/InitialClaimFlow/ClaimForm/ClaimForm.jsx` to remove implicit form submission and trigger Formik submission explicitly via the Submit button, aligning with Material UI semantics.
-* [OSDEV-2231](https://opensupplyhub.atlassian.net/browse/OSDEV-2231) - Fixed Django admin panel not displaying location type values for claims when they didn't match the predefined taxonomy. Removed the restrictive `choices` constraint to allow all location types to be visible.
-* [OSDEV-2260](https://opensupplyhub.atlassian.net/browse/OSDEV-2260) - Removed the unnecessary `facility_type` checks in the `facilities_view_set.py` to support proper saving of the data. The function assumed that the value is an array and that caused errors in the creation of extended fields. On front-end data format has been changed to send array values as a pipe-separated (`|`) string instead of a comma-separated one. The `extended_fields.py` file has been updated to correctly parse this new pipe-delimited format, ensuring data is handled correctly.
-* [OSDEV-2264](https://opensupplyhub.atlassian.net/browse/OSDEV-2264) - Fixed an issue where the processing type field was being saved to the database (`api_extendedfield` table) as an empty list. Now it's not saved if the list is empty.
+
+- [OSDEV-2259](https://opensupplyhub.atlassian.net/browse/OSDEV-2259) - Fixed an issue where the Company Phone field was being saved to the incorrect `office_phone_number` column instead of the `facility_phone_number` when submitting a claim. The Company Phone field now properly stores the value in the correct `facility_phone_number` column in `api_facilityclaim` table.
+- [OSDEV-2262](https://opensupplyhub.atlassian.net/browse/OSDEV-2262) - Prevented unintended submission of the last-step claim form when pressing Enter in an input while the Submit button is not focused. Updated `src/react/src/components/InitialClaimFlow/ClaimForm/ClaimForm.jsx` to remove implicit form submission and trigger Formik submission explicitly via the Submit button, aligning with Material UI semantics.
+- [OSDEV-2231](https://opensupplyhub.atlassian.net/browse/OSDEV-2231) - Fixed Django admin panel not displaying location type values for claims when they didn't match the predefined taxonomy. Removed the restrictive `choices` constraint to allow all location types to be visible.
+- [OSDEV-2260](https://opensupplyhub.atlassian.net/browse/OSDEV-2260) - Removed the unnecessary `facility_type` checks in the `facilities_view_set.py` to support proper saving of the data. The function assumed that the value is an array and that caused errors in the creation of extended fields. On front-end data format has been changed to send array values as a pipe-separated (`|`) string instead of a comma-separated one. The `extended_fields.py` file has been updated to correctly parse this new pipe-delimited format, ensuring data is handled correctly.
+- [OSDEV-2264](https://opensupplyhub.atlassian.net/browse/OSDEV-2264) - Fixed an issue where the processing type field was being saved to the database (`api_extendedfield` table) as an empty list. Now it's not saved if the list is empty.
 
 ### What's new
-* [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
-* [OSDEV-2206](https://opensupplyhub.atlassian.net/browse/OSDEV-2206) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional facility type and processing type data, also added additional fields from `FacilityClaim` model to the endpoint. Updated the `FacilityClaim` model to include the new fields such as `claimant_employment_verification_method`, `claimant_linkedin_profile_url` and `claimant_location_relationship`.
-* [OSDEV-2203](https://opensupplyhub.atlassian.net/browse/OSDEV-2203) - Implemented new multi-step claim flow for production locations with routing skeleton and shared layout. Introduced claim form page (`/claim/:osID/details/`) featuring a four-step stepper (Eligibility Check, Contact Information, Business Details, Production Location Details). Added step-isolated form validation with optimistic button states that enable on initial render and disable after user interaction with errors. Integrated session-based URL access protection and data prefetching for countries, facility processing types, parent companies, and production location data using the existing Redux infrastructure for the claim form steps where this data should be prepopulated.
-* [OSDEV-2201](https://opensupplyhub.atlassian.net/browse/OSDEV-2201) - Claim Flow: Eligibility Step
+
+- [OSDEV-2200](https://opensupplyhub.atlassian.net/browse/OSDEV-2200) - Implements a new claim introduction page for the new facility claiming process, accessible via `/claim/:osId`, which can be enabled or activated through a feature flag.
+- [OSDEV-2206](https://opensupplyhub.atlassian.net/browse/OSDEV-2206) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional facility type and processing type data, also added additional fields from `FacilityClaim` model to the endpoint. Updated the `FacilityClaim` model to include the new fields such as `claimant_employment_verification_method`, `claimant_linkedin_profile_url` and `claimant_location_relationship`.
+- [OSDEV-2203](https://opensupplyhub.atlassian.net/browse/OSDEV-2203) - Implemented new multi-step claim flow for production locations with routing skeleton and shared layout. Introduced claim form page (`/claim/:osID/details/`) featuring a four-step stepper (Eligibility Check, Contact Information, Business Details, Production Location Details). Added step-isolated form validation with optimistic button states that enable on initial render and disable after user interaction with errors. Integrated session-based URL access protection and data prefetching for countries, facility processing types, parent companies, and production location data using the existing Redux infrastructure for the claim form steps where this data should be prepopulated.
+- [OSDEV-2201](https://opensupplyhub.atlassian.net/browse/OSDEV-2201) - Claim Flow: Eligibility Step
   - Added a dedicated Eligibility step UI showing account email and organization name, plus a required relationship selector with the following options: owner, manager, parent company representative, worker, partner, and other.
   - Implemented an ineligibility dialog for the "partner" and "other" selections that blocks progression but preserves any previously valid selection when the dialog is closed.
-* [OSDEV-2205](https://opensupplyhub.atlassian.net/browse/OSDEV-2205) - Claim Flow: Business Information Step
+- [OSDEV-2205](https://opensupplyhub.atlassian.net/browse/OSDEV-2205) - Claim Flow: Business Information Step
   - Implemented Business step UI displaying read-only production location details including OS ID (with clickable link to facility profile), company name, and address.
   - Added Company Address Verification section with seven verification method options: company website URL, LinkedIn page URL, utility bill upload, business registration document upload, tax document/license upload, property lease/ownership document upload, and other official documents upload.
   - Implemented dynamic form fields that conditionally display URL input (for website/LinkedIn verification) or document uploader (for document-based verification methods) based on selected verification method.
   - Added comprehensive form validation with real-time error messaging for verification method selection, URL format validation, and required document uploads.
-* [OSDEV-2204](https://opensupplyhub.atlassian.net/browse/OSDEV-2204) - Claim Flow: Contact Info Step. Added a dedicated Contact Info step UI showing:
+- [OSDEV-2204](https://opensupplyhub.atlassian.net/browse/OSDEV-2204) - Claim Flow: Contact Info Step. Added a dedicated Contact Info step UI showing:
   - non-editable prefilled account email
   - claimant name field
   - claimant job title field
   - employment verification select field with one of these options:
-      - for file(s) upload:
-          - Employment letter or contract showing your name, title, and company
-          - Signed and/or stamped letter on company letterhead that confirmis your name, your title with the company, and your email address
-          - Company ID badge or access card (photo showing name and title)
-          - Official organizational chart showing your position
-          - Business card showing your name, title and company
-          - An official company document showing your name and title
-          - Audit reports showing your name and role at the facility
-      - for url input fields
-          - Company website showing your name and title (e.g., About Us, Team page)
-            - If chosen, renders company website input field
-          - Your LinkedIn page showing your name, title and company
-            - If chosen, renders claimant LinkedIn input field
+    - for file(s) upload:
+      - Employment letter or contract showing your name, title, and company
+      - Signed and/or stamped letter on company letterhead that confirmis your name, your title with the company, and your email address
+      - Company ID badge or access card (photo showing name and title)
+      - Official organizational chart showing your position
+      - Business card showing your name, title and company
+      - An official company document showing your name and title
+      - Audit reports showing your name and role at the facility
+    - for url input fields
+      - Company website showing your name and title (e.g., About Us, Team page)
+        - If chosen, renders company website input field
+      - Your LinkedIn page showing your name, title and company
+        - If chosen, renders claimant LinkedIn input field
   - 'Do you want this location's contact info to be public?' toogle button. If switch to 'Yes', renders:
-      - contact name field (required if open). Prepopulates by claimant name if it was set before.
-      - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
-* [OSDEV-2212](https://opensupplyhub.atlassian.net/browse/OSDEV-2212) - Claim Flow: Profile Step
+    - contact name field (required if open). Prepopulates by claimant name if it was set before.
+    - contact email field (required if open). Prepopulates by claimant email, but the field is editable.
+- [OSDEV-2212](https://opensupplyhub.atlassian.net/browse/OSDEV-2212) - Claim Flow: Profile Step
   - Implemented comprehensive Profile step with four expandable sections: Production Location Overview, Company Information, Operations & Capabilities, and Compliance & Partnerships.
   - Added dynamic sector-based taxonomy for facility types and processing types that filters options when "Apparel" sector is selected, with fallback to creatable fields for other sectors.
   - Integrated emissions estimation fields allowing claimants to provide energy consumption data by source type, facility opening/closing dates, and estimated annual throughput.
   - Added Beta labels with tooltips to premium fields (Company Phone, Production Location Description, Minimum Order Quantity, Average Lead Time, Affiliations, and Certifications) to indicate future Premium offering features.
   - Implemented form submission functionality with success dialog popup showing "View My Approved Claims" and "Search OS Hub" action buttons upon successful claim submission.
-* [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform and in emails automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
-* [OSDEV-2251](https://opensupplyhub.atlassian.net/browse/OSDEV-2251) - Added the `EmailAddress` model to the Django admin panel, allowing administrators to manage user email records directly. This ensures consistency between the `User` and `EmailAddress` tables when updating user email addresses.
+- [OSDEV-2213](https://opensupplyhub.atlassian.net/browse/OSDEV-2213) - Implemented dynamic claim flow link switching based on the `enable_v1_claims_flow` feature flag. When enabled by an admin, all claim-related links and CTAs throughout the platform and in emails automatically redirect to the new claim flow intro page (`/claim/{os_id}/`) instead of the old claim flow.
+- [OSDEV-2251](https://opensupplyhub.atlassian.net/browse/OSDEV-2251) - Added the `EmailAddress` model to the Django admin panel, allowing administrators to manage user email records directly. This ensures consistency between the `User` and `EmailAddress` tables when updating user email addresses.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.14.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: October 18, 2025
+
+- Product name: Open Supply Hub
+- Release date: October 18, 2025
 
 ### Database changes
 
 #### Migrations
-* 0182_introduce_free_emissions_estimate_fields.py - This migration introduces new fields for emissions estimation including energy consumption by source (electricity, natural gas, diesel, coal, biomass, etc.), opening/closing dates, and estimated annual throughput to the `facilityclaim` and `historicalfacilityclaim` tables.
+
+- 0182_introduce_free_emissions_estimate_fields.py - This migration introduces new fields for emissions estimation including energy consumption by source (electricity, natural gas, diesel, coal, biomass, etc.), opening/closing dates, and estimated annual throughput to the `facilityclaim` and `historicalfacilityclaim` tables.
 
 ### Code/API changes
-* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
-* [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
-* [OSDEV-2198](https://opensupplyhub.atlassian.net/browse/OSDEV-2198) - Pass authenticated user information to the `Dromo Uploader` initialization, for auditing and customer support purposes only.
+
+- [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Enhanced the POST `/api/facilities/{os_id}/claim/` endpoint to accept additional emissions estimation data, including energy consumption by source type (coal, natural gas, diesel, kerosene, biomass, charcoal, animal waste, electricity, and other), facility opening/closing dates, and estimated annual throughput.
+- [OSDEV-2064](https://opensupplyhub.atlassian.net/browse/OSDEV-2064) - Added `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption` response fields to GET `/api/v1/production-locations/{os_id}/` endpoint. Implemented DB lookup to retrieve partner fields (if present) and append them to the GET `/api/v1/production-locations/{os_id}/` response.
+- [OSDEV-2198](https://opensupplyhub.atlassian.net/browse/OSDEV-2198) - Pass authenticated user information to the `Dromo Uploader` initialization, for auditing and customer support purposes only.
 
 ### Architecture/Environment changes
-* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Fixed database connection timeout in the Django `sync_databases` command by implementing global session time tracking. Previously, session time was reset when switching between models, causing the connection to exceed the 24-hour RDS Proxy timeout. Now session time persists across all models and only resets after actual connection refreshes.
-* [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Enabled the daily RBA synchronization trigger following the successful completion of the initial full sync run.
+
+- [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Fixed database connection timeout in the Django `sync_databases` command by implementing global session time tracking. Previously, session time was reset when switching between models, causing the connection to exceed the 24-hour RDS Proxy timeout. Now session time persists across all models and only resets after actual connection refreshes.
+- [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Enabled the daily RBA synchronization trigger following the successful completion of the initial full sync run.
 
 ### What's new
-* [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
-* [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
-* [OSDEV-2180](https://opensupplyhub.atlassian.net/browse/OSDEV-2180) - Introduced logic to return `partner_fields` for both `GET /facilities/{os_id}` and `GET /facilities/` endpoints. Also implemented dynamic rendering of any `partner_fields` returned by the API, ensuring that new fields are displayed automatically without additional actions in `Production Location Profile` page.
+
+- [OSDEV-2177](https://opensupplyhub.atlassian.net/browse/OSDEV-2177) - Updated button text from `View My Claims` to `View My Approved Claims` in post-claims submission pop-up.
+- [OSDEV-2067](https://opensupplyhub.atlassian.net/browse/OSDEV-2067) - Added optional emissions estimation fields to the facility claim form, allowing claimants to provide energy consumption data by source type (electricity, natural gas, diesel, coal, biomass, etc.), facility opening/closing dates, and estimated annual throughput for free emissions calculations.
+- [OSDEV-2180](https://opensupplyhub.atlassian.net/browse/OSDEV-2180) - Introduced logic to return `partner_fields` for both `GET /facilities/{os_id}` and `GET /facilities/` endpoints. Also implemented dynamic rendering of any `partner_fields` returned by the API, ensuring that new fields are displayed automatically without additional actions in `Production Location Profile` page.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption`.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `opened_at`, `closed_at`, `estimated_annual_throughput` and `actual_annual_energy_consumption`.
 
 ## Release 2.13.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: October 4, 2025
+
+- Product name: Open Supply Hub
+- Release date: October 4, 2025
 
 ### Database changes
 
 #### Migrations
-* 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
-* 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
+
+- 0179_introduce_enable_v1_claims_flow.py - This migration introduces a new `enable_v1_claims_flow` feature flag that allows switching to the v1 claims flow.
+- 0180_add_unit_to_partner_field.py - This migration added new field `unit` to `PartnerField` model.
 
 ### Code/API changes
-* [OSDEV-2179](https://opensupplyhub.atlassian.net/browse/OSDEV-2179) - Add `select_related()` to default `FacilityClaimViewSet` queryset to optimize foreign key lookups. Add `select_related()` to list method queryset to prevent separate queries for facility, contributor, and admin data.
+
+- [OSDEV-2179](https://opensupplyhub.atlassian.net/browse/OSDEV-2179) - Add `select_related()` to default `FacilityClaimViewSet` queryset to optimize foreign key lookups. Add `select_related()` to list method queryset to prevent separate queries for facility, contributor, and admin data.
 
 ### Architecture/Environment changes
-* [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
-* [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Enhanced `sync_databases.py` script (which synchronizes RBA and Production(OS Hub) databases) with improved resilience: implemented checkpoint-based progress saving after each chunk (default 1000 records) instead of only at the end of processing; added configurable connection refresh mechanism (default 15 hours) to prevent RDS Proxy 24-hour timeout during long-running syncs; implemented session-based processing with break-and-resume approach to safely refresh database connections without closing active cursors.
+
+- [OSDEV-2054](https://opensupplyhub.atlassian.net/browse/OSDEV-2054) - Increased the memory allocation for the `DedupeHub` container from `16GB` to `30GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+- [Follow-up][OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Enhanced `sync_databases.py` script (which synchronizes RBA and Production(OS Hub) databases) with improved resilience: implemented checkpoint-based progress saving after each chunk (default 1000 records) instead of only at the end of processing; added configurable connection refresh mechanism (default 15 hours) to prevent RDS Proxy 24-hour timeout during long-running syncs; implemented session-based processing with break-and-resume approach to safely refresh database connections without closing active cursors.
 
 ### What's new
-* [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
-* [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
-    * Added `unit` field to `PartnerField` model
-    * Added type validation for submitted partner fields
-    * Added `create_partner_extendedfields_for_single_item()` function for bulk partner field processing
-    * Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
-    * Integrated partner field creation into the moderation event approval workflow
-    * Added `label` field to `PartnerField` model
-    * Added functionality to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
+
+- [OSDEV-2176](https://opensupplyhub.atlassian.net/browse/OSDEV-2176) - Added feature flag for v1 claims flow.
+- [OSDEV-2065](https://opensupplyhub.atlassian.net/browse/OSDEV-2065) - Updated v1 production locations `POST/PATCH` endpoints to include partner fields:
+  - Added `unit` field to `PartnerField` model
+  - Added type validation for submitted partner fields
+  - Added `create_partner_extendedfields_for_single_item()` function for bulk partner field processing
+  - Enhanced `all_values_empty()` function to handle dictionaries and improve list processing
+  - Integrated partner field creation into the moderation event approval workflow
+  - Added `label` field to `PartnerField` model
+  - Added functionality to display `estimated_emissions_activity` & `estimated_annual_energy_consumption` in Production Location Profile page
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.12.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: September 20, 2025
+
+- Product name: Open Supply Hub
+- Release date: September 20, 2025
 
 ### Database changes
 
 #### Migrations
-* 0177_add_new_certifications.py - This migration introduces new certifications for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
-* 0178_add_partner_fields_to_contributor.py - This migration introduces a new table called `Partner Field`, enhanced `Contributor` model with `partner_fields` relationship `ManyToMany`.
+
+- 0177_add_new_certifications.py - This migration introduces new certifications for `facility_certifications` field in `facilityclaim` and `historicalfacilityclaim`.
+- 0178_add_partner_fields_to_contributor.py - This migration introduces a new table called `Partner Field`, enhanced `Contributor` model with `partner_fields` relationship `ManyToMany`.
 
 ### Code/API changes
-* [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
-* [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
-* [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
-* [OSDEV-2122](https://opensupplyhub.atlassian.net/browse/OSDEV-2122) - Enhanced PATCH `/api/v1/production-locations/{os_id}/` endpoint validation to enforce required field constraints when coordinates are provided. Implemented automatic backfill of missing required fields (name, address, country) from existing facility data when no required fields are provided in PATCH requests.
+
+- [OSDEV-2137](https://opensupplyhub.atlassian.net/browse/OSDEV-2137) - Switched to a custom, page-compatible keyset for the `/facilities-downloads` endpoint, enabling more efficient, cursor-based pagination and improved download performance and compatibility.
+- [OSDEV-2089](https://opensupplyhub.atlassian.net/browse/OSDEV-2089) - Added `geocoded_location_type` and `geocoded_address` fields to GET `/api/v1/production-locations/` and GET `/api/v1/production-locations/{os_id}/` endpoints.
+- [OSDEV-2068](https://opensupplyhub.atlassian.net/browse/OSDEV-2068) - Enabled users to download their own data without impacting free & purchased data-download allowances. Introduced `is_same_contributor` field in the GET `/api/facilities-downloads` response.
+- [OSDEV-2122](https://opensupplyhub.atlassian.net/browse/OSDEV-2122) - Enhanced PATCH `/api/v1/production-locations/{os_id}/` endpoint validation to enforce required field constraints when coordinates are provided. Implemented automatic backfill of missing required fields (name, address, country) from existing facility data when no required fields are provided in PATCH requests.
 
 ### Architecture/Environment changes
-* [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Disabled the RBA synchronization script trigger via the `db_sync_enabled` Terraform variable due to the temporary unnecessity of synchronization.
+
+- [Follow-up][OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Disabled the RBA synchronization script trigger via the `db_sync_enabled` Terraform variable due to the temporary unnecessity of synchronization.
 
 ### What's new
-* [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
-* [OSDEV-2044](https://opensupplyhub.atlassian.net/browse/OSDEV-2044) - Added additional certifications to `Certifications/Standards/Regulations` on `Claim Profile`.
-* [OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Added permission system to control which partner data fields contributors can submit for `POST v1/production-locations/` & `PATCH v1/production-locations/{os_id}` endpoints. Created new `PartnerField` model for categorizing partner-specific fields. Enhanced `Contributor` model with `partner_fields` relationship.
+
+- [OSDEV-2164](https://opensupplyhub.atlassian.net/browse/OSDEV-2164) - Added search functionality for user email and contributor name in the Facility Download Limits admin page.
+- [OSDEV-2044](https://opensupplyhub.atlassian.net/browse/OSDEV-2044) - Added additional certifications to `Certifications/Standards/Regulations` on `Claim Profile`.
+- [OSDEV-2066](https://opensupplyhub.atlassian.net/browse/OSDEV-2066) - Added permission system to control which partner data fields contributors can submit for `POST v1/production-locations/` & `PATCH v1/production-locations/{os_id}` endpoints. Created new `PartnerField` model for categorizing partner-specific fields. Enhanced `Contributor` model with `partner_fields` relationship.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `geocoded_location_type` and `geocoded_address`.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to apply the updated mapping for the `production-locations` index after adding `geocoded_location_type` and `geocoded_address`.
 
 ## Release 2.11.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: September 6, 2025
+
+- Product name: Open Supply Hub
+- Release date: September 6, 2025
 
 ### Architecture/Environment changes
-* [OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Introduced automated database synchronization script (`sync_databases.py`) for private instance deployment. The script enables efficient, incremental data transfer from OS Hub to private instance databases using Django ORM. Key features include:
-    * **Incremental Synchronization**: Only processes records modified since last run using `updated_at` timestamps, reducing sync time from hours to minutes on subsequent runs.
-    * **Chunking table records with Django iterator()**: Maintains linear task memory usage and prevents out-of-memory issues for large tables.
-    * **Smart Dependency Management**: Automatic model dependency ordering (User → Contributor → FacilityList → etc.) with two-phase sync approach.
-    * **Data Privacy**: Automatic email anonymization using MD5 hashing for GDPR compliance.
-    * **Circular Reference Handling**: Automatic resolution of circular dependencies between models.
-    * **Progress Tracking**: Maintains separate timestamp files for each model to enable resumable operations.
-    * **Dry Run Mode**: Preview synchronization changes without making database modifications.
-    * **Comprehensive Logging**: Detailed logging for monitoring and debugging.
-* [OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Set up `AWS Batch` infrastructure for database synchronization, including compute environment, job queue, job definition, and `EFS` integration for persistent storage. Added required variables and RBA environment configuration to support secure database connectivity and reliable sync execution. Added a filter in the `DB - Apply Anonymized DB` and `Deploy to AWS` GitHub workflows - for the logic that retrieves EFS storage during OpenSearch cleanup, ensuring it points to the correct storage since we now have at least two in RBA. Introduced the ability to access the DB sync EFS storage from the bastion EC2 instance for management purposes.
-* [OSDEV-2078](https://opensupplyhub.atlassian.net/browse/OSDEV-2078) - Setup AWS EventBridge to trigger database sync every day at 7:00 AM UTC.
-* [OSDEV-2160](https://opensupplyhub.atlassian.net/browse/OSDEV-2160) - Migrate to the `bitnamilegacy/kafka` image instead of `bitnami/kafka` and migrate to the `bitnamilegacy/zookeeper` image instead of `bitnami/zookeeper`, as Bitnami is deprecating support for non-hardened, Debian-based images in its free tier and will gradually remove these tags from the public catalog.
-* [OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Implemented Database Private Link infrastructure to enable secure cross-VPC database access from AWS Batch jobs in the RBA environment to the main OS Hub database. The solution includes:
-    * **Provider Module**: RDS Proxy, Network Load Balancer (NLB), VPC Endpoint Service, and Lambda function for automatic target registration
-    * **Consumer Module**: VPC Endpoint in the consumer VPC with proper security group rules
-    * **Security**: All components deployed in private subnets with encrypted communication and security group rules
-    * **Environment Configuration**: Production configured as provider, RBA as consumer, with conditional deployment via Terraform variables
+
+- [OSDEV-2029](https://opensupplyhub.atlassian.net/browse/OSDEV-2029) - Introduced automated database synchronization script (`sync_databases.py`) for private instance deployment. The script enables efficient, incremental data transfer from OS Hub to private instance databases using Django ORM. Key features include:
+  - **Incremental Synchronization**: Only processes records modified since last run using `updated_at` timestamps, reducing sync time from hours to minutes on subsequent runs.
+  - **Chunking table records with Django iterator()**: Maintains linear task memory usage and prevents out-of-memory issues for large tables.
+  - **Smart Dependency Management**: Automatic model dependency ordering (User → Contributor → FacilityList → etc.) with two-phase sync approach.
+  - **Data Privacy**: Automatic email anonymization using MD5 hashing for GDPR compliance.
+  - **Circular Reference Handling**: Automatic resolution of circular dependencies between models.
+  - **Progress Tracking**: Maintains separate timestamp files for each model to enable resumable operations.
+  - **Dry Run Mode**: Preview synchronization changes without making database modifications.
+  - **Comprehensive Logging**: Detailed logging for monitoring and debugging.
+- [OSDEV-2073](https://opensupplyhub.atlassian.net/browse/OSDEV-2073) - Set up `AWS Batch` infrastructure for database synchronization, including compute environment, job queue, job definition, and `EFS` integration for persistent storage. Added required variables and RBA environment configuration to support secure database connectivity and reliable sync execution. Added a filter in the `DB - Apply Anonymized DB` and `Deploy to AWS` GitHub workflows - for the logic that retrieves EFS storage during OpenSearch cleanup, ensuring it points to the correct storage since we now have at least two in RBA. Introduced the ability to access the DB sync EFS storage from the bastion EC2 instance for management purposes.
+- [OSDEV-2078](https://opensupplyhub.atlassian.net/browse/OSDEV-2078) - Setup AWS EventBridge to trigger database sync every day at 7:00 AM UTC.
+- [OSDEV-2160](https://opensupplyhub.atlassian.net/browse/OSDEV-2160) - Migrate to the `bitnamilegacy/kafka` image instead of `bitnami/kafka` and migrate to the `bitnamilegacy/zookeeper` image instead of `bitnami/zookeeper`, as Bitnami is deprecating support for non-hardened, Debian-based images in its free tier and will gradually remove these tags from the public catalog.
+- [OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077) - Implemented Database Private Link infrastructure to enable secure cross-VPC database access from AWS Batch jobs in the RBA environment to the main OS Hub database. The solution includes:
+  - **Provider Module**: RDS Proxy, Network Load Balancer (NLB), VPC Endpoint Service, and Lambda function for automatic target registration
+  - **Consumer Module**: VPC Endpoint in the consumer VPC with proper security group rules
+  - **Security**: All components deployed in private subnets with encrypted communication and security group rules
+  - **Environment Configuration**: Production configured as provider, RBA as consumer, with conditional deployment via Terraform variables
 
 ### Bugfix
-* Enhanced the `./src/anon-tools/do_restore.sh` script to use more precise filtering when looking up the bastion host, improving reliability and reducing potential for incorrect host selection. The *bastion* filter now ensures that only an instance tagged with both the correct environment and the specific "Bastion" name is selected.
-* [OSDEV-2133](https://opensupplyhub.atlassian.net/browse/OSDEV-2133) - Implemented a fix to wrap values in double quotes to ensure correct CSV formatting for Dromo results.
+
+- Enhanced the `./src/anon-tools/do_restore.sh` script to use more precise filtering when looking up the bastion host, improving reliability and reducing potential for incorrect host selection. The _bastion_ filter now ensures that only an instance tagged with both the correct environment and the specific "Bastion" name is selected.
+- [OSDEV-2133](https://opensupplyhub.atlassian.net/browse/OSDEV-2133) - Implemented a fix to wrap values in double quotes to ensure correct CSV formatting for Dromo results.
 
 ### What's new
-* [OSDEV-2156](https://opensupplyhub.atlassian.net/browse/OSDEV-2156) - Updated the copy for Premium Data Downloads email templates to include information about all other available options to obtain data (link to bulk download inquiry form and link to Free Premium Feature access policy for Civil Society Organizations).
+
+- [OSDEV-2156](https://opensupplyhub.atlassian.net/browse/OSDEV-2156) - Updated the copy for Premium Data Downloads email templates to include information about all other available options to obtain data (link to bulk download inquiry form and link to Free Premium Feature access policy for Civil Society Organizations).
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* To properly deploy the Database Private Link infrastructure([OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077)):
-    1. **First**: Deploy to Production environment to provision the provider infrastructure (RDS Proxy, NLB, VPC Endpoint Service)
-    2. **Second**: Manually retrieve the VPC Endpoint Service name from AWS Console (VPC → Endpoint Services)
-    3. **Third**: Update the `database_private_link_vpc_endpoint_service_name` variable in the secrets repository and merge the changes
-    4. **Fourth**: Deploy to RBA environment to provision the consumer infrastructure (VPC Endpoint)
 
-    *Note: The RBA environment deployment will fail if the VPC Endpoint Service name is not properly configured in the secrets repository.*
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- To properly deploy the Database Private Link infrastructure([OSDEV-2077](https://opensupplyhub.atlassian.net/browse/OSDEV-2077)):
+  1. **First**: Deploy to Production environment to provision the provider infrastructure (RDS Proxy, NLB, VPC Endpoint Service)
+  2. **Second**: Manually retrieve the VPC Endpoint Service name from AWS Console (VPC → Endpoint Services)
+  3. **Third**: Update the `database_private_link_vpc_endpoint_service_name` variable in the secrets repository and merge the changes
+  4. **Fourth**: Deploy to RBA environment to provision the consumer infrastructure (VPC Endpoint)
 
+  _Note: The RBA environment deployment will fail if the VPC Endpoint Service name is not properly configured in the secrets repository._
 
 ## Release 2.10.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: August 9, 2025
+
+- Product name: Open Supply Hub
+- Release date: August 9, 2025
 
 ### Database changes
 
 #### Migrations
-* 0176_introduce_enable_dromo_uploading_switch.py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
+
+- 0176_introduce_enable_dromo_uploading_switch.py - This migration introduces a new feature flag called `enable_dromo_uploading`, which controls the visibility of the "Beta Self Service Upload" button on the Upload Multiple Locations page.
 
 ### Code/API changes
-* [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters:
-    * `claim_status` - filter by the claim status (`claimed`, `unclaimed`, `pending`).
-    * `claimed_at_gt` - starting date to filter by production location claim timestamp.
-    * `claimed_at_lt` - ending date to filter by production location claim timestamp.
+
+- [OSDEV-2062](https://opensupplyhub.atlassian.net/browse/OSDEV-2062) - Updated GET `v1/production-locations` API endpoint to query production locations by claim status. Introduced `claimed_at` response field which is taken from `updated_at` column in the `api_facilityclaim` table. Added these query parameters:
+  - `claim_status` - filter by the claim status (`claimed`, `unclaimed`, `pending`).
+  - `claimed_at_gt` - starting date to filter by production location claim timestamp.
+  - `claimed_at_lt` - ending date to filter by production location claim timestamp.
 
 ### Architecture/Environment changes
-* [OSDEV-2083](https://opensupplyhub.atlassian.net/browse/OSDEV-2083) - The following updates were made:
-    * Updated Python version from `3.7` to `3.8` to support higher OpenSearch client version with necessary features.
-    * Added system dependencies: `libmemcached-dev`, `zlib1g-dev` to support building C-based packages like `pylibmc`.
-    * Package `pytz` upgraded from `2018.7` → `2023.3` to include up-to-date and stable timezone data.
-    * Package `requests` upgraded from `2.31.0` → `2.32.4` for improved security and compatibility.
-    * Package `opensearch-py` upgraded from `2.5.0` → `2.8.0` to enable hybrid search.
+
+- [OSDEV-2083](https://opensupplyhub.atlassian.net/browse/OSDEV-2083) - The following updates were made:
+  - Updated Python version from `3.7` to `3.8` to support higher OpenSearch client version with necessary features.
+  - Added system dependencies: `libmemcached-dev`, `zlib1g-dev` to support building C-based packages like `pylibmc`.
+  - Package `pytz` upgraded from `2018.7` → `2023.3` to include up-to-date and stable timezone data.
+  - Package `requests` upgraded from `2.31.0` → `2.32.4` for improved security and compatibility.
+  - Package `opensearch-py` upgraded from `2.5.0` → `2.8.0` to enable hybrid search.
 
 ### What's new
-* [OSDEV-2084](https://opensupplyhub.atlassian.net/browse/OSDEV-2084) - Implemented front-end logic to display the "Beta Self Service Upload" button on the Upload Multiple Locations page when the `enable_dromo_uploading` feature flag is returned as true from the backend.
-* [OSDEV-2082](https://opensupplyhub.atlassian.net/browse/OSDEV-2082) - Replaced `Resources` with `Pricing` in the platform header globally. Moved the `Resources` content under the `How it works` category for better organization.
-* [OSDEV-2125](https://opensupplyhub.atlassian.net/browse/OSDEV-2125) - Changed the copy on the Dromo Self Service button. Included lead-in copy above the Dromo Self Service button stating.
+
+- [OSDEV-2084](https://opensupplyhub.atlassian.net/browse/OSDEV-2084) - Implemented front-end logic to display the "Beta Self Service Upload" button on the Upload Multiple Locations page when the `enable_dromo_uploading` feature flag is returned as true from the backend.
+- [OSDEV-2082](https://opensupplyhub.atlassian.net/browse/OSDEV-2082) - Replaced `Resources` with `Pricing` in the platform header globally. Moved the `Resources` content under the `How it works` category for better organization.
+- [OSDEV-2125](https://opensupplyhub.atlassian.net/browse/OSDEV-2125) - Changed the copy on the Dromo Self Service button. Included lead-in copy above the Dromo Self Service button stating.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new field `claimed_at`.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new field `claimed_at`.
 
 ## Release 2.9.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: July 30, 2025
+
+- Product name: Open Supply Hub
+- Release date: July 30, 2025
 
 ### Bugfix
-* [OSDEV-2126](https://opensupplyhub.atlassian.net/browse/OSDEV-2126) - Updated Stripe webhook to handle checkouts for all products without returning errors to Stripe.
+
+- [OSDEV-2126](https://opensupplyhub.atlassian.net/browse/OSDEV-2126) - Updated Stripe webhook to handle checkouts for all products without returning errors to Stripe.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.9.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: July 26, 2025
+
+- Product name: Open Supply Hub
+- Release date: July 26, 2025
 
 ### Code/API changes
-* [Follow-up][OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Created comprehensive test coverage for the logic that controls the display of download limit lead-in copy on the main location search page (/facilities). The implementation includes:
-    * Tests that verify the `DownloadLimitInfo` component is only shown to logged-in users when search results exceed their download limit.
-    * Tests that ensure the component is properly hidden for anonymous users, in embed mode, when the `private_instance` flag is active, or when facilities count is within the user's allowed download limit.
-    * Tests for the `DownloadLimitInfo` component to ensure it renders correct text content and link attributes for informing users about download limits and purchasing additional downloads.
-    * Refactored the filter sidebar header into a separate `FilterSidebarHeader` component to improve code organization and maintainability.
-* [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to the Open Supply Hub site. Both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don’t execute JavaScript) were enabled.
+
+- [Follow-up][OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Created comprehensive test coverage for the logic that controls the display of download limit lead-in copy on the main location search page (/facilities). The implementation includes:
+  - Tests that verify the `DownloadLimitInfo` component is only shown to logged-in users when search results exceed their download limit.
+  - Tests that ensure the component is properly hidden for anonymous users, in embed mode, when the `private_instance` flag is active, or when facilities count is within the user's allowed download limit.
+  - Tests for the `DownloadLimitInfo` component to ensure it renders correct text content and link attributes for informing users about download limits and purchasing additional downloads.
+  - Refactored the filter sidebar header into a separate `FilterSidebarHeader` component to improve code organization and maintainability.
+- [OSDEV-2036](https://opensupplyhub.atlassian.net/browse/OSDEV-2036) - Connected DarkVisitors trackers to the Open Supply Hub site. Both "client analytics" (for JavaScript-capable sessions, including browser-based AI agents) and "server analytics" (for bots that don’t execute JavaScript) were enabled.
 
 ### Architecture/Environment changes
-* [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard.
+
+- [OSDEV-2123](https://opensupplyhub.atlassian.net/browse/OSDEV-2123) - Updated VPN EC2 instance configuration to use a specific Amazon Linux 2023 AMI (`ami-0940c95b23a1f7cac`) instead of dynamically selecting the most recent AMI. This change ensures consistent AMI usage across deployments and prevents unnecessary reboots of the VPN server that could result in loss of VPN access through WireGuard.
 
 ### What's new
-* [OSDEV-1881](https://opensupplyhub.atlassian.net/browse/OSDEV-1881) - Implemented automated email notifications for registered users in three scenarios: when nearing the 5,000-record annual download limit, upon reaching that limit, and after exhausting all purchased downloads.
+
+- [OSDEV-1881](https://opensupplyhub.atlassian.net/browse/OSDEV-1881) - Implemented automated email notifications for registered users in three scenarios: when nearing the 5,000-record annual download limit, upon reaching that limit, and after exhausting all purchased downloads.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.8.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: July 12, 2025
+
+- Product name: Open Supply Hub
+- Release date: July 12, 2025
 
 ### Database changes
 
 #### Migrations
-* 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
-* 0173_create_download_location_success_payment_table - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
-* 0174_create_private_instance_switch - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 10,000 records or less per action.
-* 0175_increase_path_max_length.py - The migration increases `max_length` for the `path` field in the `DownloadLog` model.
+
+- 0172_add_facility_download_limit - This migration introduces the `api_facilitydownloadlimit` table for the `FacilityDownloadLimit` model to collect facility downloads data for a user.
+- 0173_create_download_location_success_payment_table - This migration introduces a new `DownloadLocationPayment` model in the `api` app. This model stores information about successful payments made for purchasing of additional records for downloading production locations data.
+- 0174_create_private_instance_switch - This migration introduces a new `PRIVATE_INSTANCE` feature flag that allowed to downloads unlimited amount of records but only 10,000 records or less per action.
+- 0175_increase_path_max_length.py - The migration increases `max_length` for the `path` field in the `DownloadLog` model.
 
 #### Schema changes
-* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
-* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added a new `api_downloadlocationpayment` table with the following fields:
-    * `id`: Auto-incrementing primary key
-    * `stripe_session_id`: `CharField`, unique - stores Stripe checkout session ID
-    * `payment_id`: `CharField`, unique - stores Stripe payment identifier
-    * `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
-    * `amount_total`: `IntegerField` - stores total amount in cents
-    * `discounts`: `JSONField` - optional, stores list of discount objects (with `coupon` and `promotion_code`)
-    * `created_at`: `DateTimeField` - indexed timestamp of when the record was created
-    * `user`: `ForeignKey` to `User` model - references the user who made the payment
+
+- [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - The `FacilityDownloadLimit` model has been created. This model includes such fields: id, user_id, updated_at, free_download_records, paid_download_records, purchase_date.
+- [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added a new `api_downloadlocationpayment` table with the following fields:
+  - `id`: Auto-incrementing primary key
+  - `stripe_session_id`: `CharField`, unique - stores Stripe checkout session ID
+  - `payment_id`: `CharField`, unique - stores Stripe payment identifier
+  - `amount_subtotal`: `IntegerField` - stores subtotal amount in cents
+  - `amount_total`: `IntegerField` - stores total amount in cents
+  - `discounts`: `JSONField` - optional, stores list of discount objects (with `coupon` and `promotion_code`)
+  - `created_at`: `DateTimeField` - indexed timestamp of when the record was created
+  - `user`: `ForeignKey` to `User` model - references the user who made the payment
 
 ### Code/API changes
-* [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added the following endpoints to support Stripe payments for downloading additional production location records:
-    * `POST api/v1/download-locations-checkout-session/` - Creates a Stripe Checkout session for purchasing additional download records.
-    * `POST api/v1/download-locations-checkout-webhook/`- Handles Stripe webhook events for successful payments.
+
+- [OSDEV-1919](https://opensupplyhub.atlassian.net/browse/OSDEV-1919) - Added the following endpoints to support Stripe payments for downloading additional production location records:
+  - `POST api/v1/download-locations-checkout-session/` - Creates a Stripe Checkout session for purchasing additional download records.
+  - `POST api/v1/download-locations-checkout-webhook/`- Handles Stripe webhook events for successful payments.
 
 ### Bugfix
-* Removed the unnecessary duplicate assignment of the `origin_source` field for `Contributor`, `ExtendedField`, `Facility`, `FacilityActivityReport`, `FacilityAlias`, `FacilityClaim`, `FacilityList`, `FacilityListItem`, `FacilityMatch`, `Source`, `FacilityLocation`, and `User` via the custom `default_origin_source` Django management command — and removed the command itself. The `origin_source` field will be set by Django fixtures when deploying the local environment via the `start_local_dev` script and during test runs, which include executing the `start_code_quality_dev` bash script. For models like `FacilityListItem`, `ExtendedField`, and others, it will also be set during list processing triggered by the `reset_database` custom Django management command in the `start_local_dev` and `start_code_quality_dev` bash scripts.
-* [OSDEV-2032](https://opensupplyhub.atlassian.net/browse/OSDEV-2032) - The following bugs have been fixed as part of this ticket:
-    * Fixed the incorrect indexing of the location type in the production locations OpenSearch index. Previously, it was incorrectly taking the processing type value as the location type — using the fourth item in the `matched_values` array instead of the third, which contains the location type. Also, updated the Logstash filters for both processing type and location type to return only unique values and write them to the production locations OpenSearch index.
-    * Adjusted the post-submit popup. Instead of displaying the cleaned and transformed data from ContriCleaner, we now show only the raw input submitted by the user.
-* [OSDEV-1913](https://opensupplyhub.atlassian.net/browse/OSDEV-1913) - The `max_length` for the `path` field in the `DownloadLog` model has been increased from 2083 to 4096 to fix the too long value error.
-* [OSDEV-2107](https://opensupplyhub.atlassian.net/browse/OSDEV-2107) - Fixed an issue where navigating back from the Stripe Checkout page using the browser’s back button caused the search button to repeatedly redirect to Stripe Checkout.
+
+- Removed the unnecessary duplicate assignment of the `origin_source` field for `Contributor`, `ExtendedField`, `Facility`, `FacilityActivityReport`, `FacilityAlias`, `FacilityClaim`, `FacilityList`, `FacilityListItem`, `FacilityMatch`, `Source`, `FacilityLocation`, and `User` via the custom `default_origin_source` Django management command — and removed the command itself. The `origin_source` field will be set by Django fixtures when deploying the local environment via the `start_local_dev` script and during test runs, which include executing the `start_code_quality_dev` bash script. For models like `FacilityListItem`, `ExtendedField`, and others, it will also be set during list processing triggered by the `reset_database` custom Django management command in the `start_local_dev` and `start_code_quality_dev` bash scripts.
+- [OSDEV-2032](https://opensupplyhub.atlassian.net/browse/OSDEV-2032) - The following bugs have been fixed as part of this ticket:
+  - Fixed the incorrect indexing of the location type in the production locations OpenSearch index. Previously, it was incorrectly taking the processing type value as the location type — using the fourth item in the `matched_values` array instead of the third, which contains the location type. Also, updated the Logstash filters for both processing type and location type to return only unique values and write them to the production locations OpenSearch index.
+  - Adjusted the post-submit popup. Instead of displaying the cleaned and transformed data from ContriCleaner, we now show only the raw input submitted by the user.
+- [OSDEV-1913](https://opensupplyhub.atlassian.net/browse/OSDEV-1913) - The `max_length` for the `path` field in the `DownloadLog` model has been increased from 2083 to 4096 to fix the too long value error.
+- [OSDEV-2107](https://opensupplyhub.atlassian.net/browse/OSDEV-2107) - Fixed an issue where navigating back from the Stripe Checkout page using the browser’s back button caused the search button to repeatedly redirect to Stripe Checkout.
 
 ### What's new
-* [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
-* [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
-* [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 10,000 record download packages.
-* [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated regarding scenarios: a user has available downloads, out of downloads or within limit, but search results exceed available downloads.
-* [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Added the following:
-    * Updated implementation for private_instance flag to allow 10k records instead of 5k records per download.
-    * Added logic to skip download limit check for Embeded Map requests.
-    * Updated the UI part of Embeded Map to properly allow and show 10k records limitation per download.
-    * Update button text from Upgrade to Download to Purchase More Downloads.
-    * Redirected the user back to the last OS Hub url after completing Stripe Checkout.
-* [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Introduced lead-in copy to notify only logged-in users about how the download limit works on the main location search page (/facilities) for non-private instances and in non-embedded mode of the platform.
+
+- [OSDEV-2023](https://opensupplyhub.atlassian.net/browse/OSDEV-2023) - The `Recruitment Agency` has been added to facility type and processing type. So a user can filter production locations on the `/facilities` page, can add this type on the `/contribute/single-location/info/` and `/claimed/:id/` pages.
+- [OSDEV-1865](https://opensupplyhub.atlassian.net/browse/OSDEV-1865) - 5000 facility records for download annually have been added for a registered free user.
+- [OSDEV-1879](https://opensupplyhub.atlassian.net/browse/OSDEV-1879) - Added Stripe-powered upgrade workflow allowing registered users to purchase additional 10,000 record download packages.
+- [OSDEV-1868](https://opensupplyhub.atlassian.net/browse/OSDEV-1868) - The tooltip for the limit data download buttons has been updated regarding scenarios: a user has available downloads, out of downloads or within limit, but search results exceed available downloads.
+- [OSDEV-2055](https://opensupplyhub.atlassian.net/browse/OSDEV-2055) - Added the following:
+  - Updated implementation for private_instance flag to allow 10k records instead of 5k records per download.
+  - Added logic to skip download limit check for Embeded Map requests.
+  - Updated the UI part of Embeded Map to properly allow and show 10k records limitation per download.
+  - Update button text from Upgrade to Download to Purchase More Downloads.
+  - Redirected the user back to the last OS Hub url after completing Stripe Checkout.
+- [OSDEV-2079](https://opensupplyhub.atlassian.net/browse/OSDEV-2079) - Introduced lead-in copy to notify only logged-in users about how the download limit works on the main location search page (/facilities) for non-private instances and in non-embedded mode of the platform.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after changing the Logstash filters for the `location_type` and `processing_type` fields.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after changing the Logstash filters for the `location_type` and `processing_type` fields.
 
 ## Release 2.7.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 28, 2025
+
+- Product name: Open Supply Hub
+- Release date: June 28, 2025
 
 ### Database changes
 
 #### Migrations
-* 0170_add_uuid_to_relevant_tables.py - A new `uuid` field was added to the following tables:
-    * `api_contributor`
-    * `api_extendedfield`
-    * `api_facility`
-    * `api_facilityactivityreport`
-    * `api_facilityalias`
-    * `api_facilityclaim`
-    * `api_facilityindex`
-    * `api_facilitylist`
-    * `api_facilitylistitem`
-    * `api_facilitylocation`
-    * `api_facilitymatch`
-    * `api_source`
-    * `api_user`
 
-    The field was automatically populated for existing records with default UUIDs.
-    UUID defaults were defined at both the Django level (via default=uuid4) and at the database level to ensure consistency between ORM and direct DB operations.
+- 0170_add_uuid_to_relevant_tables.py - A new `uuid` field was added to the following tables:
+  - `api_contributor`
+  - `api_extendedfield`
+  - `api_facility`
+  - `api_facilityactivityreport`
+  - `api_facilityalias`
+  - `api_facilityclaim`
+  - `api_facilityindex`
+  - `api_facilitylist`
+  - `api_facilitylistitem`
+  - `api_facilitylocation`
+  - `api_facilitymatch`
+  - `api_source`
+  - `api_user`
 
-* 0171_added_origin_source_field.py - A new `origin_source` field was added to the following tables:
-    * `api_contributor`
-    * `api_extendedfield`
-    * `api_facility`
-    * `api_facilityactivityreport`
-    * `api_facilityalias`
-    * `api_facilityclaim`
-    * `api_facilityindex`
-    * `api_facilitylist`
-    * `api_facilitylistitem`
-    * `api_facilitylocation`
-    * `api_facilitymatch`
-    * `api_source`
-    * `api_user`
+  The field was automatically populated for existing records with default UUIDs.
+  UUID defaults were defined at both the Django level (via default=uuid4) and at the database level to ensure consistency between ORM and direct DB operations.
 
-    Existing records were automatically populated with the default value `os_hub`.
-    New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
+- 0171_added_origin_source_field.py - A new `origin_source` field was added to the following tables:
+  - `api_contributor`
+  - `api_extendedfield`
+  - `api_facility`
+  - `api_facilityactivityreport`
+  - `api_facilityalias`
+  - `api_facilityclaim`
+  - `api_facilityindex`
+  - `api_facilitylist`
+  - `api_facilitylistitem`
+  - `api_facilitylocation`
+  - `api_facilitymatch`
+  - `api_source`
+  - `api_user`
+
+  Existing records were automatically populated with the default value `os_hub`.
+  New records will have the origin_source field set via the `INSTANCE_SOURCE` environment variable using triggers.
 
 #### Schema changes
-* [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
-    * `api_contributor`
-    * `api_extendedfield`
-    * `api_facility`
-    * `api_facilityactivityreport`
-    * `api_facilityalias`
-    * `api_facilityclaim`
-    * `api_facilityindex`
-    * `api_facilitylist`
-    * `api_facilitylistitem`
-    * `api_facilitylocation`
-    * `api_facilitymatch`
-    * `api_source`
-    * `api_user`
 
-    The `uuid` column was set as non-nullable and populated with default UUID values using both Django model defaults and database-level defaults.
+- [OSDEV-2018](https://opensupplyhub.atlassian.net/browse/OSDEV-2018) - A new `uuid` column (type UUID) was added to the following tables:
+  - `api_contributor`
+  - `api_extendedfield`
+  - `api_facility`
+  - `api_facilityactivityreport`
+  - `api_facilityalias`
+  - `api_facilityclaim`
+  - `api_facilityindex`
+  - `api_facilitylist`
+  - `api_facilitylistitem`
+  - `api_facilitylocation`
+  - `api_facilitymatch`
+  - `api_source`
+  - `api_user`
 
-* [OSDEV-2019](https://opensupplyhub.atlassian.net/browse/OSDEV-2019) - A new `origin_source` column was added to the following tables:
-    * `api_contributor`
-    * `api_extendedfield`
-    * `api_facility`
-    * `api_facilityactivityreport`
-    * `api_facilityalias`
-    * `api_facilityclaim`
-    * `api_facilityindex`
-    * `api_facilitylist`
-    * `api_facilitylistitem`
-    * `api_facilitylocation`
-    * `api_facilitymatch`
-    * `api_source`
-    * `api_user`
+  The `uuid` column was set as non-nullable and populated with default UUID values using both Django model defaults and database-level defaults.
 
-    The `origin_source` column was made nullable and populated with string values using both Django and SQLAlchemy models, as well as at the database level.
-    SQL `BEFORE INSERT` triggers were introduced for the relevant tables.
-    A new SQL function, `set_origin_source`, was added to support the triggers and handle updates to the `origin_source` column.
+- [OSDEV-2019](https://opensupplyhub.atlassian.net/browse/OSDEV-2019) - A new `origin_source` column was added to the following tables:
+  - `api_contributor`
+  - `api_extendedfield`
+  - `api_facility`
+  - `api_facilityactivityreport`
+  - `api_facilityalias`
+  - `api_facilityclaim`
+  - `api_facilityindex`
+  - `api_facilitylist`
+  - `api_facilitylistitem`
+  - `api_facilitylocation`
+  - `api_facilitymatch`
+  - `api_source`
+  - `api_user`
+
+  The `origin_source` column was made nullable and populated with string values using both Django and SQLAlchemy models, as well as at the database level.
+  SQL `BEFORE INSERT` triggers were introduced for the relevant tables.
+  A new SQL function, `set_origin_source`, was added to support the triggers and handle updates to the `origin_source` column.
 
 ### Architecture/Environment changes
-* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added support for specifying a contributor email in the `direct_data_load` command. This allows users to provide an email address for the contributor when loading data, and automatically creates the contributor if it does not exist. The separate compute environment for this command has been removed, it now needs to run in the default environment.
-* The RDS instance type for the Test environment has been upgraded to `db.t3.2xlarge` to handle search requests across over 1.2 million production locations now present in the database.
-* Updated the `RELEASE-PROTOCOL.md` file to include information about deployment to external environments such as RBA. Also consolidated environment naming to use capitalized format, and corrected spelling mistakes and formatting issues.
-* Updated the `ENVIRONMENTS.md` file to bring it up to date with the latest state of the core environments.
+
+- [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added support for specifying a contributor email in the `direct_data_load` command. This allows users to provide an email address for the contributor when loading data, and automatically creates the contributor if it does not exist. The separate compute environment for this command has been removed, it now needs to run in the default environment.
+- The RDS instance type for the Test environment has been upgraded to `db.t3.2xlarge` to handle search requests across over 1.2 million production locations now present in the database.
+- Updated the `RELEASE-PROTOCOL.md` file to include information about deployment to external environments such as RBA. Also consolidated environment naming to use capitalized format, and corrected spelling mistakes and formatting issues.
+- Updated the `ENVIRONMENTS.md` file to bring it up to date with the latest state of the core environments.
 
 ### Bugfix
-* [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
-* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Fixed an issue where the `direct_data_load` command was not able to reach the OpenSearch cluster.
+
+- [OSDEV-2033](https://opensupplyhub.atlassian.net/browse/OSDEV-2033) - Added support for the `slop` parameter in `multi_match` queries when using strings longer than 50 symbols or 12 tokens in GET `v1/production-locations?query=` endpoint.
+- [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Fixed an issue where the `direct_data_load` command was not able to reach the OpenSearch cluster.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.6.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 14, 2025
+
+- Product name: Open Supply Hub
+- Release date: June 14, 2025
 
 ### Architecture/Environment changes
-* [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
-* [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
-* [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added a new `direct_data_load` command and related infrastructure to support loading data directly from a Google Sheet into the platform.
+
+- [OSDEV-1925](https://opensupplyhub.atlassian.net/browse/OSDEV-1925) - This PR disables the automatic execution of the `Deploy to AWS` pipeline on `releases/*` branch creation via the `[Release] Init` pipeline, while retaining automatic execution on push events to the same branch.
+- [OSDEV-2035](https://opensupplyhub.atlassian.net/browse/OSDEV-2035) - Added IPv6 rules for ip whitelist and denylist.
+- [OSDEV-1951](https://opensupplyhub.atlassian.net/browse/OSDEV-1951) - Added a new `direct_data_load` command and related infrastructure to support loading data directly from a Google Sheet into the platform.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.5.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 31, 2025
+
+- Product name: Open Supply Hub
+- Release date: May 31, 2025
 
 ### Code/API changes
-* [OSDEV-2017](https://opensupplyhub.atlassian.net/browse/OSDEV-2017) - CSRF (Cross-Site Request Forgery) protection has been disabled across the application. CSRF middleware has been removed from the request pipeline. All affected endpoints are now accessible without requiring CSRF tokens.
+
+- [OSDEV-2017](https://opensupplyhub.atlassian.net/browse/OSDEV-2017) - CSRF (Cross-Site Request Forgery) protection has been disabled across the application. CSRF middleware has been removed from the request pipeline. All affected endpoints are now accessible without requiring CSRF tokens.
 
 ### Architecture/Environment changes
-* [OSDEV-1992](https://opensupplyhub.atlassian.net/browse/OSDEV-1992) - Provisioned a dedicated EC2 instance to host WireGuard VPN service, enabling authorized users to bypass AWS WAF when accessing the RBA instance.
+
+- [OSDEV-1992](https://opensupplyhub.atlassian.net/browse/OSDEV-1992) - Provisioned a dedicated EC2 instance to host WireGuard VPN service, enabling authorized users to bypass AWS WAF when accessing the RBA instance.
 
 ### Bugfix
-* [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
-* Updated the `Deploy to AWS` GitHub workflow to rely on the required `deploy-env` input instead of inferring the `environment` from the tag name. Previously, this approach was necessary because the `[Release] Deploy` workflow did not trigger `Deploy to AWS` via the API with the specified `environment` - it only created a tag that triggered the workflow automatically. With the latest changes, the `environment` is now explicitly passed in the `[Release] Deploy` workflow. It has also been confirmed that no branch or input combination can result in an undefined `environment`. As a result, the fallback to `None` for the `environment` value was removed from the `Deploy to AWS` workflow.
-* [OSDEV-1981](https://opensupplyhub.atlassian.net/browse/OSDEV-1981) - Fixed an issue where the `updated_at` field in the `api_facility` table was not modified when related dependency data changed, resulting in outdated or invalid data being stored in `OpenSearch`.
-* [OSDEV-1939](https://opensupplyhub.atlassian.net/browse/OSDEV-1939) - Disable the submit button during SLC contribution submission or update to prevent duplicate requests. Implemented a basic throttle class `DuplicateThrottle` to prevent duplicate data for `POST` and `PATCH` requests on the `production-location` endpoints.
+
+- [OSDEV-1882](https://opensupplyhub.atlassian.net/browse/OSDEV-1882) - Fixed an issue where the scroll position was not resetting to the top when navigating to the `Upload` page related to the list upload functionality.
+- Updated the `Deploy to AWS` GitHub workflow to rely on the required `deploy-env` input instead of inferring the `environment` from the tag name. Previously, this approach was necessary because the `[Release] Deploy` workflow did not trigger `Deploy to AWS` via the API with the specified `environment` - it only created a tag that triggered the workflow automatically. With the latest changes, the `environment` is now explicitly passed in the `[Release] Deploy` workflow. It has also been confirmed that no branch or input combination can result in an undefined `environment`. As a result, the fallback to `None` for the `environment` value was removed from the `Deploy to AWS` workflow.
+- [OSDEV-1981](https://opensupplyhub.atlassian.net/browse/OSDEV-1981) - Fixed an issue where the `updated_at` field in the `api_facility` table was not modified when related dependency data changed, resulting in outdated or invalid data being stored in `OpenSearch`.
+- [OSDEV-1939](https://opensupplyhub.atlassian.net/browse/OSDEV-1939) - Disable the submit button during SLC contribution submission or update to prevent duplicate requests. Implemented a basic throttle class `DuplicateThrottle` to prevent duplicate data for `POST` and `PATCH` requests on the `production-location` endpoints.
 
 ### What's new
-* [OSDEV-1998](https://opensupplyhub.atlassian.net/browse/OSDEV-1998) - The following changes were made:
-    * Added an additional "Data Cleaning Service" subheader to the "How It Works" > "Premium Features" section.
-    * Updated the list of supported languages/countries under the "globe" icon (added support for Chinese and changed the order).
-    * Removed the Twitter icon from the social media icons/links in the footer.
-* [OSDEV-1122](https://opensupplyhub.atlassian.net/browse/OSDEV-1122) - The following changes were made:
-    * Updated the behavior of the `Suggest an Edit` button on production location profile pages. The button now opens the Production Location Information page of the SLC workflow in a new tab, allowing users to suggest edits without having to re-search for the facility.
-    * Fixed redirection for unauthenticated users. If a user is not logged in and clicks `Suggest an Edit` button they are now redirected to the correct workflow step after logging in, instead of being taken to the home page. This fix applies to all steps within the Contribute workflow.
+
+- [OSDEV-1998](https://opensupplyhub.atlassian.net/browse/OSDEV-1998) - The following changes were made:
+  - Added an additional "Data Cleaning Service" subheader to the "How It Works" > "Premium Features" section.
+  - Updated the list of supported languages/countries under the "globe" icon (added support for Chinese and changed the order).
+  - Removed the Twitter icon from the social media icons/links in the footer.
+- [OSDEV-1122](https://opensupplyhub.atlassian.net/browse/OSDEV-1122) - The following changes were made:
+  - Updated the behavior of the `Suggest an Edit` button on production location profile pages. The button now opens the Production Location Information page of the SLC workflow in a new tab, allowing users to suggest edits without having to re-search for the facility.
+  - Fixed redirection for unauthenticated users. If a user is not logged in and clicks `Suggest an Edit` button they are now redirected to the correct workflow step after logging in, instead of being taken to the home page. This fix applies to all steps within the Contribute workflow.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.4.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 17, 2025
+
+- Product name: Open Supply Hub
+- Release date: May 17, 2025
 
 ### Code/API changes
-* [OSDEV-1952](https://opensupplyhub.atlassian.net/browse/OSDEV-1952) - Added support for including `parent_company_os_id` when creating or updating a production location. This field can now be submitted via the API (`POST /api/facilities/`, `POST /api/v1/production-locations/`, `PATCH /api/v1/production-locations/{os_id}/`) or through list uploads. The `parent_company_os_id` values are stored as standalone fields in the `api_extendedfields` table.
+
+- [OSDEV-1952](https://opensupplyhub.atlassian.net/browse/OSDEV-1952) - Added support for including `parent_company_os_id` when creating or updating a production location. This field can now be submitted via the API (`POST /api/facilities/`, `POST /api/v1/production-locations/`, `PATCH /api/v1/production-locations/{os_id}/`) or through list uploads. The `parent_company_os_id` values are stored as standalone fields in the `api_extendedfields` table.
 
 ### Architecture/Environment changes
-* [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
-* [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes:
-    - Bump Terraform version from 1.4.0 to 1.5.0
-    - Made `waf_enabled` terraform flag variable.
-    - Enabled AWS WAF for all environments, including RBA.
-    - Created a separate job `detach-waf-if-needed` in Deploy to AWS action. This is needed to prevent Terraform race condition when it tries to delete the AWS WAF before AWS has fully detached it from the CloudFront distribution, even though `web_acl_id` is set to`null`.
-    - Applied validation in the `init-and-plan` action if `ip_denylist` and `ip_whitelist` are present. Only whitelist or denylist should be defined per environment.
-* [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
-* The subdomain `a.os-hub.net` was removed from the CORS_ALLOWED_ORIGIN_REGEXES list in the Django application. This change was made because the subdomain was deleted from AWS Route 53 and is no longer in use.
-* [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - The following changes have been made:
-    * Introduced infrastructure changes to support deployment of the RBA environment. Included it in the CD pipelines in the same way as Production and Staging, which means the RBA environment can now be deployed via Git tags just like Production and Staging.
-    * Created the `export_csv_enabled` infrastructure switch to disable the Amazon EventBridge scheduler for the CSV export job in the RBA environment, as exporting the database to CSV is not needed in that environment.
+
+- [OSDEV-1960](https://opensupplyhub.atlassian.net/browse/OSDEV-1960) - Disabled deletion protection and final snapshot creation for the RDS instance when it is deleted in the pre-prod environment.
+- [OSDEV-1949](https://opensupplyhub.atlassian.net/browse/OSDEV-1949) - Attached whitelist rules and deny rules and infrastructure changes:
+  - Bump Terraform version from 1.4.0 to 1.5.0
+  - Made `waf_enabled` terraform flag variable.
+  - Enabled AWS WAF for all environments, including RBA.
+  - Created a separate job `detach-waf-if-needed` in Deploy to AWS action. This is needed to prevent Terraform race condition when it tries to delete the AWS WAF before AWS has fully detached it from the CloudFront distribution, even though `web_acl_id` is set to`null`.
+  - Applied validation in the `init-and-plan` action if `ip_denylist` and `ip_whitelist` are present. Only whitelist or denylist should be defined per environment.
+- [OSDEV-1746](https://opensupplyhub.atlassian.net/browse/OSDEV-1746) - Implemented auto-scaling to dynamically adjust the Django instance count based on load metrics for cost-efficient resource utilization and high availability.
+- The subdomain `a.os-hub.net` was removed from the CORS_ALLOWED_ORIGIN_REGEXES list in the Django application. This change was made because the subdomain was deleted from AWS Route 53 and is no longer in use.
+- [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - The following changes have been made:
+  - Introduced infrastructure changes to support deployment of the RBA environment. Included it in the CD pipelines in the same way as Production and Staging, which means the RBA environment can now be deployed via Git tags just like Production and Staging.
+  - Created the `export_csv_enabled` infrastructure switch to disable the Amazon EventBridge scheduler for the CSV export job in the RBA environment, as exporting the database to CSV is not needed in that environment.
 
 ### Bugfix
-* [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - Fixed a bug related to an incorrect environment check in the FE app, which attempted to identify the local environment by comparing it with `development`. However, the environment had been renamed to `local` some time ago and was no longer passed as `development` from the BE during local development.
+
+- [OSDEV-1947](https://opensupplyhub.atlassian.net/browse/OSDEV-1947) - Fixed a bug related to an incorrect environment check in the FE app, which attempted to identify the local environment by comparing it with `development`. However, the environment had been renamed to `local` some time ago and was no longer passed as `development` from the BE during local development.
 
 ### What's new
-* [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields as links on the production location profile page, directing to the corresponding production location pages in a new tab.
+
+- [OSDEV-1953](https://opensupplyhub.atlassian.net/browse/OSDEV-1953) - Implemented UI logic to display parent company OS ID fields as links on the production location profile page, directing to the corresponding production location pages in a new tab.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.3.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 3, 2025
+
+- Product name: Open Supply Hub
+- Release date: May 3, 2025
 
 ### Database changes
 
 #### Migrations
-* 0169_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
+
+- 0169_introduce_show_additional_identifiers_switch.py - This migration introduces a new switch called `show_additional_identifiers`, which will be used on the production location profile page to show or hide additional identifiers of the production location.
 
 ### Code/API changes
-* [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST `api/v1/production-locations/`, PATCH `api/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
-* [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the GET `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
-* [OSDEV-1892](https://opensupplyhub.atlassian.net/browse/OSDEV-1892) - Implemented access restrictions for the `GET /v1/moderation-events/` and `GET /v1/moderation-events/{moderation_id}` endpoints so that only the contribution owner or a moderator can access them. Updated the `Logstash` configuration for the `moderation-events` index to include the `contributor_email` field when sending data to `OpenSearch`.
+
+- [OSDEV-1926](https://opensupplyhub.atlassian.net/browse/OSDEV-1926) - Introduced support for submitting additional identifiers when uploading a new production location or modifying an existing one. Additional identifiers can now be added via the API (POST `api/facilities/`, POST `api/v1/production-locations/`, PATCH `api/v1/production-locations/{os_id}/`) or through list uploads. The system currently supports three types of identifiers: DUNS (Data Universal Numbering System), LEI (Legal Entity Identifier), and RBA Online ID. The provided identifiers are stored as standalone fields in the `api_extendedfields` table.
+- [OSDEV-1927](https://opensupplyhub.atlassian.net/browse/OSDEV-1927) - Added additional identifiers (DUNS , RBA Online ID and LEI) to the GET `/v1/production-locations/` and GET `/v1/production-locations/{os_id}/` endpoints.
+- [OSDEV-1892](https://opensupplyhub.atlassian.net/browse/OSDEV-1892) - Implemented access restrictions for the `GET /v1/moderation-events/` and `GET /v1/moderation-events/{moderation_id}` endpoints so that only the contribution owner or a moderator can access them. Updated the `Logstash` configuration for the `moderation-events` index to include the `contributor_email` field when sending data to `OpenSearch`.
 
 ### Architecture/Environment changes
-* [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
-* [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
+
+- [OSDEV-1935](https://opensupplyhub.atlassian.net/browse/OSDEV-1935) - Added terraform module for creating IAM roles in production and test AWS accounts to enable integration with Vanta auditor.
+- [OSDEV-1895](https://opensupplyhub.atlassian.net/browse/OSDEV-1895) - Updated the rules to send the `csrftoken` cookie with the `HttpOnly` flag to the user. Implemented logic to retrieve the `csrftoken` upon user login and save it to `localStorage`. Added functionality to set the `csrftoken` from `localStorage` in Axios headers.
 
 ### Bugfix
-* [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
-* [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Updated the styles of primary and secondary text in the data points UI and the location details contributor drawer on the location profile page, as well as the hash in the React error boundary component, to prevent overflow on the page or within its field location. Replaced the deprecated `word-wrap` CSS property with the supported `overflow-wrap` CSS property.
-* [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
-    * Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
-    * Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
-* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886)
-    * Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
-    * Implemented prevention of forced script termination during the deletion of Lambda@Edge functions. The exit code is now managed internally, ensuring proper handling without abrupt script termination.
+
+- [OSDEV-1943](https://opensupplyhub.atlassian.net/browse/OSDEV-1943) - Fixed flickering behavior when opening the SLC form to contribute to an existing production location by marking fields as touched if they match the fetched data, ensuring smoother UI during re-renders.
+- [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Updated the styles of primary and secondary text in the data points UI and the location details contributor drawer on the location profile page, as well as the hash in the React error boundary component, to prevent overflow on the page or within its field location. Replaced the deprecated `word-wrap` CSS property with the supported `overflow-wrap` CSS property.
+- [OSDEV-1914](https://opensupplyhub.atlassian.net/browse/OSDEV-1914) - The following changes have been made:
+  - Fixed an issue with fuzzy search on fields containing long text. Replaced the `match` query with `match_phrase` (with a configurable `slop` parameter) for such cases to improve accuracy for the GET `/api/v1/production-locations/` endpoint.
+  - Replaced regular text with a toast component to display server errors when fetching potential matches on the Contribution Record page of the Moderation queue dashboard.
+- [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886)
+  - Fixed the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge functions before destroying the infrastructure.
+  - Implemented prevention of forced script termination during the deletion of Lambda@Edge functions. The exit code is now managed internally, ensuring proper handling without abrupt script termination.
 
 ### What's new
-* [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
+
+- [OSDEV-1930](https://opensupplyhub.atlassian.net/browse/OSDEV-1930) - Implemented front-end logic to display additional identifiers such as RBA, LEI, and DUNS IDs as data points on the production location profile page, once the `show_additional_identifiers` feature flag is returned with a true value from the backend.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new fields `rba_id`, `duns_id`, `lei_id` and for the `moderation-events` index after adding the new field `contributor_email`.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `production-locations` index after adding the new fields `rba_id`, `duns_id`, `lei_id` and for the `moderation-events` index after adding the new field `contributor_email`.
 
 ## Release 2.2.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 25, 2025
+
+- Product name: Open Supply Hub
+- Release date: April 25, 2025
 
 ### Database changes
 
 #### Migrations
-* 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
+
+- 0168_introduce_a_switch_to_block_location_downloads.py - This migration introduces a new switch called `block_location_downloads`, which will be used to block the usage of the `api/facilities-downloads/` GET endpoint when necessary.
 
 ### Code/API changes
-* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Implemented logic to utilize the `block_location_downloads` switch. When enabled, it restricts access to the `api/facilities-downloads/` GET endpoint to prevent bulk downloads.
+
+- [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Implemented logic to utilize the `block_location_downloads` switch. When enabled, it restricts access to the `api/facilities-downloads/` GET endpoint to prevent bulk downloads.
 
 ### Architecture/Environment changes
-* [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Enabled IP address logging for the Django ECS task.
+
+- [OSDEV-1961](https://opensupplyhub.atlassian.net/browse/OSDEV-1961) - Enabled IP address logging for the Django ECS task.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.2.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 19, 2025
+
+- Product name: Open Supply Hub
+- Release date: April 19, 2025
 
 ### Code/API changes
-* [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
-* [OSDEV-1201](https://opensupplyhub.atlassian.net/browse/OSDEV-1201) - Added support of `geo_polygon` parameter for GET `v1/production-locations` endpoint.
+
+- [OSDEV-1894](https://opensupplyhub.atlassian.net/browse/OSDEV-1894) - Enabled `Secure` attribute of csrf token and session id.
+- [OSDEV-1201](https://opensupplyhub.atlassian.net/browse/OSDEV-1201) - Added support of `geo_polygon` parameter for GET `v1/production-locations` endpoint.
 
 ### Architecture/Environment changes
-* [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
-* [OSDEV-1897](https://opensupplyhub.atlassian.net/browse/OSDEV-1897) - A Lambda@Edge function was added to dynamically set the following response headers on the CloudFront side, depending on whether embed mode is active:
-    * `X-Frame-Options: DENY`
-    * `Content-Security-Policy: frame-ancestors 'none'`
+
+- [OSDEV-1896](https://opensupplyhub.atlassian.net/browse/OSDEV-1896) - The session cookie is limited to 24 hours. After this period, the user session expires, and the user needs to log in again.
+- [OSDEV-1897](https://opensupplyhub.atlassian.net/browse/OSDEV-1897) - A Lambda@Edge function was added to dynamically set the following response headers on the CloudFront side, depending on whether embed mode is active:
+  - `X-Frame-Options: DENY`
+  - `Content-Security-Policy: frame-ancestors 'none'`
 
 ### Bugfix
-* [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
-* [OSDEV-1933](https://opensupplyhub.atlassian.net/browse/OSDEV-1933) - Fixed typo errors in the resource names of the OpenSupplyHubTest-AnonymizedDatabaseDump cluster.
+
+- [OSDEV-1893](https://opensupplyhub.atlassian.net/browse/OSDEV-1893) - Prevented sending a claim request to `/api/facilities/{os_id}/claim/` for facilities that are pending or approved. Added BE validators to handle incoming claim data.
+- [OSDEV-1933](https://opensupplyhub.atlassian.net/browse/OSDEV-1933) - Fixed typo errors in the resource names of the OpenSupplyHubTest-AnonymizedDatabaseDump cluster.
 
 ### What's new
-* [OSDEV-1706](https://opensupplyhub.atlassian.net/browse/OSDEV-1706) - Implemented backend error handling for SLC form submission and created the UI to display post-submit errors in a user-friendly way. Aligned SLC form validation with backend rules to ensure maximum consistency.
+
+- [OSDEV-1706](https://opensupplyhub.atlassian.net/browse/OSDEV-1706) - Implemented backend error handling for SLC form submission and created the UI to display post-submit errors in a user-friendly way. Aligned SLC form validation with backend rules to ensure maximum consistency.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.1.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 5, 2025
+
+- Product name: Open Supply Hub
+- Release date: April 5, 2025
 
 ### Architecture/Environment changes
-* [OSDEV-1899](https://opensupplyhub.atlassian.net/browse/OSDEV-1899) - Switched from using the `latest` tags to static versions for both `bitnami/kafka` and `bitnami/zookeeper`, which resolved compatibility issues during local & CI setup. Using pinned versions ensures stability and prevents unexpected behavior from upstream image changes.
+
+- [OSDEV-1899](https://opensupplyhub.atlassian.net/browse/OSDEV-1899) - Switched from using the `latest` tags to static versions for both `bitnami/kafka` and `bitnami/zookeeper`, which resolved compatibility issues during local & CI setup. Using pinned versions ensures stability and prevents unexpected behavior from upstream image changes.
 
 ### Bugfix
-* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
-* [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Created the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge function before destroying the infrastructure. This ensures that Terraform can remove the infrastructure without encountering errors related to deleting a replicated function.
-* [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
-* [OSDEV-1861](https://opensupplyhub.atlassian.net/browse/OSDEV-1861) - On the `My Claimed Facilities` page, the help text font size was increased to `21px`, and the margin for the `FIND MY PRODUCTION LOCATION` button was increased to `16px` to improve readability.
-* [OSDEV-1904](https://opensupplyhub.atlassian.net/browse/OSDEV-1904) - The `step-by step` instructions link on the List upload page has been updated to `/resources/preparing-data`.
+
+- [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - The pages `My Claimed Facilities`, `Claimed Facility Details`, `My Lists`, and `My Lists/id` are now accessible only to authorized users. Additionally, styles have been refactored, an `InputSelect` component has been moved to the separate file, and input styling on the `Claimed Facility Details` page has been fixed.
+- [OSDEV-1886](https://opensupplyhub.atlassian.net/browse/OSDEV-1886) - Created the script to run within the Destroy Environment GitHub workflow to delete the Lambda@Edge function before destroying the infrastructure. This ensures that Terraform can remove the infrastructure without encountering errors related to deleting a replicated function.
+- [OSDEV-1830](https://opensupplyhub.atlassian.net/browse/OSDEV-1830) - Updated implementation for `Production Location Info` page to input any values for `Location Type` and `Processing Type`, except when the sector is `Apparel` — in that case, enforce taxonomy filters.
+- [OSDEV-1861](https://opensupplyhub.atlassian.net/browse/OSDEV-1861) - On the `My Claimed Facilities` page, the help text font size was increased to `21px`, and the margin for the `FIND MY PRODUCTION LOCATION` button was increased to `16px` to improve readability.
+- [OSDEV-1904](https://opensupplyhub.atlassian.net/browse/OSDEV-1904) - The `step-by step` instructions link on the List upload page has been updated to `/resources/preparing-data`.
 
 ### What's new
-* [OSDEV-1842](https://opensupplyhub.atlassian.net/browse/OSDEV-1842) - Removed the pre-filled information in the `Additional Information` section of the SLC `ProductionLocationInfo` page.
+
+- [OSDEV-1842](https://opensupplyhub.atlassian.net/browse/OSDEV-1842) - Removed the pre-filled information in the `Additional Information` section of the SLC `ProductionLocationInfo` page.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 2.0.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: March 22, 2025
+
+- Product name: Open Supply Hub
+- Release date: March 22, 2025
 
 ### Database changes
 
 #### Migrations
-* 0167_add_moderationevent_action_reason_text_fields.py - This migration adds new fields `action_reason_text_cleaned` and  `action_reason_text_raw` to the existing table `api_moderationevent`.
+
+- 0167_add_moderationevent_action_reason_text_fields.py - This migration adds new fields `action_reason_text_cleaned` and `action_reason_text_raw` to the existing table `api_moderationevent`.
 
 #### Schema changes
-* [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added new fields `action_reason_text_cleaned` and `action_reason_text_raw` to the `api_moderationevent` table to store text messages received when a moderator takes an action on a moderation event.
+
+- [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added new fields `action_reason_text_cleaned` and `action_reason_text_raw` to the `api_moderationevent` table to store text messages received when a moderator takes an action on a moderation event.
 
 ### Code/API changes
-* [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added additional validation for the fields `action_reason_text_cleaned` and `action_reason_text_raw` when using the `PATCH api/v1/moderation-events/{moderation_id}` endpoint. These fields are required in the request body when the status field is set to 'REJECTED'. The minimum length for the values of these fields is 30 characters.
-Also was added sanitization on the server side by using the `Django-Bleach` library for the HTML content that is stored in the `action_reason_text_raw` field. The bleach filter was applied to the `action_reason_text_raw` value in the `slc_contribution_rejected_body.html` template.
+
+- [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added additional validation for the fields `action_reason_text_cleaned` and `action_reason_text_raw` when using the `PATCH api/v1/moderation-events/{moderation_id}` endpoint. These fields are required in the request body when the status field is set to 'REJECTED'. The minimum length for the values of these fields is 30 characters.
+  Also was added sanitization on the server side by using the `Django-Bleach` library for the HTML content that is stored in the `action_reason_text_raw` field. The bleach filter was applied to the `action_reason_text_raw` value in the `slc_contribution_rejected_body.html` template.
 
 ### Architecture/Environment changes
-* [OSDEV-1832](https://opensupplyhub.atlassian.net/browse/OSDEV-1832) - Increased the memory allocation for the `DedupeHub` container from `12GB` to `16GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
-* [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - Splitted the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
+
+- [OSDEV-1832](https://opensupplyhub.atlassian.net/browse/OSDEV-1832) - Increased the memory allocation for the `DedupeHub` container from `12GB` to `16GB` in terraform deployment configuration to address memory overload issues during facility reindexing for `Production` & `Pre-Production` environments.
+- [OSDEV-899](https://opensupplyhub.atlassian.net/browse/OSDEV-899) - Splitted the Django container into two components: FE (React) and BE (Django). Requests to the frontend (React) will be processed by the CDN (CloudFront), while requests to the API will be redirected to the Django container. This approach will allow for more efficient use of ECS cluster computing resources and improve frontend performance.
 
   The following endpoints will be redirected to the Django container:
-  * tile/*
-  * api/*
-  * /api-auth/*
-  * /api-token-auth/*
-  * /api-feature-flags/*
-  * /web/environment.js
-  * /admin/*
-  * /health-check/*
-  * /rest-auth/*
-  * /user-login/*
-  * /user-logout/*
-  * /user-signup/*
-  * /user-profile/*
-  * /user-api-info/*
-  * /admin
-  * /static/admin/*
-  * /static/django_extensions/*
-  * /static/drf-yasg/*
-  * /static/gis/*
-  * /static/rest_framework/*
-  * /static/static/*
-  * /static/staticfiles.json
+  - tile/\*
+  - api/\*
+  - /api-auth/\*
+  - /api-token-auth/\*
+  - /api-feature-flags/\*
+  - /web/environment.js
+  - /admin/\*
+  - /health-check/\*
+  - /rest-auth/\*
+  - /user-login/\*
+  - /user-logout/\*
+  - /user-signup/\*
+  - /user-profile/\*
+  - /user-api-info/\*
+  - /admin
+  - /static/admin/\*
+  - /static/django_extensions/\*
+  - /static/drf-yasg/\*
+  - /static/gis/\*
+  - /static/rest_framework/\*
+  - /static/static/\*
+  - /static/staticfiles.json
 
   All other traffic will be redirected to the React application.
 
 ### Bugfix
-* [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
-* [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up. Changed tooltip text for pending badge if existing production location has pending claim status or has been claimed already.
-* [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
-* [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
-* [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page.
-* [OSDEV-1769](https://opensupplyhub.atlassian.net/browse/OSDEV-1769) - Fixed the response for potential matches for POST `api/facilities/?create=true`: applied an array of potential matches instead of returning a single potential match.
-* [OSDEV-1838](https://opensupplyhub.atlassian.net/browse/OSDEV-1838) - Fixed an issue where the router redirected to an unsupported page when the OS ID contained a forward slash. The fix was implemented by encoding the OS ID value using the `encodeURIComponent()` function before passing it as a URL parameter.
-* [OSDEV-1840](https://opensupplyhub.atlassian.net/browse/OSDEV-1840) - Fixed the snapshot status checking procedure. This will prevent a crash when trying to restore a database from an inaccessible snapshot.
-* [OSDEV-1831](https://opensupplyhub.atlassian.net/browse/OSDEV-1831) - Updated copies of tooltips on the “Thank you for adding data” pop-up. The texts vary depending on the claim status for a particular location.
-* [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
-* [OSDEV-1781](https://opensupplyhub.atlassian.net/browse/OSDEV-1781) - A clear error messages for the number of workers field have been added to the SLC form and Claimed Facility Details page.
-* [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
+
+- [OSDEV-1806](https://opensupplyhub.atlassian.net/browse/OSDEV-1806) - Refactored the Parent Company field validation. The field is now validated as a regular character field.
+- [OSDEV-1787](https://opensupplyhub.atlassian.net/browse/OSDEV-1787) - The tooltip messages for the Claim button have been removed for all statuses of moderation events on the `Contribution Record` page and changed according to the design on `Thanks for adding data for this production location` pop-up. Changed tooltip text for pending badge if existing production location has pending claim status or has been claimed already.
+- [OSDEV-1789](https://opensupplyhub.atlassian.net/browse/OSDEV-1789) - Fixed an issue where the scroll position was not resetting to the top when navigating through SLC workflow pages.
+- [OSDEV-1795](https://opensupplyhub.atlassian.net/browse/OSDEV-1795) - Resolved database connection issue after PostgreSQL 16.3 upgrade by upgrading pg8000 module version.
+- [OSDEV-1803](https://opensupplyhub.atlassian.net/browse/OSDEV-1803) - Updated text from `Facility Type` to `Location Type` and `Facility Name` to `Location Name` on the SLC `Thank You for Your Submission` page.
+- [OSDEV-1769](https://opensupplyhub.atlassian.net/browse/OSDEV-1769) - Fixed the response for potential matches for POST `api/facilities/?create=true`: applied an array of potential matches instead of returning a single potential match.
+- [OSDEV-1838](https://opensupplyhub.atlassian.net/browse/OSDEV-1838) - Fixed an issue where the router redirected to an unsupported page when the OS ID contained a forward slash. The fix was implemented by encoding the OS ID value using the `encodeURIComponent()` function before passing it as a URL parameter.
+- [OSDEV-1840](https://opensupplyhub.atlassian.net/browse/OSDEV-1840) - Fixed the snapshot status checking procedure. This will prevent a crash when trying to restore a database from an inaccessible snapshot.
+- [OSDEV-1831](https://opensupplyhub.atlassian.net/browse/OSDEV-1831) - Updated copies of tooltips on the “Thank you for adding data” pop-up. The texts vary depending on the claim status for a particular location.
+- [OSDEV-1827](https://opensupplyhub.atlassian.net/browse/OSDEV-1827) - Fixed the condition logic for the email template when approving a contribution to an existing production location that has either been claimed or has a pending claim request.
+- [OSDEV-1781](https://opensupplyhub.atlassian.net/browse/OSDEV-1781) - A clear error messages for the number of workers field have been added to the SLC form and Claimed Facility Details page.
+- [OSDEV-1747](https://opensupplyhub.atlassian.net/browse/OSDEV-1747) - All SLC pages have been made accessible only to authorized users.
 
 ### What's new
-* [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
-* [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added a confirmation dialog window that appears when a user tries to reject a moderation event. The dialog includes a WYSIWYG text editor where entering a message of at least 30 characters is required to confirm the rejection. If a user does not enter the required number of characters, the 'Reject' button is disabled, and a tooltip with a clear message appears when the mouse hovers over it.
-* [OSDEV-1786](https://opensupplyhub.atlassian.net/browse/OSDEV-1786) - Linked "My Claimed Facilities" page to SLC if no claimed production locations found, changed search button text.
-* [OSDEV-1607](https://opensupplyhub.atlassian.net/browse/OSDEV-1607) - Enabled SLC flow.
-* [OSDEV-1864](https://opensupplyhub.atlassian.net/browse/OSDEV-1864) - Disabled the 'Submit/Update' button on the SLC Production Location Information page when the `disable_list_uploading` feature flag is active.
-* [OSDEV-1867](https://opensupplyhub.atlassian.net/browse/OSDEV-1867) - Updated the 'Messy Data' link on the `Contribute` page and `List Upload` page to direct users to the `Data Cleaning Service splash` page instead of the old `Preparing Data` page.
+
+- [OSDEV-1814](https://opensupplyhub.atlassian.net/browse/OSDEV-1814) - Added toggle switch button for production location info page to render additional data if necessary. If toggle switch button is inactive (default behavior), additional data won't be send to the server along with name, address and country.
+- [OSDEV-1782](https://opensupplyhub.atlassian.net/browse/OSDEV-1782) - Added a confirmation dialog window that appears when a user tries to reject a moderation event. The dialog includes a WYSIWYG text editor where entering a message of at least 30 characters is required to confirm the rejection. If a user does not enter the required number of characters, the 'Reject' button is disabled, and a tooltip with a clear message appears when the mouse hovers over it.
+- [OSDEV-1786](https://opensupplyhub.atlassian.net/browse/OSDEV-1786) - Linked "My Claimed Facilities" page to SLC if no claimed production locations found, changed search button text.
+- [OSDEV-1607](https://opensupplyhub.atlassian.net/browse/OSDEV-1607) - Enabled SLC flow.
+- [OSDEV-1864](https://opensupplyhub.atlassian.net/browse/OSDEV-1864) - Disabled the 'Submit/Update' button on the SLC Production Location Information page when the `disable_list_uploading` feature flag is active.
+- [OSDEV-1867](https://opensupplyhub.atlassian.net/browse/OSDEV-1867) - Updated the 'Messy Data' link on the `Contribute` page and `List Upload` page to direct users to the `Data Cleaning Service splash` page instead of the old `Preparing Data` page.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 1.31.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: March 8, 2025
+
+- Product name: Open Supply Hub
+- Release date: March 8, 2025
 
 ### Bugfix
-* [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
-* [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
-* [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.
+
+- [OSDEV-1777](https://opensupplyhub.atlassian.net/browse/OSDEV-1777) - A consistent URL style was established across all pages of the SLC workflow. After the changes, the URL begins from `/contribute/single-location/`.
+- [OSDEV-1678](https://opensupplyhub.atlassian.net/browse/OSDEV-1678) - Added asterisks next to each required form field (Name, Address, and Country) on the "Production Location Information" page. Highlighted an empty field and displayed an error message if it loses focus.
+- [OSDEV-1778](https://opensupplyhub.atlassian.net/browse/OSDEV-1778) - Fixed the validation for number of workers field in POST, PATCH production locations API. The min field must be less than or equal to the max field.
 
 ### What's new
-* [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new claiming email for the Moderation queue/SLC workflow, which is sent once a data moderator creates a new location based on the moderation event the customer submitted through the SLC workflow.
-* [OSDEV-1721](https://opensupplyhub.atlassian.net/browse/OSDEV-1721) - Added new email templates for Moderation/SLC workflow:
-    * Email #1 SLC additional contribution to existing production location - Pending moderation.
-    * Email #2 SLC contribution - Moderation complete. APPROVED.
-    * Email #3 SLC contribution - Moderation complete. REJECTED.
-    * Email #4 SLC new production location contribution - Pending moderation.
+
+- [OSDEV-1764](https://opensupplyhub.atlassian.net/browse/OSDEV-1764) - Added a new claiming email for the Moderation queue/SLC workflow, which is sent once a data moderator creates a new location based on the moderation event the customer submitted through the SLC workflow.
+- [OSDEV-1721](https://opensupplyhub.atlassian.net/browse/OSDEV-1721) - Added new email templates for Moderation/SLC workflow:
+  - Email #1 SLC additional contribution to existing production location - Pending moderation.
+  - Email #2 SLC contribution - Moderation complete. APPROVED.
+  - Email #3 SLC contribution - Moderation complete. REJECTED.
+  - Email #4 SLC new production location contribution - Pending moderation.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 1.30.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: March 01, 2025
+
+- Product name: Open Supply Hub
+- Release date: March 01, 2025
 
 ### Database changes
-* [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the `api_moderationevent` table so we can handle and store moderation actions user data.
+
+- [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the `api_moderationevent` table so we can handle and store moderation actions user data.
 
 #### Migrations
-* 0166_add_moderationevent_action_perform_by.py - This migration added a new field, `action_perform_by`, to the existing table `api_moderationevent`.
+
+- 0166_add_moderationevent_action_perform_by.py - This migration added a new field, `action_perform_by`, to the existing table `api_moderationevent`.
 
 ### Code/API changes
-* [OSDEV-1577](https://opensupplyhub.atlassian.net/browse/OSDEV-1577) - Added geo-bounding box query support to the GET `/api/v1/production-locations/` endpoint. To filter production locations whose geopoints fall within the bounding box, it is necessary to specify valid values for the parameters `geo_bounding_box[top]`, `geo_bounding_box[left]`, `geo_bounding_box[bottom]`, and `geo_bounding_box[right]`.
 
-    The validation rules are as follows:
-    * All coordinates of the geo-boundary box (top, left, bottom, right) must be provided.
-    * All values must be integers.
-    * The top and bottom coordinates must be between -90 and 90.
-    * The left and right coordinates must be between -180 and 180.
-    * The top must be greater than the bottom.
-    * The right must be greater than the left.
-* [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Updated Logstash mapping configuration to handle the new `action_perform_by` field for OpenSearch.
-* [OSDEV-1748](https://opensupplyhub.atlassian.net/browse/OSDEV-1748) - Aligned SLC with current v1/production-locations validation. Removed validation for `number_of_workers` min >= max.
+- [OSDEV-1577](https://opensupplyhub.atlassian.net/browse/OSDEV-1577) - Added geo-bounding box query support to the GET `/api/v1/production-locations/` endpoint. To filter production locations whose geopoints fall within the bounding box, it is necessary to specify valid values for the parameters `geo_bounding_box[top]`, `geo_bounding_box[left]`, `geo_bounding_box[bottom]`, and `geo_bounding_box[right]`.
+
+  The validation rules are as follows:
+  - All coordinates of the geo-boundary box (top, left, bottom, right) must be provided.
+  - All values must be integers.
+  - The top and bottom coordinates must be between -90 and 90.
+  - The left and right coordinates must be between -180 and 180.
+  - The top must be greater than the bottom.
+  - The right must be greater than the left.
+
+- [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Updated Logstash mapping configuration to handle the new `action_perform_by` field for OpenSearch.
+- [OSDEV-1748](https://opensupplyhub.atlassian.net/browse/OSDEV-1748) - Aligned SLC with current v1/production-locations validation. Removed validation for `number_of_workers` min >= max.
 
 ### Architecture/Environment changes
-* [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
-* [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
-* [OSDEV-1580](https://opensupplyhub.atlassian.net/browse/OSDEV-1580) - The new architecture diagram of the OS Hub platform has been created in response to the penetration testing that will be conducted in February 2025. The diagram has been placed in the root of the `./doc/system_design/` folder, replacing the old diagrams that have been moved to the `./doc/system_design/archived/` folder as they are no longer valid. A new `./doc/system_design/README.md` file has also been created, with a reference to the new architecture/network diagram.
-* [OSDEV-1785](https://opensupplyhub.atlassian.net/browse/OSDEV-1785) - Forked the aiokafka repository to the Open Supply Hub GitHub account, reverted to v0.8.0, and created a kafka-python-2.0.3 [branch](https://github.com/opensupplyhub/aiokafka/tree/kafka-python-2.0.3). Pinned kafka-python to v2.0.3 ([released](https://pypi.org/project/kafka-python/#history) on Feb 13, 2025) in the Dockerfile to install aiokafka from the forked repository and verified the local installation.
+
+- [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Removed `rds_allow_major_version_upgrade` and `rds_apply_immediately` from the environment tfvars files (e.g., terraform-production.tfvars) to set them to `false` again, as the default values in `/deployment/terraform/variables.tf` are `false`. This is necessary to prevent unintended PostgreSQL major version upgrades since the target PostgreSQL 16.3 version has been reached.
+- [OSDEV-1692](https://opensupplyhub.atlassian.net/browse/OSDEV-1692) - Update cache dependencies due to Ubuntu 20 image runner deprecation. See [link](https://github.blog/changelog/2024-12-05-notice-of-upcoming-releases-and-breaking-changes-for-github-actions/#actions-cache-v1-v2-and-actions-toolkit-cache-package-closing-down).
+- [OSDEV-1580](https://opensupplyhub.atlassian.net/browse/OSDEV-1580) - The new architecture diagram of the OS Hub platform has been created in response to the penetration testing that will be conducted in February 2025. The diagram has been placed in the root of the `./doc/system_design/` folder, replacing the old diagrams that have been moved to the `./doc/system_design/archived/` folder as they are no longer valid. A new `./doc/system_design/README.md` file has also been created, with a reference to the new architecture/network diagram.
+- [OSDEV-1785](https://opensupplyhub.atlassian.net/browse/OSDEV-1785) - Forked the aiokafka repository to the Open Supply Hub GitHub account, reverted to v0.8.0, and created a kafka-python-2.0.3 [branch](https://github.com/opensupplyhub/aiokafka/tree/kafka-python-2.0.3). Pinned kafka-python to v2.0.3 ([released](https://pypi.org/project/kafka-python/#history) on Feb 13, 2025) in the Dockerfile to install aiokafka from the forked repository and verified the local installation.
 
 ### Bugfix
-* [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
-* [OSDEV-1700](https://opensupplyhub.atlassian.net/browse/OSDEV-1700) - SLC: Keep only one previous OS ID in the search result if it matches the search query.
-* [OSDEV-1697](https://opensupplyhub.atlassian.net/browse/OSDEV-1697) - Added a redirect to the main page upon closing the SLC modal window to prevent the creation of multiple moderation events.
-* [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
-* [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
-* [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
-* [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
-* [OSDEV-1696](https://opensupplyhub.atlassian.net/browse/OSDEV-1696) - Added loader on single production location fetch; added error handling; added cleanup hook to clear production location data on component unmount.
-* [OSDEV-1653](https://opensupplyhub.atlassian.net/browse/OSDEV-1653) - Added asterisks next to each required form field (Name, Address, and Country) on the "Search by Name and Address" tab. Highlighted an empty field and displayed an error message if it loses focus. Added proper styles for the error messages.
-* [OSDEV-1699](https://opensupplyhub.atlassian.net/browse/OSDEV-1699) - The scroll position has been fixed from the bottom to the top after navigating from the bottom of the `Search results` page (press the `Select` button) to `Product Location Information`.
-* [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
-* [OSDEV-1739](https://opensupplyhub.atlassian.net/browse/OSDEV-1739) - Applied state cleanup on modal unmount to prevent the same dialog from appearing when clicking on a different production location.
-* [OSDEV-1744](https://opensupplyhub.atlassian.net/browse/OSDEV-1744) - Fixed the issue where the text `by user ID:` appeared even when `user_id` was `null` in Contribution Record page.
-* [OSDEV-1779](https://opensupplyhub.atlassian.net/browse/OSDEV-1779) - SLC. Made Parent Company field as regular text field and apply snake_case keys to standard keys (e.g. `location_type`, `number_of_workers`, `parent_company`, `processing_type` and `product_type`) in request payload from production location info page to conform API specs.
-* [OSDEV-1745](https://opensupplyhub.atlassian.net/browse/OSDEV-1745) - The `Search by Name and Address` tab was defined as default on the Production Location Search page.
+
+- [OSDEV-1698](https://opensupplyhub.atlassian.net/browse/OSDEV-1698) - SLC: Refactored the "Submit Another Location" button link to direct users to the search-by-name-and-address form at /contribute/single-location?tab=name-address.
+- [OSDEV-1700](https://opensupplyhub.atlassian.net/browse/OSDEV-1700) - SLC: Keep only one previous OS ID in the search result if it matches the search query.
+- [OSDEV-1697](https://opensupplyhub.atlassian.net/browse/OSDEV-1697) - Added a redirect to the main page upon closing the SLC modal window to prevent the creation of multiple moderation events.
+- [OSDEV-1695](https://opensupplyhub.atlassian.net/browse/OSDEV-1695) - [SLC] Enabled the claim button for updated production locations when a moderation event has a pending status. Disabled claim button explicitly if production location has pending claim status.
+- [OSDEV-1701](https://opensupplyhub.atlassian.net/browse/OSDEV-1701) - Refactored "Go Back" button in production location info page.
+- [OSDEV-1672](https://opensupplyhub.atlassian.net/browse/OSDEV-1672) - SLC. Implement collecting contribution data page (FE) - All Multi-Selects on the page have been fixed. They resize based on the number of items selected.
+- [OSDEV-1549](https://opensupplyhub.atlassian.net/browse/OSDEV-1549) - Added Django serialization check for all fields from the request body based on [the API specification](https://opensupplyhub.github.io/open-supply-hub-api-docs/) for POST and PATCH v1/production-locations endpoint, and appropriate errors return according to the request body schema in the API spec.
+- [OSDEV-1696](https://opensupplyhub.atlassian.net/browse/OSDEV-1696) - Added loader on single production location fetch; added error handling; added cleanup hook to clear production location data on component unmount.
+- [OSDEV-1653](https://opensupplyhub.atlassian.net/browse/OSDEV-1653) - Added asterisks next to each required form field (Name, Address, and Country) on the "Search by Name and Address" tab. Highlighted an empty field and displayed an error message if it loses focus. Added proper styles for the error messages.
+- [OSDEV-1699](https://opensupplyhub.atlassian.net/browse/OSDEV-1699) - The scroll position has been fixed from the bottom to the top after navigating from the bottom of the `Search results` page (press the `Select` button) to `Product Location Information`.
+- [OSDEV-1589](https://opensupplyhub.atlassian.net/browse/OSDEV-1589) - Fixed layout issue on new `contribute` page.
+- [OSDEV-1739](https://opensupplyhub.atlassian.net/browse/OSDEV-1739) - Applied state cleanup on modal unmount to prevent the same dialog from appearing when clicking on a different production location.
+- [OSDEV-1744](https://opensupplyhub.atlassian.net/browse/OSDEV-1744) - Fixed the issue where the text `by user ID:` appeared even when `user_id` was `null` in Contribution Record page.
+- [OSDEV-1779](https://opensupplyhub.atlassian.net/browse/OSDEV-1779) - SLC. Made Parent Company field as regular text field and apply snake_case keys to standard keys (e.g. `location_type`, `number_of_workers`, `parent_company`, `processing_type` and `product_type`) in request payload from production location info page to conform API specs.
+- [OSDEV-1745](https://opensupplyhub.atlassian.net/browse/OSDEV-1745) - The `Search by Name and Address` tab was defined as default on the Production Location Search page.
 
 ### What's new
-* [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
+
+- [OSDEV-1662](https://opensupplyhub.atlassian.net/browse/OSDEV-1662) - Added a new field, `action_perform_by`, to the moderation event. This data appears on the Contribution Record page when a moderator perform any actions like `APPROVED` or `REJECTED`.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `moderation-events` index after adding the new field `action_perform_by`. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `moderation-events` index after adding the new field `action_perform_by`. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
 
 ## Release 1.29.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: February 8, 2025
+
+- Product name: Open Supply Hub
+- Release date: February 8, 2025
 
 ### Database changes
-* [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Upgraded the PostgreSQL version from 13 to 16 for the database used in local development, DB anonymization, DB restore setup, and environments in the AWS cloud. Additionally, the pg_trgm extension has been upgraded to version 1.6 based on the available extension version for PostgreSQL 16.3 in AWS RDS. For more information, see [Extensions supported for RDS for PostgreSQL 16](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html#postgresql-extensions-16x).
-* [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Added a new field, `action_type`, to the `api_moderationevent` table so we can handle and store moderation actions.
+
+- [OSDEV-1515](https://opensupplyhub.atlassian.net/browse/OSDEV-1515) - Upgraded the PostgreSQL version from 13 to 16 for the database used in local development, DB anonymization, DB restore setup, and environments in the AWS cloud. Additionally, the pg_trgm extension has been upgraded to version 1.6 based on the available extension version for PostgreSQL 16.3 in AWS RDS. For more information, see [Extensions supported for RDS for PostgreSQL 16](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html#postgresql-extensions-16x).
+- [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Added a new field, `action_type`, to the `api_moderationevent` table so we can handle and store moderation actions.
 
 #### Migrations
-* 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - Updated the SQL script within the migration that upgrades the DB extension versions to handle previously failure cases when a higher version is available for upgrade or when the extension is not installed. This is primarily useful for local development or DB resets in the Development environment, where migrations are applied from scratch, one by one. This fix will not negatively affect other environments, as the migration has already been applied and will not be reapplied. Additionally, the changes are backward compatible.
-* 0164_refresh_pg_statistic_and_upgrade_postgres_extensions_after_db_upgrade_to_postgres_16.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 16 and upgrades the pg_trgm extension to version 1.6. The SQL script within the migration that upgrades the DB extension versions handles previously failure cases where a higher version is available for upgrade or where the extension is not installed.
-* 0165_add_moderationevent_action_type.py - This migration added a new field, `action_type`, to the existing table `api_moderationevent`.
+
+- 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - Updated the SQL script within the migration that upgrades the DB extension versions to handle previously failure cases when a higher version is available for upgrade or when the extension is not installed. This is primarily useful for local development or DB resets in the Development environment, where migrations are applied from scratch, one by one. This fix will not negatively affect other environments, as the migration has already been applied and will not be reapplied. Additionally, the changes are backward compatible.
+- 0164_refresh_pg_statistic_and_upgrade_postgres_extensions_after_db_upgrade_to_postgres_16.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 16 and upgrades the pg_trgm extension to version 1.6. The SQL script within the migration that upgrades the DB extension versions handles previously failure cases where a higher version is available for upgrade or where the extension is not installed.
+- 0165_add_moderationevent_action_type.py - This migration added a new field, `action_type`, to the existing table `api_moderationevent`.
 
 ### Code/API changes
-* [OSDEV-1581](https://opensupplyhub.atlassian.net/browse/OSDEV-1581) - Added support for Geohex grid aggregation to the GET `/api/v1/production-locations/` endpoint. To receive the Geohex grid aggregation list in the response, it is necessary to pass the `aggregation` parameter with a value of `geohex_grid` and optionally specify `geohex_grid_precision` with an integer between 0 and 15. If `geohex_grid_precision` is not defined, the default value of 5 will be used.
-* [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Updated Logstash mapping configuration to handle the new `action_type` field for OpenSearch.
+
+- [OSDEV-1581](https://opensupplyhub.atlassian.net/browse/OSDEV-1581) - Added support for Geohex grid aggregation to the GET `/api/v1/production-locations/` endpoint. To receive the Geohex grid aggregation list in the response, it is necessary to pass the `aggregation` parameter with a value of `geohex_grid` and optionally specify `geohex_grid_precision` with an integer between 0 and 15. If `geohex_grid_precision` is not defined, the default value of 5 will be used.
+- [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Updated Logstash mapping configuration to handle the new `action_type` field for OpenSearch.
 
 ### Bugfix
-* Some of the resources related to the Development AWS environment still have the `stg` prefix, which can be confusing since we also have a Staging environment with the same prefix. To clarify the resource names, including the database instance, the prefix has been updated from `stg` to `dev` for the development environment.
+
+- Some of the resources related to the Development AWS environment still have the `stg` prefix, which can be confusing since we also have a Staging environment with the same prefix. To clarify the resource names, including the database instance, the prefix has been updated from `stg` to `dev` for the development environment.
 
 ### What's new
-* [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
-    - Connected GET `v1/production-locations`.
-    - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
-    - Max result limit set to 100.
-* [OSDEV-1365](https://opensupplyhub.atlassian.net/browse/OSDEV-1365) - SLC: Integrate collecting contribution data page.
-* [OSDEV-1370](https://opensupplyhub.atlassian.net/browse/OSDEV-1370) - SLC: Connect Backend API submission with "Thank for Submitting" screen
-    - Integrated `POST /v1/production-locations/` in `/contribute/production-location/info/` page.
-    - Integrated `PATCH /v1/production-locations/` in `/contribute/production-location/{os_id}/info/` page.
-    - Production location info page is now rendered using two routes: /contribute/production-location/info/ and /contribute/production-location/{os_id}/info/. First route for creating new production location, second is for updating existing one.
-    - Implemented error popup on error response for `PATCH | POST /v1/production-locations/`.
-    - Implemented error popup on error response for `GET /v1/moderation-events/{moderation_id}`.
-    - Integrated "Thank for Submitting" modal dialog. When popup is appeared, path parameter `{moderation-id}` will be attached to `/contribute/production-location/{os_id}/info/` or `/contribute/production-location/info/`.
-    - Implemented temporary saving of moderation events in local storage for a seamless user experience.
-    - Created separate mobile and desktop layouts for "Thank for Submitting" modal dialog.
-    - Created link to claim from "Thank for Submitting" modal dialog only if production location is available for claim and moderation event is not pending.
-    - Implemented serializing and validation production location fields before passing to the "Thank for Submitting" modal dialog.
-    - Refactored routing between search results page and production location info page. Search parameters are now stored in the Redux state, so the 'Go Back' button in production location info page will lead to the previous search.
-* [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Added a new field, `action_type`, to the moderation event. This data appears on the Contribution Record page when a moderator creates a new location or matches it to an existing one.
+
+- [OSDEV-1374](https://opensupplyhub.atlassian.net/browse/OSDEV-1374) - Implemented integration for the `Search results` page to show results of searching by name and address (`/contribute/production-location/search`):
+  - Connected GET `v1/production-locations`.
+  - Routing between pages `Production Location Search`,`Search returned no results`, `Production Location Information`, `Search results`, and `I don't see my Location` pop-up is configured.
+  - Max result limit set to 100.
+- [OSDEV-1365](https://opensupplyhub.atlassian.net/browse/OSDEV-1365) - SLC: Integrate collecting contribution data page.
+- [OSDEV-1370](https://opensupplyhub.atlassian.net/browse/OSDEV-1370) - SLC: Connect Backend API submission with "Thank for Submitting" screen
+  - Integrated `POST /v1/production-locations/` in `/contribute/production-location/info/` page.
+  - Integrated `PATCH /v1/production-locations/` in `/contribute/production-location/{os_id}/info/` page.
+  - Production location info page is now rendered using two routes: /contribute/production-location/info/ and /contribute/production-location/{os_id}/info/. First route for creating new production location, second is for updating existing one.
+  - Implemented error popup on error response for `PATCH | POST /v1/production-locations/`.
+  - Implemented error popup on error response for `GET /v1/moderation-events/{moderation_id}`.
+  - Integrated "Thank for Submitting" modal dialog. When popup is appeared, path parameter `{moderation-id}` will be attached to `/contribute/production-location/{os_id}/info/` or `/contribute/production-location/info/`.
+  - Implemented temporary saving of moderation events in local storage for a seamless user experience.
+  - Created separate mobile and desktop layouts for "Thank for Submitting" modal dialog.
+  - Created link to claim from "Thank for Submitting" modal dialog only if production location is available for claim and moderation event is not pending.
+  - Implemented serializing and validation production location fields before passing to the "Thank for Submitting" modal dialog.
+  - Refactored routing between search results page and production location info page. Search parameters are now stored in the Redux state, so the 'Go Back' button in production location info page will lead to the previous search.
+- [OSDEV-1558](https://opensupplyhub.atlassian.net/browse/OSDEV-1558) - Added a new field, `action_type`, to the moderation event. This data appears on the Contribution Record page when a moderator creates a new location or matches it to an existing one.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `moderation-events` index after adding the new field `action_type`. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
-* This release will upgrade PostgreSQL from version 13 to version 16.
-    * The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16) for detailed instructions.
-    * Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16#After-the-PostgreSQL-major-version-upgrade) section.
-    * In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to update the index mapping for the `moderation-events` index after adding the new field `action_type`. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster.
+- This release will upgrade PostgreSQL from version 13 to version 16.
+  - The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16) for detailed instructions.
+  - Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16#After-the-PostgreSQL-major-version-upgrade) section.
+  - In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/640155649/PostgreSQL+database+upgrade+from+version+13+to+version+16#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
 
 ## Release 1.28.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 31, 2025
+
+- Product name: Open Supply Hub
+- Release date: January 31, 2025
 
 ### Bugfix
-* [OSDEV-1626](https://opensupplyhub.atlassian.net/browse/OSDEV-1626) - Temporarily hid the new contribution page `Add Location Data` and re-enabled the old navigation to the `List Upload` page via the `/contribute` path.
 
+- [OSDEV-1626](https://opensupplyhub.atlassian.net/browse/OSDEV-1626) - Temporarily hid the new contribution page `Add Location Data` and re-enabled the old navigation to the `List Upload` page via the `/contribute` path.
 
 ## Release 1.28.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 25, 2025
+
+- Product name: Open Supply Hub
+- Release date: January 25, 2025
 
 ### Database changes
-* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Upgraded the PostgreSQL version from 12 to 13 for the database used in local development, DB anonymization, DB restore setup, and environments in the AWS cloud. Additionally, the postgis and pg_trgm extensions have been upgraded to versions 3.4.2 and 1.5, respectively, based on the available extension versions for PostgreSQL 13.15 in AWS RDS. For more information, see [Extensions supported for RDS for PostgreSQL 13](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html#postgresql-extensions-13x). Allowed major version upgrades and activated the `apply immediately` flag to perform the PostgreSQL major version upgrade in AWS.
+
+- [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Upgraded the PostgreSQL version from 12 to 13 for the database used in local development, DB anonymization, DB restore setup, and environments in the AWS cloud. Additionally, the postgis and pg_trgm extensions have been upgraded to versions 3.4.2 and 1.5, respectively, based on the available extension versions for PostgreSQL 13.15 in AWS RDS. For more information, see [Extensions supported for RDS for PostgreSQL 13](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html#postgresql-extensions-13x). Allowed major version upgrades and activated the `apply immediately` flag to perform the PostgreSQL major version upgrade in AWS.
 
 #### Migrations
-* 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 13 and upgrades the postgis and pg_trgm extensions to versions 3.4.2 and 1.5, respectively.
+
+- 0163_refresh_pg_statistic_and_upgrade_postgres_extensions.py - This migration refreshes the `pg_statistic` table after the upgrade to PostgreSQL 13 and upgrades the postgis and pg_trgm extensions to versions 3.4.2 and 1.5, respectively.
 
 ### Code/API changes
-* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Corrected spelling mistakes in the `src/anon-tools/do_dump.sh` file and in the name of the folder `database_anonymizer_sheduled_task`. Removed the unused `src/anon-tools/anon.sql` file and the redundant `src/anon-tools/initdb.sql` file. Removed commented-out code in the `src/anon-tools/Dockerfile.dump` and `deployment/terraform/database_anonymizer_scheduled_task/docker/database_anonymizer.py` files.
-* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
+
+- [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Corrected spelling mistakes in the `src/anon-tools/do_dump.sh` file and in the name of the folder `database_anonymizer_sheduled_task`. Removed the unused `src/anon-tools/anon.sql` file and the redundant `src/anon-tools/initdb.sql` file. Removed commented-out code in the `src/anon-tools/Dockerfile.dump` and `deployment/terraform/database_anonymizer_scheduled_task/docker/database_anonymizer.py` files.
+- [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Updated `export_csv.py` to enable uploading to Google Drive and implemented cursor-based pagination for the export.
 
 ### Architecture/Environment changes
-* [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Introduced `rds_allow_major_version_upgrade` and `rds_apply_immediately` Terraform variables to enable or disable major version upgrades and the `apply immediately` flag, depending on the environment.
-* [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Added a new batch job that triggers the export_csv.py command on the first day of each month to upload bulk data of production locations to Google Drive.
+
+- [OSDEV-1514](https://opensupplyhub.atlassian.net/browse/OSDEV-1514) - Introduced `rds_allow_major_version_upgrade` and `rds_apply_immediately` Terraform variables to enable or disable major version upgrades and the `apply immediately` flag, depending on the environment.
+- [OSDEV-1523](https://opensupplyhub.atlassian.net/browse/OSDEV-1523) - Added a new batch job that triggers the export_csv.py command on the first day of each month to upload bulk data of production locations to Google Drive.
 
 ### What's new
-* [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
-* [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`):
-    - Connected GET `api/v1/moderation-events/{moderation_id}/`.
-    - Connected GET `api/v1/production-locations?name={productionLocationName}&country={countryCode}&address={address}` to get potential matches using OpenSearch engine.
-    - Connected PATCH `/v1/moderation-events/{moderation_id}/` (for Reject button).
-    - Connected POST `/v1/moderation-events/{moderation_id}/production-locations/` (for Create New Location button).
-    - Connected PATCH `/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` (for Confirm potential match button).
-    - UI improvements:
-        - Added a toast component to display notifications during moderation event updates.
-        - Introduced a backdrop to prevent accidental clicks on other buttons during the update process.
-    - Applied Django Signal for moderation-events OpenSearch index.
-* [OSDEV-1524](https://opensupplyhub.atlassian.net/browse/OSDEV-1524) - Updated salutations in automated emails to ensure a consistent and professional experience of communication from OS Hub.
-* [OSDEV-1129](https://opensupplyhub.atlassian.net/browse/OSDEV-1129) - The UI for the results page for name and address search was implemented. It includes the following screens:
-    * Successful Search: If the search is successful, the results screen displays a list of production locations. Each item includes the following information about the production location: name, OS ID, address, and country name. Users can either select a specific production location or press the "I don’t see my Location" button, which triggers a confirmation dialog window.
-    * Confirmation Dialog Window: In this window, users can confirm that no correct location was found using the provided search parameters. They can either proceed to create a new production location or return to the search.
-    * Unsuccessful Search: If the search is unsuccessful, an explanation is provided along with two options: return to the search or add a new production location.
-* [OSDEV-1579](https://opensupplyhub.atlassian.net/browse/OSDEV-1579) - Updated the API limit automated email to remove an outdated link referring to OAR and improve the languate for clarity. With this update the contributor will be informed of the correct process to follow if they have reached their API calls limit.
+
+- [OSDEV-40](https://opensupplyhub.atlassian.net/browse/OSDEV-40) - Created new page for `/contribute` to choose between multiple & single location upload. Replaced current multiple list upload to `/contribute/multiple-locations`. Changed `Upload Data` to `Add Data` text.
+- [OSDEV-1117](https://opensupplyhub.atlassian.net/browse/OSDEV-1117) - Implemented integration of Contribution Record Page (`/dashboard/moderation-queue/contribution-record/{moderation_id}`):
+  - Connected GET `api/v1/moderation-events/{moderation_id}/`.
+  - Connected GET `api/v1/production-locations?name={productionLocationName}&country={countryCode}&address={address}` to get potential matches using OpenSearch engine.
+  - Connected PATCH `/v1/moderation-events/{moderation_id}/` (for Reject button).
+  - Connected POST `/v1/moderation-events/{moderation_id}/production-locations/` (for Create New Location button).
+  - Connected PATCH `/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` (for Confirm potential match button).
+  - UI improvements:
+    - Added a toast component to display notifications during moderation event updates.
+    - Introduced a backdrop to prevent accidental clicks on other buttons during the update process.
+  - Applied Django Signal for moderation-events OpenSearch index.
+- [OSDEV-1524](https://opensupplyhub.atlassian.net/browse/OSDEV-1524) - Updated salutations in automated emails to ensure a consistent and professional experience of communication from OS Hub.
+- [OSDEV-1129](https://opensupplyhub.atlassian.net/browse/OSDEV-1129) - The UI for the results page for name and address search was implemented. It includes the following screens:
+  - Successful Search: If the search is successful, the results screen displays a list of production locations. Each item includes the following information about the production location: name, OS ID, address, and country name. Users can either select a specific production location or press the "I don’t see my Location" button, which triggers a confirmation dialog window.
+  - Confirmation Dialog Window: In this window, users can confirm that no correct location was found using the provided search parameters. They can either proceed to create a new production location or return to the search.
+  - Unsuccessful Search: If the search is unsuccessful, an explanation is provided along with two options: return to the search or add a new production location.
+- [OSDEV-1579](https://opensupplyhub.atlassian.net/browse/OSDEV-1579) - Updated the API limit automated email to remove an outdated link referring to OAR and improve the languate for clarity. With this update the contributor will be informed of the correct process to follow if they have reached their API calls limit.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* This release will upgrade PostgreSQL from version 12 to version 13.
-    * The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13) for detailed instructions.
-    * Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#After-the-PostgreSQL-major-version-upgrade) section.
-    * In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- This release will upgrade PostgreSQL from version 12 to version 13.
+  - The upgrade will be performed automatically by Terrafrom and AWS, but some steps need to be completed **before** and **after** the upgrade. Please refer to [the Confluence article](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13) for detailed instructions.
+  - Steps to be completed before the upgrade are marked with the statement: "**This should be done before deploying the upgraded database.**". Post-upgrade tasks can be found under the [After the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#After-the-PostgreSQL-major-version-upgrade) section.
+  - In case of an unsuccessful release along with the database upgrade, follow the instructions under the [Guide for rolling back the PostgreSQL major version upgrade](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/620134402/PostgreSQL+database+upgrade+from+version+12+to+version+13#Guide-for-rolling-back-the-PostgreSQL-major-version-upgrade) section.
 
 ## Release 1.27.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 11, 2025
+
+- Product name: Open Supply Hub
+- Release date: January 11, 2025
 
 ### Code/API changes
-* [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint. This endpoint allows the creation of a new contribution for an existing production location based on the provided moderation event.
-* [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Introduced a new PATCH `/api/v1/production-locations/{os_id}/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for updating the production location with the given details. Basically, the endpoint can be used to contribute to an existing location.
-* [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Dynamic mapping for the new fields in the `moderation-events` index has been disabled for those that don't have an explicit mapping defined. This change helps avoid indexing conflicts, such as when a field is initially indexed with one data type (e.g., long), but later an entry with a different data type for the same field is indexed, causing the entire entry to fail indexing. After this change, fields with an explicit mapping will be indexed, while other fields will not be indexed or searchable, but will still be displayed in the document.
+
+- [OSDEV-1409](https://opensupplyhub.atlassian.net/browse/OSDEV-1409) - Introduced a new PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint. This endpoint allows the creation of a new contribution for an existing production location based on the provided moderation event.
+- [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Introduced a new PATCH `/api/v1/production-locations/{os_id}/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for updating the production location with the given details. Basically, the endpoint can be used to contribute to an existing location.
+- [OSDEV-1336](https://opensupplyhub.atlassian.net/browse/OSDEV-1336) - Dynamic mapping for the new fields in the `moderation-events` index has been disabled for those that don't have an explicit mapping defined. This change helps avoid indexing conflicts, such as when a field is initially indexed with one data type (e.g., long), but later an entry with a different data type for the same field is indexed, causing the entire entry to fail indexing. After this change, fields with an explicit mapping will be indexed, while other fields will not be indexed or searchable, but will still be displayed in the document.
 
 ### Architecture/Environment changes
 
 ### Bugfix
-* [OSDEV-1492](https://opensupplyhub.atlassian.net/browse/OSDEV-1492) - Fixed an issue where invalid manually entered dates were not validated on the UI, resulting in API errors with message “The request query is invalid.” on `Moderation Queue` page. Invalid dates are now trimmed and properly handled.
-* [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
-* [OSDEV-1532](https://opensupplyhub.atlassian.net/browse/OSDEV-1532) - Fixed the date range picker on the `Moderation Queue` page. A Data Moderator can change the Before date even if an Error message is displayed.
-* [OSDEV-1533](https://opensupplyhub.atlassian.net/browse/OSDEV-1533) - The presentation of the `Moderation Decision Date` in the `Moderation Queue` table has been corrected. If the "status_change_date" is missing in the object, it now displays as "N/A".
-* [OSDEV-1196](https://opensupplyhub.atlassian.net/browse/OSDEV-1196) - The `?sort_by=contributors_desc` query parameter is only appended to URLs on the `/facilities` page and is excluded from all other pages. The error caused by the property type that occurred during local test execution has been resolved.
-* [OSDEV-1397](https://opensupplyhub.atlassian.net/browse/OSDEV-1397) - GET `/api/parent-companies/` request has been removed from the Open Supply Hub page and ClaimFacility component. Parent Company Select is a regular input field that allows the creation of multiple parent company names for filter on this page.
-* [OSDEV-1556](https://opensupplyhub.atlassian.net/browse/OSDEV-1556) - Fixed validation of `os_id` for PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint.
-* [OSDEV-1563](https://opensupplyhub.atlassian.net/browse/OSDEV-1563) - Fixed updating of the moderation decision date after moderation event approval.
+
+- [OSDEV-1492](https://opensupplyhub.atlassian.net/browse/OSDEV-1492) - Fixed an issue where invalid manually entered dates were not validated on the UI, resulting in API errors with message “The request query is invalid.” on `Moderation Queue` page. Invalid dates are now trimmed and properly handled.
+- [OSDEV-1493](https://opensupplyhub.atlassian.net/browse/OSDEV-1493) - Fixed an issue where the backend sorts countries not by `name` but by their `alpha-2 codes` in `GET /api/v1/moderation-events/` endpoint.
+- [OSDEV-1532](https://opensupplyhub.atlassian.net/browse/OSDEV-1532) - Fixed the date range picker on the `Moderation Queue` page. A Data Moderator can change the Before date even if an Error message is displayed.
+- [OSDEV-1533](https://opensupplyhub.atlassian.net/browse/OSDEV-1533) - The presentation of the `Moderation Decision Date` in the `Moderation Queue` table has been corrected. If the "status_change_date" is missing in the object, it now displays as "N/A".
+- [OSDEV-1196](https://opensupplyhub.atlassian.net/browse/OSDEV-1196) - The `?sort_by=contributors_desc` query parameter is only appended to URLs on the `/facilities` page and is excluded from all other pages. The error caused by the property type that occurred during local test execution has been resolved.
+- [OSDEV-1397](https://opensupplyhub.atlassian.net/browse/OSDEV-1397) - GET `/api/parent-companies/` request has been removed from the Open Supply Hub page and ClaimFacility component. Parent Company Select is a regular input field that allows the creation of multiple parent company names for filter on this page.
+- [OSDEV-1556](https://opensupplyhub.atlassian.net/browse/OSDEV-1556) - Fixed validation of `os_id` for PATCH `/api/v1/moderation-events/{moderation_id}/production-locations/{os_id}/` endpoint.
+- [OSDEV-1563](https://opensupplyhub.atlassian.net/browse/OSDEV-1563) - Fixed updating of the moderation decision date after moderation event approval.
 
 ### What's new
-* [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
-* [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
-* [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
-* [OSDEV-1130](https://opensupplyhub.atlassian.net/browse/OSDEV-1130) A new page, `Production Location Information`, has been implemented. It includes the following inputs:
-    * Required and pre-fillable fields:
-        - Name
-        - Address
-        - Country
-    * Additional information section: Fields for optional contributions from the owner or manager of the production location, including sector(s), product type(s), location type(s), processing type(s), number of workers, and parent company.
-The page also features `Go Back` and `Submit` buttons for navigation and form submission.
+
+- [OSDEV-1376](https://opensupplyhub.atlassian.net/browse/OSDEV-1376) - Updated automated emails for closure reports (report_result) to remove the term "Rejected" for an improved user experience. Added link to Closure Policy and instructions for submitting a Reopening Report to make the process easier to understand for users.
+- [OSDEV-1383](https://opensupplyhub.atlassian.net/browse/OSDEV-1383) - Edited text of the automated email that notifies a contributor when one of their facilities has been claimed. The new text provides more information to the contributor to understand the claim process and how they can encourage more of their facilities to claim their profile.
+- [OSDEV-1474](https://opensupplyhub.atlassian.net/browse/OSDEV-1474) - Added contributor type value to response of `/api/contributors/` endpoint.
+- [OSDEV-1130](https://opensupplyhub.atlassian.net/browse/OSDEV-1130) A new page, `Production Location Information`, has been implemented. It includes the following inputs:
+  _ Required and pre-fillable fields: - Name - Address - Country
+  _ Additional information section: Fields for optional contributions from the owner or manager of the production location, including sector(s), product type(s), location type(s), processing type(s), number of workers, and parent company.
+  The page also features `Go Back` and `Submit` buttons for navigation and form submission.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `moderation-events` index after disabling dynamic mapping for the new fields that don't have an explicit mapping defined. The `production-locations` will also be affected since it will clean all of our custom indexes and templates within the OpenSearch cluster
 
 ## Release 1.26.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: December 14, 2024
+
+- Product name: Open Supply Hub
+- Release date: December 14, 2024
 
 ### Database changes
 
 #### Migrations
-* 0162_update_moderationevent_table_fields.py - This migration updates the ModerationEvent table and its constraints.
+
+- 0162_update_moderationevent_table_fields.py - This migration updates the ModerationEvent table and its constraints.
 
 #### Schema changes
-* [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following updates to the ModerationEvent table have been made:
-    1. Set `uuid` as the primary key.
-    2. Make `geocode_result` field optional. It can be blank if lat and lng
-    have been provided by user.
-    3. Remove redundant `blank=False` and `null=False` constraints, as these are
-    the default values for model fields in Django and do not need to be
-    explicitly set.
-    4. Make `contributor` field non-nullable, as the field should not be left
-    empty. It is required to have information about the contributor.
-    5. Allow `claim` field to be blank. This change reflects the fact that
-    a moderation event may not always be related to a claim, so the field can
-    be left empty.
+
+- [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following updates to the ModerationEvent table have been made:
+  1. Set `uuid` as the primary key.
+  2. Make `geocode_result` field optional. It can be blank if lat and lng
+     have been provided by user.
+  3. Remove redundant `blank=False` and `null=False` constraints, as these are
+     the default values for model fields in Django and do not need to be
+     explicitly set.
+  4. Make `contributor` field non-nullable, as the field should not be left
+     empty. It is required to have information about the contributor.
+  5. Allow `claim` field to be blank. This change reflects the fact that
+     a moderation event may not always be related to a claim, so the field can
+     be left empty.
 
 ### Code/API changes
-* [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH /api/v1/moderation-events/{moderation_id}/` response.
-* [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced a new POST `/api/v1/moderation-events/{moderation_id}/production-locations/` endpoint
-* [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
+
+- [OSDEV-1453](https://opensupplyhub.atlassian.net/browse/OSDEV-1453) - The `detail` keyword instead of `message` has been applied in error response objects for V1 endpoints.
+- [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Disabled null values from the response of the OpenSearch. Disabled possible null `os_id`, `claim_id` and `source` from `PATCH /api/v1/moderation-events/{moderation_id}/` response.
+- [OSDEV-1410](https://opensupplyhub.atlassian.net/browse/OSDEV-1410) - Introduced a new POST `/api/v1/moderation-events/{moderation_id}/production-locations/` endpoint
+- [OSDEV-1449](https://opensupplyhub.atlassian.net/browse/OSDEV-1449) - **Breaking changes** to the following endpoints:
   - GET `v1/moderation-events/`
   - GET `v1/production-locations/`
 
@@ -1789,1016 +2000,1152 @@ The page also features `Go Back` and `Submit` buttons for navigation and form su
   - Refactored `sort_by` parameter to improve sorting functionality.
   - Split `search_after` parameter into `search_after_value` and `search_after_id` for better pagination control.
 
-* [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following features and improvements have been made:
-    1. Introduced a new POST `/api/v1/production-locations/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for the production location creation with the given details.
-    2. Removed redundant redefinition of paths via the `as_view` method for all the v1 API endpoints since they are already defined via `DefaultRouter`.
-* [OSDEV-1468](https://opensupplyhub.atlassian.net/browse/OSDEV-1468) - Limit the `page` parameter to `100` for the GET `/api/facilities/` endpoint. This will help prevent system downtimes, as larger pages (OFFSET) make it harder for the database to retrieve data, especially considering the large amount of data we have.
+- [OSDEV-1158](https://opensupplyhub.atlassian.net/browse/OSDEV-1158) - The following features and improvements have been made:
+  1. Introduced a new POST `/api/v1/production-locations/` endpoint based on the API v1 specification. This endpoint allows the creation of a new moderation event for the production location creation with the given details.
+  2. Removed redundant redefinition of paths via the `as_view` method for all the v1 API endpoints since they are already defined via `DefaultRouter`.
+- [OSDEV-1468](https://opensupplyhub.atlassian.net/browse/OSDEV-1468) - Limit the `page` parameter to `100` for the GET `/api/facilities/` endpoint. This will help prevent system downtimes, as larger pages (OFFSET) make it harder for the database to retrieve data, especially considering the large amount of data we have.
 
 ### Architecture/Environment changes
-* [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
-* In light of recent instances(on 12/03/2024 UTC and 12/04/2024 UTC) where the current RDS disk storage space limit was reached in Production, the RDS storage size has been increased to `256 GB` in the Production, Test, and Pre-prod environments to accommodate the processing of larger volumes of data. The configurations for the Test and Pre-prod environments have also been updated to maintain parity with the Production environment.
-* Right-sized the resources for Django containers across all environments and the RDS instance in the Production and Preprod environments. This will result in a savings of approximately $2,481. The following changes have been made:
-    - Production:
-        - RDS instance type was changed from `db.m6in.8xlarge` to `db.m6in.4xlarge`.
-        - ECS tasks for Django containers: the number was reduced from `12` to `10`, and memory was reduced from `8GB` to `4GB`.
-    - Preprod:
-        - RDS instance type was changed from `db.m6in.8xlarge` to `db.m6in.4xlarge`.
-        - ECS tasks for Django containers: the number was reduced from `12` to `10`, and memory was reduced from `8GB` to `4GB`.
-        - These changes were made to maintain parity with the Production environment, as it is a copy of that environment.
-    - Staging:
-        - ECS tasks for Django containers: memory was reduced from `8GB` to `2GB`.
-    - Test:
-        - ECS tasks for Django containers: memory was reduced from `8GB` to `4GB`.
-    - Development:
-        - ECS tasks for Django containers: memory was reduced from `8GB` to `1GB`, and CPU was reduced from `1 vCPU` to `0.5 vCPU`.
+
+- [OSDEV-1170](https://opensupplyhub.atlassian.net/browse/OSDEV-1170) - Added the ability to automatically create a dump from the latest shared snapshot of the anonymized database from Production environment for use in the Test and Pre-Prod environments.
+- In light of recent instances(on 12/03/2024 UTC and 12/04/2024 UTC) where the current RDS disk storage space limit was reached in Production, the RDS storage size has been increased to `256 GB` in the Production, Test, and Pre-prod environments to accommodate the processing of larger volumes of data. The configurations for the Test and Pre-prod environments have also been updated to maintain parity with the Production environment.
+- Right-sized the resources for Django containers across all environments and the RDS instance in the Production and Preprod environments. This will result in a savings of approximately $2,481. The following changes have been made:
+  - Production:
+    - RDS instance type was changed from `db.m6in.8xlarge` to `db.m6in.4xlarge`.
+    - ECS tasks for Django containers: the number was reduced from `12` to `10`, and memory was reduced from `8GB` to `4GB`.
+  - Preprod:
+    - RDS instance type was changed from `db.m6in.8xlarge` to `db.m6in.4xlarge`.
+    - ECS tasks for Django containers: the number was reduced from `12` to `10`, and memory was reduced from `8GB` to `4GB`.
+    - These changes were made to maintain parity with the Production environment, as it is a copy of that environment.
+  - Staging:
+    - ECS tasks for Django containers: memory was reduced from `8GB` to `2GB`.
+  - Test:
+    - ECS tasks for Django containers: memory was reduced from `8GB` to `4GB`.
+  - Development:
+    - ECS tasks for Django containers: memory was reduced from `8GB` to `1GB`, and CPU was reduced from `1 vCPU` to `0.5 vCPU`.
 
 ### Bugfix
-* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
-* It was found that clearing OpenSearch indexes didn’t work properly because the templates weren’t cleared. After updating the index mappings within the index template files, the index template remained unchanged because only the indexes were deleted during deployment, not both the indexes and their templates. This caused conflicts and prevented developers' updates from being applied to the OpenSearch indexes.
-This issue has been fixed by adding additional requests to delete the appropriate index templates to the `clear_opensearch.sh.tpl` script, which is triggered when clearing OpenSearch during deployment to any environment.
-* [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
-* [OSDEV-1511](https://opensupplyhub.atlassian.net/browse/OSDEV-1511) - Updated google maps api version to 3.57 for ReactLeafletGoogleLayer component (3.51 not supported).
+
+- [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388) - The waiter from boto3 cannot wait more than half an hour so we replaced it with our own.
+- It was found that clearing OpenSearch indexes didn’t work properly because the templates weren’t cleared. After updating the index mappings within the index template files, the index template remained unchanged because only the indexes were deleted during deployment, not both the indexes and their templates. This caused conflicts and prevented developers' updates from being applied to the OpenSearch indexes.
+  This issue has been fixed by adding additional requests to delete the appropriate index templates to the `clear_opensearch.sh.tpl` script, which is triggered when clearing OpenSearch during deployment to any environment.
+- [OSDEV-1482](https://opensupplyhub.atlassian.net/browse/OSDEV-1482) - The `GET api/v1/moderation-events/{moderation_id}` endpoint returns a single response instead of an array containing one item.
+- [OSDEV-1511](https://opensupplyhub.atlassian.net/browse/OSDEV-1511) - Updated google maps api version to 3.57 for ReactLeafletGoogleLayer component (3.51 not supported).
 
 ### What's new
-* [OSDEV-1132](https://opensupplyhub.atlassian.net/browse/OSDEV-1132) - Added FE for the "thanks for submitting" screen when user submits production location's data.
-* [OSDEV-1373](https://opensupplyhub.atlassian.net/browse/OSDEV-1373) - The tab `Search by Name and Address.` on the Production Location Search screen has been implemented. There are three required properties (name, address, country). The "Search" button becomes clickable after filling out inputs, creates a link with parameters, and allows users to proceed to the results screen.
-* [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
+
+- [OSDEV-1132](https://opensupplyhub.atlassian.net/browse/OSDEV-1132) - Added FE for the "thanks for submitting" screen when user submits production location's data.
+- [OSDEV-1373](https://opensupplyhub.atlassian.net/browse/OSDEV-1373) - The tab `Search by Name and Address.` on the Production Location Search screen has been implemented. There are three required properties (name, address, country). The "Search" button becomes clickable after filling out inputs, creates a link with parameters, and allows users to proceed to the results screen.
+- [OSDEV-1175](https://opensupplyhub.atlassian.net/browse/OSDEV-1175) - New Moderation Queue Page was integrated with `GET api/v1/moderation-events/` endpoint that include pagination, sorting and filtering.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
-* Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `production-locations` and `moderation-events` indexes after fixing the process of clearing the custom OpenSearch indexes. It will clean all of our custom indexes and templates within the OpenSearch cluster.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
+- Run `[Release] Deploy` pipeline for the target environment with the flag `Clear the custom OpenSearch indexes and templates` set to true - to refresh the index mappings for the `production-locations` and `moderation-events` indexes after fixing the process of clearing the custom OpenSearch indexes. It will clean all of our custom indexes and templates within the OpenSearch cluster.
 
 ## Release 1.25.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 30, 2024
+
+- Product name: Open Supply Hub
+- Release date: November 30, 2024
 
 ### Database changes
 
 #### Migrations
-* 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
-* 0160_allow_null_parsing_errors_in_facilitylist.py - This migration allows empty parsing_errors in api_facilitylist.
-* 0161_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
+
+- 0159_alter_status_of_moderation_events_table.py - This migration alters status of api_moderationevent table.
+- 0160_allow_null_parsing_errors_in_facilitylist.py - This migration allows empty parsing_errors in api_facilitylist.
+- 0161_create_disable_list_uploading_switch.py - This migration creates disable_list_uploading switch in the Django admin panel and record in the waffle_switch table.
 
 #### Schema changes
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
-* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Allows empty parsing_errors in api_facilitylist.
+
+- [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Alter status options for api_moderationevent table.
+- [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Allows empty parsing_errors in api_facilitylist.
 
 ### Code/API changes
-* [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
-* [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to disable the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process. Implemented a check on the list upload endpoint.
-* [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
-to modify moderation event `status`.
-* [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
-* Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
-* The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
-* [OSDEV-1467](https://opensupplyhub.atlassian.net/browse/OSDEV-1467) - Implemented disabling endpoint `POST /api/facilities/` during the release process. It is raising an error message with status code 503.
+
+- [OSDEV-1346](https://opensupplyhub.atlassian.net/browse/OSDEV-1346) - Create GET request for `v1/moderation-events` endpoint.
+- [OSDEV-1429](https://opensupplyhub.atlassian.net/browse/OSDEV-1429) - The list upload switcher has been created to disable the `Submit` button on the List Contribute page through the Switch page in the Django admin panel during the release process. Implemented a check on the list upload endpoint.
+- [OSDEV-1332](https://opensupplyhub.atlassian.net/browse/OSDEV-1332) - Introduced new `PATCH api/v1/moderation-events/{moderation_id}` endpoint
+  to modify moderation event `status`.
+- [OSDEV-1347](https://opensupplyhub.atlassian.net/browse/OSDEV-1347) - Create GET request for `v1/moderation-events/{moderation_id}` endpoint.
+- Update `/v1/production-locations/{os_id}` endpoint to return a single object instead of multiple objects. Also, add unit tests for the `ProductionLocationsViewSet`.
+- The RDS instance has been upgraded as follows: for `production` and `preprod`, it is now `db.m6in.8xlarge`, and for `test`, it has been upgraded to `db.t3.xlarge`.
+- [OSDEV-1467](https://opensupplyhub.atlassian.net/browse/OSDEV-1467) - Implemented disabling endpoint `POST /api/facilities/` during the release process. It is raising an error message with status code 503.
 
 ### Architecture/Environment changes
-* Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
+
+- Increased the memory for the Dedupe Hub instance from 8GB to 12GB in the `production` and `pre-prod` environments to reduce the risk of container overload and minimize the need for reindexing in the future.
 
 ### Bugfix
-* [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
-* [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
+
+- [OSDEV-1448](https://opensupplyhub.atlassian.net/browse/OSDEV-1448) - The map on the production location’s profile and the production location marker have been fixed. Improved the handling of SQL query parameters for better execution accuracy.
+- [OSDEV-1411](https://opensupplyhub.atlassian.net/browse/OSDEV-1411) - Django Admin: Fixed an issue when updating the facility list with an empty array in the `parsing errors` field.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `reindex_database`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `reindex_database`
 
 ## Release 1.24.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 16, 2024
+
+- Product name: Open Supply Hub
+- Release date: November 16, 2024
 
 ### Code/API changes
-* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
-* Moved all the files related to the OpenSearch service to the existing `src/django/api/services/opensearch` folder within the `api` app of the Django application. This should make it easier to navigate through the files and clarify the location of all OpenSearch service-related files in one place within the `api` app in Django.
+
+- [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Explicitly set the number of shards and the number of replicas for the "production locations" and "moderation events" OpenSearch indexes. Based on the OpenSearch documentation, a storage size of 10–30 GB is preferred for workloads that prioritize low search latency. Additionally, having too many small shards can unnecessarily exhaust memory by storing excessive metadata. Currently, the "production locations" index utilizes 651.9 MB, including replicas, while the "moderation events" index is empty. This indicates that one shard and one replica should be sufficient for the "production locations" and "moderation events" indexes.
+- Moved all the files related to the OpenSearch service to the existing `src/django/api/services/opensearch` folder within the `api` app of the Django application. This should make it easier to navigate through the files and clarify the location of all OpenSearch service-related files in one place within the `api` app in Django.
 
 ### Architecture/Environment changes
-* The OpenSearch version has been increased to 2.15.
-* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
-* [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
-* [OSDEV-1171](https://opensupplyhub.atlassian.net/browse/OSDEV-1171) - RDS instances for `staging` and `test` have beed decreased to `db.t3.large`
-* Playwright has been introduced as the main framework for end-to-end testing:
-    * Added a new Playwright testing service to the Docker configuration
-    * Implemented initial test cases to verify core functionality
-    * Integrated Playwright tests into the CI pipeline via GitHub Actions
-    * Added necessary configuration files and dependencies for the e2e testing project
-* The RDS instance for `production` has been upgraded to `db.m6in.4xlarge` and configured to operate in a single Availability Zone.
+
+- The OpenSearch version has been increased to 2.15.
+- [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - The new "moderation events" Logstash pipeline has been configured and implemented to collect moderation event data from the current PostgreSQL database and save it to OpenSearch. This setup allows for fast searches on the moderation events data.
+- [OSDEV-1387](https://opensupplyhub.atlassian.net/browse/OSDEV-1387) - The SQL query for generating tiles from PostgreSQL+PostGIS has been reimplemented to avoid using the JOIN + GROUP BY clause. This change reduces the number of subqueries and their asymptotic complexity. Additionally, an option to set an upper limit on facility counts in the 'count' clause has been introduced, capped at 100, which doubles the query's performance. Throttling has been removed for tile generation endpoints.
+- [OSDEV-1171](https://opensupplyhub.atlassian.net/browse/OSDEV-1171) - RDS instances for `staging` and `test` have beed decreased to `db.t3.large`
+- Playwright has been introduced as the main framework for end-to-end testing:
+  - Added a new Playwright testing service to the Docker configuration
+  - Implemented initial test cases to verify core functionality
+  - Integrated Playwright tests into the CI pipeline via GitHub Actions
+  - Added necessary configuration files and dependencies for the e2e testing project
+- The RDS instance for `production` has been upgraded to `db.m6in.4xlarge` and configured to operate in a single Availability Zone.
 
 ### Bugfix
-* [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
+
+- [OSDEV-1335](https://opensupplyhub.atlassian.net/browse/OSDEV-1335) - Fixed the assertion in the test for the `country.rb` filter of the "production locations" Logstash pipeline. The main issue was with the evaluation of statements in the Ruby block. Since only the last statement is evaluated in a Ruby block, all the checks were grouped into one chain of logical statements and returned as a `result` variable at the end.
 
 ### What's new
-* [OSDEV-1116](https://opensupplyhub.atlassian.net/browse/OSDEV-1116) - A new Contribution Record Page has been developed to enable quick identification and moderation of contributions. This page includes two main sections: Moderation Event Data and Potential Matches, along with a set of buttons designed to facilitate the moderation process.
-* [OSDEV-1120](https://opensupplyhub.atlassian.net/browse/OSDEV-1120) - A new Moderation Queue Dashboard page has been introduced, featuring three essential components:
-    * Moderation Events Table: Allows users to view and manage moderation events more effectively.
-    * Filtering Options: Multiple filter fields enable users to customize the displayed events based on different criteria, making it easier to find specific events.
-    * Download Excel Button: Provides the ability to export the list of displayed moderation events as an XLSX file for offline analysis and record-keeping.
+
+- [OSDEV-1116](https://opensupplyhub.atlassian.net/browse/OSDEV-1116) - A new Contribution Record Page has been developed to enable quick identification and moderation of contributions. This page includes two main sections: Moderation Event Data and Potential Matches, along with a set of buttons designed to facilitate the moderation process.
+- [OSDEV-1120](https://opensupplyhub.atlassian.net/browse/OSDEV-1120) - A new Moderation Queue Dashboard page has been introduced, featuring three essential components:
+  - Moderation Events Table: Allows users to view and manage moderation events more effectively.
+  - Filtering Options: Multiple filter fields enable users to customize the displayed events based on different criteria, making it easier to find specific events.
+  - Download Excel Button: Provides the ability to export the list of displayed moderation events as an XLSX file for offline analysis and record-keeping.
 
 ### Release instructions
-* The following steps should be completed while deploying to Staging or Production:
-    1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
-    2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
-        - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
-            - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
-            - In the IAM console, find and click on the "Users" tab.
-            - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
-        - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
-        - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
-        - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
-    3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
 
+- The following steps should be completed while deploying to Staging or Production:
+  1. Run the `[Release] Deploy` pipeline for these environments with the flag 'Clear OpenSearch indexes' set to true. This will allow Logstash to refill OpenSearch since the OpenSearch instance will be recreated due to the version increase. It is also necessary due to changes in the OpenSearch index settings.
+  2. Open the triggered `Deploy to AWS` workflow and ensure that the `apply` job is completed. **Right after** finishing the `apply` job, follow these instructions, which should be the last steps in setting up the recreated OpenSearch instance:
+     - Copy the ARN of the `terraform_ci` user from the AWS IAM console.
+       - Navigate to the AWS console's search input, type "IAM", and open the IAM console.
+       - In the IAM console, find and click on the "Users" tab.
+       - In the list of available users, locate the `terraform_ci` user, click on it, and on that page, you will find its ARN.
+     - After copying this value, go to the AWS OpenSearch console in the same way you accessed the IAM console.
+     - Open the available domains and locate the domain for the corresponding environment. Open it, then navigate to the security configuration and click "Edit".
+     - Find the section titled "Fine-grained access control", and under this section, you will find an "IAM ARN" input field. Paste the copied ARN into this field and save the changes. It may take several minutes to apply. Make sure that the "Configuration change status" field has green status.
+  3. Then, return to the running `Deploy to AWS` workflow and ensure that the logs for `clear_opensearch` job do not contain errors related to access for deleting the OpenSearch index or lock files in EFS storage. In case of **an access error**, simply rerun the `Deploy to AWS` workflow manually from the appropriate release Git tag.
 
 ## Release 1.23.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 02, 2024
+
+- Product name: Open Supply Hub
+- Release date: November 02, 2024
 
 ### Database changes
 
 #### Migrations
-* 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
+
+- 0158_create_moderation_events_table.py - This migration creates api_moderationevent table for Moderation Queue.
 
 #### Schema changes
-* [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
+
+- [OSDEV-1229](https://opensupplyhub.atlassian.net/browse/OSDEV-1229) - Created Moderation Events Postgres table to track moderation events in the database.
 
 ### Code/API changes
-* Throttling has been introduced for tiles/* endpoints, limiting requests to 300 per minute.
-* [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
+
+- Throttling has been introduced for tiles/\* endpoints, limiting requests to 300 per minute.
+- [OSDEV-1328](https://opensupplyhub.atlassian.net/browse/OSDEV-1328) The OpenSearch tokenizer has been changed to `lowercase` to get better search results when querying the GET /v1/production-locations/ endpoint.
 
 ### Architecture/Environment changes
-* Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
+
+- Resource allocation has been optimized for the staging environment. The number of ECS tasks for the Django app has been reduced from 6 to 4, while maintaining system stability.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-* Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+- Run `[Release] Deploy` pipeline for an existing environment with the flag 'Clear OpenSearch indexes' set to true - to let the tokenizer parse full text into words with new configurations.
 
 ## Release 1.22.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: October 19, 2024
+
+- Product name: Open Supply Hub
+- Release date: October 19, 2024
 
 ### Database changes
 
 #### Migrations
-* 0156_introduce_list_level_parsing_errors.py - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
-* 0157_delete_endpoint_switcher_for_list_uploads.py - This migration deletes the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
+
+- 0156_introduce_list_level_parsing_errors.py - This migration introduces the parsing_errors field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+- 0157_delete_endpoint_switcher_for_list_uploads.py - This migration deletes the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
 
 #### Schema changes
-* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
+
+- [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Since the `use_old_upload_list_endpoint` switcher is no longer necessary for the list upload, it has been deleted from the DB. Additionally, the `parsing_errors` field has been added to the FacilityList model.
 
 ### Code/API changes
-* [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities, match facility (promote, split).
-* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed, having been replaced with real CSV files. Additionally, other important changes have been implemented in the Django app and deployment:
-    * Adjusted all code that used the `facility_list_items.json` fixture and removed the unused matching logic from the Django app, as it is no longer necessary and was connected to that fixture.
-    * Updated the reset database step in the `restore_database` job of the Deploy to AWS GitHub workflow to upload CSV location list files to S3 for parsing during the DB reset.
+
+- [OSDEV-1102](https://opensupplyhub.atlassian.net/browse/OSDEV-1102) - API. Propagate production location updates to OpenSearch data source via refreshing `updated_at` field in `api_facility` table. Triggered updated_at field in such actions: transfer to alternate facility, claim facility, approve, reject and deny claim, claim details, merge facilities, match facility (promote, split).
+- [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Deleted the `facility_list_items.json` fixture from the Django app since it is no longer needed, having been replaced with real CSV files. Additionally, other important changes have been implemented in the Django app and deployment:
+  - Adjusted all code that used the `facility_list_items.json` fixture and removed the unused matching logic from the Django app, as it is no longer necessary and was connected to that fixture.
+  - Updated the reset database step in the `restore_database` job of the Deploy to AWS GitHub workflow to upload CSV location list files to S3 for parsing during the DB reset.
 
 ### Architecture/Environment changes
-* [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
-  * __Deploy to AWS__ pipeline will init from __[Release] Deploy__ pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
-* [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
-  * Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
-  * Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
-* [OSDEV-1172](https://opensupplyhub.atlassian.net/browse/OSDEV-1172)
-  * Added the ability to restore a database from a snapshot.
-* [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
-  * Increased timeout to wait for copying anonymized shared snapshot.
+
+- [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)
+  - **Deploy to AWS** pipeline will init from **[Release] Deploy** pipeline and get deployment parameters, such as cleaning OpenSearch indexes, by trigger.
+- [OSDEV-1372](https://opensupplyhub.atlassian.net/browse/OSDEV-1372)
+  - Changed the base image in the Django app Dockerfile to use a Debian 11 instead of Debian 10 as the PostgreSQL 13 repository support for Debian 10 has been ended.
+  - Always build a docker image for the amd64 platform so that the image in the local environment fully corresponds to the one in production.
+- [OSDEV-1172](https://opensupplyhub.atlassian.net/browse/OSDEV-1172)
+  - Added the ability to restore a database from a snapshot.
+- [OSDEV-1388](https://opensupplyhub.atlassian.net/browse/OSDEV-1388)
+  - Increased timeout to wait for copying anonymized shared snapshot.
 
 ### Bugfix
-* Fixed a bug related to environment variable management:
-    * Removed the `py_environment` Terraform variable, as it appeared to be a duplicate of the `environment` variable.
-    * Passed the correct environment values to the ECS task definition for the Django containers in all environments, especially in the Preprod and Development environments, to avoid misunderstandings and incorrect interpretations of the values previously passed via `py_environment`.
-    * Introduced a *Local* environment specifically for local development to avoid duplicating variable values with the AWS-hosted *Development* environment.
-* [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Made the list parsing asynchronous and increased the list upload limit to 10,000 facilities per list to reduce manual work for moderators when they split large lists into smaller ones. The following architectural and code changes have been made:
-    1. Renamed the previously copied `api/facility-lists/createlist` POST endpoint to the `api/facility-lists` POST endpoint. Deleted the old implementation of the `api/facility-lists` POST endpoint along with the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
-    2. Removed the triggering of ContriCleaner from the `api/facility-lists` POST endpoint and moved it to the async parse AWS batch job to reduce the load on the endpoint. Introduced a `parsing_errors` field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
-    3. Established a connection between the EC2 instance within the AWS batch job and the S3 bucket where all the uploaded list files are saved. This is necessary because the parse job retrieves a particular list from the S3 bucket via Django.
-    4. Deleted redundant code from the previous implementation of the list item parsing.
-    5. Adjusted Django, ContriCleaner, and integration tests. Regarding integration tests, the `facility_list_items.json` fixture was converted to concrete CSV lists, which were connected to the `facility_lists.json` fixture to upload them to the DB while creating the test DB for the integration tests. This is necessary because the parsing function that triggers ContriCleaner can only work with real files, not facility list items as it did previously.
-    6. Refactored the ContributeForm component in the front-end app.
-    7. The list page has been adjusted to work with asynchronous parsing, and a new dialog window has been added to notify users about the list parsing process, indicating that they need to wait.
-    8. Introduced a UI to display list parsing errors on the list page after the page refresh.
+
+- Fixed a bug related to environment variable management:
+  - Removed the `py_environment` Terraform variable, as it appeared to be a duplicate of the `environment` variable.
+  - Passed the correct environment values to the ECS task definition for the Django containers in all environments, especially in the Preprod and Development environments, to avoid misunderstandings and incorrect interpretations of the values previously passed via `py_environment`.
+  - Introduced a _Local_ environment specifically for local development to avoid duplicating variable values with the AWS-hosted _Development_ environment.
+- [OSDEV-1039](https://opensupplyhub.atlassian.net/browse/OSDEV-1039) - Made the list parsing asynchronous and increased the list upload limit to 10,000 facilities per list to reduce manual work for moderators when they split large lists into smaller ones. The following architectural and code changes have been made:
+  1. Renamed the previously copied `api/facility-lists/createlist` POST endpoint to the `api/facility-lists` POST endpoint. Deleted the old implementation of the `api/facility-lists` POST endpoint along with the `use_old_upload_list_endpoint` switcher that was necessary to toggle between the old and new list upload endpoints.
+  2. Removed the triggering of ContriCleaner from the `api/facility-lists` POST endpoint and moved it to the async parse AWS batch job to reduce the load on the endpoint. Introduced a `parsing_errors` field for the FacilityList model to collect list-level and internal errors logged during the background parsing of the list.
+  3. Established a connection between the EC2 instance within the AWS batch job and the S3 bucket where all the uploaded list files are saved. This is necessary because the parse job retrieves a particular list from the S3 bucket via Django.
+  4. Deleted redundant code from the previous implementation of the list item parsing.
+  5. Adjusted Django, ContriCleaner, and integration tests. Regarding integration tests, the `facility_list_items.json` fixture was converted to concrete CSV lists, which were connected to the `facility_lists.json` fixture to upload them to the DB while creating the test DB for the integration tests. This is necessary because the parsing function that triggers ContriCleaner can only work with real files, not facility list items as it did previously.
+  6. Refactored the ContributeForm component in the front-end app.
+  7. The list page has been adjusted to work with asynchronous parsing, and a new dialog window has been added to notify users about the list parsing process, indicating that they need to wait.
+  8. Introduced a UI to display list parsing errors on the list page after the page refresh.
 
 ### What's new
-* [OSDEV-1127](https://opensupplyhub.atlassian.net/browse/OSDEV-1127) - It was implemented the Production Location Search screen that has two tabs: "Search by OS ID" and "Search by Name and Address." Each tab adds a query parameter (`?tab=os-id` and `?tab=name-address`) to the URL when active, allowing for redirection to the selected tab. On the "Search by OS ID" tab, users see an input field where they can enter an OS ID. After entering the full OS ID (15 characters), the "Search By ID" button becomes clickable, allowing users to proceed to the results screen. There are two possible outcomes:
-    * Successful Search: If the search is successful, the results screen displays information about the production location, including its name, OS ID, previous OS ID (If they exist), address, and country name. Users can then choose to either return to the search by name and address or add data and claim the location.
-    * Unsuccessful Search: If the search is unsuccessful, an explanation is provided, along with two options: return to the search by name and address or search for another OS ID.
 
-    Each results screen also includes a "Back to ID search" button at the top.
+- [OSDEV-1127](https://opensupplyhub.atlassian.net/browse/OSDEV-1127) - It was implemented the Production Location Search screen that has two tabs: "Search by OS ID" and "Search by Name and Address." Each tab adds a query parameter (`?tab=os-id` and `?tab=name-address`) to the URL when active, allowing for redirection to the selected tab. On the "Search by OS ID" tab, users see an input field where they can enter an OS ID. After entering the full OS ID (15 characters), the "Search By ID" button becomes clickable, allowing users to proceed to the results screen. There are two possible outcomes:
+  - Successful Search: If the search is successful, the results screen displays information about the production location, including its name, OS ID, previous OS ID (If they exist), address, and country name. Users can then choose to either return to the search by name and address or add data and claim the location.
+  - Unsuccessful Search: If the search is unsuccessful, an explanation is provided, along with two options: return to the search by name and address or search for another OS ID.
+
+  Each results screen also includes a "Back to ID search" button at the top.
 
 ### Release instructions
-* Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
-* Ensure that the `migrate` command is included in the `post_deployment` command.
 
+- Before deploying to an existing environment, clear OpenSearch to ensure it can receive any missed changes and properly start the update process.
+- Ensure that the `migrate` command is included in the `post_deployment` command.
 
 ## Release 1.21.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: September 21, 2024
+
+- Product name: Open Supply Hub
+- Release date: September 21, 2024
 
 ### Code/API changes
-* [OSDEV-1126](https://opensupplyhub.atlassian.net/browse/OSDEV-1126) - Added the `historical_os_id` field to the response from the `v1/production-locations` endpoint if the searched production location contains this data. Modified the search query for `os_id` so that the search is conducted in both the `os_id` and `historical_os_id` fields in the OpenSearch production-locations index.
-To make this possible, the `sync_production_locations.sql` script, which generates data for the production-locations index, was modified to include the selection of `historical_os_id_value` from the `api_facilityalias` table.
-Additionally, a `historical_os_id` filter was added to the `sync_production_locations.conf`, ensuring that the `historical_os_id` is included in the index document only when the `historical_os_id_value` is not empty.
+
+- [OSDEV-1126](https://opensupplyhub.atlassian.net/browse/OSDEV-1126) - Added the `historical_os_id` field to the response from the `v1/production-locations` endpoint if the searched production location contains this data. Modified the search query for `os_id` so that the search is conducted in both the `os_id` and `historical_os_id` fields in the OpenSearch production-locations index.
+  To make this possible, the `sync_production_locations.sql` script, which generates data for the production-locations index, was modified to include the selection of `historical_os_id_value` from the `api_facilityalias` table.
+  Additionally, a `historical_os_id` filter was added to the `sync_production_locations.conf`, ensuring that the `historical_os_id` is included in the index document only when the `historical_os_id_value` is not empty.
 
 ### Architecture/Environment changes
-* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177)
-  * Improved OpenSearch indexes cleanup step in the `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines to use script templates so that changes can be made in one place rather than in each pipeline separately
-  * Stop/start Logstash and clearing OpenSearch indexes moved to separate jobs of `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines.
-  * Stop/start Logstash and clearing OpenSearch indexes now runs on ubuntu-latest runner.
-  * The automated deployment to AWS after creating tags for `sandbox` and `production` was temporarily prevented (until the implementation of [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)).
+
+- [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177)
+  - Improved OpenSearch indexes cleanup step in the `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines to use script templates so that changes can be made in one place rather than in each pipeline separately
+  - Stop/start Logstash and clearing OpenSearch indexes moved to separate jobs of `Deploy to AWS` and `DB - Apply Anonymized DB` pipelines.
+  - Stop/start Logstash and clearing OpenSearch indexes now runs on ubuntu-latest runner.
+  - The automated deployment to AWS after creating tags for `sandbox` and `production` was temporarily prevented (until the implementation of [OSDEV-1325](https://opensupplyhub.atlassian.net/browse/OSDEV-1325)).
 
 ### Bugfix
-* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - The following changes have been made:
-    * Removed the if clause in the DB. Apply the Anonymized DB workflow to activate stopping Logstash.
-    * Corrected grammar mistakes in the description of the job steps for stopping Logstash and clearing OpenSearch for the `DB - Apply Anonymized DB` and `Deploy to AWS` GitHub workflows.
+
+- [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - The following changes have been made:
+  - Removed the if clause in the DB. Apply the Anonymized DB workflow to activate stopping Logstash.
+  - Corrected grammar mistakes in the description of the job steps for stopping Logstash and clearing OpenSearch for the `DB - Apply Anonymized DB` and `Deploy to AWS` GitHub workflows.
 
 ### What's new
-* [OSDEV-1225](https://opensupplyhub.atlassian.net/browse/OSDEV-1225) - The auto email responses for `Approved` and `Rejected` statuses have been updated to improve user experience. A user receives an email updating them on the status of their list and the next steps they need to take.
+
+- [OSDEV-1225](https://opensupplyhub.atlassian.net/browse/OSDEV-1225) - The auto email responses for `Approved` and `Rejected` statuses have been updated to improve user experience. A user receives an email updating them on the status of their list and the next steps they need to take.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-* After running the `Release [Deploy]` workflow for both the `sandbox` and `production` environments, the responsible person must manually run the `Deploy to AWS` workflow, ensuring that the `Clear OpenSearch indexes` option is checked for each environment.
-Note: This instruction updates item 3 of the ['Release to Production and Sandbox'](https://github.com/opensupplyhub/open-supply-hub/blob/main/doc/release/RELEASE-PROTOCOL.md#release-to-production-and-sandbox) section of the RELEASE-PROTOCOL.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+- After running the `Release [Deploy]` workflow for both the `sandbox` and `production` environments, the responsible person must manually run the `Deploy to AWS` workflow, ensuring that the `Clear OpenSearch indexes` option is checked for each environment.
+  Note: This instruction updates item 3 of the ['Release to Production and Sandbox'](https://github.com/opensupplyhub/open-supply-hub/blob/main/doc/release/RELEASE-PROTOCOL.md#release-to-production-and-sandbox) section of the RELEASE-PROTOCOL.
 
 ## Release 1.20.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: September 7, 2024
+
+- Product name: Open Supply Hub
+- Release date: September 7, 2024
 
 ### Database changes
 
 #### Migrations
-* 0155_remove_verification_method_column_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a new one that does not index the `verification_method` and `phone_number` fields. Additionally, it removes the `verification_method` and `phone_number` fields from the FacilityClaim model and the respective history table.
+
+- 0155_remove_verification_method_column_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a new one that does not index the `verification_method` and `phone_number` fields. Additionally, it removes the `verification_method` and `phone_number` fields from the FacilityClaim model and the respective history table.
 
 #### Schema changes
-* [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Since the `verification_method` and `phone_number` fields are no longer necessary for the claim form and aren't used anywhere in the codebase, they have been deleted from the FacilityClaim model and the respective history table.
+
+- [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Since the `verification_method` and `phone_number` fields are no longer necessary for the claim form and aren't used anywhere in the codebase, they have been deleted from the FacilityClaim model and the respective history table.
 
 ### Code/API changes
-* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - Added flag `highlightBackground` to the DashboardFacilityCard component to highlight background for claimed facilities only on the Merge moderation screen. Added the `get_is_claimed` method to the `FacilityIndexDetailsSerializer` that returns a boolean value depending on whether the facility has an approved claim or not.
-* [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema for GET api/v1/production-locations has been changed:
-    - `name_local` -> `local_name`
-    - `url` -> `business_url`
-    - `lon` -> `lng`
-* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
-* [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Modified the serialized output of the `FacilityClaimDetailsSerializer`:
-    * Removed the `verification_method` and `phone_number` fields.
-    * Added `facility_website`, `sector`, `facility_workers_count`, and `facility_name_native_language`.
-* [OSDEV-1101](https://opensupplyhub.atlassian.net/browse/OSDEV-1101) - API v1/production-locations. Extend the country object to include alpha-3 code, numeric code, and country name.
+
+- [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - Added flag `highlightBackground` to the DashboardFacilityCard component to highlight background for claimed facilities only on the Merge moderation screen. Added the `get_is_claimed` method to the `FacilityIndexDetailsSerializer` that returns a boolean value depending on whether the facility has an approved claim or not.
+- [OSDEV-1167](https://opensupplyhub.atlassian.net/browse/OSDEV-1167) - Search. Update field names in Open Search. The following parameter/field names in the API schema for GET api/v1/production-locations has been changed:
+  - `name_local` -> `local_name`
+  - `url` -> `business_url`
+  - `lon` -> `lng`
+- [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the `get_is_claimed` method to the `FacilityMatchSerializer` that returns a boolean value depending on whether the matched facility has an approved claim or not.
+- [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - Modified the serialized output of the `FacilityClaimDetailsSerializer`:
+  - Removed the `verification_method` and `phone_number` fields.
+  - Added `facility_website`, `sector`, `facility_workers_count`, and `facility_name_native_language`.
+- [OSDEV-1101](https://opensupplyhub.atlassian.net/browse/OSDEV-1101) - API v1/production-locations. Extend the country object to include alpha-3 code, numeric code, and country name.
 
 ### Architecture/Environment changes
-* [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
-* [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Implemented clearing OpenSearch and stopping Logstash during Postgres DB restore/reset in pre-prod/test/dev environments to freshly populate OpenSearch with data from the restored or reset Postgres DB.
+
+- [OSDEV-1153](https://opensupplyhub.atlassian.net/browse/OSDEV-1153) - Created integration tests for the OpenSearch and for new `/api/v1/production-locations/` API endpoint.
+- [OSDEV-1177](https://opensupplyhub.atlassian.net/browse/OSDEV-1177) - Implemented clearing OpenSearch and stopping Logstash during Postgres DB restore/reset in pre-prod/test/dev environments to freshly populate OpenSearch with data from the restored or reset Postgres DB.
 
 ### What's new
-* [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - The color of the facility panel for claimed facilities in the Merge moderation screen has been changed to green.
-* [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
-* [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - On the Facility Claims Details page, fields have been updated to show only those that could be uploaded as part of the claim form:
-    * Removed deprecated fields: Phone Number, Company Name, Facility Parent Company / Supplier Group, Facility Description, and Verification Method.
-    * Added new fields: Sector(s), Production Location's Website, Number of Workers, and Local Language Name.
-    * Renamed fields:
-        * 'Facility' to 'Location Name',
-        * 'Claim Contributor' to 'Claimant Account',
-        * 'Job Title' to 'Claimant Title',
-        * 'Email' to 'Account Email',
-        * 'Website' to 'Claimant's Website',
-        * 'LinkedIn Profile' to 'Production Location's LinkedIn'.
+
+- [OSDEV-1045](https://opensupplyhub.atlassian.net/browse/OSDEV-1045) - The color of the facility panel for claimed facilities in the Merge moderation screen has been changed to green.
+- [OSDEV-1025](https://opensupplyhub.atlassian.net/browse/OSDEV-1025) - Added the claim badge to the facility details on the C/R moderation screen when the facility has an approved claim.
+- [OSDEV-1092](https://opensupplyhub.atlassian.net/browse/OSDEV-1092) - On the Facility Claims Details page, fields have been updated to show only those that could be uploaded as part of the claim form:
+  - Removed deprecated fields: Phone Number, Company Name, Facility Parent Company / Supplier Group, Facility Description, and Verification Method.
+  - Added new fields: Sector(s), Production Location's Website, Number of Workers, and Local Language Name.
+  - Renamed fields:
+    - 'Facility' to 'Location Name',
+    - 'Claim Contributor' to 'Claimant Account',
+    - 'Job Title' to 'Claimant Title',
+    - 'Email' to 'Account Email',
+    - 'Website' to 'Claimant's Website',
+    - 'LinkedIn Profile' to 'Production Location's LinkedIn'.
 
 ### Release instructions
-* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `index_facilities_new`
+- Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `index_facilities_new`
 
 ## Release 1.19.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: August 24, 2024
+
+- Product name: Open Supply Hub
+- Release date: August 24, 2024
 
 ### Code/API changes
-* [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
-* [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Modified the `sectors` endpoint to return either a list of sectors or sectors grouped by their sector groups, depending on the query parameters passed to the request. Possible parameters include:
-    * `embed` (optional): If present, returns a flat list of sectors submitted by a specific contributor.
-    * `contributor` (optional): If embed is provided, this parameter must be included to filter sectors submitted by a specific contributor.
-    * `grouped` (optional): If present, returns sectors grouped by their sector groups.
-* [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
-* [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
-* [OSDEV-1103](https://opensupplyhub.atlassian.net/browse/OSDEV-1103) - Enabled accent-insensitive search for `name` and `address` fields of production location by designing the index mapping to do ASCII folding for search tokens. Additionally, there were changed query_type for the `name` and `name_local` fields from `terms` to `match`.
+
+- [OSDEV-1006](https://opensupplyhub.atlassian.net/browse/OSDEV-1006) - Create new "api/v1/production-locations" endpoint.
+- [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Modified the `sectors` endpoint to return either a list of sectors or sectors grouped by their sector groups, depending on the query parameters passed to the request. Possible parameters include:
+  - `embed` (optional): If present, returns a flat list of sectors submitted by a specific contributor.
+  - `contributor` (optional): If embed is provided, this parameter must be included to filter sectors submitted by a specific contributor.
+  - `grouped` (optional): If present, returns sectors grouped by their sector groups.
+- [OSDEV-1184](https://opensupplyhub.atlassian.net/browse/OSDEV-1184) - Handle validation errors for size, sort_by and order_by parameters of "api/v1/production-locations" endpoint.
+- [OSDEV-982](https://opensupplyhub.atlassian.net/browse/OSDEV-982) - Search, API. Add OS ID query parameter to v1/production-locations. Implement "api/v1/production-locations/{os_id}" endpoint.
+- [OSDEV-1103](https://opensupplyhub.atlassian.net/browse/OSDEV-1103) - Enabled accent-insensitive search for `name` and `address` fields of production location by designing the index mapping to do ASCII folding for search tokens. Additionally, there were changed query_type for the `name` and `name_local` fields from `terms` to `match`.
 
 ### Architecture/Environment changes
-* [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
-* Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
-* [OSDEV-1169](https://opensupplyhub.atlassian.net/browse/OSDEV-1169) - Activated deployment database-anonymizer to production.
-* [OSDEV-1197](https://opensupplyhub.atlassian.net/browse/OSDEV-1197) - Upgrade Kafka tools to version 3.8.0
+
+- [OSDEV-1165](https://opensupplyhub.atlassian.net/browse/OSDEV-1165) - Updated the release protocol to include information about quick fixes and how to perform them. Additionally, updated the GitFlow diagram to visually depict this process.
+- Updated the `RELEASE-PROTOCOL.md` file to include information about OpenSearch and Logstash, stating that their functionality should also be checked after deployment.
+- [OSDEV-1169](https://opensupplyhub.atlassian.net/browse/OSDEV-1169) - Activated deployment database-anonymizer to production.
+- [OSDEV-1197](https://opensupplyhub.atlassian.net/browse/OSDEV-1197) - Upgrade Kafka tools to version 3.8.0
 
 ### Bugfix
-* [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
-* [OSDEV-1180](https://opensupplyhub.atlassian.net/browse/OSDEV-1180) - Introduced a 10,000-download limit check on the api/facilities-downloads API endpoint to prevent non-API users from downloading more than 10,000 production locations.
-* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Added null check for claimStatuses array that fixes JS error on Dashboard/Facility Claims page.
+
+- [OSDEV-1048](https://opensupplyhub.atlassian.net/browse/OSDEV-1048) - Fixed error "User Cannot read properties of undefined (reading 'length')".
+- [OSDEV-1180](https://opensupplyhub.atlassian.net/browse/OSDEV-1180) - Introduced a 10,000-download limit check on the api/facilities-downloads API endpoint to prevent non-API users from downloading more than 10,000 production locations.
+- [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Added null check for claimStatuses array that fixes JS error on Dashboard/Facility Claims page.
 
 ### What's new
-* [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Added a nested select to the Sectors filter. The main selection is the group name of related sectors. By pressing the header, a user can select all related sectors from this group. To view the list of related sectors, it's necessary to press the "carrot" icon next to the group heading. This action allows a user to choose a single sector from the grouped list. Additionally, entering text into the search filter displays only the filtered sectors within the opened groups.
+
+- [OSDEV-633](https://opensupplyhub.atlassian.net/browse/OSDEV-633) - Added a nested select to the Sectors filter. The main selection is the group name of related sectors. By pressing the header, a user can select all related sectors from this group. To view the list of related sectors, it's necessary to press the "carrot" icon next to the group heading. This action allows a user to choose a single sector from the grouped list. Additionally, entering text into the search filter displays only the filtered sectors within the opened groups.
 
 ### Release instructions
-* Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
+- Before deploying to an existing environment, manually delete the related EFS storage, OpenSearch domain, and stop all tasks of the Logstash service in the appropriate ECS cluster. This is necessary to apply the new mapping for the production-locations OpenSearch index.
 
 ## Release 1.18.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: August 10, 2024
+
+- Product name: Open Supply Hub
+- Release date: August 10, 2024
 
 ### Database changes
 
 #### Migrations
-* 0152_delete_tilecache_and_dynamicsetting.py - removed unused `api_tilecache` and `api_dynamicsetting` tables.
-* 0153_add_sector_group_table.py - creates the `SectorGroup` model and populates it with the sector groups names.
-* 0154_associate_sectors_with_groups.py - associates sectors with sector groups.
+
+- 0152_delete_tilecache_and_dynamicsetting.py - removed unused `api_tilecache` and `api_dynamicsetting` tables.
+- 0153_add_sector_group_table.py - creates the `SectorGroup` model and populates it with the sector groups names.
+- 0154_associate_sectors_with_groups.py - associates sectors with sector groups.
 
 #### Schema changes
-* [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
-* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
-    * A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
-    * A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
+
+- [OSDEV-1142](https://opensupplyhub.atlassian.net/browse/OSDEV-1142) - Technical Debt. Remove unused `api_tilecache` and `api_dynamicsetting` tables. Migration has been created, removed related data in the code base.
+- [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - The following changes have been implemented:
+  - A new table, `api_sectorgroup`, has been introduced and populated with sector group names.
+  - A new field named `groups` has been added to the `Sector` model to establish a many-to-many relationship between the `api_sector` and the `api_sectorgroup` tables.
 
 ### Code/API changes
-* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Disconnect location deletion propagation to the OpenSearch cluster while the Django tests are running, as it is outside the scope of Django unit testing.
+
+- [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Disconnect location deletion propagation to the OpenSearch cluster while the Django tests are running, as it is outside the scope of Django unit testing.
 
 ### Architecture/Environment changes
-* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.
-* [OSDEV-1156](https://opensupplyhub.atlassian.net/browse/OSDEV-1156) - The following changes have been made:
-    * Defined memory and CPU configurations for Logstash and instance types for OpenSearch in each AWS environment. The memory and CPU configurations for Logstash have been set uniformly across all environments. After an investigation, it was found that the minimally sufficient requirements are 0.25 CPU and 2 GB of memory for proper Logstash operation, even with the production database. [This documentation](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html) about JVM settings in the Logstash app was used to determine the appropriate resource settings. Regarding OpenSearch, the least powerful instance type was used for the Dev, Staging, and Test environments since high OpenSearch performance is not required there. For the Prod and Pre-prod environments, the minimally recommended general-purpose instance type, `m6g.large.search`, was selected. Research showed that it can process document deletions in 0.04 seconds, which is relatively fast compared to the 0.1-0.2 seconds on the `t3.small.search` instance type used for Dev, Staging, and Test. This decision was based on [this AWS Blog article](https://aws.amazon.com/blogs/aws-cloud-financial-management/better-together-graviton-2-and-gp3-with-amazon-opensearch-service/).
-    * The OpenSearch instance type was parameterized.
-    * The JVM direct memory consumption in the Logstash app was decreased to 512 MB to fit into two gigabytes of memory, which is the maximum available for 0.25 CPU. Total memory usage was calculated based on the formula in [this section](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html#memory-size-calculation) of the Logstash JVM settings documentation.
-* Updated the OpenSearch domain name to the environment-dependent Terraform (TF) local variable in the resources of the OpenSearch access policy. Utilized the `aws_opensearch_domain_policy` resource since the `access_policies` parameter on `aws_opensearch_domain` does not validate the policy correctly after its updates. See [the discussion on GitHub](https://github.com/hashicorp/terraform-provider-aws/issues/26433).
+
+- [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Enable deployment of the Logstash and OpenSearch infra to AWS environments.
+- [OSDEV-1156](https://opensupplyhub.atlassian.net/browse/OSDEV-1156) - The following changes have been made:
+  - Defined memory and CPU configurations for Logstash and instance types for OpenSearch in each AWS environment. The memory and CPU configurations for Logstash have been set uniformly across all environments. After an investigation, it was found that the minimally sufficient requirements are 0.25 CPU and 2 GB of memory for proper Logstash operation, even with the production database. [This documentation](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html) about JVM settings in the Logstash app was used to determine the appropriate resource settings. Regarding OpenSearch, the least powerful instance type was used for the Dev, Staging, and Test environments since high OpenSearch performance is not required there. For the Prod and Pre-prod environments, the minimally recommended general-purpose instance type, `m6g.large.search`, was selected. Research showed that it can process document deletions in 0.04 seconds, which is relatively fast compared to the 0.1-0.2 seconds on the `t3.small.search` instance type used for Dev, Staging, and Test. This decision was based on [this AWS Blog article](https://aws.amazon.com/blogs/aws-cloud-financial-management/better-together-graviton-2-and-gp3-with-amazon-opensearch-service/).
+  - The OpenSearch instance type was parameterized.
+  - The JVM direct memory consumption in the Logstash app was decreased to 512 MB to fit into two gigabytes of memory, which is the maximum available for 0.25 CPU. Total memory usage was calculated based on the formula in [this section](https://www.elastic.co/guide/en/logstash/current/jvm-settings.html#memory-size-calculation) of the Logstash JVM settings documentation.
+- Updated the OpenSearch domain name to the environment-dependent Terraform (TF) local variable in the resources of the OpenSearch access policy. Utilized the `aws_opensearch_domain_policy` resource since the `access_policies` parameter on `aws_opensearch_domain` does not validate the policy correctly after its updates. See [the discussion on GitHub](https://github.com/hashicorp/terraform-provider-aws/issues/26433).
 
 ### Bugfix
-* Ensure that the OpenSearch domain name is unique for each environment to avoid conflicts when provisioning domains across different environments.
-* [OSDEV-1176](https://opensupplyhub.atlassian.net/browse/OSDEV-1176) - Fixed a spelling mistake in the label for the password field on the LogIn page. After the fix, the label reads "Password".
-* [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Fixed error "Something went wrong" error after clicking on Dashboard -> View Facility Claims.
+
+- Ensure that the OpenSearch domain name is unique for each environment to avoid conflicts when provisioning domains across different environments.
+- [OSDEV-1176](https://opensupplyhub.atlassian.net/browse/OSDEV-1176) - Fixed a spelling mistake in the label for the password field on the LogIn page. After the fix, the label reads "Password".
+- [OSDEV-1178](https://opensupplyhub.atlassian.net/browse/OSDEV-1178) - Fixed error "Something went wrong" error after clicking on Dashboard -> View Facility Claims.
 
 ### What's new
-* [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
-* [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - On the admin dashboard, functionality has been added to allow Admins to add, remove, or modify sector groups. In the `Sectors` tab, Admins can now adjust the related sector groups for each sector. Each sector must be associated with at least one group.
-* [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Implement the propagation of production location deletions from the PostgreSQL database to the OpenSearch cluster. After this fix, the locations that were deleted will be excluded from the response of the `v1/production-location` GET API endpoint.
+
+- [OSDEV-1144](https://opensupplyhub.atlassian.net/browse/OSDEV-1144) - Claims emails. Updated text for approval, revocation, and denial emails.
+- [OSDEV-360](https://opensupplyhub.atlassian.net/browse/OSDEV-360) - On the admin dashboard, functionality has been added to allow Admins to add, remove, or modify sector groups. In the `Sectors` tab, Admins can now adjust the related sector groups for each sector. Each sector must be associated with at least one group.
+- [OSDEV-1005](https://opensupplyhub.atlassian.net/browse/OSDEV-1005) - Implement the propagation of production location deletions from the PostgreSQL database to the OpenSearch cluster. After this fix, the locations that were deleted will be excluded from the response of the `v1/production-location` GET API endpoint.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
 
 ## Release 1.17.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: July 27, 2024
+
+- Product name: Open Supply Hub
+- Release date: July 27, 2024
 
 ### Database changes
 
 #### Migrations
-* 0151_replace_index_number_of_workers.py - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
+
+- 0151_replace_index_number_of_workers.py - replace function `index_number_of_workers` to use one source of truth for both`number_of_workers` & `extended_fields`.
 
 ### Bugfix
-* [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error property type.
-* [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
-* [OSDEV-1146](https://opensupplyhub.atlassian.net/browse/OSDEV-1146) - Fixed issue with missed header & data for Claim Decision column while downloaded Facility Claims data in xlsx format.
+
+- [OSDEV-1145](https://opensupplyhub.atlassian.net/browse/OSDEV-1145) - Error message appearing as red dot with no context. Error display has been fixed. Simplified displaying logic of errors. Changed error property type.
+- [OSDEV-576](https://opensupplyhub.atlassian.net/browse/OSDEV-576) - Implemented one source of truth to Search query source & Production Location Details page source for field `number_of_workers`.
+- [OSDEV-1146](https://opensupplyhub.atlassian.net/browse/OSDEV-1146) - Fixed issue with missed header & data for Claim Decision column while downloaded Facility Claims data in xlsx format.
 
 ### What's new
-* [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
-* [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
-* [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
-* The legacy `_template` API endpoint was disabled via the configuration file in favor of the new `_index_template` API endpoint, since the composable index template is used for OpenSearch. The `legacy_template` was set to `false` to start using the defined composable index template in the `production_locations.json` file. This change is necessary to avoid omitting the `production_locations.json` index template for the `production-locations` index defined in the Logstash app and to enforce the OpenSearch cluster to use the explicit mapping for the `production-locations` index.
+
+- [OSDEV-1090](https://opensupplyhub.atlassian.net/browse/OSDEV-1090) - Claims. Remove extra product type field on Claimed Facility Details page.
+- [OSDEV-273](https://opensupplyhub.atlassian.net/browse/OSDEV-273) - Facility Claims. Implement filtering by Country and Status. Set 'pending' claim status as a default filter.
+- [OSDEV-1083](https://opensupplyhub.atlassian.net/browse/OSDEV-1083) - Implemented a 'toggle password visibility' feature in the login, registration, reset password and user profile forms.
+- The legacy `_template` API endpoint was disabled via the configuration file in favor of the new `_index_template` API endpoint, since the composable index template is used for OpenSearch. The `legacy_template` was set to `false` to start using the defined composable index template in the `production_locations.json` file. This change is necessary to avoid omitting the `production_locations.json` index template for the `production-locations` index defined in the Logstash app and to enforce the OpenSearch cluster to use the explicit mapping for the `production-locations` index.
 
 ### Release instructions
-* Ensure that the following commands are included in the `post_deployment` command:
-    * `migrate`
-    * `index_facilities_new`
 
+- Ensure that the following commands are included in the `post_deployment` command:
+  - `migrate`
+  - `index_facilities_new`
 
 ## Release 1.16.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: July 13, 2024
+
+- Product name: Open Supply Hub
+- Release date: July 13, 2024
 
 ### Code/API changes
-* [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
-* [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Created an additional `RowCoordinatesSerializer` in the ContriCleaner to handle coordinate values ("lat" and "lng"). Moved the conversion of "lat" and "lng" into float point numbers from `FacilityListViewSet` to this serializer.
-* Introduced a general format for all Python logs by updating the Django `LOGGING` constant. Disabled propagation for the `django` logger to the `root` logger to avoid log duplication. Removed unnecessary calls to the `basicConfig` method since only the configuration defined in the `LOGGING` constant in the settings.py file is considered valid by the current Django app.
+
+- [OSDEV-1100](https://opensupplyhub.atlassian.net/browse/OSDEV-1100) - Replaced all mentions of "facility" and "facilities" with the new production location naming in the Logstash app. Renamed `location` field in the production locations index to `coordinates`.
+- [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Created an additional `RowCoordinatesSerializer` in the ContriCleaner to handle coordinate values ("lat" and "lng"). Moved the conversion of "lat" and "lng" into float point numbers from `FacilityListViewSet` to this serializer.
+- Introduced a general format for all Python logs by updating the Django `LOGGING` constant. Disabled propagation for the `django` logger to the `root` logger to avoid log duplication. Removed unnecessary calls to the `basicConfig` method since only the configuration defined in the `LOGGING` constant in the settings.py file is considered valid by the current Django app.
 
 ### Bugfix
-* [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Fixed the error “could not convert string to float” that occurred when a list contained columns for “lat” and “lng” and only some of the rows in these columns had data. As a result, rows are processed regardless of whether the values for “lat” and “lng” are present and valid, invalid, or empty.
+
+- [OSDEV-705](https://opensupplyhub.atlassian.net/browse/OSDEV-705) - Fixed the error “could not convert string to float” that occurred when a list contained columns for “lat” and “lng” and only some of the rows in these columns had data. As a result, rows are processed regardless of whether the values for “lat” and “lng” are present and valid, invalid, or empty.
 
 ### What's new
-* [OSDEV-981](https://opensupplyhub.atlassian.net/browse/OSDEV-981) Reporting. History of contributor uploads. Created a new report with details about the contributor:
-    * including name, ID, contributor type;
-    * first upload, including date of the first upload and time since the first upload in days;
-    * most recent (or “last”) upload, including date of the last upload and time since the last upload in days;
-    * total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads = total uploads / (current year - first upload year); if “first upload year” = “current year”, then use 1 in denominator). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
-* [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
-* [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
-* [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
-* [OSDEV-1053](https://opensupplyhub.atlassian.net/browse/OSDEV-1053) - Updated email notification about the claim submission.
 
+- [OSDEV-981](https://opensupplyhub.atlassian.net/browse/OSDEV-981) Reporting. History of contributor uploads. Created a new report with details about the contributor:
+  - including name, ID, contributor type;
+  - first upload, including date of the first upload and time since the first upload in days;
+  - most recent (or “last”) upload, including date of the last upload and time since the last upload in days;
+  - total (or “lifetime”) uploads and a calculation for uploads per year (= lifetime uploads = total uploads / (current year - first upload year); if “first upload year” = “current year”, then use 1 in denominator). This data is ordered based on the “date of last upload” column so that contributors who have recently contributed data are at the top of the report.
+- [OSDEV-1105](https://opensupplyhub.atlassian.net/browse/OSDEV-1105) - Contribution. Allow commas in list name and update error message.
+- [OSDEV-272](https://opensupplyhub.atlassian.net/browse/OSDEV-272) - Facility Claims Page. Implement ascending/descending and alphabetic sort on FE. Applied proper sorting for lower case/upper case/accented strings.
+- [OSDEV-1036](https://opensupplyhub.atlassian.net/browse/OSDEV-1036) - Claims. Add a sortable "claim decision" column to claims admin page.
+- [OSDEV-1053](https://opensupplyhub.atlassian.net/browse/OSDEV-1053) - Updated email notification about the claim submission.
 
 ## Release 1.15.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 29, 2024
+
+- Product name: Open Supply Hub
+- Release date: June 29, 2024
 
 ### Database changes
 
 #### Migrations
-* 0150_introduce_function_formatting_number_to_percent.py - adds add_percent_to_number to DB and drop
-drop_calc_column_func.
+
+- 0150_introduce_function_formatting_number_to_percent.py - adds add_percent_to_number to DB and drop
+  drop_calc_column_func.
 
 ### Code/API changes
-* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
-    * Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification. Agreed upon and established a prioritization scale for gathering data related to the name, address, sector, parent_company, product_type, facility_type, processing_type, number_of_workers and location fields as follows:
-        * Data from the approved claim.
-        * Promoted matches (considered as promoted facility list items).
-        * The most recently contributed data.
-    * For the country field, the same prioritization scale has been utilized except for 'Data from the approved claims' because the claimant cannot update the country in any way.
-    * Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
-    * Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
-    * Set up the main Logstash pipeline to run every 15 minutes.
-    * Introduced ingress and egress rules for the Opensearch and Logstash.
-    * Parameterized database credentials for the logstash configs input.
-    * Parameterized OpenSearch domain for the logstash configs output.
-    * Specified the ARN of an IAM role to be used as the master user for the OpenSearch domain.
-    * Set EFS access point permissions for logstash:root user.
-    * Utilized environment variables to disable authentication for OpenSearch during local development, as the authentication isn't necessary.
 
-    All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
+- [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - The following changes have been made to the Logstash and OpenSearch services:
+  - Prepared the SQL script to collect all the necessary data for the `v1/facilities` API endpoint according to the new API specification. Agreed upon and established a prioritization scale for gathering data related to the name, address, sector, parent_company, product_type, facility_type, processing_type, number_of_workers and location fields as follows:
+    - Data from the approved claim.
+    - Promoted matches (considered as promoted facility list items).
+    - The most recently contributed data.
+  - For the country field, the same prioritization scale has been utilized except for 'Data from the approved claims' because the claimant cannot update the country in any way.
+  - Introduced a new set of Ruby scripts to filter and reorganize the incoming data at the Logstash app level, avoiding complex database queries that could lead to high database load.
+  - Updated the `facilities` index template for OpenSearch to define how new fields within the facility documents are stored and indexed by OpenSearch.
+  - Set up the main Logstash pipeline to run every 15 minutes.
+  - Introduced ingress and egress rules for the Opensearch and Logstash.
+  - Parameterized database credentials for the logstash configs input.
+  - Parameterized OpenSearch domain for the logstash configs output.
+  - Specified the ARN of an IAM role to be used as the master user for the OpenSearch domain.
+  - Set EFS access point permissions for logstash:root user.
+  - Utilized environment variables to disable authentication for OpenSearch during local development, as the authentication isn't necessary.
+
+  All changes have been made to meet the API specification requirements for `v1/facilities` API endpoint as closely as possible.
 
 ### Architecture/Environment changes
-* For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
-* The `reindex_database` and `index_facilities_new` commands have been removed from the `post_deployment` command.
+
+- For the job `clean_ecr_repositories` of Destroy Environment action, it was added a new line to the script responsible for deleting ECR repositories, specifically targeting the `opensupplyhub-logstash` repository.
+- The `reindex_database` and `index_facilities_new` commands have been removed from the `post_deployment` command.
 
 ### Bugfix
-* [OSDEV-1098](https://opensupplyhub.atlassian.net/browse/OSDEV-1098) Reporting. A columns values in the report "Contributor type by %" are not cumulative. The SQL for the report has been rewritten in such a way that first calculates the monthly counts, then computes the cumulative counts for each month, and finally applies the add_percent_to_number function to get the desired percentages. This gives us the accumulated values for each month.
+
+- [OSDEV-1098](https://opensupplyhub.atlassian.net/browse/OSDEV-1098) Reporting. A columns values in the report "Contributor type by %" are not cumulative. The SQL for the report has been rewritten in such a way that first calculates the monthly counts, then computes the cumulative counts for each month, and finally applies the add_percent_to_number function to get the desired percentages. This gives us the accumulated values for each month.
 
 ### What's new
-* [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071)  Replaced the term "facility" with "production location" in the claims banners
-* [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
-* [OSDEV-1088](https://opensupplyhub.atlassian.net/browse/OSDEV-1088) - Collecting users' public IP addresses in the Rollbar error tracker has been disabled to meet GDPR compliance.
+
+- [OSDEV-1071](https://opensupplyhub.atlassian.net/browse/OSDEV-1071) Replaced the term "facility" with "production location" in the claims banners
+- [OSDEV-933](https://opensupplyhub.atlassian.net/browse/OSDEV-933) Facility Claims. Add "what is claims" screen. `What is claims` page with radio buttons has been added that explains more about the claim. Updated title and link text for not logged in user who wants to claim a production location.
+- [OSDEV-1088](https://opensupplyhub.atlassian.net/browse/OSDEV-1088) - Collecting users' public IP addresses in the Rollbar error tracker has been disabled to meet GDPR compliance.
 
 ### Release instructions
-* Update code.
 
+- Update code.
 
 ## Release 1.14.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 15, 2024
+
+- Product name: Open Supply Hub
+- Release date: June 15, 2024
 
 ### Database changes
 
 #### Migrations
-* 0146_add_facility_workers_count_new_field_to_facilityclaim.py - adds the facility_workers_count_new field to the FacilityClaim model.
-* 0147_copy_facility_workers_count_to_facility_workers_count_new.py - copies the data from the facility_workers_count field to the facility_workers_count_new field.
-* 0148_remove_facility_workers_count_field_from_facilityclaim.py - removes the facility_workers_count field from the FacilityClaim model.
-* 0149_rename_facility_workers_count_new_to_facility_workers_count.py - renames the facility_workers_count_new field to facility_workers_count.
+
+- 0146_add_facility_workers_count_new_field_to_facilityclaim.py - adds the facility_workers_count_new field to the FacilityClaim model.
+- 0147_copy_facility_workers_count_to_facility_workers_count_new.py - copies the data from the facility_workers_count field to the facility_workers_count_new field.
+- 0148_remove_facility_workers_count_field_from_facilityclaim.py - removes the facility_workers_count field from the FacilityClaim model.
+- 0149_rename_facility_workers_count_new_to_facility_workers_count.py - renames the facility_workers_count_new field to facility_workers_count.
 
 #### Schema changes
-* [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
+
+- [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - To enable adding a range for the number of workers during the claiming process, the type of the `facility_workers_count` field in the `FacilityClaim` table was changed from `IntegerField` to `CharField`.
 
 ### Architecture/Environment changes
-* [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
-    * Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
-    * Built the PostGIS program from source and installed it to avoid LLVM-related errors inside the database Docker container during local development.
-* [OSDEV-1072](https://opensupplyhub.atlassian.net/browse/OSDEV-1072) - The following changes have been made:
-    * Added building database-anonymizer container to the pipeline.
-    * Pushing the database-anonymizer container to the repo is turned off until the database anonymizing scheduled task will be deployed to the production.
-* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
-* Added command `reindex_database`
-* [OSDEV-1075](https://opensupplyhub.atlassian.net/browse/OSDEV-1075) - The following changes have been made:
-    * All resources created via batch job will be tagged
-* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
-* Make tile generation endpoint transaction-less and remove `CREATE TEMP TABLE` statement.
-* Added command `reindex_database`.
-* [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
-* Removed calling command `clean_facilitylistitems` from the `post_deployment` command.
-* Added calling command `reindex_database` from the `post_deployment` command.
-* Added calling command `index_facilities_new` from the `post_deployment` command.
-* An additional loop was added to the `run_cli_task` script that repeatedly checks the status of an AWS ECS task, waiting for it to stop.
+
+- [OSDEV-1069](https://opensupplyhub.atlassian.net/browse/OSDEV-1069) - The following changes have been made:
+  - Changed the Postgres Docker image for the database to use the official one and make the local database setup platform-agnostic, so it doesn't depend on the processor architecture.
+  - Built the PostGIS program from source and installed it to avoid LLVM-related errors inside the database Docker container during local development.
+- [OSDEV-1072](https://opensupplyhub.atlassian.net/browse/OSDEV-1072) - The following changes have been made:
+  - Added building database-anonymizer container to the pipeline.
+  - Pushing the database-anonymizer container to the repo is turned off until the database anonymizing scheduled task will be deployed to the production.
+- [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+- Added command `reindex_database`
+- [OSDEV-1075](https://opensupplyhub.atlassian.net/browse/OSDEV-1075) - The following changes have been made:
+  - All resources created via batch job will be tagged
+- [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+- Make tile generation endpoint transaction-less and remove `CREATE TEMP TABLE` statement.
+- Added command `reindex_database`.
+- [OSDEV-1089](https://opensupplyhub.atlassian.net/browse/OSDEV-1089) Change format gunicurn logs not pass IP address to AWS CloudWatch.
+- Removed calling command `clean_facilitylistitems` from the `post_deployment` command.
+- Added calling command `reindex_database` from the `post_deployment` command.
+- Added calling command `index_facilities_new` from the `post_deployment` command.
+- An additional loop was added to the `run_cli_task` script that repeatedly checks the status of an AWS ECS task, waiting for it to stop.
 
 ### Bugfix
-* [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
-* Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
+
+- [OSDEV-1019](https://opensupplyhub.atlassian.net/browse/OSDEV-1019) - Fixed an error message to 'Your account is not verified. Check your email for a confirmation link.' when a user tries to log in with an uppercase letter in the email address and their account has not been activated through the confirmation link.
+- Added the `--if-exists` flag to all calls of the `pg_restore` command to eliminate spam errors when it tries to delete resources that don't exist just because the DB can be empty. Improved the section of the README about applying the database dump locally. Specifically, SQL queries have been added to delete all the tables and recreate an empty database schema to avoid conflicts during the database dump restore.
 
 ### What's new
-* [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
-    * Replaced the "Donate" button with a "Blog" button in the header
-    * Added links to the "Blog" and "Careers" pages in the footer
-* [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
-    * Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
-    * Added popup for successfully submitted claim.
-* [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
+
+- [OSDEV-1030](https://opensupplyhub.atlassian.net/browse/OSDEV-1030) - The following changes have been made:
+  - Replaced the "Donate" button with a "Blog" button in the header
+  - Added links to the "Blog" and "Careers" pages in the footer
+- [OSDEV-939](https://opensupplyhub.atlassian.net/browse/OSDEV-939) - The following changes have been made:
+  - Created new steps `Supporting Documentation` & `Additional Data` for `Facility Claim Request` page.
+  - Added popup for successfully submitted claim.
+- [OSDEV-1084](https://opensupplyhub.atlassian.net/browse/OSDEV-1084) - Enable adding a range for the number of workers during the claiming process, either after pressing the “I want to claim this production location” link or on the Claimed Facility Details page.
 
 ### Release instructions
-* Update code.
 
+- Update code.
 
 ## Release 1.13.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: June 01, 2024
+
+- Product name: Open Supply Hub
+- Release date: June 01, 2024
 
 ### Database changes
 
 #### Migrations
-* 0145_new_functions_for_clean_facilitylistitems_command.py - introduced new sql functions for `clean_facilitylistitems` command:
-    - drop_table_triggers
-    - remove_items_where_facility_id_is_null
-    - remove_old_pending_matches
-    - remove_items_without_matches_and_related_facilities
+
+- 0145_new_functions_for_clean_facilitylistitems_command.py - introduced new sql functions for `clean_facilitylistitems` command:
+  - drop_table_triggers
+  - remove_items_where_facility_id_is_null
+  - remove_old_pending_matches
+  - remove_items_without_matches_and_related_facilities
 
 ### Code/API changes
-* [OSDEV-994](https://opensupplyhub.atlassian.net/browse/OSDEV-994) API. Update to pass all merge events to user based on contrib id. A non-admin API user makes:
-- a GET call to /moderation-events/merge/
-and receives information about merges that have occurred for all contributors.
-- a GET call to /moderation-events/merge/?contributors=<id_number_x>&contributors=<id_number_y>&contributors=<id_number_z>
-and receives information about merges that have occurred for the contributors with the specified IDs.
+
+- [OSDEV-994](https://opensupplyhub.atlassian.net/browse/OSDEV-994) API. Update to pass all merge events to user based on contrib id. A non-admin API user makes:
+
+* a GET call to /moderation-events/merge/
+  and receives information about merges that have occurred for all contributors.
+* a GET call to /moderation-events/merge/?contributors=<id_number_x>&contributors=<id_number_y>&contributors=<id_number_z>
+  and receives information about merges that have occurred for the contributors with the specified IDs.
 
 ### Architecture/Environment changes
-* [OSDEV-1003](https://opensupplyhub.atlassian.net/browse/OSDEV-1003) - Added automatic building for the Logstash Docker image in the `Deploy to AWS` workflow. Refactored the `Deploy to AWS` workflow to remove redundant setting values for `build-args` of the `docker/build-push-action` action in cases where the values are not used.
-* [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - Prepared the local environment setup for the Logstash and OpenSearch services to enable local development. Created a script to start the project from scratch with a database populated with sample data.
-* [OSDEV-1054](https://opensupplyhub.atlassian.net/browse/OSDEV-1054) - Added a Django command `clean_facilitylistitems` that make next steps:
-    - drop table triggers;
-    - remove facilitylistitems where facility_id is null;
-    - remove facilitylistitems with potential match status more than thirty days;
-    - remove facilitylistitems without matches and related facilities;
-    - create table triggers;
-    - run indexing facilities
-* [OSDEV-878](https://opensupplyhub.atlassian.net/browse/OSDEV-878) - Added a Django command `post_deployment` that runs Django migrations during the deployment process. This command can be expanded to include other post-deployment tasks. Used the `post_deployment` command in the `post_deploy` job of the Deploy to AWS workflow.
+
+- [OSDEV-1003](https://opensupplyhub.atlassian.net/browse/OSDEV-1003) - Added automatic building for the Logstash Docker image in the `Deploy to AWS` workflow. Refactored the `Deploy to AWS` workflow to remove redundant setting values for `build-args` of the `docker/build-push-action` action in cases where the values are not used.
+- [OSDEV-1004](https://opensupplyhub.atlassian.net/browse/OSDEV-1004) - Prepared the local environment setup for the Logstash and OpenSearch services to enable local development. Created a script to start the project from scratch with a database populated with sample data.
+- [OSDEV-1054](https://opensupplyhub.atlassian.net/browse/OSDEV-1054) - Added a Django command `clean_facilitylistitems` that make next steps:
+  - drop table triggers;
+  - remove facilitylistitems where facility_id is null;
+  - remove facilitylistitems with potential match status more than thirty days;
+  - remove facilitylistitems without matches and related facilities;
+  - create table triggers;
+  - run indexing facilities
+- [OSDEV-878](https://opensupplyhub.atlassian.net/browse/OSDEV-878) - Added a Django command `post_deployment` that runs Django migrations during the deployment process. This command can be expanded to include other post-deployment tasks. Used the `post_deployment` command in the `post_deploy` job of the Deploy to AWS workflow.
 
 ### Bugfix
-* [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
-* [OSDEV-1022](https://opensupplyhub.atlassian.net/browse/OSDEV-1022) - Fix updating facility claim for user. Bring the format of extended field values to the same format as for List / API upload during processing. This has been done because extending fields processing is happening both for List / API uploading and claim update.
-* [OSDEV-788](https://opensupplyhub.atlassian.net/browse/OSDEV-788) - Re-written logic for New_Facility/Automatic_Match/Potential_Match when we collect & save data for FacilityListItemTemp/FacilityMatchTemp. That fixed issue with option `create` equal `False` for API requests.
-* [OSDEV-1027](https://opensupplyhub.atlassian.net/browse/OSDEV-1027) - Fix rendering of the Average Lead Time section
+
+- [OSDEV-1056](https://opensupplyhub.atlassian.net/browse/OSDEV-1056) - Refactor OS Hub member's email anonymization.
+- [OSDEV-1022](https://opensupplyhub.atlassian.net/browse/OSDEV-1022) - Fix updating facility claim for user. Bring the format of extended field values to the same format as for List / API upload during processing. This has been done because extending fields processing is happening both for List / API uploading and claim update.
+- [OSDEV-788](https://opensupplyhub.atlassian.net/browse/OSDEV-788) - Re-written logic for New_Facility/Automatic_Match/Potential_Match when we collect & save data for FacilityListItemTemp/FacilityMatchTemp. That fixed issue with option `create` equal `False` for API requests.
+- [OSDEV-1027](https://opensupplyhub.atlassian.net/browse/OSDEV-1027) - Fix rendering of the Average Lead Time section
 
 ### What's new
-* [OSDEV-1049](https://opensupplyhub.atlassian.net/browse/OSDEV-1049) Update Release protocol.
-* [OSDEV-922](https://opensupplyhub.atlassian.net/browse/OSDEV-922) Consent Message. Update wording of consent opt in message on Open Supply Hub. A user who verifies Open Supply Hub for the first time can see the updated message.
-* [OSDEV-1068](https://opensupplyhub.atlassian.net/browse/OSDEV-1068) - Created report that shows the number of records from the api_facilitymatch table for contributors: 2060, 1045, 685, 3356
+
+- [OSDEV-1049](https://opensupplyhub.atlassian.net/browse/OSDEV-1049) Update Release protocol.
+- [OSDEV-922](https://opensupplyhub.atlassian.net/browse/OSDEV-922) Consent Message. Update wording of consent opt in message on Open Supply Hub. A user who verifies Open Supply Hub for the first time can see the updated message.
+- [OSDEV-1068](https://opensupplyhub.atlassian.net/browse/OSDEV-1068) - Created report that shows the number of records from the api_facilitymatch table for contributors: 2060, 1045, 685, 3356
 
 ### Release instructions
-* Update code.
-* Apply DB migrations up to the latest one.
 
+- Update code.
+- Apply DB migrations up to the latest one.
 
 ## Release 1.12.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: May 18, 2024
+
+- Product name: Open Supply Hub
+- Release date: May 18, 2024
 
 ### Database changes
 
 #### Migrations
-* 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
-* 0144_remove_unnecessary_columns_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a similar one that does not index the `preferred_contact_method` field. Additionally, the migration removes `email` and `preferred_contact_method` from the `FacilityClaim` model and the respective history table.
+
+- 0143_create_facility_claim_attachment_table.py - create api_facilityclaimattachments table to store claimant attachments per facility claim
+- 0144_remove_unnecessary_columns_from_facility_claim.py - This migration replaces the old `index_approved_claim` function with a similar one that does not index the `preferred_contact_method` field. Additionally, the migration removes `email` and `preferred_contact_method` from the `FacilityClaim` model and the respective history table.
 
 #### Schema changes
-* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - Since `email` and `preferred_contact_method` are no longer necessary for the claim form, they have been removed from the `FacilityClaim` model and the respective history table. Additionally, the old `index_approved_claim` function has been replaced with a similar one that does not index the `preferred_contact_method` field.
+
+- [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - Since `email` and `preferred_contact_method` are no longer necessary for the claim form, they have been removed from the `FacilityClaim` model and the respective history table. Additionally, the old `index_approved_claim` function has been replaced with a similar one that does not index the `preferred_contact_method` field.
 
 ### Code/API changes
-* [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
-* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - A new method, `message_claimant`, was added to the `FacilityClaimViewSet` for handling a POST request on the url-path `message-claimant` for messages to the claimant.
-Mail templates for the message to the claimant and the claims team signature were also added.
+
+- [OSDEV-1021](https://opensupplyhub.atlassian.net/browse/OSDEV-1021) Update the release protocol. The release protocol has been updated with the recent changes. Has been added the section about reloading DedupeHub and QA notification.
+- [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - A new method, `message_claimant`, was added to the `FacilityClaimViewSet` for handling a POST request on the url-path `message-claimant` for messages to the claimant.
+  Mail templates for the message to the claimant and the claims team signature were also added.
 
 ### Architecture/Environment changes
-* [OSDEV-897](https://opensupplyhub.atlassian.net/browse/OSDEV-897) FE(React) app. An appropriate local Docker environment is configured for the application. A local Docker environment has been created for the React application. Renamed the `app` folder to `react` to be clearer in the project. Replaced name in the code base. Removed unnecessary commands.
-* [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
+
+- [OSDEV-897](https://opensupplyhub.atlassian.net/browse/OSDEV-897) FE(React) app. An appropriate local Docker environment is configured for the application. A local Docker environment has been created for the React application. Renamed the `app` folder to `react` to be clearer in the project. Replaced name in the code base. Removed unnecessary commands.
+- [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) Fix `DB - Save Anonymized DB` / `DB - Apply Anonymized DB` workflows:
   - run actions on self-hosted runners to eliminate `lack of storage` issue that happens on github's runners.
-  - use the `Test` environment for  `DB - Save Anonymized DB` action
-* [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
-    * ProcessingFacility - abstract class for facility processing
-    * ProcessingFacilityList - class to process a facility list
-    * ProcessingFacilityAPI - class to process a facility from an API request
-    * ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
-* Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
-* [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - In `docker-compose` for the `api-app`  added dependency that helps to fix connection with the database during tests pipelines for Dedupe-Hub:
-* [OSDEV-1001](https://opensupplyhub.atlassian.net/browse/OSDEV-1001) - Deploy OpenSearch service to OS Hub infrastructure.
+  - use the `Test` environment for `DB - Save Anonymized DB` action
+- [OSDEV-989](https://opensupplyhub.atlassian.net/browse/OSDEV-989) - The Strategy pattern was utilized to consolidate the processing of new facilities received from both API requests and list uploads. The code responsible for executing this processing was refactored, and new classes were implemented:
+  - ProcessingFacility - abstract class for facility processing
+  - ProcessingFacilityList - class to process a facility list
+  - ProcessingFacilityAPI - class to process a facility from an API request
+  - ProcessingFacilityExecutor - class defines which interface to execute for the processing of a facility
+- Resource allocation has been optimized for the Test environment. The number of ECS tasks in the Test environment has been reduced from 4 to 2, while maintaining system stability.
+- [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - In `docker-compose` for the `api-app` added dependency that helps to fix connection with the database during tests pipelines for Dedupe-Hub:
+- [OSDEV-1001](https://opensupplyhub.atlassian.net/browse/OSDEV-1001) - Deploy OpenSearch service to OS Hub infrastructure.
+
 ```
 database:
     condition: service_healthy
 ```
-* [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option `--reload` & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
-* [OSDEV-885](https://opensupplyhub.atlassian.net/browse/OSDEV-885) - Implement option to reset database for `Dev`, `Test` and `Pre-prod` environmet to `Deploy to AWS` pipleine
-* [OSDEV-1002](https://opensupplyhub.atlassian.net/browse/OSDEV-1002) - The following changes have been done:
-    * Prepared initial AWS infrastructure via Terraform for the Logstash service, including configuring AWS EFS storage to save the pointer of the last run for the jdbc plugin. Essentially, after deploying updated Terraform code to an environment, ECS task definition, ECR repository, ECS service, along with EFS storage, will be set up for Logstash to function.
-    * Moved the PoC solution of the Logstash + Elasticsearch setup to the repository to avoid losing it. Further work is needed as the solution requires development and is not functioning smoothly.
-* In response to recent stability observations of the staging environment, resource allocation has been optimized by reducing the number of ECS tasks from 8 to 6 for the Django app instances, thus maintaining system stability.
+
+- [OSDEV-1024](https://opensupplyhub.atlassian.net/browse/OSDEV-1024) - Dedupe Hub. Revise service configurations and refine gazetteer retraining. Remove option `--reload` & decrease number of workers in Dedupe Hub service configuration. Refactor initial rebuilding of gazetteer.
+- [OSDEV-885](https://opensupplyhub.atlassian.net/browse/OSDEV-885) - Implement option to reset database for `Dev`, `Test` and `Pre-prod` environmet to `Deploy to AWS` pipleine
+- [OSDEV-1002](https://opensupplyhub.atlassian.net/browse/OSDEV-1002) - The following changes have been done:
+  - Prepared initial AWS infrastructure via Terraform for the Logstash service, including configuring AWS EFS storage to save the pointer of the last run for the jdbc plugin. Essentially, after deploying updated Terraform code to an environment, ECS task definition, ECR repository, ECS service, along with EFS storage, will be set up for Logstash to function.
+  - Moved the PoC solution of the Logstash + Elasticsearch setup to the repository to avoid losing it. Further work is needed as the solution requires development and is not functioning smoothly.
+- In response to recent stability observations of the staging environment, resource allocation has been optimized by reducing the number of ECS tasks from 8 to 6 for the Django app instances, thus maintaining system stability.
 
 ### Bugfix
-* [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
-* [OSDEV-744](https://opensupplyhub.atlassian.net/browse/OSDEV-744) - API. When user want to confirm/reject potential_match it didn't found a match through `id`, was fixed by provided valid `id` from `api_facilitymatch` table.
-* [OSDEV-1052](https://opensupplyhub.atlassian.net/browse/OSDEV-1052) - Replace data@opensupplyhub by claims@opensupplyhub in the Frontend
+
+- [OSDEV-870](https://opensupplyhub.atlassian.net/browse/OSDEV-870) - The returning confirm/reject URLs were fixed when a facility has been matched. Changes were made to the Dedupe-Hub to prevent adding rows with empty fields to the `api_facilitymatch` and `api_facilitymatchtemp` tables when the count of matches is more than one.
+- [OSDEV-744](https://opensupplyhub.atlassian.net/browse/OSDEV-744) - API. When user want to confirm/reject potential_match it didn't found a match through `id`, was fixed by provided valid `id` from `api_facilitymatch` table.
+- [OSDEV-1052](https://opensupplyhub.atlassian.net/browse/OSDEV-1052) - Replace data@opensupplyhub by claims@opensupplyhub in the Frontend
 
 ### What's new
-* [OSDEV-975](https://opensupplyhub.atlassian.net/browse/OSDEV-975) Reporting. Number of facilities with at least one extended field.`Facilities with Extended Field Data` report has been rewritten from Django ORM to SQL to optimize and speed up time of the report generation. Added two columns `With At Least 1 Extended Field` and `Sector`.
-* [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this production location".
-* [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
-* [OSDEV-944](https://opensupplyhub.atlassian.net/browse/OSDEV-944) - Facility claims. Short-term new screen for claim documentation.
-* [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - The following features have been implemented:
-    * Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
-    * Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
-    * Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
-* [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - Facility Claims. A new button, 'Message Claimant' has been added to the update status controls on the Facility Claim Details page. After successfully sending a message, the message text is recorded in the Claim Review Notes.
+
+- [OSDEV-975](https://opensupplyhub.atlassian.net/browse/OSDEV-975) Reporting. Number of facilities with at least one extended field.`Facilities with Extended Field Data` report has been rewritten from Django ORM to SQL to optimize and speed up time of the report generation. Added two columns `With At Least 1 Extended Field` and `Sector`.
+- [OSDEV-945](https://opensupplyhub.atlassian.net/browse/OSDEV-945) - Facility Claim. Update text of claim link on profile to "I want to claim this production location".
+- [OSDEV-745](https://opensupplyhub.atlassian.net/browse/OSDEV-745) - New "Portuguese" translated resources option added to international menu.
+- [OSDEV-944](https://opensupplyhub.atlassian.net/browse/OSDEV-944) - Facility claims. Short-term new screen for claim documentation.
+- [OSDEV-931](https://opensupplyhub.atlassian.net/browse/OSDEV-931) - The following features have been implemented:
+  - Made the Email field in the claim form uneditable, setting the claimer's email as the default value for this field.
+  - Removed the _Preferred method of contact_ field from both the claim form and the claim details page in the admin dashboard.
+  - Implemented redirecting a user to the claim page after navigating to the login page via the CTA link on the claim page for unauthorized users and successful login.
+- [OSDEV-997](https://opensupplyhub.atlassian.net/browse/OSDEV-997) - Facility Claims. A new button, 'Message Claimant' has been added to the update status controls on the Facility Claim Details page. After successfully sending a message, the message text is recorded in the Claim Review Notes.
 
 ### Release instructions
-* Update code.
-* Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
+- Update code.
+- Apply DB migrations up to the latest one.
+- Run the index_facilities_new management command.
 
 ## Release 1.11.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: April 20, 2024
+
+- Product name: Open Supply Hub
+- Release date: April 20, 2024
 
 ### Code/API changes
-* [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
-* [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
+
+- [OSDEV-923](https://opensupplyhub.atlassian.net/browse/OSDEV-923) [Uptime] Added more logs around API/List uploads & Dedupe Hub match processing
+- [OSDEV-606](https://opensupplyhub.atlassian.net/browse/OSDEV-606) Contributor Sort: Allow for ascending sort of contributors on the Map page. The sort_by parameter submits type of sorting order for facilities. Default sorting will be primary by public contributors count descending and secondary by name ascending/descending and contributors count ascending.
 
 ### Architecture/Environment changes
-* [OSDEV-990](https://opensupplyhub.atlassian.net/browse/OSDEV-990) - Implement a ContriCleaner facade class to simplify interaction with client code. With this change, the client code only needs to instantiate the ContriCleaner class, pass the input data, and then call the `process_data` method without the need to define strategies or other details. This abstraction helps streamline the process and encapsulate complexity.
-* [OSDEV-991](https://opensupplyhub.atlassian.net/browse/OSDEV-991) - Implement a chain of pre-validation and serialization handlers in the ContriCleaner to streamline data processing. Additionally, refactor the CompositeRowSerializer to set up leaf serializers using a specialized method, ensuring loose coupling between the CompositeRowSerializer and leaf serializers. Lastly, separate serialization and validation tasks from parsing in the ContriCleaner library for improved modularity and maintainability.
-* [OSDEV-1000](https://opensupplyhub.atlassian.net/browse/OSDEV-1000) - A new class `ProcessingFacility` was created that will be responsible for managing the processing of new facilities from both API requests and list uploads. The functionality of processing a new facility received from an API request, which was previously in `facilities_view_set.py`, has been moved to `processing_facility.py`.
-* [OSDEV-1007](https://opensupplyhub.atlassian.net/browse/OSDEV-1007) - The functionality of processing a new facility received from list uploads, which was previously in `facility_list_view_set.py`, has been moved to `create_facility.py`.
-* [OSDEV-927](https://opensupplyhub.atlassian.net/browse/OSDEV-927) - Reduce resources allocated for bastions to t3.nano.
-* [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
-* [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) - Add `Save Anonymized DB` and `Apply Anonymized DB` actions that provde possibility to save anonymized dump to S3 bucket and then resotre Test or Pre-Prod environment from dump stored on S3.
-* [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that
-  * creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
-  * run anonymization query
-  * saves anonymized snapshot and removes the instance
-* In response to recent stability observations, resource allocation has been optimized, reducing the number of ECS tasks in both production and pre-production environments from 16 to 12, maintaining system stability.
+
+- [OSDEV-990](https://opensupplyhub.atlassian.net/browse/OSDEV-990) - Implement a ContriCleaner facade class to simplify interaction with client code. With this change, the client code only needs to instantiate the ContriCleaner class, pass the input data, and then call the `process_data` method without the need to define strategies or other details. This abstraction helps streamline the process and encapsulate complexity.
+- [OSDEV-991](https://opensupplyhub.atlassian.net/browse/OSDEV-991) - Implement a chain of pre-validation and serialization handlers in the ContriCleaner to streamline data processing. Additionally, refactor the CompositeRowSerializer to set up leaf serializers using a specialized method, ensuring loose coupling between the CompositeRowSerializer and leaf serializers. Lastly, separate serialization and validation tasks from parsing in the ContriCleaner library for improved modularity and maintainability.
+- [OSDEV-1000](https://opensupplyhub.atlassian.net/browse/OSDEV-1000) - A new class `ProcessingFacility` was created that will be responsible for managing the processing of new facilities from both API requests and list uploads. The functionality of processing a new facility received from an API request, which was previously in `facilities_view_set.py`, has been moved to `processing_facility.py`.
+- [OSDEV-1007](https://opensupplyhub.atlassian.net/browse/OSDEV-1007) - The functionality of processing a new facility received from list uploads, which was previously in `facility_list_view_set.py`, has been moved to `create_facility.py`.
+- [OSDEV-927](https://opensupplyhub.atlassian.net/browse/OSDEV-927) - Reduce resources allocated for bastions to t3.nano.
+- [OSDEV-805](https://opensupplyhub.atlassian.net/browse/OSDEV-805) - Make Environment and project tag to be applied to all resources by defaul.
+- [OSDEV-862](https://opensupplyhub.atlassian.net/browse/OSDEV-862) - Add `Save Anonymized DB` and `Apply Anonymized DB` actions that provde possibility to save anonymized dump to S3 bucket and then resotre Test or Pre-Prod environment from dump stored on S3.
+- [OSDEV-859](https://opensupplyhub.atlassian.net/browse/OSDEV-859) - Creates task-definitation for scheduled task that
+  - creates temporary postgresdb instance from latest production snaphsot in the `test` AWS account
+  - run anonymization query
+  - saves anonymized snapshot and removes the instance
+- In response to recent stability observations, resource allocation has been optimized, reducing the number of ECS tasks in both production and pre-production environments from 16 to 12, maintaining system stability.
 
 ### Bugfix
-* [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
-* [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
-* [OSDEV-888](https://opensupplyhub.atlassian.net/browse/OSDEV-888) - Facility Profile. An error occurs when trying to open a facility from the Status Reports page. The error occurred due to activity reports with the status `pending` containing fields with `null` values and these values pass to the `format_date` function as an argument. Modified the `get_activity_reports` method in the `FacilityIndexDetailsSerializer` to prevent passing a falsy `date` argument into the `format_date` function.
-* [OSDEV-984](https://opensupplyhub.atlassian.net/browse/OSDEV-984) - Facility list upload. Header validation is failing, even though all the required columns and data are filled. Prepared basic implementation for ContriCleaner to validate headers (required fields) on early stage.
-* [OSDEV-660](https://opensupplyhub.atlassian.net/browse/OSDEV-660) - Remove punctuation issues with duplicated commas and double quotes while facility list uploading.
-* [OSDEV-986](https://opensupplyhub.atlassian.net/browse/OSDEV-986) - Fix the population of the custom data points uploaded via lists. Ensure that the full list header is saved in the database, and that the raw data for each facility list item is saved as a string of strings, with each value separated by a comma. This way, it helps maintain backward compatibility with the functionality responsible for displaying custom data points on the embedded maps. Also, revert to the previous default logic, which saves the sector as `Unspecified` when sector, sector_product_type, or product_type have empty values.
-* [OSDEV-966](https://opensupplyhub.atlassian.net/browse/OSDEV-966) - Character limit validation has been implemented in the ContriCleaner library for name, address, and sector values. It enforces a maximum length of 200 characters for both the name and address values, and restricts sector values to 50 characters each. This fix addresses the issue where user uploads containing such invalid data caused requests to fail with unexpected errors.
+
+- [OSDEV-996](https://opensupplyhub.atlassian.net/browse/OSDEV-996) The default sorting order for embedded maps was broken (changed to Descending by # Contributors). The default sorting order for embedded maps has been fixed (changed it back to Ascending by Name).
+- [OSDEV-857](https://opensupplyhub.atlassian.net/browse/OSDEV-857) [Bug] Pre-prod isn't deleted by the 'terraform destroy' script. Command for destroying repositories on AWS pre-prod has been added.
+- [OSDEV-888](https://opensupplyhub.atlassian.net/browse/OSDEV-888) - Facility Profile. An error occurs when trying to open a facility from the Status Reports page. The error occurred due to activity reports with the status `pending` containing fields with `null` values and these values pass to the `format_date` function as an argument. Modified the `get_activity_reports` method in the `FacilityIndexDetailsSerializer` to prevent passing a falsy `date` argument into the `format_date` function.
+- [OSDEV-984](https://opensupplyhub.atlassian.net/browse/OSDEV-984) - Facility list upload. Header validation is failing, even though all the required columns and data are filled. Prepared basic implementation for ContriCleaner to validate headers (required fields) on early stage.
+- [OSDEV-660](https://opensupplyhub.atlassian.net/browse/OSDEV-660) - Remove punctuation issues with duplicated commas and double quotes while facility list uploading.
+- [OSDEV-986](https://opensupplyhub.atlassian.net/browse/OSDEV-986) - Fix the population of the custom data points uploaded via lists. Ensure that the full list header is saved in the database, and that the raw data for each facility list item is saved as a string of strings, with each value separated by a comma. This way, it helps maintain backward compatibility with the functionality responsible for displaying custom data points on the embedded maps. Also, revert to the previous default logic, which saves the sector as `Unspecified` when sector, sector_product_type, or product_type have empty values.
+- [OSDEV-966](https://opensupplyhub.atlassian.net/browse/OSDEV-966) - Character limit validation has been implemented in the ContriCleaner library for name, address, and sector values. It enforces a maximum length of 200 characters for both the name and address values, and restricts sector values to 50 characters each. This fix addresses the issue where user uploads containing such invalid data caused requests to fail with unexpected errors.
 
 ### What's new
-* [OSDEV-974](https://opensupplyhub.atlassian.net/browse/OSDEV-974) Reporting. Contributor type by %. Admin sees in the report data for the percent of data contributors on the platform by type (this should be in percent format with two decimal places shown), only accounts that have contributed data, the data should be ordered by most recent to oldest month and display mid-month values.
-* [OSDEV-912](https://opensupplyhub.atlassian.net/browse/OSDEV-912) Facility Claim. Disable editing of name and address. The Facility name (English language) & Address fields of the claim details page have been removed and cannot be edited by the claimant.
-* [OSDEV-571](https://opensupplyhub.atlassian.net/browse/OSDEV-571) Claimed Facility Details. Make the "Sector" field a dropdown instead of free text field. The `Sector` field became a dropdown that is pre-populated with the platform’s sector list from Django.
-* [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
-* [OSDEV-972](https://opensupplyhub.atlassian.net/browse/OSDEV-972) Reporting. Updating "Facility Uploads" report. Joined one table from two reports and added columns.New table with such columns:
-`month`, `Total # of list uploads` in a given month (these are uploads that come from external contributors, NOT OS Hub team members), `# of public list uploads` in a given month (these are uploads that come from OS Hub team members AND have “[Public List]” in the contributor name), `Total facility listItems` uploaded in a given month, `# of Facilities` from Public Lists, `Total Facilities w/ status = new facility`, `# Public List Facilities w/ status = new facility`. Data is ordered from most recent to oldest
-* [OSDEV-913](https://opensupplyhub.atlassian.net/browse/OSDEV-913) Claim. Updated the submitted claim auto-reply message for email template.
-* [OSDEV-914](https://opensupplyhub.atlassian.net/browse/OSDEV-914) Claim. Updated the approved claim auto-reply message for email template
+
+- [OSDEV-974](https://opensupplyhub.atlassian.net/browse/OSDEV-974) Reporting. Contributor type by %. Admin sees in the report data for the percent of data contributors on the platform by type (this should be in percent format with two decimal places shown), only accounts that have contributed data, the data should be ordered by most recent to oldest month and display mid-month values.
+- [OSDEV-912](https://opensupplyhub.atlassian.net/browse/OSDEV-912) Facility Claim. Disable editing of name and address. The Facility name (English language) & Address fields of the claim details page have been removed and cannot be edited by the claimant.
+- [OSDEV-571](https://opensupplyhub.atlassian.net/browse/OSDEV-571) Claimed Facility Details. Make the "Sector" field a dropdown instead of free text field. The `Sector` field became a dropdown that is pre-populated with the platform’s sector list from Django.
+- [OSDEV-962](https://opensupplyhub.atlassian.net/browse/OSDEV-962) Update Release protocol. The Release protocol has been updated after the automatization of manual processes such as creating a release branch, restoring DB, deploy to AWS.
+- [OSDEV-972](https://opensupplyhub.atlassian.net/browse/OSDEV-972) Reporting. Updating "Facility Uploads" report. Joined one table from two reports and added columns.New table with such columns:
+  `month`, `Total # of list uploads` in a given month (these are uploads that come from external contributors, NOT OS Hub team members), `# of public list uploads` in a given month (these are uploads that come from OS Hub team members AND have “[Public List]” in the contributor name), `Total facility listItems` uploaded in a given month, `# of Facilities` from Public Lists, `Total Facilities w/ status = new facility`, `# Public List Facilities w/ status = new facility`. Data is ordered from most recent to oldest
+- [OSDEV-913](https://opensupplyhub.atlassian.net/browse/OSDEV-913) Claim. Updated the submitted claim auto-reply message for email template.
+- [OSDEV-914](https://opensupplyhub.atlassian.net/browse/OSDEV-914) Claim. Updated the approved claim auto-reply message for email template
 
 ### Release instructions
-* Update code.
 
+- Update code.
 
 ## Release 1.10.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: March 23, 2024
+
+- Product name: Open Supply Hub
+- Release date: March 23, 2024
 
 ### Database changes
 
 #### Migrations
-* 0141_delete_contributor_webhooks.py - deletes `ContributorWebhook` model
-* 0142_introduce_temporary_endpoint_switcher_for_list_uploads.py - This migration introduces a temporary API endpoint switcher for list uploads.
+
+- 0141_delete_contributor_webhooks.py - deletes `ContributorWebhook` model
+- 0142_introduce_temporary_endpoint_switcher_for_list_uploads.py - This migration introduces a temporary API endpoint switcher for list uploads.
 
 #### Schema changes
-* [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Introduce a temporary API endpoint switcher for list uploads to enable switching to the old list upload API endpoint if the new endpoint affects production uptime.
+
+- [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Introduce a temporary API endpoint switcher for list uploads to enable switching to the old list upload API endpoint if the new endpoint affects production uptime.
 
 ### Code/API changes
-* [OSDEV-832](https://opensupplyhub.atlassian.net/browse/OSDEV-832) API. Provide admins with a way to retrieve a user's call count in real time. Admin can see the report `API requests by user` with the number of successful and unsuccessful requests a user has made up to the current date.
-* [OSDEV-831](https://opensupplyhub.atlassian.net/browse/OSDEV-831) - API. Handle Geocode errors w/ system error code when upload facility using endpoint.
+
+- [OSDEV-832](https://opensupplyhub.atlassian.net/browse/OSDEV-832) API. Provide admins with a way to retrieve a user's call count in real time. Admin can see the report `API requests by user` with the number of successful and unsuccessful requests a user has made up to the current date.
+- [OSDEV-831](https://opensupplyhub.atlassian.net/browse/OSDEV-831) - API. Handle Geocode errors w/ system error code when upload facility using endpoint.
 
 ### Architecture/Environment changes
-* [OSDEV-693](https://opensupplyhub.atlassian.net/browse/OSDEV-693) Implement a GitHub action that applies migrations on given environment. Run migrations for `Test` environment via CLI command.
-* [OSDEV-910](https://opensupplyhub.atlassian.net/browse/OSDEV-910) Add separated code quality pipelines for contricleaner, countries, django-api and frontend. After checking, it creates a code coverage report showing each particular app's code coverage. Add separated code quality jobs for code formatters.
-* [OSDEV-702](https://opensupplyhub.atlassian.net/browse/OSDEV-702) Integrate a new module named `contricleaner` separately, designed to parse and validate data from various sources such as json, csv, and xls.
-Move `countries` to a separate module so that it becomes possible to use both `django` and `contricleaner`.
-* [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement CSV and XLSX file parser strategies in the ContriCleaner library, and incorporate preliminary cleanup during parsing.
-* [OSDEV-915](https://opensupplyhub.atlassian.net/browse/OSDEV-915) Upgrade Kafka tools to version 3.5.2
-* [OSDEV-877](https://opensupplyhub.atlassian.net/browse/OSDEV-877) Make migration run as part of "Deploy to AWS" workflow
-* [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment/
-* [OSDEV-938](https://opensupplyhub.atlassian.net/browse/OSDEV-938) Move cleanup helper functions to the serializer
-* [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment
-* [OSDEV-894](https://opensupplyhub.atlassian.net/browse/OSDEV-894) Implement Contricleaner library into create facility API endpoint (`facilities_view_set.py`)
-* [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars.
-* [OSDEV-760](https://opensupplyhub.atlassian.net/browse/OSDEV-760) In the Contricleaner library, implement parsing of fields `facility_type_processing_type`, `facility_type`, and `processing_type` based on commas and vertical bars.
-* [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement the ContriCleaner parser for parsing facility lists immediately after list upload.
+
+- [OSDEV-693](https://opensupplyhub.atlassian.net/browse/OSDEV-693) Implement a GitHub action that applies migrations on given environment. Run migrations for `Test` environment via CLI command.
+- [OSDEV-910](https://opensupplyhub.atlassian.net/browse/OSDEV-910) Add separated code quality pipelines for contricleaner, countries, django-api and frontend. After checking, it creates a code coverage report showing each particular app's code coverage. Add separated code quality jobs for code formatters.
+- [OSDEV-702](https://opensupplyhub.atlassian.net/browse/OSDEV-702) Integrate a new module named `contricleaner` separately, designed to parse and validate data from various sources such as json, csv, and xls.
+  Move `countries` to a separate module so that it becomes possible to use both `django` and `contricleaner`.
+- [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement CSV and XLSX file parser strategies in the ContriCleaner library, and incorporate preliminary cleanup during parsing.
+- [OSDEV-915](https://opensupplyhub.atlassian.net/browse/OSDEV-915) Upgrade Kafka tools to version 3.5.2
+- [OSDEV-877](https://opensupplyhub.atlassian.net/browse/OSDEV-877) Make migration run as part of "Deploy to AWS" workflow
+- [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment/
+- [OSDEV-938](https://opensupplyhub.atlassian.net/browse/OSDEV-938) Move cleanup helper functions to the serializer
+- [OSDEV-851](https://opensupplyhub.atlassian.net/browse/OSDEV-851) Place 'terraform.tfvar' files to repository and move sensitive info to private repository opensupplyhub/ci-deployment
+- [OSDEV-894](https://opensupplyhub.atlassian.net/browse/OSDEV-894) Implement Contricleaner library into create facility API endpoint (`facilities_view_set.py`)
+- [OSDEV-536](https://opensupplyhub.atlassian.net/browse/OSDEV-536) In the Contricleaner library, implement parsing of fields `sector_product_type`, `sector`, and `product_type` based on commas and vertical bars.
+- [OSDEV-760](https://opensupplyhub.atlassian.net/browse/OSDEV-760) In the Contricleaner library, implement parsing of fields `facility_type_processing_type`, `facility_type`, and `processing_type` based on commas and vertical bars.
+- [OSDEV-893](https://opensupplyhub.atlassian.net/browse/OSDEV-893) - Implement the ContriCleaner parser for parsing facility lists immediately after list upload.
 
 ### Bugfix
-* [OSDEV-549](https://opensupplyhub.atlassian.net/browse/OSDEV-549) Facility Search. Search button overlaps dropdown items. Dropdown items in search were made not to overlapping with button and containers in `Potential matches table` and `Find facility` search. The `isSideBarSearch` flag has been added to all search components to render properly regarding the place where the select is rendering.
-* [OSDEV-943](https://opensupplyhub.atlassian.net/browse/OSDEV-943) Verified badges. The claim/verified icon on profiles is cut off at the bottom. The icons have been fixed and show properly.
-* [OSDEV-716](https://opensupplyhub.atlassian.net/browse/OSDEV-716) Search. Lost refresh icon. The refresh icon has been made visible.
-* [OSDEV-918](https://opensupplyhub.atlassian.net/browse/OSDEV-918) - ContriBot. New lists are not populating in Monday board and are not sent to slack. Added validation to throw an error for users who upload a facility list with `|` in the description field.
-* [OSDEV-644](https://opensupplyhub.atlassian.net/browse/OSDEV-644) Error when trying to delete a facility with only one contributor in case that logic to clear FacilityClaimReviewNote table records missed.
+
+- [OSDEV-549](https://opensupplyhub.atlassian.net/browse/OSDEV-549) Facility Search. Search button overlaps dropdown items. Dropdown items in search were made not to overlapping with button and containers in `Potential matches table` and `Find facility` search. The `isSideBarSearch` flag has been added to all search components to render properly regarding the place where the select is rendering.
+- [OSDEV-943](https://opensupplyhub.atlassian.net/browse/OSDEV-943) Verified badges. The claim/verified icon on profiles is cut off at the bottom. The icons have been fixed and show properly.
+- [OSDEV-716](https://opensupplyhub.atlassian.net/browse/OSDEV-716) Search. Lost refresh icon. The refresh icon has been made visible.
+- [OSDEV-918](https://opensupplyhub.atlassian.net/browse/OSDEV-918) - ContriBot. New lists are not populating in Monday board and are not sent to slack. Added validation to throw an error for users who upload a facility list with `|` in the description field.
+- [OSDEV-644](https://opensupplyhub.atlassian.net/browse/OSDEV-644) Error when trying to delete a facility with only one contributor in case that logic to clear FacilityClaimReviewNote table records missed.
 
 ### What's new
-*  [OSDEV-861](https://opensupplyhub.atlassian.net/browse/OSDEV-861) API. The `API Notifications` tab has been removed so that users do not get confused about what it is, since the functionality does not exist for them. `Token:` as a header has been added above the API key on the `API` tab.
-* [OSDEV-917](https://opensupplyhub.atlassian.net/browse/OSDEV-917) My Account Menu. Update order of the settings tabs. `NON-admin` user sees: My Facility / My Lists / Settings / Logout and `Admin` user sees: Dashboard / My Facility / My Lists / Settings / Logout
-* [OSDEV-728](https://opensupplyhub.atlassian.net/browse/OSDEV-728) - Include `sector` data in the response of the `api/facilities/` API endpoint for the GET request, similar to what is provided in the `api/facilities/{id}` API endpoint.
-* [OSDEV-802](https://opensupplyhub.atlassian.net/browse/OSDEV-802) - Distinguish API user and contributor id in the error message that pass to the Rollbar.
+
+- [OSDEV-861](https://opensupplyhub.atlassian.net/browse/OSDEV-861) API. The `API Notifications` tab has been removed so that users do not get confused about what it is, since the functionality does not exist for them. `Token:` as a header has been added above the API key on the `API` tab.
+- [OSDEV-917](https://opensupplyhub.atlassian.net/browse/OSDEV-917) My Account Menu. Update order of the settings tabs. `NON-admin` user sees: My Facility / My Lists / Settings / Logout and `Admin` user sees: Dashboard / My Facility / My Lists / Settings / Logout
+- [OSDEV-728](https://opensupplyhub.atlassian.net/browse/OSDEV-728) - Include `sector` data in the response of the `api/facilities/` API endpoint for the GET request, similar to what is provided in the `api/facilities/{id}` API endpoint.
+- [OSDEV-802](https://opensupplyhub.atlassian.net/browse/OSDEV-802) - Distinguish API user and contributor id in the error message that pass to the Rollbar.
 
 ### Release instructions
-* Update code.
-* Apply DB migrations up to the latest one.
 
+- Update code.
+- Apply DB migrations up to the latest one.
 
 ## Release 1.9.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: February 24, 2024
+
+- Product name: Open Supply Hub
+- Release date: February 24, 2024
 
 ### Database changes
 
 #### Migrations
-* 0135_disable_duplicates_and_lowercase_all_emails.py - implementing all emails to lowercase and disables duplicates
-* 0136_remove_indexing_unnecessary_emails.py - This migration replaces the old `index_activity_reports_info` and `index_approved_claim` functions with similar ones that do not index emails.
-* 0137_add_renewal_period_field.py - add new field to api_apilimit table & rename existing one.
-Updated existing users api_apilimit records renewal_period value.
-* 0138_remove_ppe_fields.py - This migration removes the PPE fields from the Facility, FacilityIndex, FacilityListItem, FacilityListItemTemp, HistoricalFacility models.
-* 0139_remove_ppe_switch.py - This migration removes the ppe switch.
-* 0140_remove_indexing_ppe_fields.py - This migration updates indexing functions to not index PPE fields.
+
+- 0135_disable_duplicates_and_lowercase_all_emails.py - implementing all emails to lowercase and disables duplicates
+- 0136_remove_indexing_unnecessary_emails.py - This migration replaces the old `index_activity_reports_info` and `index_approved_claim` functions with similar ones that do not index emails.
+- 0137_add_renewal_period_field.py - add new field to api_apilimit table & rename existing one.
+  Updated existing users api_apilimit records renewal_period value.
+- 0138_remove_ppe_fields.py - This migration removes the PPE fields from the Facility, FacilityIndex, FacilityListItem, FacilityListItemTemp, HistoricalFacility models.
+- 0139_remove_ppe_switch.py - This migration removes the ppe switch.
+- 0140_remove_indexing_ppe_fields.py - This migration updates indexing functions to not index PPE fields.
 
 #### Schema changes
-* [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Since the FacilityIndex model is primarily used to store cached facility data and display it publicly via the `/facilities/{id}` API endpoint, only public data can be shown. Therefore, caching emails to the FacilityIndex model was removed from the PostgreSQL indexing functions. All instances where emails are publicly displayed have been removed. The only remaining field is `ppe_contact_email`, but all functionality and code related to PPE will be deleted in this [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) ticket.
-* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove PPE fields (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from the `api_facility`, `api_facilityindex`, `api_facilitylistitem`, `api_facilitylistitemtemp`, `api_historicalfacility`. Remove this fields from indexing processes.
+
+- [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Since the FacilityIndex model is primarily used to store cached facility data and display it publicly via the `/facilities/{id}` API endpoint, only public data can be shown. Therefore, caching emails to the FacilityIndex model was removed from the PostgreSQL indexing functions. All instances where emails are publicly displayed have been removed. The only remaining field is `ppe_contact_email`, but all functionality and code related to PPE will be deleted in this [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) ticket.
+- [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove PPE fields (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from the `api_facility`, `api_facilityindex`, `api_facilitylistitem`, `api_facilitylistitemtemp`, `api_historicalfacility`. Remove this fields from indexing processes.
 
 ### Code/API changes
-* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) field from `/src/app`
-* [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) field from `/src/dedupe-hub`
-* [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from `/src/django`
+
+- [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) field from `/src/app`
+- [OSDEV-562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) - Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) field from `/src/dedupe-hub`
+- [OSDEV 562](https://opensupplyhub.atlassian.net/browse/OSDEV-562) Remove code related to PPE (ppe_product_types, ppe_contact_email, ppe_contact_phone, ppe_website, ppe) from `/src/django`
 
 ### Architecture/Environment changes
-* [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code with less than 1% diff from main.
+
+- [OSDEV-829](https://opensupplyhub.atlassian.net/browse/OSDEV-673) Makes `minimum-ratio: 1` It allows to push code with less than 1% diff from main.
 
 ### Bugfix
-* [OSDEV-848](https://opensupplyhub.atlassian.net/browse/OSDEV-848) When a user tries to create an account with an email that exists in the DB but with a different case of letters, the system returns "An error prevented signing up". Has been fixed to "A user with that email already exists."
-* [OSDEV-673](https://opensupplyhub.atlassian.net/browse/OSDEV-673) When a user calls the endpoint `facility/id/history`, instead of a response, receives the error "TypeError: the JSON object must be str, bytes or bytearray, not list", in particular, this happened with the PK20190913BBJ2Y facility. A list with one element (a dictionary) was passed to the function, so an error occurred when trying to index the list with a string. Fixed.
+
+- [OSDEV-848](https://opensupplyhub.atlassian.net/browse/OSDEV-848) When a user tries to create an account with an email that exists in the DB but with a different case of letters, the system returns "An error prevented signing up". Has been fixed to "A user with that email already exists."
+- [OSDEV-673](https://opensupplyhub.atlassian.net/browse/OSDEV-673) When a user calls the endpoint `facility/id/history`, instead of a response, receives the error "TypeError: the JSON object must be str, bytes or bytearray, not list", in particular, this happened with the PK20190913BBJ2Y facility. A list with one element (a dictionary) was passed to the function, so an error occurred when trying to index the list with a string. Fixed.
 
 ### What's new
-* API. Include token and call info on API settings tab.[OSDEV-752](https://opensupplyhub.atlassian.net/browse/OSDEV-752). Users can access a tab called `API` in account settings.From this tab, they can generate/retrieve their token and see their `API call allowance`, `current call count` and their `renewal period`.
-* Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User  could login with any variations of casing as long as the characters are the same.
-* API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
-* [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
-* [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Remove the display of emails in the `activity_reports` section of the `facilities/{id}` API endpoint, as email information is private.
-* [OSDEV-525](https://opensupplyhub.atlassian.net/browse/OSDEV-525). Add Latitude and Longitude labels on facility page.
-* API. Add a flag on API Limit page to indicate if package renews monthly or yearly. [OSDEV-781](https://opensupplyhub.atlassian.net/browse/OSDEV-781) Updated logic to support montly & yearly limitation count reset for API calls.
+
+- API. Include token and call info on API settings tab.[OSDEV-752](https://opensupplyhub.atlassian.net/browse/OSDEV-752). Users can access a tab called `API` in account settings.From this tab, they can generate/retrieve their token and see their `API call allowance`, `current call count` and their `renewal period`.
+- Make login non-case sensitive. [OSDEV-628](https://opensupplyhub.atlassian.net/browse/OSDEV-628). When the user creates an account email saving in lowercase. User could login with any variations of casing as long as the characters are the same.
+- API. Enable token generation based on API permissions in Django. [OSDEV-729](https://opensupplyhub.atlassian.net/browse/OSDEV-729). Updated Settings page to show/hide token tab by user groups. Forbid access to generate token for API if user didn't have permission groups.
+- [OSDEV-219](https://opensupplyhub.atlassian.net/browse/OSDEV-219). Data moderator can merge potential match facilities from Confirm / Reject screen.
+- [OSDEV-835](https://opensupplyhub.atlassian.net/browse/OSDEV-835) - Remove the display of emails in the `activity_reports` section of the `facilities/{id}` API endpoint, as email information is private.
+- [OSDEV-525](https://opensupplyhub.atlassian.net/browse/OSDEV-525). Add Latitude and Longitude labels on facility page.
+- API. Add a flag on API Limit page to indicate if package renews monthly or yearly. [OSDEV-781](https://opensupplyhub.atlassian.net/browse/OSDEV-781) Updated logic to support montly & yearly limitation count reset for API calls.
 
 ### Release instructions
-* Update code.
-* Apply DB migrations up to the latest one.
-* Run the index_facilities_new management command.
 
+- Update code.
+- Apply DB migrations up to the latest one.
+- Run the index_facilities_new management command.
 
 ## Release 1.8.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 27, 2024
+
+- Product name: Open Supply Hub
+- Release date: January 27, 2024
 
 ### Code/API changes
-* [OSDEV-690](https://opensupplyhub.atlassian.net/browse/OSDEV-690) - Correct all existing lint errors to ensure that code quality checks pass successfully via GitHub Actions and can detect new linting errors but not the old ones.
-* [OSDEV-719](https://opensupplyhub.atlassian.net/browse/OSDEV-719) Introduce FacilityDownloadSerializerEmbedMode FacilityDownloadSerializer, replace FacilityIndexDownloadSerializer with combination of FacilityDownloadSerializerEmbedMode and FacilityDownloadSerializer
-* [OSDEV-732](https://opensupplyhub.atlassian.net/browse/OSDEV-732) Fix issue with circular dependencies between `util.js` and `constants.jsx` modules in React app
+
+- [OSDEV-690](https://opensupplyhub.atlassian.net/browse/OSDEV-690) - Correct all existing lint errors to ensure that code quality checks pass successfully via GitHub Actions and can detect new linting errors but not the old ones.
+- [OSDEV-719](https://opensupplyhub.atlassian.net/browse/OSDEV-719) Introduce FacilityDownloadSerializerEmbedMode FacilityDownloadSerializer, replace FacilityIndexDownloadSerializer with combination of FacilityDownloadSerializerEmbedMode and FacilityDownloadSerializer
+- [OSDEV-732](https://opensupplyhub.atlassian.net/browse/OSDEV-732) Fix issue with circular dependencies between `util.js` and `constants.jsx` modules in React app
 
 ### Architecture/Environment changes
-* [OSDEV-690](https://opensupplyhub.atlassian.net/browse/OSDEV-690) - Configure running the code quality workflow as part of the continuous integration (CI) for each commit to a pull request. Both frontend (FE) and backend (BE) tests are executed, along with their respective linters. Additionally, `shellcheck` is applied to scripts within the scripts folder.
-* [OSDEV-691](https://opensupplyhub.atlassian.net/browse/OSDEV-691) - Implement parallel job running for BE, FE, and bash script code quality checks. Three new scripts were created and can be used to run the same checks during local development to verify BE, FE, and bash scripts in the ./scripts folder.
-* [OSDEV-692](https://opensupplyhub.atlassian.net/browse/OSDEV-691) - Implement code coverage checks for the React and Django apps using `barecheck/code-coverage-action` and generated code coverage `lcov` files. For the React app, code coverage is based on Jest tests, and for the Django app, it is based on unittest tests. If code coverage decreases, the job fails, preventing the PR from merging.
-* [OSDEV-740](https://opensupplyhub.atlassian.net/browse/OSDEV-740) - Setup module for mocking Redux store (`redux-mock-store"`)
-* [OSDEV-733](https://opensupplyhub.atlassian.net/browse/OSDEV-733) - Setup React test library module (`@testing-library`)
+
+- [OSDEV-690](https://opensupplyhub.atlassian.net/browse/OSDEV-690) - Configure running the code quality workflow as part of the continuous integration (CI) for each commit to a pull request. Both frontend (FE) and backend (BE) tests are executed, along with their respective linters. Additionally, `shellcheck` is applied to scripts within the scripts folder.
+- [OSDEV-691](https://opensupplyhub.atlassian.net/browse/OSDEV-691) - Implement parallel job running for BE, FE, and bash script code quality checks. Three new scripts were created and can be used to run the same checks during local development to verify BE, FE, and bash scripts in the ./scripts folder.
+- [OSDEV-692](https://opensupplyhub.atlassian.net/browse/OSDEV-691) - Implement code coverage checks for the React and Django apps using `barecheck/code-coverage-action` and generated code coverage `lcov` files. For the React app, code coverage is based on Jest tests, and for the Django app, it is based on unittest tests. If code coverage decreases, the job fails, preventing the PR from merging.
+- [OSDEV-740](https://opensupplyhub.atlassian.net/browse/OSDEV-740) - Setup module for mocking Redux store (`redux-mock-store"`)
+- [OSDEV-733](https://opensupplyhub.atlassian.net/browse/OSDEV-733) - Setup React test library module (`@testing-library`)
 
 ### Bugfix
-* [OSDEV-718](https://opensupplyhub.atlassian.net/browse/OSDEV-718) - Fixed issue with user profile populating to other components.
-* [OSDEV-727](https://opensupplyhub.atlassian.net/browse/OSDEV-720) - Downloading facilities with for Bangladesh is working again [https://opensupplyhub.org/facilities?countries=BD&sectors=Apparel](https://opensupplyhub.org/facilities?countries=BD&sectors=Apparel)
+
+- [OSDEV-718](https://opensupplyhub.atlassian.net/browse/OSDEV-718) - Fixed issue with user profile populating to other components.
+- [OSDEV-727](https://opensupplyhub.atlassian.net/browse/OSDEV-720) - Downloading facilities with for Bangladesh is working again [https://opensupplyhub.org/facilities?countries=BD&sectors=Apparel](https://opensupplyhub.org/facilities?countries=BD&sectors=Apparel)
 
 ### What's new
-* [OSDEV-241](https://opensupplyhub.atlassian.net/browse/OSDEV-241) - Searches with accented characters return results for accented and non accented characters.
+
+- [OSDEV-241](https://opensupplyhub.atlassian.net/browse/OSDEV-241) - Searches with accented characters return results for accented and non accented characters.
+
 ### Database changes
 
 #### Migrations
-* 0134_remove_sources_without_contributor.py -  Remove records from the Source table where the contributor is null and remove all data related to these records
+
+- 0134_remove_sources_without_contributor.py - Remove records from the Source table where the contributor is null and remove all data related to these records
 
 ### Release instructions
-* Update code
-* Run migration up to 0134
 
+- Update code
+- Run migration up to 0134
 
 ## Release 1.7.3
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 12, 2024
+
+- Product name: Open Supply Hub
+- Release date: January 12, 2024
 
 ### Bugfix
-* [OSDEV-736](https://opensupplyhub.atlassian.net/browse/OSDEV-736) Removed logic to handle text only match response data as it already removed from matching functionality in Dedupe Hub. Previously it bring an error on response for user when potential match happened.
+
+- [OSDEV-736](https://opensupplyhub.atlassian.net/browse/OSDEV-736) Removed logic to handle text only match response data as it already removed from matching functionality in Dedupe Hub. Previously it bring an error on response for user when potential match happened.
 
 ## Release 1.7.2
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: January 09, 2024
+
+- Product name: Open Supply Hub
+- Release date: January 09, 2024
 
 ### Bugfix
-* [OSDEV-721](https://opensupplyhub.atlassian.net/browse/OSDEV-721) Fixed issue with potential match logic when get facility data of match, previously it take facility id from Facility List Item, but it's wrong for Potential Match status as there is always NULL, facility id should be taken from Facility Match record in this case of Potential Match status.
+
+- [OSDEV-721](https://opensupplyhub.atlassian.net/browse/OSDEV-721) Fixed issue with potential match logic when get facility data of match, previously it take facility id from Facility List Item, but it's wrong for Potential Match status as there is always NULL, facility id should be taken from Facility Match record in this case of Potential Match status.
 
 ## Release 1.7.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: December 21, 2023
+
+- Product name: Open Supply Hub
+- Release date: December 21, 2023
 
 ### Bugfix
-* Fixed issue with Facility Upload API error by covered a case when facility object didn't exist (create=false) & updated timeout value while waiting to produce kafka topic message [OSDEV-713](https://opensupplyhub.atlassian.net/browse/OSDEV-713)
-* [OSDEV-714](https://opensupplyhub.atlassian.net/browse/OSDEV-714) - Users can now use the map on the search page simultaneously without missing any tiles. Before fixing this issue, if the map requested tiles that weren't cached, one user might not receive all the tiles. With the bug fixed, the tile generation logic can handle multiple requests at the same time, ensuring all users get the tiles they need for the map based on their search requests.
+
+- Fixed issue with Facility Upload API error by covered a case when facility object didn't exist (create=false) & updated timeout value while waiting to produce kafka topic message [OSDEV-713](https://opensupplyhub.atlassian.net/browse/OSDEV-713)
+- [OSDEV-714](https://opensupplyhub.atlassian.net/browse/OSDEV-714) - Users can now use the map on the search page simultaneously without missing any tiles. Before fixing this issue, if the map requested tiles that weren't cached, one user might not receive all the tiles. With the bug fixed, the tile generation logic can handle multiple requests at the same time, ensuring all users get the tiles they need for the map based on their search requests.
 
 ### Code/API changes
-* [OSDEV-714](https://opensupplyhub.atlassian.net/browse/OSDEV-714) - `select_for_update` and `get_or_create` have been implemented in the `retrieve_cached_tile` function to ensure that if another thread attempts to `select_for_update()`, it will block at the `get_or_create()` until the first thread's transaction commits. The `get_tile` function, which serves as an API endpoint handler for tile generation, was implemented as an atomic transaction to facilitate the use of `select_for_update()` and maintain the lock until the end of the transaction. This approach helps to prevent crashes from parallel requests attempting to create a cache record with the same primary key, corresponding to the full URL path.
-* [OSDEV-711](https://opensupplyhub.atlassian.net/browse/OSDEV-711) - Make JS code related to load testing for tile generation more universal so that they can work with the HAR file provided by the developer. For that, the `ZOOM_HAR_PATH` environment variable was introduced. More test cases for tile generation were added to test the environment close to production, focusing on densely saturated regions with facilities, such as China and India. The README.md file for the load tests was updated to reflect the changes made.
 
+- [OSDEV-714](https://opensupplyhub.atlassian.net/browse/OSDEV-714) - `select_for_update` and `get_or_create` have been implemented in the `retrieve_cached_tile` function to ensure that if another thread attempts to `select_for_update()`, it will block at the `get_or_create()` until the first thread's transaction commits. The `get_tile` function, which serves as an API endpoint handler for tile generation, was implemented as an atomic transaction to facilitate the use of `select_for_update()` and maintain the lock until the end of the transaction. This approach helps to prevent crashes from parallel requests attempting to create a cache record with the same primary key, corresponding to the full URL path.
+- [OSDEV-711](https://opensupplyhub.atlassian.net/browse/OSDEV-711) - Make JS code related to load testing for tile generation more universal so that they can work with the HAR file provided by the developer. For that, the `ZOOM_HAR_PATH` environment variable was introduced. More test cases for tile generation were added to test the environment close to production, focusing on densely saturated regions with facilities, such as China and India. The README.md file for the load tests was updated to reflect the changes made.
 
 ## Release 1.7.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: December 19, 2023
+
+- Product name: Open Supply Hub
+- Release date: December 19, 2023
 
 ### Database changes
 
 #### Migrations
-* 0130_introduce_separate_data_gathering_functions_for_the_index_table_columns.py - This migration:
-    - rename `api_facilityindexnew` -> `api_facilityindex`
-    - introduces separate data-gathering functions for the `api_facilityindexnew` table columns and makes the `index_facilities` and `index_facilities_by` procedures use them.
+
+- 0130_introduce_separate_data_gathering_functions_for_the_index_table_columns.py - This migration:
+  - rename `api_facilityindexnew` -> `api_facilityindex`
+  - introduces separate data-gathering functions for the `api_facilityindexnew` table columns and makes the `index_facilities` and `index_facilities_by` procedures use them.
     This migration is irreversible.
-* 0131_introduce_sql_triggers_instead_of_django_signals.py - This migration introduces SQL triggers instead of Django signals. The migration is revertable.
-* 0132_add_moderation_mode_field.py - This migration adds the field `is_moderation_mode` to table `api_user`.
-* 0133_introduce_tile_caching.py - This migration creates the TileCache table and the DynamicSetting table. This migration is reversible.
+- 0131_introduce_sql_triggers_instead_of_django_signals.py - This migration introduces SQL triggers instead of Django signals. The migration is revertable.
+- 0132_add_moderation_mode_field.py - This migration adds the field `is_moderation_mode` to table `api_user`.
+- 0133_introduce_tile_caching.py - This migration creates the TileCache table and the DynamicSetting table. This migration is reversible.
 
 #### Schema changes
-* [OSDEV-622](https://opensupplyhub.atlassian.net/browse/OSDEV-622) - Separate data-gathering functions were created for the `api_facilityindexnew` table columns to collect data independently of the main procedure. The `index_facilities` and `index_facilities_by` procedures were updated to use new separate functions for collecting data for the `api_facilityindexnew` table columns that require long SQL queries.
-* [OSDEV-595](https://opensupplyhub.atlassian.net/browse/OSDEV-595) - Rename FacilityIndexNew to FacilityIndex
-* [OSDEV-623](https://opensupplyhub.atlassian.net/browse/OSDEV-623), [OSDEV-624](https://opensupplyhub.atlassian.net/browse/OSDEV-624), [OSDEV-638](https://opensupplyhub.atlassian.net/browse/OSDEV-638) - New SQL triggers have been introduced to handle changes in the `api_contributor`, `api_extendedfield`, `api_facility`, `api_facilityclaim`, `api_facilitylistitem`, `api_facilitymatch`, `api_source`, and `api_facilitylist` tables at the database level. This change is essential for the future functionality of DedupeHub, which will communicate directly with the database. All the Django signals have been removed. Additionally, reindexing of the necessary columns of the index table has been transferred to these triggers, eliminating the need for the large SQL procedure previously used in conjunction with Django signals.
-* [OSDEV-637](https://opensupplyhub.atlassian.net/browse/OSDEV-637) - Add field `is_moderation_mode` to table `api_user`.
-* [OSDEV-687](https://opensupplyhub.atlassian.net/browse/OSDEV-687) - The TileCache table was created to store cached tiles, and the DynamicSetting table was established to dynamically control app settings, specifically the expiration time of cached tiles.
+
+- [OSDEV-622](https://opensupplyhub.atlassian.net/browse/OSDEV-622) - Separate data-gathering functions were created for the `api_facilityindexnew` table columns to collect data independently of the main procedure. The `index_facilities` and `index_facilities_by` procedures were updated to use new separate functions for collecting data for the `api_facilityindexnew` table columns that require long SQL queries.
+- [OSDEV-595](https://opensupplyhub.atlassian.net/browse/OSDEV-595) - Rename FacilityIndexNew to FacilityIndex
+- [OSDEV-623](https://opensupplyhub.atlassian.net/browse/OSDEV-623), [OSDEV-624](https://opensupplyhub.atlassian.net/browse/OSDEV-624), [OSDEV-638](https://opensupplyhub.atlassian.net/browse/OSDEV-638) - New SQL triggers have been introduced to handle changes in the `api_contributor`, `api_extendedfield`, `api_facility`, `api_facilityclaim`, `api_facilitylistitem`, `api_facilitymatch`, `api_source`, and `api_facilitylist` tables at the database level. This change is essential for the future functionality of DedupeHub, which will communicate directly with the database. All the Django signals have been removed. Additionally, reindexing of the necessary columns of the index table has been transferred to these triggers, eliminating the need for the large SQL procedure previously used in conjunction with Django signals.
+- [OSDEV-637](https://opensupplyhub.atlassian.net/browse/OSDEV-637) - Add field `is_moderation_mode` to table `api_user`.
+- [OSDEV-687](https://opensupplyhub.atlassian.net/browse/OSDEV-687) - The TileCache table was created to store cached tiles, and the DynamicSetting table was established to dynamically control app settings, specifically the expiration time of cached tiles.
 
 ### Code/API changes
-* Update copy for "example" entries for List & Description fields & Contributor list page:
-    - Update copy of Facility List example to: example: **Your Organization’s Name** Facility List June 2023
-    - Update copy of Facility Description example to: example: This is the **Your Organization’s Name** list of suppliers for their retail products valid from Jan 2023 to June 2023
-    - Update copy of rejected message to: "This list was rejected and will not be processed."
-[OSDEV-640](https://opensupplyhub.atlassian.net/browse/OSDEV-640)
-* In the Facility Claim Request form the field 'Preferred method of contact' has been done not mandatory. - [OSDEV-560](https://opensupplyhub.atlassian.net/browse/OSDEV-560)
-* The new parameter `is_moderation_mode` has been added to GET and POST requests of the `/user-profile/{ID}/` API endpoint. - [OSDEV-637](https://opensupplyhub.atlassian.net/browse/OSDEV-637)
-* [OSDEV-687](https://opensupplyhub.atlassian.net/browse/OSDEV-687) - Implement cache logic for the get_tile view to either use a cached tile or generate a new tile for caching. When a user interacts with the map and makes a new request for a tile, the system checks if the requested tile, identified by its path, is already cached in the database. If the tile is already cached in the TileCache table, the cached tile binary data is retrieved and returned, avoiding the need to regenerate the tile for improved performance. Each cached tile has a default expiration period of 604,800 seconds (7 days). However, the admin can reconfigure this duration in the Django admin panel.
-* Delete all Jenkins-related files since Jenkins is no longer in use.
-* Move the maintenance page to the project repository, specifically to `src/maintenance`, to track the history of its changes.
+
+- Update copy for "example" entries for List & Description fields & Contributor list page: - Update copy of Facility List example to: example: **Your Organization’s Name** Facility List June 2023 - Update copy of Facility Description example to: example: This is the **Your Organization’s Name** list of suppliers for their retail products valid from Jan 2023 to June 2023 - Update copy of rejected message to: "This list was rejected and will not be processed."
+  [OSDEV-640](https://opensupplyhub.atlassian.net/browse/OSDEV-640)
+- In the Facility Claim Request form the field 'Preferred method of contact' has been done not mandatory. - [OSDEV-560](https://opensupplyhub.atlassian.net/browse/OSDEV-560)
+- The new parameter `is_moderation_mode` has been added to GET and POST requests of the `/user-profile/{ID}/` API endpoint. - [OSDEV-637](https://opensupplyhub.atlassian.net/browse/OSDEV-637)
+- [OSDEV-687](https://opensupplyhub.atlassian.net/browse/OSDEV-687) - Implement cache logic for the get_tile view to either use a cached tile or generate a new tile for caching. When a user interacts with the map and makes a new request for a tile, the system checks if the requested tile, identified by its path, is already cached in the database. If the tile is already cached in the TileCache table, the cached tile binary data is retrieved and returned, avoiding the need to regenerate the tile for improved performance. Each cached tile has a default expiration period of 604,800 seconds (7 days). However, the admin can reconfigure this duration in the Django admin panel.
+- Delete all Jenkins-related files since Jenkins is no longer in use.
+- Move the maintenance page to the project repository, specifically to `src/maintenance`, to track the history of its changes.
 
 ### Architecture/Environment changes
-* Remove FacilityDownloadSerializer and replace it with FacilityIndexDownloadSerializer
-* Add a special Django management command, `install_db_exts`, that will install all the necessary PostgreSQL extensions for the database based on the required DB extensions for the 1.7.0 release.
-* Create the `reset_database` Django management command that resets the database and repopulates it with fixture data, including facilities and matches. Update the `scripts/reset_database` shell script to include the call to this command, making it available for local development when it needs to be run inside the failed Django container for the first time. Also, rename shell scripts and affected management commands to enhance readability.
+
+- Remove FacilityDownloadSerializer and replace it with FacilityIndexDownloadSerializer
+- Add a special Django management command, `install_db_exts`, that will install all the necessary PostgreSQL extensions for the database based on the required DB extensions for the 1.7.0 release.
+- Create the `reset_database` Django management command that resets the database and repopulates it with fixture data, including facilities and matches. Update the `scripts/reset_database` shell script to include the call to this command, making it available for local development when it needs to be run inside the failed Django container for the first time. Also, rename shell scripts and affected management commands to enhance readability.
 
 ### Bugfix
-* Increase amount of facilities downloaded to 100 per red and reduce time per request in 4-5 times
-Fix issue with exceeding API requests. [OSDEV-557](https://opensupplyhub.atlassian.net/browse/OSDEV-442)
+
+- Increase amount of facilities downloaded to 100 per red and reduce time per request in 4-5 times
+  Fix issue with exceeding API requests. [OSDEV-557](https://opensupplyhub.atlassian.net/browse/OSDEV-442)
 
 ### What's new
-* Updated copy for "example" entries for List & Description fields & Contributor list page
-[OSDEV-640](https://opensupplyhub.atlassian.net/browse/OSDEV-640)
-* The field 'Preferred method of contact' has been done not mandatory in the Facility Claim Request form. When the user fills this form he/she can skip this field. - [OSDEV-560](https://opensupplyhub.atlassian.net/browse/OSDEV-560)
-* Data Moderator Profile. Implement the ability to activate the Merge function on the Facility Search page. - [OSDEV-637](https://opensupplyhub.atlassian.net/browse/OSDEV-637)
-* [OSDEV-302](https://opensupplyhub.atlassian.net/browse/OSDEV-302), [OSDEV-667](https://opensupplyhub.atlassian.net/browse/OSDEV-667) - Enable data moderators to trigger merges from the search results screen. Checkboxes were added to the search page right before each item in the search results to allow users to select facilities for merging. A "Merge" button was also implemented to open the Merge modal window, where all the data about the selected facilities is downloaded.
-* [OSDEV-684](https://opensupplyhub.atlassian.net/browse/OSDEV-684) Removed Google Translate Plug-In in the system & UI Element
+
+- Updated copy for "example" entries for List & Description fields & Contributor list page
+  [OSDEV-640](https://opensupplyhub.atlassian.net/browse/OSDEV-640)
+- The field 'Preferred method of contact' has been done not mandatory in the Facility Claim Request form. When the user fills this form he/she can skip this field. - [OSDEV-560](https://opensupplyhub.atlassian.net/browse/OSDEV-560)
+- Data Moderator Profile. Implement the ability to activate the Merge function on the Facility Search page. - [OSDEV-637](https://opensupplyhub.atlassian.net/browse/OSDEV-637)
+- [OSDEV-302](https://opensupplyhub.atlassian.net/browse/OSDEV-302), [OSDEV-667](https://opensupplyhub.atlassian.net/browse/OSDEV-667) - Enable data moderators to trigger merges from the search results screen. Checkboxes were added to the search page right before each item in the search results to allow users to select facilities for merging. A "Merge" button was also implemented to open the Merge modal window, where all the data about the selected facilities is downloaded.
+- [OSDEV-684](https://opensupplyhub.atlassian.net/browse/OSDEV-684) Removed Google Translate Plug-In in the system & UI Element
 
 ### Release instructions
-* apply migrations up to 0133_introduce_tile_caching.py
-* apply command index_facilities_new
 
+- apply migrations up to 0133_introduce_tile_caching.py
+- apply command index_facilities_new
 
 ## Release 1.6.1
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 8, 2023
+
+- Product name: Open Supply Hub
+- Release date: November 8, 2023
 
 ### Database changes
 
 #### Migrations
+
 - 0130_facility_index_gin_index.py - implement indexes for fields on "api_facilityindexnew" table related to tile generation
 
 #### Schema changes
-* indexing fields in api_facilityindexnew
-    * contrib_types
-    * contributors_id
-    * lists
+
+- indexing fields in api_facilityindexnew
+  - contrib_types
+  - contributors_id
+  - lists
 
 ### Architecture/Environment changes
-* Reconfigure CPU resources so that every worker uses 2 cores - [OSDEV-657](https://opensupplyhub.atlassian.net/browse/OSDEV-657)
-* Add Code Quality pipelines
+
+- Reconfigure CPU resources so that every worker uses 2 cores - [OSDEV-657](https://opensupplyhub.atlassian.net/browse/OSDEV-657)
+- Add Code Quality pipelines
 
 ### Bugfix
-* Implement indexing of fields related to tile generation in api_facilityindexnew table [OSDEV-654](https://opensupplyhub.atlassian.net/browse/OSDEV-654)
+
+- Implement indexing of fields related to tile generation in api_facilityindexnew table [OSDEV-654](https://opensupplyhub.atlassian.net/browse/OSDEV-654)
 
 ### Release instructions
-- apply migrations up to 0130_facility_index_gin_index.py
 
+- apply migrations up to 0130_facility_index_gin_index.py
 
 ## Release 1.6.0
 
 ## Introduction
-* Product name: Open Supply Hub
-* Release date: November 4, 2023
+
+- Product name: Open Supply Hub
+- Release date: November 4, 2023
 
 ### Database changes
 
 #### Migrations
+
 - 0126_add_tables_a_b_test.py - add tables api_facilitylistitemtemp & api_facilitymatchtemp for A/B Test purpose
 - 0127_search_by_private_contributor_types.py - add contributor types from non-public lists to api_facilityindexnew table
 - 0128_custom_text_implementation.py - creates custom_text SQL functions and updated index_facilities and index_facilities_by to use it
 - 0129_delete_facility_index.py - removes api_facilityindex table
 
 #### Schema changes
-* introduce fields to api_facility_list_items
-    * raw_json:JSON
-    * raw_header:Text
-* introduce table api_facilitylistitemfield - key-value storage for both mandatory and custom facility list item fields.
-* introduce procedure custom_text - evaluates array required for advanced search by custom fields
-* update index_facilities and index_facilities_by procedures to evaluate custom_text add custom_text_serach using custom_text from above
-* introduce tables api_facilitylistitemtemp & api_facilitymatchtemp as a copy of api_facilitylistitem & api_facilitymatch for A/B Test to store match results
-* remove api_facilityindex table
+
+- introduce fields to api_facility_list_items
+  - raw_json:JSON
+  - raw_header:Text
+- introduce table api_facilitylistitemfield - key-value storage for both mandatory and custom facility list item fields.
+- introduce procedure custom_text - evaluates array required for advanced search by custom fields
+- update index_facilities and index_facilities_by procedures to evaluate custom_text add custom_text_serach using custom_text from above
+- introduce tables api_facilitylistitemtemp & api_facilitymatchtemp as a copy of api_facilitylistitem & api_facilitymatch for A/B Test to store match results
+- remove api_facilityindex table
 
 ### Code/API changes
-* Endpoint /contributor-lists/ has been deprecated
-* The new endpoint /contributor-lists-sorted/ has been created: View Facility Lists that are both active and approved filtered by Contributor sorted by creation date and changed response type to list of objects.
-- [OSDEV-218](https://opensupplyhub.atlassian.net/browse/OSDEV-218)
-* Connect new tables (api_facilitylistitemtemp & api_facilitymatchtemp) to existing parsing & geocoding result storing
-* Trigger matching process on Dedupe Hub through Kafka Producer on Django side
-- [OSDEV-507](https://opensupplyhub.atlassian.net/browse/OSDEV-507)
+
+- Endpoint /contributor-lists/ has been deprecated
+- The new endpoint /contributor-lists-sorted/ has been created: View Facility Lists that are both active and approved filtered by Contributor sorted by creation date and changed response type to list of objects.
+
+* [OSDEV-218](https://opensupplyhub.atlassian.net/browse/OSDEV-218)
+
+- Connect new tables (api_facilitylistitemtemp & api_facilitymatchtemp) to existing parsing & geocoding result storing
+- Trigger matching process on Dedupe Hub through Kafka Producer on Django side
+
+* [OSDEV-507](https://opensupplyhub.atlassian.net/browse/OSDEV-507)
 
 ### Architecture/Environment changes
-* Update rollbar token - [OSDEV-581](https://opensupplyhub.atlassian.net/browse/OSHUB-581)
-* Deployed Dedupe Hub standalone service & Kafka event streaming service for A/B Test purpose - [OSDEV-507](https://opensupplyhub.atlassian.net/browse/OSDEV-507)
-* Kafka added to infrastructure (AWS MSK) - [OSDEV-428](https://opensupplyhub.atlassian.net/browse/OSDEV-428)
-* Dedupe Hub service added to ECS Cluster - [OSDEV-430](https://opensupplyhub.atlassian.net/browse/OSDEV-430)
-* Infrastructure environments not depended on python (django app environment) - [OSDEV-424](https://opensupplyhub.atlassian.net/browse/OSDEV-424)
-* Reworked algorithm to manage DNS records - [OSDEV-414](https://opensupplyhub.atlassian.net/browse/OSDEV-414)
-* Update AWS Terraform provider, move from Azavea repo & upgrade few modules for Terraform - [OSDEV-405](https://opensupplyhub.atlassian.net/browse/OSDEV-405)
-* Replaced usage of FacilityIndex model by FacilityIndexNew.
-* Removed FacilityIndex model
-* Removed function get_custom_text
-* Removed function index_custom_text from transactions
-* Removed function index_extended_fields from transactions
-* Removed function index_facilities from transactions
-* Removed function index_sectors from transactions
-* Removed get_sector_dict from transactions
+
+- Update rollbar token - [OSDEV-581](https://opensupplyhub.atlassian.net/browse/OSHUB-581)
+- Deployed Dedupe Hub standalone service & Kafka event streaming service for A/B Test purpose - [OSDEV-507](https://opensupplyhub.atlassian.net/browse/OSDEV-507)
+- Kafka added to infrastructure (AWS MSK) - [OSDEV-428](https://opensupplyhub.atlassian.net/browse/OSDEV-428)
+- Dedupe Hub service added to ECS Cluster - [OSDEV-430](https://opensupplyhub.atlassian.net/browse/OSDEV-430)
+- Infrastructure environments not depended on python (django app environment) - [OSDEV-424](https://opensupplyhub.atlassian.net/browse/OSDEV-424)
+- Reworked algorithm to manage DNS records - [OSDEV-414](https://opensupplyhub.atlassian.net/browse/OSDEV-414)
+- Update AWS Terraform provider, move from Azavea repo & upgrade few modules for Terraform - [OSDEV-405](https://opensupplyhub.atlassian.net/browse/OSDEV-405)
+- Replaced usage of FacilityIndex model by FacilityIndexNew.
+- Removed FacilityIndex model
+- Removed function get_custom_text
+- Removed function index_custom_text from transactions
+- Removed function index_extended_fields from transactions
+- Removed function index_facilities from transactions
+- Removed function index_sectors from transactions
+- Removed get_sector_dict from transactions
 
 ### Bugfix
-* Make search by non-public contributor types available [OSDEV-307](https://opensupplyhub.atlassian.net/browse/OSDEV-307)
-* Make possibility to create embed map configuration for constributors with more than 2500 facilities [OSDEV-585](https://opensupplyhub.atlassian.net/browse/OSDEV-585)
-* Make possibility to save data facilities even if they have no stored location [OSDEV-596](https://opensupplyhub.atlassian.net/browse/OSDEV-596)
+
+- Make search by non-public contributor types available [OSDEV-307](https://opensupplyhub.atlassian.net/browse/OSDEV-307)
+- Make possibility to create embed map configuration for constributors with more than 2500 facilities [OSDEV-585](https://opensupplyhub.atlassian.net/browse/OSDEV-585)
+- Make possibility to save data facilities even if they have no stored location [OSDEV-596](https://opensupplyhub.atlassian.net/browse/OSDEV-596)
 
 ### What's new
-* Update README.md with the most recent information - [OSDEV-580](https://opensupplyhub.atlassian.net/browse/OSHUB-580)
-* Update Rollbar's post_server_item tokens - [OSDEV-581](https://opensupplyhub.atlassian.net/browse/OSHUB-581)
-* Contributor Lists. Order lists from a contributor by newest to oldest list - [OSDEV-218](https://opensupplyhub.atlassian.net/browse/OSDEV-218)
+
+- Update README.md with the most recent information - [OSDEV-580](https://opensupplyhub.atlassian.net/browse/OSHUB-580)
+- Update Rollbar's post_server_item tokens - [OSDEV-581](https://opensupplyhub.atlassian.net/browse/OSHUB-581)
+- Contributor Lists. Order lists from a contributor by newest to oldest list - [OSDEV-218](https://opensupplyhub.atlassian.net/browse/OSDEV-218)
 
 ### Release instructions
+
 - apply migrations up to 0124_itroduce_raw_json.py
 - execute command fill_raw_json
 - apply migrations up to 0129_delete_facility_index.py
