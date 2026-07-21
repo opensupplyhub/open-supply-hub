@@ -218,7 +218,7 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 Smoke testing is the responsibility of the person performing the release. On release day, the release performer runs the automated smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against both the Sandbox and Production environments.
 
-See Confluence for the documentation on how to set up and run the smoke tests: [Automated Playwright tests](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1059749889/Automated+Playwright+tests).
+See the [e2e repository README](https://github.com/opensupplyhub/open-supply-hub-e2e-tests/blob/main/README.md) for instructions on how to set up and run the smoke tests.
 
 Once the smoke tests finish, if any of them report errors, retest the affected cases manually. If the manual tests pass, the release is considered successful. In this case, ping the team in the `#data_x_product` Slack channel after the release so they can check the failing e2e tests, since the failures are in the tests themselves rather than in the release.
 
