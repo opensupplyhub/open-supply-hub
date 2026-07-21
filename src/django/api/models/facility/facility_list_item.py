@@ -187,6 +187,62 @@ class FacilityListItem(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
+
+    # --- External-source provenance (OSDEV-3070) ---
+    # The external information source this row came from. Per-row: one source
+    # per data-center row. Distinct from Source.source_type (LIST/SINGLE).
+    source_name = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text=('Name of the external information source this row came '
+                   'from (e.g. "US EPA FRS", an operator website).')
+    )
+    source_link = models.URLField(
+        max_length=2000,
+        null=True,
+        blank=True,
+        help_text='Link to the external source for this row.'
+    )
+    information_source_type = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=('Type of the external information source (e.g. air quality '
+                   'permit, press release, company website). Renamed from the '
+                   'schema field "source_type" to avoid colliding with '
+                   'Source.source_type.')
+    )
+    date_of_source = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=('Timestamp stated by the external source, kept as raw text '
+                   '(specific date, month, and/or year).')
+    )
+
+    # --- Data-collection provenance (OSDEV-3071) ---
+    # added_on_date -> use `created_at`; added_by / added_by_type -> the
+    # Source's `contributor` (approximate; contrib_type differs from the
+    # schema enum).
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        help_text='Notes on judgment calls made during data collection.'
+    )
+    data_collection_methodology = models.TextField(
+        null=True,
+        blank=True,
+        help_text=('How the data was collected (e.g. copied from a website, '
+                   'scraped, downloaded directly from source).')
+    )
+    ai_usage_notes = models.TextField(
+        null=True,
+        blank=True,
+        help_text=('Details of any AI usage during collection: model and '
+                   'version, tasks performed, and extent of human review.')
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
