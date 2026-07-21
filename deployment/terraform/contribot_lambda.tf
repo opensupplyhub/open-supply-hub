@@ -3,11 +3,14 @@
 #
 
 locals {
+  contribot_os_hub_api_url = var.environment == "Production" ? "https://${var.r53_public_hosted_zone}" : "https://${local.domain_name}"
+
   contribot_lambda_environment = {
     ENVIRONMENT                         = var.environment
     CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
+    LAST_LIST_ID                        = var.contribot_last_list_id
     AWS_STORAGE_BUCKET_NAME             = local.files_bucket_name
-    OS_HUB_API_URL                      = "https://${var.r53_public_hosted_zone}"
+    OS_HUB_API_URL                      = local.contribot_os_hub_api_url
     MONDAY_API_URL                      = "https://api.monday.com/v2"
     MONDAY_BOARD_ID                     = var.contribot_monday_board_id
     GOOGLE_DRIVE_SHARED_DIRECTORY_ID    = var.contribot_google_drive_shared_directory_id
@@ -115,7 +118,7 @@ resource "aws_lambda_function" "contribot_fetch_lists" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = 900
   memory_size      = 256
 
   environment {
@@ -140,7 +143,7 @@ resource "aws_lambda_function" "contribot_process_list" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 300
+  timeout          = 900
   memory_size      = 512
 
   environment {
@@ -165,7 +168,7 @@ resource "aws_lambda_function" "contribot_notify" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = 900
   memory_size      = 256
 
   environment {
