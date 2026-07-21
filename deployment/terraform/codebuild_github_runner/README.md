@@ -72,9 +72,12 @@ repository: the org-level runner group setting **Allow public repositories**
 3. Run **DB - Apply Anonymized DB** with `deploy-env: Test`.
 4. Run **Deploy to AWS** to Test with `restore-db: true` to exercise the
    `restore_database` job.
-5. During the first dump run, check disk usage in the build logs; if it fits
-   comfortably within 128 GB, `codebuild_github_runner_compute_type` can be
-   downgraded to `BUILD_GENERAL1_MEDIUM` to cut cost roughly in half.
+
+Note on compute sizing: `BUILD_GENERAL1_LARGE` is intentional. A production
+dump run measured ~14.25 GB of memory utilization (dominated by page cache
+during the local restore/anonymization), which rules out
+`BUILD_GENERAL1_MEDIUM` (8 GB RAM); the dump job is the sizing driver, the
+restore jobs are far lighter.
 
 Note on concurrency: CodeBuild starts one ephemeral build per queued job, so
 two runs targeting the same environment would execute in parallel. Do not
