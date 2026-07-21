@@ -204,7 +204,7 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 #### Preparation for release testing
 1. Creating a Test Run Cycle:
-    - A Day before the Code Freeze (Five working days before the release scheduled for Saturday), the QA engineer creates a new test run cycle in QAlity.
+    - A Day before the Code Freeze, the QA engineer creates a new test run cycle in QAlity.
     [See Instructions how to create Test Cycles in QAlity](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles)
     - Above the regular set of test cases, the QA team adds tickets implemented in the current release to the test run cycle as well. For this in the QAlity should be created new folder "Release {#release-version}" in the Functional Testing Folder. [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/665255957/QAlity+Instruction+how+to+add+tests+regarding+change+list+for+release)
 2. Executing the Test Run:
