@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: August 7, 2026
 
 ### Code/API changes
-* The claimed-details update endpoint (`PUT /api/facility-claims/{id}/claimed/`) now skips the save when no field value actually changed. Previously every submit re-saved all claim fields unconditionally, bumping `updated_at` (which feeds the claimed section's "last updated" date), firing the claim reindex trigger, rebuilding extended fields, and emailing list contributors — even when the claimant changed nothing. Requests that change at least one value behave exactly as before.
+* [OSDEV-3094](https://opensupplyhub.atlassian.net/browse/OSDEV-3094) - The claimed-details update endpoint (`PUT /api/facility-claims/{id}/claimed/`) now skips the save when no field value actually changed. Previously every submit re-saved all claim fields unconditionally, bumping `updated_at` (which feeds the claimed section's "last updated" date), firing the claim reindex trigger, rebuilding extended fields, and emailing list contributors — even when the claimant changed nothing. Requests that change at least one value behave exactly as before.
 * [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Bumped `django` 5.2.14 → 5.2.16 (security patch releases on the 5.2 LTS line). 5.2.15 fixes CVE-2026-7666 — the SMTP email backend no longer reuses a partially-initialized connection after a failed STARTTLS handshake (production uses the Amazon SES backend, so no behavior change expected); 5.2.16 adds three low-severity cache-related fixes.
 
 ### Architecture/Environment changes
