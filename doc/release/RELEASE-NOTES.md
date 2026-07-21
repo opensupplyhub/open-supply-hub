@@ -25,7 +25,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * Fixed the anonymized DB dump/restore workflows ("DB - Apply Anonymized DB", "DB - Save Anonymized DB", and the restore step of the deploy workflow) failing on all self-hosted runners with `Error relocating .../pyexpat...so: XML_SetAllocTrackerActivationThreshold: symbol not found`. The `postgis/postgis:16-3.4-alpine` base image ships libexpat 2.6.3, while the python3 pulled in by `apk add aws-cli` from Alpine's current package repository is built against expat >= 2.7.2, so the AWS CLI crashed at runtime and the dump/restore scripts failed. The same base image and `apk add aws-cli` pattern is used by the scheduled anonymized-dump ECS task (`deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile`), which was affected as well. `src/anon-tools/Dockerfile.restore`, `src/anon-tools/Dockerfile.dump`, and that scheduled-task Dockerfile now install `--upgrade libexpat` alongside `aws-cli`. Reproduced and verified on native x86_64 (Linux) and ARM64 Macs (amd64 image under emulation); runners with a warm Docker build cache were unaffected only until the cached `apk add` layer was invalidated.
 
-
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
