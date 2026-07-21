@@ -238,7 +238,7 @@ In case there is a need to run additional command in the terminal of the Django 
 9. Make inactive the `disable_list_uploading` switch (in the Production environment).
 10. Once the new version has been released, the responsible person must run the smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against the Sandbox and Production environments, as described in the [Smoke testing on release day](#smoke-testing-on-release-day) section. Smoke testing is the responsibility of the person performing the release, not the QA Engineer.
 11. If any smoke tests fail, retest the affected cases manually. If the manual tests pass, ping the team in the `#data_x_product` Slack channel after the release so they can check the failing e2e tests, since the failures are in the tests themselves rather than in the release.
-12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded, including any issues encountered during smoke testing. Updating the *Unreleased* version's status in Jira should be completed by the PM.
+12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded, including any issues encountered during smoke testing. Updating the *Unreleased* version's status in Jira should be completed by the Project Manager (PM).
 
 ### Deployment to external collaboration environments
 
