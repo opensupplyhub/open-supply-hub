@@ -16,6 +16,7 @@ are skipped entirely unless a migration file is part of the pushed commits.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -193,17 +194,78 @@ def table_has_write_signal(content: str, table: str, models: list[str]) -> bool:
         if re.search(pattern, content, re.IGNORECASE):
             return True
 
-    has_column_op = re.search(
-        r"migrations\.(AddField|RemoveField|RenameField)\b", content
-    ) is not None
-    has_run_python = re.search(r"migrations\.RunPython\b", content) is not None
+    try:
+        tree = ast.parse(content)
+    except SyntaxError:
+        return False
 
-    for model in models:
-        model_ref = rf"model_name\s*=\s*['\"]{re.escape(model)}['\"]"
-        if not re.search(model_ref, content, re.IGNORECASE):
+    model_names = {model.casefold() for model in models}
+    functions = {
+        node.name: node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
             continue
-        if has_column_op or has_run_python:
-            return True
+        if not isinstance(node.func.value, ast.Name) or node.func.value.id != "migrations":
+            continue
+
+        if node.func.attr in {"AddField", "RemoveField", "RenameField"}:
+            model_name = next(
+                (
+                    keyword.value.value
+                    for keyword in node.keywords
+                    if keyword.arg == "model_name"
+                    and isinstance(keyword.value, ast.Constant)
+                    and isinstance(keyword.value.value, str)
+                ),
+                None,
+            )
+            if model_name is not None and model_name.casefold() in model_names:
+                return True
+
+        if node.func.attr == "RunPython":
+            callback = (
+                node.args[0]
+                if node.args
+                else next(
+                    (
+                        keyword.value
+                        for keyword in node.keywords
+                        if keyword.arg == "code"
+                    ),
+                    None,
+                )
+            )
+            if callback is None:
+                continue
+            if isinstance(callback, ast.Name):
+                callback = functions.get(callback.id, callback)
+            for call in ast.walk(callback):
+                if not isinstance(call, ast.Call) or not isinstance(call.func, ast.Attribute):
+                    continue
+                if call.func.attr != "get_model":
+                    continue
+                model_name = (
+                    call.args[1]
+                    if len(call.args) >= 2
+                    else next(
+                        (
+                            keyword.value
+                            for keyword in call.keywords
+                            if keyword.arg == "model_name"
+                        ),
+                        None,
+                    )
+                )
+                if (
+                    isinstance(model_name, ast.Constant)
+                    and isinstance(model_name.value, str)
+                    and model_name.value.casefold() in model_names
+                ):
+                    return True
 
     return False
 
