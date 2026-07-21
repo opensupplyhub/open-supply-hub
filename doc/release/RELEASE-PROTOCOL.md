@@ -220,8 +220,6 @@ Smoke testing is the responsibility of the person performing the release. On rel
 
 See the [e2e repository README](https://github.com/opensupplyhub/open-supply-hub-e2e-tests/blob/main/README.md) for instructions on how to set up and run the smoke tests.
 
-To choose the right smoke test suite, check the `enable_production_location_page` switch in the Django admin panel: if it is enabled, run the `@smokev2` suite; if it is disabled, run the `@smokev1` suite.
-
 Once the smoke tests finish, if any of them report errors, retest the affected cases manually. If the manual tests pass, the release is considered successful. In this case, ping the engineering team after the release so they can check the failing e2e tests, since the failures are in the tests themselves rather than in the release.
 
 ### Release to Production and Sandbox
