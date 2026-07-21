@@ -216,10 +216,14 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 #### Smoke testing on release day
 
-On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles):
+Smoke testing is the responsibility of the person performing the release. On release day, the release performer runs the automated smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against the environment being released:
 
-1. `Staging Environment:` Verify the release changes before deployment to Production.
+1. `Sandbox Environment:` Verify the release changes after deployment to Sandbox.
 2. `Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
+
+See Confluence for the documentation on how to set up and run the smoke tests: [Automated Playwright tests](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1059749889/Automated+Playwright+tests).
+
+Once the smoke tests finish, if any of them report errors, retest the affected cases manually. If the manual tests pass, the release is considered successful. In this case, ping the team in the `#data_x_product` Slack channel after the release so they can check the failing e2e tests, since the failures are in the tests themselves rather than in the release.
 
 ### Release to Production and Sandbox
 
@@ -235,9 +239,9 @@ If there is no such message and DedupeHub hangs, you need to reload it (perhaps 
 8. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
 In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 9. Make inactive the `disable_list_uploading` switch (in the Production environment).
-10. Notify the QA Engineer that the new version has been released, and they can commence smoke testing.
-11. The QA Engineer must notify stakeholders in the `#data_x_product` Slack channel when testing is complete in the Sandbox and in the Production, as well as issues, if any encountered during testing.
-12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+10. Once the new version has been released, the responsible person must run the smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against the Sandbox and Production environments, as described in the [Smoke testing on release day](#smoke-testing-on-release-day) section. Smoke testing is the responsibility of the person performing the release, not the QA Engineer.
+11. If any smoke tests fail, retest the affected cases manually. If the manual tests pass, ping the team in the `#data_x_product` Slack channel after the release so they can check the failing e2e tests, since the failures are in the tests themselves rather than in the release.
+12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded, including any issues encountered during smoke testing. Additionally, update the *Unreleased* version's status in Jira.
 
 ### Deployment to external collaboration environments
 
@@ -247,7 +251,7 @@ General guidelines for deploying to external collaboration environments:
 1. Git Tagging Strategy: Use the same Git tagging strategy as for Production. The only difference is that each tag should include a prefix specific to the external environment. See the [Git branches and tags](#git-branches-and-tags) section for more details.
 2. Release Process: The release process should follow the same steps as outlined for Production in the [Release to Production and Sandbox](#release-to-production-and-sandbox) section. The release day follows the defined [Release Schedule](#release-schedule).
 3. Hotfixes: Hotfixes should be deployed to external environments using the same process as for the Production environment. See the [Hotfixes](#hotfixes) section for more information.
-4. Smoke Testing: Smoke testing should be conducted in the same manner as on the Production environment to ensure stability and feature integrity. Refer to the [Smoke testing on release day](#smoke-testing-on-release-day) section for details.
+4. Smoke Testing: Smoke testing should be conducted in the same manner as on the Production environment to ensure stability and feature integrity. Refer to the [Smoke testing on release day](#smoke-testing-on-release-day) section for details. For third-party environments such as RBA, you must have the VPN activated to reach the environment before running the smoke tests. See Confluence for the documentation on how to set up the VPN: [Setup WireGuard VPN to access RBA environment](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/778403842/Setup+WireGuard+VPN+to+access+RBA+environment).
 5. Reloading DedupeHub: Reloading DedupeHub in external environments can be performed by following the same steps described in the [Reloading the DedupeHub](#reloading-the-dedupehub) section, using the appropriate infrastructure resources of the respective external environment.
 
 Notes:
