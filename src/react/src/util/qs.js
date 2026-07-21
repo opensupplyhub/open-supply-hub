@@ -17,7 +17,7 @@ export const stringify = obj => {
     Object.keys(obj || {}).forEach(key => {
         const value = obj[key];
 
-        if (typeof value === 'undefined') {
+        if (value === undefined) {
             return;
         }
 
@@ -36,7 +36,7 @@ export const parse = qs => {
     const result = {};
 
     params.forEach((value, key) => {
-        if (Object.prototype.hasOwnProperty.call(result, key)) {
+        if (Object.hasOwn(result, key)) {
             if (Array.isArray(result[key])) {
                 result[key].push(value);
             } else {
