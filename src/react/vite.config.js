@@ -59,6 +59,12 @@ export default defineConfig(({ mode }) => {
         server: {
             host: true,
             port: 6543,
+            // Vite blocks requests whose Host header isn't recognized
+            // (DNS-rebinding protection). Allow the 'react' service name so
+            // the e2e container and other compose services can reach the dev
+            // server at http://react:6543. CRA's webpack-dev-server did not
+            // enforce this, so it worked implicitly before.
+            allowedHosts: ['react', 'localhost'],
             // Docker bind mounts need polling (was CHOKIDAR_USEPOLLING).
             watch: {
                 usePolling: true,
