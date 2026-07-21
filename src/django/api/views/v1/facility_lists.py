@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from django.db import transaction
 
@@ -20,28 +19,7 @@ logger = logging.getLogger(__name__)
 
 class FacilityLists(ViewSet):
     swagger_schema = None
-
-    def get_permissions(self):
-        '''
-        Redefines the parent method and returns the list of permissions for
-        the ViewSet action methods.
-        '''
-        action_permissions = self.__get_action_permissions()
-
-        # Combine custom permissions with global application-level permissions
-        # set via the DEFAULT_PERMISSION_CLASSES setting.
-        combined_permission_classes = \
-            action_permissions + self.permission_classes
-
-        return [permission() for permission in combined_permission_classes]
-
-    def __get_action_permissions(self) -> List:
-        '''
-        Returns the list of permissions specific to the current action.
-        '''
-        if self.action == 'deactivate':
-            return [IsRegisteredAndConfirmed]
-        return []
+    permission_classes = [IsRegisteredAndConfirmed]
 
     @action(detail=True, methods=['post'], url_path='deactivate')
     @transaction.atomic
