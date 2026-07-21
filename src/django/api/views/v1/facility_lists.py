@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class FacilityLists(ViewSet):
     swagger_schema = None
-    permission_classes = [IsRegisteredAndConfirmed]
+    permission_classes = (IsRegisteredAndConfirmed,)
 
     @action(detail=True, methods=['post'], url_path='deactivate')
     @transaction.atomic
@@ -54,12 +54,16 @@ class FacilityLists(ViewSet):
             .first()
         )
 
+        contributor_id = (
+            request.user.contributor.id
+            if request.user.has_contributor else None
+        )
+
         # Return the same 404 whether the list is missing or owned by another
         # contributor, so list ownership is not leaked.
         if (facility_list is None
                 or facility_list.source is None
-                or facility_list.source.contributor_id
-                != request.user.contributor.id):
+                or facility_list.source.contributor_id != contributor_id):
             return Response(
                 {'detail': APIV1CommonErrorMessages.FACILITY_LIST_NOT_FOUND},
                 status=status.HTTP_404_NOT_FOUND

@@ -296,6 +296,27 @@ class TestFacilityListsDeactivate(APITestCase):
         self.source.refresh_from_db()
         self.assertTrue(self.source.is_active)
 
+    def test_404_for_user_without_contributor(self):
+        user = User.objects.create(email='no-contributor@example.com')
+        user.set_password(self.user_password)
+        user.save()
+        EmailAddress.objects.create(
+            user=user, email=user.email, verified=True, primary=True
+        )
+        self.login(user.email, self.user_password)
+
+        response = self.client.post(
+            self.__deactivate_url(self.facility_list.id)
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            json.loads(response.content)['detail'],
+            'The list with the given id was not found.',
+        )
+        self.source.refresh_from_db()
+        self.assertTrue(self.source.is_active)
+
     def test_requires_confirmed_email(self):
         email_address = EmailAddress.objects.get_primary(self.user)
         email_address.verified = False
