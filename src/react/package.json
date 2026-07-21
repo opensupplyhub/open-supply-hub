@@ -105,7 +105,6 @@
         "micromatch": "4.0.8",
         "@tootallnate/once": "2.0.1",
         "@babel/runtime": "7.26.10",
-        "node-fetch": "2.6.7",
-        "ajv": "8.18.0"
+        "node-fetch": "2.6.7"
     }
 }
