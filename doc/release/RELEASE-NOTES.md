@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-2924](https://opensupplyhub.atlassian.net/browse/OSDEV-2924) - Bumped `django` 5.2.14 → 5.2.16 (security patch releases on the 5.2 LTS line). 5.2.15 fixes CVE-2026-7666 — the SMTP email backend no longer reuses a partially-initialized connection after a failed STARTTLS handshake (production uses the Amazon SES backend, so no behavior change expected); 5.2.16 adds three low-severity cache-related fixes.
-* [OSDEV-3093] Data downloads (`GET /api/facilities-downloads/`) now use the approved claim's address for the `address` column when the claimant has provided one, matching the existing claim-first behavior of the `name` column. Previously the download address ignored claim data entirely, so a claimant's corrected address never appeared in exports. Facilities without an approved claim (or whose claim has no address) are unchanged.
+* [OSDEV-3093](https://opensupplyhub.atlassian.net/browse/OSDEV-3093) - Data downloads (`GET /api/facilities-downloads/`) now use the approved claim's address for the `address` column when the claimant has provided one, matching the existing claim-first behavior of the `name` column. Previously the download address ignored claim data entirely, so a claimant's corrected address never appeared in exports. Facilities without an approved claim (or whose claim has no address) are unchanged.
 
 
 ### Architecture/Environment changes
