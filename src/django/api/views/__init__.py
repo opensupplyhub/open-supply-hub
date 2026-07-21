@@ -70,7 +70,7 @@ from .make_report import (
 )
 from .number_of_workers_ranges import number_of_workers_ranges
 from .parent_companies import ParentCompanies
-from .product_types import product_types
+from .product_types import ProductTypes
 from .sectors import sectors
 from .claim_statuses import claim_statuses
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
