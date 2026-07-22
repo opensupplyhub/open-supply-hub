@@ -72,6 +72,22 @@ describe('qs.parse', () => {
     it('returns an empty object for an empty string', () => {
         expect(parse('')).toEqual({});
     });
+
+    it('preserves "__proto__" as an own key without polluting the prototype (node parity)', () => {
+        const result = parse('__proto__=x');
+
+        expect(Object.hasOwn(result, '__proto__')).toBe(true);
+        expect(result.__proto__).toBe('x');
+        // The prototype itself must be untouched.
+        expect({}.polluted).toBeUndefined();
+        expect(Object.getPrototypeOf(result)).toBeNull();
+    });
+
+    it('collects repeated "__proto__" keys into an array', () => {
+        const result = parse('__proto__=1&__proto__=2');
+
+        expect(result.__proto__).toEqual(['1', '2']);
+    });
 });
 
 describe('qs round-trip', () => {

@@ -41,7 +41,11 @@ export const stringify = obj => {
 
 export const parse = qs => {
     const params = new URLSearchParams(qs);
-    const result = {};
+    // Object.create(null) matches node's querystring.parse (which returns a
+    // null-prototype object). This preserves keys like "__proto__" as own
+    // properties instead of hitting Object.prototype's setter and dropping
+    // them, and avoids any prototype-pollution surface.
+    const result = Object.create(null);
 
     params.forEach((value, key) => {
         if (Object.hasOwn(result, key)) {
