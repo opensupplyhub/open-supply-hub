@@ -77,7 +77,10 @@ describe('qs.parse', () => {
         const result = parse('__proto__=x');
 
         expect(Object.hasOwn(result, '__proto__')).toBe(true);
-        expect(result.__proto__).toBe('x');
+        // Read via descriptor rather than result.__proto__ (no-proto rule).
+        expect(Object.getOwnPropertyDescriptor(result, '__proto__').value).toBe(
+            'x',
+        );
         // The prototype itself must be untouched.
         expect({}.polluted).toBeUndefined();
         expect(Object.getPrototypeOf(result)).toBeNull();
@@ -86,7 +89,9 @@ describe('qs.parse', () => {
     it('collects repeated "__proto__" keys into an array', () => {
         const result = parse('__proto__=1&__proto__=2');
 
-        expect(result.__proto__).toEqual(['1', '2']);
+        expect(
+            Object.getOwnPropertyDescriptor(result, '__proto__').value,
+        ).toEqual(['1', '2']);
     });
 });
 
