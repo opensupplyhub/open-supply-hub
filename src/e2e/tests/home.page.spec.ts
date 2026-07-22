@@ -7,5 +7,5 @@ import { test, expect } from '@playwright/test';
 test('Home page loads with the correct title', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page).toHaveTitle('Open Supply Hub');;
+  await expect(page).toHaveTitle('Open Supply Hub');
 });

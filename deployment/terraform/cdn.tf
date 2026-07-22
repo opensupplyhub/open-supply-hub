@@ -140,13 +140,39 @@ resource "aws_cloudfront_origin_access_identity" "react" {
   comment = local.frontend_bucket_name
 }
 
+#
+# Homepage proxy — CloudFront Function to rewrite Host header for Craft CMS origin
+#
+# This is used when enable_homepage_proxy = true (dev only for now).
+# The function sets the Host header to info.opensupplyhub.org so Craft serves
+# the correct site when CloudFront reverse-proxies requests from / to it.
+#
+resource "aws_cloudfront_function" "homepage_host_rewrite" {
+  count   = var.enable_homepage_proxy ? 1 : 0
+  name    = "func${local.short}HomepageHostRewrite"
+  runtime = "cloudfront-js-1.0"
+  publish = true
+  comment = "Rewrites URI to /home-page for Craft CMS homepage proxy"
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      request.uri = '/home-page';
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "cdn" {
   depends_on = [
     aws_s3_bucket.logs,
     aws_s3_bucket.react
   ]
 
-  default_root_object = "index.html"
+  # When the homepage proxy is active, disable default_root_object so CloudFront
+  # doesn't rewrite "/" to "/index.html" before our ordered cache behavior runs.
+  # Without this, CloudFront intercepts "/" before path pattern matching and routes
+  # it to S3, bypassing the Craft origin entirely.
+  default_root_object = var.enable_homepage_proxy ? "" : "index.html"
 
   origin {
     domain_name = "origin.${local.domain_name}"
@@ -176,6 +202,22 @@ resource "aws_cloudfront_distribution" "cdn" {
     custom_header {
       name  = "X-CloudFront-Auth"
       value = var.cloudfront_auth_token
+    }
+  }
+
+  # Craft CMS origin — only present when enable_homepage_proxy = true
+  dynamic "origin" {
+    for_each = var.enable_homepage_proxy ? [1] : []
+    content {
+      domain_name = var.craft_cms_origin_domain
+      origin_id   = "originCraft"
+
+      custom_origin_config {
+        http_port              = 80
+        https_port             = 443
+        origin_protocol_policy = "https-only"
+        origin_ssl_protocols   = ["TLSv1.2"]
+      }
     }
   }
 
@@ -217,6 +259,41 @@ resource "aws_cloudfront_distribution" "cdn" {
     min_ttl                = 0
     default_ttl            = 0
     max_ttl                = 300
+  }
+
+  # Homepage proxy — serves Craft CMS at / when enable_homepage_proxy = true.
+  # Path pattern "/" matches only the exact root path, not sub-paths.
+  # TTL is 0 so CMS content changes are reflected immediately without a cache invalidation.
+  # Note: redirect_to_s3_origin Lambda@Edge runs on the default_cache_behavior only —
+  # it will NOT run for requests matched by this ordered behavior.
+  dynamic "ordered_cache_behavior" {
+    for_each = var.enable_homepage_proxy ? [1] : []
+    content {
+      path_pattern     = "/"
+      allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+      cached_methods   = ["GET", "HEAD"]
+      target_origin_id = "originCraft"
+
+      forwarded_values {
+        query_string = true
+        headers      = ["Accept", "Accept-Encoding", "Accept-Language"]
+
+        cookies {
+          forward = "none"
+        }
+      }
+
+      function_association {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.homepage_host_rewrite[0].arn
+      }
+
+      compress               = true
+      viewer_protocol_policy = "redirect-to-https"
+      min_ttl                = 0
+      default_ttl            = 0
+      max_ttl                = 0
+    }
   }
 
   ordered_cache_behavior {
@@ -805,9 +882,6 @@ resource "aws_cloudfront_distribution" "cdn" {
   web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }
 
-#
-# info.openapparel.org → https://info.opensupplyhub.org redirect (Production only)
-#
 data "aws_route53_zone" "openapparel" {
   count = var.enable_legacy_info_site_redirect ? 1 : 0
   name  = "openapparel.org"
@@ -855,7 +929,7 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
   code    = <<-EOT
     function handler(event) {
       var qs = event.request.querystring;
-      var location = "https://info.opensupplyhub.org" + event.request.uri + (qs ? "?" + qs : "");
+      var location = var.craft_cms_origin_domain + event.request.uri + (qs ? "?" + qs : "");
       return {
         statusCode: 301,
         statusDescription: "Moved Permanently",
@@ -871,11 +945,11 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
   count           = var.enable_legacy_info_site_redirect ? 1 : 0
   enabled         = true
   is_ipv6_enabled = true
-  comment         = "Redirect info.openapparel.org to info.opensupplyhub.org"
+  comment         = "Redirect info.openapparel.org to ${var.craft_cms_origin_domain}"
   aliases         = ["info.openapparel.org"]
 
   origin {
-    domain_name = "info.opensupplyhub.org"
+    domain_name = var.craft_cms_origin_domain
     origin_id   = "info-opensupplyhub-origin"
     custom_origin_config {
       http_port              = 80
