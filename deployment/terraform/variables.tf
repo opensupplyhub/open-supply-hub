@@ -938,6 +938,12 @@ variable "enable_homepage_proxy" {
   description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage at info.opensupplyhub.org. Enable in dev for testing only — do not apply to production without further validation."
 }
 
+variable "craft_cms_origin_domain" {
+  type        = string
+  default     = ""
+  description = "Hostname of the Craft CMS origin (Servd) used when enable_homepage_proxy is true. Set per-environment in tfvars (e.g. open-supply.staging.servd.dev)."
+}
+
 
 # Stripe variables
 

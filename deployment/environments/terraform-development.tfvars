@@ -78,4 +78,5 @@ vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 # Homepage proxy — routes / to Craft CMS (info.opensupplyhub.org)
 # Keep false in staging, production, and rba until fully validated.
-enable_homepage_proxy = true
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.staging.servd.dev"
