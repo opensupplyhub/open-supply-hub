@@ -11,20 +11,28 @@
  * "%20". Both decode identically here and in Django, so round-trips and
  * bookmarked URLs keep working.
  */
+// Match node's querystring.stringify coercion: strings/numbers/booleans
+// serialize as-is; null, undefined, and any non-primitive become "".
+// The key is always emitted (e.g. {a: null} -> "a="), including for each
+// array item, so nothing leaks as the literal "null"/"undefined" strings
+// that URLSearchParams would otherwise produce.
+const toPrimitive = v => {
+    const t = typeof v;
+    if (t === 'string') return v;
+    if (t === 'number' || t === 'boolean' || t === 'bigint') return String(v);
+    return '';
+};
+
 export const stringify = obj => {
     const params = new URLSearchParams();
 
     Object.keys(obj || {}).forEach(key => {
         const value = obj[key];
 
-        if (value === undefined) {
-            return;
-        }
-
         if (Array.isArray(value)) {
-            value.forEach(v => params.append(key, v));
+            value.forEach(v => params.append(key, toPrimitive(v)));
         } else {
-            params.append(key, value);
+            params.append(key, toPrimitive(value));
         }
     });
 

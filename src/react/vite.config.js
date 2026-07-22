@@ -1,6 +1,14 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
+import browserslistToEsbuild from 'browserslist-to-esbuild';
+
+// Vite 8 no longer reads package.json "browserslist" for build.target and
+// defaults to a modern-only baseline, which would narrow our support policy.
+// Derive an explicit esbuild target from the same "browserslist" field
+// (single source of truth — it also drives autoprefixer) so the supported
+// browser set is unchanged and reviewable.
+const buildTarget = browserslistToEsbuild();
 
 // Paths the dev server forwards to django (was src/setupProxy.js under CRA).
 const pathsToProxy = [
@@ -75,6 +83,8 @@ export default defineConfig(({ mode }) => {
         build: {
             // Keep CRA's output directory so deploy tooling is untouched.
             outDir: 'build',
+            target: buildTarget,
+            cssTarget: buildTarget,
         },
     };
 });
