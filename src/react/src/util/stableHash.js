@@ -11,7 +11,12 @@
  */
 const stableStringify = value => {
     if (value === null || typeof value !== 'object') {
-        return JSON.stringify(value);
+        // JSON.stringify returns the value `undefined` (not a string) for
+        // undefined, functions, and symbols. Coerce to a distinct,
+        // type-tagged token so the hasher always receives a string and
+        // these values don't collide with each other or with null.
+        const serialized = JSON.stringify(value);
+        return serialized === undefined ? `__${typeof value}__` : serialized;
     }
 
     if (Array.isArray(value)) {
