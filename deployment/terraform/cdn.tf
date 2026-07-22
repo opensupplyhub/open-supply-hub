@@ -156,11 +156,6 @@ resource "aws_cloudfront_function" "homepage_host_rewrite" {
   code    = <<-EOT
     function handler(event) {
       var request = event.request;
-      // Rewrite URI so Craft serves the correct page.
-      // Note: do NOT set request.headers['host'] here — it is read-only in
-      // CloudFront Functions and will cause a 502. CloudFront automatically
-      // uses the origin domain (open-supply.staging.servd.dev) as the Host header
-      // when forwarding to a custom origin, so no override is needed.
       request.uri = '/home-page';
       return request;
     }
@@ -214,7 +209,7 @@ resource "aws_cloudfront_distribution" "cdn" {
   dynamic "origin" {
     for_each = var.enable_homepage_proxy ? [1] : []
     content {
-      domain_name = "open-supply.staging.servd.dev"
+      domain_name = var.craft_cms_origin_domain
       origin_id   = "originCraft"
 
       custom_origin_config {
@@ -887,9 +882,6 @@ resource "aws_cloudfront_distribution" "cdn" {
   web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }
 
-#
-# info.openapparel.org → https://open-supply.staging.servd.dev redirect (Production only)
-#
 data "aws_route53_zone" "openapparel" {
   count = var.enable_legacy_info_site_redirect ? 1 : 0
   name  = "openapparel.org"
@@ -937,7 +929,7 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
   code    = <<-EOT
     function handler(event) {
       var qs = event.request.querystring;
-      var location = "https://open-supply.staging.servd.dev" + event.request.uri + (qs ? "?" + qs : "");
+      var location = var.craft_cms_origin_domain + event.request.uri + (qs ? "?" + qs : "");
       return {
         statusCode: 301,
         statusDescription: "Moved Permanently",
@@ -953,11 +945,11 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
   count           = var.enable_legacy_info_site_redirect ? 1 : 0
   enabled         = true
   is_ipv6_enabled = true
-  comment         = "Redirect info.openapparel.org to open-supply.staging.servd.dev"
+  comment         = "Redirect info.openapparel.org to ${var.craft_cms_origin_domain}"
   aliases         = ["info.openapparel.org"]
 
   origin {
-    domain_name = "open-supply.staging.servd.dev"
+    domain_name = var.craft_cms_origin_domain
     origin_id   = "info-opensupplyhub-origin"
     custom_origin_config {
       http_port              = 80

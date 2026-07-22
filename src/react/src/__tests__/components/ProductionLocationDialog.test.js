@@ -211,7 +211,7 @@ describe('ProductionLocationDialog', () => {
         const searchOSHubButton = getByRole('button', { name: /Search OS Hub/i });
         fireEvent.click(searchOSHubButton);
 
-        expect(mockHistoryPush).toHaveBeenCalledWith('/');
+        expect(mockHistoryPush).toHaveBeenCalledWith('/map');
     });
 
     test('Submit another Location button should link to the SLC search page', () => {
@@ -255,7 +255,7 @@ describe('ProductionLocationDialog', () => {
         const closeButton = getByRole('button', { name: /close/i });
 
         fireEvent.click(closeButton);
-        expect(mockHistoryPush).toHaveBeenCalledWith('/');
+        expect(mockHistoryPush).toHaveBeenCalledWith('/map');
     });
 });
 
