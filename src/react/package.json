@@ -123,7 +123,7 @@
         "ejs": "3.1.10",
         "json-schema": "0.4.0",
         "**/react-dev-utils/immer": "9.0.21",
-        "**/postcss-safe-parser/postcss": "8.5.16",
+        "postcss-safe-parser/postcss": "8.5.16",
         "tmp": "0.2.5",
         "yaml": "1.10.3",
         "bn.js": "5.2.3",
