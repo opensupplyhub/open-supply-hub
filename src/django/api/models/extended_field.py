@@ -74,7 +74,8 @@ class ExtendedField(models.Model):
     NUMBER_OF_SERVERS = 'number_of_servers'
     NUMBER_OF_RACKS = 'number_of_racks'
 
-    # Data center fields grouped for reuse in ingestion (see extended_fields.py)
+    # Data center fields grouped for reuse in
+    # ingestion (see extended_fields.py)
     DATA_CENTER_FIELDS = (
         NAME_UNSPECIFIED, NAME_SITE_OTHER, NAME_OWNER, NAME_PROPERTY_MANAGER,
         NAME_OPERATOR, NAME_PERMIT_HOLDER, NAME_BUILDING_OWNER, NAME_TENANT,

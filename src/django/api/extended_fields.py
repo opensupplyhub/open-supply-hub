@@ -170,6 +170,7 @@ def create_extendedfield(field, field_value, item, contributor):
             field == ExtendedField.DUNS_ID
             or field == ExtendedField.LEI_ID
             or field == ExtendedField.RBA_ID
+            or field in ExtendedField.DATA_CENTER_FIELDS
         ):
             field_value = {
                 'raw_value': field_value,
@@ -179,10 +180,6 @@ def create_extendedfield(field, field_value, item, contributor):
             if not normalized_isic.get('raw_value'):
                 return
             field_value = normalized_isic
-        elif field in ExtendedField.DATA_CENTER_FIELDS:
-            field_value = {
-                'raw_value': field_value,
-            }
 
         ExtendedField.objects.create(
             contributor=contributor,
