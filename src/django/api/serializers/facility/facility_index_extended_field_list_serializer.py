@@ -1,5 +1,6 @@
 from typing import Union
 
+from ..utils import is_contribution_masked
 from .utils import (
     get_contributor_name_from_facilityindex,
     get_contributor_id_from_facilityindex,
@@ -99,7 +100,22 @@ class FacilityIndexExtendedFieldListSerializer:
         )
 
     def _get_is_from_claim(self, extended_field: dict) -> bool:
-        return extended_field.get('facility_list_item_id') is None
+        # Fields created directly from a FacilityClaim have no list item.
+        if extended_field.get('facility_list_item_id') is None:
+            return True
+        # Fields the approved claimant contributed through other channels
+        # (SLC, list upload) are also claimant data. See the Promotion
+        # Logic Q3 plan.
+        claimant_contributor_id = self.context.get('claimant_contributor_id')
+        if claimant_contributor_id is None:
+            return False
+        contributor = extended_field.get('contributor') or {}
+        # A masked (anonymized) contribution must not be attributed to the
+        # claim: the claimant is publicly named, so the badge would undo
+        # the masking by inference.
+        if is_contribution_masked(contributor, self.masked_contributors):
+            return False
+        return contributor.get('id') == claimant_contributor_id
 
     def _get_verified_count(self, extended_field: dict) -> int:
         count = 0
