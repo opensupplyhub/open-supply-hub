@@ -278,10 +278,6 @@ jobs:
 
       - name: Build static assets
         working-directory: src/react
-        env:
-          # webpack 4 needs OpenSSL's legacy provider on node >=17.
-          # Remove when migrating off react-scripts 4 (OSDEV-2996).
-          NODE_OPTIONS: --openssl-legacy-provider
         run: yarn run build
 
       - id: project
