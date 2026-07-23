@@ -54,7 +54,7 @@ class FacilityDownloadSerializerBase(Serializer):
             facility.id,
             self.get_contribution_date(facility),
             self.get_name(facility),
-            facility.address,
+            self.get_address(facility),
             facility.country_code,
             self.get_country_name(facility),
             *self.get_location(facility),
@@ -75,6 +75,15 @@ class FacilityDownloadSerializerBase(Serializer):
         if claim and claim.get("facility_name_english"):
             return claim.get("facility_name_english")
         return facility.name
+
+    @staticmethod
+    def get_address(facility: FacilityIndexNewManager) -> str:
+        """Return the claim address when present, otherwise the facility
+        address."""
+        claim = facility.approved_claim
+        if claim and claim.get("facility_address"):
+            return claim.get("facility_address")
+        return facility.address
 
     @staticmethod
     def get_country_name(facility: FacilityIndexNewManager) -> str:

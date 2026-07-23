@@ -676,7 +676,9 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             self.facility.id,
             self.date,
             "Claim Name",
-            "Address",
+            # The claim's facility_address wins over the facility address,
+            # matching the claim-first behavior of the name column.
+            "facility_address",
             "US",
             "United States",
             0.0,
