@@ -67,3 +67,38 @@ def is_data_center(facility):
     ).values_list('value', flat=True)
 
     return any(matched_values_include_data_center(v) for v in values)
+
+
+# --- Per-row provenance capture for FacilityListItem ---
+# These names match the incoming contribution column names. Values are
+# read from the raw row (not the cleaned fields) so URLs, dates, and
+# free text are preserved unmodified.
+PROVENANCE_FIELDS = (
+    'source_name',
+    'source_link',
+    'information_source_type',
+    'date_of_source',
+    'notes',
+    'data_collection_methodology',
+    'ai_usage_notes',
+)
+
+
+def extract_provenance(raw_data):
+    """
+    Return a dict of provenance field -> value from a raw contribution row.
+
+    Only present, non-empty values are included, so absent provenance leaves
+    the FacilityListItem columns as NULL. Safe to call on any path; returns an
+    empty dict when the row carries no provenance.
+    """
+    if not raw_data:
+        return {}
+
+    provenance = {}
+    for field in PROVENANCE_FIELDS:
+        value = raw_data.get(field)
+        if value not in (None, ''):
+            provenance[field] = value
+
+    return provenance
