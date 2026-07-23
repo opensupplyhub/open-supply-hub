@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="OS Hub Deck" description="Branded 1280×720 slide deck with the full OS Hub slide-layout library: titles, section rails, statements, pillars, stats, topic bars, key notes, callouts, motions" -->
+<helmet>
+<script src="./ds-base.js"></script>
+<style>
+body { margin:0; background:#3a3a3f; }
+</style>
+</helmet>
+
+<div style="display:flex; flex-direction:column; gap:28px; padding:28px; align-items:center; width:fit-content; min-width:fit-content; margin:0 auto; box-sizing:border-box;">
+
+  <!-- 01 · Title (dark mosaic) -->
+  <section data-screen-label="01 Title" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background-color:#0D1128; background-image:url('../../assets/backgrounds/mosaic-dark.png'); background-size:cover; background-position:right center;">
+    <img src="../../assets/logos/osh-logo-white.svg" alt="Open Supply Hub" style="position:absolute; top:64px; left:74px; width:200px;" />
+    <div style="position:absolute; left:74px; bottom:170px; width:620px;">
+      <div style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.14em; text-transform:uppercase; color:#FCCF3F; margin-bottom:18px;">Presentation kicker · Month 2026</div>
+      <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:64px; line-height:0.92; color:#F9F7F7; margin:0;">Deck title goes here, two lines works best</h1>
+    </div>
+    <div style="position:absolute; left:74px; bottom:64px; font-family:'DM Sans',sans-serif; font-weight:500; font-size:17px; color:#F9F7F7;">Audience or event name</div>
+  </section>
+
+  <!-- 02 · Title (light) -->
+  <section data-screen-label="02 Title Light" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7;">
+    <img src="../../assets/logos/osh-logo-dark.svg" alt="Open Supply Hub" style="position:absolute; top:56px; left:64px; width:150px;" />
+    <div style="position:absolute; left:64px; top:250px; width:620px;">
+      <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:56px; line-height:0.92; color:#0D1128; margin:0;">Open Supply Hub<br />Board of Directors<br />Q1 Meeting</h1>
+      <p style="font-family:'DM Sans',sans-serif; font-size:19px; color:#0D1128; margin:26px 0 0;">30 April 2026</p>
+    </div>
+    <div style="position:absolute; right:0; top:0; width:460px; height:720px; background-image:url('../../assets/backgrounds/mosaic-light.png'); background-size:cover; background-position:right center;"></div>
+  </section>
+
+  <!-- 03 · Statement -->
+  <section data-screen-label="03 Statement" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; display:grid; place-items:center; background-color:#F9F7F7; background-image:url('../../assets/backgrounds/corner-cluster-light.png'); background-size:cover; background-position:right bottom;">
+    <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:64px; line-height:0.95; color:#0D1128; max-width:900px; text-align:center; padding:0 90px; margin:0;">A single bold statement lives here. <span style="color:#8428FA;">Highlight the key phrase</span> in purple.</h1>
+    <img src="../../assets/logos/osh-star-dark.svg" alt="" style="position:absolute; top:52px; left:64px; width:54px;" />
+  </section>
+
+  <!-- 04 · Section header (shape rail) -->
+  <section data-screen-label="04 Section Rail" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7; display:flex;">
+    <div style="width:150px; height:720px; flex:none; display:grid; grid-template-rows:repeat(6,1fr);">
+      <div style="display:grid; place-items:center; overflow:hidden;"><img src="../../assets/shapes/fan-lines-dark.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="display:grid; place-items:center; overflow:hidden;"><img src="../../assets/shapes/semicircles-yellow.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="display:grid; place-items:center; overflow:hidden;"><img src="../../assets/shapes/triangles-green-pair.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="display:grid; place-items:center; overflow:hidden;"><img src="../../assets/shapes/checkerboard-dark.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="display:grid; place-items:center; overflow:hidden;"><img src="../../assets/shapes/circle-purple.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="display:grid; place-items:center; overflow:hidden;"><img src="../../assets/shapes/triangle-red.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+    </div>
+    <div style="flex:1; display:grid; place-items:center;">
+      <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:64px; line-height:0.92; color:#0D1128; text-align:center; max-width:760px; margin:0;">Section title goes here</h1>
+    </div>
+  </section>
+
+  <!-- 05 · Pillars (3-up) -->
+  <section data-screen-label="05 Pillars" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7; padding:72px; box-sizing:border-box;">
+    <div style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.13em; text-transform:uppercase; color:#8428FA;">Uppercase eyebrow line</div>
+    <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:56px; line-height:0.92; color:#0D1128; margin:8px 0 0;">Three pillars make it work</h1>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:44px; margin-top:56px;">
+      <div>
+        <img src="../../assets/shapes/circle-purple.png" alt="" style="width:72px; height:72px; object-fit:contain;" />
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:30px; line-height:0.95; color:#0D1128; margin:20px 0 0;">First pillar</h3>
+        <p style="font-family:'DM Sans',sans-serif; font-size:17px; line-height:1.4; color:#0D1128; margin:10px 0 0;">One or two sentences supporting the first pillar with a <b>bold key phrase</b>.</p>
+      </div>
+      <div>
+        <img src="../../assets/shapes/triangle-yellow.png" alt="" style="width:72px; height:72px; object-fit:contain;" />
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:30px; line-height:0.95; color:#0D1128; margin:20px 0 0;">Second pillar</h3>
+        <p style="font-family:'DM Sans',sans-serif; font-size:17px; line-height:1.4; color:#0D1128; margin:10px 0 0;">One or two sentences supporting the second pillar.</p>
+      </div>
+      <div>
+        <img src="../../assets/shapes/semicircles-green.png" alt="" style="width:72px; height:72px; object-fit:contain;" />
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:30px; line-height:0.95; color:#0D1128; margin:20px 0 0;">Third pillar</h3>
+        <p style="font-family:'DM Sans',sans-serif; font-size:17px; line-height:1.4; color:#0D1128; margin:10px 0 0;">One or two sentences supporting the third pillar.</p>
+      </div>
+    </div>
+    <img src="../../assets/logos/osh-star-dark.svg" alt="" style="position:absolute; right:64px; top:64px; width:46px;" />
+  </section>
+
+  <!-- 06 · Stats -->
+  <section data-screen-label="06 Stats" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7; padding:80px 72px; box-sizing:border-box;">
+    <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:56px; line-height:0.92; color:#0D1128; margin:0;">A dynamic, growing community</h1>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:44px; margin-top:90px; text-align:center;">
+      <div>
+        <div style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:84px; line-height:0.9; color:#8428FA;">2,500,000+</div>
+        <div style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:22px; color:#0D1128; margin-top:14px;">OS IDs</div>
+        <p style="font-family:'DM Sans',sans-serif; font-size:16px; color:rgba(13,17,40,0.65); margin:6px 0 0;">Production locations listed on OS Hub</p>
+      </div>
+      <div>
+        <div style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:84px; line-height:0.9; color:#62CC74;">3,700+</div>
+        <div style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:22px; color:#0D1128; margin-top:14px;">Claimed profiles</div>
+        <p style="font-family:'DM Sans',sans-serif; font-size:16px; color:rgba(13,17,40,0.65); margin:6px 0 0;">Facilities taking ownership of their data</p>
+      </div>
+      <div>
+        <div style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:84px; line-height:0.9; color:#FF2727;">4,500+</div>
+        <div style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:22px; color:#0D1128; margin-top:14px;">Data contributors</div>
+        <p style="font-family:'DM Sans',sans-serif; font-size:16px; color:rgba(13,17,40,0.65); margin:6px 0 0;">Brands, orgs, and service providers</p>
+      </div>
+    </div>
+    <img src="../../assets/backgrounds/confetti-strip-light.png" alt="" style="position:absolute; left:0; bottom:0; width:100%;" />
+  </section>
+
+  <!-- 07 · Topic bar content -->
+  <section data-screen-label="07 Topic Bar" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7;">
+    <div style="height:44px; background:#0D1128; display:flex; align-items:center; justify-content:flex-end; padding:0 36px;">
+      <span style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:15px; color:#F9F7F7; letter-spacing:0.04em;">Running topic label</span>
+    </div>
+    <div style="padding:52px 72px;">
+      <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:44px; line-height:0.92; color:#0D1128; margin:0;">Content slide title</h1>
+      <div style="background:#FFA6D0; border-radius:14px; padding:32px 40px; margin-top:34px; max-width:880px;">
+        <p style="font-family:'DM Sans',sans-serif; font-size:19px; color:#0D1128; margin:0;">Lead sentence for the highlighted panel:</p>
+        <ul style="font-family:'DM Sans',sans-serif; font-size:19px; line-height:1.55; color:#0D1128; margin:14px 0 0; padding-left:24px;">
+          <li>First supporting point</li>
+          <li>Second supporting point</li>
+          <li>Third supporting point</li>
+        </ul>
+      </div>
+    </div>
+    <img src="../../assets/logos/osh-star-dark.svg" alt="" style="position:absolute; right:36px; top:64px; width:40px;" />
+  </section>
+
+  <!-- 08 · Key notes + chart -->
+  <section data-screen-label="08 Key Notes" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7;">
+    <div style="height:44px; background:#0D1128; display:flex; align-items:center; justify-content:flex-end; padding:0 36px;">
+      <span style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:15px; color:#F9F7F7; letter-spacing:0.04em;">Running topic label</span>
+    </div>
+    <div style="display:grid; grid-template-columns:340px 1fr; gap:40px; padding:40px 60px; box-sizing:border-box;">
+      <div style="background:#FCCF3F; border-radius:14px; padding:28px 30px; height:500px; box-sizing:border-box;">
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:30px; line-height:0.95; color:#0D1128; margin:0;">Key notes</h3>
+        <ul style="font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#0D1128; margin:16px 0 0; padding-left:20px;">
+          <li><b>Q1:</b> headline result goes here</li>
+          <li>Context on what changed this quarter</li>
+          <li>Risk or watch-item to flag</li>
+        </ul>
+      </div>
+      <div style="height:500px; background:#FFFFFF; border:1.5px dashed rgba(13,17,40,0.3); border-radius:12px; display:grid; place-items:center;">
+        <span style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:17px; color:rgba(13,17,40,0.65);">Chart area</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 · Band header (data) -->
+  <section data-screen-label="09 Band Header" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#FFFFFF;">
+    <div style="height:72px; background:#8428FA; display:flex; align-items:center; gap:18px; padding:0 40px;">
+      <img src="../../assets/logos/osh-star-white.svg" alt="" style="width:34px;" />
+      <span style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:20px; color:#F9F7F7; letter-spacing:0.08em; text-transform:uppercase;">Uppercase data slide title</span>
+    </div>
+    <div style="padding:40px 72px;">
+      <div style="height:440px; border:1.5px dashed rgba(13,17,40,0.3); border-radius:12px; display:grid; place-items:center;">
+        <span style="font-family:'DM Sans',sans-serif; font-weight:500; font-size:17px; color:rgba(13,17,40,0.65);">Chart / table area</span>
+      </div>
+      <p style="font-family:'DM Sans',sans-serif; font-size:15px; color:rgba(13,17,40,0.65); margin:22px 0 0; max-width:1000px;">Footnote commentary sits here under the chart.</p>
+    </div>
+  </section>
+
+  <!-- 10 · Callout boxes -->
+  <section data-screen-label="10 Callout Boxes" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7; padding:56px 72px; box-sizing:border-box;">
+    <span style="display:inline-block; background:#FCCF3F; border:2px solid #0D1128; border-radius:999px; padding:8px 26px; font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:26px; line-height:1; color:#0D1128;">Pill label</span>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:36px;">
+      <div style="background:#FCCF3F; border-radius:16px; padding:30px 34px; box-sizing:border-box;">
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:26px; line-height:0.95; color:#0D1128; margin:0;">First panel</h3>
+        <ul style="font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#0D1128; margin:12px 0 0; padding-left:20px;"><li>Point one</li><li>Point two</li></ul>
+      </div>
+      <div style="background:#62CC74; border-radius:16px; padding:30px 34px; box-sizing:border-box;">
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:26px; line-height:0.95; color:#0D1128; margin:0;">Second panel</h3>
+        <ul style="font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#0D1128; margin:12px 0 0; padding-left:20px;"><li>Point one</li><li>Point two</li></ul>
+      </div>
+      <div style="background:#FFA6D0; border-radius:16px; padding:30px 34px; box-sizing:border-box;">
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:26px; line-height:0.95; color:#0D1128; margin:0;">Third panel</h3>
+        <ul style="font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#0D1128; margin:12px 0 0; padding-left:20px;"><li>Point one</li><li>Point two</li></ul>
+      </div>
+      <div style="background:#FFFFFF; border:2px solid #0D1128; border-radius:16px; padding:30px 34px; box-sizing:border-box;">
+        <h3 style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:26px; line-height:0.95; color:#0D1128; margin:0;">Fourth panel</h3>
+        <ul style="font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5; color:#0D1128; margin:12px 0 0; padding-left:20px;"><li>Point one</li><li>Point two</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · Motion (staircase mosaic) -->
+  <section data-screen-label="11 Motion" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7;">
+    <div style="position:absolute; left:72px; top:150px; width:560px;">
+      <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:56px; line-height:0.92; color:#0D1128; margin:0;">Motion for election</h1>
+      <ul style="font-family:'DM Sans',sans-serif; font-size:19px; line-height:1.5; color:#0D1128; margin:22px 0 0; padding-left:22px;">
+        <li>To elect [name] to the OS Hub Board of Directors</li>
+      </ul>
+    </div>
+    <div style="position:absolute; right:0; bottom:0; display:grid; grid-template-columns:repeat(4,120px); grid-template-rows:repeat(4,120px);">
+      <div></div><div></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/triangle-red.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/fan-lines-dark.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/circle-pink.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/semicircles-yellow.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/triangles-green-pair.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/triangle-yellow.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/petals-purple.svg" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/checkerboard-dark.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/circle-purple.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/semicircles-green.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/triangle-pink.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/burst-dark.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+      <div style="overflow:hidden;"><img src="../../assets/shapes/petals-red.png" alt="" style="width:100%; height:100%; object-fit:contain;" /></div>
+    </div>
+  </section>
+
+  <!-- 12 · Section divider (dark) -->
+  <section data-screen-label="12 Divider Dark" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#0D1128; display:grid; place-items:center;">
+    <div style="text-align:center;">
+      <div style="width:84px; height:84px; border-radius:50%; background:#8428FA; display:grid; place-items:center; margin:0 auto 30px; font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:44px; color:#F9F7F7; padding-bottom:6px; box-sizing:border-box;">2</div>
+      <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:88px; line-height:0.92; color:#F9F7F7; margin:0;">Section name</h1>
+    </div>
+    <img src="../../assets/shapes/petals-yellow.png" alt="" style="position:absolute; left:-30px; bottom:-30px; width:200px;" />
+  </section>
+
+  <!-- 13 · Contact / close -->
+  <section data-screen-label="13 Contact" style="width:1280px; height:720px; flex:none; position:relative; overflow:hidden; background:#F9F7F7; padding:72px; box-sizing:border-box;">
+    <div style="font-family:'DM Sans',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.13em; text-transform:uppercase; color:#8428FA;">For more information</div>
+    <h1 style="font-family:'Darker Grotesque',sans-serif; font-weight:800; font-size:46px; line-height:0.95; color:#0D1128; margin:12px 0 0; max-width:880px;">We're only just getting started. Our vision is to map the millions of production locations across the world — for the <span style="color:#8428FA;">450+ million people</span> working in them.</h1>
+    <div style="display:flex; gap:80px; margin-top:48px;">
+      <div>
+        <div style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:30px; line-height:0.95; color:#0D1128;">Contact name</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:16px; color:#0D1128; margin-top:4px;">Role title</div>
+        <a href="mailto:hello@opensupplyhub.org" style="font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; color:#8428FA;">hello@opensupplyhub.org</a>
+      </div>
+      <div>
+        <div style="font-family:'Darker Grotesque',sans-serif; font-weight:700; font-size:30px; line-height:0.95; color:#0D1128;">Contact name</div>
+        <div style="font-family:'DM Sans',sans-serif; font-size:16px; color:#0D1128; margin-top:4px;">Role title</div>
+        <a href="mailto:hello@opensupplyhub.org" style="font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; color:#8428FA;">hello@opensupplyhub.org</a>
+      </div>
+    </div>
+    <img src="../../assets/logos/osh-logo-dark.svg" alt="Open Supply Hub" style="position:absolute; left:72px; bottom:56px; width:170px;" />
+    <div style="position:absolute; right:0; bottom:0; width:620px; height:300px; background-image:url('../../assets/backgrounds/corner-cluster-light.png'); background-size:210% auto; background-position:right bottom; background-repeat:no-repeat;"></div>
+  </section>
+
+</div>
+</x-dc>
+</body>
+</html>
