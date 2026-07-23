@@ -69,10 +69,10 @@ def is_data_center(facility):
     return any(matched_values_include_data_center(v) for v in values)
 
 
-# --- Per-row provenance capture for FacilityListItem (OSDEV-3075) ---
-# The provenance columns are added by OSDEV-3070 / OSDEV-3071. These names match
-# the incoming contribution column names. Values are read from the raw row (not
-# the cleaned fields) so URLs, dates, and free text are preserved unmodified.
+# --- Per-row provenance capture for FacilityListItem ---
+# These names match the incoming contribution column names. Values are
+# read from the raw row (not the cleaned fields) so URLs, dates, and
+# free text are preserved unmodified.
 PROVENANCE_FIELDS = (
     'source_name',
     'source_link',
