@@ -170,6 +170,7 @@ def create_extendedfield(field, field_value, item, contributor):
             field == ExtendedField.DUNS_ID
             or field == ExtendedField.LEI_ID
             or field == ExtendedField.RBA_ID
+            or field in ExtendedField.DATA_CENTER_FIELDS
         ):
             field_value = {
                 'raw_value': field_value,
@@ -229,7 +230,7 @@ RAW_DATA_FIELDS = (
     ExtendedField.LEI_ID,
     ExtendedField.RBA_ID,
     ExtendedField.ISIC_4,
-)
+) + ExtendedField.DATA_CENTER_FIELDS
 
 
 def create_extendedfields_for_single_item(
