@@ -812,6 +812,41 @@ variable "anonymized_database_password" {
   sensitive = true
 }
 
+variable "codebuild_github_runner_enabled" {
+  description = "Toggle to enable the CodeBuild project acting as an ephemeral GitHub Actions runner"
+  type        = bool
+  default     = false
+}
+
+variable "codebuild_github_runner_project_name" {
+  description = "CodeBuild project name; workflows reference it as runs-on: codebuild-<name>-.... Must stay in sync with the runs-on labels in .github/workflows."
+  type        = string
+  default     = "osh-github-actions-runner"
+}
+
+variable "codebuild_github_runner_repository_url" {
+  type    = string
+  default = "https://github.com/opensupplyhub/open-supply-hub.git"
+}
+
+variable "codebuild_github_runner_connection_arn" {
+  description = "ARN of the manually created CodeConnections connection to the opensupplyhub GitHub org"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "codebuild_github_runner_compute_type" {
+  type    = string
+  default = "BUILD_GENERAL1_LARGE"
+}
+
+variable "codebuild_github_runner_build_timeout" {
+  description = "Build timeout in minutes for runner jobs (DB dump/restore run 85-150 minutes)"
+  type        = number
+  default     = 300
+}
+
 variable "export_csv_enabled" {
   description = "Toggle to enable or disable the export csv scheduled job"
   type        = bool

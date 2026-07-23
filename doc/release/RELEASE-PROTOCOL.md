@@ -87,7 +87,8 @@ This document outlines the SDLC pillars of the opensupplyhub monorepo, as well a
 | v2.24.0 | May 26, 2026 | May 29, 2026 | @Vadim Kovalenko |
 | v2.25.0 | June 09, 2026 | June 12, 2026 | @Vadim Kovalenko |
 | v2.26.0 | June 23, 2026 | June 26, 2026 | @Vlad Shapik |
-| v2.27.0 | July 7, 2026 | July 10, 2026 | @Vlad Shapik |
+| v2.27.0 | July 14, 2026 | July 17, 2026 | @Vlad Shapik |
+| v2.28.0 | August 4, 2026 | August 7, 2026 | @Max Valencia |
 
 ## General Information
 
@@ -204,7 +205,7 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 #### Preparation for release testing
 1. Creating a Test Run Cycle:
-    - A Day before the Code Freeze (Five working days before the release scheduled for Saturday), the QA engineer creates a new test run cycle in QAlity.
+    - A Day before the Code Freeze, the QA engineer creates a new test run cycle in QAlity.
     [See Instructions how to create Test Cycles in QAlity](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles)
     - Above the regular set of test cases, the QA team adds tickets implemented in the current release to the test run cycle as well. For this in the QAlity should be created new folder "Release {#release-version}" in the Functional Testing Folder. [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/665255957/QAlity+Instruction+how+to+add+tests+regarding+change+list+for+release)
 2. Executing the Test Run:
@@ -216,10 +217,11 @@ To identify the tasks that need testing, QA engineers should refer to the Jira r
 
 #### Smoke testing on release day
 
-On Saturday (release day), the QA team should create two additional test cycles for conducting Smoke Testing [See Instructions here](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/657358851/QAlity+instruction+how+to+create+Regression+and+Smoke+test+Cycles):
+Smoke testing is the responsibility of the person performing the release. On release day, the release performer runs the automated smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against both the Sandbox and Production environments.
 
-1. `Staging Environment:` Verify the release changes before deployment to Production.
-2. `Production Environment:` Ensure the release is successfully deployed and functions as expected in the live environment.
+See the [e2e repository README](https://github.com/opensupplyhub/open-supply-hub-e2e-tests/blob/main/README.md) for instructions on how to set up and run the smoke tests.
+
+Once the smoke tests finish, if any of them report errors, retest the affected cases manually. If the manual tests pass, the release is considered successful. In this case, ping the engineering team after the release so they can check the failing e2e tests, since the failures are in the tests themselves rather than in the release.
 
 ### Release to Production and Sandbox
 
@@ -235,9 +237,9 @@ If there is no such message and DedupeHub hangs, you need to reload it (perhaps 
 8. Once the aforementioned steps are successfully completed, the person responsible for the release should also verify that all actions included in the post_deployment command have been successfully executed. Here is the [instructions](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/280788993/Checking+successful+application+of+post-deployment+actions+in+the+test+environment).
 In case there is a need to run additional command in the terminal of the Django container, follow [this instruction](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/140443651/DevOps+Guidelines+for+Django+container+Database+Snapshots+and+ECS+Management#All-the-steps-described-in-this-Document-should-be-run-by-DevOps-or-Tech-Lead-Engineers-only-------How-can-we-manually-execute-commands-within-the-Django-container-for-our-environments%3F--Even-if-it-will-be-done-in-the-OSDEV-564-JIRA-ticket%2C-we-need-to-have-instructions-for-the-current-state-of-the-infrastructure.).
 9. Make inactive the `disable_list_uploading` switch (in the Production environment).
-10. Notify the QA Engineer that the new version has been released, and they can commence smoke testing.
-11. The QA Engineer must notify stakeholders in the `#data_x_product` Slack channel when testing is complete in the Sandbox and in the Production, as well as issues, if any encountered during testing.
-12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded. Additionally, update the *Unreleased* version's status in Jira.
+10. Once the new version has been released, the responsible person must run the smoke tests from the [e2e repository](https://github.com/opensupplyhub/open-supply-hub-e2e-tests) against the Sandbox and Production environments, as described in the [Smoke testing on release day](#smoke-testing-on-release-day) section.
+11. If any smoke tests fail, retest the affected cases manually. If the manual tests pass, smoke testing is considered completed successfully.
+12. Upon completing the release, the responsible person must notify stakeholders in the `#data_x_product` Slack channel that the releases to Sandbox and Production have concluded and that smoke testing has been completed successfully. Updating the *Unreleased* version's status in Jira should be completed by the Project Manager (PM).
 
 ### Deployment to external collaboration environments
 
@@ -247,7 +249,7 @@ General guidelines for deploying to external collaboration environments:
 1. Git Tagging Strategy: Use the same Git tagging strategy as for Production. The only difference is that each tag should include a prefix specific to the external environment. See the [Git branches and tags](#git-branches-and-tags) section for more details.
 2. Release Process: The release process should follow the same steps as outlined for Production in the [Release to Production and Sandbox](#release-to-production-and-sandbox) section. The release day follows the defined [Release Schedule](#release-schedule).
 3. Hotfixes: Hotfixes should be deployed to external environments using the same process as for the Production environment. See the [Hotfixes](#hotfixes) section for more information.
-4. Smoke Testing: Smoke testing should be conducted in the same manner as on the Production environment to ensure stability and feature integrity. Refer to the [Smoke testing on release day](#smoke-testing-on-release-day) section for details.
+4. Smoke Testing: Smoke testing should be conducted in the same manner as on the Production environment to ensure stability and feature integrity. Refer to the [Smoke testing on release day](#smoke-testing-on-release-day) section for details. For third-party environments such as RBA, you must have the VPN activated to reach the environment before running the smoke tests. See Confluence for the documentation on how to set up the VPN: [Setup WireGuard VPN to access RBA environment](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/778403842/Setup+WireGuard+VPN+to+access+RBA+environment).
 5. Reloading DedupeHub: Reloading DedupeHub in external environments can be performed by following the same steps described in the [Reloading the DedupeHub](#reloading-the-dedupehub) section, using the appropriate infrastructure resources of the respective external environment.
 
 Notes:
@@ -275,13 +277,6 @@ On Monday after each release, current metrics should be checked by QA engineer.
      - check that there are new uploads in Monday after release
 2. [Contribot](https://spdfn.slack.com/archives/C04EDHR643E):
     - Make sure that new uploads are displayed in Contribot and they are similar to the Contributor List Approval Queue in Monday
-3. [~~Kamino~~](https://34.241.25.221/kamino/bk): (not relevant)
-    - ~~Successfully logged with valid OS HUb admin credentials and re-directed to Kamino's.~~
-2. [~~Looker~~](https://lookerstudio.google.com/u/1/reporting/b242ab63-6cfd-4d49-98ca-88ad84a47208/page/clbkD): (not relevant)
-    - ~~`duplicate_ratio_perc` ~ 2 (+- 0.1)~~
-    - ~~`estimated_duplicates` ~ 4000-6000~~
-3. [~~Airflow~~](https://34.241.25.221/airflow/dagrun/list/?_flt_3_dag_id=dupliloom): (not relevant)
-    - ~~Dag_Id duplillom should approximately take 50 min. So we can conclude that it <strong>must be > 2.5</strong>~~
 
 ### Reloading the DedupeHub
 - To restart DedupeHub the responsible person have to find `ecsOpenSupplyHubProductionCluster` in Amazon Elastic Container Service (ECS), select `OpenSupplyHubProductionAppDD` and press update. Then select `Force New Deployment` and press update button.
