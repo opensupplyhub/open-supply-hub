@@ -13,7 +13,8 @@ BACKFILL_PARALLEL_BY_ENVIRONMENT = {
     'Rba': 10,
 }
 
-# Fallback when settings.ENVIRONMENT is not in the map (e.g. a new deploy target).
+# Fallback when settings.ENVIRONMENT is not in the map
+# (e.g. a new deploy target).
 BACKFILL_PARALLEL_DEFAULT = 2
 
 
