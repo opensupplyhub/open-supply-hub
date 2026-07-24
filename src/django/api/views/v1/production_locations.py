@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from rest_framework.decorators import action
 from waffle import switch_is_active
 
 from api.views.v1.utils import (
@@ -55,6 +56,9 @@ from api.serializers.facility.partner_field_helper import (
     apply_schema_defaults,
     get_cached_all_partner_fields,
 )
+from api.services.facility_dissociation_service import (
+    dissociate_contributor_matches,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +95,7 @@ class ProductionLocations(ViewSet):
         '''
         Returns the list of permissions specific to the current action.
         '''
-        if (self.action == 'create'
-                or self.action == 'partial_update'):
+        if self.action in ('create', 'partial_update', 'dissociate'):
             return [IsRegisteredAndConfirmed]
         return []
 
@@ -283,6 +286,50 @@ class ProductionLocations(ViewSet):
                 'cleaned_data': result.moderation_event.cleaned_data,
             },
             status=result.status_code
+        )
+
+    @action(detail=True, methods=['post'], url_path='dissociate')
+    @transaction.atomic
+    def dissociate(self, request, pk=None):
+        '''
+        Deactivate the authenticated contributor's contributions to the
+        production location identified by ``pk`` (an ``os_id``).
+
+        Only contributions from lists approved by an admin are eligible. The
+        contribution is anonymized, not deleted: the contributor's active
+        matches are set inactive, so their name is replaced with their
+        contributor type on the location profile. Scoping to
+        ``request.user.contributor`` guarantees a caller can only ever affect
+        their own contributions, never another contributor's.
+        '''
+        facility = Facility.objects.filter(id=pk).first()
+        if facility is None:
+            return Response(
+                {'detail': APIV1CommonErrorMessages.LOCATION_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        dissociated_count = dissociate_contributor_matches(
+            facility,
+            request.user.contributor,
+            require_approved_list=True
+        )
+
+        if dissociated_count == 0:
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages
+                    .NO_ACTIVE_CONTRIBUTION_TO_DISSOCIATE
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            {
+                'os_id': facility.id,
+                'dissociated_contributions': dissociated_count,
+            },
+            status=status.HTTP_200_OK
         )
 
     def __get_partner_fields(self, pk):
