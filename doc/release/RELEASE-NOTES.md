@@ -36,6 +36,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `remove_rsc_grievance_mechanism_nested_internal_ids` — one-time cleanup (OSDEV-2949) that strips the nested `internal_ID` from `rsc_grievance_mechanism` values; remove from `post_deployment` after this release has been deployed everywhere.
 * Expect `remove_rsc_grievance_mechanism_nested_internal_ids` to update on the order of ~1.7k `ExtendedField` rows. Each update invokes the existing `ExtendedField` database trigger, which refreshes the affected `FacilityIndex.extended_fields` data without a separate full or targeted reindex. The command runs with no application downtime. Confirm timing on Staging before Production.
 * Before applying Terraform to Test, complete the one-time CodeConnections setup described in `deployment/terraform/codebuild_github_runner/README.md` and set `codebuild_github_runner_connection_arn` in the private `ci-deployment` Test tfvars.
+* [OSDEV-1148] The `production-locations` index template gains new mappings (`contributors`, `number_of_contributors`, `lists`), and template changes only apply to a newly created index. When deploying, run the `[Release] Deploy` workflow with `clear-opensearch-target` set to `production-locations` so the index is dropped and rebuilt by the Logstash `sync_production_locations` pipeline, which also backfills the new fields for all existing locations (the incremental sync alone would not). If OSDEV-3115 lands in the same release, one rebuild covers both changes.
 
 
 ## Release 2.27.0
