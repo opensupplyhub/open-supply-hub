@@ -16,7 +16,9 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         super(FacilityAndProcessingTypeAPITest, self).setUp()
         self.url = reverse("facility-list")
 
-    def _create_processing_type_extended_field(self, raw_value, matched_values):
+    def _create_processing_type_extended_field(
+        self, raw_value, matched_values
+    ):
         # The ExtendedField insert trigger reindexes FacilityIndex, so the
         # facility must be linked directly for index_processing_type() to
         # pick the value up.
@@ -65,7 +67,14 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         # being indexed in processing_type after the OSDEV-1034 change.
         self._create_processing_type_extended_field(
             ["Cutting"],
-            [["PROCESSING_TYPE", "EXACT", "Final Product Assembly", "Cutting"]],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Cutting",
+                ]
+            ],
         )
 
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
