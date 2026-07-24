@@ -551,6 +551,205 @@ class ProductionLocationsTest(BaseAPITest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result['data'][0]['claim_status'], 'unclaimed')
 
+    def test_production_locations_contributor_fields_and_filtering(self):
+        multi_contributor_doc = {
+            "sector": ["Apparel"],
+            "address": "Multi Contributor Facility Address",
+            "name": "Multi Contributor Facility",
+            "country": {"alpha_2": "US"},
+            "os_id": "US2023CONTRIB01",
+            "coordinates": {"lon": -74.0060, "lat": 40.7128},
+            "contributors": [
+                {"id": 142, "type": "Brand/Retailer"},
+                {"id": 44, "type": "Civil Society Organization"}
+            ],
+            "number_of_contributors": 2,
+            "lists": [
+                {"id": 13, "contributor_id": 142, "name": "Test list"}
+            ]
+        }
+
+        single_contributor_doc = {
+            "sector": ["Apparel"],
+            "address": "Single Contributor Facility Address",
+            "name": "Single Contributor Facility",
+            "country": {"alpha_2": "CA"},
+            "os_id": "CA2023CONTRIB01",
+            "coordinates": {"lon": -79.3832, "lat": 43.6532},
+            "contributors": [
+                {"id": 977, "type": "Multi-Stakeholder Initiative"}
+            ],
+            "number_of_contributors": 1,
+            "lists": [
+                {"id": 21, "contributor_id": 977, "name": "MSI list"}
+            ]
+        }
+
+        no_contributor_doc = {
+            "sector": ["Apparel"],
+            "address": "No Contributor Facility Address",
+            "name": "No Contributor Facility",
+            "country": {"alpha_2": "MX"},
+            "os_id": "MX2023CONTRIB01",
+            "coordinates": {"lon": -99.1332, "lat": 19.4326}
+        }
+
+        docs = [
+            multi_contributor_doc,
+            single_contributor_doc,
+            no_contributor_doc
+        ]
+        for doc in docs:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        # The three fields are returned in list responses.
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?os_id=US2023CONTRIB01",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        item = result['data'][0]
+        self.assertEqual(item['number_of_contributors'], 2)
+        self.assertIn(
+            {"id": 142, "type": "Brand/Retailer"}, item['contributors']
+        )
+        self.assertEqual(
+            item['lists'],
+            [{"id": 13, "contributor_id": 142, "name": "Test list"}]
+        )
+
+        # And in the single-location detail response.
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/US2023CONTRIB01/",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result['number_of_contributors'], 2)
+
+        # Filtering by a single contributor_id.
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?contributor_id=142",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        os_ids = [item['os_id'] for item in result['data']]
+        self.assertIn('US2023CONTRIB01', os_ids)
+        self.assertNotIn('CA2023CONTRIB01', os_ids)
+        self.assertNotIn('MX2023CONTRIB01', os_ids)
+
+        # Filtering by multiple contributor_id values (OR semantics).
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?contributor_id=142&contributor_id=977",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        os_ids = [item['os_id'] for item in result['data']]
+        self.assertIn('US2023CONTRIB01', os_ids)
+        self.assertIn('CA2023CONTRIB01', os_ids)
+
+        # Filtering by contributor_type.
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?contributor_type=Multi-Stakeholder Initiative",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        os_ids = [item['os_id'] for item in result['data']]
+        self.assertIn('CA2023CONTRIB01', os_ids)
+        self.assertNotIn('US2023CONTRIB01', os_ids)
+
+        # Invalid contributor_id returns a validation error, not a 500.
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?contributor_id=abc",
+            headers=self.basic_headers,
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_production_locations_number_of_contributors_sorting(self):
+        docs = [
+            {
+                "sector": ["Apparel"],
+                "address": "Few Contributors Facility",
+                "name": "Few Contributors Facility",
+                "country": {"alpha_2": "US"},
+                "os_id": "US2023NSORT01",
+                "coordinates": {"lon": -74.0060, "lat": 40.7128},
+                "contributors": [{"id": 1, "type": "Brand/Retailer"}],
+                "number_of_contributors": 1
+            },
+            {
+                "sector": ["Apparel"],
+                "address": "Many Contributors Facility",
+                "name": "Many Contributors Facility",
+                "country": {"alpha_2": "CA"},
+                "os_id": "CA2023NSORT01",
+                "coordinates": {"lon": -79.3832, "lat": 43.6532},
+                "contributors": [
+                    {"id": 2, "type": "Brand/Retailer"},
+                    {"id": 3, "type": "Civil Society Organization"},
+                    {"id": 4, "type": "Multi-Stakeholder Initiative"}
+                ],
+                "number_of_contributors": 3
+            },
+            # No contributor fields at all: sorting must not error on
+            # documents indexed before the fields existed.
+            {
+                "sector": ["Apparel"],
+                "address": "Legacy Facility",
+                "name": "Legacy Facility",
+                "country": {"alpha_2": "MX"},
+                "os_id": "MX2023NSORT01",
+                "coordinates": {"lon": -99.1332, "lat": 19.4326}
+            }
+        ]
+        for doc in docs:
+            self.open_search_client.index(
+                index=self.production_locations_index_name,
+                body=doc,
+                id=self.open_search_client.count()
+            )
+        self.open_search_client.indices.refresh(
+            index=self.production_locations_index_name
+        )
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=number_of_contributors&order_by=desc&size=100",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        counts = [
+            item.get('number_of_contributors')
+            for item in result['data']
+            if item.get('number_of_contributors') is not None
+        ]
+        self.assertEqual(counts, sorted(counts, reverse=True))
+        self.assertEqual(result['data'][0]['os_id'], 'CA2023NSORT01')
+
+        response = requests.get(
+            f"{self.root_url}/api/v1/production-locations/?sort_by=number_of_contributors&order_by=asc&size=100",
+            headers=self.basic_headers,
+        )
+        result = response.json()
+        self.assertEqual(response.status_code, 200)
+        counts = [
+            item.get('number_of_contributors')
+            for item in result['data']
+            if item.get('number_of_contributors') is not None
+        ]
+        self.assertEqual(counts, sorted(counts))
+
     def test_production_locations_combined_claim_status_filters(self):
         claimed_us_doc = {
             "sector": ["Apparel"],

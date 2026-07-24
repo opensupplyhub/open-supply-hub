@@ -240,6 +240,42 @@ class TestProductionLocationsQueryBuilder(TestCase):
             self.builder.query_body['query']['bool']['must']
         )
 
+    def test_add_terms_for_contributor_id_single(self):
+        self.builder.add_terms('contributor_id', [142])
+        expected = {'terms': {'contributors.id': [142]}}
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_add_terms_for_contributor_id_multiple(self):
+        self.builder.add_terms('contributor_id', [142, 44])
+        expected = {'terms': {'contributors.id': [142, 44]}}
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_add_terms_for_contributor_type(self):
+        self.builder.add_terms('contributor_type', ['Brand/Retailer'])
+        expected = {
+            'terms': {'contributors.type.keyword': ['Brand/Retailer']}
+        }
+        self.assertIn(
+            expected,
+            self.builder.query_body['query']['bool']['must']
+        )
+
+    def test_number_of_contributors_sorting_asc(self):
+        self.builder.add_sort('number_of_contributors', 'asc')
+        expected = {'number_of_contributors': {'order': 'asc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
+    def test_number_of_contributors_sorting_desc(self):
+        self.builder.add_sort('number_of_contributors', 'desc')
+        expected = {'number_of_contributors': {'order': 'desc'}}
+        self.assertIn(expected, self.builder.query_body['sort'])
+
     def test_claimed_at_sorting_asc(self):
         self.builder.add_sort('claimed_at', 'asc')
         expected = {'claimed_at': {'order': 'asc'}}
@@ -436,6 +472,9 @@ class TestProductionLocationsQueryBuilder(TestCase):
             "closed_at",
             "actual_annual_energy_consumption",
             "estimated_annual_throughput",
+            "contributors",
+            "number_of_contributors",
+            "lists",
         ]
 
         self.builder.include_into_search(include_fields)
