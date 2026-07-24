@@ -2056,7 +2056,6 @@ export const filterFreeEmissionsEstimateFields = formData => {
     const {
         energySourcesData,
         openingDateField,
-        closingDateField,
         estimatedAnnualThroughputField,
     } = freeEmissionsEstimateFormConfig;
 
@@ -2073,7 +2072,6 @@ export const filterFreeEmissionsEstimateFields = formData => {
     // Use Set for O(1) date and throughput field lookups.
     const dateAndThroughputFieldNames = new Set([
         openingDateField.valueFieldName,
-        closingDateField.valueFieldName,
         estimatedAnnualThroughputField.valueFieldName,
     ]);
 

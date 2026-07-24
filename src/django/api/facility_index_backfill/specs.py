@@ -13,6 +13,8 @@ NON_EMPTY_CONTRIBUTORS_FILTER = (
 # the millions of unclaimed rows.
 CLAIMED_FACILITIES_FILTER = "claim_info IS NOT NULL"
 
+APPROVED_CLAIM_FACILITIES_FILTER = "approved_claim IS NOT NULL"
+
 
 class FacilityIndexFieldSpec(TypedDict, total=False):
     """Configuration for backfilling one logical field group."""
@@ -52,6 +54,16 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': CLAIMED_FACILITIES_FILTER,
+    },
+    'approved_claim': {
+        'columns': {
+            'approved_claim': (
+                "COALESCE("
+                "(SELECT approved_claim FROM index_approved_claim(afi.id))"
+                ")"
+            ),
+        },
+        'filter_sql': APPROVED_CLAIM_FACILITIES_FILTER,
     },
 }
 

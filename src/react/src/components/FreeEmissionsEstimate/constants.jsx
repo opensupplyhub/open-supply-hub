@@ -38,14 +38,6 @@ export const freeEmissionsEstimateFormConfig = Object.freeze({
         placeholder: 'Select year',
         valueFieldName: 'openingDate',
     }),
-    closingDateField: Object.freeze({
-        label: 'Closing Date',
-        tooltipText:
-            'Enter the date your production location permanently stopped operating. Leave blank if still active.',
-        placeholderMonth: 'Select month',
-        placeholderYear: 'Select year',
-        valueFieldName: 'closingDate',
-    }),
     estimatedAnnualThroughputField: Object.freeze({
         label: 'Estimated Annual Throughput',
         tooltipText:
