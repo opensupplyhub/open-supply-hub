@@ -89,6 +89,5 @@ instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
-# Homepage proxy — set craft_cms_origin_domain when enable_homepage_proxy is enabled
-enable_homepage_proxy   = true
+enable_homepage_proxy   = false
 craft_cms_origin_domain = "open-supply.staging.servd.dev"

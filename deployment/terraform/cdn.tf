@@ -141,15 +141,15 @@ resource "aws_cloudfront_origin_access_identity" "react" {
 }
 
 #
-# Homepage proxy — CloudFront Function to rewrite Host header for Craft CMS origin
+# Homepage proxy — CloudFront Function to rewrite URI for Craft CMS origin
 #
-# This is used when enable_homepage_proxy = true (dev only for now).
-# The function sets the Host header to info.opensupplyhub.org so Craft serves
+# This is used when enable_homepage_proxy = true.
+# The function sets the URI to infosite page so Craft serves
 # the correct site when CloudFront reverse-proxies requests from / to it.
 #
-resource "aws_cloudfront_function" "homepage_host_rewrite" {
+resource "aws_cloudfront_function" "homepage_uri_rewrite" {
   count   = var.enable_homepage_proxy ? 1 : 0
-  name    = "func${local.short}HomepageHostRewrite"
+  name    = "func${local.short}HomepageUriRewrite"
   runtime = "cloudfront-js-1.0"
   publish = true
   comment = "Rewrites URI to /home-page for Craft CMS homepage proxy"
@@ -285,7 +285,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
       function_association {
         event_type   = "viewer-request"
-        function_arn = aws_cloudfront_function.homepage_host_rewrite[0].arn
+        function_arn = aws_cloudfront_function.homepage_uri_rewrite[0].arn
       }
 
       compress               = true
@@ -929,7 +929,7 @@ resource "aws_cloudfront_function" "info_openapparel_redirect" {
   code    = <<-EOT
     function handler(event) {
       var qs = event.request.querystring;
-      var location = var.craft_cms_origin_domain + event.request.uri + (qs ? "?" + qs : "");
+      var location = "https://info.opensupplyhub.org" + event.request.uri + (qs ? "?" + qs : "");
       return {
         statusCode: 301,
         statusDescription: "Moved Permanently",
@@ -945,11 +945,11 @@ resource "aws_cloudfront_distribution" "info_openapparel_redirect" {
   count           = var.enable_legacy_info_site_redirect ? 1 : 0
   enabled         = true
   is_ipv6_enabled = true
-  comment         = "Redirect info.openapparel.org to ${var.craft_cms_origin_domain}"
+  comment         = "Redirect info.openapparel.org to info.opensupplyhub.org"
   aliases         = ["info.openapparel.org"]
 
   origin {
-    domain_name = var.craft_cms_origin_domain
+    domain_name = "info.opensupplyhub.org"
     origin_id   = "info-opensupplyhub-origin"
     custom_origin_config {
       http_port              = 80

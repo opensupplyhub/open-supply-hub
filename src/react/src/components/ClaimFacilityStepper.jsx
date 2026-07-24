@@ -28,6 +28,8 @@ import {
     makeFacilityDetailLink,
 } from '../util/util';
 
+import { mapRoute } from '../util/constants.jsx';
+
 const stepperStyles = theme =>
     Object.freeze({
         buttonStyles: Object.freeze({
@@ -332,7 +334,7 @@ const ClaimFacilityStepper = ({
                             <Button
                                 variant="contained"
                                 color="primary"
-                                href="/"
+                                href={mapRoute}
                                 className={classes.popupButtonStyles}
                             >
                                 Search OS Hub

@@ -9,12 +9,13 @@ import FooterNav from './FooterNav';
 import FooterShapes from './FooterShapes';
 import FooterShapesMobile from './FooterShapesMobile';
 import FooterText from './FooterText';
+import { mapRoute } from '../../util/constants.jsx';
 
 export default function Footer() {
     return (
         <footer className="footer" id="footer" data-testid="footer">
             <div className="footer__container">
-                <Link to="/" className="footer__home">
+                <Link to={mapRoute} className="footer__home">
                     <span className="visually-hidden" />
                     <FooterLogo />
                 </Link>

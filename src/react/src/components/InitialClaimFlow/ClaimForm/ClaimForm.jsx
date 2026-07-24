@@ -66,6 +66,7 @@ import {
     useClaimFormCleanup,
 } from './hooks';
 import { claimIntroRoute } from '../../../util/constants';
+import { mapRoute } from '../../../util/constants.jsx';
 
 const iconMapping = {
     Security,
@@ -396,7 +397,7 @@ const ClaimForm = ({
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={() => history.push('/')}
+                        onClick={() => history.push(mapRoute)}
                         className={classes.continueButton}
                     >
                         Search OS Hub
