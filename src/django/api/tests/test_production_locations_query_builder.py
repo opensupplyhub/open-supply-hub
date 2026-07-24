@@ -257,9 +257,9 @@ class TestProductionLocationsQueryBuilder(TestCase):
         )
 
     def test_add_terms_for_contributor_type(self):
-        self.builder.add_terms('contributor_type', ['Brand/Retailer'])
+        self.builder.add_terms('contributor_type', ['Brand / Retailer'])
         expected = {
-            'terms': {'contributors.type.keyword': ['Brand/Retailer']}
+            'terms': {'contributors.type.keyword': ['Brand / Retailer']}
         }
         self.assertIn(
             expected,

@@ -560,7 +560,7 @@ class ProductionLocationsTest(BaseAPITest):
             "os_id": "US2023CONTRIB01",
             "coordinates": {"lon": -74.0060, "lat": 40.7128},
             "contributors": [
-                {"id": 142, "type": "Brand/Retailer"},
+                {"id": 142, "type": "Brand / Retailer"},
                 {"id": 44, "type": "Civil Society Organization"}
             ],
             "number_of_contributors": 2,
@@ -619,7 +619,7 @@ class ProductionLocationsTest(BaseAPITest):
         item = result['data'][0]
         self.assertEqual(item['number_of_contributors'], 2)
         self.assertIn(
-            {"id": 142, "type": "Brand/Retailer"}, item['contributors']
+            {"id": 142, "type": "Brand / Retailer"}, item['contributors']
         )
         self.assertEqual(
             item['lists'],
@@ -685,7 +685,7 @@ class ProductionLocationsTest(BaseAPITest):
                 "country": {"alpha_2": "US"},
                 "os_id": "US2023NSORT01",
                 "coordinates": {"lon": -74.0060, "lat": 40.7128},
-                "contributors": [{"id": 1, "type": "Brand/Retailer"}],
+                "contributors": [{"id": 1, "type": "Brand / Retailer"}],
                 "number_of_contributors": 1
             },
             {
@@ -696,7 +696,7 @@ class ProductionLocationsTest(BaseAPITest):
                 "os_id": "CA2023NSORT01",
                 "coordinates": {"lon": -79.3832, "lat": 43.6532},
                 "contributors": [
-                    {"id": 2, "type": "Brand/Retailer"},
+                    {"id": 2, "type": "Brand / Retailer"},
                     {"id": 3, "type": "Civil Society Organization"},
                     {"id": 4, "type": "Multi-Stakeholder Initiative"}
                 ],

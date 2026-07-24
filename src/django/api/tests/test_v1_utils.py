@@ -36,14 +36,14 @@ class V1UtilsTests(TestCase):
     def test_serialize_params_with_contributor_filters(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.setlist('contributor_id', ['142', '44'])
-        query_dict.setlist('contributor_type', ['Brand/Retailer'])
+        query_dict.setlist('contributor_type', ['Brand / Retailer'])
         query_dict.update({'sort_by': 'number_of_contributors'})
         serialized_params, error_response = \
             serialize_params(ProductionLocationsSerializer, query_dict)
         self.assertIsNone(error_response)
         self.assertEqual(serialized_params['contributor_id'], [142, 44])
         self.assertEqual(
-            serialized_params['contributor_type'], ['Brand/Retailer']
+            serialized_params['contributor_type'], ['Brand / Retailer']
         )
         self.assertEqual(
             serialized_params['sort_by'], 'number_of_contributors'
