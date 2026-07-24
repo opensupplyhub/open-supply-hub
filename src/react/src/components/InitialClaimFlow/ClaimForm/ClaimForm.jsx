@@ -65,8 +65,7 @@ import {
     useClaimFormSubmission,
     useClaimFormCleanup,
 } from './hooks';
-import { claimIntroRoute } from '../../../util/constants';
-import { mapRoute } from '../../../util/constants.jsx';
+import { claimIntroRoute, mapRoute } from '../../../util/constants';
 
 const iconMapping = {
     Security,

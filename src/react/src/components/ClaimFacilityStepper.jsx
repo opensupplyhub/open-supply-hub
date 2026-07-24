@@ -20,15 +20,13 @@ import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
 import { submitClaimAFacilityData } from '../actions/claimFacility';
 
 import COLOURS from '../util/COLOURS';
-import { facilityClaimStepsNames } from '../util/constants';
+import { facilityClaimStepsNames, mapRoute } from '../util/constants';
 
 import {
     claimFacilitySupportDocsIsValid,
     claimAFacilityFormIsValid,
     makeFacilityDetailLink,
 } from '../util/util';
-
-import { mapRoute } from '../util/constants.jsx';
 
 const stepperStyles = theme =>
     Object.freeze({

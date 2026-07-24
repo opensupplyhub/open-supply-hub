@@ -7,8 +7,8 @@ import ProductionLocationDialogCloseButton from '../../components/Contribute/Pro
 import {
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
+    mapRoute
 } from '../../util/constants';
-import { mapRoute } from '../../util/constants.jsx';
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
