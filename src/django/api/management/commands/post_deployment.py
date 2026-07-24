@@ -13,9 +13,15 @@ BACKFILL_PARALLEL_BY_ENVIRONMENT = {
     'Rba': 10,
 }
 
+# Fallback when settings.ENVIRONMENT is not in the map (e.g. a new deploy target).
+BACKFILL_PARALLEL_DEFAULT = 2
+
 
 def backfill_parallel_worker_count() -> int:
-    return BACKFILL_PARALLEL_BY_ENVIRONMENT[settings.ENVIRONMENT]
+    return BACKFILL_PARALLEL_BY_ENVIRONMENT.get(
+        settings.ENVIRONMENT,
+        BACKFILL_PARALLEL_DEFAULT,
+    )
 
 
 class Command(BaseCommand):
