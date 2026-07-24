@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 # Remove this map, the helper below, and the backfill call once the release
 # has been deployed everywhere.
 BACKFILL_PARALLEL_BY_ENVIRONMENT = {
-    'Development': 2,
+    'Development': 1,
     'Test': 10,
     'Staging': 10,
     'Preprod': 10,
