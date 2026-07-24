@@ -41,10 +41,17 @@ export const stringify = obj => {
 
 export const parse = qs => {
     const params = new URLSearchParams(qs);
-    // Object.create(null) matches node's querystring.parse (which returns a
-    // null-prototype object). This preserves keys like "__proto__" as own
-    // properties instead of hitting Object.prototype's setter and dropping
-    // them, and avoids any prototype-pollution surface.
+    // Object.create(null) matches node's querystring.parse, which returns a
+    // null-prototype object. This restores the pre-Vite behavior (the app
+    // used node's `querystring` directly before this file existed), preserves
+    // keys like "__proto__" as own properties instead of hitting
+    // Object.prototype's setter and dropping them, and avoids any
+    // prototype-pollution surface.
+    //
+    // Consumer note: the returned object has NO prototype, so inherited
+    // methods are unavailable — read keys directly or via destructuring
+    // (both fine), but do not call result.hasOwnProperty()/toString() on it.
+    // Use Object.hasOwn(result, key) / Object.keys(result) instead.
     const result = Object.create(null);
 
     params.forEach((value, key) => {

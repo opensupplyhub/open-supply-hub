@@ -52,10 +52,6 @@ export default defineConfig(({ mode }) => {
         ],
         envPrefix: 'REACT_APP_',
         define: {
-            // Browserify/webpack-era dependencies (object-hash's browser
-            // bundle among them) reference node's `global`; map it to the
-            // standard globalThis.
-            global: 'globalThis',
             // CRA exposed the whole env object, so dynamic access like
             // process.env[v] worked. Reproduce that with the REACT_APP_
             // subset plus NODE_ENV.
