@@ -600,10 +600,13 @@ class ProductionLocationsTest(BaseAPITest):
             no_contributor_doc
         ]
         for doc in docs:
+            # Not id=self.open_search_client.count() as elsewhere in this
+            # file: count() is stale until the index is refreshed, so inside
+            # a loop every doc gets the same id and overwrites the previous.
             self.open_search_client.index(
                 index=self.production_locations_index_name,
                 body=doc,
-                id=self.open_search_client.count()
+                id=doc['os_id']
             )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
@@ -714,10 +717,13 @@ class ProductionLocationsTest(BaseAPITest):
             }
         ]
         for doc in docs:
+            # Not id=self.open_search_client.count() as elsewhere in this
+            # file: count() is stale until the index is refreshed, so inside
+            # a loop every doc gets the same id and overwrites the previous.
             self.open_search_client.index(
                 index=self.production_locations_index_name,
                 body=doc,
-                id=self.open_search_client.count()
+                id=doc['os_id']
             )
         self.open_search_client.indices.refresh(
             index=self.production_locations_index_name
