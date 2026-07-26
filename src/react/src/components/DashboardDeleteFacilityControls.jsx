@@ -76,7 +76,7 @@ export default function DashboardDeleteFacilityControls({
             {deleting && <CircularProgress />}
             {error && (
                 <span style={{ color: 'red' }}>
-                    An error prevented deleting that facility
+                    {error.join(' ')}
                 </span>
             )}
             <Dialog open={dialogIsOpen}>
