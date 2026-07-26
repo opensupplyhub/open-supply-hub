@@ -152,10 +152,26 @@ resource "aws_cloudfront_function" "homepage_uri_rewrite" {
   name    = "func${local.short}HomepageUriRewrite"
   runtime = "cloudfront-js-1.0"
   publish = true
-  comment = "Rewrites URI to /home-page for Craft CMS homepage proxy"
+  comment = "Routes / to Craft CMS homepage, or redirects to /map if query params are present"
   code    = <<-EOT
     function handler(event) {
       var request = event.request;
+      var qs = request.querystring;
+
+      // Any query params at / indicate a React app request (embedded map,
+      // contributor filter, search, etc.). Redirect to /map preserving the
+      // full query string so existing URLs continue to work without any
+      // changes on the customer side.
+      if (qs) {
+        return {
+          statusCode: 302,
+          statusDescription: 'Found',
+          headers: {
+            location: { value: '/map?' + qs }
+          }
+        };
+      }
+
       request.uri = '/home-page';
       return request;
     }
