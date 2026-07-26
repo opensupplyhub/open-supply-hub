@@ -286,7 +286,14 @@ class Routes extends Component {
                                 <Route
                                     exact
                                     path={mainRoute}
-                                    render={() => <Redirect to={mapRoute} />}
+                                    render={({ location }) => (
+                                        <Redirect
+                                            to={{
+                                                ...location,
+                                                pathname: mapRoute,
+                                            }}
+                                        />
+                                    )}
                                 />
                                 <Route
                                     path={mainRoute}
