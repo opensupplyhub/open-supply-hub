@@ -882,6 +882,9 @@ resource "aws_cloudfront_distribution" "cdn" {
   web_acl_id = var.waf_enabled ? aws_wafv2_web_acl.web_acl[var.environment].arn : null
 }
 
+#
+# info.openapparel.org → https://info.opensupplyhub.org redirect (Production only)
+#
 data "aws_route53_zone" "openapparel" {
   count = var.enable_legacy_info_site_redirect ? 1 : 0
   name  = "openapparel.org"
