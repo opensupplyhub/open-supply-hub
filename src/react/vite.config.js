@@ -75,9 +75,6 @@ export default defineConfig(({ mode }) => {
                 interval: 100,
             },
             proxy: djangoProxy,
-            warmup: {
-                clientFiles: ['./src/index.jsx', './src/App.jsx', './src/Routes.jsx'],
-            },
         },
         build: {
             // Keep CRA's output directory so deploy tooling is untouched.
