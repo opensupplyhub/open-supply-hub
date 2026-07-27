@@ -3,6 +3,7 @@ from api.facility_type_processing_type import (
     ALL_FACILITY_TYPES,
     ALL_PROCESSING_TYPES,
     ASSEMBLY,
+    DATA_CENTER,
     EXACT_MATCH,
     FACILITY_TYPE,
     FUZZY_MATCH,
@@ -118,3 +119,56 @@ class FacilityAndProcessingTypeTest(TestCase):
             facility_type_input, self.nonapparel_sector
         )
         self.assertEqual(output, expected_output)
+
+    def test_exact_data_center_facility_type_match(self):
+        facility_type_input = "Data Center"
+        expected_output = (
+            FACILITY_TYPE,
+            EXACT_MATCH,
+            ALL_FACILITY_TYPES[DATA_CENTER],
+            None,
+        )
+        output = get_facility_and_processing_type(
+            facility_type_input, self.sector
+        )
+        self.assertEqual(output, expected_output)
+
+    def test_data_center_facility_type_match_sector_nonapparel(self):
+        # Data centers must resolve even though the sector is not apparel;
+        # the data-center branch runs before the apparel-only sector gate.
+        facility_type_input = "Data Center"
+        expected_output = (
+            FACILITY_TYPE,
+            EXACT_MATCH,
+            ALL_FACILITY_TYPES[DATA_CENTER],
+            None,
+        )
+        output = get_facility_and_processing_type(
+            facility_type_input, self.nonapparel_sector
+        )
+        self.assertEqual(output, expected_output)
+
+    def test_data_center_facility_type_match_sector_none(self):
+        facility_type_input = "Data Center"
+        expected_output = (
+            FACILITY_TYPE,
+            EXACT_MATCH,
+            ALL_FACILITY_TYPES[DATA_CENTER],
+            None,
+        )
+        output = get_facility_and_processing_type(facility_type_input, None)
+        self.assertEqual(output, expected_output)
+
+    def test_data_center_alias_match(self):
+        expected_output = (
+            FACILITY_TYPE,
+            EXACT_MATCH,
+            ALL_FACILITY_TYPES[DATA_CENTER],
+            None,
+        )
+        for facility_type_input in ["datacenter", "data centre", "DC"]:
+            with self.subTest(facility_type_input=facility_type_input):
+                output = get_facility_and_processing_type(
+                    facility_type_input, self.nonapparel_sector
+                )
+                self.assertEqual(output, expected_output)
