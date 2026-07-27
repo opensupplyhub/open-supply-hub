@@ -26,7 +26,7 @@ def test_constructor_loads_token_from_secret():
     )
 
 
-def test_constructor_strips_token_prefix_from_secret():
+def test_constructor_preserves_token_value_from_secret():
     secrets = MagicMock()
     secrets.get_secret_value.return_value = {"SecretString": "Token abc123\n"}
     api = OSHubAPI(
@@ -34,7 +34,7 @@ def test_constructor_strips_token_prefix_from_secret():
         secret_arn=TEST_SECRET_ARN,
         secrets_client=secrets,
     )
-    assert api._token == "abc123"
+    assert api._token == "Token abc123"
 
 
 def test_fetch_lists_paginates_until_empty(monkeypatch):
