@@ -548,7 +548,6 @@ class FacilityClaim(models.Model):
         'sector',
         'facility_location',
         'opening_date',
-        'closing_date',
         'estimated_annual_throughput',
         'energy_coal',
         'energy_natural_gas',
