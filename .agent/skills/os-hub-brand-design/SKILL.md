@@ -1,12 +1,12 @@
 ---
 name: os-hub-brand-design
-description: Use when creating OS Hub-branded collateral — slide decks, one-pagers, explainer HTML pages, prototypes, mocks, or written comms copy that must match the Open Supply Hub brand. Contains brand colors, the Darker Grotesque type system, logo and shape rules, voice and messaging guidelines, fonts, assets, and sample slide layouts. NOT for production app UI work (the Production Location page or other React/Material UI screens in the product codebase) — this system was built from OS Hub's brand guidelines, comms style guide, and presentation decks, not from the app.
+description: Use when creating OS Hub-branded collateral — slide decks, one-pagers, explainer HTML pages, prototypes, mocks, or written comms copy that must match the Open Supply Hub brand — or when needing to know how the production app implements the brand (Material UI v3 theme, COLOURS.js palette, typeface-darker-grotesque). Contains brand colors, the Darker Grotesque type system, logo and shape rules, voice and messaging guidelines, fonts, assets, sample slide layouts, and a product-ui.md map of the app's real theme files. The collateral system was built from brand guidelines and decks, not the app — for product UI changes the codebase is the source of truth.
 user-invocable: true
 ---
 
 # OS Hub Brand Design System
 
-**Scope:** this is the *brand and collateral* design system — decks, one-pagers, explainer HTML, prototypes, and comms copy. It is not a UI kit for the OS Hub product app; do not use it as a source of truth for production React components or the Production Location page redesign.
+**Scope:** the core of this skill is the *brand and collateral* design system — decks, one-pagers, explainer HTML, prototypes, and comms copy. For the *product app UI*, read **product-ui.md** in this skill: it maps the real implementation (Material UI v3 theme in `App.jsx`, `util/COLOURS.js` palette, `typeface-darker-grotesque`, SCSS variables) with exact repo paths. For production React work the codebase is the source of truth — this skill orients you; the code decides.
 
 Read the readme.md file within this skill, and explore the other available files.
 

@@ -4,7 +4,7 @@
 
 **Open Supply Hub (OS Hub)** — opensupplyhub.org — is a US-based 501(c)(3) non-profit powering the transition to safe and sustainable supply chains with "the world's most complete, open and accessible map of global production." The platform assigns a universal **OS ID** to every production location, lets anyone search and contribute data, and serves brands & retailers, civil society, industry organizations, and manufacturing groups. Key stats (2026, verify before use): more than 2.5 million production locations, 4,500+ data contributors, 3,700+ claimed profiles.
 
-Products/surfaces represented in the sources: **presentation decks** (intro/sales deck + event deck) plus organization-wide brand and comms standards. No product-app codebase or Figma was provided, so this system is built for branded collateral — decks, one-pagers, mocks — not a UI recreation of the platform.
+Products/surfaces represented in the sources: **presentation decks** (intro/sales deck + event deck) plus organization-wide brand and comms standards. The collateral system (tokens, assets, slides) was built from these sources — decks, one-pagers, mocks — not as a UI recreation of the platform. For how the **product app** implements the brand (Material UI v3 theme, `util/COLOURS.js` palette, `typeface-darker-grotesque`), see `product-ui.md` in this skill, which maps the real repo files; the code remains the source of truth for product UI work.
 
 ## Sources
 - `uploads/[MAKE A COPY] May 2026 - Intro Deck .pptx` — 102-slide master intro deck (copied to `uploads/intro-deck.pptx`)
@@ -72,6 +72,7 @@ Brand typeface "Darker Grotesque" (and deck body face "DM Sans") fetched from Go
 
 ## Index
 
+- `product-ui.md` — map of the product app's real design implementation: libraries, theme, palette, fonts, SCSS vars, ProductionLocation styles pattern, gotchas (e.g. the two near-identical yellows #FFCF3F vs #FCCF3F)
 - `styles.css` — global entry; imports `tokens/{colors,typography,spacing,fonts,base}.css`
 - `assets/logos/` — full logo (dark/white, SVG+PNG), star icon (dark/white)
 - `assets/backgrounds/` — mosaic-dark/light, corner-cluster, globe-community, yellow banner, confetti strip
