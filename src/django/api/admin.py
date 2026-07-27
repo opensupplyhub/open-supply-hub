@@ -155,7 +155,6 @@ class ContributorAdmin(SimpleHistoryAdmin):
 
 class FacilityClaimAdmin(SimpleHistoryAdmin):
     autocomplete_fields = ('parent_company', )
-    exclude = ('closing_date', )
     history_list_display = ('id', 'contact_person', 'created_at', 'status')
     readonly_fields = ('contributor', 'facility', 'status_change_reason',
                        'status_change_by', 'status_change_date', 'status')

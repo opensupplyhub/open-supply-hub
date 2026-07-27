@@ -149,7 +149,6 @@ class FacilityClaimTest(APITestCase):
         self.assertIsNotNone(claim)
         self.assertEqual(claim.contact_person, "John Doe")
         self.assertEqual(claim.job_title, "Facility Manager")
-        self.assertIsNone(claim.closing_date)
 
     @override_switch("claim_a_facility", active=True)
     def test_create_claim_without_optional_emissions_fields(self):
@@ -247,7 +246,6 @@ class FacilityClaimTest(APITestCase):
             facility=self.facility,
             contributor=self.contributor,
             status=FacilityClaimStatuses.APPROVED,
-            closing_date=date(2020, 1, 1),
         )
         claim_url = reverse(
             "facility-claim-get-claimed-details",
@@ -294,7 +292,6 @@ class FacilityClaimTest(APITestCase):
 
         claim.refresh_from_db()
         self.assertEqual(claim.opening_date, date(2021, 1, 1))
-        self.assertEqual(claim.closing_date, date(2020, 1, 1))
         self.assertEqual(claim.estimated_annual_throughput, 123456)
         self.assertEqual(claim.energy_coal, 10)
         self.assertEqual(claim.energy_natural_gas, 20)

@@ -142,7 +142,7 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
             contributor=self.contributor,
             facility=self.facility,
             status=FacilityClaimStatuses.APPROVED,
-            closing_date=date(2025, 12, 1),
+            opening_date=date(2020, 1, 1),
         )
 
         facility_index = FacilityIndex.objects.get(id=self.facility.id)

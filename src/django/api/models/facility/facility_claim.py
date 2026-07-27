@@ -419,12 +419,6 @@ class FacilityClaim(models.Model):
         verbose_name='opening date',
         help_text='The opening date of the location for emissions estimation.'
     )
-    closing_date = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name='closing date',
-        help_text='The closing date of the location for emissions estimation.'
-    )
     estimated_annual_throughput = models.PositiveBigIntegerField(
         null=True,
         blank=True,

@@ -1,8 +1,4 @@
 from django.utils import timezone
-from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, SimpleTestCase
-
-from api.admin import admin_site
 from api.constants import FacilityClaimStatuses
 from api.models import (
     Contributor,
@@ -20,18 +16,6 @@ from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
 from django.core import mail
-
-
-class FacilityClaimAdminTest(SimpleTestCase):
-    def test_closing_date_is_not_editable(self):
-        model_admin = admin_site._registry[FacilityClaim]
-        request = RequestFactory().get('/')
-        request.user = AnonymousUser()
-
-        self.assertNotIn(
-            'closing_date',
-            model_admin.get_form(request=request).base_fields,
-        )
 
 
 class FacilityClaimAdminDashboardTest(APITestCase):
