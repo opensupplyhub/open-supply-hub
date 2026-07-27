@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Union
 
 from api.constants import APIErrorMessages, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
+from api.helpers.data_center import extract_provenance
 from api.facility_actions.processing_facility import ProcessingFacility
 from api.geocoding import geocode_address
 from api.kafka_producer import produce_message_match_process
@@ -162,6 +163,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
             clean_address=row.clean_address,
             country_code=row.country_code,
             sector=row.sector,
+            **extract_provenance(row.raw_json),
         )
 
     def __handle_validation_errors(self) -> Response:
