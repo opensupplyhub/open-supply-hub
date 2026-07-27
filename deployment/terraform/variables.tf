@@ -812,6 +812,41 @@ variable "anonymized_database_password" {
   sensitive = true
 }
 
+variable "codebuild_github_runner_enabled" {
+  description = "Toggle to enable the CodeBuild project acting as an ephemeral GitHub Actions runner"
+  type        = bool
+  default     = false
+}
+
+variable "codebuild_github_runner_project_name" {
+  description = "CodeBuild project name; workflows reference it as runs-on: codebuild-<name>-.... Must stay in sync with the runs-on labels in .github/workflows."
+  type        = string
+  default     = "osh-github-actions-runner"
+}
+
+variable "codebuild_github_runner_repository_url" {
+  type    = string
+  default = "https://github.com/opensupplyhub/open-supply-hub.git"
+}
+
+variable "codebuild_github_runner_connection_arn" {
+  description = "ARN of the manually created CodeConnections connection to the opensupplyhub GitHub org"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "codebuild_github_runner_compute_type" {
+  type    = string
+  default = "BUILD_GENERAL1_LARGE"
+}
+
+variable "codebuild_github_runner_build_timeout" {
+  description = "Build timeout in minutes for runner jobs (DB dump/restore run 85-150 minutes)"
+  type        = number
+  default     = 300
+}
+
 variable "export_csv_enabled" {
   description = "Toggle to enable or disable the export csv scheduled job"
   type        = bool
@@ -1065,4 +1100,24 @@ variable "database_private_link_vpc_endpoint_service_name" {
   sensitive   = true
   description = "The name of the VPC endpoint service in the provider VPC"
   default     = ""
+}
+
+# ContriBot variables
+
+variable "contribot_monday_board_id" {
+  type        = string
+  description = "ID of the Monday board where ContriBot posts updates."
+  default     = ""
+}
+
+variable "contribot_google_drive_shared_directory_id" {
+  type        = string
+  description = "Google Drive folder ID where ContriBot uploads ContriCleaner reports."
+  default     = ""
+}
+
+variable "contribot_schedule_expression" {
+  type        = string
+  description = "Schedule expression for the ContriBot Step Functions workflow."
+  default     = "rate(5 minutes)"
 }

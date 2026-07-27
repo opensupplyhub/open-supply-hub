@@ -42,6 +42,7 @@ src/dedupe-hub/api/coverage
 ## Test artifacts
 src/django/*.csv
 src/django/*.xlsx
+src/django/media/
 
 
 # macOS
@@ -79,6 +80,7 @@ tools/endpoint_comp/reports/*
 # deployment/terraform/lambda-functions/**/*.zip
 deployment/terraform/lambda-functions/**/*.out
 deployment/terraform/lambda-functions/**/src/*
+deployment/terraform/lambda-functions/contribot_*/*.zip
 !deployment/terraform/lambda-functions/alert_batch_failures/src/alert_batch_failures.py
 !deployment/terraform/lambda-functions/alert_sfn_failures/src/alert_sfn_failures.py
 

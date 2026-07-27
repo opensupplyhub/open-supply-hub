@@ -261,9 +261,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v5
         with:
-          node-version: '14'
+          node-version: '22'
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -278,6 +278,10 @@ jobs:
 
       - name: Build static assets
         working-directory: src/react
+        env:
+          # webpack 4 needs OpenSSL's legacy provider on node >=17.
+          # Remove when migrating off react-scripts 4 (OSDEV-2996).
+          NODE_OPTIONS: --openssl-legacy-provider
         run: yarn run build
 
       - id: project
@@ -479,7 +483,9 @@ jobs:
 
   restore_database:
     needs: stop_logstash
-    runs-on: self-hosted
+    # Ephemeral GitHub Actions runner on AWS CodeBuild (Test account); the
+    # project is managed by deployment/terraform/codebuild_github_runner.
+    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if:  ${{ inputs.deploy-plan-only == false }}
     steps:
