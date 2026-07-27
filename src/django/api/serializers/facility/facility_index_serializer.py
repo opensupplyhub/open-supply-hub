@@ -245,6 +245,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
         user_can_see_detail = can_user_see_detail(self)
         embed_mode_active = is_embed_mode_active(self)
+        claimant_contributor_id = (
+            (facility.approved_claim or {}).get('contributor_id')
+        )
 
         grouped_data = defaultdict(list)
 
@@ -256,6 +259,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 filtered_fields,
                 context={'user_can_see_detail': user_can_see_detail,
                          'embed_mode_active': embed_mode_active,
+                         'claimant_contributor_id': claimant_contributor_id,
                          'masked_contributor_ids': masked},
                 exclude_fields=(
                     ['created_at'] if not use_main_created_at else []
