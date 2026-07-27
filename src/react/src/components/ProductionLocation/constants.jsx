@@ -124,3 +124,114 @@ export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
     FIELD_CONFIG.lei_id.key,
     FIELD_CONFIG.status.key,
 ]);
+
+/**
+ * Data-center-only attribute fields, grouped for the details page
+ * (OSDEV-3076 / OSDEV-3077). Rendered only when `properties.is_data_center`
+ * is true, additively below the shared General Information section. Provenance
+ * fields are intentionally excluded (they live on FacilityListItem, not on
+ * extended_fields). Each field reads `properties.extended_fields.<key>`;
+ * `unitsField` combines a measure with its units into one displayed value
+ * (e.g. "20 MW").
+ */
+export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
+    Object.freeze({
+        label: 'Named Entities',
+        fields: Object.freeze([
+            { key: 'name_operator', label: 'Operator' },
+            { key: 'name_owner', label: 'Owner' },
+            { key: 'name_property_manager', label: 'Property Manager' },
+            { key: 'name_building_owner', label: 'Building Owner' },
+            { key: 'name_tenant', label: 'Tenant' },
+            { key: 'name_permit_holder', label: 'Permit Holder' },
+            { key: 'name_site_other', label: 'Other Site Name' },
+            { key: 'name_unspecified', label: 'Other Named Entity' },
+        ]),
+    }),
+    Object.freeze({
+        label: 'Utility Usage',
+        fields: Object.freeze([
+            {
+                key: 'capacity',
+                label: 'Capacity',
+                unitsField: 'capacity_units',
+            },
+            {
+                key: 'it_capacity',
+                label: 'IT Capacity',
+                unitsField: 'it_capacity_units',
+            },
+            {
+                key: 'utility_capacity',
+                label: 'Utility Capacity',
+                unitsField: 'utility_capacity_units',
+            },
+            {
+                key: 'ups_capacity',
+                label: 'UPS Capacity',
+                unitsField: 'ups_capacity_units',
+            },
+            {
+                key: 'backup_generator_capacity',
+                label: 'Backup Generator Capacity',
+                unitsField: 'backup_generator_capacity_units',
+            },
+            { key: 'pue', label: 'Power Usage Effectiveness (PUE)' },
+            { key: 'power_providers', label: 'Power Providers' },
+            { key: 'power_sources', label: 'Power Sources' },
+            {
+                key: 'power_density',
+                label: 'Power Density',
+                unitsField: 'power_density_units',
+            },
+            {
+                key: 'water_usage',
+                label: 'Water Usage',
+                unitsField: 'water_usage_units',
+            },
+            { key: 'wue', label: 'Water Use Efficiency (WUE)' },
+            { key: 'cooling_mechanism', label: 'Cooling Mechanism' },
+        ]),
+    }),
+    Object.freeze({
+        label: 'Operating Information',
+        fields: Object.freeze([
+            { key: 'operational_status', label: 'Operational Status' },
+            { key: 'date_operational', label: 'Operational Date' },
+            { key: 'time_zones', label: 'Time Zone(s)' },
+            {
+                key: 'certifications_compliance',
+                label: 'Certifications / Compliance',
+            },
+        ]),
+    }),
+    Object.freeze({
+        label: 'Building Information',
+        fields: Object.freeze([
+            { key: 'area', label: 'Area', unitsField: 'area_units' },
+            {
+                key: 'data_area',
+                label: 'Data Hall Area',
+                unitsField: 'data_area_units',
+            },
+            {
+                key: 'floor_space',
+                label: 'Floor Space',
+                unitsField: 'floor_space_units',
+            },
+            {
+                key: 'overall_area',
+                label: 'Overall Area',
+                unitsField: 'overall_area_units',
+            },
+            {
+                key: 'other_area',
+                label: 'Other Area',
+                unitsField: 'other_area_units',
+            },
+            { key: 'other_area_notes', label: 'Other Area Notes' },
+            { key: 'number_of_servers', label: 'Number of Servers' },
+            { key: 'number_of_racks', label: 'Number of Racks' },
+        ]),
+    }),
+]);

@@ -7,7 +7,11 @@ import {
     ADDITIONAL_IDENTIFIERS,
 } from '../../../util/constants';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
-import { ORDERED_GENERAL_FIELD_KEYS, FIELD_CONFIG } from '../constants.jsx';
+import {
+    ORDERED_GENERAL_FIELD_KEYS,
+    FIELD_CONFIG,
+    DATA_CENTER_FIELD_GROUPS,
+} from '../constants.jsx';
 
 const toDrawerContribution = (item, value) => ({
     value,
@@ -360,6 +364,69 @@ const getVisibleFields = (data, includeAdditionalIdentifiers) => {
             return { key: config.key, ...props };
         })
         .filter(Boolean);
+};
+
+const rawExtendedValue = item => item && item.value && item.value.raw_value;
+
+const buildDataCenterDataPoint = (data, field) => {
+    const values = get(data, `properties.extended_fields.${field.key}`, []);
+    if (!values.length || !values[0]) return null;
+
+    const topValue = rawExtendedValue(values[0]);
+    if (topValue == null || topValue === '') return null;
+
+    let unit = null;
+    if (field.unitsField) {
+        const unitValues = get(
+            data,
+            `properties.extended_fields.${field.unitsField}`,
+            [],
+        );
+        unit = unitValues.length ? rawExtendedValue(unitValues[0]) : null;
+    }
+    const withUnit = value =>
+        unit && value != null && value !== '' ? `${value} ${unit}` : value;
+
+    const toContribution = item => ({
+        value: withUnit(rawExtendedValue(item)),
+        sourceName: item.contributor_name || null,
+        date: item.created_at || null,
+        userId: item.contributor_id != null ? item.contributor_id : undefined,
+    });
+
+    const promotedContribution = toContribution(values[0]);
+    const contributions = values
+        .slice(1)
+        .filter(item => {
+            const value = rawExtendedValue(item);
+            return value != null && value !== '';
+        })
+        .map(toContribution);
+
+    return {
+        key: field.key,
+        label: field.label,
+        value: promotedContribution.value,
+        tooltipText: field.tooltipText,
+        statusLabel: STATUS_CROWDSOURCED,
+        contributorName: promotedContribution.sourceName,
+        userId: promotedContribution.userId,
+        date: promotedContribution.date,
+        drawerData: { promotedContribution, contributions },
+    };
+};
+
+// Data-center attribute fields, grouped (OSDEV-3076 / OSDEV-3077). Returns
+// [{ label, fields: [...] }] with empty fields/groups dropped. Only meaningful
+// for data centers; callers gate on `properties.is_data_center`.
+export const getDataCenterFieldGroups = data => {
+    if (!data) return [];
+    return DATA_CENTER_FIELD_GROUPS.map(group => ({
+        label: group.label,
+        fields: group.fields
+            .map(field => buildDataCenterDataPoint(data, field))
+            .filter(Boolean),
+    })).filter(group => group.fields.length > 0);
 };
 
 export default getVisibleFields;
