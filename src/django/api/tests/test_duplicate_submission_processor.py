@@ -132,6 +132,103 @@ class TestDuplicateSubmissionProcessor(APITestCase):
         self.assertEqual(second_result.status_code, status.HTTP_409_CONFLICT)
         self.assertIsNone(second_result.moderation_event)
 
+    def test_different_unit_number_in_name_is_not_flagged(self):
+        first_unit_data = {
+            **self.base_input_data,
+            'name': 'Blue Horizon Facility Unit 1',
+        }
+        first_result = self._submit(self.contributor, first_unit_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # Same address, and the name as a whole is >0.9 similar (single-digit
+        # change), but it's a different unit at the same complex, not a typo
+        # of the same unit.
+        second_unit_data = {
+            **self.base_input_data,
+            'name': 'Blue Horizon Facility Unit 2',
+        }
+        second_result = self._submit(self.contributor, second_unit_data)
+
+        self.assertEqual(second_result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(second_result.moderation_event)
+
+    def test_same_unit_number_in_name_is_still_flagged(self):
+        first_unit_data = {
+            **self.base_input_data,
+            'name': 'Blue Horizon Facility Unit 1',
+        }
+        first_result = self._submit(self.contributor, first_unit_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # Same unit number, only a typo elsewhere in the name.
+        typo_unit_data = {
+            **self.base_input_data,
+            'name': 'Blue Horizon Facilty Unit 1',
+        }
+        second_result = self._submit(self.contributor, typo_unit_data)
+
+        self.assertEqual(second_result.status_code, status.HTTP_409_CONFLICT)
+        self.assertIsNone(second_result.moderation_event)
+
+    def test_different_street_number_is_not_flagged_despite_high_similarity(
+        self
+    ):
+        first_result = self._submit(self.contributor, self.base_input_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # Same name, and the address string as a whole is >0.9 similar
+        # (single-digit change), but it's the building next door, not a typo
+        # of the same address.
+        next_door_data = {
+            **self.base_input_data,
+            'address': '992 Spring Garden St., Philadelphia PA 19123',
+        }
+        second_result = self._submit(self.contributor, next_door_data)
+
+        self.assertEqual(second_result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(second_result.moderation_event)
+
+    def test_different_suite_number_is_not_flagged_despite_same_street_number(
+        self
+    ):
+        first_suite_data = {
+            **self.base_input_data,
+            'address': (
+                '990 Spring Garden St. Suite 200, Philadelphia PA 19123'
+            ),
+        }
+        first_result = self._submit(self.contributor, first_suite_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # Same leading street number, but a different suite in the same
+        # building - the address as a whole is still >0.9 similar.
+        second_suite_data = {
+            **self.base_input_data,
+            'address': (
+                '990 Spring Garden St. Suite 300, Philadelphia PA 19123'
+            ),
+        }
+        second_result = self._submit(self.contributor, second_suite_data)
+
+        self.assertEqual(second_result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(second_result.moderation_event)
+
+    def test_punctuation_only_address_difference_is_still_flagged(self):
+        first_result = self._submit(self.contributor, self.base_input_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # Same leading street number, only punctuation/formatting differs.
+        reformatted_address_data = {
+            **self.base_input_data,
+            'address': '990 Spring Garden St, Philadelphia, PA 19123',
+        }
+        second_result = self._submit(
+            self.contributor, reformatted_address_data
+        )
+
+        self.assertEqual(second_result.status_code, status.HTTP_409_CONFLICT)
+        self.assertIsNone(second_result.moderation_event)
+
     def test_different_country_is_not_flagged(self):
         first_result = self._submit(self.contributor, self.base_input_data)
         self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)

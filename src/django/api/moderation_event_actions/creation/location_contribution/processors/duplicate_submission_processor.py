@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from difflib import SequenceMatcher
 
@@ -26,6 +27,13 @@ DUPLICATE_CHECK_WINDOW_MINUTES = 30
 # positives elsewhere in this codebase (see ContributorManager.filter_by_name).
 NAME_SIMILARITY_THRESHOLD = 0.9
 ADDRESS_SIMILARITY_THRESHOLD = 0.9
+
+# Matches any numeric token in a cleaned name or address, e.g. "990" and
+# "19123" in "990 spring garden st. philadelphia pa 19123", or "2" in "blue
+# horizon facility unit 2". A distinguishing number (street number, suite/
+# unit/building number, zip code) can appear anywhere in either field, not
+# just at the start, so this isn't anchored to a fixed position.
+NUMBER_TOKEN_PATTERN = re.compile(r'\d+')
 
 
 class DuplicateSubmissionProcessor(ContributionProcessor):
@@ -89,16 +97,28 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
             if candidate.cleaned_data.get('country_code') != new_country:
                 continue
 
+            candidate_name = candidate.cleaned_data.get('clean_name', '')
+            if DuplicateSubmissionProcessor.__numbers_differ(
+                new_name, candidate_name
+            ):
+                continue
+
             name_similarity = SequenceMatcher(
-                None, new_name, candidate.cleaned_data.get('clean_name', '')
+                None, new_name, candidate_name
             ).ratio()
             if name_similarity < NAME_SIMILARITY_THRESHOLD:
                 continue
 
+            candidate_address = candidate.cleaned_data.get(
+                'clean_address', ''
+            )
+            if DuplicateSubmissionProcessor.__numbers_differ(
+                new_address, candidate_address
+            ):
+                continue
+
             address_similarity = SequenceMatcher(
-                None,
-                new_address,
-                candidate.cleaned_data.get('clean_address', '')
+                None, new_address, candidate_address
             ).ratio()
             if address_similarity < ADDRESS_SIMILARITY_THRESHOLD:
                 continue
@@ -106,3 +126,25 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
             return candidate
 
         return None
+
+    @staticmethod
+    def __numbers_differ(value: str, other_value: str) -> bool:
+        '''
+        A single-digit change in a distinguishing number (a street number, a
+        suite/unit/building number, a zip code) barely moves the overall
+        SequenceMatcher ratio, so an otherwise near-identical name or address
+        for a genuinely different location (the building next door, a
+        different suite in the same building, a different unit sharing a
+        base name) could still clear the similarity threshold. Comparing all
+        numeric tokens found anywhere in the value (order-sensitive, since
+        these numbers aren't anchored to one position), and requiring an
+        exact match when both values contain at least one, catches that
+        case. Values without any numbers fall back to the overall similarity
+        ratio only.
+        '''
+        numbers = NUMBER_TOKEN_PATTERN.findall(value)
+        other_numbers = NUMBER_TOKEN_PATTERN.findall(other_value)
+        if not numbers or not other_numbers:
+            return False
+
+        return numbers != other_numbers
