@@ -84,7 +84,7 @@ v1_custom_routes = [
 public_apis = [
     path('api/', include(router.urls)),
     path(
-        'api/facility-lists/<str:pk>/deactivate/',
+        'api/facility-lists/<int:pk>/deactivate/',
         views.FacilityListDeactivateView.as_view(),
         name='facility-list-deactivate',
     ),

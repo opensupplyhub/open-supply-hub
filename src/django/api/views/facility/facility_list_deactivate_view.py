@@ -29,6 +29,10 @@ deactivate_response_schema = Schema(
 )
 
 
+def error_response(detail, status_code):
+    return Response({'detail': detail}, status=status_code)
+
+
 class FacilityListDeactivateView(APIView):
     permission_classes = (IsRegisteredAndConfirmed,)
 
@@ -60,54 +64,44 @@ class FacilityListDeactivateView(APIView):
                 "deactivated": true
             }
         """
-        if pk is None or not str(pk).isdecimal():
-            return Response(
-                {'detail': APIErrorMessages.FACILITY_LIST_NOT_FOUND},
-                status=status.HTTP_404_NOT_FOUND
+        facility_list = None
+        if request.user.has_contributor:
+            facility_list = (
+                FacilityList.objects
+                .select_related('source')
+                .filter(
+                    id=pk,
+                    source__contributor=request.user.contributor,
+                )
+                .first()
             )
 
-        facility_list = (
-            FacilityList.objects
-            .filter(id=pk)
-            .select_related('source', 'source__contributor')
-            .first()
-        )
-        source = (
-            getattr(facility_list, 'source', None)
-            if facility_list is not None else None
-        )
-
-        contributor_id = (
-            request.user.contributor.id
-            if request.user.has_contributor else None
-        )
-
-        if (facility_list is None
-                or source is None
-                or source.contributor_id != contributor_id):
-            return Response(
-                {'detail': APIErrorMessages.FACILITY_LIST_NOT_FOUND},
-                status=status.HTTP_404_NOT_FOUND
+        if facility_list is None:
+            return error_response(
+                APIErrorMessages.FACILITY_LIST_NOT_FOUND,
+                status.HTTP_404_NOT_FOUND,
             )
+
+        source = facility_list.source
 
         if not source.is_active:
-            return Response(
-                {'detail': APIErrorMessages.LIST_ALREADY_INACTIVE},
-                status=status.HTTP_404_NOT_FOUND
+            return error_response(
+                APIErrorMessages.LIST_ALREADY_INACTIVE,
+                status.HTTP_404_NOT_FOUND,
             )
 
         if facility_list.status not in (
                 FacilityList.APPROVED,
                 FacilityList.MATCHED):
-            return Response(
-                {'detail': APIErrorMessages.LIST_NOT_APPROVED},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                APIErrorMessages.LIST_NOT_APPROVED,
+                status.HTTP_400_BAD_REQUEST,
             )
 
         if not deactivate_contributor_source(facility_list, request.user):
-            return Response(
-                {'detail': APIErrorMessages.LIST_ALREADY_INACTIVE},
-                status=status.HTTP_404_NOT_FOUND
+            return error_response(
+                APIErrorMessages.LIST_ALREADY_INACTIVE,
+                status.HTTP_404_NOT_FOUND,
             )
 
         return Response(
