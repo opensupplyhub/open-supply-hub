@@ -250,6 +250,12 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         if 'source' in copied_raw_data:
             del copied_raw_data['source']
 
+        # Delete the duplicate_override flag, which is only consumed by
+        # DuplicateSubmissionProcessor later in the chain and isn't a real
+        # location field.
+        if 'duplicate_override' in copied_raw_data:
+            del copied_raw_data['duplicate_override']
+
         return copied_raw_data
 
     @staticmethod

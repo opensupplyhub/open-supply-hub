@@ -5,6 +5,7 @@ import { MemoryRouter, Route, BrowserRouter as Router } from "react-router-dom";
 import ProductionLocationInfo from "../../components/Contribute/ProductionLocationInfo";
 import renderWithProviders from "../../util/testUtils/renderWithProviders";
 import { MAINTENANCE_MESSAGE } from "../../util/constants";
+import apiRequest from "../../util/apiRequest";
 
 beforeAll(() => {
     window.scrollTo = jest.fn();
@@ -12,6 +13,24 @@ beforeAll(() => {
 
 jest.mock('@material-ui/core/Popper', () => ({ children }) => children);
 jest.mock('@material-ui/core/Portal', () => ({ children }) => children);
+
+jest.mock("../../util/apiRequest", () => ({
+    __esModule: true,
+    default: {
+        get: jest.fn(),
+        post: jest.fn(),
+        patch: jest.fn(),
+    },
+}));
+
+// CRA's jest config sets `resetMocks: true`, which strips any implementation
+// given to jest.fn() before every test, so the mocked resolved values must be
+// (re)assigned here rather than in the jest.mock factory above.
+beforeEach(() => {
+    apiRequest.get.mockResolvedValue({ data: [] });
+    apiRequest.post.mockResolvedValue({ data: {} });
+    apiRequest.patch.mockResolvedValue({ data: {} });
+});
 
 jest.mock("../../components/Filters/StyledSelect", () => (props) => {
     const { options = [], value, onChange, onBlur, placeholder, name } = props;
@@ -454,5 +473,98 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
         fireEvent.click(switchButton);
         await waitFor(() => expect(queryByText("Enter the number of workers as a number or range")).not.toBeInTheDocument());
         expect(updateButton).toBeEnabled();
+    });
+});
+
+describe("ProductionLocationInfo component, possible duplicate submission dialog", () => {
+    const defaultState = {
+        filterOptions: {
+            countries: {
+                data: [{ value: "US", label: "United States" }],
+                error: null,
+                fetching: false,
+            },
+            facilityProcessingType: {
+                data: [],
+                error: null,
+                fetching: false,
+            },
+        },
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        featureFlags: {
+            flags: {
+                disable_list_uploading: false,
+            },
+            fetching: false,
+        },
+        contributeProductionLocation: {
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: {
+                    errorSource: "CLIENT",
+                    detail: "You recently submitted a very similar production location.",
+                    errors: null,
+                    rawData: {
+                        detail: "You recently submitted a very similar production location.",
+                        duplicate_of: {
+                            moderation_id: "abc-123",
+                            created_at: "2026-07-24T12:00:00.000Z",
+                            name: "Blue Horizon Facility",
+                            address: "990 Spring Garden St., Philadelphia PA 19123",
+                            country: "US",
+                        },
+                    },
+                },
+            },
+            singleProductionLocation: {
+                data: {},
+                fetching: false,
+                error: null,
+            },
+        },
+    };
+
+    const defaultProps = {
+        submitMethod: "POST",
+    };
+
+    const renderComponent = (props = {}, preloadedState = defaultState) =>
+        renderWithProviders(
+            <Router>
+                <ProductionLocationInfo {...defaultProps} {...props} />
+            </Router>,
+            { preloadedState },
+        );
+
+    test("shows the duplicate submission dialog instead of the generic error notification", () => {
+        const { getByText, queryByText } = renderComponent();
+
+        expect(getByText("Possible Duplicate Submission")).toBeInTheDocument();
+        expect(queryByText("Data submission failed.")).not.toBeInTheDocument();
+    });
+
+    test("dismisses the dialog on 'Go back and edit' without resubmitting", async () => {
+        const { getByText, queryByText } = renderComponent();
+
+        fireEvent.click(getByText("Go back and edit"));
+
+        await waitFor(() =>
+            expect(queryByText("Possible Duplicate Submission")).not.toBeInTheDocument(),
+        );
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
+    test("resubmits with duplicate_override when 'Submit anyway' is clicked", async () => {
+        const { getByText } = renderComponent();
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(1));
+        const [, body] = apiRequest.post.mock.calls[0];
+        expect(body.duplicate_override).toBe(true);
     });
 });

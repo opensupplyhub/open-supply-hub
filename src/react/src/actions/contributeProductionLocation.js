@@ -62,16 +62,22 @@ export const resetPendingModerationEvent = createAction(
     'RESET_PENDING_MODERATION_EVENT',
 );
 
-export function createProductionLocation(contribData) {
+export function createProductionLocation(
+    contribData,
+    duplicateOverride = false,
+) {
     const parsedContribData = parseContribData(contribData);
+    const requestData = duplicateOverride
+        ? { ...parsedContribData, duplicate_override: true }
+        : parsedContribData;
 
     return async dispatch => {
-        dispatch(startCreateProductionLocation(parsedContribData));
+        dispatch(startCreateProductionLocation(requestData));
 
         try {
             const { data } = await apiRequest.post(
                 makeProductionLocationURL(),
-                parsedContribData,
+                requestData,
             );
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
@@ -86,16 +92,23 @@ export function createProductionLocation(contribData) {
     };
 }
 
-export function updateProductionLocation(contribData, osID) {
+export function updateProductionLocation(
+    contribData,
+    osID,
+    duplicateOverride = false,
+) {
     const parsedContribData = parseContribData(contribData);
+    const requestData = duplicateOverride
+        ? { ...parsedContribData, duplicate_override: true }
+        : parsedContribData;
 
     return async dispatch => {
-        dispatch(startUpdateProductionLocation(parsedContribData));
+        dispatch(startUpdateProductionLocation(requestData));
 
         try {
             const { data } = await apiRequest.patch(
                 makeProductionLocationURL(osID),
-                parsedContribData,
+                requestData,
             );
             return dispatch(completeUpdateProductionLocation(data));
         } catch (err) {

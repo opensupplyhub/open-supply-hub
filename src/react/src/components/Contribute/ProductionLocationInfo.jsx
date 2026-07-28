@@ -142,11 +142,12 @@ const ProductionLocationInfo = ({
     let handleProductionLocation;
     switch (submitMethod) {
         case 'POST':
-            handleProductionLocation = handleCreateProductionLocation;
+            handleProductionLocation = (data, duplicateOverride) =>
+                handleCreateProductionLocation(data, duplicateOverride);
             break;
         case 'PATCH':
-            handleProductionLocation = data =>
-                handleUpdateProductionLocation(data, osID);
+            handleProductionLocation = (data, duplicateOverride) =>
+                handleUpdateProductionLocation(data, osID, duplicateOverride);
             break;
         default:
             handleProductionLocation = () => {
@@ -155,8 +156,14 @@ const ProductionLocationInfo = ({
             break;
     }
 
+    const [
+        showDuplicateSubmissionDialog,
+        setShowDuplicateSubmissionDialog,
+    ] = useState(false);
+
     const contributionForm = useSingleLocationContributionForm(values => {
         setShowPostSubmitErrorNotification(false);
+        setShowDuplicateSubmissionDialog(false);
         handleProductionLocation(values);
     });
 
@@ -341,7 +348,13 @@ const ProductionLocationInfo = ({
     }, [location.pathname, history, osID]);
 
     useEffect(() => {
-        if (!pendingModerationEventFetching && pendingModerationEventError) {
+        if (pendingModerationEventFetching || !pendingModerationEventError) {
+            return;
+        }
+
+        if (pendingModerationEventError.rawData?.duplicate_of) {
+            setShowDuplicateSubmissionDialog(true);
+        } else {
             setShowPostSubmitErrorNotification(true);
         }
     }, [pendingModerationEventFetching, pendingModerationEventError]);
@@ -1214,6 +1227,16 @@ const ProductionLocationInfo = ({
                         : ''
                 }
             />
+            <ContributionWarningDialog
+                open={showDuplicateSubmissionDialog}
+                onClose={() => setShowDuplicateSubmissionDialog(false)}
+                onSubmitAnyway={() => {
+                    setShowDuplicateSubmissionDialog(false);
+                    handleProductionLocation(contributionForm.values, true);
+                }}
+                title="Possible Duplicate Submission"
+                message="You recently submitted a very similar production location. Please wait at least 30 minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission."
+            />
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
                 localStorage.getItem(moderationID) ||
@@ -1334,10 +1357,10 @@ function mapDispatchToProps(dispatch) {
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
-        handleCreateProductionLocation: data =>
-            dispatch(createProductionLocation(data)),
-        handleUpdateProductionLocation: (data, osID) =>
-            dispatch(updateProductionLocation(data, osID)),
+        handleCreateProductionLocation: (data, duplicateOverride) =>
+            dispatch(createProductionLocation(data, duplicateOverride)),
+        handleUpdateProductionLocation: (data, osID, duplicateOverride) =>
+            dispatch(updateProductionLocation(data, osID, duplicateOverride)),
         fetchModerationEvent: moderationID =>
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>
