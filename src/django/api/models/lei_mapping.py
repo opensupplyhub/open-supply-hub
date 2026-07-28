@@ -53,8 +53,10 @@ class LeiMapping(models.Model):
         blank=True,
         help_text='The match score reported by the mapping process.')
     mapping_file_date = models.DateField(
-        null=False,
-        help_text='The date of the GLEIF mapping file with this mapping.')
+        null=True,
+        blank=True,
+        help_text=('The date of the GLEIF mapping file with this mapping, '
+                   'when provided.'))
     status = models.CharField(
         max_length=11,
         null=False,

@@ -90,7 +90,6 @@ class IngestLeiMappingsTest(TestCase):
         call_command(
             'ingest_lei_mappings',
             '--file', path,
-            '--file-date', '2026-07-01',
             *extra,
             stdout=StringIO(),
             stderr=StringIO(),
@@ -118,7 +117,8 @@ class IngestLeiMappingsTest(TestCase):
         self.assertEqual(mapping.lei, VALID_LEI)
         self.assertEqual(mapping.match_type, LeiMapping.FACILITY_NAME)
         self.assertEqual(mapping.status, LeiMapping.ACTIVE)
-        self.assertEqual(mapping.mapping_file_date, date(2026, 7, 1))
+        # No mapping_file_date column in the CSV: stored as unknown.
+        self.assertIsNone(mapping.mapping_file_date)
 
         source = Source.objects.get(contributor=self.gleif)
         self.assertEqual(source.source_type, Source.LIST)
@@ -168,6 +168,16 @@ class IngestLeiMappingsTest(TestCase):
             ).count(),
             1,
         )
+
+    def test_mapping_file_date_stored_when_provided(self):
+        columns = DEFAULT_COLUMNS + ('mapping_file_date',)
+        self._call(self._write_csv(
+            [self._row(mapping_file_date='2026-07-15')],
+            columns=columns,
+        ))
+
+        mapping = LeiMapping.objects.get(os_id=self.facility.id)
+        self.assertEqual(mapping.mapping_file_date, date(2026, 7, 15))
 
     def test_missing_gleif_account_is_a_clear_error(self):
         self.gleif.delete()

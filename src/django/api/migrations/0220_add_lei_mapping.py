@@ -56,10 +56,12 @@ class Migration(migrations.Migration):
                     null=True,
                 )),
                 ('mapping_file_date', models.DateField(
+                    blank=True,
                     help_text=(
                         'The date of the GLEIF mapping file with this '
-                        'mapping.'
+                        'mapping, when provided.'
                     ),
+                    null=True,
                 )),
                 ('status', models.CharField(
                     choices=[

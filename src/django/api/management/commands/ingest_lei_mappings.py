@@ -58,13 +58,6 @@ class Command(BaseCommand):
             help='Path to the GLEIF OS Hub-to-LEI mapping CSV file.'
         )
         parser.add_argument(
-            '--file-date', type=str, default=None,
-            help=(
-                'Mapping file date in YYYY-MM-DD format. Used when the '
-                'CSV does not provide a mapping_file_date column.'
-            )
-        )
-        parser.add_argument(
             '--dry-run', action='store_true', default=False,
             help='Do not write to DB; just report what would be done.'
         )
@@ -81,14 +74,6 @@ class Command(BaseCommand):
         batch_size = options['batch_size']
 
         contributor = self._resolve_contributor()
-
-        default_file_date = None
-        if options['file_date']:
-            default_file_date = self._parse_date(options['file_date'])
-            if default_file_date is None:
-                raise CommandError(
-                    '--file-date must be a valid date in YYYY-MM-DD format.'
-                )
 
         header, rows = self._read_csv(file_path)
 
@@ -109,7 +94,6 @@ class Command(BaseCommand):
             plan = self._plan_row(
                 row,
                 row_number,
-                default_file_date,
                 ledger,
                 seen_facility_ids,
                 stats,
@@ -197,7 +181,6 @@ class Command(BaseCommand):
         self,
         row,
         row_number,
-        default_file_date,
         ledger,
         seen_facility_ids,
         stats,
@@ -228,6 +211,9 @@ class Command(BaseCommand):
             )
             return None
 
+        # The mapping-file date is optional for now — it is one of the
+        # fields still unconfirmed with GLEIF. Stored when provided.
+        file_date = None
         raw_date = (row.get('mapping_file_date') or '').strip()
         if raw_date:
             file_date = self._parse_date(raw_date)
@@ -236,15 +222,6 @@ class Command(BaseCommand):
                 self.stderr.write(
                     f'Row {row_number}: invalid mapping_file_date '
                     f'{raw_date!r}. Expected YYYY-MM-DD.'
-                )
-                return None
-        else:
-            file_date = default_file_date
-            if file_date is None:
-                stats['invalid'] += 1
-                self.stderr.write(
-                    f'Row {row_number}: no mapping_file_date in the CSV '
-                    'and no --file-date provided.'
                 )
                 return None
 
@@ -305,18 +282,19 @@ class Command(BaseCommand):
 
         return plan
 
-    def _ensure_source(self, contributor, file_date):
+    def _ensure_source(self, contributor):
         if self._facility_list_source is not None:
             return self._facility_list_source
 
-        list_name = f'GLEIF LEI Mapping — {file_date.isoformat()}'
+        ingest_date = timezone.localdate().isoformat()
+        list_name = f'GLEIF LEI Mapping — {ingest_date}'
         facility_list = FacilityList.objects.create(
             name=list_name,
             description=(
                 'OS Hub-to-LEI mappings provided by GLEIF and ingested by '
                 'the ingest_lei_mappings management command.'
             ),
-            file_name=f'gleif_lei_mapping_{file_date.isoformat()}.csv',
+            file_name=f'gleif_lei_mapping_{ingest_date}.csv',
             header=self._header_str,
         )
         self._facility_list_source = Source.objects.create(
@@ -338,7 +316,7 @@ class Command(BaseCommand):
         """
         facility = plan['facility']
         row = plan['row']
-        source = self._ensure_source(contributor, plan['file_date'])
+        source = self._ensure_source(contributor)
 
         name = facility.name
         address = facility.address
