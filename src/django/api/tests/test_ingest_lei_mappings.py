@@ -291,19 +291,19 @@ class IngestLeiMappingsTest(TestCase):
             0,
         )
 
-    def test_blacklisted_ledger_row_is_not_recreated(self):
+    def test_denylisted_ledger_row_is_not_recreated(self):
         LeiMapping.objects.create(
             os_id=self.facility.id,
             lei=VALID_LEI,
             match_type=LeiMapping.FACILITY_NAME,
             mapping_file_date=date(2026, 6, 1),
-            status=LeiMapping.BLACKLISTED,
+            status=LeiMapping.DENYLISTED,
         )
 
         self._call(self._write_csv([self._row()]))
 
         mapping = LeiMapping.objects.get(os_id=self.facility.id)
-        self.assertEqual(mapping.status, LeiMapping.BLACKLISTED)
+        self.assertEqual(mapping.status, LeiMapping.DENYLISTED)
         self.assertEqual(mapping.mapping_file_date, date(2026, 6, 1))
         self.assertEqual(self._gleif_extended_fields().count(), 0)
         self.assertEqual(

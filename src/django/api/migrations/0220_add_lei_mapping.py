@@ -65,14 +65,14 @@ class Migration(migrations.Migration):
                     choices=[
                         ('active', 'active'),
                         ('removed', 'removed'),
-                        ('blacklisted', 'blacklisted'),
+                        ('denylisted', 'denylisted'),
                     ],
                     default='active',
                     help_text=(
                         'The lifecycle status of the mapping. An active '
                         'mapping is materialized as an extended field. A '
                         'removed mapping was absent from the most recent '
-                        'mapping file. A blacklisted mapping is never '
+                        'mapping file. A denylisted mapping is never '
                         'recreated by ingestion.'
                     ),
                     max_length=11,

@@ -35,7 +35,7 @@ STAT_KEYS = (
     'alias_resolved',
     'duplicate_target',
     'echo_mismatch',
-    'blacklisted_skipped',
+    'denylisted_skipped',
 )
 
 
@@ -310,8 +310,8 @@ class Command(BaseCommand):
         }
 
         mapping = ledger.get(facility.id)
-        if mapping is not None and mapping.status == LeiMapping.BLACKLISTED:
-            stats['blacklisted_skipped'] += 1
+        if mapping is not None and mapping.status == LeiMapping.DENYLISTED:
+            stats['denylisted_skipped'] += 1
             return None
         if mapping is not None and mapping.status == LeiMapping.ACTIVE:
             if mapping.lei == lei and mapping.match_type == match_type:

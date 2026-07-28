@@ -17,12 +17,12 @@ class LeiMapping(models.Model):
 
     ACTIVE = 'active'
     REMOVED = 'removed'
-    BLACKLISTED = 'blacklisted'
+    DENYLISTED = 'denylisted'
 
     STATUS_CHOICES = (
         (ACTIVE, ACTIVE),
         (REMOVED, REMOVED),
-        (BLACKLISTED, BLACKLISTED),
+        (DENYLISTED, DENYLISTED),
     )
 
     os_id = models.CharField(
@@ -64,7 +64,7 @@ class LeiMapping(models.Model):
         help_text=('The lifecycle status of the mapping. An active mapping '
                    'is materialized as an extended field. A removed mapping '
                    'was absent from the most recent mapping file. A '
-                   'blacklisted mapping is never recreated by ingestion.'))
+                   'denylisted mapping is never recreated by ingestion.'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
