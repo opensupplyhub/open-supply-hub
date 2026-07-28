@@ -9,8 +9,8 @@ import Add from '@material-ui/icons/Add';
 import CheckCircleOutline from '@material-ui/icons/CheckCircleOutline';
 import HighlightOff from '@material-ui/icons/HighlightOff';
 
-import { ReactComponent as CopyIcon } from './icons/copy.svg';
-import { ReactComponent as ShieldXIcon } from './icons/shield-x.svg';
+import CopyIcon from './icons/copy.svg?react';
+import ShieldXIcon from './icons/shield-x.svg?react';
 
 import ShowOnly from '../../../ShowOnly';
 
