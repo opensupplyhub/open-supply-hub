@@ -85,8 +85,8 @@ class IngestLeiMappingsTest(TestCase):
         return handle.name
 
     def _call(self, path, *extra):
-        # No --contributor-id: exercises the default resolution of the
-        # GLEIF account by its canonical admin email.
+        # The command resolves the GLEIF account by its canonical admin
+        # email; there is deliberately no contributor parameter.
         call_command(
             'ingest_lei_mappings',
             '--file', path,
@@ -168,24 +168,6 @@ class IngestLeiMappingsTest(TestCase):
             ).count(),
             1,
         )
-
-    def test_contributor_id_override_attributes_to_that_contributor(self):
-        other_user = User.objects.create(email='other-partner@example.com')
-        other = Contributor.objects.create(
-            admin=other_user,
-            name='Other Partner',
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
-        )
-
-        self._call(
-            self._write_csv([self._row()]),
-            '--contributor-id', str(other.id),
-        )
-
-        extended_field = ExtendedField.objects.get(
-            field_name=ExtendedField.LEI_ID
-        )
-        self.assertEqual(extended_field.contributor, other)
 
     def test_missing_gleif_account_is_a_clear_error(self):
         self.gleif.delete()

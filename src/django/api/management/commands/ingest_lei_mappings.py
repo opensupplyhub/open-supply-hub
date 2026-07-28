@@ -58,16 +58,6 @@ class Command(BaseCommand):
             help='Path to the GLEIF OS Hub-to-LEI mapping CSV file.'
         )
         parser.add_argument(
-            '--contributor-id', type=int, default=None,
-            help=(
-                'Override: the id of the contributor to attribute the '
-                'ingested contributions to. By default the GLEIF account '
-                f'is resolved by its admin email ({GLEIF_CONTRIBUTOR_EMAIL})'
-                ', which is the same in every environment while ids are '
-                'not.'
-            )
-        )
-        parser.add_argument(
             '--file-date', type=str, default=None,
             help=(
                 'Mapping file date in YYYY-MM-DD format. Used when the '
@@ -90,7 +80,7 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         batch_size = options['batch_size']
 
-        contributor = self._resolve_contributor(options['contributor_id'])
+        contributor = self._resolve_contributor()
 
         default_file_date = None
         if options['file_date']:
@@ -138,16 +128,7 @@ class Command(BaseCommand):
         self._report(stats, dry_run)
 
     @staticmethod
-    def _resolve_contributor(contributor_id):
-        if contributor_id is not None:
-            contributor = (
-                Contributor.objects.filter(id=contributor_id).first()
-            )
-            if contributor is None:
-                raise CommandError(
-                    f'Contributor with id {contributor_id} does not exist.'
-                )
-            return contributor
+    def _resolve_contributor():
         contributor = (
             Contributor
             .objects
@@ -158,7 +139,7 @@ class Command(BaseCommand):
             raise CommandError(
                 'No contributor account found for the GLEIF admin email '
                 f'{GLEIF_CONTRIBUTOR_EMAIL}. Create the GLEIF contributor '
-                'account first, or pass --contributor-id explicitly.'
+                'account first.'
             )
         return contributor
 
