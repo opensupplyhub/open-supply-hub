@@ -64,6 +64,7 @@ from .extended_field import (
   ExtendedField,
   HistoricalExtendedField
 )
+from .lei_mapping import LeiMapping
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
 from .partner_data_file_upload import PartnerDataFileUpload
