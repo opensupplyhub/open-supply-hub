@@ -19,27 +19,24 @@ from api.services.facility_list_deactivation_service import (
 )
 
 
-deactivate_response_schema = Schema(
-    type=TYPE_OBJECT,
-    properties={
-        'list_id': Schema(type=TYPE_INTEGER),
-        'deactivated': Schema(type=TYPE_BOOLEAN),
-    },
-    required=['list_id', 'deactivated'],
-)
-
-
-def error_response(detail, status_code):
-    return Response({'detail': detail}, status=status_code)
-
-
 class FacilityListDeactivateView(APIView):
     permission_classes = (IsRegisteredAndConfirmed,)
+    __deactivate_response_schema = Schema(
+        type=TYPE_OBJECT,
+        properties={
+            'list_id': Schema(type=TYPE_INTEGER),
+            'deactivated': Schema(type=TYPE_BOOLEAN),
+        },
+        required=['list_id', 'deactivated'],
+    )
+
+    def _get_error_response(detail, status_code):
+        return Response({'detail': detail}, status=status_code)
 
     @swagger_auto_schema(
         request_body=no_body,
         responses={
-            200: deactivate_response_schema,
+            200: __deactivate_response_schema,
             400: APIErrorMessages.LIST_NOT_APPROVED,
             404: APIErrorMessages.FACILITY_LIST_NOT_FOUND,
         },
@@ -77,7 +74,7 @@ class FacilityListDeactivateView(APIView):
             )
 
         if facility_list is None:
-            return error_response(
+            return self._get_error_response(
                 APIErrorMessages.FACILITY_LIST_NOT_FOUND,
                 status.HTTP_404_NOT_FOUND,
             )
@@ -85,7 +82,7 @@ class FacilityListDeactivateView(APIView):
         source = facility_list.source
 
         if not source.is_active:
-            return error_response(
+            return self._get_error_response(
                 APIErrorMessages.LIST_ALREADY_INACTIVE,
                 status.HTTP_404_NOT_FOUND,
             )
@@ -93,13 +90,13 @@ class FacilityListDeactivateView(APIView):
         if facility_list.status not in (
                 FacilityList.APPROVED,
                 FacilityList.MATCHED):
-            return error_response(
+            return self._get_error_response(
                 APIErrorMessages.LIST_NOT_APPROVED,
                 status.HTTP_400_BAD_REQUEST,
             )
 
         if not deactivate_contributor_source(facility_list, request.user):
-            return error_response(
+            return self._get_error_response(
                 APIErrorMessages.LIST_ALREADY_INACTIVE,
                 status.HTTP_404_NOT_FOUND,
             )
