@@ -22,6 +22,10 @@ from api.models.source import Source
 
 LEI_RE = re.compile(r'^[A-Z0-9]{18}\d{2}$')
 INGEST_MATCH_TYPE = 'lei_mapping_ingest'
+# The canonical admin email of the GLEIF contributor account. The account
+# must be created with this email in every environment (see the OSDEV-3095
+# runbook notes); ids differ per environment, emails do not.
+GLEIF_CONTRIBUTOR_EMAIL = 'gleif-data@opensupplyhub.org'
 REQUIRED_COLUMNS = ('os_id', 'lei', 'match_type')
 VALID_MATCH_TYPES = (LeiMapping.FACILITY_NAME, LeiMapping.PARENT_COMPANY)
 STAT_KEYS = (
@@ -54,10 +58,13 @@ class Command(BaseCommand):
             help='Path to the GLEIF OS Hub-to-LEI mapping CSV file.'
         )
         parser.add_argument(
-            '--contributor-id', type=int, required=True,
+            '--contributor-id', type=int, default=None,
             help=(
-                'The id of the existing GLEIF contributor to which the '
-                'ingested contributions are attributed.'
+                'Override: the id of the contributor to attribute the '
+                'ingested contributions to. By default the GLEIF account '
+                f'is resolved by its admin email ({GLEIF_CONTRIBUTOR_EMAIL})'
+                ', which is the same in every environment while ids are '
+                'not.'
             )
         )
         parser.add_argument(
@@ -80,17 +87,10 @@ class Command(BaseCommand):
         self.stdout.write('Ingesting GLEIF LEI mappings...')
 
         file_path = options['file']
-        contributor_id = options['contributor_id']
         dry_run = options['dry_run']
         batch_size = options['batch_size']
 
-        contributor = Contributor.objects.filter(id=contributor_id).first()
-        if contributor is None:
-            raise CommandError(
-                f'Contributor with id {contributor_id} does not exist. '
-                'Pass the id of the existing GLEIF contributor via '
-                '--contributor-id.'
-            )
+        contributor = self._resolve_contributor(options['contributor_id'])
 
         default_file_date = None
         if options['file_date']:
@@ -136,6 +136,31 @@ class Command(BaseCommand):
             self._apply_creates(creates, contributor, batch_size)
 
         self._report(stats, dry_run)
+
+    @staticmethod
+    def _resolve_contributor(contributor_id):
+        if contributor_id is not None:
+            contributor = (
+                Contributor.objects.filter(id=contributor_id).first()
+            )
+            if contributor is None:
+                raise CommandError(
+                    f'Contributor with id {contributor_id} does not exist.'
+                )
+            return contributor
+        contributor = (
+            Contributor
+            .objects
+            .filter(admin__email__iexact=GLEIF_CONTRIBUTOR_EMAIL)
+            .first()
+        )
+        if contributor is None:
+            raise CommandError(
+                'No contributor account found for the GLEIF admin email '
+                f'{GLEIF_CONTRIBUTOR_EMAIL}. Create the GLEIF contributor '
+                'account first, or pass --contributor-id explicitly.'
+            )
+        return contributor
 
     @staticmethod
     def _parse_date(value):

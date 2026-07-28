@@ -6,8 +6,12 @@ from io import StringIO
 
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
+from api.management.commands.ingest_lei_mappings import (
+    GLEIF_CONTRIBUTOR_EMAIL,
+)
 from api.models import Contributor, User
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility import Facility
@@ -24,7 +28,7 @@ DEFAULT_COLUMNS = ('os_id', 'lei', 'match_type')
 
 class IngestLeiMappingsTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create(email='gleif@example.com')
+        self.user = User.objects.create(email=GLEIF_CONTRIBUTOR_EMAIL)
         self.gleif = Contributor.objects.create(
             admin=self.user,
             name='GLEIF',
@@ -81,10 +85,11 @@ class IngestLeiMappingsTest(TestCase):
         return handle.name
 
     def _call(self, path, *extra):
+        # No --contributor-id: exercises the default resolution of the
+        # GLEIF account by its canonical admin email.
         call_command(
             'ingest_lei_mappings',
             '--file', path,
-            '--contributor-id', str(self.gleif.id),
             '--file-date', '2026-07-01',
             *extra,
             stdout=StringIO(),
@@ -163,6 +168,32 @@ class IngestLeiMappingsTest(TestCase):
             ).count(),
             1,
         )
+
+    def test_contributor_id_override_attributes_to_that_contributor(self):
+        other_user = User.objects.create(email='other-partner@example.com')
+        other = Contributor.objects.create(
+            admin=other_user,
+            name='Other Partner',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        self._call(
+            self._write_csv([self._row()]),
+            '--contributor-id', str(other.id),
+        )
+
+        extended_field = ExtendedField.objects.get(
+            field_name=ExtendedField.LEI_ID
+        )
+        self.assertEqual(extended_field.contributor, other)
+
+    def test_missing_gleif_account_is_a_clear_error(self):
+        self.gleif.delete()
+
+        with self.assertRaises(CommandError):
+            self._call(self._write_csv([self._row()]))
+
+        self.assertEqual(LeiMapping.objects.count(), 0)
 
     def test_existing_mapping_with_changed_lei_is_skipped(self):
         # This command only creates mappings for OS IDs new to the ledger;
