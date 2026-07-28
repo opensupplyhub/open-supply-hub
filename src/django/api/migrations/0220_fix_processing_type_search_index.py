@@ -22,6 +22,15 @@ def update_indexing_function(apps, schema_editor):
     The new version keeps every entry whose processing-type slot (index 3) is
     populated, mirroring the facility_type index (index 2) and the frontend
     display logic. See OSDEV-1034.
+
+    Out of scope: entries whose processing-type slot is null (raw text that
+    failed taxonomy matching entirely) are intentionally not indexed here.
+    Such values have never been searchable and cannot be queried from the
+    search page anyway - the Processing Type filter only offers known
+    taxonomy values and the API filter maps every input through the taxonomy
+    matcher. They only surface as raw fallback text on the location profile.
+    Making unmatched raw contributions searchable is a separate effort
+    tracked under the OSDEV-1094 umbrella.
     """
     helper.run_sql_files([
         '0220_index_processing_type.sql'
