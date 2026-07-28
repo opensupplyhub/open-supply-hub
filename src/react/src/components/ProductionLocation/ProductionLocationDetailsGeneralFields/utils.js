@@ -11,6 +11,7 @@ import {
     ORDERED_GENERAL_FIELD_KEYS,
     FIELD_CONFIG,
     DATA_CENTER_FIELD_GROUPS,
+    NO_UNIT_SPECIFIED
 } from '../constants.jsx';
 
 const toDrawerContribution = (item, value) => ({
@@ -366,7 +367,7 @@ const getVisibleFields = (data, includeAdditionalIdentifiers) => {
         .filter(Boolean);
 };
 
-const rawExtendedValue = item => item && item.value && item.value.raw_value;
+const rawExtendedValue = item => item?.value?.raw_value || null;
 
 const buildDataCenterDataPoint = (data, field) => {
     const values = get(data, `properties.extended_fields.${field.key}`, []);
@@ -376,7 +377,9 @@ const buildDataCenterDataPoint = (data, field) => {
     if (topValue == null || topValue === '') return null;
 
     let unit = null;
+    let isValueWithUnit = false;
     if (field.unitsField) {
+        isValueWithUnit = true;
         const unitValues = get(
             data,
             `properties.extended_fields.${field.unitsField}`,
@@ -384,11 +387,16 @@ const buildDataCenterDataPoint = (data, field) => {
         );
         unit = unitValues.length ? rawExtendedValue(unitValues[0]) : null;
     }
-    const withUnit = value =>
-        unit && value != null && value !== '' ? `${value} ${unit}` : value;
+
+    const withUnit = (value) => {
+        if (unit !== null && value != null && value !== '') {
+            return `${value} ${unit}`;
+        }
+        return `${value} ${NO_UNIT_SPECIFIED}`;
+    }
 
     const toContribution = item => ({
-        value: withUnit(rawExtendedValue(item)),
+        value: isValueWithUnit ? withUnit(rawExtendedValue(item)) : rawExtendedValue(item),
         sourceName: item.contributor_name || null,
         date: item.created_at || null,
         userId: item.contributor_id != null ? item.contributor_id : undefined,
@@ -416,7 +424,7 @@ const buildDataCenterDataPoint = (data, field) => {
     };
 };
 
-// Data-center attribute fields, grouped (OSDEV-3076 / OSDEV-3077). Returns
+// Data-center attribute fields. Returns
 // [{ label, fields: [...] }] with empty fields/groups dropped. Only meaningful
 // for data centers; callers gate on `properties.is_data_center`.
 export const getDataCenterFieldGroups = data => {

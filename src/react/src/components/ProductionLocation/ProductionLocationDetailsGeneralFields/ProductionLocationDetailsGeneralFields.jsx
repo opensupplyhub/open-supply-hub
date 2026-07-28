@@ -143,6 +143,11 @@ const ProductionLocationDetailsGeneralFields = ({
                         >
                             {group.label}
                         </Typography>
+                        <IconComponent
+                            title={`${group.label} information for this production location. ${group.description}`}
+                            icon={InfoOutlined}
+                            className={classes.infoIcon}
+                        />
                     </Grid>
                     <Divider className={classes.divider} />
                     <Grid item xs={12} className={classes.dataList}>
