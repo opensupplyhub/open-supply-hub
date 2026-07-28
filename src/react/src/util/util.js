@@ -1,4 +1,3 @@
-import querystring from 'querystring';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
@@ -44,7 +43,6 @@ import startCase from 'lodash/startCase';
 import toLower from 'lodash/toLower';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
-import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
@@ -55,6 +53,8 @@ import {
     string as stringYup,
     array as arrayYup,
 } from 'yup';
+import hash from './stableHash';
+import querystring from './qs';
 
 import {
     OTHER,
