@@ -30,7 +30,7 @@ class FacilityListDeactivateView(APIView):
         required=['list_id', 'deactivated'],
     )
 
-    def _get_error_response(detail, status_code):
+    def _get_error_response(self, detail, status_code):
         return Response({'detail': detail}, status=status_code)
 
     @swagger_auto_schema(
