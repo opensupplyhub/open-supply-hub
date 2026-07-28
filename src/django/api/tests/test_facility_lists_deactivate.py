@@ -12,7 +12,6 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.source import Source
 from api.models.facility.facility import Facility
 from api.models.facility.facility_match import FacilityMatch
-from api.views.v1.url_names import URLNames
 
 
 class TestFacilityListsDeactivate(APITestCase):
@@ -103,10 +102,7 @@ class TestFacilityListsDeactivate(APITestCase):
         return facility
 
     def __deactivate_url(self, list_id):
-        return reverse(
-            URLNames.FACILITY_LISTS + '-deactivate',
-            args=[list_id],
-        )
+        return reverse('facility-list-deactivate', args=[list_id])
 
     def __facility_contributors(self, facility):
         response = self.client.get(
@@ -211,9 +207,11 @@ class TestFacilityListsDeactivate(APITestCase):
         self.assertEqual(self.facility_list.status, FacilityList.REJECTED)
 
     def test_404_when_already_inactive(self):
-        self.source.is_active = False
-        self.source.save()
         self.login(self.user_email, self.user_password)
+        first_response = self.client.post(
+            self.__deactivate_url(self.facility_list.id)
+        )
+        self.assertEqual(first_response.status_code, 200)
 
         response = self.client.post(
             self.__deactivate_url(self.facility_list.id)
@@ -223,6 +221,23 @@ class TestFacilityListsDeactivate(APITestCase):
         self.assertEqual(
             json.loads(response.content)['detail'],
             'This list is already inactive.',
+        )
+
+    def test_404_when_list_has_no_source(self):
+        orphan_list = FacilityList.objects.create(
+            header='header',
+            file_name='orphan',
+            name='Orphan List',
+            status=FacilityList.APPROVED,
+        )
+        self.login(self.user_email, self.user_password)
+
+        response = self.client.post(self.__deactivate_url(orphan_list.id))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            json.loads(response.content)['detail'],
+            'The list with the given id was not found.',
         )
 
     def test_cannot_deactivate_another_contributors_list(self):
@@ -275,10 +290,7 @@ class TestFacilityListsDeactivate(APITestCase):
         self.login(self.user_email, self.user_password)
 
         response = self.client.post(
-            reverse(
-                URLNames.FACILITY_LISTS + '-deactivate',
-                args=['abc'],
-            )
+            reverse('facility-list-deactivate', args=['abc'])
         )
 
         self.assertEqual(response.status_code, 404)
@@ -330,3 +342,26 @@ class TestFacilityListsDeactivate(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.source.refresh_from_db()
         self.assertTrue(self.source.is_active)
+
+    def test_legacy_swagger_documents_list_deactivation_endpoint(self):
+        response = self.client.get(
+            reverse('schema-swagger-ui'),
+            {'format': 'openapi'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        paths = json.loads(response.content)['paths']
+        self.assertIn('/facility-lists/{id}/deactivate/', paths)
+        deactivate_operation = (
+            paths['/facility-lists/{id}/deactivate/']['post']
+        )
+        self.assertFalse(any(
+            parameter.get('in') == 'body'
+            for parameter in deactivate_operation.get('parameters', [])
+        ))
+        response_schema = deactivate_operation['responses']['200']['schema']
+        self.assertIn('list_id', response_schema['properties'])
+        self.assertIn('deactivated', response_schema['properties'])
+        self.assertNotIn('/facility-lists/{id}/approve/', paths)
+        self.assertNotIn('/facility-lists/{id}/reject/', paths)
+        self.assertNotIn('/v1/facility-lists/{id}/deactivate/', paths)

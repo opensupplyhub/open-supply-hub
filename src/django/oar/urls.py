@@ -21,8 +21,6 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
-from api.views.v1.facility_lists \
-     import FacilityLists
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -69,11 +67,6 @@ v1_router.register(
     ModerationEvents,
     basename=URLNames.MODERATION_EVENTS
 )
-v1_router.register(
-    URLNames.FACILITY_LISTS,
-    FacilityLists,
-    basename=URLNames.FACILITY_LISTS
-)
 
 v1_custom_routes = [
      path(
@@ -90,6 +83,11 @@ v1_custom_routes = [
 
 public_apis = [
     path('api/', include(router.urls)),
+    path(
+        'api/facility-lists/<str:pk>/deactivate/',
+        views.FacilityListDeactivateView.as_view(),
+        name='facility-list-deactivate',
+    ),
     path('api/contributors/active_count/', views.active_contributors_count,
          name='active_contributors_count'),
     path('api/contributors/', views.all_contributors,

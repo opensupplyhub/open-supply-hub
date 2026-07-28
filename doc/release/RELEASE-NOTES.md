@@ -31,22 +31,14 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Provisioned ContriBot AWS infrastructure in Terraform: four empty Secrets Manager stores for runtime credentials, an on-demand DynamoDB state table keyed by `list_id`, three placeholder Lambda functions (`fetch_lists`, `process_list`, `notify`), a Step Functions workflow (fetch → Map over process → notify), and an EventBridge schedule (default every 5 minutes). Handlers are stubs only; secret values must be populated manually in AWS before real processing can run. Lambda dependency bundling for production handler code is not yet wired into the deploy pipeline.
 
 ### Code/API changes
-* [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added v1 API support for contributors to disassociate production-location contributions and deactivate uploaded lists:
-    * **Production-location contribution dissociation:** `POST /api/v1/production-locations/{os_id}/dissociate/`
-        * Requires an authenticated, confirmed contributor (`IsRegisteredAndConfirmed`).
-        * Only contributions originating from lists approved by an admin are eligible for dissociation.
-        * Scoped to the caller's own `FacilityMatch` records via `facility_list_item__source__contributor`, so a caller can never affect another contributor's data.
-        * Deactivates (never deletes) the caller's active matches — the contribution is anonymized (contributor name replaced with contributor type) through the existing `api_facilityindex` DB triggers — and bumps `Facility.updated_at` only when a match is actually deactivated.
-        * Returns `{os_id, dissociated_contributions}` on success; `404` when the location is unknown or when the caller has no active contribution from an approved list to dissociate (so "no changes made" stays truthful).
-        * Shared logic was extracted into `api/services/facility_dissociation_service.py`, and the legacy `POST /api/facilities/{id}/dissociate/` endpoint was refactored to reuse it (behavior unchanged).
-    * **Uploaded-list deactivation:** `POST /api/v1/facility-lists/{list_id}/deactivate/`
-        * Added a new `FacilityLists` viewset to the v1 router.
-        * Requires an authenticated, confirmed contributor and is gated by list ownership (`source.contributor`); missing and non-owned lists both return the same `404` so list ownership is not leaked.
-        * Reuses the platform's existing whole-list deactivation mechanic — the superuser reject path minus the rejection email — by setting `FacilityList.status = REJECTED`, which fires `manual_list_reject_revert_trigger` to set the list's `Source.is_active = False`, anonymizing every contribution from that list.
-        * Setting the status (not just the source flag) makes the deactivation durable: the trigger re-syncs `Source.is_active` from the list status on every list update.
-        * Only an approved (live) list can be deactivated — a list still awaiting moderator approval returns `400` (`Only an approved list can be deactivated.`), because a later `approve` would revert the `REJECTED` status and silently reactivate the source.
-        * Returns `{list_id, deactivated}` on success; `404` when the list is already inactive.
-        * Because deactivation reuses the `REJECTED` status, a deactivated list cannot subsequently be used as a replacement (`replaces`) target, consistent with existing rejected-list behavior.
+* [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added `POST /api/facility-lists/{list_id}/deactivate/` so contributors can deactivate their own uploaded lists:
+    * Requires an authenticated, confirmed contributor and is gated by list ownership (`source.contributor`); missing and non-owned lists both return the same `404` so list ownership is not leaked.
+    * Reuses the platform's existing whole-list deactivation mechanic — the superuser reject path minus the rejection email — by setting `FacilityList.status = REJECTED`, which fires `manual_list_reject_revert_trigger` to set the list's `Source.is_active = False`, anonymizing every contribution from that list.
+    * Setting the status (not just the source flag) makes the deactivation durable: the trigger re-syncs `Source.is_active` from the list status on every list update.
+    * Only an approved (live) list can be deactivated — a list still awaiting moderator approval returns `400` (`Only an approved list can be deactivated.`), because a later `approve` would revert the `REJECTED` status and silently reactivate the source.
+    * Returns `{list_id, deactivated}` on success; `404` when the list is already inactive.
+    * Because deactivation reuses the `REJECTED` status, a deactivated list cannot subsequently be used as a replacement (`replaces`) target, consistent with existing rejected-list behavior.
+    * The endpoint is documented in the legacy Swagger API documentation. No v1 route was added while the RESTful v1 resource design is under consideration.
 
 ### Bugfix
 * [OSDEV-2949](https://opensupplyhub.atlassian.net/browse/OSDEV-2949) - Fixed the `internal_ID` field being exposed in the API for the `rsc_grievance_mechanism` partner field. The key had been ingested from the partner's list contribution (used only to map their IDs to OS IDs) but is not part of the partner field's JSON Schema, and the partner explicitly asked us not to share it. Two parts: (1) all object-type partner field JSON Schemas were guarded in Django admin with `additionalProperties: false` placed as a sibling of `properties` (at the root and, where applicable, inside each nested object) — not just `rsc_grievance_mechanism` — so redundant keys like `internal_ID` are rejected on future contributions across every partner field; previously `additionalProperties` had been either absent or mistakenly nested *inside* `properties`, where JSON Schema treats it as a property definition rather than the keyword, so it had no effect. (2) The `remove_rsc_grievance_mechanism_nested_internal_ids` command strips `internal_ID` from the ~1.7k already-stored `rsc_grievance_mechanism` values, with the existing database trigger refreshing the affected facility index data, so the data looks as if the key was never contributed.
@@ -56,7 +48,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-* No reindex is required: dissociation and list deactivation propagate through the existing `api_facilitymatch` / `api_source` indexing triggers.
+* No reindex is required: list deactivation propagates through the existing `api_source` indexing trigger.
     * `remove_rsc_grievance_mechanism_nested_internal_ids` — one-time cleanup (OSDEV-2949) that strips the nested `internal_ID` from `rsc_grievance_mechanism` values; remove from `post_deployment` after this release has been deployed everywhere.
 * Expect `remove_rsc_grievance_mechanism_nested_internal_ids` to update on the order of ~1.7k `ExtendedField` rows. Each update invokes the existing `ExtendedField` database trigger, which refreshes the affected `FacilityIndex.extended_fields` data without a separate full or targeted reindex. The command runs with no application downtime. Confirm timing on Staging before Production.
 * Before applying Terraform to Test, complete the one-time CodeConnections setup described in `deployment/terraform/codebuild_github_runner/README.md` and set `codebuild_github_runner_connection_arn` in the private `ci-deployment` Test tfvars.

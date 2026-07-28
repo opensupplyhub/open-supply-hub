@@ -218,6 +218,9 @@ class APIErrorMessages:
     TEMPORARILY_UNAVAILABLE = (
         'The endpoint is temporarily unavailable. Please try again later.'
     )
+    FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
+    LIST_ALREADY_INACTIVE = 'This list is already inactive.'
+    LIST_NOT_APPROVED = 'Only an approved list can be deactivated.'
 
 
 class FacilitiesDownloadSettings:
@@ -255,13 +258,6 @@ class APIV1CommonErrorMessages:
     )
     LOCATION_NOT_FOUND = 'The location with the given id was not found.'
     LOCATION_ID_NOT_VALID = 'The value must be a valid id.'
-    NO_ACTIVE_CONTRIBUTION_TO_DISSOCIATE = (
-        'You have no active contribution from an approved list to '
-        'dissociate from this location.'
-    )
-    FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
-    LIST_ALREADY_INACTIVE = 'This list is already inactive.'
-    LIST_NOT_APPROVED = 'Only an approved list can be deactivated.'
 
 
 class APIV1LocationContributionErrorMessages:
