@@ -41,7 +41,7 @@ STAT_KEYS = (
 
 class Command(BaseCommand):
     help = (
-        'Ingest a GLEIF OSH-to-LEI mapping CSV file. Each mapping is '
+        'Ingest a GLEIF OS Hub-to-LEI mapping CSV file. Each mapping is '
         'recorded in the LeiMapping ledger and materialized as a '
         'contribution chain (Source, FacilityListItem, FacilityMatch and '
         'a lei_id ExtendedField) attributed to the GLEIF contributor. '
@@ -52,7 +52,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--file', type=str, required=True,
-            help='Path to the GLEIF OSH-to-LEI mapping CSV file.'
+            help='Path to the GLEIF OS Hub-to-LEI mapping CSV file.'
         )
         parser.add_argument(
             '--contributor-id', type=int, required=True,
@@ -367,7 +367,7 @@ class Command(BaseCommand):
         facility_list = FacilityList.objects.create(
             name=list_name,
             description=(
-                'OSH-to-LEI mappings provided by GLEIF and ingested by '
+                'OS Hub-to-LEI mappings provided by GLEIF and ingested by '
                 'the ingest_lei_mappings management command.'
             ),
             file_name=f'gleif_lei_mapping_{file_date.isoformat()}.csv',

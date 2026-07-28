@@ -3,7 +3,7 @@ from django.db import models
 
 class LeiMapping(models.Model):
     """
-    Ledger of GLEIF OSH-to-LEI mappings ingested by the ingest_lei_mappings
+    Ledger of GLEIF OS Hub-to-LEI mappings ingested by the ingest_lei_mappings
     management command. Holds one current row per OS ID and tracks the
     lifecycle of the mapping across ingestion runs.
     """
