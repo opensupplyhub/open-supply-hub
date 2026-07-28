@@ -82,12 +82,14 @@ resource "aws_lb_target_group" "app" {
   name = "tg${local.short}App"
 
   health_check {
-    healthy_threshold   = "3"
-    interval            = "30"
-    matcher             = "200"
-    protocol            = "HTTP"
-    timeout             = "3"
-    path                = "/health-check/"
+    healthy_threshold = "3"
+    interval          = "30"
+    matcher           = "200"
+    protocol          = "HTTP"
+    timeout           = "3"
+    # Liveness only (django-watchman ping). Do not use /health-check/ here:
+    # that runs DB/cache checks and can drain targets under Postgres load.
+    path                = "/health-check/ping/"
     unhealthy_threshold = "2"
   }
 

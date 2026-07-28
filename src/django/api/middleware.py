@@ -118,6 +118,16 @@ class RequestMeterMiddleware:
         return response
 
 
+def is_health_check_request(request):
+    """True for django-watchman paths under /health-check/.
+
+    Liveness probes (/health-check/ping/) and deep readiness checks must not
+    depend on middleware that talks to Postgres or external services.
+    """
+    path = request.path
+    return path == '/health-check/' or path.startswith('/health-check/')
+
+
 class OriginSourceMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -128,11 +138,14 @@ class OriginSourceMiddleware:
         )
 
     def __call__(self, request):
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SET app.origin_source TO %s",
-                [self.default_origin_source]
-            )
+        # Skip the session-scoped SET so synthetic/ALB/ECS probes stay
+        # independent of Postgres availability (OSDEV-2867).
+        if not is_health_check_request(request):
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SET app.origin_source TO %s",
+                    [self.default_origin_source]
+                )
 
         response = self.get_response(request)
         return response
@@ -155,6 +168,9 @@ class DarkVisitorsMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+
+        if is_health_check_request(request):
+            return response
 
         if self.TOKEN:
             allowed_headers = ['user-agent', 'referer', 'host']

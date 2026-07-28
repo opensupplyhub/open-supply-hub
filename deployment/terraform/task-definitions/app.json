@@ -75,7 +75,7 @@
     "healthCheck": {
         "command": [
             "CMD-SHELL",
-            "/usr/bin/curl -f http://localhost:${app_port}/health-check/ || exit 1"
+            "/usr/bin/curl -f http://localhost:${app_port}/health-check/ping/ || exit 1"
         ],
         "interval": 30,
         "timeout": 5,
