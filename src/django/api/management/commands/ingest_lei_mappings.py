@@ -46,7 +46,9 @@ class Command(BaseCommand):
         'contribution chain (Source, FacilityListItem, FacilityMatch and '
         'a lei_id ExtendedField) attributed to the GLEIF contributor. '
         'Re-running with the same file is a no-op; mappings absent from '
-        'the file are marked removed and their extended fields deleted.'
+        'the file are marked removed and their extended fields deleted. '
+        'The CSV is OS Hub\'s normalized internal format; converting '
+        'GLEIF\'s delivery file into it is a separate step (OSDEV-3096).'
     )
 
     def add_arguments(self, parser):
