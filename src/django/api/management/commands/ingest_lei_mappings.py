@@ -26,16 +26,12 @@ REQUIRED_COLUMNS = ('os_id', 'lei', 'match_type')
 VALID_MATCH_TYPES = (LeiMapping.FACILITY_NAME, LeiMapping.PARENT_COMPANY)
 STAT_KEYS = (
     'created',
-    'updated',
-    'metadata_refreshed',
     'unchanged',
-    'removed',
+    'skipped_existing',
     'invalid',
     'unknown_os_id',
     'alias_resolved',
     'duplicate_target',
-    'echo_mismatch',
-    'denylisted_skipped',
 )
 
 
@@ -45,10 +41,11 @@ class Command(BaseCommand):
         'recorded in the LeiMapping ledger and materialized as a '
         'contribution chain (Source, FacilityListItem, FacilityMatch and '
         'a lei_id ExtendedField) attributed to the GLEIF contributor. '
-        'Re-running with the same file is a no-op; mappings absent from '
-        'the file are marked removed and their extended fields deleted. '
-        'The CSV is OS Hub\'s normalized internal format; converting '
-        'GLEIF\'s delivery file into it is a separate step (OSDEV-3096).'
+        'Re-running with the same file is a no-op. This command creates '
+        'new mappings only; updates, removals and denylist handling arrive '
+        'with the monthly-process work (OSDEV-3097). The CSV is OS Hub\'s '
+        'normalized internal format; converting GLEIF\'s delivery file '
+        'into it is a separate step (OSDEV-3096).'
     )
 
     def add_arguments(self, parser):
@@ -117,8 +114,6 @@ class Command(BaseCommand):
         }
         seen_facility_ids = set()
         creates = []
-        updates = []
-        refreshes = []
 
         for row_number, row in enumerate(rows, start=2):
             plan = self._plan_row(
@@ -129,36 +124,16 @@ class Command(BaseCommand):
                 seen_facility_ids,
                 stats,
             )
-            if plan is None:
-                continue
-            if plan['action'] == 'create':
+            if plan is not None:
                 creates.append(plan)
-            elif plan['action'] == 'refresh':
-                refreshes.append(plan)
-            else:
-                updates.append(plan)
-
-        removals = [
-            mapping for os_id, mapping in ledger.items()
-            if mapping.status == LeiMapping.ACTIVE
-            and os_id not in seen_facility_ids
-        ]
 
         stats['created'] = len(creates)
-        stats['updated'] = len(updates)
-        stats['metadata_refreshed'] = len(refreshes)
-        stats['removed'] = len(removals)
 
         if not dry_run:
             self._facility_list_source = None
             self._next_row_index = 0
             self._header_str = ','.join(header)
             self._apply_creates(creates, contributor, batch_size)
-            self._apply_updates(updates, contributor, batch_size)
-            self._apply_refreshes(refreshes, batch_size)
-            self._apply_removals(
-                removals, contributor, seen_facility_ids, batch_size
-            )
 
         self._report(stats, dry_run)
 
@@ -211,10 +186,6 @@ class Command(BaseCommand):
         if alias is not None:
             return alias.facility, True
         return None, False
-
-    @staticmethod
-    def _normalize_echo(value):
-        return re.sub(r'\s+', ' ', value or '').strip().casefold()
 
     def _plan_row(
         self,
@@ -291,8 +262,6 @@ class Command(BaseCommand):
             return None
         seen_facility_ids.add(facility.id)
 
-        self._check_echo_columns(row, row_number, facility, stats)
-
         try:
             score = float(row['score'])
         except (KeyError, TypeError, ValueError):
@@ -306,60 +275,29 @@ class Command(BaseCommand):
             'matched_name': (row.get('matched_name') or '').strip(),
             'score': score,
             'file_date': file_date,
-            'mapping': None,
         }
 
         mapping = ledger.get(facility.id)
-        if mapping is not None and mapping.status == LeiMapping.DENYLISTED:
-            stats['denylisted_skipped'] += 1
-            return None
-        if mapping is not None and mapping.status == LeiMapping.ACTIVE:
-            if mapping.lei == lei and mapping.match_type == match_type:
-                if (
-                    mapping.matched_name == plan['matched_name']
-                    and mapping.score == plan['score']
-                    and mapping.mapping_file_date == plan['file_date']
-                ):
-                    stats['unchanged'] += 1
-                    return None
-                # Same LEI and match type, newer audit metadata (typically
-                # the mapping_file_date of a new monthly file): update the
-                # ledger only, so mapping_file_date means "last confirmed
-                # by", without touching the extended field (whose writes
-                # fire reindex triggers).
-                plan['action'] = 'refresh'
-                plan['mapping'] = mapping
-                return plan
-            plan['action'] = 'update'
-            plan['mapping'] = mapping
-            return plan
-
-        # The OS ID is either absent from the ledger or its mapping was
-        # previously removed; (re)create the full contribution chain.
-        plan['action'] = 'create'
-        plan['mapping'] = mapping
-        return plan
-
-    def _check_echo_columns(self, row, row_number, facility, stats):
-        mismatches = []
-        for column, our_value in (
-            ('facility_name', facility.name),
-            ('facility_address', facility.address),
-        ):
-            echoed = (row.get(column) or '').strip()
-            if not echoed:
-                continue
-            if self._normalize_echo(echoed) != \
-                    self._normalize_echo(our_value):
-                mismatches.append(
-                    f'{column} {echoed!r} != {our_value!r}'
-                )
-        if mismatches:
-            stats['echo_mismatch'] += 1
+        if mapping is not None:
+            if (
+                mapping.status == LeiMapping.ACTIVE
+                and mapping.lei == lei
+                and mapping.match_type == match_type
+            ):
+                stats['unchanged'] += 1
+                return None
+            # This command only creates mappings for OS IDs new to the
+            # ledger. Changed, removed and denylisted mappings are handled
+            # by the diff-semantics follow-up (OSDEV-3097).
+            stats['skipped_existing'] += 1
             self.stderr.write(self.style.WARNING(
-                f'Row {row_number}: echoed columns differ from facility '
-                f'{facility.id}: ' + '; '.join(mismatches)
+                f'Row {row_number}: facility {facility.id} already has a '
+                f'ledger entry ({mapping.status}); skipping — changes are '
+                'handled by the diff-semantics follow-up.'
             ))
+            return None
+
+        return plan
 
     def _ensure_source(self, contributor, file_date):
         if self._facility_list_source is not None:
@@ -396,10 +334,8 @@ class Command(BaseCommand):
         row = plan['row']
         source = self._ensure_source(contributor, plan['file_date'])
 
-        name = (row.get('facility_name') or '').strip() or facility.name
-        address = (
-            (row.get('facility_address') or '').strip() or facility.address
-        )
+        name = facility.name
+        address = facility.address
         now = str(timezone.now())
 
         item = FacilityListItem.objects.create(
@@ -458,25 +394,15 @@ class Command(BaseCommand):
         )
 
     def _save_ledger_row(self, plan):
-        mapping = plan['mapping']
-        if mapping is None:
-            LeiMapping.objects.create(
-                os_id=plan['facility'].id,
-                lei=plan['lei'],
-                match_type=plan['match_type'],
-                matched_name=plan['matched_name'],
-                score=plan['score'],
-                mapping_file_date=plan['file_date'],
-                status=LeiMapping.ACTIVE,
-            )
-            return
-        mapping.lei = plan['lei']
-        mapping.match_type = plan['match_type']
-        mapping.matched_name = plan['matched_name']
-        mapping.score = plan['score']
-        mapping.mapping_file_date = plan['file_date']
-        mapping.status = LeiMapping.ACTIVE
-        mapping.save()
+        LeiMapping.objects.create(
+            os_id=plan['facility'].id,
+            lei=plan['lei'],
+            match_type=plan['match_type'],
+            matched_name=plan['matched_name'],
+            score=plan['score'],
+            mapping_file_date=plan['file_date'],
+            status=LeiMapping.ACTIVE,
+        )
 
     def _csv_line(self, row):
         buffer = io.StringIO()
@@ -497,70 +423,6 @@ class Command(BaseCommand):
                 for plan in batch:
                     self._create_chain(plan, contributor)
                     self._save_ledger_row(plan)
-
-    def _apply_updates(self, updates, contributor, batch_size):
-        for batch in self._batches(updates, batch_size):
-            with transaction.atomic():
-                for plan in batch:
-                    extended_field = (
-                        ExtendedField
-                        .objects
-                        .filter(
-                            contributor=contributor,
-                            facility=plan['facility'],
-                            field_name=ExtendedField.LEI_ID,
-                        )
-                        .order_by('id')
-                        .first()
-                    )
-                    if extended_field is None:
-                        self.stderr.write(self.style.WARNING(
-                            'No lei_id extended field found for facility '
-                            f'{plan["facility"].id}; recreating the '
-                            'contribution chain.'
-                        ))
-                        self._create_chain(plan, contributor)
-                    else:
-                        extended_field.value = {
-                            'raw_value': plan['lei'],
-                            'match_type': plan['match_type'],
-                        }
-                        extended_field.save()
-                    self._save_ledger_row(plan)
-
-    def _apply_refreshes(self, refreshes, batch_size):
-        for batch in self._batches(refreshes, batch_size):
-            with transaction.atomic():
-                for plan in batch:
-                    self._save_ledger_row(plan)
-
-    def _apply_removals(
-        self, removals, contributor, seen_facility_ids, batch_size
-    ):
-        for batch in self._batches(removals, batch_size):
-            with transaction.atomic():
-                for mapping in batch:
-                    facility, _ = self._resolve_facility(mapping.os_id)
-                    if (
-                        facility is not None
-                        and facility.id not in seen_facility_ids
-                    ):
-                        # The Source, FacilityListItem and FacilityMatch
-                        # rows are left in place as historical
-                        # contribution records; only the extended field
-                        # is deleted so the LEI stops being displayed.
-                        (
-                            ExtendedField
-                            .objects
-                            .filter(
-                                contributor=contributor,
-                                facility=facility,
-                                field_name=ExtendedField.LEI_ID,
-                            )
-                            .delete()
-                        )
-                    mapping.status = LeiMapping.REMOVED
-                    mapping.save()
 
     def _report(self, stats, dry_run):
         summary = ' '.join(

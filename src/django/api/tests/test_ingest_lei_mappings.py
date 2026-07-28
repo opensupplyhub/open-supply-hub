@@ -164,81 +164,30 @@ class IngestLeiMappingsTest(TestCase):
             1,
         )
 
-    def test_changed_lei_updates_extended_field_in_place(self):
+    def test_existing_mapping_with_changed_lei_is_skipped(self):
+        # This command only creates mappings for OS IDs new to the ledger;
+        # changed mappings are handled by the diff-semantics follow-up
+        # (OSDEV-3097) and must be left untouched here.
         self._call(self._write_csv([self._row()]))
         original_field = self._gleif_extended_fields().get()
 
         self._call(self._write_csv([self._row(lei=OTHER_LEI)]))
 
         mapping = LeiMapping.objects.get(os_id=self.facility.id)
-        self.assertEqual(mapping.lei, OTHER_LEI)
+        self.assertEqual(mapping.lei, VALID_LEI)
         self.assertEqual(mapping.status, LeiMapping.ACTIVE)
 
         extended_field = self._gleif_extended_fields().get()
         self.assertEqual(extended_field.id, original_field.id)
         self.assertEqual(
-            extended_field.facility_list_item,
-            original_field.facility_list_item,
-        )
-        self.assertEqual(
             extended_field.value,
             {
-                'raw_value': OTHER_LEI,
+                'raw_value': VALID_LEI,
                 'match_type': LeiMapping.FACILITY_NAME,
             },
         )
         self.assertEqual(
             Source.objects.filter(contributor=self.gleif).count(), 1
-        )
-
-    def test_metadata_only_change_refreshes_ledger_not_extended_field(self):
-        self._call(self._write_csv([self._row()]))
-        original_field = self._gleif_extended_fields().get()
-
-        columns = DEFAULT_COLUMNS + ('mapping_file_date',)
-        self._call(self._write_csv(
-            [self._row(mapping_file_date='2026-08-01')],
-            columns=columns,
-        ))
-
-        # The ledger records the newest file that confirmed the mapping.
-        mapping = LeiMapping.objects.get(os_id=self.facility.id)
-        self.assertEqual(mapping.mapping_file_date, date(2026, 8, 1))
-        self.assertEqual(mapping.lei, VALID_LEI)
-        self.assertEqual(mapping.status, LeiMapping.ACTIVE)
-
-        # The extended field is untouched (no reindex-trigger writes).
-        extended_field = self._gleif_extended_fields().get()
-        self.assertEqual(extended_field.id, original_field.id)
-        self.assertEqual(
-            extended_field.updated_at, original_field.updated_at
-        )
-        self.assertEqual(
-            FacilityListItem.objects.filter(
-                source__contributor=self.gleif
-            ).count(),
-            1,
-        )
-
-    def test_os_id_absent_from_second_file_is_removed(self):
-        self._call(self._write_csv([self._row()]))
-        self._call(self._write_csv([]))
-
-        mapping = LeiMapping.objects.get(os_id=self.facility.id)
-        self.assertEqual(mapping.status, LeiMapping.REMOVED)
-        self.assertEqual(self._gleif_extended_fields().count(), 0)
-        # The historical contribution records are left in place.
-        self.assertEqual(
-            FacilityListItem.objects.filter(
-                source__contributor=self.gleif
-            ).count(),
-            1,
-        )
-        self.assertEqual(
-            FacilityMatch.objects.filter(
-                facility_list_item__source__contributor=self.gleif
-            ).count(),
-            1,
         )
 
     def test_merged_os_id_resolves_via_facility_alias(self):
