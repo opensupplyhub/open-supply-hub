@@ -977,6 +977,10 @@ variable "craft_cms_origin_domain" {
   type        = string
   default     = ""
   description = "Hostname of the Craft CMS origin (Servd) used when enable_homepage_proxy is true. Set per-environment in tfvars (e.g. open-supply.staging.servd.dev)."
+  validation {
+    condition     = !var.enable_homepage_proxy || trimspace(var.craft_cms_origin_domain) != ""
+    error_message = "craft_cms_origin_domain must be set when enable_homepage_proxy is true."
+  }
 }
 
 
