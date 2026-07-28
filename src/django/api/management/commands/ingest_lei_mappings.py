@@ -104,7 +104,6 @@ class Command(BaseCommand):
         stats['created'] = len(creates)
 
         if not dry_run:
-            # Write phase — everything above this point only reads.
             self._facility_list_source = None
             self._next_row_index = 0
             self._header_str = ','.join(header)
