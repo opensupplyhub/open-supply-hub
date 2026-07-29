@@ -4,11 +4,11 @@ from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
 
 
-class HealthCheckPingEndpointTest(TestCase):
-    def test_ping_returns_pong_without_watchman_payload(self):
-        response = self.client.get('/health-check/ping/')
+class HealthCheckEndpointTest(TestCase):
+    def test_health_check_is_app_liveness_only(self):
+        response = self.client.get('/health-check/')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b'pong')
+        self.assertEqual(response.content, b'ok')
         self.assertNotIn(b'databases', response.content)
         self.assertNotIn(b'caches', response.content)
 
@@ -19,11 +19,11 @@ class OriginSourceMiddlewareHealthCheckTest(SimpleTestCase):
         self.get_response = lambda request: HttpResponse(status=200)
 
     @patch('api.middleware.connection')
-    def test_skips_database_set_for_health_check_ping(self, mock_connection):
+    def test_skips_database_set_for_health_check(self, mock_connection):
         from api.middleware import OriginSourceMiddleware
 
         middleware = OriginSourceMiddleware(self.get_response)
-        request = self.factory.get('/health-check/ping/')
+        request = self.factory.get('/health-check/')
 
         response = middleware(request)
 
@@ -58,7 +58,7 @@ class DarkVisitorsMiddlewareHealthCheckTest(SimpleTestCase):
         middleware.TOKEN = 'dummy-token'
         middleware.executor = MagicMock()
 
-        request = self.factory.get('/health-check/ping/')
+        request = self.factory.get('/health-check/')
         response = middleware(request)
 
         self.assertEqual(response.status_code, 200)

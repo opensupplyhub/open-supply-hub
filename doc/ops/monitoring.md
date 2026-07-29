@@ -2,35 +2,31 @@
 
 Follow-up to [OSDEV-2867](https://opensupplyhub.atlassian.net/browse/OSDEV-2867) and the [Incident Report – April 21–22, 2026](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1243414530/Incident+Report+-+April+21-22+2026).
 
-## Application endpoints
+## Application endpoint
 
 | URL | Purpose | Touches Postgres / cache? |
 | --- | --- | --- |
-| `GET /health-check/ping/` | **Liveness** — process is up and serving HTTP | No |
-| `GET /health-check/` | **Deep readiness** — django-watchman (`WATCHMAN_CHECKS`: databases + caches) | Yes |
+| `GET /health-check/` | **Liveness** — Django process is up and serving HTTP | No |
 
-`OriginSourceMiddleware` and `DarkVisitorsMiddleware` skip `/health-check/*` so probes do not issue a session `SET` or call Dark Visitors.
+Response: HTTP 200, body `ok` (`text/plain`). No django-watchman database or cache checks.
+
+`OriginSourceMiddleware` and `DarkVisitorsMiddleware` skip `/health-check/` so probes do not issue a session `SET` or call Dark Visitors.
+
+Database and cache health are covered by CloudWatch (below), not by this URL.
 
 ### BetterStack (synthetic uptime)
 
-Point production (and other) BetterStack monitors at:
+Keep monitors on:
 
 ```text
-https://<env-domain>/health-check/ping/
+https://<env-domain>/health-check/
 ```
 
-Expect HTTP 200 and body `pong`. Do **not** use `/health-check/` for high-frequency uptime paging: under map-tile / `api_facilityindex` load, watchman DB checks queue behind the same contention and can time out even while the app still serves other requests.
-
-Optional: keep a **lower-frequency** BetterStack (or similar) check on `/health-check/` if you want visibility into Postgres/cache readiness without treating it as site-down.
+Expect HTTP 200 and body `ok`. After deploy, update any monitor that still expects the old watchman JSON payload.
 
 ### ALB and ECS
 
-Terraform wires both to the liveness URL:
-
-- ALB target group health check → `/health-check/ping/`
-- ECS task `healthCheck` curl → `/health-check/ping/`
-
-Deep watchman checks are no longer used for target registration or container replacement.
+Both use `/health-check/` for liveness (same URL as BetterStack).
 
 ## CloudWatch alarms (SNS)
 
@@ -76,6 +72,5 @@ When BetterStack liveness is green but users report errors, or when RDS/ALB alar
 1. ALB 5xx / response time — app or upstream dependency failures.
 2. RDS CPU, disk queue, connections, free memory — compare with Performance Insights (tiles / `api_facilityindex`).
 3. ECS service events and task restarts (console / `log…App`).
-4. Optional deep check: `GET /health-check/` (expect JSON with database/cache status, or 503).
 
 Long-term tile/search offload remains under [OSDEV-1575](https://opensupplyhub.atlassian.net/browse/OSDEV-1575).

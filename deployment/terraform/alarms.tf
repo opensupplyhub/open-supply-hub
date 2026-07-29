@@ -4,8 +4,8 @@ resource "aws_sns_topic" "global" {
 
 #
 # ALB application health (pages via SNS when the app is unhealthy independently
-# of synthetic liveness). Used after OSDEV-2867 decoupled BetterStack from
-# django-watchman DB checks — see doc/ops/monitoring.md.
+# of synthetic liveness). Used after OSDEV-2867 made /health-check/ app-only
+# (no Django DB checks) — see doc/ops/monitoring.md.
 #
 resource "aws_cloudwatch_metric_alarm" "alb_target_5xx" {
   alarm_name          = "alarm${local.short}AppALBHTTPCodeTarget5XXCount"

@@ -188,7 +188,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
-    'watchman',
     'simple_history',
     'waffle',
     'api',
@@ -450,20 +449,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ((os.path.join(STATIC_ROOT, "static")),)
 STATICFILES_STORAGE = "spa.storage.SPAStaticFilesStorage"
-
-# Watchman
-# https://github.com/mwarkentin/django-watchman
-#
-# /health-check/ runs WATCHMAN_CHECKS (Postgres + cache) — deep readiness.
-# /health-check/ping/ returns "pong" with no checks — use for BetterStack,
-# ALB, and ECS liveness so DB saturation does not page as "site down"
-# (OSDEV-2867).
-
-WATCHMAN_ERROR_CODE = 503
-WATCHMAN_CHECKS = (
-    'watchman.checks.databases',
-    'watchman.checks.caches',
-)
 
 # django-ecsmanage
 # https://github.com/azavea/django-ecsmanage

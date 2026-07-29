@@ -87,9 +87,8 @@ resource "aws_lb_target_group" "app" {
     matcher           = "200"
     protocol          = "HTTP"
     timeout           = "3"
-    # Liveness only (django-watchman ping). Do not use /health-check/ here:
-    # that runs DB/cache checks and can drain targets under Postgres load.
-    path                = "/health-check/ping/"
+    # App liveness only (no Postgres/cache). See doc/ops/monitoring.md.
+    path                = "/health-check/"
     unhealthy_threshold = "2"
   }
 

@@ -119,10 +119,10 @@ class RequestMeterMiddleware:
 
 
 def is_health_check_request(request):
-    """True for django-watchman paths under /health-check/.
+    """True for the app liveness path under /health-check/.
 
-    Liveness probes (/health-check/ping/) and deep readiness checks must not
-    depend on middleware that talks to Postgres or external services.
+    Probes must not depend on middleware that talks to Postgres or external
+    services (OSDEV-2867).
     """
     path = request.path
     return path == '/health-check/' or path.startswith('/health-check/')
