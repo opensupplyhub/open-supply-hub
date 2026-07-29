@@ -53,6 +53,7 @@ batch_default_job_memory   = 8192
 batch_default_ce_instance_types = ["c5", "m5"]
 
 gunicorn_worker_timeout = "360"
+gunicorn_workers        = "5"
 
 ec_memcached_identifier = "opensupplyhub-prd"
 

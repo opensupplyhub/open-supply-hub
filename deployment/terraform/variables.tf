@@ -389,6 +389,10 @@ variable "gunicorn_worker_timeout" {
   default = "180"
 }
 
+variable "gunicorn_workers" {
+  default = "1"
+}
+
 variable "google_server_side_api_key" {
   sensitive = true
 }
