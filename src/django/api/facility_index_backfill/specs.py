@@ -13,6 +13,17 @@ NON_EMPTY_CONTRIBUTORS_FILTER = (
 # the millions of unclaimed rows.
 CLAIMED_FACILITIES_FILTER = "claim_info IS NOT NULL"
 
+# Only facilities that have at least one processing_type ExtendedField can
+# change when index_processing_type() is recomputed; this skips the millions
+# of rows without processing type data.
+PROCESSING_TYPE_FILTER = (
+    "EXISTS ("
+    "SELECT 1 FROM api_extendedfield aef "
+    "WHERE aef.facility_id = afi.id "
+    "AND aef.field_name = 'processing_type'"
+    ")"
+)
+
 
 class FacilityIndexFieldSpec(TypedDict, total=False):
     """Configuration for backfilling one logical field group."""
@@ -52,6 +63,18 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': CLAIMED_FACILITIES_FILTER,
+    },
+    'processing_type': {
+        'columns': {
+            'processing_type': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT processing_type) "
+                "FROM index_processing_type(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+        },
+        'filter_sql': PROCESSING_TYPE_FILTER,
     },
 }
 
