@@ -279,7 +279,7 @@ MIDDLEWARE = [
     'waffle.middleware.WaffleMiddleware',
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
-    'api.middleware.OriginSourceMiddleware',
+    'api.middlewares.origin_source.OriginSourceMiddleware',
     'api.middleware.DarkVisitorsMiddleware',
 ]
 

@@ -8,7 +8,9 @@ from api.models import Facility
 
 
 def health_check(request):
-    """App liveness only — no Postgres or cache checks (OSDEV-2867)."""
+    """
+    App liveness only.
+    """
     return HttpResponse('ok', content_type='text/plain')
 
 

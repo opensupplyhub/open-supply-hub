@@ -9,7 +9,6 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.conf import settings
-from django.db import connection
 
 from rest_framework.authentication import get_authorization_header
 from rest_framework.authtoken.models import Token
@@ -18,6 +17,7 @@ from django.http import HttpResponse
 
 from api.models import RequestLog
 from api.limits import get_api_block
+from api.middlewares.utils import is_health_check_request
 from oar.rollbar import report_error_to_rollbar
 
 
@@ -118,39 +118,6 @@ class RequestMeterMiddleware:
         return response
 
 
-def is_health_check_request(request):
-    """True for the app liveness path under /health-check/.
-
-    Probes must not depend on middleware that talks to Postgres or external
-    services (OSDEV-2867).
-    """
-    path = request.path
-    return path == '/health-check/' or path.startswith('/health-check/')
-
-
-class OriginSourceMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-        self.default_origin_source = getattr(
-            settings,
-            'INSTANCE_SOURCE',
-            'os_hub'
-        )
-
-    def __call__(self, request):
-        # Skip the session-scoped SET so synthetic/ALB/ECS probes stay
-        # independent of Postgres availability (OSDEV-2867).
-        if not is_health_check_request(request):
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SET app.origin_source TO %s",
-                    [self.default_origin_source]
-                )
-
-        response = self.get_response(request)
-        return response
-
-
 class DarkVisitorsMiddleware:
     """
     Middleware to log visits to the Dark Visitors API.
@@ -168,6 +135,7 @@ class DarkVisitorsMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+        print(f"is_health_check_request: {is_health_check_request(request)}")
 
         if is_health_check_request(request):
             return response

@@ -18,9 +18,9 @@ class OriginSourceMiddlewareHealthCheckTest(SimpleTestCase):
         self.factory = RequestFactory()
         self.get_response = lambda request: HttpResponse(status=200)
 
-    @patch('api.middleware.connection')
+    @patch('api.middlewares.origin_source.connection')
     def test_skips_database_set_for_health_check(self, mock_connection):
-        from api.middleware import OriginSourceMiddleware
+        from api.middlewares.origin_source import OriginSourceMiddleware
 
         middleware = OriginSourceMiddleware(self.get_response)
         request = self.factory.get('/health-check/')
@@ -30,9 +30,9 @@ class OriginSourceMiddlewareHealthCheckTest(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         mock_connection.cursor.assert_not_called()
 
-    @patch('api.middleware.connection')
+    @patch('api.middlewares.origin_source.connection')
     def test_sets_origin_source_for_non_health_paths(self, mock_connection):
-        from api.middleware import OriginSourceMiddleware
+        from api.middlewares.origin_source import OriginSourceMiddleware
 
         cursor = MagicMock()
         mock_connection.cursor.return_value.__enter__.return_value = cursor
