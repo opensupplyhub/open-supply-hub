@@ -78,7 +78,7 @@ On each run, `fetch_lists`:
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
 | 2    | For each list, download the file from S3, run facility list validation, and upload the report to Google Drive. |
-| 3    | Send a Slack notification so that data moderators can review the report.                                       |
+| 3    | Send a Slack notification so that data moderators can review the report. Failures also go to a failures-only channel. |
 
 ## Configuration
 
@@ -90,7 +90,8 @@ Store sensitive values in AWS Secrets Manager. Lambdas receive each secret's ARN
 | ------------------------ | ------------------------------------- | -------------------------------------------------------------------------- |
 | OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | API token used to authenticate requests to Open Supply Hub.                |
 | Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | API token used to post items to the Monday board.                          |
-| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | Webhook URL used to send Slack notifications.                              |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | Webhook URL for the channel that receives every notification.              |
+| Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN` | Webhook URL for the failures-only channel. Failure notifications go to both channels; leave unset to disable. |
 | Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables

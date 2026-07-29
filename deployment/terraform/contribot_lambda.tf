@@ -17,6 +17,7 @@ locals {
     OS_HUB_API_TOKEN_SECRET_ARN         = aws_secretsmanager_secret.contribot_os_hub_api_token.arn
     MONDAY_API_KEY_SECRET_ARN           = aws_secretsmanager_secret.contribot_monday_api_key.arn
     SLACK_API_URL_SECRET_ARN            = aws_secretsmanager_secret.contribot_slack_api_url.arn
+    SLACK_FAILURES_API_URL_SECRET_ARN   = aws_secretsmanager_secret.contribot_slack_failures_api_url.arn
     GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = aws_secretsmanager_secret.contribot_google_drive_service_key.arn
   }
 }
@@ -47,6 +48,7 @@ data "aws_iam_policy_document" "contribot_lambda" {
       aws_secretsmanager_secret.contribot_os_hub_api_token.arn,
       aws_secretsmanager_secret.contribot_monday_api_key.arn,
       aws_secretsmanager_secret.contribot_slack_api_url.arn,
+      aws_secretsmanager_secret.contribot_slack_failures_api_url.arn,
       aws_secretsmanager_secret.contribot_google_drive_service_key.arn,
     ]
   }

@@ -12,6 +12,8 @@ import json
 import logging
 import os
 
+from botocore.exceptions import ClientError
+
 from lib.lists_repository import (
     STATUS_FAILED,
     STATUS_PROCESSED,
@@ -99,6 +101,28 @@ def _build_message(list_id: str, item: dict, event: dict) -> str:
     return "\n".join(line for line in lines if line)
 
 
+def _post_to_slack(message: str, secret_env: str) -> bool:
+    """Post ``message`` to the webhook whose secret ARN is in ``secret_env``.
+
+    Returns False instead of raising when the channel is unconfigured or
+    Slack is unreachable — a notification problem should not fail the
+    workflow after the list was already processed; the message content is
+    preserved in the logs.
+    """
+    secret_arn = os.environ.get(secret_env)
+    if not secret_arn:
+        logger.info("%s not configured; skipping", secret_env)
+        return False
+
+    try:
+        SlackWebhook(secret_arn=secret_arn).post(message)
+        return True
+    except (ClientError, RuntimeError):
+        logger.exception("Slack notification via %s failed", secret_env)
+        logger.info("Unsent Slack message: %s", json.dumps(message))
+        return False
+
+
 def handler(event, context):
     """Lambda entry point: post a Slack notification for one processed list."""
     list_id = str(event.get("list_id", "unknown"))
@@ -112,15 +136,11 @@ def handler(event, context):
     message = _build_message(list_id, item, event)
     logger.info("Notifying for list_id=%s failed=%s", list_id, failed)
 
-    try:
-        SlackWebhook().post(message)
-        notified = True
-    except RuntimeError:
-        # A Slack outage should not fail the workflow after the list was
-        # already processed; the message content is preserved in the logs.
-        logger.exception("Slack notification failed for list_id=%s", list_id)
-        logger.info("Unsent Slack message: %s", json.dumps(message))
-        notified = False
+    notified = _post_to_slack(message, "SLACK_API_URL_SECRET_ARN")
+    if failed:
+        # Failures also go to the failures-only channel so they are not
+        # lost in the volume of routine notifications.
+        _post_to_slack(message, "SLACK_FAILURES_API_URL_SECRET_ARN")
 
     repository.finish_list(
         list_id,

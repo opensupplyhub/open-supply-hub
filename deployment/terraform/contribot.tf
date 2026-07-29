@@ -34,6 +34,16 @@ resource "aws_secretsmanager_secret" "contribot_slack_api_url" {
   })
 }
 
+resource "aws_secretsmanager_secret" "contribot_slack_failures_api_url" {
+  name                    = "contribot${local.short}SlackFailuresApiUrl"
+  description             = "ContriBot webhook URL used to send failure-only Slack notifications."
+  recovery_window_in_days = 0
+
+  tags = merge(local.default_tags, {
+    Name = "contribotSlackFailuresApiUrl"
+  })
+}
+
 resource "aws_secretsmanager_secret" "contribot_google_drive_service_key" {
   name                    = "contribot${local.short}GoogleDriveServiceKey"
   description             = "ContriBot Google service account credentials used to upload reports to Google Drive."
