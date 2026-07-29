@@ -3,16 +3,20 @@ function handler(event) {
     var qs = request.querystring;
     // If we add a filter key here, make sure it exists in React frontend code in
     // util/util.js in the createQueryStringFromSearchFilters function.
-    var mapParams = new Set([
-        "q", "contributors", "lists", "contributor_types", "countries", "statuses",
-        "sectors", "parent_company", "facility_type", "processing_type", "product_type",
-        "number_of_workers", "native_language_name", "combine_contributors", "boundary",
-        "sort_by", "embed", "detail", "partner_contributor"
-    ]);
+    // Note: CloudFront Functions runtime 1.0 does not support Set/Map, so we use
+    // a plain object for O(1) key lookup.
+    var mapParams = {
+        "q": true, "contributors": true, "lists": true, "contributor_types": true,
+        "countries": true, "statuses": true, "sectors": true, "parent_company": true,
+        "facility_type": true, "processing_type": true, "product_type": true,
+        "number_of_workers": true, "native_language_name": true, "combine_contributors": true,
+        "boundary": true, "sort_by": true, "embed": true, "detail": true,
+        "partner_contributor": true
+    };
 
     var keys = Object.keys(qs);
     // If no React app params are present, serve the Craft CMS homepage.
-    if (!keys.some(key => mapParams.has(key))) {
+    if (!keys.some(function(key) { return mapParams[key]; })) {
         request.uri = "/home-page";
         return request;
     }
