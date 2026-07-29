@@ -51,47 +51,52 @@ def _error_ratio_line(event: dict) -> str:
     return f"({num_lines}/{num_errors}) Error ratio: {error_ratio:.1%} {emoji}"
 
 
+def _contributor_line(base: str, item: dict) -> str:
+    """Return the contributor line, or "" when the row has no contributor info."""
+    contributor_name = item.get("contributor_name") or ""
+    contributor_email = item.get("contributor_email") or ""
+    if not (contributor_name or contributor_email):
+        return ""
+
+    contributor = f"Contributor {contributor_name}"
+    contributor_id = item.get("contributor_id")
+    if contributor_id:
+        admin_link = f"{base}/admin/api/contributor/{contributor_id}/change/"
+        contributor = f"<{admin_link}|{contributor}>"
+    return f"{contributor} email {contributor_email}".rstrip()
+
+
+def _error_line(error: dict | None) -> str:
+    """Return the error-cause line, or "" when there is no error."""
+    if not error:
+        return ""
+    cause = error.get("Cause") or error.get("Error") or ""
+    return f"Error: {cause[:500]}" if cause else ""
+
+
 def _build_message(list_id: str, item: dict, event: dict) -> str:
     base = _base_url()
     list_name = item.get("list_name") or event.get("list_name") or ""
     list_link = f"<{base}/lists/{list_id}|#{list_id} {list_name}".rstrip() + ">"
-
-    lines = []
     error = event.get("error")
-    if error:
-        lines.append(f":rotating_light: ContriBot failed to process list {list_link}")
-    else:
-        lines.append(f"New list {list_link}")
 
-    contributor_name = item.get("contributor_name") or ""
-    contributor_email = item.get("contributor_email") or ""
-    contributor_id = item.get("contributor_id")
-    if contributor_name or contributor_email:
-        if contributor_id:
-            admin_link = f"{base}/admin/api/contributor/{contributor_id}/change/"
-            contributor = f"<{admin_link}|Contributor {contributor_name}>"
-        else:
-            contributor = f"Contributor {contributor_name}"
-        lines.append(f"{contributor} email {contributor_email}".rstrip())
-
+    headline = (
+        f":rotating_light: ContriBot failed to process list {list_link}"
+        if error
+        else f"New list {list_link}"
+    )
     file_name = item.get("file_name") or ""
-    if file_name:
-        lines.append(f"File {file_name}")
-
     report_url = event.get("report_url")
-    if report_url:
-        lines.append(f"<{report_url}|Checked report>")
 
-    ratio_line = _error_ratio_line(event)
-    if ratio_line:
-        lines.append(ratio_line)
-
-    if error:
-        cause = error.get("Cause") or error.get("Error") or ""
-        if cause:
-            lines.append(f"Error: {cause[:500]}")
-
-    return "\n".join(lines)
+    lines = [
+        headline,
+        _contributor_line(base, item),
+        f"File {file_name}" if file_name else "",
+        f"<{report_url}|Checked report>" if report_url else "",
+        _error_ratio_line(event),
+        _error_line(error),
+    ]
+    return "\n".join(line for line in lines if line)
 
 
 def handler(event, context):
