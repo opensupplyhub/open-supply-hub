@@ -315,16 +315,6 @@ variable "rds_database_connections_alarm_threshold" {
   default     = "90"
 }
 
-variable "alb_target_5xx_alarm_threshold" {
-  description = "Sum of ALB HTTPCode_Target_5XX_Count per minute above which SNS pages"
-  default     = "25"
-}
-
-variable "alb_target_response_time_alarm_threshold_seconds" {
-  description = "Average ALB TargetResponseTime (seconds) above which SNS pages"
-  default     = "2"
-}
-
 variable "rds_work_mem" {
   default = "65536"
 }

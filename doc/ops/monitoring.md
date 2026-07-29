@@ -56,13 +56,6 @@ Per-environment `rds_database_connections_alarm_threshold` values (from `LEAST(D
 
 Also enable **Performance Insights** in the AWS console for query-level triage during saturation (not an SNS alarm).
 
-### Application load balancer
-
-| Alarm | Metric | Pages when |
-| --- | --- | --- |
-| `…AppALBHTTPCodeTarget5XXCount` | `HTTPCode_Target_5XX_Count` | Sum > `alb_target_5xx_alarm_threshold` (default **25**/min for 2 periods) |
-| `…AppALBTargetResponseTime` | `TargetResponseTime` | Average > `alb_target_response_time_alarm_threshold_seconds` (default **2s** for 3 periods) |
-
 ### Memcached
 
 | Alarm | Metric | Pages when |
@@ -76,10 +69,10 @@ Also enable **Performance Insights** in the AWS console for query-level triage d
 
 ## Suggested triage order
 
-When BetterStack liveness is green but users report errors, or when RDS/ALB alarms fire:
+When BetterStack liveness is green but users report errors, or when RDS alarms fire:
 
-1. ALB 5xx / response time — app or upstream dependency failures.
-2. RDS CPU, disk queue, connections, free memory — compare with Performance Insights (tiles / `api_facilityindex`).
-3. ECS service events and task restarts (console / `log…App`).
+1. RDS CPU, disk queue, connections, free memory — compare with Performance Insights (tiles / `api_facilityindex`).
+2. ECS service events and task restarts (console / `log…App`).
+3. ALB access logs / target health in the AWS console for 5xx or latency patterns.
 
 Long-term tile/search offload remains under [OSDEV-1575](https://opensupplyhub.atlassian.net/browse/OSDEV-1575).
