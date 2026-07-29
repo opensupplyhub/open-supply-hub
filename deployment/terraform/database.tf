@@ -76,9 +76,7 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  # Bump to ref=3.3.0 after opensupplyhub/terraform-aws-postgresql-rds#3 is
-  # merged and tagged (DatabaseConnections alarm).
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=2b71cc36d2bedc5730995814234d5f15f6226896"
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.3.0"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
