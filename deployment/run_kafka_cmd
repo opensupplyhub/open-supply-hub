@@ -14,15 +14,67 @@
 # Single-quote the command so $BOOTSTRAP_SERVERS expands inside the container
 # (injected by the task definition), not in your local shell.
 
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <Environment> '<shell command>'" >&2
+    echo "  Environment: Development | Test | Staging | RBA | Preprod | Production" >&2
+    echo "" >&2
+    echo "Got $# argument(s). The command must be a single quoted argument -" >&2
+    echo "an unquoted command is split by your shell and would run only in part." >&2
+    echo "  Wrong: $0 Staging ./fix_replication.sh --execute" >&2
+    echo "  Right: $0 Staging './fix_replication.sh --execute'" >&2
+    exit 1
+fi
+
+# Region for the console deep link below. Resolved the same way the AWS CLI
+# resolves it, so the printed URL always matches the region the lookups ran in.
+region="${AWS_REGION:-${AWS_DEFAULT_REGION:-$(aws configure get region)}}"
+region="${region:-eu-west-1}"
+
 vpc_id="$(aws ec2 describe-vpcs --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[*].VpcId' --output text)"
 echo "VPC ID: $vpc_id"
+
+if [ -z "$vpc_id" ]; then
+    echo "ERROR: no VPC tagged vpcOpenSupplyHub$1 - check the environment name and your AWS profile." >&2
+    exit 1
+fi
 
 security_groups="$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgAppEcsService" --query 'SecurityGroups[*].GroupId' --output text | sed 's/\t/,/g')"
 
 echo "Security Group: $security_groups"
 
-subnet_id="$(aws ec2 describe-subnets --filters=Name=vpc-id,Values=$vpc_id --query 'Subnets[].SubnetId' --output text | awk '{print $1}')"
-echo "Subnet ID: $subnet_id"
+# Subnet selection. The task uses assignPublicIp=ENABLED, so it needs a public
+# subnet to pull the image from ECR; the MSK brokers are reachable from any
+# subnet in the VPC via local routing. Public subnets are identified by
+# map-public-ip-on-launch rather than a Name tag, since the tag scheme lives in
+# the external VPC module. Set KAFKA_TASK_SUBNET_ID to pin a specific subnet.
+if [ -n "${KAFKA_TASK_SUBNET_ID:-}" ]; then
+    subnet_id="$KAFKA_TASK_SUBNET_ID"
+    if ! aws ec2 describe-subnets --subnet-ids "$subnet_id" \
+        --query 'Subnets[?VpcId==`'"$vpc_id"'`].SubnetId' --output text | grep -q .; then
+        echo "ERROR: KAFKA_TASK_SUBNET_ID=$subnet_id is not in VPC $vpc_id." >&2
+        exit 1
+    fi
+    echo "Subnet ID: $subnet_id (pinned via KAFKA_TASK_SUBNET_ID)"
+else
+    subnet_candidates="$(aws ec2 describe-subnets \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=map-public-ip-on-launch,Values=true" \
+        --query 'sort_by(Subnets, &SubnetId)[].SubnetId' --output text)"
+
+    if [ -z "$subnet_candidates" ]; then
+        echo "ERROR: no public subnet found in VPC $vpc_id." >&2
+        echo "The task needs a public subnet for the ECR image pull (assignPublicIp=ENABLED)." >&2
+        echo "List subnets and pin one explicitly:" >&2
+        echo "  aws ec2 describe-subnets --filters Name=vpc-id,Values=$vpc_id \\" >&2
+        echo "    --query 'Subnets[].[SubnetId,CidrBlock,AvailabilityZone,MapPublicIpOnLaunch]' --output table" >&2
+        echo "  KAFKA_TASK_SUBNET_ID=subnet-xxxx $0 $1 '<command>'" >&2
+        exit 1
+    fi
+
+    # Deterministic pick (lowest subnet ID) so repeat runs land in the same AZ.
+    subnet_id="$(echo "$subnet_candidates" | tr '\t' '\n' | head -n 1)"
+    echo "Public subnet candidates: $(echo "$subnet_candidates" | tr '\t' ' ')"
+    echo "Subnet ID: $subnet_id (lowest ID; override with KAFKA_TASK_SUBNET_ID)"
+fi
 
 revision="$(aws ecs describe-task-definition  --task-definition OpenSupplyHub${1}AppKafka --query 'taskDefinition.revision' --output text)"
 echo "Revision: $revision"
@@ -36,20 +88,41 @@ overrides_file="$(mktemp)"
 trap 'rm -f "$overrides_file"' EXIT
 python3 -c 'import json,sys; print(json.dumps({"containerOverrides":[{"name":"kafka-topics","command":["-c",sys.argv[1]]}]}))' "$2" > "$overrides_file"
 
-task_arn="$(aws ecs run-task \
+run_output="$(aws ecs run-task \
     --cluster ecsOpenSupplyHub${1}Cluster \
     --task-definition=OpenSupplyHub${1}AppKafka:${revision} \
     --launch-type "FARGATE" \
     --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_groups"], subnets=["$subnet_id"]}" \
     --overrides "file://$overrides_file" \
-    --query 'tasks[0].taskArn' \
-    --output text)"
+    --output json)"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: aws ecs run-task failed. See the error above." >&2
+    exit 1
+fi
+
+# ECS reports placement problems in failures[] with a 200 response, so a task
+# ARN must never be assumed. Without this check an empty ARN reaches
+# 'aws ecs wait tasks-stopped', which fails every attempt and spins the retry
+# loop below forever.
+task_arn="$(python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+for f in d.get('failures', []):
+    sys.stderr.write('ECS failure: arn=%s reason=%s detail=%s\n' % (
+        f.get('arn', '?'), f.get('reason', '?'), f.get('detail', '')))
+tasks = d.get('tasks', [])
+if not tasks or not tasks[0].get('taskArn'):
+    sys.stderr.write('ERROR: ECS started no task.\n')
+    sys.exit(1)
+sys.stdout.write(tasks[0]['taskArn'])
+" <<< "$run_output")" || exit 1
 
 echo "Task ARN: $task_arn"
 id=$(echo $task_arn | awk -F'/' '{print $NF}')
 echo "Log Stream ID: $id"
 
-echo "Task URL: https://eu-west-1.console.aws.amazon.com/ecs/v2/clusters/ecsOpenSupplyHub${1}Cluster/tasks/$id"
+echo "Task URL: https://${region}.console.aws.amazon.com/ecs/v2/clusters/ecsOpenSupplyHub${1}Cluster/tasks/$id?region=${region}"
 
 echo "Waiting for task to stop..."
 res=1
@@ -64,8 +137,10 @@ echo "Stop time: $(date +%T)"
 echo "Task stopped reason:"
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
 
-echo "Container exit code:"
-aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].containers[0].exitCode' --output text
+# Captured before the logs are fetched, so a failed log retrieval cannot mask
+# the container's own result.
+exit_code="$(aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].containers[0].exitCode' --output text)"
+echo "Container exit code: $exit_code"
 
 echo "----- Log Stream -----"
 echo ""
@@ -74,3 +149,21 @@ aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppKafka" --log-st
 echo ""
 echo ""
 echo "----- Log Stream end -----"
+
+# A task killed before the container ran (OOM, ENI failure, image pull error)
+# reports a null exitCode, which the CLI renders as "None" - that is a failure,
+# not a success.
+case "$exit_code" in
+    0)
+        exit 0
+        ;;
+    ''|None|null)
+        echo "ERROR: no container exit code reported - the container did not run to completion." >&2
+        echo "Check the stopped reason above and the Task URL." >&2
+        exit 1
+        ;;
+    *)
+        echo "ERROR: container exited with code $exit_code." >&2
+        exit "$exit_code"
+        ;;
+esac

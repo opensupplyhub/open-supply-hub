@@ -11,7 +11,10 @@ topics_to_create=($(cat "list.txt"))
 existing_topics=$(./bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP_SERVERS" --list)
 
 for topic in "${topics_to_create[@]}"; do
-    if echo "$existing_topics" | grep -qx "$topic"; then
+    # -F is required: topic names contain dots (e.g. dedupe.hub.topic), which as
+    # a regex would match any character and could match a different topic,
+    # silently skipping a required create.
+    if echo "$existing_topics" | grep -qxF "$topic"; then
         echo "$topic topic already exists"
     else
         ./bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP_SERVERS" \
