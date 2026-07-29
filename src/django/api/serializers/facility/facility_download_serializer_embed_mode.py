@@ -16,6 +16,7 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
 
     def __init__(self, *args, **kwargs):
         self.contributor_id = int(kwargs.pop("contributor_id", None))
+        self._list_field_indexes_by_header = {}
         super().__init__(*args, **kwargs)
         fields = self.get_embed_fields(self.contributor_id)
         self.embed_fields = [
@@ -52,12 +53,14 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
 
         if info["source_type"] == Source.LIST:
             data_values = get_csv_values(info["raw_data"])
-            list_fields = get_csv_values(info["list_header"])
+            field_indexes = self.__get_list_field_indexes(
+                info["list_header"]
+            )
 
             return [
-                data_values[list_fields.index(field)]
-                if field in list_fields
-                and list_fields.index(field) < len(data_values)
+                data_values[index]
+                if (index := field_indexes.get(field)) is not None
+                and index < len(data_values)
                 else ""
                 for field in self.embed_fields
             ]
@@ -81,3 +84,22 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
             for field in embed_fields.values("column_name")
             if field["column_name"]
         ]
+
+    def __get_list_field_indexes(self, list_header: str):
+        if list_header not in self._list_field_indexes_by_header:
+            exact_indexes = {}
+            casefold_indexes = {}
+            for index, field in enumerate(get_csv_values(list_header)):
+                exact_indexes.setdefault(field, index)
+                casefold_indexes.setdefault(field.casefold(), index)
+
+            field_indexes = {
+                field: exact_indexes.get(
+                    field,
+                    casefold_indexes.get(field.casefold()),
+                )
+                for field in self.embed_fields
+            }
+            self._list_field_indexes_by_header[list_header] = field_indexes
+
+        return self._list_field_indexes_by_header[list_header]

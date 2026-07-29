@@ -1,5 +1,8 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 
+from api.helpers.helpers import get_csv_values
 from api.models.contributor.contributor import Contributor
 from api.models.embed_config import EmbedConfig
 from api.models.embed_field import EmbedField
@@ -180,6 +183,62 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
                 "250",
             ],
         )
+
+    def test_get_list_custom_fields_matches_headers_case_insensitively(self):
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] = "Extra_1,EXTRA_2,parent_company"
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertEqual(
+            serializer.get_contributor_custom_fields(self.facility_one),
+            [
+                "Extra 1 custom field data",
+                "Extra 2 custom field data",
+            ],
+        )
+
+    def test_get_list_custom_fields_prefers_exact_case_match(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="Extra_1",
+            display_name="Uppercase Extra One",
+            visible=True,
+            searchable=True,
+        )
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] = "extra_1,Extra_1,parent_company"
+        info["raw_data"] = '"lowercase value","uppercase value","Parent"'
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertEqual(
+            serializer.get_contributor_custom_fields(self.facility_one),
+            [
+                "lowercase value",
+                "",
+                "uppercase value",
+            ],
+        )
+
+    def test_get_list_custom_fields_caches_header_indexes(self):
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+        list_header = self.facility_one.custom_field_info[0]["list_header"]
+        get_csv_values_path = (
+            "api.serializers.facility."
+            "facility_download_serializer_embed_mode.get_csv_values"
+        )
+
+        with patch(get_csv_values_path, wraps=get_csv_values) as get_values:
+            serializer.get_contributor_custom_fields(self.facility_one)
+            serializer.get_contributor_custom_fields(self.facility_one)
+
+        header_calls = [
+            call for call in get_values.call_args_list
+            if call.args == (list_header,)
+        ]
+        self.assertEqual(len(header_calls), 1)
 
     def test_get_api_custom_fields_uses_configured_names(self):
         self.facility_one.custom_field_info = [
