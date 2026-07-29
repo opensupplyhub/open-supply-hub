@@ -144,4 +144,5 @@ anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-ke
 contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
 contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name = "oshub/production/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/production/contribot-google-drive-service-key"

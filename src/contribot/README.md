@@ -89,7 +89,7 @@ On each fetch run, `fetch_lists`:
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
 | 2    | For each list, download the `.csv` or `.xlsx` from S3, convert CSV if needed, run facility list validation, and upload `{list_id}.~PROCESSED.xlsx` to Google Drive. |
-| 3    | Send notifications to Slack and Monday so that data moderators can review the report.                          |
+| 3    | Send notifications to Slack and Monday so that data moderators can review the report. Failures also go to a failures-only Slack channel. |
 | 4    | On a matching schedule, `retry_failed_lists` re-enqueues `FAILED` lists (under the attempt cap) and starts the Map without advancing the cursor. |
 
 ## Configuration
@@ -98,12 +98,13 @@ On each fetch run, `fetch_lists`:
 
 Store sensitive values in AWS Secrets Manager. Each Lambda receives only the secret ARNs it needs and loads values at runtime via `GetSecretValue`.
 
-| Secret (Secrets Manager) | Environment variable                  | Used by         | Description                                                                |
-| ------------------------ | ------------------------------------- | --------------- | -------------------------------------------------------------------------- |
-| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
-| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | `notify`        | API token used to post items to the Monday board.                          |
-| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | `notify`        | Webhook URL used to send Slack notifications.                              |
-| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
+| Secret (Secrets Manager) | Environment variable                    | Used by         | Description                                                                |
+| ------------------------ | --------------------------------------- | --------------- | -------------------------------------------------------------------------- |
+| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`           | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
+| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`             | `notify`        | API token used to post items to the Monday board.                          |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`              | `notify`        | Webhook URL for the channel that receives every notification.              |
+| Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN`   | `notify`        | Webhook URL for the failures-only channel. Failure notifications go to both channels; leave unset to disable. |
+| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN`   | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
 
@@ -113,7 +114,7 @@ Nonsensitive configuration is set as plain Lambda environment variables. Each fu
 | ---------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
 | `CONTRIBOT_STATE_TABLE_NAME`       | all                            | DynamoDB table that stores the state of processed facility lists.        |
 | `LAST_LIST_ID`                     | `fetch_lists`                  | Fallback resume cursor when the DynamoDB `__CURSOR__` item is missing.   |
-| `OS_HUB_API_URL`                   | `fetch_lists`                  | Base URL of the Open Supply Hub API.                                     |
+| `OS_HUB_API_URL`                   | `fetch_lists`, `notify`        | Base URL of the Open Supply Hub API.                                     |
 | `CONTRIBOT_STATE_MACHINE_ARN`      | `retry_failed_lists`           | Step Functions state machine started with re-queued `FAILED` lists.      |
 | `CONTRIBOT_MAX_ATTEMPTS`           | `retry_failed_lists`           | Maximum `process_list` attempts before a `FAILED` list is left for ops.  |
 | `AWS_STORAGE_BUCKET_NAME`          | `process_list`                 | S3 bucket where uploaded facility list files are stored.                 |
