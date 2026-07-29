@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Runs an arbitrary command in the AppKafka Fargate task and prints its output.
+#
+# Same pattern as run_cli_task, but targets the AppKafka task definition and the
+# kafka-topics container, which is the only image with the Kafka CLI on it. The
+# command override works because app_kafka.json sets entryPoint ["/bin/bash"].
+#
+# Usage: ./run_kafka_cmd <Environment> '<shell command>'
+#
+#   ./run_kafka_cmd Staging './fix_replication.sh'
+#   ./run_kafka_cmd Staging './bin/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --describe'
+#
+# Single-quote the command so $BOOTSTRAP_SERVERS expands inside the container
+# (injected by the task definition), not in your local shell.
+
+vpc_id="$(aws ec2 describe-vpcs --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[*].VpcId' --output text)"
+echo "VPC ID: $vpc_id"
+
+security_groups="$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgAppEcsService" --query 'SecurityGroups[*].GroupId' --output text | sed 's/\t/,/g')"
+
+echo "Security Group: $security_groups"
+
+subnet_id="$(aws ec2 describe-subnets --filters=Name=vpc-id,Values=$vpc_id --query 'Subnets[].SubnetId' --output text | awk '{print $1}')"
+echo "Subnet ID: $subnet_id"
+
+revision="$(aws ecs describe-task-definition  --task-definition OpenSupplyHub${1}AppKafka --query 'taskDefinition.revision' --output text)"
+echo "Revision: $revision"
+
+echo "Running task with command: $2"
+
+# Built as JSON rather than the shorthand containerOverrides=[...] syntax used
+# in run_cli_task, because the AWS CLI shorthand parser splits on commas and
+# these commands contain them (awk field separators, grep alternations).
+overrides_file="$(mktemp)"
+trap 'rm -f "$overrides_file"' EXIT
+python3 -c 'import json,sys; print(json.dumps({"containerOverrides":[{"name":"kafka-topics","command":["-c",sys.argv[1]]}]}))' "$2" > "$overrides_file"
+
+task_arn="$(aws ecs run-task \
+    --cluster ecsOpenSupplyHub${1}Cluster \
+    --task-definition=OpenSupplyHub${1}AppKafka:${revision} \
+    --launch-type "FARGATE" \
+    --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_groups"], subnets=["$subnet_id"]}" \
+    --overrides "file://$overrides_file" \
+    --query 'tasks[0].taskArn' \
+    --output text)"
+
+echo "Task ARN: $task_arn"
+id=$(echo $task_arn | awk -F'/' '{print $NF}')
+echo "Log Stream ID: $id"
+
+echo "Task URL: https://eu-west-1.console.aws.amazon.com/ecs/v2/clusters/ecsOpenSupplyHub${1}Cluster/tasks/$id"
+
+echo "Waiting for task to stop..."
+res=1
+while [ $res -ne 0 ]; do
+    echo "Continue waiting: $(date +%T)"
+    aws ecs wait tasks-stopped --cluster "ecsOpenSupplyHub${1}Cluster" --tasks "${task_arn}"
+    res=$?
+done
+
+echo "Stop time: $(date +%T)"
+
+echo "Task stopped reason:"
+aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
+
+echo "Container exit code:"
+aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].containers[0].exitCode' --output text
+
+echo "----- Log Stream -----"
+echo ""
+echo ""
+aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppKafka" --log-stream-name "management/kafka-topics/$id" --query 'events[*].[message]' --output text
+echo ""
+echo ""
+echo "----- Log Stream end -----"
