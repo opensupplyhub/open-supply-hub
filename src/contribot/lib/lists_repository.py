@@ -13,6 +13,8 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 STATUS_PENDING = "PENDING"
+STATUS_PROCESSED = "PROCESSED"
+STATUS_FAILED = "FAILED"
 # Reserved hash-key item that stores the id__gt watermark (not a facility list).
 CURSOR_LIST_ID = "__CURSOR__"
 
@@ -88,6 +90,23 @@ class ListsRepository:
                 )
                 return
             raise
+
+    def get_list(self, list_id: int | str) -> Optional[dict[str, Any]]:
+        """Return the facility-list row for ``list_id``, or None when absent."""
+        response = self._table.get_item(Key={"list_id": str(list_id)})
+        return response.get("Item")
+
+    def finish_list(self, list_id: int | str, *, status: str) -> None:
+        """Set the final ``status`` and ``finished_at`` timestamp for a list row."""
+        self._table.update_item(
+            Key={"list_id": str(list_id)},
+            UpdateExpression="SET #status = :status, finished_at = :finished_at",
+            ExpressionAttributeNames={"#status": "status"},
+            ExpressionAttributeValues={
+                ":status": status,
+                ":finished_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
     def put_list(
         self,
