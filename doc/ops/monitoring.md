@@ -34,7 +34,7 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global`).
 
 ### RDS (primary Postgres)
 
-Provisioned by `module.database_enc` ([terraform-aws-postgresql-rds](https://github.com/opensupplyhub/terraform-aws-postgresql-rds)) plus OSDEV-2867:
+Provisioned by `module.database_enc` ([terraform-aws-postgresql-rds](https://github.com/opensupplyhub/terraform-aws-postgresql-rds), including the OSDEV-2867 `DatabaseConnections` alarm):
 
 | Alarm (name pattern) | Metric | Pages when |
 | --- | --- | --- |
@@ -43,7 +43,16 @@ Provisioned by `module.database_enc` ([terraform-aws-postgresql-rds](https://git
 | `…DatabaseServerFreeStorageSpace-…` | `FreeStorageSpace` | Average < `rds_free_disk_threshold_bytes` (default **5 GB**) |
 | `…DatabaseServerFreeableMemory-…` | `FreeableMemory` | Average < `rds_free_memory_threshold_bytes` (default **128 MB**) |
 | `…DatabaseCPUCreditBalance-…` | `CPUCreditBalance` | Average < `rds_cpu_credit_balance_threshold` (default **30**; **db.t\*** only) |
-| `…DatabaseServerDatabaseConnections-…` | `DatabaseConnections` | Average > `rds_database_connections_alarm_threshold` (default **80**, 2×60s) |
+| `…DatabaseServerDatabaseConnections-…` | `DatabaseConnections` | Average > `rds_database_connections_alarm_threshold` (~**80%** of instance `max_connections`; set per env) |
+
+Per-environment `rds_database_connections_alarm_threshold` values (from `LEAST(DBInstanceClassMemory/9531392, 5000)`):
+
+| Env | Instance | max_connections | Threshold |
+| --- | --- | ---: | ---: |
+| Development | `db.t3.micro` | 112 | **90** |
+| Staging | `db.t3.large` | 901 | **720** |
+| Test | `db.t3.2xlarge` | 3604 | **2880** |
+| Preprod / Production / RBA | `db.m6in.4xlarge` | 5000 (capped) | **4000** |
 
 Also enable **Performance Insights** in the AWS console for query-level triage during saturation (not an SNS alarm).
 

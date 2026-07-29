@@ -7,6 +7,8 @@ resource "aws_sns_topic" "global" {
 # of synthetic liveness). Used after OSDEV-2867 made /health-check/ app-only
 # (no Django DB checks) — see doc/ops/monitoring.md.
 #
+# RDS DatabaseConnections lives in terraform-aws-postgresql-rds (see database.tf).
+#
 resource "aws_cloudwatch_metric_alarm" "alb_target_5xx" {
   alarm_name          = "alarm${local.short}AppALBHTTPCodeTarget5XXCount"
   alarm_description   = "ALB target 5xx responses — application errors behind the load balancer"
@@ -41,26 +43,6 @@ resource "aws_cloudwatch_metric_alarm" "alb_target_response_time" {
 
   dimensions = {
     LoadBalancer = aws_lb.app.arn_suffix
-  }
-
-  alarm_actions = [aws_sns_topic.global.arn]
-  ok_actions    = [aws_sns_topic.global.arn]
-}
-
-resource "aws_cloudwatch_metric_alarm" "rds_database_connections" {
-  alarm_name          = "alarm${local.short}DatabaseServerDatabaseConnections-${var.rds_database_identifier}"
-  alarm_description   = "RDS DatabaseConnections — connection pressure on the primary Postgres instance"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "DatabaseConnections"
-  namespace           = "AWS/RDS"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = var.rds_database_connections_alarm_threshold
-  treat_missing_data  = "notBreaching"
-
-  dimensions = {
-    DBInstanceIdentifier = module.database_enc.id
   }
 
   alarm_actions = [aws_sns_topic.global.arn]

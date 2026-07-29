@@ -1,4 +1,3 @@
-
 def is_health_check_request(request):
     """
     True for the app liveness path under /health-check/.

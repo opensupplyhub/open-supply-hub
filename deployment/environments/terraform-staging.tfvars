@@ -24,6 +24,8 @@ rds_database_identifier = "opensupplyhub-enc-stg"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
+# ~80% of max_connections for db.t3.large (901)
+rds_database_connections_alarm_threshold = "720"
 
 app_ecs_desired_count = "4"
 app_ecs_deployment_min_percent = "100"

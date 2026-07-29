@@ -76,7 +76,9 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.2.0"
+  # Bump to ref=3.3.0 after opensupplyhub/terraform-aws-postgresql-rds#3 is
+  # merged and tagged (DatabaseConnections alarm).
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=2b71cc36d2bedc5730995814234d5f15f6226896"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
@@ -104,14 +106,15 @@ module "database_enc" {
   deletion_protection         = var.rds_deletion_protection
   snapshot_identifier         = var.snapshot_identifier
 
-  alarm_cpu_threshold                = var.rds_cpu_threshold_percent
-  alarm_disk_queue_threshold         = var.rds_disk_queue_threshold
-  alarm_free_disk_threshold          = var.rds_free_disk_threshold_bytes
-  alarm_free_memory_threshold        = var.rds_free_memory_threshold_bytes
-  alarm_cpu_credit_balance_threshold = var.rds_cpu_credit_balance_threshold
-  alarm_actions                      = [aws_sns_topic.global.arn]
-  ok_actions                         = [aws_sns_topic.global.arn]
-  insufficient_data_actions          = [aws_sns_topic.global.arn]
+  alarm_cpu_threshold                  = var.rds_cpu_threshold_percent
+  alarm_disk_queue_threshold           = var.rds_disk_queue_threshold
+  alarm_free_disk_threshold            = var.rds_free_disk_threshold_bytes
+  alarm_free_memory_threshold          = var.rds_free_memory_threshold_bytes
+  alarm_cpu_credit_balance_threshold   = var.rds_cpu_credit_balance_threshold
+  alarm_database_connections_threshold = var.rds_database_connections_alarm_threshold
+  alarm_actions                        = [aws_sns_topic.global.arn]
+  ok_actions                           = [aws_sns_topic.global.arn]
+  insufficient_data_actions            = [aws_sns_topic.global.arn]
 
   project     = var.project
   environment = var.environment

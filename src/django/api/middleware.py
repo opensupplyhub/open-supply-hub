@@ -135,7 +135,6 @@ class DarkVisitorsMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        print(f"is_health_check_request: {is_health_check_request(request)}")
 
         if is_health_check_request(request):
             return response

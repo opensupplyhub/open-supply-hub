@@ -28,6 +28,8 @@ rds_multi_az = false
 rds_storage_type = "gp3"
 rds_iops = 12000
 rds_storage_encrypted = true
+# ~80% of max_connections for db.t3.2xlarge (3604)
+rds_database_connections_alarm_threshold = "2880"
 
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"

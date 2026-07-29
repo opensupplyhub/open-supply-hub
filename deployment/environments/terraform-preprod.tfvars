@@ -28,6 +28,8 @@ rds_multi_az = false
 rds_storage_encrypted = true
 rds_skip_final_snapshot = true
 rds_deletion_protection = false
+# ~80% of capped max_connections for db.m6in.4xlarge (5000)
+rds_database_connections_alarm_threshold = "4000"
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"

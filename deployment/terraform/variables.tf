@@ -311,8 +311,8 @@ variable "rds_cpu_credit_balance_threshold" {
 }
 
 variable "rds_database_connections_alarm_threshold" {
-  description = "Average DatabaseConnections above which SNS pages (tune per instance class / max_connections)"
-  default     = "80"
+  description = "Average DatabaseConnections above which SNS pages (~80% of instance max_connections; set per env in deployment/environments)"
+  default     = "90"
 }
 
 variable "alb_target_5xx_alarm_threshold" {

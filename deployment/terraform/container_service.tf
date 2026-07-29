@@ -87,7 +87,7 @@ resource "aws_lb_target_group" "app" {
     matcher           = "200"
     protocol          = "HTTP"
     timeout           = "3"
-    # App liveness only (no Postgres/cache). See doc/ops/monitoring.md.
+    # App liveness only (no database/cache). See doc/ops/monitoring.md.
     path                = "/health-check/"
     unhealthy_threshold = "2"
   }
