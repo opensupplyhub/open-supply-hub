@@ -86,7 +86,10 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
             contributor_id=contributor_id
         )
         row = serializer.get_row(self.facility_one)
-        expected_row = [
+        headers = serializer.get_headers()
+        row_by_header = dict(zip(headers, row))
+
+        expected_common_and_custom_values = [
             "1",
             "2022-05-18",
             "First Facility",
@@ -98,14 +101,101 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
             "Test Sector",
             "Extra 1 custom field data",
             "Extra 2 custom field data",
-            "1",
-            "Parent Company Service Provider A",
-            "Raw Data",
-            "Matched facility type value one Service Provider A|"
-            "Matched facility type value two Service Provider A",
-            "Matched processing type value one Service Provider A|"
-            "Matched processing type value two Service Provider A",
-            "Product Type Service Provider A",
-            "False",
         ]
-        self.assertEqual(row, expected_row)
+        self.assertEqual(row[:11], expected_common_and_custom_values)
+        self.assertEqual(
+            row_by_header["processing_type_facility_type_raw"], "Raw Data"
+        )
+        self.assertEqual(row_by_header["is_closed"], "False")
+        self.assertEqual(
+            set(row_by_header["number_of_workers"].split("|")),
+            {"1", "101-500"},
+        )
+        self.assertEqual(
+            set(row_by_header["parent_company"].split("|")),
+            {
+                "Parent Company Service Provider A",
+                "Parent Company Factory A",
+            },
+        )
+        self.assertEqual(
+            set(row_by_header["facility_type"].split("|")),
+            {
+                "Matched facility type value one Service Provider A",
+                "Matched facility type value two Service Provider A",
+                "Matched facility type value one Factory A",
+            },
+        )
+        self.assertEqual(
+            set(row_by_header["processing_type"].split("|")),
+            {
+                "Matched processing type value one Service Provider A",
+                "Matched processing type value two Service Provider A",
+                "Matched processing type value one Factory A",
+            },
+        )
+        self.assertEqual(
+            set(row_by_header["product_type"].split("|")),
+            {
+                "Product Type Service Provider A",
+                "Product Type Factory A",
+            },
+        )
+
+    def test_get_list_custom_fields_preserves_configured_header_case(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="program_1_Name",
+            display_name="Program Name",
+            visible=True,
+            searchable=True,
+        )
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=5,
+            column_name="total_number_of_employees",
+            display_name="Total Number of Employees",
+            visible=True,
+            searchable=True,
+        )
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] = (
+            "extra_1,extra_2,parent_company,program_1_Name,"
+            "total_number_of_employees"
+        )
+        info["raw_data"] = (
+            '"Extra 1 custom field data","Extra 2 custom field data",'
+            '"Parent Company","Program One","250"'
+        )
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertEqual(
+            serializer.get_contributor_custom_fields(self.facility_one),
+            [
+                "Extra 1 custom field data",
+                "Extra 2 custom field data",
+                "Program One",
+                "250",
+            ],
+        )
+
+    def test_get_api_custom_fields_uses_configured_names(self):
+        self.facility_one.custom_field_info = [
+            {
+                "raw_data": (
+                    "{'extra_1': 'API extra one', "
+                    "'extra_2': 'API extra two'}"
+                ),
+                "list_header": "",
+                "source_type": "SINGLE",
+                "contributor_id": 1,
+            }
+        ]
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertEqual(
+            serializer.get_contributor_custom_fields(self.facility_one),
+            ["API extra one", "API extra two"],
+        )

@@ -3,7 +3,7 @@ from api.models.facility.facility_manager_index_new \
     import FacilityIndexNewManager
 from api.models.embed_field import EmbedField
 from api.models import Contributor
-from api.helpers.helpers import get_raw_json, parse_raw_data
+from api.helpers.helpers import get_csv_values, parse_raw_data
 from api.models.source import Source
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
@@ -36,7 +36,7 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
         return [
             *self.get_common_row(facility),
             *self.get_contributor_custom_fields(facility),
-            *self.get_extended_fields(self.get_extended_fields_raw(facility)),
+            *self.get_extended_fields(facility.extended_fields),
             self.get_is_closed(facility),
         ]
 
@@ -47,26 +47,23 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
             if str(info["contributor_id"]) == str(self.contributor_id)
         ]
         info = infos[0] if len(infos) > 0 else None
-        raw_json = dict()
+        if info is None:
+            return [""] * len(self.embed_fields)
 
-        if info is not None:
-            if info["source_type"] == Source.LIST:
-                raw_json = get_raw_json(info["raw_data"], info["list_header"])
-            else:
-                raw_json = parse_raw_data(info["raw_data"])
+        if info["source_type"] == Source.LIST:
+            data_values = get_csv_values(info["raw_data"])
+            list_fields = get_csv_values(info["list_header"])
 
-        res = [raw_json.get(field, "") for field in self.embed_fields]
-        return res
+            return [
+                data_values[list_fields.index(field)]
+                if field in list_fields
+                and list_fields.index(field) < len(data_values)
+                else ""
+                for field in self.embed_fields
+            ]
 
-    def check_embed_contributor(self, contributor_id: int) -> bool:
-        return self.contributor_id == contributor_id
-
-    def get_extended_fields_raw(self, facility: FacilityIndexNewManager):
-        return [
-            field
-            for field in facility.extended_fields
-            if self.check_embed_contributor(field["contributor"]["id"])
-        ]
+        raw_json = parse_raw_data(info["raw_data"])
+        return [raw_json.get(field, "") for field in self.embed_fields]
 
     @staticmethod
     def get_embed_fields(contributor_id: int) -> List[str]:

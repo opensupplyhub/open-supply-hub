@@ -638,6 +638,128 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(len(base_row), len(expected_base_row))
         self.assertEqual(base_row, expected_base_row)
 
+    def test_embed_populates_mixed_case_custom_and_all_standard_fields(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="program_1_Name",
+            display_name="Program Name",
+            visible=True,
+            searchable=True,
+        )
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=5,
+            column_name="total_number_of_employees",
+            display_name="Total Number of Employees",
+            visible=True,
+            searchable=True,
+        )
+        self.contrib_list.header = (
+            "country,name,address,sector,extra_1,program_1_Name,"
+            "total_number_of_employees"
+        )
+        self.contrib_list.save()
+        self.contrib_list_item.raw_data = (
+            '"US","Towel Factory 42","42 Dolphin St","Apparel",'
+            '"data one","Program One","250"'
+        )
+        self.contrib_list_item.save()
+
+        alternate_source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor_two,
+        )
+        alternate_raw_data = (
+            "{'extra_2': 'alternate API custom data', "
+            "'program_1_Name': 'Alternate Program'}"
+        )
+        alternate_item = FacilityListItem.objects.create(
+            name="Towel Factory 42",
+            address="42 Dolphin St",
+            country_code="US",
+            sector=["Apparel"],
+            raw_data=alternate_raw_data,
+            raw_json=parse_raw_data(alternate_raw_data),
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=alternate_source,
+            facility=self.contrib_facility,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.contrib_facility,
+            facility_list_item=alternate_item,
+            confidence=0.85,
+            results="",
+            is_active=True,
+        )
+
+        extended_fields = [
+            ("number_of_workers", {"min": 100, "max": 200}),
+            (
+                "parent_company",
+                {"name": "Alternate Parent", "raw_value": "Alternate Parent"},
+            ),
+            (
+                "facility_type",
+                {
+                    "raw_values": ["Alternate raw value"],
+                    "matched_values": [
+                        [None, None, "Alternate Facility Type", None]
+                    ],
+                },
+            ),
+            (
+                "processing_type",
+                {
+                    "raw_values": ["Alternate raw value"],
+                    "matched_values": [
+                        [None, None, None, "Alternate Processing Type"]
+                    ],
+                },
+            ),
+            ("product_type", {"raw_values": ["Alternate Product"]}),
+        ]
+        for field_name, value in extended_fields:
+            ExtendedField.objects.create(
+                field_name=field_name,
+                value=value,
+                contributor=self.contributor_two,
+                facility=self.contrib_facility,
+                facility_list_item=alternate_item,
+            )
+
+        params = "embed=1&contributors={}&q={}".format(
+            self.contributor.id, self.contrib_facility.id
+        )
+        response = self.get_facility_download(params)
+        headers = self.get_headers(response)
+        row_by_header = dict(zip(headers, self.get_rows(response)[0]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(headers.count("parent_company"), 1)
+        self.assertEqual(row_by_header["extra_1"], "data one")
+        self.assertEqual(row_by_header["extra_2"], "")
+        self.assertEqual(row_by_header["program_1_Name"], "Program One")
+        self.assertEqual(row_by_header["total_number_of_employees"], "250")
+        self.assertEqual(row_by_header["number_of_workers"], "100-200")
+        self.assertEqual(row_by_header["parent_company"], "Alternate Parent")
+        self.assertEqual(
+            row_by_header["processing_type_facility_type_raw"],
+            "Alternate raw value",
+        )
+        self.assertEqual(
+            row_by_header["facility_type"], "Alternate Facility Type"
+        )
+        self.assertEqual(
+            row_by_header["processing_type"], "Alternate Processing Type"
+        )
+        self.assertEqual(row_by_header["product_type"], "Alternate Product")
+
     def test_extended_fields(self):
         self.create_extended_fields({"list_item_id": self.list_item.id})
         params = "q={}".format(self.facility.id)
