@@ -9,7 +9,7 @@ import FooterNav from './FooterNav';
 import FooterShapes from './FooterShapes';
 import FooterShapesMobile from './FooterShapesMobile';
 import FooterText from './FooterText';
-import { mapRoute } from '../../util/constants.jsx';
+import { mapRoute } from '../../util/constants';
 
 export default function Footer() {
     return (

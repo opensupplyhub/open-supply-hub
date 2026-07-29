@@ -970,7 +970,7 @@ variable "enable_legacy_info_site_redirect" {
 variable "enable_homepage_proxy" {
   type        = bool
   default     = false
-  description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage at info.opensupplyhub.org. Enable in dev for testing only — do not apply to production without further validation."
+  description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage."
 }
 
 variable "craft_cms_origin_domain" {
