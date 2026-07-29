@@ -1107,6 +1107,23 @@ variable "database_private_link_vpc_endpoint_service_name" {
   default     = ""
 }
 
+# AWS Chatbot → Slack (CloudWatch alarms on aws_sns_topic.global).
+# Values live in the private ci-deployment tfvars. Leave empty to skip create.
+
+variable "aws_chatbot_slack_team_id" {
+  type        = string
+  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Set in ci-deployment."
+  default     = ""
+  sensitive   = true
+}
+
+variable "aws_chatbot_slack_channel_id" {
+  type        = string
+  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Set in ci-deployment."
+  default     = ""
+  sensitive   = true
+}
+
 # ContriBot variables
 
 variable "contribot_monday_board_id" {

@@ -30,7 +30,13 @@ Both use `/health-check/` for liveness (same URL as BetterStack).
 
 ## CloudWatch alarms (SNS)
 
-Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global`). Subscribe that topic to the on-call / ops destination used for pages.
+Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global`).
+
+When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (private `ci-deployment` tfvars), Terraform creates an AWS Chatbot Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. Empty IDs skip Chatbot (no Slack delivery). Setup and verify steps: [`cloudwatch-alarms-slack.md`](./cloudwatch-alarms-slack.md).
+
+```text
+CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
+```
 
 ### RDS (primary Postgres)
 
