@@ -42,6 +42,7 @@ cli_fargate_cpu = "1024"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
+gunicorn_workers        = "3"
 
 batch_default_ce_spot_fleet_bid_percentage = 60
 batch_ami_id = "ami-002e2fef4b94f8fd0"
