@@ -45,9 +45,9 @@ Provisioned by `module.database_enc` ([terraform-aws-postgresql-rds](https://git
 | `…DatabaseCPUCreditBalance-…` | `CPUCreditBalance` | Average < `rds_cpu_credit_balance_threshold` (default **30**; **db.t\*** only) |
 | `…DatabaseServerDatabaseConnections-…` | `DatabaseConnections` | Average > `rds_database_connections_alarm_threshold` (~**80%** of instance `max_connections`; set per env) |
 
-Per-environment `rds_database_connections_alarm_threshold` values (from `LEAST(DBInstanceClassMemory/9531392, 5000)`):
+Per-environment `rds_database_connections_alarm_threshold` values (from `LEAST(DBInstanceClassMemory/9531392, 5000)`). Thresholds use **~80% of `max_connections`** so SNS pages while ~20% headroom remains — before new clients fail with “too many connections”:
 
-| Env | Instance | max_connections | Threshold |
+| Env | Instance | max_connections | Threshold (~80%) |
 | --- | --- | ---: | ---: |
 | Development | `db.t3.micro` | 112 | **90** |
 | Staging | `db.t3.large` | 901 | **720** |
