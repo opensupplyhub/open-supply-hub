@@ -171,6 +171,18 @@ class ListsRepository:
             kwargs["ExpressionAttributeNames"] = names
         self._table.update_item(**kwargs)
 
+    def finish_list(self, list_id: int | str, *, status: str) -> None:
+        """Set the final ``status`` and ``finished_at`` timestamp for a list row."""
+        self._table.update_item(
+            Key={"list_id": str(list_id)},
+            UpdateExpression="SET #status = :status, finished_at = :finished_at",
+            ExpressionAttributeNames={"#status": "status"},
+            ExpressionAttributeValues={
+                ":status": status,
+                ":finished_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+
     def put_list(
         self,
         list_id: int | str,

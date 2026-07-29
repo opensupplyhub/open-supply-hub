@@ -4,7 +4,7 @@ Lambda functions that validate facility list uploads and notify data moderators 
 
 ## Overview
 
-ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack and Monday.
+ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack.
 
 ## Facility List Validation
 
@@ -65,7 +65,7 @@ flowchart LR
   Process --> S3[(S3)]
   Process --> GDrive[Google Drive]
   Notify --> Slack[Slack]
-  Notify --> Monday[Monday]
+  Notify --> DDB
 ```
 
 ### State Management
@@ -81,7 +81,7 @@ On each fetch run, `fetch_lists`:
 
 `retry_failed_lists` does not touch the cursor or the OS Hub API. It scans for `status=FAILED`, skips rows whose `attempt_count` is already at `CONTRIBOT_MAX_ATTEMPTS`, resets the rest to `PENDING` (increments `attempt_count`, refreshes `started_at`, clears `finished_at`), and starts the state machine with `{"lists": [{"list_id": "..."}]}`.
 
-`process_list` marks the row `PROCESSING`, downloads the upload from S3 using `file_name` as the object key (`.xlsx` or `.csv`), converts CSV to a temporary workbook, and always hands ContriBot a file named `{list_id}.xlsx`. That makes the Drive report `{list_id}.~PROCESSED.xlsx` (moderation tooling reads the facility-list id from the filename stem, not the contributor’s original upload name). CSV inputs must be UTF-8 (optional BOM); delimiter is sniffed (comma, semicolon, tab, pipe). Empty, header-only, or malformed CSVs fail the task so Step Functions can route to `notify`. Native `.xlsx` validation is otherwise unchanged. The handler stores `report_url` / summary stats on the row and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it records `FAILED` (and `finished_at`) then re-raises so Step Functions `Catch` can route to `notify` with `$.error`. `PROCESSED` status is recorded by `notify`.
+`process_list` marks the row `PROCESSING`, downloads the upload from S3 using `file_name` as the object key (`.xlsx` or `.csv`), converts CSV to a temporary workbook, and always hands ContriBot a file named `{list_id}.xlsx`. That makes the Drive report `{list_id}.~PROCESSED.xlsx` (moderation tooling reads the facility-list id from the filename stem, not the contributor’s original upload name). CSV inputs must be UTF-8 (optional BOM); delimiter is sniffed (comma, semicolon, tab, pipe). Empty, header-only, or malformed CSVs fail the task so Step Functions can route to `notify`. Native `.xlsx` validation is otherwise unchanged. The handler stores `report_url` / summary stats on the row and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it records `FAILED` (and `finished_at`) then re-raises so Step Functions `Catch` can route to `notify` with `$.error`. `notify` posts the Slack notification and records the final `PROCESSED` status.
 
 ## Process
 
