@@ -13,8 +13,8 @@ def update_indexing_functions(apps, schema_editor):
     See OSDEV-2977.
     """
     helper.run_sql_files([
-        '0221_remove_closing_date_from_index_claim_info.sql',
-        '0221_remove_closing_date_from_index_approved_claim.sql',
+        '0221_index_claim_info.sql',
+        '0221_index_approved_claim.sql',
     ])
 
 
