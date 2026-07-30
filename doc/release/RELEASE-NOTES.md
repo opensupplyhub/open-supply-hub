@@ -12,13 +12,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-
 * `0220_fix_processing_type_search_index.py` - Replaces the `index_processing_type()` SQL function so `FacilityIndex.processing_type` keeps every `matched_values` entry whose processing-type slot (index 3) is set, instead of only entries tagged `PROCESSING_TYPE`. This aligns the searchable `processing_type` column with the value shown under Processing Type on the location profile and mirrors the existing `index_facility_type()` logic (index 2). See OSDEV-1034.
 * `0221_remove_closing_date_from_claim_index_functions.py` - Updates `index_claim_info()` and `index_approved_claim()` to omit `closing_date` from indexed claim JSON.
 * `0222_remove_closing_date_from_facility_claim.py` - Drops `closing_date` from `api_facilityclaim` and `api_historicalfacilityclaim`.
 
 #### Schema changes
-
 * [OSDEV-2977](https://opensupplyhub.atlassian.net/browse/OSDEV-2977) - Removed the `closing_date` column from `FacilityClaim` and its audit history table.
 
 ### Code/API changes

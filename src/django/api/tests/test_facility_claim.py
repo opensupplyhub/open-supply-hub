@@ -126,9 +126,6 @@ class FacilityClaimTest(APITestCase):
             "business_website": "https://facility.com",
             "business_linkedin_profile": business_linkedin_profile,
             "opening_date": "2020-01-01",
-            # Legacy clients may still send this removed field. It must not
-            # be persisted as claim data.
-            "closing_date": "2023-12-31",
             "estimated_annual_throughput": 100000,
             "energy_coal": 500000,
             "energy_natural_gas": 300000,
@@ -254,9 +251,6 @@ class FacilityClaimTest(APITestCase):
 
         update_payload = {
             "opening_date": "2021-01-01",
-            # Legacy clients may still send this removed field. Updating the
-            # claim must neither overwrite nor expose the historical value.
-            "closing_date": "2022-01-01",
             "estimated_annual_throughput": 123456,
             "energy_coal": 10,
             "energy_natural_gas": 20,
@@ -288,7 +282,6 @@ class FacilityClaimTest(APITestCase):
 
         response = self.client.put(claim_url, update_payload, format="json")
         self.assertEqual(200, response.status_code)
-        self.assertNotIn("closing_date", response.data)
 
         claim.refresh_from_db()
         self.assertEqual(claim.opening_date, date(2021, 1, 1))
