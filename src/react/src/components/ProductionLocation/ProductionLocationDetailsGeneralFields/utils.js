@@ -11,7 +11,7 @@ import {
     ORDERED_GENERAL_FIELD_KEYS,
     FIELD_CONFIG,
     DATA_CENTER_FIELD_GROUPS,
-    NO_UNIT_SPECIFIED
+    NO_UNIT_SPECIFIED,
 } from '../constants.jsx';
 
 const toDrawerContribution = (item, value) => ({
@@ -388,15 +388,17 @@ const buildDataCenterDataPoint = (data, field) => {
         unit = unitValues.length ? rawExtendedValue(unitValues[0]) : null;
     }
 
-    const withUnit = (value) => {
+    const withUnit = value => {
         if (unit !== null && value != null && value !== '') {
             return `${value} ${unit}`;
         }
         return `${value} ${NO_UNIT_SPECIFIED}`;
-    }
+    };
 
     const toContribution = item => ({
-        value: isValueWithUnit ? withUnit(rawExtendedValue(item)) : rawExtendedValue(item),
+        value: isValueWithUnit
+            ? withUnit(rawExtendedValue(item))
+            : rawExtendedValue(item),
         sourceName: item.contributor_name || null,
         date: item.created_at || null,
         userId: item.contributor_id != null ? item.contributor_id : undefined,

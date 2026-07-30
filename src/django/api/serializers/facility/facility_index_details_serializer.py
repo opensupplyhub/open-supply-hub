@@ -510,6 +510,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 grouped_data[field_name] = []
 
         return grouped_data
-    
+
     def get_is_data_center(self, facility):
         return is_data_center(facility=facility.id)

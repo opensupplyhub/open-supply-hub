@@ -378,6 +378,7 @@ def get_product_types():
     product_types.sort()
     return product_types
 
+
 def get_integer_or_double_value(value):
     try:
         val = int(value)

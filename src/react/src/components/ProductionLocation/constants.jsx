@@ -138,14 +138,53 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
     Object.freeze({
         label: 'Named Entities',
         fields: Object.freeze([
-            { key: 'name_operator', label: 'Operator', tooltipText: 'The entity that operates this production location.' },
-            { key: 'name_owner', label: 'Owner', tooltipText: 'The entity that owns this production location.' },
-            { key: 'name_property_manager', label: 'Property Manager', tooltipText: 'The entity responsible for managing the property of this production location.' },
-            { key: 'name_building_owner', label: 'Building Owner', tooltipText: 'The entity that owns the building where this production location is situated.' },
-            { key: 'name_tenant', label: 'Tenant', tooltipText: 'The entity that leases or rents the space at this production location.' },
-            { key: 'name_permit_holder', label: 'Permit Holder', tooltipText: 'The entity that holds the necessary permits for operating this production location.' },
-            { key: 'name_site_other', label: 'Other Site Name', tooltipText: 'An alternative name for this production location.' },
-            { key: 'name_unspecified', label: 'Other Named Entity', tooltipText: 'A generic label for a named entity associated with this production location.' },
+            {
+                key: 'name_operator',
+                label: 'Operator',
+                tooltipText:
+                    'The entity that operates this production location.',
+            },
+            {
+                key: 'name_owner',
+                label: 'Owner',
+                tooltipText: 'The entity that owns this production location.',
+            },
+            {
+                key: 'name_property_manager',
+                label: 'Property Manager',
+                tooltipText:
+                    'The entity responsible for managing the property of this production location.',
+            },
+            {
+                key: 'name_building_owner',
+                label: 'Building Owner',
+                tooltipText:
+                    'The entity that owns the building where this production location is situated.',
+            },
+            {
+                key: 'name_tenant',
+                label: 'Tenant',
+                tooltipText:
+                    'The entity that leases or rents the space at this production location.',
+            },
+            {
+                key: 'name_permit_holder',
+                label: 'Permit Holder',
+                tooltipText:
+                    'The entity that holds the necessary permits for operating this production location.',
+            },
+            {
+                key: 'name_site_other',
+                label: 'Other Site Name',
+                tooltipText:
+                    'An alternative name for this production location.',
+            },
+            {
+                key: 'name_unspecified',
+                label: 'Other Named Entity',
+                tooltipText:
+                    'A generic label for a named entity associated with this production location.',
+            },
         ]),
     }),
     Object.freeze({
@@ -155,95 +194,168 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 key: 'capacity',
                 label: 'Capacity',
                 unitsField: 'capacity_units',
-                tooltipText: 'The maximum output or production capacity of this production location.'
+                tooltipText:
+                    'The maximum output or production capacity of this production location.',
             },
             {
                 key: 'it_capacity',
                 label: 'IT Capacity',
                 unitsField: 'it_capacity_units',
-                tooltipText: 'The information technology capacity of this production location.'
+                tooltipText:
+                    'The information technology capacity of this production location.',
             },
             {
                 key: 'utility_capacity',
                 label: 'Utility Capacity',
                 unitsField: 'utility_capacity_units',
-                tooltipText: 'The utility capacity of this production location, indicating the maximum amount of utility resources it can handle.'
+                tooltipText:
+                    'The utility capacity of this production location, indicating the maximum amount of utility resources it can handle.',
             },
             {
                 key: 'ups_capacity',
                 label: 'UPS Capacity',
                 unitsField: 'ups_capacity_units',
-                tooltipText: 'The uninterruptible power supply capacity of this production location.'
+                tooltipText:
+                    'The uninterruptible power supply capacity of this production location.',
             },
             {
                 key: 'backup_generator_capacity',
                 label: 'Backup Generator Capacity',
                 unitsField: 'backup_generator_capacity_units',
-                tooltipText: 'The backup generator capacity of this production location.'
+                tooltipText:
+                    'The backup generator capacity of this production location.',
             },
-            { key: 'pue', unitsField: 'pue_units', label: 'Power Usage Effectiveness (PUE)', tooltipText: 'A metric indicating the energy efficiency of a data center, calculated as the ratio of total power used by the data center to the power delivered to the IT equipment.' },
-            { key: 'power_providers', label: 'Power Providers', tooltipText: 'Entities that supply electrical power to this production location.' },
-            { key: 'power_sources', label: 'Power Sources', tooltipText: 'The origins of the electrical power used by this production location.' },
+            {
+                key: 'pue',
+                unitsField: 'pue_units',
+                label: 'Power Usage Effectiveness (PUE)',
+                tooltipText:
+                    'A metric indicating the energy efficiency of a data center, calculated as the ratio of total power used by the data center to the power delivered to the IT equipment.',
+            },
+            {
+                key: 'power_providers',
+                label: 'Power Providers',
+                tooltipText:
+                    'Entities that supply electrical power to this production location.',
+            },
+            {
+                key: 'power_sources',
+                label: 'Power Sources',
+                tooltipText:
+                    'The origins of the electrical power used by this production location.',
+            },
             {
                 key: 'power_density',
                 label: 'Power Density',
                 unitsField: 'power_density_units',
-                tooltipText: 'The amount of power consumed per unit area of the production location.'
+                tooltipText:
+                    'The amount of power consumed per unit area of the production location.',
             },
             {
                 key: 'water_usage',
                 label: 'Water Usage',
                 unitsField: 'water_usage_units',
-                tooltipText: 'The amount of water used by this production location.'
+                tooltipText:
+                    'The amount of water used by this production location.',
             },
-            { key: 'wue', unitsField: 'wue_units', label: 'Water Use Efficiency (WUE)', tooltipText: 'A metric indicating the water efficiency of this production location, calculated as the ratio of total water used to the amount of water delivered to the IT equipment.' },
-            { key: 'cooling_mechanism', label: 'Cooling Mechanism', tooltipText: 'The method used to cool this production location.' },
+            {
+                key: 'wue',
+                unitsField: 'wue_units',
+                label: 'Water Use Efficiency (WUE)',
+                tooltipText:
+                    'A metric indicating the water efficiency of this production location, calculated as the ratio of total water used to the amount of water delivered to the IT equipment.',
+            },
+            {
+                key: 'cooling_mechanism',
+                label: 'Cooling Mechanism',
+                tooltipText:
+                    'The method used to cool this production location.',
+            },
         ]),
     }),
     Object.freeze({
         label: 'Operating Information',
         fields: Object.freeze([
-            { key: 'operational_status', label: 'Operational Status', tooltipText: 'Indicates whether this production location is currently operational, under construction, or decommissioned.' },
-            { key: 'date_operational', label: 'Operational Date', tooltipText: 'The date when this production location became operational.' },
-            { key: 'time_zones', label: 'Time Zone(s)', tooltipText: 'The time zone(s) to which this production location belongs.' },
+            {
+                key: 'operational_status',
+                label: 'Operational Status',
+                tooltipText:
+                    'Indicates whether this production location is currently operational, under construction, or decommissioned.',
+            },
+            {
+                key: 'date_operational',
+                label: 'Operational Date',
+                tooltipText:
+                    'The date when this production location became operational.',
+            },
+            {
+                key: 'time_zones',
+                label: 'Time Zone(s)',
+                tooltipText:
+                    'The time zone(s) to which this production location belongs.',
+            },
             {
                 key: 'certifications_compliance',
                 label: 'Certifications / Compliance',
-                tooltipText: 'The certifications and compliance information for this production location.'
+                tooltipText:
+                    'The certifications and compliance information for this production location.',
             },
         ]),
     }),
     Object.freeze({
         label: 'Building Information',
         fields: Object.freeze([
-            { key: 'area', label: 'Area', unitsField: 'area_units', tooltipText: 'The total area of this production location.' },
+            {
+                key: 'area',
+                label: 'Area',
+                unitsField: 'area_units',
+                tooltipText: 'The total area of this production location.',
+            },
             {
                 key: 'data_area',
                 label: 'Data Hall Area',
                 unitsField: 'data_area_units',
-                tooltipText: 'The area dedicated to data processing and storage within this production location.'
+                tooltipText:
+                    'The area dedicated to data processing and storage within this production location.',
             },
             {
                 key: 'floor_space',
                 label: 'Floor Space',
                 unitsField: 'floor_space_units',
-                tooltipText: 'The total floor space available in this production location.'
+                tooltipText:
+                    'The total floor space available in this production location.',
             },
             {
                 key: 'overall_area',
                 label: 'Overall Area',
                 unitsField: 'overall_area_units',
-                tooltipText: 'The overall area of this production location.'
+                tooltipText: 'The overall area of this production location.',
             },
             {
                 key: 'other_area',
                 label: 'Other Area',
                 unitsField: 'other_area_units',
-                tooltipText: 'The area of this production location that is not categorized as data, floor, or overall space.'
+                tooltipText:
+                    'The area of this production location that is not categorized as data, floor, or overall space.',
             },
-            { key: 'other_area_notes', label: 'Other Area Notes', tooltipText: 'Additional information about the other area of this production location.' },
-            { key: 'number_of_servers', label: 'Number of Servers', tooltipText: 'The total number of servers in this production location.' },
-            { key: 'number_of_racks', label: 'Number of Racks', tooltipText: 'The total number of racks in this production location.' },
+            {
+                key: 'other_area_notes',
+                label: 'Other Area Notes',
+                tooltipText:
+                    'Additional information about the other area of this production location.',
+            },
+            {
+                key: 'number_of_servers',
+                label: 'Number of Servers',
+                tooltipText:
+                    'The total number of servers in this production location.',
+            },
+            {
+                key: 'number_of_racks',
+                label: 'Number of Racks',
+                tooltipText:
+                    'The total number of racks in this production location.',
+            },
         ]),
     }),
 ]);
