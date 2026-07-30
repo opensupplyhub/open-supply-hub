@@ -36,7 +36,7 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` i
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
 
-When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. If either ID is empty, Terraform skips Chatbot (no Slack delivery).
+When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (required, non-empty values in private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack.
 
 ### Slack setup (once per AWS account)
 
