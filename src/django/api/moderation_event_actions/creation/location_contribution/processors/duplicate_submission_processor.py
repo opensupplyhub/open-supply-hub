@@ -2,6 +2,7 @@ import re
 from datetime import timedelta
 from difflib import SequenceMatcher
 
+from django.db import connection
 from django.utils import timezone
 from rest_framework import status
 
@@ -59,6 +60,8 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
         if event_dto.duplicate_override:
             return super().process(event_dto)
 
+        self.__lock_contributor(event_dto.contributor)
+
         duplicate = self.__find_recent_duplicate(event_dto)
         if duplicate is not None:
             event_dto.errors = {
@@ -81,6 +84,29 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
             return event_dto
 
         return super().process(event_dto)
+
+    @staticmethod
+    def __lock_contributor(contributor) -> None:
+        '''
+        Closes the race where two near-simultaneous SLC CREATE submissions
+        from the same contributor both run __find_recent_duplicate before
+        either has committed its new ModerationEvent row, so neither sees
+        the other and both get created. A Postgres advisory lock is used
+        (rather than SELECT ... FOR UPDATE on a matching event) because it
+        doesn't require an existing row to lock on - the exact scenario
+        being guarded against is that no matching event exists yet.
+        pg_advisory_xact_lock is transaction-scoped: it blocks a second,
+        concurrent caller with the same contributor id until this
+        transaction commits or rolls back, then releases automatically.
+        This relies on the caller (ProductionLocations.create) already
+        wrapping the whole request in @transaction.atomic - without that,
+        Django's autocommit mode would release the lock immediately after
+        this statement instead of holding it for the rest of the request.
+        '''
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'SELECT pg_advisory_xact_lock(%s)', [contributor.pk]
+            )
 
     @staticmethod
     def __find_recent_duplicate(event_dto: CreateModerationEventDTO):

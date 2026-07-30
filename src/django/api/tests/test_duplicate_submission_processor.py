@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.utils import timezone
@@ -101,6 +102,51 @@ class TestDuplicateSubmissionProcessor(APITestCase):
 
         self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNotNone(result.moderation_event)
+
+    @patch(
+        'api.moderation_event_actions.creation.location_contribution'
+        '.processors.duplicate_submission_processor.connection'
+    )
+    def test_advisory_lock_is_acquired_for_the_contributor(
+        self, mock_connection
+    ):
+        mock_cursor = \
+            mock_connection.cursor.return_value.__enter__.return_value
+
+        result = self._submit(self.contributor, self.base_input_data)
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        mock_cursor.execute.assert_called_once_with(
+            'SELECT pg_advisory_xact_lock(%s)', [self.contributor.pk]
+        )
+
+    @patch(
+        'api.moderation_event_actions.creation.location_contribution'
+        '.processors.duplicate_submission_processor.connection'
+    )
+    def test_advisory_lock_is_not_acquired_with_duplicate_override(
+        self, mock_connection
+    ):
+        self._submit(
+            self.contributor, self.base_input_data, duplicate_override=True
+        )
+
+        mock_connection.cursor.assert_not_called()
+
+    @patch(
+        'api.moderation_event_actions.creation.location_contribution'
+        '.processors.duplicate_submission_processor.connection'
+    )
+    def test_advisory_lock_is_not_acquired_for_non_slc_source(
+        self, mock_connection
+    ):
+        api_input_data = {
+            **self.base_input_data,
+            'source': ModerationEvent.Source.API.value,
+        }
+        self._submit(self.contributor, api_input_data)
+
+        mock_connection.cursor.assert_not_called()
 
     def test_identical_resubmission_within_window_is_flagged(self):
         first_result = self._submit(self.contributor, self.base_input_data)
