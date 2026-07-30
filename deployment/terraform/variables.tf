@@ -1108,27 +1108,26 @@ variable "database_private_link_vpc_endpoint_service_name" {
 }
 
 # AWS Chatbot → Slack (CloudWatch alarms on aws_sns_topic.global).
-# Required non-empty values in private ci-deployment tfvars for every environment.
 
 variable "aws_chatbot_slack_team_id" {
   type        = string
-  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Set in ci-deployment."
+  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP)."
   sensitive   = true
 
   validation {
     condition     = length(var.aws_chatbot_slack_team_id) > 0
-    error_message = "aws_chatbot_slack_team_id must be a non-empty Slack workspace ID (set in ci-deployment)."
+    error_message = "aws_chatbot_slack_team_id must be a non-empty Slack workspace ID."
   }
 }
 
 variable "aws_chatbot_slack_channel_id" {
   type        = string
-  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Set in ci-deployment."
+  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23)."
   sensitive   = true
 
   validation {
     condition     = length(var.aws_chatbot_slack_channel_id) > 0
-    error_message = "aws_chatbot_slack_channel_id must be a non-empty Slack channel ID (set in ci-deployment)."
+    error_message = "aws_chatbot_slack_channel_id must be a non-empty Slack channel ID."
   }
 }
 
