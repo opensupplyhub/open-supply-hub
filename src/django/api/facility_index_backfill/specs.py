@@ -24,6 +24,21 @@ PROCESSING_TYPE_FILTER = (
     ")"
 )
 
+# Only facilities where a single contributor has more than one matched list
+# item can change when index_sector() is recomputed (the OSDEV-992 change
+# keeps one item per contributor instead of all of them); this skips the
+# millions of rows with at most one item per contributor.
+SECTOR_FILTER = (
+    "EXISTS ("
+    "SELECT 1 FROM api_facilitylistitem afli "
+    "JOIN api_source aso ON aso.id = afli.source_id "
+    "WHERE afli.facility_id = afi.id "
+    "AND afli.status IN ('MATCHED', 'CONFIRMED_MATCH') "
+    "GROUP BY aso.contributor_id "
+    "HAVING COUNT(*) > 1"
+    ")"
+)
+
 
 class FacilityIndexFieldSpec(TypedDict, total=False):
     """Configuration for backfilling one logical field group."""
@@ -75,6 +90,18 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': PROCESSING_TYPE_FILTER,
+    },
+    'sector': {
+        'columns': {
+            'sector': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT sector) "
+                "FROM index_sector(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+        },
+        'filter_sql': SECTOR_FILTER,
     },
 }
 

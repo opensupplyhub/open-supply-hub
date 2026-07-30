@@ -82,6 +82,26 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertIn("field_name = 'processing_type'", sql)
         self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
+    def test_list_field_names_includes_sector(self):
+        self.assertIn('sector', list_field_names())
+
+    def test_build_update_sql_includes_sector_column(self):
+        spec = get_field_spec('sector')
+        sql = build_update_sql(spec)
+
+        self.assertIn('sector =', sql)
+        self.assertIn('index_sector(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_sector_filter(self):
+        spec = get_field_spec('sector')
+        sql = build_count_sql(spec)
+
+        self.assertIn('GROUP BY aso.contributor_id', sql)
+        self.assertIn('HAVING COUNT(*) > 1', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
     def test_build_count_sql_omits_filter_when_not_configured(self):
         spec = {
             'columns': {'foo': 'bar'},

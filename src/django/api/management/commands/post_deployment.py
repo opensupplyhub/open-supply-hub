@@ -35,13 +35,14 @@ class Command(BaseCommand):
         # refreshes the affected FacilityIndex rows. Remove after the release
         # has been deployed everywhere.
         call_command('remove_rsc_grievance_mechanism_nested_internal_ids')
-        # Temporary for 2.28.0 (OSDEV-1034) — migration 0220 changes
-        # index_processing_type(), so refresh the FacilityIndex.processing_type
-        # column for facilities that have processing_type extended fields.
+        # Temporary for 2.28.0 — migration 0220 changes
+        # index_processing_type() (OSDEV-1034) and migration 0221 changes
+        # index_sector() (OSDEV-992), so refresh the affected FacilityIndex
+        # columns for the facilities each filter targets.
         # Remove after the release has been deployed everywhere.
         call_command(
             'backfill_facility_index',
-            fields='processing_type',
+            fields='processing_type,sector',
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )
