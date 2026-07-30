@@ -76,7 +76,10 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.3.0"
+  # TODO(OSDEV-2867): After terraform-aws-postgresql-rds PR #3 is merged and
+  # tagged, switch this back to: ?ref=3.3.0
+  # Temporary pin to the DatabaseConnections alarm commit for Development testing.
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=6dab040c18bd0891a2f09008ce65db53fc0c2237"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
