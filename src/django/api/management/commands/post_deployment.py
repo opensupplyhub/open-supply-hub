@@ -2,10 +2,13 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-# Each worker is a full Django subprocess (~150–200 MB RSS).
+# Temporary for the OSDEV-1034 and OSDEV-2977 backfills. Each worker is a
+# subprocess (~150-200 MB RSS), so size parallelism to the CLI task memory.
+# Remove this map, the helper below, and the backfill call once the release
+# has been deployed everywhere.
 BACKFILL_PARALLEL_BY_ENVIRONMENT = {
     'Local': 2,
-    'Development': 2,
+    'Development': 1,
     'Test': 10,
     'Staging': 10,
     'Preprod': 10,
@@ -46,6 +49,16 @@ class Command(BaseCommand):
         call_command(
             'backfill_facility_index',
             fields='claim_info,approved_claim',
+            parallel=backfill_parallel_worker_count(),
+            batch_size=10000,
+        )
+        # Temporary for 2.28.0 (OSDEV-1034) — migration 0220 changes
+        # index_processing_type(), so refresh the FacilityIndex.processing_type
+        # column for facilities that have processing_type extended fields.
+        # Remove after the release has been deployed everywhere.
+        call_command(
+            'backfill_facility_index',
+            fields='processing_type',
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )

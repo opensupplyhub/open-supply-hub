@@ -13,8 +13,8 @@ def update_indexing_functions(apps, schema_editor):
     See OSDEV-2977.
     """
     helper.run_sql_files([
-        '0220_remove_closing_date_from_index_claim_info.sql',
-        '0220_remove_closing_date_from_index_approved_claim.sql',
+        '0221_remove_closing_date_from_index_claim_info.sql',
+        '0221_remove_closing_date_from_index_approved_claim.sql',
     ])
 
 
@@ -28,7 +28,7 @@ def revert_indexing_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0219_add_contributor_anonymise_in_paid_products'),
+        ('api', '0220_fix_processing_type_search_index'),
     ]
 
     operations = [

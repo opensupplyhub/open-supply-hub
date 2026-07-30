@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0220_remove_closing_date_from_claim_index_functions'),
+        ('api', '0221_remove_closing_date_from_claim_index_functions'),
     ]
 
     operations = [
