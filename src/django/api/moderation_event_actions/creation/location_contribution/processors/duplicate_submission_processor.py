@@ -53,7 +53,10 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
         if event_dto.request_type != ModerationEvent.RequestType.CREATE.value:
             return super().process(event_dto)
 
-        if event_dto.raw_data.get('duplicate_override'):
+        if event_dto.source != ModerationEvent.Source.SLC.value:
+            return super().process(event_dto)
+
+        if event_dto.duplicate_override:
             return super().process(event_dto)
 
         duplicate = self.__find_recent_duplicate(event_dto)
@@ -69,6 +72,8 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
                     'name': duplicate.cleaned_data.get('name'),
                     'address': duplicate.cleaned_data.get('address'),
                     'country': duplicate.cleaned_data.get('country_code'),
+                    'duplicate_check_window_minutes':
+                        DUPLICATE_CHECK_WINDOW_MINUTES,
                 }
             }
             event_dto.status_code = status.HTTP_409_CONFLICT

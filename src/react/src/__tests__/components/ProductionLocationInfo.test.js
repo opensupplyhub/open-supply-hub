@@ -516,6 +516,7 @@ describe("ProductionLocationInfo component, possible duplicate submission dialog
                             name: "Blue Horizon Facility",
                             address: "990 Spring Garden St., Philadelphia PA 19123",
                             country: "US",
+                            duplicate_check_window_minutes: 30,
                         },
                     },
                 },
@@ -539,6 +540,38 @@ describe("ProductionLocationInfo component, possible duplicate submission dialog
             </Router>,
             { preloadedState },
         );
+
+    const stateWithDuplicateOf = duplicateOfOverrides => {
+        const baseError =
+            defaultState.contributeProductionLocation.pendingModerationEvent
+                .error;
+        const duplicateOf = { ...baseError.rawData.duplicate_of };
+        Object.keys(duplicateOfOverrides).forEach(key => {
+            if (duplicateOfOverrides[key] === undefined) {
+                delete duplicateOf[key];
+            } else {
+                duplicateOf[key] = duplicateOfOverrides[key];
+            }
+        });
+
+        return {
+            ...defaultState,
+            contributeProductionLocation: {
+                ...defaultState.contributeProductionLocation,
+                pendingModerationEvent: {
+                    ...defaultState.contributeProductionLocation
+                        .pendingModerationEvent,
+                    error: {
+                        ...baseError,
+                        rawData: {
+                            ...baseError.rawData,
+                            duplicate_of: duplicateOf,
+                        },
+                    },
+                },
+            },
+        };
+    };
 
     test("shows the duplicate submission dialog instead of the generic error notification", () => {
         const { getByText, queryByText } = renderComponent();
@@ -564,7 +597,28 @@ describe("ProductionLocationInfo component, possible duplicate submission dialog
         fireEvent.click(getByText("Submit anyway"));
 
         await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(1));
-        const [, body] = apiRequest.post.mock.calls[0];
-        expect(body.duplicate_override).toBe(true);
+        const [, body, config] = apiRequest.post.mock.calls[0];
+        expect(body.duplicate_override).toBeUndefined();
+        expect(config.params.duplicate_override).toBe(true);
+    });
+
+    test("renders the backend's duplicate check window in the dialog message", () => {
+        const { getByText } = renderComponent(
+            {},
+            stateWithDuplicateOf({ duplicate_check_window_minutes: 45 }),
+        );
+
+        expect(getByText(/wait at least 45 minutes/)).toBeInTheDocument();
+    });
+
+    test("falls back to the default window when the backend omits it", () => {
+        const { getByText } = renderComponent(
+            {},
+            stateWithDuplicateOf({
+                duplicate_check_window_minutes: undefined,
+            }),
+        );
+
+        expect(getByText(/wait at least 30 minutes/)).toBeInTheDocument();
     });
 });

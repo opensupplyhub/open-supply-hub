@@ -66,10 +66,7 @@ export function createProductionLocation(
     contribData,
     duplicateOverride = false,
 ) {
-    const parsedContribData = parseContribData(contribData);
-    const requestData = duplicateOverride
-        ? { ...parsedContribData, duplicate_override: true }
-        : parsedContribData;
+    const requestData = parseContribData(contribData);
 
     return async dispatch => {
         dispatch(startCreateProductionLocation(requestData));
@@ -78,6 +75,9 @@ export function createProductionLocation(
             const { data } = await apiRequest.post(
                 makeProductionLocationURL(),
                 requestData,
+                duplicateOverride
+                    ? { params: { duplicate_override: true } }
+                    : undefined,
             );
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
@@ -92,15 +92,8 @@ export function createProductionLocation(
     };
 }
 
-export function updateProductionLocation(
-    contribData,
-    osID,
-    duplicateOverride = false,
-) {
-    const parsedContribData = parseContribData(contribData);
-    const requestData = duplicateOverride
-        ? { ...parsedContribData, duplicate_override: true }
-        : parsedContribData;
+export function updateProductionLocation(contribData, osID) {
+    const requestData = parseContribData(contribData);
 
     return async dispatch => {
         dispatch(startUpdateProductionLocation(requestData));

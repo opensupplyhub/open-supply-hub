@@ -68,6 +68,11 @@ import ContributionWarningDialog from './ContributionWarningDialog';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
 
+// Fallback only. The backend includes the authoritative window in the 409
+// duplicate-submission response (duplicate_of.duplicate_check_window_minutes);
+// this covers the case where that field is unexpectedly absent.
+const DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES = 30;
+
 // Ordered list of soft-warning checks run before submission. Each entry
 // specifies which form field to inspect, a condition function (returns true
 // when the warning should fire), and the dialog copy to show the contributor.
@@ -146,8 +151,8 @@ const ProductionLocationInfo = ({
                 handleCreateProductionLocation(data, duplicateOverride);
             break;
         case 'PATCH':
-            handleProductionLocation = (data, duplicateOverride) =>
-                handleUpdateProductionLocation(data, osID, duplicateOverride);
+            handleProductionLocation = data =>
+                handleUpdateProductionLocation(data, osID);
             break;
         default:
             handleProductionLocation = () => {
@@ -1235,7 +1240,11 @@ const ProductionLocationInfo = ({
                     handleProductionLocation(contributionForm.values, true);
                 }}
                 title="Possible Duplicate Submission"
-                message="You recently submitted a very similar production location. Please wait at least 30 minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission."
+                message={`You recently submitted a very similar production location. Please wait at least ${
+                    pendingModerationEventError?.rawData?.duplicate_of
+                        ?.duplicate_check_window_minutes ??
+                    DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES
+                } minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`}
             />
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
@@ -1359,8 +1368,8 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchFacilityProcessingTypeOptions()),
         handleCreateProductionLocation: (data, duplicateOverride) =>
             dispatch(createProductionLocation(data, duplicateOverride)),
-        handleUpdateProductionLocation: (data, osID, duplicateOverride) =>
-            dispatch(updateProductionLocation(data, osID, duplicateOverride)),
+        handleUpdateProductionLocation: (data, osID) =>
+            dispatch(updateProductionLocation(data, osID)),
         fetchModerationEvent: moderationID =>
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>

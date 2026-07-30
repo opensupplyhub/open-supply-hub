@@ -598,3 +598,71 @@ class TestProductionLocationsCreate(APITestCase):
             moderation_event.cleaned_data['fields']['parent_company_os_id'],
             [self.production_location.id],
         )
+
+    def test_invalid_duplicate_override_query_param_returns_400(self):
+        response = self.client.post(
+            f'{self.url}?duplicate_override=1',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response_body_dict = json.loads(response.content)
+        self.assertEqual(
+            response_body_dict['detail'], 'The request query is invalid.'
+        )
+        self.assertEqual(
+            response_body_dict['errors'][0]['field'], 'duplicate_override'
+        )
+
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_override_query_param_bypasses_duplicate_check(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # Each body below is worded slightly differently so the
+        # DuplicateThrottle (which keys on the exact request body) doesn't
+        # block the second and third submissions before the duplicate check
+        # or the override are exercised. The name changes are still similar
+        # enough to clear DuplicateSubmissionProcessor's fuzzy match.
+        first_response = self.client.post(
+            self.url,
+            json.dumps({
+                'source': 'SLC',
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
+
+        duplicate_response = self.client.post(
+            self.url,
+            json.dumps({
+                'source': 'SLC',
+                'name': 'Blue Horizon Facilty',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(
+            duplicate_response.status_code, status.HTTP_409_CONFLICT
+        )
+
+        override_response = self.client.post(
+            f'{self.url}?duplicate_override=true',
+            json.dumps({
+                'source': 'SLC',
+                'name': 'Blue Horizoon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+            }),
+            content_type='application/json'
+        )
+        self.assertEqual(
+            override_response.status_code, status.HTTP_202_ACCEPTED
+        )

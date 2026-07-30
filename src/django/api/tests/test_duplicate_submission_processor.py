@@ -18,6 +18,9 @@ from api.moderation_event_actions.creation.location_contribution \
     .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.moderation_event_actions.creation.location_contribution \
+    .processors.duplicate_submission_processor \
+    import DUPLICATE_CHECK_WINDOW_MINUTES
 
 
 class TestDuplicateSubmissionProcessor(APITestCase):
@@ -58,11 +61,12 @@ class TestDuplicateSubmissionProcessor(APITestCase):
             }
         }
 
-    def _submit(self, contributor, input_data):
+    def _submit(self, contributor, input_data, duplicate_override=False):
         event_dto = CreateModerationEventDTO(
             contributor=contributor,
             raw_data=input_data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            duplicate_override=duplicate_override,
         )
         return self.moderation_event_creator.perform_event_creation(
             event_dto
@@ -117,6 +121,11 @@ class TestDuplicateSubmissionProcessor(APITestCase):
         )
         self.assertEqual(
             second_result.errors['duplicate_of']['country'], 'US'
+        )
+        self.assertEqual(
+            second_result.errors['duplicate_of']
+            ['duplicate_check_window_minutes'],
+            DUPLICATE_CHECK_WINDOW_MINUTES
         )
 
     def test_near_duplicate_name_typo_is_flagged(self):
@@ -303,20 +312,35 @@ class TestDuplicateSubmissionProcessor(APITestCase):
         first_result = self._submit(self.contributor, self.base_input_data)
         self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
 
-        override_input_data = {
-            **self.base_input_data,
-            'duplicate_override': True,
-        }
-        second_result = self._submit(self.contributor, override_input_data)
+        second_result = self._submit(
+            self.contributor, self.base_input_data, duplicate_override=True
+        )
 
         self.assertEqual(second_result.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNotNone(second_result.moderation_event)
-        # The override flag must not leak into ContriCleaner's cleaned
-        # output (raw_json/fields), even though it stays in raw_data as
-        # literally submitted (matching how "source" is handled).
+        # duplicate_override is request-processing metadata (arrives as a
+        # query parameter, not part of the submitted location data), so it
+        # must never appear in ContriCleaner's cleaned output.
         cleaned_data = second_result.moderation_event.cleaned_data
         self.assertNotIn('duplicate_override', cleaned_data['raw_json'])
         self.assertNotIn('duplicate_override', cleaned_data['fields'])
+
+    def test_api_submission_after_slc_submission_is_not_flagged(self):
+        first_result = self._submit(self.contributor, self.base_input_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        api_input_data = {
+            **self.base_input_data,
+            'source': ModerationEvent.Source.API.value,
+        }
+        second_result = self._submit(self.contributor, api_input_data)
+
+        # Confirm the duplicate check itself never triggers for non-SLC
+        # sources, even though an identical SLC CREATE submission exists.
+        self.assertEqual(
+            second_result.status_code, status.HTTP_202_ACCEPTED
+        )
+        self.assertIsNotNone(second_result.moderation_event)
 
     def test_update_request_type_is_never_flagged(self):
         first_result = self._submit(self.contributor, self.base_input_data)
