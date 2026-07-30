@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.utils import timezone
@@ -18,6 +19,9 @@ from api.moderation_event_actions.creation.location_contribution \
     .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.moderation_event_actions.creation.location_contribution \
+    .processors.duplicate_submission_processor \
+    import DuplicateSubmissionProcessor
 
 
 class TestDuplicateSubmissionProcessor(APITestCase):
@@ -360,3 +364,47 @@ class TestDuplicateSubmissionProcessor(APITestCase):
         # Confirm the duplicate check itself never triggers for UPDATE
         # requests, even though an identical CREATE submission exists.
         self.assertNotEqual(result.status_code, status.HTTP_409_CONFLICT)
+
+    def test_api_source_submission_is_not_checked_against_slc_submission(
+        self
+    ):
+        first_result = self._submit(self.contributor, self.base_input_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # An identical submission through the API source must not be
+        # rejected against the recent SLC submission - the duplicate check
+        # is scoped to the SLC form flow on both sides.
+        api_input_data = {
+            **self.base_input_data,
+            'source': 'API',
+        }
+        second_result = self._submit(self.contributor, api_input_data)
+
+        self.assertEqual(second_result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(second_result.moderation_event)
+
+    def test_creator_recheck_catches_duplicate_missed_by_processor(self):
+        first_result = self._submit(self.contributor, self.base_input_data)
+        self.assertEqual(first_result.status_code, status.HTTP_202_ACCEPTED)
+
+        # Simulate the concurrent-submission race: the processor-level
+        # check runs before the twin event exists (here: bypassed
+        # entirely), so only the authoritative re-check in
+        # ModerationEventCreator can catch the duplicate at insert time.
+        with patch.object(
+            DuplicateSubmissionProcessor,
+            'process',
+            lambda self, event_dto: (
+                self._next.process(event_dto) if self._next else event_dto
+            ),
+        ):
+            second_result = self._submit(
+                self.contributor, self.base_input_data
+            )
+
+        self.assertEqual(second_result.status_code, status.HTTP_409_CONFLICT)
+        self.assertIsNone(second_result.moderation_event)
+        self.assertEqual(
+            second_result.errors['duplicate_of']['moderation_id'],
+            str(first_result.moderation_event.uuid)
+        )
