@@ -1,13 +1,6 @@
 #
 # AWS Chatbot → Slack for CloudWatch alarms on aws_sns_topic.global.
-#
-# Prerequisites (once per AWS account):
-# 1. AWS Console → Chatbot → Configure client → Slack → authorize the workspace.
-# 2. Invite the AWS Chatbot app to the target Slack channel.
-# 3. Set aws_chatbot_slack_team_id and aws_chatbot_slack_channel_id in the
-#    private ci-deployment tfvars for that environment.
-#
-# When either ID is empty, no Chatbot resources are created (safe default).
+# See doc/ops/monitoring.md for Slack setup. Empty team/channel IDs skip create.
 #
 
 locals {

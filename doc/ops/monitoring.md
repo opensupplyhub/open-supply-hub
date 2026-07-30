@@ -30,13 +30,33 @@ Both use `/health-check/` for liveness (same URL as BetterStack).
 
 ## CloudWatch alarms (SNS)
 
-Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global`).
-
-When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (private `ci-deployment` tfvars), Terraform creates an AWS Chatbot Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. Empty IDs skip Chatbot (no Slack delivery). Setup and verify steps: [`cloudwatch-alarms-slack.md`](./cloudwatch-alarms-slack.md).
+Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` in `deployment/terraform/alarms.tf`).
 
 ```text
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
+
+When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. If either ID is empty, Terraform skips Chatbot (no Slack delivery).
+
+### Slack setup (once per AWS account)
+
+1. In the AWS Console for that account/region: **Amazon Q Developer in chat applications** (Chatbot) → **Configure client** → **Slack** → authorize the workspace.
+2. In Slack, invite the **AWS Chatbot** / **Amazon Q** app to the alerts channel.
+3. Copy:
+   - **Workspace (team) ID** — Chatbot console → configured clients, or Slack workspace settings (starts with `T`).
+   - **Channel ID** — Slack → channel details / copy link (starts with `C`).
+4. Put both values in the private `ci-deployment` tfvars for that environment:
+   - `aws_chatbot_slack_team_id`
+   - `aws_chatbot_slack_channel_id`
+
+| Resource | Purpose |
+| --- | --- |
+| `aws_iam_role.chatbot` | Role assumed by Chatbot (`chatbot.amazonaws.com`) |
+| `CloudWatchReadOnlyAccess` on that role | Enrich Slack cards with metric / alarm detail |
+| `aws_chatbot_slack_channel_configuration.global_alarms` | Binds Slack channel to `aws_sns_topic.global` |
+| Guardrail `ReadOnlyAccess` | Limits what Chatbot can do from the channel |
+
+After deploy with IDs set: SNS → topic `topic…GlobalNotifications` → Subscriptions should list the Chatbot endpoint. Force a test `ALARM` on an alarm wired to that topic, confirm Slack, then restore `OK`.
 
 ### RDS (primary Postgres)
 
