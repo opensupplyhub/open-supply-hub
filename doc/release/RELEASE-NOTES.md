@@ -55,7 +55,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-* No reindex is required: list deactivation propagates through the existing `api_source` indexing trigger.
     * `remove_rsc_grievance_mechanism_nested_internal_ids` — one-time cleanup (OSDEV-2949) that strips the nested `internal_ID` from `rsc_grievance_mechanism` values; remove from `post_deployment` after this release has been deployed everywhere.
     * `backfill_facility_index --fields processing_type` — one-time targeted reindex (OSDEV-1034) that refreshes `FacilityIndex.processing_type` after migration `0220` changes `index_processing_type()`. It only touches facilities that have a `processing_type` `ExtendedField`, running in parallel workers (count per environment via the temporary `BACKFILL_PARALLEL_BY_ENVIRONMENT` map in `post_deployment.py`). Remove the call, the map, and the helper from `post_deployment` after this release has been deployed everywhere.
 * Expect `remove_rsc_grievance_mechanism_nested_internal_ids` to update on the order of ~1.7k `ExtendedField` rows. Each update invokes the existing `ExtendedField` database trigger, which refreshes the affected `FacilityIndex.extended_fields` data without a separate full or targeted reindex. The command runs with no application downtime. Confirm timing on Staging before Production.
