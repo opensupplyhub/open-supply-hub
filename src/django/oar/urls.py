@@ -83,6 +83,11 @@ v1_custom_routes = [
 
 public_apis = [
     path('api/', include(router.urls)),
+    path(
+        'api/facility-lists/<int:pk>/deactivate/',
+        views.FacilityListDeactivateView.as_view(),
+        name='facility-list-deactivate',
+    ),
     path('api/contributors/active_count/', views.active_contributors_count,
          name='active_contributors_count'),
     path('api/contributors/', views.all_contributors,

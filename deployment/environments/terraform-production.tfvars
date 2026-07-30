@@ -55,6 +55,7 @@ batch_default_job_memory   = 8192
 batch_default_ce_instance_types = ["c5", "m5"]
 
 gunicorn_worker_timeout = "360"
+gunicorn_workers        = "5"
 
 ec_memcached_identifier = "opensupplyhub-prd"
 
@@ -76,5 +77,8 @@ app_logstash_fargate_memory = 2048
 instance_source = "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.production.servd.dev"
 
 is_database_private_link_provider = true
