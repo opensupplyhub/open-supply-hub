@@ -389,6 +389,10 @@ variable "gunicorn_worker_timeout" {
   default = "180"
 }
 
+variable "gunicorn_workers" {
+  default = "1"
+}
+
 variable "google_server_side_api_key" {
   sensitive = true
 }
@@ -965,6 +969,22 @@ variable "waf_enabled" {
 variable "enable_legacy_info_site_redirect" {
   type    = bool
   default = false
+}
+
+variable "enable_homepage_proxy" {
+  type        = bool
+  default     = false
+  description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage."
+}
+
+variable "craft_cms_origin_domain" {
+  type        = string
+  default     = ""
+  description = "Hostname of the Craft CMS origin (Servd) used when enable_homepage_proxy is true. Set per-environment in tfvars (e.g. open-supply.staging.servd.dev)."
+  validation {
+    condition     = !var.enable_homepage_proxy || trimspace(var.craft_cms_origin_domain) != ""
+    error_message = "craft_cms_origin_domain must be set when enable_homepage_proxy is true."
+  }
 }
 
 

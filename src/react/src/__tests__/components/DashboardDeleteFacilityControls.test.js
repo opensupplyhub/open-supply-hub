@@ -41,8 +41,10 @@ describe('DashboardDeleteFacilityControls', () => {
     });
 
     test('does not show an error message when error is null', () => {
-        const { queryByRole } = renderComponent({ error: null });
-        expect(queryByRole('generic', { name: /error/i })).toBeNull();
+        const { queryByText } = renderComponent({ error: null });
+        expect(
+            queryByText('Facilities with approved claims cannot be deleted'),
+        ).toBeNull();
     });
 
     test('displays API error message when error array is provided', () => {

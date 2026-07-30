@@ -427,6 +427,11 @@ export const createQueryStringFromSearchFilters = (
     withEmbed,
     detail,
 ) => {
+    // Note: The values that we are using to construct this filter are also used
+    // in the home_uri_rewrite.js CloudFront function to redirect users to the
+    // map page with the correct filters applied. If you change the names of any
+    // of these query string parameters, you will also need to update the CloudFront
+    // function to match.
     const inputForQueryString = Object.freeze({
         q: facilityFreeTextQuery,
         contributors: createCompactSortedQuerystringInputObject(contributors),

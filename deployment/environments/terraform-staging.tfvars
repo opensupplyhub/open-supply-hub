@@ -42,6 +42,7 @@ cli_fargate_cpu = "1024"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
+gunicorn_workers        = "3"
 
 batch_default_ce_spot_fleet_bid_percentage = 60
 batch_ami_id = "ami-002e2fef4b94f8fd0"
@@ -72,3 +73,6 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.staging.servd.dev"

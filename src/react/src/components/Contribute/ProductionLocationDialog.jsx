@@ -17,7 +17,7 @@ import ProductionLocationDialogCloseButton from './ProductionLocationDialogClose
 import DialogTooltip from './DialogTooltip';
 import ProductionLocationDialogFields from './ProductionLocationDialogFields';
 import {
-    mainRoute,
+    mapRoute,
     contributeProductionLocationRoute,
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
@@ -168,7 +168,7 @@ const ProductionLocationDialog = ({
 
     const statusLabel = snakeToTitleCase(moderationStatus);
 
-    const handleGoToMainPage = () => history.push(mainRoute);
+    const handleGoToMainPage = () => history.push(mapRoute);
     const handleGoToSearchByNameAndAddress = () =>
         history.push(`${contributeProductionLocationRoute}?tab=name-address`);
 
