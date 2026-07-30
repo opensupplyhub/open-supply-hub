@@ -178,6 +178,9 @@ class SectorSearchIndexAlignmentTest(FacilityAPITestCaseBase):
         self.assertIn("Apparel", facility_index.sector)
         self.assertNotIn("Toys", facility_index.sector)
 
+        self.assertEqual([], self._search_ids("Toys"))
+        self.assertEqual([self.facility.id], self._search_ids("Apparel"))
+
     def test_approved_claim_sectors_are_searchable(self):
         FacilityClaim.objects.create(
             contributor=self.contributor,
