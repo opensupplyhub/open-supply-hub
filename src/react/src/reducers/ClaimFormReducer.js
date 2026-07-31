@@ -64,7 +64,6 @@ const initialState = Object.freeze({
 
         // Profile step - Free Emissions Estimate.
         openingDate: '',
-        closingDate: '',
         estimatedAnnualThroughput: '',
         energyCoal: '',
         energyNaturalGas: '',

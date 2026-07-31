@@ -69,7 +69,6 @@ export const useFreeEmissionsEstimateForm = initialValues =>
     useFormik({
         initialValues: {
             openingDate: '',
-            closingDate: '',
             estimatedAnnualThroughput: '',
             energyCoal: '',
             energyNaturalGas: '',
