@@ -464,6 +464,52 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             workers[1]['contributor_name'], self.contrib_three.name
         )
 
+    def test_embed_extended_fields_use_shared_created_at_ranking(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        contributor = {
+            'id': self.contrib_one.id,
+            'admin_id': self.contrib_one.admin_id,
+            'name': self.contrib_one.name,
+            'contrib_type': self.contrib_one.contrib_type,
+            'is_verified': False,
+        }
+        common = {
+            'field_name': 'number_of_workers',
+            'contributor': contributor,
+            'is_verified': False,
+            'facility_list_item_id': self.list_item_one.id,
+            'should_display_association': True,
+            'value_count': 1,
+        }
+        facility_index.extended_fields = [
+            {
+                **common,
+                'id': 9001,
+                'value': {'min': 100, 'max': 100},
+                'created_at': '2026-01-01T00:00:00Z',
+                'updated_at': '2026-06-01T00:00:00Z',
+            },
+            {
+                **common,
+                'id': 9002,
+                'value': {'min': 200, 'max': 200},
+                'created_at': '2026-02-01T00:00:00Z',
+                'updated_at': '2026-03-01T00:00:00Z',
+            },
+        ]
+        request = Mock(query_params=QueryDict(
+            f'embed=1&contributor={self.contrib_one.id}'
+        ))
+
+        data = FacilityIndexDetailsSerializer(
+            facility_index,
+            context={'request': request},
+        ).data
+        workers = data['properties']['extended_fields']['number_of_workers']
+
+        self.assertEqual(len(workers), 1)
+        self.assertEqual(workers[0]['id'], 9002)
+
     def test_get_other_names(self):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         serializer = FacilityIndexDetailsSerializer()

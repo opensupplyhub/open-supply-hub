@@ -25,6 +25,49 @@ from ..utils import (
     prefer_contributor_name,
 )
 
+EMBED_EXTENDED_FIELD_DATE_FIELD = 'created_at'
+
+
+def extended_field_sort_order(item, date_field):
+    """Return the shared profile/download priority for an extended field."""
+    return (
+        item.get('verified_count', 0),
+        item.get('is_from_claim', False),
+        item.get('value_count', 1),
+        item.get(date_field) or '',
+    )
+
+
+def is_embed_extended_field_displayable(item):
+    """Return whether the embedded profile can render this contribution."""
+    if item.get('field_name') != ExtendedField.FACILITY_TYPE:
+        return True
+
+    value = item.get('value') or {}
+    return any(
+        len(matched_value) > 2 and matched_value[2]
+        for matched_value in value.get('matched_values', [])
+    )
+
+
+def select_embed_extended_field(fields):
+    """Select the single contribution displayed for an embed field.
+
+    Embed profiles use contribution creation time as the final tie-breaker
+    and do not expose additional entries. Facility-type contributions without
+    a matched facility type are not renderable and therefore cannot win.
+    """
+    displayable_fields = filter(is_embed_extended_field_displayable, fields)
+    ranked_fields = sorted(
+        displayable_fields,
+        key=lambda field: extended_field_sort_order(
+            field,
+            EMBED_EXTENDED_FIELD_DATE_FIELD,
+        ),
+        reverse=True,
+    )
+    return ranked_fields[:1]
+
 
 def _get_parent_company(claim):
     if not claim:

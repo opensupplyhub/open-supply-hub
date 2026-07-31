@@ -36,8 +36,10 @@ from .utils import (
     get_efs_associated_with_contributor,
     create_name_field_from_facility_name,
     create_address_field_from_facility_address,
+    extended_field_sort_order,
     regroup_items_for_sector_field,
-    regroup_claims_for_sector_field
+    regroup_claims_for_sector_field,
+    select_embed_extended_field,
 )
 
 logger = logging.getLogger(__name__)
@@ -232,8 +234,13 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     @with_masked_contributors
     def get_extended_fields(self, facility, masked):
         request = self._get_request()
+        embed_mode_active = is_embed_mode_active(self)
 
-        use_main_created_at = is_created_at_main_date(self)
+        # Embed profiles have one stable display rule: creation time is the
+        # final ranking tie-breaker, regardless of how the endpoint is called.
+        use_main_created_at = (
+            embed_mode_active or is_created_at_main_date(self)
+        )
         date_field_to_sort = self._date_field_to_sort(
             use_main_created_at
         )
@@ -244,7 +251,6 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         )
 
         user_can_see_detail = can_user_see_detail(self)
-        embed_mode_active = is_embed_mode_active(self)
         claimant_contributor_id = (
             (facility.approved_claim or {}).get('contributor_id')
         )
@@ -308,6 +314,8 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
+            elif embed_mode_active:
+                data = select_embed_extended_field(serializer.data)
             else:
                 data = sorted(
                     serializer.data,
@@ -499,12 +507,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
 
     @staticmethod
     def _sort_order(item, date_field_to_sort):
-        return (
-            item.get('verified_count', 0),
-            item.get('is_from_claim', False),
-            item.get('value_count', 1),
-            item.get(date_field_to_sort, None)
-        )
+        return extended_field_sort_order(item, date_field_to_sort)
 
     @staticmethod
     def _sort_order_excluding_date(item):

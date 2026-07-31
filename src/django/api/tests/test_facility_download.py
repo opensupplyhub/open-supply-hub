@@ -569,11 +569,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
-            "",
-            "",
-            "",
-            "",
-            "",
             "False",
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
@@ -596,11 +591,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             0.0,
             "Apparel",
             "data one",
-            "",
-            "",
-            "",
-            "",
-            "",
             "",
             "",
             "False",
@@ -627,17 +617,12 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "data two",
             "",
-            "",
-            "",
-            "",
-            "",
-            "",
             "False",
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
         self.assertEqual(base_row, expected_base_row)
 
-    def test_embed_populates_mixed_case_custom_and_all_standard_fields(self):
+    def test_embed_populates_mixed_case_custom_fields(self):
         EmbedField.objects.create(
             embed_config=self.embed_config,
             order=4,
@@ -745,19 +730,91 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(row_by_header["extra_2"], "")
         self.assertEqual(row_by_header["program_1_Name"], "Program One")
         self.assertEqual(row_by_header["total_number_of_employees"], "250")
-        self.assertEqual(row_by_header["number_of_workers"], "100-200")
-        self.assertEqual(row_by_header["parent_company"], "Alternate Parent")
-        self.assertEqual(
-            row_by_header["processing_type_facility_type_raw"],
-            "Alternate raw value",
+
+        self.assertNotIn("number_of_workers", headers)
+        self.assertNotIn("processing_type_facility_type_raw", headers)
+        self.assertNotIn("facility_type", headers)
+        self.assertNotIn("processing_type", headers)
+        self.assertNotIn("product_type", headers)
+
+    def test_embed_standard_fields_match_map_visibility(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="number_of_workers",
+            display_name="Number of Workers",
+            visible=True,
+            searchable=True,
         )
-        self.assertEqual(
-            row_by_header["facility_type"], "Alternate Facility Type"
+        ExtendedField.objects.create(
+            field_name="number_of_workers",
+            value={"min": 100, "max": 100},
+            contributor=self.contributor,
+            facility=self.contrib_facility,
+            facility_list_item=self.contrib_list_item,
         )
-        self.assertEqual(
-            row_by_header["processing_type"], "Alternate Processing Type"
+        # The embedded profile renders a single value per field, so the
+        # higher-ranked verified contribution is the one that must be exported.
+        ExtendedField.objects.create(
+            field_name="number_of_workers",
+            value={"min": 900, "max": 900},
+            contributor=self.contributor,
+            facility=self.contrib_facility,
+            facility_list_item=self.contrib_list_item,
+            is_verified=True,
         )
-        self.assertEqual(row_by_header["product_type"], "Alternate Product")
+        ExtendedField.objects.create(
+            field_name="parent_company",
+            value={"name": "Own Parent", "raw_value": "Own Parent"},
+            contributor=self.contributor,
+            facility=self.contrib_facility,
+            facility_list_item=self.contrib_list_item,
+        )
+
+        alternate_source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor_two,
+        )
+        alternate_item = FacilityListItem.objects.create(
+            name="Towel Factory 42",
+            address="42 Dolphin St",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=alternate_source,
+            facility=self.contrib_facility,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.contrib_facility,
+            facility_list_item=alternate_item,
+            confidence=0.85,
+            results="",
+            is_active=True,
+        )
+        ExtendedField.objects.create(
+            field_name="product_type",
+            value={"raw_values": ["Alternate Product"]},
+            contributor=self.contributor_two,
+            facility=self.contrib_facility,
+            facility_list_item=alternate_item,
+        )
+
+        params = "embed=1&contributors={}&q={}".format(
+            self.contributor.id, self.contrib_facility.id
+        )
+        response = self.get_facility_download(params)
+        headers = self.get_headers(response)
+        row_by_header = dict(zip(headers, self.get_rows(response)[0]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(row_by_header["number_of_workers"], "900")
+        self.assertEqual(row_by_header["parent_company"], "Own Parent")
+        self.assertNotIn("product_type", headers)
 
     def test_extended_fields(self):
         self.create_extended_fields({"list_item_id": self.list_item.id})
@@ -913,11 +970,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "data one",
             "",
             "",
-            "",
-            "",
-            "",
-            "",
-            "",
             "False",
         ]
         self.assertEquals(rows[0], expected_base_row)
@@ -1067,11 +1119,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             0.0,
             0.0,
             "Apparel",
-            "",
-            "",
-            "",
-            "",
-            "",
             "",
             "",
             "",

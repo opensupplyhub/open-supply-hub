@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 from api.models.facility.facility_manager_index_new \
     import FacilityIndexNewManager
 from api.models.embed_field import EmbedField
@@ -8,40 +8,181 @@ from api.models.source import Source
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
 )
+from api.serializers.facility.facility_index_extended_field_list_serializer \
+    import FacilityIndexExtendedFieldListSerializer
+from api.serializers.facility.utils import select_embed_extended_field
 
 
 class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
     embed_fields = []
     contributor_id = None
+    visible_embed_columns = []
+    EMBED_EXTENDED_FIELD_NAMES = {
+        "number_of_workers",
+        "parent_company",
+        "facility_type",
+        "processing_type",
+        "product_type",
+    }
 
     def __init__(self, *args, **kwargs):
         self.contributor_id = int(kwargs.pop("contributor_id", None))
         self._list_field_indexes_by_header = {}
         super().__init__(*args, **kwargs)
-        fields = self.get_embed_fields(self.contributor_id)
+        self.visible_embed_columns = self.get_embed_fields(self.contributor_id)
         self.embed_fields = [
             field
-            for field in fields
-            if field not in self.EXTENDED_FIELDS_HEADERS
+            for field in self.visible_embed_columns
+            if field not in self.EMBED_EXTENDED_FIELD_NAMES
         ]
 
     def get_headers(self) -> List[str]:
         return [
             *self.COMMON_HEADERS,
-            *self.embed_fields,
-            *self.EXTENDED_FIELDS_HEADERS,
+            *self.visible_embed_columns,
             self.IS_CLOSED_HEADER,
         ]
 
     def get_row(self, facility: FacilityIndexNewManager) -> List[str]:
         return [
             *self.get_common_row(facility),
-            *self.get_contributor_custom_fields(facility),
-            *self.get_extended_fields(facility.extended_fields),
+            *self.get_embed_column_values(facility),
             self.get_is_closed(facility),
         ]
 
-    def get_contributor_custom_fields(self, facility: FacilityIndexNewManager):
+    def get_embed_column_values(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        """Return visible embed-config columns in the same order as the map."""
+        custom_values = self.get_contributor_field_values_by_name(facility)
+        extended_values = self.get_formatted_extended_field_values(facility)
+
+        values = []
+        for column in self.visible_embed_columns:
+            if column in self.EMBED_EXTENDED_FIELD_NAMES:
+                value = extended_values.get(column, "")
+                if not str(value).strip():
+                    value = custom_values.get(column, "")
+            else:
+                value = custom_values.get(column, "")
+            values.append(value or "")
+
+        return values
+
+    def get_formatted_extended_field_values(
+        self, facility: FacilityIndexNewManager,
+    ) -> Dict[str, str]:
+        return {
+            field["field_name"]: self.__format_extended_field(field)
+            for field in self.get_displayed_extended_fields(facility)
+        }
+
+    def get_displayed_extended_fields(
+        self, facility: FacilityIndexNewManager
+    ) -> List[dict]:
+        """Return the extended-field contributions the embedded map shows.
+
+        The embedded profile drops other contributors' contributions to
+        promote only the owner's data, and renders a single value per field
+        because ``FacilityDetailsItem`` suppresses additional entries while
+        ``embed`` is set. The download mirrors both rules so an embed export
+        never contains values that are hidden on the map it came from.
+        """
+        claimant_contributor_id = (facility.approved_claim or {}).get(
+            "contributor_id"
+        )
+        fields = [
+            field
+            for field in facility.extended_fields
+            if (field.get("contributor") or {}).get("id")
+            == self.contributor_id
+        ]
+        serialized_fields = FacilityIndexExtendedFieldListSerializer(
+            fields,
+            context={
+                "user_can_see_detail": False,
+                "embed_mode_active": True,
+                "claimant_contributor_id": claimant_contributor_id,
+                "masked_contributor_ids": None,
+            },
+        ).data
+        fields_by_name = {}
+        for field in serialized_fields:
+            fields_by_name.setdefault(field.get("field_name"), []).append(
+                field
+            )
+
+        return [
+            selected
+            for grouped_fields in fields_by_name.values()
+            for selected in select_embed_extended_field(grouped_fields)
+        ]
+
+    @staticmethod
+    def __format_extended_field(field: dict) -> str:
+        field_name = field.get("field_name")
+        value = field.get("value") or {}
+
+        if field_name == "number_of_workers":
+            minimum = value.get("min", 0)
+            maximum = value.get("max", 0)
+            return (
+                str(maximum)
+                if minimum == maximum
+                else f"{minimum}-{maximum}"
+            )
+
+        if field_name == "parent_company":
+            return (
+                value.get("contributor_name")
+                or value.get("name")
+                or value.get("raw_value")
+                or ""
+            )
+
+        if field_name == "facility_type":
+            return FacilityDownloadSerializerEmbedMode.__join_unique(
+                str(matched_value[2])
+                for matched_value in value.get("matched_values", [])
+                if len(matched_value) > 2 and matched_value[2]
+            )
+
+        if field_name == "processing_type":
+            raw_values = value.get("raw_values", [])
+            if not isinstance(raw_values, list):
+                raw_values = str(raw_values).split("|")
+            formatted_values = []
+            for index, matched_value in enumerate(
+                value.get("matched_values", [])
+            ):
+                matched = (
+                    matched_value[3]
+                    if len(matched_value) > 3
+                    else None
+                )
+                raw = raw_values[index] if index < len(raw_values) else ""
+                formatted_values.append(str(matched or raw))
+            return FacilityDownloadSerializerEmbedMode.__join_unique(
+                filter(None, formatted_values)
+            )
+
+        if field_name == "product_type":
+            raw_values = value.get("raw_values", [])
+            if not isinstance(raw_values, list):
+                raw_values = str(raw_values).split("|")
+            return FacilityDownloadSerializerEmbedMode.__join_unique(
+                map(str, raw_values)
+            )
+
+        return ""
+
+    @staticmethod
+    def __join_unique(values) -> str:
+        return "|".join(dict.fromkeys(values))
+
+    def get_contributor_field_values_by_name(
+        self, facility: FacilityIndexNewManager
+    ) -> Dict[str, str]:
         infos = [
             info
             for info in facility.custom_field_info
@@ -49,7 +190,7 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
         ]
         info = infos[0] if len(infos) > 0 else None
         if info is None:
-            return [""] * len(self.embed_fields)
+            return {field: "" for field in self.visible_embed_columns}
 
         if info["source_type"] == Source.LIST:
             data_values = get_csv_values(info["raw_data"])
@@ -57,16 +198,25 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
                 info["list_header"]
             )
 
-            return [
-                data_values[index]
-                if (index := field_indexes.get(field)) is not None
-                and index < len(data_values)
-                else ""
-                for field in self.embed_fields
-            ]
+            return {
+                field: (
+                    data_values[index]
+                    if (index := field_indexes.get(field)) is not None
+                    and index < len(data_values)
+                    else ""
+                )
+                for field in self.visible_embed_columns
+            }
 
         raw_json = parse_raw_data(info["raw_data"])
-        return [raw_json.get(field, "") for field in self.embed_fields]
+        return {
+            field: raw_json.get(field, "")
+            for field in self.visible_embed_columns
+        }
+
+    def get_contributor_custom_fields(self, facility: FacilityIndexNewManager):
+        custom_values = self.get_contributor_field_values_by_name(facility)
+        return [custom_values.get(field, "") for field in self.embed_fields]
 
     @staticmethod
     def get_embed_fields(contributor_id: int) -> List[str]:
@@ -98,7 +248,7 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
                     field,
                     casefold_indexes.get(field.casefold()),
                 )
-                for field in self.embed_fields
+                for field in self.visible_embed_columns
             }
             self._list_field_indexes_by_header[list_header] = field_indexes
 
