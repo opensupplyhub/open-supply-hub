@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import timedelta
 from difflib import SequenceMatcher
@@ -36,6 +37,16 @@ ADDRESS_SIMILARITY_THRESHOLD = 0.9
 # just at the start, so this isn't anchored to a fixed position.
 NUMBER_TOKEN_PATTERN = re.compile(r'\d+')
 
+# Namespace for the advisory lock below, keyed together with the contributor
+# id via the two-key form of pg_advisory_xact_lock. Advisory locks are a
+# single global keyspace per database, so without a namespace a bare
+# contributor.pk here could collide with an unrelated lock elsewhere in the
+# app that happens to use the same integer. Value is arbitrary and just
+# needs to be unique to this feature; using the Jira ticket number.
+ADVISORY_LOCK_NAMESPACE = 2980
+
+logger = logging.getLogger(__name__)
+
 
 class DuplicateSubmissionProcessor(ContributionProcessor):
     '''
@@ -46,6 +57,9 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
     caught up yet with the contributor's own just-created submission.
     Rejected submissions are excluded, since a rejected event won't become
     a real facility and resubmitting after a rejection is legitimate.
+    Neither a flagged duplicate nor a duplicate_override bypass leaves a
+    ModerationEvent trace, so both are logged to let CloudWatch Logs
+    Insights track how often the check fires and how contributors respond.
     '''
 
     def process(
@@ -58,12 +72,23 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
             return super().process(event_dto)
 
         if event_dto.duplicate_override:
+            logger.info(
+                'Duplicate check bypassed via duplicate_override: '
+                'contributor=%s',
+                event_dto.contributor.id,
+            )
             return super().process(event_dto)
 
         self.__lock_contributor(event_dto.contributor)
 
         duplicate = self.__find_recent_duplicate(event_dto)
         if duplicate is not None:
+            logger.info(
+                'Duplicate SLC submission flagged: contributor=%s '
+                'duplicate_of=%s',
+                event_dto.contributor.id,
+                duplicate.uuid,
+            )
             event_dto.errors = {
                 'detail': (
                     APIV1LocationContributionErrorMessages
@@ -103,9 +128,16 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
         Django's autocommit mode would release the lock immediately after
         this statement instead of holding it for the rest of the request.
         '''
+        if not connection.in_atomic_block:
+            raise RuntimeError(
+                'The duplicate-check advisory lock requires an open '
+                'transaction (transaction.atomic) to have any effect.'
+            )
+
         with connection.cursor() as cursor:
             cursor.execute(
-                'SELECT pg_advisory_xact_lock(%s)', [contributor.pk]
+                'SELECT pg_advisory_xact_lock(%s, %s)',
+                [ADVISORY_LOCK_NAMESPACE, contributor.pk]
             )
 
     @staticmethod

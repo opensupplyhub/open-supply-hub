@@ -21,7 +21,7 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.moderation_event_actions.creation.location_contribution \
     .processors.duplicate_submission_processor \
-    import DUPLICATE_CHECK_WINDOW_MINUTES
+    import ADVISORY_LOCK_NAMESPACE, DUPLICATE_CHECK_WINDOW_MINUTES
 
 
 class TestDuplicateSubmissionProcessor(APITestCase):
@@ -117,7 +117,8 @@ class TestDuplicateSubmissionProcessor(APITestCase):
 
         self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         mock_cursor.execute.assert_called_once_with(
-            'SELECT pg_advisory_xact_lock(%s)', [self.contributor.pk]
+            'SELECT pg_advisory_xact_lock(%s, %s)',
+            [ADVISORY_LOCK_NAMESPACE, self.contributor.pk]
         )
 
     @patch(
