@@ -1,4 +1,6 @@
-import getVisibleFields from '../../components/ProductionLocation/ProductionLocationDetailsGeneralFields/utils';
+import getVisibleFields, {
+    getDataCenterFieldGroups,
+} from '../../components/ProductionLocation/ProductionLocationDetailsGeneralFields/utils';
 import { FIELD_CONFIG } from '../../components/ProductionLocation/constants.jsx';
 
 /**
@@ -462,5 +464,99 @@ describe('getVisibleFields', () => {
                 'Reporter',
             );
         });
+    });
+});
+
+describe('getDataCenterFieldGroups', () => {
+    const ef = raw => [
+        {
+            value: { raw_value: raw },
+            contributor_id: 1,
+            contributor_name: 'Contributor A',
+            created_at: '2020-01-01T00:00:00.000Z',
+        },
+    ];
+
+    const dataCenterFixture = {
+        type: 'Feature',
+        properties: {
+            is_data_center: true,
+            extended_fields: {
+                name_operator: ef('Equinix'),
+                capacity: ef('20'),
+                capacity_units: ef('MW'),
+                operational_status: ef('operational'),
+            },
+        },
+    };
+
+    const findGroup = (groups, label) =>
+        groups.find(group => group.label === label);
+    const findField = (group, key) =>
+        group.fields.find(field => field.key === key);
+
+    it('returns an empty array for falsy data', () => {
+        expect(getDataCenterFieldGroups(null)).toEqual([]);
+        expect(getDataCenterFieldGroups(undefined)).toEqual([]);
+    });
+
+    it('combines a measure with its units into a single value', () => {
+        const groups = getDataCenterFieldGroups(dataCenterFixture);
+        const utility = findGroup(groups, 'Utility Usage');
+        expect(findField(utility, 'capacity').value).toBe('20 MW');
+    });
+
+    it('groups named entities and operating info by their sections', () => {
+        const groups = getDataCenterFieldGroups(dataCenterFixture);
+        const named = findGroup(groups, 'Named Entities');
+        expect(findField(named, 'name_operator').value).toBe('Equinix');
+        const operating = findGroup(groups, 'Operating Information');
+        expect(findField(operating, 'operational_status').value).toBe(
+            'operational',
+        );
+    });
+
+    it('drops empty groups and does not render units fields on their own', () => {
+        const groups = getDataCenterFieldGroups(dataCenterFixture);
+        // No building-info fields present -> the group is dropped entirely.
+        expect(findGroup(groups, 'Building Information')).toBeUndefined();
+        // The units field is merged, not a standalone data point.
+        const utility = findGroup(groups, 'Utility Usage');
+        expect(findField(utility, 'capacity_units')).toBeUndefined();
+    });
+
+    it('includes additional contributors in drawer contributions', () => {
+        const fixture = {
+            type: 'Feature',
+            properties: {
+                is_data_center: true,
+                extended_fields: {
+                    name_operator: [
+                        {
+                            value: { raw_value: 'Equinix' },
+                            contributor_id: 1,
+                            contributor_name: 'Contributor A',
+                            created_at: '2020-01-01T00:00:00.000Z',
+                        },
+                        {
+                            value: { raw_value: 'Digital Realty' },
+                            contributor_id: 2,
+                            contributor_name: 'Contributor B',
+                            created_at: '2020-02-01T00:00:00.000Z',
+                        },
+                    ],
+                },
+            },
+        };
+        const groups = getDataCenterFieldGroups(fixture);
+        const operator = findField(
+            findGroup(groups, 'Named Entities'),
+            'name_operator',
+        );
+        expect(operator.value).toBe('Equinix');
+        expect(operator.drawerData.contributions).toHaveLength(1);
+        expect(operator.drawerData.contributions[0].value).toBe(
+            'Digital Realty',
+        );
     });
 });

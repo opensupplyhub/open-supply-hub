@@ -39,6 +39,7 @@ from .utils import (
     is_created_at_main_date
 )
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
+from api.helpers.data_center import is_data_center
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -51,6 +52,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     created_from = SerializerMethodField()
     is_claimed = SerializerMethodField()
     partner_fields = SerializerMethodField()
+    is_data_center = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -77,6 +79,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'sector',
             'is_claimed',
             'partner_fields',
+            'is_data_center',
         )
         geo_field = 'location'
 
@@ -507,3 +510,6 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 grouped_data[field_name] = []
 
         return grouped_data
+
+    def get_is_data_center(self, facility):
+        return is_data_center(facility=facility.id)
