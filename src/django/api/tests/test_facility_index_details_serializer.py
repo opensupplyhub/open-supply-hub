@@ -207,6 +207,32 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertIn("values", data["properties"]["sector"][0])
         self.assertIn("updated_at", data["properties"]["sector"][0])
 
+    def test_is_data_center_false_by_default(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertIn("is_data_center", data["properties"])
+        self.assertFalse(data["properties"]["is_data_center"])
+
+    def test_is_data_center_true_when_facility_type_is_data_center(self):
+        ExtendedField.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            facility_list_item=self.list_item_one,
+            field_name=ExtendedField.FACILITY_TYPE,
+            value={
+                'raw_values': 'Data Center',
+                'matched_values': [
+                    ['FACILITY_TYPE', 'EXACT', 'Data Center', None]
+                ],
+            },
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertTrue(data["properties"]["is_data_center"])
+
     def test_sector_includes_approved_claim(self):
         FacilityClaim.objects.create(
             contributor=self.contrib_one,

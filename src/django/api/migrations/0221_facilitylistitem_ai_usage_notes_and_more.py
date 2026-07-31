@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0219_add_contributor_anonymise_in_paid_products'),
+        ('api', '0220_fix_processing_type_search_index'),
     ]
 
     operations = [
