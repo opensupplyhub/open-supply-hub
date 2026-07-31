@@ -170,8 +170,13 @@ def create_extendedfield(field, field_value, item, contributor):
             field == ExtendedField.DUNS_ID
             or field == ExtendedField.LEI_ID
             or field == ExtendedField.RBA_ID
-            or field in ExtendedField.DATA_CENTER_FIELDS
         ):
+            field_value = {
+                'raw_value': field_value,
+            }
+        elif field in ExtendedField.DATA_CENTER_FIELDS:
+            if (field in ExtendedField.DATA_CENTER_NUMERICAL_FIELDS):
+                field_value = get_integer_or_double_value(field_value)
             field_value = {
                 'raw_value': field_value,
             }
@@ -372,3 +377,15 @@ def get_product_types():
     product_types = list(set(product_types))
     product_types.sort()
     return product_types
+
+
+def get_integer_or_double_value(value):
+    try:
+        val = int(value)
+        return val
+    except ValueError:
+        try:
+            val = float(value)
+            return val
+        except ValueError:
+            return str(value)
