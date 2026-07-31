@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import orderBy from 'lodash/orderBy';
 import identity from 'lodash/identity';
 
@@ -250,16 +249,6 @@ export const getLocationFieldsConfig = (location, contact, office) => [
         tooltipText:
             'The date the production location officially started operations.',
         getValue: () => location.opening_date || null,
-    },
-    {
-        key: 'closing_date',
-        label: 'Closing Date',
-        tooltipText:
-            'The date the production location permanently stopped operating.',
-        getValue: () =>
-            location.closing_date
-                ? moment(location.closing_date, 'YYYY-MM').format('MMMM YYYY')
-                : null,
     },
     {
         key: 'estimated_annual_throughput',

@@ -169,10 +169,3 @@ export const yearPickerStyles = Object.freeze({
         fontSize: '12px',
     }),
 });
-
-export const monthYearPickerStyles = Object.freeze({
-    ...clearButtonStyles,
-    monthYearPickerContainer: Object.freeze({
-        alignItems: 'center',
-    }),
-});

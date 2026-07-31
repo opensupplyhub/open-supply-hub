@@ -45,7 +45,6 @@ class ProductionLocationsResponseMapping:
     ]
     PRODUCTION_LOCATION_BY_OS_ID = PRODUCTION_LOCATIONS + [
         "opened_at",
-        "closed_at",
         "estimated_annual_throughput",
         "actual_annual_energy_consumption",
     ]
