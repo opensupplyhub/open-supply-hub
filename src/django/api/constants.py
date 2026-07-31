@@ -218,6 +218,9 @@ class APIErrorMessages:
     TEMPORARILY_UNAVAILABLE = (
         'The endpoint is temporarily unavailable. Please try again later.'
     )
+    FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
+    LIST_ALREADY_INACTIVE = 'This list is already inactive.'
+    LIST_NOT_APPROVED = 'Only an approved list can be deactivated.'
 
 
 class FacilitiesDownloadSettings:
@@ -355,7 +358,6 @@ CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_parent_company', 'parent_company_name'),
     ('claim_number_of_workers', 'facility_workers_count'),
     ('claim_opening_date', 'opening_date'),
-    ('claim_closing_date', 'closing_date'),
     (
         'claim_estimated_annual_throughput_kg_year',
         'estimated_annual_throughput',

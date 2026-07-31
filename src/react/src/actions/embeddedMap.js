@@ -1,6 +1,6 @@
-import querystring from 'querystring';
 import { createAction } from 'redux-act';
 import startsWith from 'lodash/startsWith';
+import querystring from '../util/qs';
 
 import apiRequest from '../util/apiRequest';
 import {

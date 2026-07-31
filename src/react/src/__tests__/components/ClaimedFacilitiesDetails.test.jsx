@@ -80,7 +80,6 @@ const baseClaimData = {
     certification_choices: [],
     production_type_choices: [],
     opening_date: '2020',
-    closing_date: '2021-12',
     estimated_annual_throughput: '123456',
     energy_coal: '10',
     energy_natural_gas: '20',
@@ -165,7 +164,6 @@ const renderComponent = () =>
             sectorOptions={[]}
             fetchSectors={jest.fn()}
             updateOpeningDate={jest.fn()}
-            updateClosingDate={jest.fn()}
             updateEstimatedAnnualThroughput={jest.fn()}
             energyValueUpdaters={{
                 energyCoal: jest.fn(),
@@ -206,11 +204,10 @@ describe('ClaimedFacilitiesDetails', () => {
         ).toBeInTheDocument();
     });
 
-    it('renders opening and closing date inputs', () => {
+    it('renders opening date input', () => {
         renderComponent();
 
         expect(screen.getByText('Opening Date')).toBeInTheDocument();
-        expect(screen.getByText('Closing Date')).toBeInTheDocument();
     });
 });
 
