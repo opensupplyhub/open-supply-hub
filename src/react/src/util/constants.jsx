@@ -1382,8 +1382,13 @@ export const optionsForSortingResults = [
     },
 ];
 
-// This offset is necessary to match row indices in the uploaded files.
-export const uploadedFileRowIndexOffset = 1;
+// This offset maps the platform's 0-based row_index to the row number in
+// the contributor's uploaded file, where the header is row 1 and the first
+// data row is row 2. It MUST stay 2: ContriBot reports and data-team
+// feedback emails cite file row numbers, and moderators cross-reference
+// them against this page (OSDEV-2724 regression: it was briefly 1, making
+// every displayed row one less than the file).
+export const uploadedFileRowIndexOffset = 2;
 
 export const USER_DEFAULT_STATE = Object.freeze({
     isAnon: true,
