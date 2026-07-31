@@ -622,11 +622,12 @@ class TestProductionLocationsCreate(APITestCase):
         mock_get.return_value = Mock(ok=True, status_code=200)
         mock_get.return_value.json.return_value = geocoding_data
 
-        # Each body below is worded slightly differently so the
-        # DuplicateThrottle (which keys on the exact request body) doesn't
-        # block the second and third submissions before the duplicate check
-        # or the override are exercised. The name changes are still similar
-        # enough to clear DuplicateSubmissionProcessor's fuzzy match.
+        # The duplicate and override requests below reuse the exact same
+        # body, matching the real frontend flow: submit, get flagged as a
+        # possible duplicate, then resubmit the identical payload with
+        # ?duplicate_override=true. DuplicateThrottle keys on body + query
+        # params together, so the override retry isn't mistaken for a
+        # repeat of the (different-query-param) duplicate-check request.
         first_response = self.client.post(
             self.url,
             json.dumps({
@@ -639,14 +640,15 @@ class TestProductionLocationsCreate(APITestCase):
         )
         self.assertEqual(first_response.status_code, status.HTTP_202_ACCEPTED)
 
+        duplicate_body = json.dumps({
+            'source': 'SLC',
+            'name': 'Blue Horizon Facilty',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+        })
         duplicate_response = self.client.post(
             self.url,
-            json.dumps({
-                'source': 'SLC',
-                'name': 'Blue Horizon Facilty',
-                'address': '990 Spring Garden St., Philadelphia PA 19123',
-                'country': 'US',
-            }),
+            duplicate_body,
             content_type='application/json'
         )
         self.assertEqual(
@@ -655,12 +657,7 @@ class TestProductionLocationsCreate(APITestCase):
 
         override_response = self.client.post(
             f'{self.url}?duplicate_override=true',
-            json.dumps({
-                'source': 'SLC',
-                'name': 'Blue Horizoon Facility',
-                'address': '990 Spring Garden St., Philadelphia PA 19123',
-                'country': 'US',
-            }),
+            duplicate_body,
             content_type='application/json'
         )
         self.assertEqual(

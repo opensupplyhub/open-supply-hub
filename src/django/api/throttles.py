@@ -71,7 +71,13 @@ class DuplicateThrottle(BaseThrottle):
 
         pk = view.kwargs.get("pk")
         pk_prefix = f":{pk}" if pk else ""
-        data_hash = hashlib.sha256(data_str.encode()).hexdigest()
+        # Query params are included so that requests with the same body but
+        # different query params (e.g. a duplicate-check override retry via
+        # ?duplicate_override=true) aren't mistaken for the same request.
+        query_str = self._serialize_data(dict(request.query_params))
+        data_hash = hashlib.sha256(
+            f"{data_str}{query_str}".encode()
+        ).hexdigest()
         cache_key = f"duplicate:{request.user.id}{pk_prefix}:{data_hash}"
 
         if self.cache.get(cache_key):
