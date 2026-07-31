@@ -21,7 +21,6 @@ describe('FacilityDetailsClaimedInfo component', () => {
                 minimum_order: '18',
                 average_lead_time: '120 days',
                 opening_date: '2020',
-                closing_date: '2025-12',
                 estimated_annual_throughput: 50000,
                 actual_annual_energy_consumption: {
                     electricity: 1200,
@@ -56,7 +55,6 @@ describe('FacilityDetailsClaimedInfo component', () => {
         expect(getByText('Minimum Order', { exact: true })).toBeInTheDocument();
         expect(getByText('Average Lead Time', { exact: true })).toBeInTheDocument();
         expect(getByText('Opening Date', { exact: true })).toBeInTheDocument();
-        expect(getByText('Closing Date', { exact: true })).toBeInTheDocument();
         expect(getByText('Estimated Annual Throughput', { exact: true })).toBeInTheDocument();
         expect(getByText('Actual Annual Energy Consumption', { exact: true })).toBeInTheDocument();
         expect(getByText('Office Name', { exact: true })).toBeInTheDocument();
@@ -83,9 +81,8 @@ describe('FacilityDetailsClaimedInfo component', () => {
             expect(textElement).toBeInTheDocument();
         });
 
-        // Test opening and closing dates.
+        // Test opening date.
         expect(getByText('2020', { exact: true })).toBeInTheDocument();
-        expect(getByText('December 2025', { exact: true })).toBeInTheDocument();
 
         // Test estimated annual throughput.
         expect(getByText('50000 kg/year', { exact: true })).toBeInTheDocument();

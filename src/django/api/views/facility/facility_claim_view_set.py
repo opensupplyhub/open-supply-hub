@@ -62,7 +62,6 @@ CLAIM_PROFILE_ARRAY_FIELDS = (
 
 CLAIM_PROFILE_DATE_FIELDS = (
     'opening_date',
-    'closing_date',
 )
 
 CLAIM_PROFILE_EMISSION_FIELDS = (

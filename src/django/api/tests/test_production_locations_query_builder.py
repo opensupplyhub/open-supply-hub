@@ -433,7 +433,6 @@ class TestProductionLocationsQueryBuilder(TestCase):
             "claimed_at",
             "historical_os_id",
             "opened_at",
-            "closed_at",
             "actual_annual_energy_consumption",
             "estimated_annual_throughput",
         ]
