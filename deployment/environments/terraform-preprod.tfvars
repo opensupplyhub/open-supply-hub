@@ -30,6 +30,9 @@ rds_skip_final_snapshot = true
 rds_deletion_protection = false
 # ~80% of capped max_connections for db.m6in.4xlarge (5000)
 rds_database_connections_alarm_threshold = "4000"
+# ~5% of 64 GiB RAM; ~10% of 256 GB storage
+rds_free_memory_threshold_bytes = "3200000000"
+rds_free_disk_threshold_bytes   = "25000000000"
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"

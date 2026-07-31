@@ -299,11 +299,13 @@ variable "rds_disk_queue_threshold" {
 }
 
 variable "rds_free_disk_threshold_bytes" {
-  default = "5000000000"
+  description = "FreeStorageSpace below which SNS pages (~10% of rds_allocated_storage; set per env in deployment/environments)"
+  default     = "5000000000"
 }
 
 variable "rds_free_memory_threshold_bytes" {
-  default = "128000000"
+  description = "FreeableMemory below which SNS pages (~5% of instance RAM; set per env in deployment/environments)"
+  default     = "128000000"
 }
 
 variable "rds_cpu_credit_balance_threshold" {
@@ -644,7 +646,8 @@ variable "ec_memcached_alarm_cpu_threshold_percent" {
 }
 
 variable "ec_memcached_alarm_memory_threshold_bytes" {
-  default = "10000000"
+  description = "FreeableMemory below which SNS pages (~16% of cache.t3.medium RAM / 500 MB; shared across envs)"
+  default     = "500000000"
 }
 
 variable "ec_memcached_max_item_size" {

@@ -2,17 +2,37 @@
 
 Follow-up to [OSDEV-2867](https://opensupplyhub.atlassian.net/browse/OSDEV-2867) and the [Incident Report – April 21–22, 2026](https://opensupplyhub.atlassian.net/wiki/spaces/SD/pages/1243414530/Incident+Report+-+April+21-22+2026).
 
-## Application endpoint
+## Architecture overview
+
+Monitoring is split by concern:
+
+| Layer | Tool | What it answers |
+| --- | --- | --- |
+| **App liveness** | BetterStack (synthetic), ALB target health, ECS health checks | Is Django up and serving HTTP? |
+| **Infrastructure** | CloudWatch metric alarms → SNS → AWS Chatbot → Slack | Are RDS / Memcached (and related infra) healthy? |
+
+```text
+BetterStack ──► GET /health-check/ ──► HTTP 200 "ok"   (app process only)
+
+ALB / ECS   ──► GET /health-check/ ──► same liveness probe
+
+CloudWatch  ──► RDS + Memcached metrics
+            ──► SNS topic…GlobalNotifications
+            ──► AWS Chatbot
+            ──► Slack
+```
+
+`GET /health-check/` does **not** check Postgres or Memcached. Infra failure can leave BetterStack green while users still see errors — use CloudWatch / Slack for that path.
+
+## Application endpoint (liveness)
 
 | URL | Purpose | Touches Postgres / cache? |
 | --- | --- | --- |
 | `GET /health-check/` | **Liveness** — Django process is up and serving HTTP | No |
 
-Response: HTTP 200, body `ok` (`text/plain`). No django-watchman database or cache checks.
+Response: HTTP 200, body `ok` (`text/plain`).
 
 `OriginSourceMiddleware` and `DarkVisitorsMiddleware` skip `/health-check/` so probes do not issue a session `SET` or call Dark Visitors.
-
-Database and cache health are covered by CloudWatch (below), not by this URL.
 
 ### BetterStack (synthetic uptime)
 
@@ -22,13 +42,13 @@ Keep monitors on:
 https://<env-domain>/health-check/
 ```
 
-Expect HTTP 200 and body `ok`. After deploy, update any monitor that still expects the old watchman JSON payload.
+Expect HTTP 200 and body `ok`.
 
 ### ALB and ECS
 
 Both use `/health-check/` for liveness (same URL as BetterStack).
 
-## CloudWatch alarms (SNS)
+## CloudWatch alarms (SNS → Slack)
 
 Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` in `deployment/terraform/alarms.tf`).
 
@@ -36,7 +56,7 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` i
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
 
-When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (required, non-empty values in private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack.
+When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (required, non-empty values in private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`.
 
 ### Slack setup (once per AWS account)
 
@@ -60,16 +80,25 @@ After deploy with IDs set: SNS → topic `topic…GlobalNotifications` → Subsc
 
 ### RDS (primary Postgres)
 
-Provisioned by `module.database_enc` ([terraform-aws-postgresql-rds](https://github.com/opensupplyhub/terraform-aws-postgresql-rds), including the OSDEV-2867 `DatabaseConnections` alarm):
+Provisioned by `module.database_enc` in `deployment/terraform/database.tf` ([terraform-aws-postgresql-rds](https://github.com/opensupplyhub/terraform-aws-postgresql-rds) `3.3.0`, including the OSDEV-2867 `DatabaseConnections` alarm). All listed alarms use `alarm_actions` / `ok_actions` / `insufficient_data_actions` → `aws_sns_topic.global`.
 
 | Alarm (name pattern) | Metric | Pages when |
 | --- | --- | --- |
 | `…DatabaseServerCPUUtilization-…` | `CPUUtilization` | Average > `rds_cpu_threshold_percent` (default **75%**, 300s) |
 | `…DatabaseServerDiskQueueDepth-…` | `DiskQueueDepth` | Average > `rds_disk_queue_threshold` (default **10**, 60s) |
-| `…DatabaseServerFreeStorageSpace-…` | `FreeStorageSpace` | Average < `rds_free_disk_threshold_bytes` (default **5 GB**) |
-| `…DatabaseServerFreeableMemory-…` | `FreeableMemory` | Average < `rds_free_memory_threshold_bytes` (default **128 MB**) |
+| `…DatabaseServerFreeStorageSpace-…` | `FreeStorageSpace` | Average < `rds_free_disk_threshold_bytes` (~**10%** of allocated storage; set per env) |
+| `…DatabaseServerFreeableMemory-…` | `FreeableMemory` | Average < `rds_free_memory_threshold_bytes` (~**5%** of instance RAM; set per env) |
 | `…DatabaseCPUCreditBalance-…` | `CPUCreditBalance` | Average < `rds_cpu_credit_balance_threshold` (default **30**; **db.t\*** only) |
 | `…DatabaseServerDatabaseConnections-…` | `DatabaseConnections` | Average > `rds_database_connections_alarm_threshold` (~**80%** of instance `max_connections`; set per env) |
+
+Per-environment free memory / free disk thresholds (~5% of RAM, ~10% of allocated storage):
+
+| Env | Instance / RAM | FreeableMemory | Allocated storage | FreeStorageSpace |
+| --- | --- | ---: | ---: | ---: |
+| Development | `db.t3.micro` / 1 GiB | **128 MB** | 128 GB | **13 GB** |
+| Staging | `db.t3.large` / 8 GiB | **400 MB** | 128 GB | **13 GB** |
+| Test | `db.t3.2xlarge` / 32 GiB | **1.6 GB** | 400 GB | **40 GB** |
+| Preprod / Production / RBA | `db.m6in.4xlarge` / 64 GiB | **3.2 GB** | 256 GB | **25 GB** |
 
 Per-environment `rds_database_connections_alarm_threshold` values (from `LEAST(DBInstanceClassMemory/9531392, 5000)`). Thresholds use **~80% of `max_connections`** so SNS pages while ~20% headroom remains — before new clients fail with “too many connections”:
 
@@ -80,14 +109,19 @@ Per-environment `rds_database_connections_alarm_threshold` values (from `LEAST(D
 | Test | `db.t3.2xlarge` | 3604 | **2880** |
 | Preprod / Production / RBA | `db.m6in.4xlarge` | 5000 (capped) | **4000** |
 
-Also enable **Performance Insights** in the AWS console for query-level triage during saturation (not an SNS alarm).
 
-### Memcached
+### ElastiCache (Memcached)
 
-| Alarm | Metric | Pages when |
-| --- | --- | --- |
-| `…MemcachedCacheClusterCPUUtilization` | `CPUUtilization` | Average > `ec_memcached_alarm_cpu_threshold_percent` |
-| `…MemcachedCacheClusterFreeableMemory` | `FreeableMemory` | Average < `ec_memcached_alarm_memory_threshold_bytes` |
+Defined in `deployment/terraform/cache.tf`. CloudWatch alarms page via the same global SNS topic (and thus Chatbot → Slack). The cluster also sets `notification_topic_arn` to that topic for ElastiCache engine/maintenance notifications.
+
+All envs use `cache.t3.medium` (~3.09 GiB). CPU stays at the shared default:
+
+| Alarm | Metric | Period | Pages when |
+| --- | --- | ---: | --- |
+| `alarm…MemcachedCacheClusterCPUUtilization` | `CPUUtilization` (`AWS/ElastiCache`) | 300s | Average > `ec_memcached_alarm_cpu_threshold_percent` (default **75%**) |
+| `alarm…MemcachedCacheClusterFreeableMemory` | `FreeableMemory` (`AWS/ElastiCache`) | 60s | Average < `ec_memcached_alarm_memory_threshold_bytes` (default **500 MB** / `500000000`, ~16% of node RAM) |
+
+Both alarms: `evaluation_periods = 1`; `alarm_actions` / `ok_actions` / `insufficient_data_actions` → `aws_sns_topic.global`.
 
 ### ECS CPU (autoscaling)
 
@@ -95,10 +129,11 @@ Also enable **Performance Insights** in the AWS console for query-level triage d
 
 ## Suggested triage order
 
-When BetterStack liveness is green but users report errors, or when RDS alarms fire:
+When BetterStack liveness is green but users report errors, or when RDS / Memcached alarms fire:
 
 1. RDS CPU, disk queue, connections, free memory — compare with Performance Insights (tiles / `api_facilityindex`).
-2. ECS service events and task restarts (console / `log…App`).
-3. ALB access logs / target health in the AWS console for 5xx or latency patterns.
+2. Memcached CPU and freeable memory (CloudWatch / Slack).
+3. ECS service events and task restarts (console / `log…App`).
+4. ALB access logs / target health in the AWS console for 5xx or latency patterns.
 
 Long-term tile/search offload remains under [OSDEV-1575](https://opensupplyhub.atlassian.net/browse/OSDEV-1575).

@@ -26,6 +26,9 @@ rds_multi_az = false
 rds_storage_encrypted = true
 # ~80% of max_connections for db.t3.large (901)
 rds_database_connections_alarm_threshold = "720"
+# ~5% of 8 GiB RAM; ~10% of 128 GB storage
+rds_free_memory_threshold_bytes = "400000000"
+rds_free_disk_threshold_bytes   = "13000000000"
 
 app_ecs_desired_count = "4"
 app_ecs_deployment_min_percent = "100"

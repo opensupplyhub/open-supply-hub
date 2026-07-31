@@ -30,6 +30,9 @@ rds_iops = 12000
 rds_storage_encrypted = true
 # ~80% of max_connections for db.t3.2xlarge (3604)
 rds_database_connections_alarm_threshold = "2880"
+# ~5% of 32 GiB RAM; ~10% of 400 GB storage
+rds_free_memory_threshold_bytes = "1600000000"
+rds_free_disk_threshold_bytes   = "40000000000"
 
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"
