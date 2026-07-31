@@ -86,8 +86,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
-          # TODO(OSDEV-2867): Remove ref after ci-deployment PR #67 is merged to main.
-          ref: OSDEV-2867-aws-chatbot-slack-ids
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
           persist-credentials: false
@@ -161,8 +159,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'opensupplyhub/ci-deployment'
-          # TODO(OSDEV-2867): Remove ref after ci-deployment PR #67 is merged to main.
-          ref: OSDEV-2867-aws-chatbot-slack-ids
           path: 'terraform-config'
           token: ${{ secrets.PAT }}
           persist-credentials: false
