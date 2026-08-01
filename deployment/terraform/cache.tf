@@ -85,7 +85,9 @@ resource "aws_cloudwatch_metric_alarm" "cache_cpu" {
     CacheClusterId = aws_elasticache_cluster.memcached.id
   }
 
-  alarm_actions = [aws_sns_topic.global.arn]
+  alarm_actions             = [aws_sns_topic.global.arn]
+  ok_actions                = [aws_sns_topic.global.arn]
+  insufficient_data_actions = [aws_sns_topic.global.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "cache_memory" {
@@ -104,5 +106,7 @@ resource "aws_cloudwatch_metric_alarm" "cache_memory" {
     CacheClusterId = aws_elasticache_cluster.memcached.id
   }
 
-  alarm_actions = [aws_sns_topic.global.arn]
+  alarm_actions             = [aws_sns_topic.global.arn]
+  ok_actions                = [aws_sns_topic.global.arn]
+  insufficient_data_actions = [aws_sns_topic.global.arn]
 }
