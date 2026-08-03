@@ -68,6 +68,11 @@ import ContributionWarningDialog from './ContributionWarningDialog';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
 
+// Fallback only. The backend includes the authoritative window in the 409
+// duplicate-submission response (duplicate_of.duplicate_check_window_minutes);
+// this covers the case where that field is unexpectedly absent.
+const DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES = 30;
+
 // Ordered list of soft-warning checks run before submission. Each entry
 // specifies which form field to inspect, a condition function (returns true
 // when the warning should fire), and the dialog copy to show the contributor.
@@ -142,7 +147,8 @@ const ProductionLocationInfo = ({
     let handleProductionLocation;
     switch (submitMethod) {
         case 'POST':
-            handleProductionLocation = handleCreateProductionLocation;
+            handleProductionLocation = (data, duplicateOverride) =>
+                handleCreateProductionLocation(data, duplicateOverride);
             break;
         case 'PATCH':
             handleProductionLocation = data =>
@@ -155,8 +161,14 @@ const ProductionLocationInfo = ({
             break;
     }
 
+    const [
+        showDuplicateSubmissionDialog,
+        setShowDuplicateSubmissionDialog,
+    ] = useState(false);
+
     const contributionForm = useSingleLocationContributionForm(values => {
         setShowPostSubmitErrorNotification(false);
+        setShowDuplicateSubmissionDialog(false);
         handleProductionLocation(values);
     });
 
@@ -341,7 +353,13 @@ const ProductionLocationInfo = ({
     }, [location.pathname, history, osID]);
 
     useEffect(() => {
-        if (!pendingModerationEventFetching && pendingModerationEventError) {
+        if (pendingModerationEventFetching || !pendingModerationEventError) {
+            return;
+        }
+
+        if (pendingModerationEventError.rawData?.duplicate_of) {
+            setShowDuplicateSubmissionDialog(true);
+        } else {
             setShowPostSubmitErrorNotification(true);
         }
     }, [pendingModerationEventFetching, pendingModerationEventError]);
@@ -1214,6 +1232,20 @@ const ProductionLocationInfo = ({
                         : ''
                 }
             />
+            <ContributionWarningDialog
+                open={showDuplicateSubmissionDialog}
+                onClose={() => setShowDuplicateSubmissionDialog(false)}
+                onSubmitAnyway={() => {
+                    setShowDuplicateSubmissionDialog(false);
+                    handleProductionLocation(contributionForm.values, true);
+                }}
+                title="Possible Duplicate Submission"
+                message={`You recently submitted a very similar production location. Please wait at least ${
+                    pendingModerationEventError?.rawData?.duplicate_of
+                        ?.duplicate_check_window_minutes ??
+                    DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES
+                } minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`}
+            />
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
                 localStorage.getItem(moderationID) ||
@@ -1334,8 +1366,8 @@ function mapDispatchToProps(dispatch) {
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
-        handleCreateProductionLocation: data =>
-            dispatch(createProductionLocation(data)),
+        handleCreateProductionLocation: (data, duplicateOverride) =>
+            dispatch(createProductionLocation(data, duplicateOverride)),
         handleUpdateProductionLocation: (data, osID) =>
             dispatch(updateProductionLocation(data, osID)),
         fetchModerationEvent: moderationID =>
