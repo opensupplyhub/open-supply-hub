@@ -299,15 +299,22 @@ variable "rds_disk_queue_threshold" {
 }
 
 variable "rds_free_disk_threshold_bytes" {
-  default = "5000000000"
+  description = "FreeStorageSpace below which SNS pages (~10% of rds_allocated_storage; set per env in deployment/environments)"
+  default     = "5000000000"
 }
 
 variable "rds_free_memory_threshold_bytes" {
-  default = "128000000"
+  description = "FreeableMemory below which SNS pages (~5% of instance RAM; set per env in deployment/environments)"
+  default     = "128000000"
 }
 
 variable "rds_cpu_credit_balance_threshold" {
   default = "30"
+}
+
+variable "rds_database_connections_alarm_threshold" {
+  description = "Average DatabaseConnections above which SNS pages (~80% of instance max_connections; set per env in deployment/environments)"
+  default     = "90"
 }
 
 variable "rds_work_mem" {
@@ -639,7 +646,8 @@ variable "ec_memcached_alarm_cpu_threshold_percent" {
 }
 
 variable "ec_memcached_alarm_memory_threshold_bytes" {
-  default = "10000000"
+  description = "FreeableMemory below which SNS pages (~16% of cache.t3.medium RAM / 500 MB; shared across envs)"
+  default     = "500000000"
 }
 
 variable "ec_memcached_max_item_size" {
@@ -1120,6 +1128,30 @@ variable "database_private_link_vpc_endpoint_service_name" {
   sensitive   = true
   description = "The name of the VPC endpoint service in the provider VPC"
   default     = ""
+}
+
+# AWS Chatbot → Slack (CloudWatch alarms on aws_sns_topic.global).
+
+variable "aws_chatbot_slack_team_id" {
+  type        = string
+  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP)."
+  sensitive   = true
+
+  validation {
+    condition     = length(var.aws_chatbot_slack_team_id) > 0
+    error_message = "aws_chatbot_slack_team_id must be a non-empty Slack workspace ID."
+  }
+}
+
+variable "aws_chatbot_slack_channel_id" {
+  type        = string
+  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23)."
+  sensitive   = true
+
+  validation {
+    condition     = length(var.aws_chatbot_slack_channel_id) > 0
+    error_message = "aws_chatbot_slack_channel_id must be a non-empty Slack channel ID."
+  }
 }
 
 # ContriBot variables

@@ -82,11 +82,12 @@ resource "aws_lb_target_group" "app" {
   name = "tg${local.short}App"
 
   health_check {
-    healthy_threshold   = "3"
-    interval            = "30"
-    matcher             = "200"
-    protocol            = "HTTP"
-    timeout             = "3"
+    healthy_threshold = "3"
+    interval          = "30"
+    matcher           = "200"
+    protocol          = "HTTP"
+    timeout           = "3"
+    # App liveness only. See doc/ops/monitoring.md.
     path                = "/health-check/"
     unhealthy_threshold = "2"
   }

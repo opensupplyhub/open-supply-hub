@@ -27,7 +27,7 @@ from api.views.stripe.download_locations_checkout_webhook_view \
      import DownloadLocationsCheckoutWebhookView
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
-from web.views import environment
+from web.views import environment, health_check
 
 from rest_framework import routers, permissions
 from drf_yasg.views import get_schema_view
@@ -166,7 +166,7 @@ internal_apis = [
     path('admin/', admin_site.urls),
     path('accounts/', include('allauth.urls')),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
-    path('health-check/', include('watchman.urls')),
+    path('health-check/', health_check, name='health-check'),
     path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('dj_rest_auth.urls')),
     path(
