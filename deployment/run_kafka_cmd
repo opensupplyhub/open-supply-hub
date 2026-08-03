@@ -16,7 +16,8 @@
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <Environment> '<shell command>'" >&2
-    echo "  Environment: Development | Test | Staging | RBA | Preprod | Production" >&2
+    echo "  Environment: Development | Test | Staging | Rba | Preprod | Production" >&2
+    echo "  (case-sensitive - must match 'environment' in deployment/environments/*.tfvars)" >&2
     echo "" >&2
     echo "Got $# argument(s). The command must be a single quoted argument -" >&2
     echo "an unquoted command is split by your shell and would run only in part." >&2
@@ -81,42 +82,47 @@ echo "Revision: $revision"
 
 echo "Running task with command: $2"
 
-# Built as JSON rather than the shorthand containerOverrides=[...] syntax used
-# in run_cli_task, because the AWS CLI shorthand parser splits on commas and
+# Passed as inline JSON rather than the shorthand containerOverrides=[...] syntax
+# used in run_cli_task, because the AWS CLI shorthand parser splits on commas and
 # these commands contain them (awk field separators, grep alternations).
-overrides_file="$(mktemp)"
-trap 'rm -f "$overrides_file"' EXIT
-python3 -c 'import json,sys; print(json.dumps({"containerOverrides":[{"name":"kafka-topics","command":["-c",sys.argv[1]]}]}))' "$2" > "$overrides_file"
+#
+# Inline rather than file:// so the script works under Git Bash on Windows: a
+# POSIX temp path like /tmp/tmp.XXXX is meaningless to the native aws.exe, which
+# fails with "Unable to load paramfile". No temp file also means no cleanup.
+escaped_cmd=${2//\\/\\\\}     # backslashes first
+escaped_cmd=${escaped_cmd//\"/\\\"}   # then double quotes
+overrides="{\"containerOverrides\":[{\"name\":\"kafka-topics\",\"command\":[\"-c\",\"$escaped_cmd\"]}]}"
 
+# ECS reports placement problems in failures[] alongside a 200 response, so a
+# task ARN must never be assumed. Without this check an empty ARN reaches
+# 'aws ecs wait tasks-stopped', which fails every attempt and spins the retry
+# loop below forever. Both values come back in one call, tab-separated, so the
+# ARN and any failure detail are captured without a JSON parser on the host.
 run_output="$(aws ecs run-task \
     --cluster ecsOpenSupplyHub${1}Cluster \
     --task-definition=OpenSupplyHub${1}AppKafka:${revision} \
     --launch-type "FARGATE" \
     --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_groups"], subnets=["$subnet_id"]}" \
-    --overrides "file://$overrides_file" \
-    --output json)"
+    --overrides "$overrides" \
+    --query '[tasks[0].taskArn, to_string(failures)]' \
+    --output text)"
 
 if [ $? -ne 0 ]; then
     echo "ERROR: aws ecs run-task failed. See the error above." >&2
     exit 1
 fi
 
-# ECS reports placement problems in failures[] with a 200 response, so a task
-# ARN must never be assumed. Without this check an empty ARN reaches
-# 'aws ecs wait tasks-stopped', which fails every attempt and spins the retry
-# loop below forever.
-task_arn="$(python3 -c "
-import json, sys
-d = json.load(sys.stdin)
-for f in d.get('failures', []):
-    sys.stderr.write('ECS failure: arn=%s reason=%s detail=%s\n' % (
-        f.get('arn', '?'), f.get('reason', '?'), f.get('detail', '')))
-tasks = d.get('tasks', [])
-if not tasks or not tasks[0].get('taskArn'):
-    sys.stderr.write('ERROR: ECS started no task.\n')
-    sys.exit(1)
-sys.stdout.write(tasks[0]['taskArn'])
-" <<< "$run_output")" || exit 1
+IFS=$'\t' read -r task_arn failures_json <<< "$run_output"
+
+if [ -z "$task_arn" ] || [ "$task_arn" = "None" ]; then
+    echo "ERROR: ECS started no task." >&2
+    echo "Failures: ${failures_json:-none reported}" >&2
+    exit 1
+fi
+
+if [ -n "$failures_json" ] && [ "$failures_json" != "[]" ] && [ "$failures_json" != "None" ]; then
+    echo "WARNING: ECS reported failures: $failures_json" >&2
+fi
 
 echo "Task ARN: $task_arn"
 id=$(echo $task_arn | awk -F'/' '{print $NF}')

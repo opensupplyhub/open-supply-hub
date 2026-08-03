@@ -25,10 +25,8 @@ resource "aws_msk_configuration" "msk_config" {
   # MSK update doesn't block producers using acks=all.
   #
   # These are cluster DEFAULTS only - they do not apply to a topic that sets its
-  # own min.insync.replicas. Topic-level overrides are repaired separately by
-  # src/kafka-tools/fix_replication.sh, which must be run before this
-  # configuration revision is applied (applying it triggers a rolling broker
-  # restart, the exact failure window the advisory describes). See OSDEV-3063.
+  # own min.insync.replicas, and they do not change the replication factor of
+  # existing topics. Both are handled by src/kafka-tools/fix_replication.sh.
   server_properties = <<-EOT
     default.replication.factor=2
     min.insync.replicas=1
