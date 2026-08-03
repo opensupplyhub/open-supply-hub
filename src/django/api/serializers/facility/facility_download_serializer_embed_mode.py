@@ -58,103 +58,19 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
     def _get_extended_values(
         self, facility: FacilityIndexNewManager
     ) -> Dict[str, str]:
-        """Select and format the owner's top contribution for each field."""
-        claimant_contributor_id = (facility.approved_claim or {}).get(
-            "contributor_id"
+        """Join all of the embed owner's values for each standard field."""
+        owner_fields = [
+            field
+            for field in facility.extended_fields
+            if (field.get("contributor") or {}).get("id")
+            == self.contributor_id
+        ]
+        return dict(
+            zip(
+                self.EXTENDED_FIELDS_HEADERS,
+                self.get_extended_fields(owner_fields),
+            )
         )
-        selected = {}
-        ranks = {}
-        for field in facility.extended_fields:
-            contributor = field.get("contributor") or {}
-            if contributor.get("id") != self.contributor_id:
-                continue
-
-            field_name = field.get("field_name")
-            value = field.get("value") or {}
-            if field_name == "facility_type" and not any(
-                len(matched) > 2 and matched[2]
-                for matched in value.get("matched_values", [])
-            ):
-                continue
-
-            rank = (
-                int(bool(contributor.get("is_verified")))
-                + int(bool(field.get("is_verified"))),
-                field.get("facility_list_item_id") is None
-                or contributor.get("id") == claimant_contributor_id,
-                field.get("value_count", 1),
-                field.get("created_at") or "",
-            )
-            if field_name not in ranks or rank > ranks[field_name]:
-                selected[field_name] = field
-                ranks[field_name] = rank
-
-        return {
-            name: self._format_extended_field(field)
-            for name, field in selected.items()
-        }
-
-    @staticmethod
-    def _format_extended_field(field: dict) -> str:
-        field_name = field.get("field_name")
-        value = field.get("value") or {}
-
-        if field_name == "number_of_workers":
-            minimum = value.get("min", 0)
-            maximum = value.get("max", 0)
-            return (
-                str(maximum)
-                if minimum == maximum
-                else f"{minimum}-{maximum}"
-            )
-
-        if field_name == "parent_company":
-            return (
-                value.get("contributor_name")
-                or value.get("name")
-                or value.get("raw_value")
-                or ""
-            )
-
-        if field_name == "facility_type":
-            return FacilityDownloadSerializerEmbedMode._join_unique(
-                str(matched_value[2])
-                for matched_value in value.get("matched_values", [])
-                if len(matched_value) > 2 and matched_value[2]
-            )
-
-        if field_name == "processing_type":
-            raw_values = value.get("raw_values", [])
-            if not isinstance(raw_values, list):
-                raw_values = str(raw_values).split("|")
-            formatted_values = []
-            for index, matched_value in enumerate(
-                value.get("matched_values", [])
-            ):
-                matched = (
-                    matched_value[3]
-                    if len(matched_value) > 3
-                    else None
-                )
-                raw = raw_values[index] if index < len(raw_values) else ""
-                formatted_values.append(str(matched or raw))
-            return FacilityDownloadSerializerEmbedMode._join_unique(
-                filter(None, formatted_values)
-            )
-
-        if field_name == "product_type":
-            raw_values = value.get("raw_values", [])
-            if not isinstance(raw_values, list):
-                raw_values = str(raw_values).split("|")
-            return FacilityDownloadSerializerEmbedMode._join_unique(
-                map(str, raw_values)
-            )
-
-        return ""
-
-    @staticmethod
-    def _join_unique(values) -> str:
-        return "|".join(dict.fromkeys(values))
 
     def _get_custom_values(
         self, facility: FacilityIndexNewManager

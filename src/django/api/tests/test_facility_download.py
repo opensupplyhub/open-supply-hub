@@ -761,8 +761,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             facility=self.contrib_facility,
             facility_list_item=self.contrib_list_item,
         )
-        # The embedded profile renders a single value per field, so the
-        # higher-ranked verified contribution is the one that must be exported.
+        # Production embed downloads join every owner value with "|".
         ExtendedField.objects.create(
             field_name="number_of_workers",
             value={"min": 900, "max": 900},
@@ -820,7 +819,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         row_by_header = dict(zip(headers, self.get_rows(response)[0]))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(row_by_header["number_of_workers"], "900")
+        self.assertEqual(row_by_header["number_of_workers"], "100|900")
         self.assertEqual(row_by_header["parent_company"], "Own Parent")
         self.assertEqual(row_by_header["product_type"], "")
 
