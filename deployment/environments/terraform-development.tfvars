@@ -84,3 +84,6 @@ vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 enable_homepage_proxy   = true
 craft_cms_origin_domain = "open-supply.staging.servd.dev"
+
+# Shares Chatbot channel config with Test (same AWS account / Slack channel).
+aws_chatbot_manage_channel_configuration = false
