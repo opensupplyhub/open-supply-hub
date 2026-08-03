@@ -341,7 +341,7 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         self.assertNotIn("processing_type", headers)
         self.assertNotIn("product_type", headers)
 
-    def test_get_list_custom_fields_preserves_configured_header_case(self):
+    def test_get_embed_values_preserve_configured_list_header_case(self):
         EmbedField.objects.create(
             embed_config=self.embed_config,
             order=4,
@@ -371,10 +371,11 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
 
         self.assertEqual(
-            serializer.get_contributor_custom_fields(self.facility_one),
+            serializer.get_embed_column_values(self.facility_one),
             [
                 "Extra 1 custom field data",
                 "Extra 2 custom field data",
+                "Parent Company Service Provider A",
                 "Program One",
                 "250",
             ],
@@ -420,21 +421,22 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         self.assertEqual(row_by_header["total_number_of_employees"], "250")
         self.assertEqual(row_by_header["number_of_workers"], "")
 
-    def test_get_list_custom_fields_matches_headers_case_insensitively(self):
+    def test_get_embed_values_match_list_headers_case_insensitively(self):
         info = self.facility_one.custom_field_info[0]
         info["list_header"] = "Extra_1,EXTRA_2,parent_company"
 
         serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
 
         self.assertEqual(
-            serializer.get_contributor_custom_fields(self.facility_one),
+            serializer.get_embed_column_values(self.facility_one),
             [
                 "Extra 1 custom field data",
                 "Extra 2 custom field data",
+                "Parent Company Service Provider A",
             ],
         )
 
-    def test_get_list_custom_fields_prefers_exact_case_match(self):
+    def test_get_embed_values_prefer_exact_list_header_case(self):
         EmbedField.objects.create(
             embed_config=self.embed_config,
             order=4,
@@ -450,10 +452,11 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
 
         self.assertEqual(
-            serializer.get_contributor_custom_fields(self.facility_one),
+            serializer.get_embed_column_values(self.facility_one),
             [
                 "lowercase value",
                 "",
+                "Parent Company Service Provider A",
                 "uppercase value",
             ],
         )
@@ -496,8 +499,8 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         )
 
         with patch(get_csv_values_path, wraps=get_csv_values) as get_values:
-            serializer.get_contributor_custom_fields(self.facility_one)
-            serializer.get_contributor_custom_fields(self.facility_one)
+            serializer.get_embed_column_values(self.facility_one)
+            serializer.get_embed_column_values(self.facility_one)
 
         header_calls = [
             call for call in get_values.call_args_list
@@ -505,7 +508,7 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         ]
         self.assertEqual(len(header_calls), 1)
 
-    def test_get_api_custom_fields_uses_configured_names(self):
+    def test_get_embed_values_use_configured_single_field_names(self):
         self.facility_one.custom_field_info = [
             {
                 "raw_data": (
@@ -520,6 +523,10 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
 
         self.assertEqual(
-            serializer.get_contributor_custom_fields(self.facility_one),
-            ["API extra one", "API extra two"],
+            serializer.get_embed_column_values(self.facility_one),
+            [
+                "API extra one",
+                "API extra two",
+                "Parent Company Service Provider A",
+            ],
         )
