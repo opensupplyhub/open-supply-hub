@@ -1142,6 +1142,7 @@ variable "aws_chatbot_manage_channel_configuration" {
 variable "aws_chatbot_additional_sns_topic_arns" {
   type        = list(string)
   description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Set in private ci-deployment tfvars; omit until those topics exist."
+  sensitive   = true
   default     = []
 }
 
