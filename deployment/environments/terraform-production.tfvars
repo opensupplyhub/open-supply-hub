@@ -85,3 +85,8 @@ enable_homepage_proxy   = true
 craft_cms_origin_domain = "open-supply.production.servd.dev"
 
 is_database_private_link_provider = true
+
+# Owns the shared-account Chatbot Slack channel config for Production/Staging/RBA.
+# Sibling SNS ARNs live in private ci-deployment Production tfvars.
+# Staging/RBA set aws_chatbot_manage_channel_configuration = false.
+aws_chatbot_manage_channel_configuration = true

@@ -56,7 +56,29 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` i
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
 
-When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (required, non-empty values in private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`.
+When `aws_chatbot_manage_channel_configuration = true`, Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes SNS topics so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`. Slack IDs come from [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars.
+
+### Shared AWS account (one channel config)
+
+AWS allows **only one** Chatbot Slack channel configuration per Slack channel **per AWS account**. Two groups share an account + channel:
+
+**Dev / Test / Preprod** (shared AWS account):
+
+| Env | `aws_chatbot_manage_channel_configuration` | Role |
+| --- | --- | --- |
+| Test | `true` (owner) | Creates the channel config; `sns_topic_arns` = Test SNS + optional sibling ARNs |
+| Development / Preprod | `false` | Own SNS topic only; no Chatbot resources |
+
+**Production / Staging / RBA** (shared AWS account):
+
+| Env | `aws_chatbot_manage_channel_configuration` | Role |
+| --- | --- | --- |
+| Production | `true` (owner) | Creates the channel config; `sns_topic_arns` = Prod SNS + optional sibling ARNs |
+| Staging / RBA | `false` | Own SNS topic only; no Chatbot resources |
+
+Owner optional list `aws_chatbot_additional_sns_topic_arns` defaults to `[]` (safe for a new account / first env). After sibling SNS topics exist, add their ARNs in private `ci-deployment` tfvars for the owner env and re-apply.
+
+New AWS account, first env: leave manage `true` and additional ARNs empty — only that env’s SNS is attached. If ownership later moves between envs in the same account, apply the previous owner with manage `false` first (destroys its Chatbot resources), then apply the new owner.
 
 ### Slack setup (once per AWS account)
 
@@ -65,18 +87,18 @@ When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (req
 3. Copy:
    - **Workspace (team) ID** — Chatbot console → configured clients, or Slack workspace settings (starts with `T`).
    - **Channel ID** — Slack → channel details / copy link (starts with `C`).
-4. Put both values in the private `ci-deployment` tfvars for that environment:
+4. Put both values in the private `ci-deployment` tfvars for the **owner** environment (`aws_chatbot_manage_channel_configuration = true`):
    - `aws_chatbot_slack_team_id`
    - `aws_chatbot_slack_channel_id`
 
 | Resource | Purpose |
 | --- | --- |
-| `aws_iam_role.chatbot` | Role assumed by Chatbot (`chatbot.amazonaws.com`) |
+| `aws_iam_role.chatbot` | Role assumed by Chatbot (`chatbot.amazonaws.com`) — owner env only |
 | `CloudWatchReadOnlyAccess` on that role | Enrich Slack cards with metric / alarm detail |
-| `aws_chatbot_slack_channel_configuration.global_alarms` | Binds Slack channel to `aws_sns_topic.global` |
+| `aws_chatbot_slack_channel_configuration.global_alarms` | Binds Slack channel to owner + additional SNS topics |
 | Guardrail `ReadOnlyAccess` | Limits what Chatbot can do from the channel |
 
-After deploy with IDs set: SNS → topic `topic…GlobalNotifications` → Subscriptions should list the Chatbot endpoint. Force a test `ALARM` on an alarm wired to that topic, confirm Slack, then restore `OK`.
+After deploy: SNS → topic `topic…GlobalNotifications` → Subscriptions should list the Chatbot endpoint (for every topic attached to the shared config). Force a test `ALARM` on an alarm wired to that topic, confirm Slack, then restore `OK`.
 
 ### RDS (primary Postgres)
 
