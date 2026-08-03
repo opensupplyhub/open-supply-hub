@@ -569,6 +569,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
             "False",
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
@@ -591,6 +596,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             0.0,
             "Apparel",
             "data one",
+            "",
+            "",
+            "",
+            "",
+            "",
             "",
             "",
             "False",
@@ -616,6 +626,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "Apparel",
             "",
             "data two",
+            "",
+            "",
+            "",
+            "",
+            "",
             "",
             "False",
         ]
@@ -731,11 +746,18 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(row_by_header["program_1_Name"], "Program One")
         self.assertEqual(row_by_header["total_number_of_employees"], "250")
 
-        self.assertNotIn("number_of_workers", headers)
-        self.assertNotIn("processing_type_facility_type_raw", headers)
-        self.assertNotIn("facility_type", headers)
-        self.assertNotIn("processing_type", headers)
-        self.assertNotIn("product_type", headers)
+        # Standard extended headers are always present in production shape,
+        # even when the embed owner has no values for them.
+        self.assertIn("number_of_workers", headers)
+        self.assertIn("processing_type_facility_type_raw", headers)
+        self.assertIn("facility_type", headers)
+        self.assertIn("processing_type", headers)
+        self.assertIn("product_type", headers)
+        self.assertEqual(row_by_header["number_of_workers"], "")
+        self.assertEqual(row_by_header["parent_company"], "")
+        self.assertEqual(row_by_header["facility_type"], "")
+        self.assertEqual(row_by_header["processing_type"], "")
+        self.assertEqual(row_by_header["product_type"], "")
 
     def test_embed_standard_fields_match_map_visibility(self):
         EmbedField.objects.create(
@@ -977,6 +999,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "data one",
             "",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
             "False",
         ]
         self.assertEquals(rows[0], expected_base_row)
@@ -1126,6 +1153,11 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             0.0,
             0.0,
             "Apparel",
+            "",
+            "",
+            "",
+            "",
+            "",
             "",
             "",
             "",
