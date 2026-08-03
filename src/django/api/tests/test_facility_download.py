@@ -746,6 +746,14 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             visible=True,
             searchable=True,
         )
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=5,
+            column_name="product_type",
+            display_name="Product Type",
+            visible=True,
+            searchable=True,
+        )
         ExtendedField.objects.create(
             field_name="number_of_workers",
             value={"min": 100, "max": 100},
@@ -814,7 +822,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(row_by_header["number_of_workers"], "900")
         self.assertEqual(row_by_header["parent_company"], "Own Parent")
-        self.assertNotIn("product_type", headers)
+        self.assertEqual(row_by_header["product_type"], "")
 
     def test_extended_fields(self):
         self.create_extended_fields({"list_item_id": self.list_item.id})

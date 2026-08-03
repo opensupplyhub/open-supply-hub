@@ -78,6 +78,33 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
         ]
         self.assertEqual(headers, expected_headers)
 
+    def test_visible_empty_header_is_retained(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="configured_without_data",
+            display_name="Configured Without Data",
+            visible=True,
+            searchable=True,
+        )
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+        headers = serializer.get_headers()
+        row_by_header = dict(
+            zip(headers, serializer.get_row(self.facility_one))
+        )
+
+        self.assertIn("configured_without_data", headers)
+        self.assertEqual(row_by_header["configured_without_data"], "")
+
+    def test_hidden_header_is_omitted_despite_data(self):
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] += ",extra_3"
+        info["raw_data"] += ',"Hidden field data"'
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertNotIn("extra_3", serializer.get_headers())
+
     def test_get_row(self):
         contributor_id = "1"
         serializer = FacilityDownloadSerializerEmbedMode(
@@ -103,6 +130,18 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
             "False",
         ]
         self.assertEqual(row, expected_row)
+
+    def test_get_row_preserves_baseline_sector_aggregation(self):
+        self.facility_one.sector = ["apparel", "TEXTILES"]
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+        row_by_header = dict(
+            zip(
+                serializer.get_headers(),
+                serializer.get_row(self.facility_one),
+            )
+        )
+
+        self.assertEqual(row_by_header["sector"], "Apparel|Textiles")
 
     def test_get_row_keeps_only_top_ranked_contribution_per_field(self):
         EmbedField.objects.create(
@@ -136,7 +175,7 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
 
         self.assertEqual(row_by_header["number_of_workers"], "900")
 
-    def test_get_row_uses_created_at_as_final_embed_tiebreaker(self):
+    def test_get_row_uses_display_ranking_for_single_value(self):
         EmbedField.objects.create(
             embed_config=self.embed_config,
             order=4,
@@ -207,6 +246,42 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
             row_by_header["facility_type"],
             "Matched facility type value one Service Provider A|"
             "Matched facility type value two Service Provider A",
+        )
+
+    def test_get_row_falls_back_to_custom_standard_field_value(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="facility_type",
+            display_name="Facility Type",
+            visible=True,
+            searchable=True,
+        )
+        self.facility_one.extended_fields = [
+            field
+            for field in self.facility_one.extended_fields
+            if not (
+                field["field_name"] == "facility_type"
+                and field["contributor"]["id"] == 1
+            )
+        ]
+        info = next(
+            info
+            for info in self.facility_one.custom_field_info
+            if info["contributor_id"] == 1
+        )
+        info["list_header"] += "facility_type"
+        info["raw_data"] += ',"Custom facility type"'
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+        row_by_header = dict(zip(
+            serializer.get_headers(),
+            serializer.get_row(self.facility_one),
+        ))
+
+        self.assertEqual(
+            row_by_header["facility_type"],
+            "Custom facility type",
         )
 
     def test_get_row_formats_extended_fields_like_embed_profile(self):
@@ -304,6 +379,46 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
                 "250",
             ],
         )
+
+    def test_employee_headers_do_not_alias_or_fall_back(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="total_number_of_employees",
+            display_name="Total Number of Employees",
+            visible=True,
+            searchable=True,
+        )
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=5,
+            column_name="number_of_workers",
+            display_name="Number of Workers",
+            visible=True,
+            searchable=True,
+        )
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] = (
+            "extra_1,extra_2,parent_company,total_number_of_employees"
+        )
+        info["raw_data"] = '"Extra 1","Extra 2","Parent","250"'
+        self.facility_one.extended_fields = [
+            field
+            for field in self.facility_one.extended_fields
+            if field["field_name"] != "number_of_workers"
+            or field["contributor"]["id"] != 1
+        ]
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+        row_by_header = dict(
+            zip(
+                serializer.get_headers(),
+                serializer.get_row(self.facility_one),
+            )
+        )
+
+        self.assertEqual(row_by_header["total_number_of_employees"], "250")
+        self.assertEqual(row_by_header["number_of_workers"], "")
 
     def test_get_list_custom_fields_matches_headers_case_insensitively(self):
         info = self.facility_one.custom_field_info[0]

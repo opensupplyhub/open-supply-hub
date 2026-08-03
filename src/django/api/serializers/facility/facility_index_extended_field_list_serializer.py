@@ -126,7 +126,7 @@ class FacilityIndexExtendedFieldListSerializer:
         return count
 
     def _get_created_at(self, extended_field: dict) -> str:
-        return format_date(extended_field.get('created_at'))
+        return format_date(extended_field['created_at'])
 
     def _get_updated_at(self, extended_field: dict) -> str:
-        return format_date(extended_field.get('updated_at'))
+        return format_date(extended_field['updated_at'])

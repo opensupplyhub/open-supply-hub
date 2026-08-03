@@ -8,9 +8,6 @@ from api.models.source import Source
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
 )
-from api.serializers.facility.facility_index_extended_field_list_serializer \
-    import FacilityIndexExtendedFieldListSerializer
-from api.serializers.facility.utils import select_embed_extended_field
 
 
 class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
@@ -97,26 +94,59 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
             if (field.get("contributor") or {}).get("id")
             == self.contributor_id
         ]
-        serialized_fields = FacilityIndexExtendedFieldListSerializer(
-            fields,
-            context={
-                "user_can_see_detail": False,
-                "embed_mode_active": True,
-                "claimant_contributor_id": claimant_contributor_id,
-                "masked_contributor_ids": None,
-            },
-        ).data
         fields_by_name = {}
-        for field in serialized_fields:
+        for field in fields:
             fields_by_name.setdefault(field.get("field_name"), []).append(
                 field
             )
 
-        return [
-            selected
-            for grouped_fields in fields_by_name.values()
-            for selected in select_embed_extended_field(grouped_fields)
-        ]
+        selected_fields = []
+        for grouped_fields in fields_by_name.values():
+            displayable_fields = [
+                field
+                for field in grouped_fields
+                if self.__is_extended_field_displayable(field)
+            ]
+            ranked_fields = sorted(
+                displayable_fields,
+                key=lambda field: self.__extended_field_sort_order(
+                    field,
+                    claimant_contributor_id,
+                ),
+                reverse=True,
+            )
+            selected_fields.extend(ranked_fields[:1])
+
+        return selected_fields
+
+    @staticmethod
+    def __extended_field_sort_order(
+        field: dict, claimant_contributor_id: int
+    ):
+        contributor = field.get("contributor") or {}
+        verified_count = int(bool(contributor.get("is_verified")))
+        verified_count += int(bool(field.get("is_verified")))
+        is_from_claim = (
+            field.get("facility_list_item_id") is None
+            or contributor.get("id") == claimant_contributor_id
+        )
+        return (
+            verified_count,
+            is_from_claim,
+            field.get("value_count", 1),
+            field.get("created_at") or "",
+        )
+
+    @staticmethod
+    def __is_extended_field_displayable(field: dict) -> bool:
+        if field.get("field_name") != "facility_type":
+            return True
+
+        value = field.get("value") or {}
+        return any(
+            len(matched_value) > 2 and matched_value[2]
+            for matched_value in value.get("matched_values", [])
+        )
 
     @staticmethod
     def __format_extended_field(field: dict) -> str:
