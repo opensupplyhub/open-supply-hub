@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from api.serializers.facility.facility_index_extended_field_list_serializer \
     import FacilityIndexExtendedFieldListSerializer
+from api.constants import MASKED_CONTRIBUTOR_LABEL
 from api.services.masked_contributors import MaskedContributors
 
 
@@ -71,10 +72,14 @@ class IsFromClaimTest(SimpleTestCase):
         data = serialize_one(make_extended_field())
         self.assertFalse(data['is_from_claim'])
 
-    def test_masked_claimant_contribution_is_not_from_claim(self):
-        # A masked (anonymized) contribution must not be linked to the
-        # publicly named claimant by the badge, even when the contributor
-        # ids match.
+    def test_masked_claimant_contribution_is_still_from_claim(self):
+        # A masked claimant keeps the claim attribution while their identity
+        # stays hidden: the label says where the value came from, and the
+        # name/id getters do the hiding. Fields created on the claim form are
+        # already marked as claim data whether or not the claimant is masked,
+        # so excluding masked contributions here would label one claimant's
+        # data two ways depending on the channel. Raised by review on
+        # OSDEV-3170.
         data = serialize_one(
             make_extended_field(),
             context_overrides={
@@ -84,4 +89,7 @@ class IsFromClaimTest(SimpleTestCase):
                 ),
             },
         )
-        self.assertFalse(data['is_from_claim'])
+        self.assertTrue(data['is_from_claim'])
+        # identity still masked
+        self.assertEqual(data['contributor_name'], MASKED_CONTRIBUTOR_LABEL)
+        self.assertIsNone(data['contributor_id'])

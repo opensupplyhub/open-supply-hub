@@ -515,32 +515,25 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertFalse(sectors[0]['is_from_claim'])
         self.assertTrue(sectors[1]['is_from_claim'])
 
-    def test_masked_claimant_contribution_not_marked(self):
-        class MaskEverything:
-            def should_mask(self, contributor):
-                return True
-
-        self.assertFalse(
-            is_contribution_from_claimant(
-                {'id': self.contrib_one.id},
-                self.contrib_one.id,
-                MaskEverything(),
-            )
-        )
+    def test_claimant_check_matches_on_contributor_id_only(self):
+        # Masking is deliberately not part of this check: the label states
+        # where a value came from, while the contributor name/id getters hide
+        # who the contributor is (see the OSDEV-3170 review).
         self.assertTrue(
             is_contribution_from_claimant(
-                {'id': self.contrib_one.id}, self.contrib_one.id, None
+                {'id': self.contrib_one.id}, self.contrib_one.id
             )
         )
         self.assertFalse(
             is_contribution_from_claimant(
-                {'id': self.contrib_two.id}, self.contrib_one.id, None
+                {'id': self.contrib_two.id}, self.contrib_one.id
             )
         )
         self.assertFalse(
-            is_contribution_from_claimant(
-                {'id': self.contrib_one.id}, None, None
-            )
+            is_contribution_from_claimant({'id': self.contrib_one.id}, None)
+        )
+        self.assertFalse(
+            is_contribution_from_claimant(None, self.contrib_one.id)
         )
 
     def test_get_other_names(self):

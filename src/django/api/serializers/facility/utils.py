@@ -176,23 +176,23 @@ def get_efs_associated_with_contributor(
 def is_contribution_from_claimant(
     contributor: Union[None, dict],
     claimant_contributor_id: Union[None, int],
-    masked_ids: Union[None, set] = None,
 ) -> bool:
     """Whether a contribution was made by the facility's approved claimant.
 
-    A masked (anonymized) contribution is never attributed to the claim: the
-    claimant is publicly named, so the attribution would undo the masking by
-    inference.
+    Masking is deliberately NOT consulted here. The label says where a value
+    came from; hiding *who* the contributor is stays the job of
+    get_contributor_name_from_facilityindex, which every caller already routes
+    names through. A masked claimant's name is hidden everywhere on the
+    profile, claim_info included, so the label discloses no identity — and
+    fields created on the claim form are already marked as claim data whether
+    or not the claimant is masked, so skipping masked contributions here would
+    label one claimant's data two different ways depending on the channel it
+    arrived through.
     """
     if claimant_contributor_id is None:
         return False
 
-    contributor = contributor or {}
-
-    if is_contribution_masked(contributor, masked_ids):
-        return False
-
-    return contributor.get('id') == claimant_contributor_id
+    return (contributor or {}).get('id') == claimant_contributor_id
 
 
 def create_name_field_from_facility_name(
@@ -215,7 +215,7 @@ def create_name_field_from_facility_name(
             contributor, user_can_see_detail, masked_ids),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_contribution_from_claimant(
-            contributor, claimant_contributor_id, masked_ids),
+            contributor, claimant_contributor_id),
         'is_from_created_from': is_from_created_from,
     }
 
@@ -248,7 +248,7 @@ def create_address_field_from_facility_address(
             contributor, user_can_see_detail, masked_ids),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_from_claim or is_contribution_from_claimant(
-            contributor, claimant_contributor_id, masked_ids),
+            contributor, claimant_contributor_id),
         'is_from_created_from': is_from_created_from,
     }
 
@@ -391,7 +391,7 @@ def format_sectors(items,
             # upload). The list order is deliberately left untouched: this
             # marks entries in place and never promotes them.
             'is_from_claim': is_claim or is_contribution_from_claimant(
-                entity['contributor'], claimant_contributor_id, masked_ids),
+                entity['contributor'], claimant_contributor_id),
         }
 
         if use_main_created_at:
