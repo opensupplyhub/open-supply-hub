@@ -132,10 +132,19 @@ echo "Task URL: https://${region}.console.aws.amazon.com/ecs/v2/clusters/ecsOpen
 
 echo "Waiting for task to stop..."
 res=1
+attempt=1
+max_attempts=3
 while [ $res -ne 0 ]; do
-    echo "Continue waiting: $(date +%T)"
+    # Check if the maximum number of attempts has been exceeded
+    if [ $attempt -gt $max_attempts ]; then
+        echo "Error: Task did not stop after $max_attempts attempts. Timing out."
+        exit 1
+    fi
+    echo "Continue waiting (Attempt $attempt/$max_attempts): $(date +%T)"
     aws ecs wait tasks-stopped --cluster "ecsOpenSupplyHub${1}Cluster" --tasks "${task_arn}"
     res=$?
+    # Increment the loop counter
+    attempt=$((attempt + 1))
 done
 
 echo "Stop time: $(date +%T)"
@@ -148,6 +157,7 @@ aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn}
 exit_code="$(aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].containers[0].exitCode' --output text)"
 echo "Container exit code: $exit_code"
 
+echo "Warning: output may be truncated if the command produced a lot of output. Use the Task URL above to view the full log stream in the AWS console."
 echo "----- Log Stream -----"
 echo ""
 echo ""

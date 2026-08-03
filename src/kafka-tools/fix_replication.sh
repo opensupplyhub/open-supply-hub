@@ -30,6 +30,7 @@
 
 set -euo pipefail
 
+# word-split intended
 BROKERS=(${BROKER_IDS:-1 2})
 TARGET_RF="${TARGET_RF:-2}"
 PLAN_FILE="add-replicas.json"
