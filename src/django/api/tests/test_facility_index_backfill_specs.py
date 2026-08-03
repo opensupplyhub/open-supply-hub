@@ -63,6 +63,25 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertIn('claim_info IS NOT NULL', sql)
         self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
+    def test_list_field_names_includes_approved_claim(self):
+        self.assertIn('approved_claim', list_field_names())
+
+    def test_build_update_sql_includes_approved_claim_column(self):
+        spec = get_field_spec('approved_claim')
+        sql = build_update_sql(spec)
+
+        self.assertIn('approved_claim =', sql)
+        self.assertIn('index_approved_claim(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_approved_claim_filter(self):
+        spec = get_field_spec('approved_claim')
+        sql = build_count_sql(spec)
+
+        self.assertIn('approved_claim IS NOT NULL', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
     def test_list_field_names_includes_processing_type(self):
         self.assertIn('processing_type', list_field_names())
 

@@ -2,11 +2,12 @@ from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-# Temporary for 2.28.0 (OSDEV-1034). Each backfill worker is a full Django
+# Temporary for the OSDEV-1034 and OSDEV-2977 backfills. Each worker is a
 # subprocess (~150-200 MB RSS), so size parallelism to the CLI task memory.
 # Remove this map, the helper below, and the backfill call once the release
 # has been deployed everywhere.
 BACKFILL_PARALLEL_BY_ENVIRONMENT = {
+    'Local': 2,
     'Development': 1,
     'Test': 10,
     'Staging': 10,
@@ -15,9 +16,16 @@ BACKFILL_PARALLEL_BY_ENVIRONMENT = {
     'Rba': 10,
 }
 
+# Fallback when settings.ENVIRONMENT is not in the map
+# (e.g. a new deploy target).
+BACKFILL_PARALLEL_DEFAULT = 2
+
 
 def backfill_parallel_worker_count() -> int:
-    return BACKFILL_PARALLEL_BY_ENVIRONMENT.get(settings.ENVIRONMENT, 2)
+    return BACKFILL_PARALLEL_BY_ENVIRONMENT.get(
+        settings.ENVIRONMENT,
+        BACKFILL_PARALLEL_DEFAULT,
+    )
 
 
 class Command(BaseCommand):
@@ -35,14 +43,14 @@ class Command(BaseCommand):
         # refreshes the affected FacilityIndex rows. Remove after the release
         # has been deployed everywhere.
         call_command('remove_rsc_grievance_mechanism_nested_internal_ids')
-        # Temporary for 2.28.0 — migration 0220 changes
-        # index_processing_type() (OSDEV-1034) and migration 0221 changes
-        # index_sector() (OSDEV-992), so refresh the affected FacilityIndex
-        # columns for the facilities each filter targets.
-        # Remove after the release has been deployed everywhere.
+        # Temporary for 2.28.0 — recompute claim_info and approved_claim
+        # without closing_date (OSDEV-2977), refresh processing_type after
+        # migration 0220 changes index_processing_type() (OSDEV-1034), and
+        # refresh sector after migration 0223 changes index_sector()
+        # (OSDEV-992). Remove after the release has been deployed everywhere.
         call_command(
             'backfill_facility_index',
-            fields='processing_type,sector',
+            fields='claim_info,approved_claim,processing_type,sector',
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )

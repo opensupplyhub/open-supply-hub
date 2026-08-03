@@ -5,7 +5,6 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
 import YearPicker from './YearPicker';
-import MonthYearPicker from './MonthYearPicker';
 import InputErrorText from '../Contribute/InputErrorText';
 import EnergySourceInput from './EnergySourceInput';
 import LabelWithTooltip from './LabelWithTooltip';
@@ -22,7 +21,6 @@ const {
     title,
     description,
     openingDateField,
-    closingDateField,
     estimatedAnnualThroughputField,
     energyConsumptionLabel,
     energySourcesData,
@@ -78,12 +76,6 @@ const EmissionsEstimateForm = ({
         freeEmissionsEstimateForm.values.openingDate,
         formData.openingDate,
         value => onEmissionsValueChange(openingDateField.valueFieldName, value),
-    );
-
-    useFormFieldSync(
-        freeEmissionsEstimateForm.values.closingDate,
-        formData.closingDate,
-        value => onEmissionsValueChange(closingDateField.valueFieldName, value),
     );
 
     useFormFieldSync(
@@ -205,10 +197,6 @@ const EmissionsEstimateForm = ({
         freeEmissionsEstimateForm.touched.openingDate &&
         !!freeEmissionsEstimateForm.errors.openingDate;
 
-    const closingDateHasError =
-        freeEmissionsEstimateForm.touched.closingDate &&
-        !!freeEmissionsEstimateForm.errors.closingDate;
-
     return (
         <div className={classes.emissionsSection}>
             <Typography className={classes.sectionTitle}>
@@ -247,38 +235,6 @@ const EmissionsEstimateForm = ({
                             );
                             freeEmissionsEstimateForm.setFieldTouched(
                                 openingDateField.valueFieldName,
-                                true,
-                                false,
-                            );
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <MonthYearPicker
-                        value={freeEmissionsEstimateForm.values.closingDate}
-                        label={closingDateField.label}
-                        tooltipText={closingDateField.tooltipText}
-                        placeholderMonth={closingDateField.placeholderMonth}
-                        placeholderYear={closingDateField.placeholderYear}
-                        helperText={
-                            closingDateHasError && (
-                                <InputErrorText
-                                    text={
-                                        freeEmissionsEstimateForm.errors
-                                            .closingDate
-                                    }
-                                />
-                            )
-                        }
-                        disabled={disabled}
-                        error={closingDateHasError}
-                        onChange={value => {
-                            freeEmissionsEstimateForm.setFieldValue(
-                                closingDateField.valueFieldName,
-                                value,
-                            );
-                            freeEmissionsEstimateForm.setFieldTouched(
-                                closingDateField.valueFieldName,
                                 true,
                                 false,
                             );

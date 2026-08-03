@@ -37,7 +37,6 @@ CLAIM_HEADERS = [
     "claim_parent_company",
     "claim_number_of_workers",
     "claim_opening_date",
-    "claim_closing_date",
     "claim_estimated_annual_throughput_kg_year",
     "claim_energy_coal_j",
     "claim_energy_natural_gas_j",

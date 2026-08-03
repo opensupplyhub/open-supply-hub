@@ -13,6 +13,8 @@ NON_EMPTY_CONTRIBUTORS_FILTER = (
 # the millions of unclaimed rows.
 CLAIMED_FACILITIES_FILTER = "claim_info IS NOT NULL"
 
+APPROVED_CLAIM_FACILITIES_FILTER = "approved_claim IS NOT NULL"
+
 # Only facilities that have at least one processing_type ExtendedField can
 # change when index_processing_type() is recomputed; this skips the millions
 # of rows without processing type data.
@@ -78,6 +80,16 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': CLAIMED_FACILITIES_FILTER,
+    },
+    'approved_claim': {
+        'columns': {
+            'approved_claim': (
+                "COALESCE("
+                "(SELECT approved_claim FROM index_approved_claim(afi.id))"
+                ")"
+            ),
+        },
+        'filter_sql': APPROVED_CLAIM_FACILITIES_FILTER,
     },
     'processing_type': {
         'columns': {

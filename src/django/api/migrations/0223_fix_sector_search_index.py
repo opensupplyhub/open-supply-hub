@@ -47,7 +47,7 @@ def revert_indexing_function(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0220_fix_processing_type_search_index'),
+        ('api', '0222_remove_closing_date_from_facility_claim'),
     ]
 
     operations = [
