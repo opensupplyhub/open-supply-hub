@@ -36,19 +36,19 @@ TARGET_RF="${TARGET_RF:-2}"
 PLAN_FILE="add-replicas.json"
 VERIFY_MAX_ATTEMPTS=120   # 120 x 5s = 10 minutes
 
-if [ -z "${BOOTSTRAP_SERVERS:-}" ]; then
+if [[ -z "${BOOTSTRAP_SERVERS:-}" ]]; then
     echo "ERROR: BOOTSTRAP_SERVERS is not set." >&2
     exit 1
 fi
 
-if [ "${#BROKERS[@]}" -lt "$TARGET_RF" ]; then
+if [[ "${#BROKERS[@]}" -lt "$TARGET_RF" ]]; then
     echo "ERROR: TARGET_RF=$TARGET_RF but only ${#BROKERS[@]} broker(s) given: ${BROKERS[*]}" >&2
     exit 1
 fi
 
 # MinISR <= RF-1 is unsatisfiable below RF=2: the repair target would be
 # min.insync.replicas=0, which Kafka rejects (minimum is 1).
-if [ "$TARGET_RF" -lt 2 ]; then
+if [[ "$TARGET_RF" -lt 2 ]]; then
     echo "ERROR: TARGET_RF=$TARGET_RF cannot satisfy MinISR <= RF-1; use 2 or more." >&2
     exit 1
 fi
@@ -101,7 +101,7 @@ mapfile -t repairs < <(echo "$describe" | awk -v target="$TARGET_RF" "$AWK_FIELD
     }
 ')
 
-if [ ${#rows[@]} -eq 0 ] && [ ${#repairs[@]} -eq 0 ]; then
+if [[ ${#rows[@]} -eq 0 && ${#repairs[@]} -eq 0 ]]; then
     echo "Nothing to do: no topic is below RF=$TARGET_RF and no topic-level"
     echo "min.insync.replicas override violates MinISR <= RF-1."
     exit 0
@@ -110,7 +110,7 @@ fi
 echo "=== PLAN ==="
 echo
 
-if [ ${#rows[@]} -gt 0 ]; then
+if [[ ${#rows[@]} -gt 0 ]]; then
     echo "Partition reassignments (${#rows[@]} partition(s) below RF=$TARGET_RF):"
 else
     echo "Partition reassignments: none needed."
@@ -118,7 +118,7 @@ fi
 
 # Build the reassignment plan: keep existing replicas (first stays preferred
 # leader), then append brokers not already holding the partition.
-if [ ${#rows[@]} -gt 0 ]; then
+if [[ ${#rows[@]} -gt 0 ]]; then
     {
         printf '{"version":1,"partitions":[\n'
         first=true
@@ -127,13 +127,13 @@ if [ ${#rows[@]} -gt 0 ]; then
             new_replicas="$replicas"
             count=$(awk -F, '{print NF}' <<< "$replicas")
             for b in "${BROKERS[@]}"; do
-                [ "$count" -ge "$TARGET_RF" ] && break
+                [[ "$count" -ge "$TARGET_RF" ]] && break
                 if ! echo ",$replicas," | grep -q ",$b,"; then
                     new_replicas="$new_replicas,$b"
                     count=$((count + 1))
                 fi
             done
-            if [ "$count" -lt "$TARGET_RF" ]; then
+            if [[ "$count" -lt "$TARGET_RF" ]]; then
                 echo "ERROR: cannot reach RF=$TARGET_RF for $topic-$partition" \
                      "(replicas=$replicas, brokers=${BROKERS[*]})" >&2
                 exit 1
@@ -149,7 +149,7 @@ if [ ${#rows[@]} -gt 0 ]; then
 fi
 
 echo
-if [ ${#repairs[@]} -gt 0 ]; then
+if [[ ${#repairs[@]} -gt 0 ]]; then
     echo "Topic-level min.insync.replicas repairs (${#repairs[@]} topic(s)):"
     for r in "${repairs[@]}"; do
         read -r topic current wanted <<< "$r"
@@ -164,7 +164,7 @@ else
 fi
 
 echo
-if [ "${1:-}" != "--execute" ]; then
+if [[ "${1:-}" != "--execute" ]]; then
     echo "Dry run only. Re-run with --execute to apply."
     exit 0
 fi
@@ -184,7 +184,7 @@ for r in "${repairs[@]}"; do
         --alter --add-config "min.insync.replicas=$wanted"
 done
 
-if [ ${#rows[@]} -gt 0 ]; then
+if [[ ${#rows[@]} -gt 0 ]]; then
     echo "Executing reassignment..."
     ./bin/kafka-reassign-partitions.sh --bootstrap-server "$BOOTSTRAP_SERVERS" \
         --reassignment-json-file "$PLAN_FILE" --execute
@@ -212,7 +212,7 @@ if [ ${#rows[@]} -gt 0 ]; then
         verify_status=$?
         set -e
 
-        if [ "$verify_status" -ne 0 ]; then
+        if [[ "$verify_status" -ne 0 ]]; then
             echo "$verify_out"
             echo "ERROR: --verify exited with status $verify_status." >&2
             echo "The reassignment is likely still running on the brokers. Re-check with:" >&2
@@ -232,13 +232,13 @@ if [ ${#rows[@]} -gt 0 ]; then
         completed=$(echo "$verify_out" | grep -c "is complete" || true)
         in_progress=$(echo "$verify_out" | grep -c "still in progress" || true)
 
-        if [ "$completed" -eq "$expected" ] && [ "$in_progress" -eq 0 ]; then
+        if [[ "$completed" -eq "$expected" && "$in_progress" -eq 0 ]]; then
             echo "$verify_out"
             echo "All $completed of $expected partition reassignment(s) completed."
             break
         fi
 
-        if [ "$attempt" -ge "$VERIFY_MAX_ATTEMPTS" ]; then
+        if [[ "$attempt" -ge "$VERIFY_MAX_ATTEMPTS" ]]; then
             echo "$verify_out"
             echo "ERROR: after $attempt checks, only $completed of $expected partition(s)" >&2
             echo "reported completion ($in_progress still in progress)." >&2
@@ -267,7 +267,7 @@ violations=$(./bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP_SERVERS" --des
         }
     ')
 
-if [ -n "$violations" ]; then
+if [[ -n "$violations" ]]; then
     echo "$violations" >&2
     echo "ERROR: cluster is still non-compliant with the advisory." >&2
     exit 1
