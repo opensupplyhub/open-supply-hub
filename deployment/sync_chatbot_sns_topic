@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 # Attach or detach an SNS topic ARN on a shared AWS Chatbot Slack channel
 # configuration (used for ephemeral Preprod in the Dev/Test/Preprod account).
