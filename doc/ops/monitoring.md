@@ -76,7 +76,16 @@ AWS allows **only one** Chatbot Slack channel configuration per Slack channel **
 | Production | `true` (owner) | Creates the channel config; `sns_topic_arns` = Prod SNS + optional sibling ARNs |
 | Staging / RBA | `false` | Own SNS topic only; no Chatbot resources |
 
-Owner optional list `aws_chatbot_additional_sns_topic_arns` defaults to `[]` (safe for a new account / first env). After sibling SNS topics exist, add their ARNs in private `ci-deployment` tfvars for the owner env and re-apply.
+Owner optional list `aws_chatbot_additional_sns_topic_arns` defaults to `[]` (safe for a new account / first env). After **stable** sibling SNS topics exist, add their ARNs in private `ci-deployment` tfvars for the owner env and re-apply.
+
+Do **not** put ephemeral Preprod in that Terraform list. Chatbot accepts an SNS ARN even when the topic does not exist yet and does **not** create a subscription later when the topic appears. Preprod attach/detach is CI-owned:
+
+| When | Workflow | Script |
+| --- | --- | --- |
+| After Preprod terraform apply | `deploy_to_aws.yml` | `./deployment/sync_chatbot_sns_topic attach` → Test Chatbot config `chatbotOpenSupplyHubTestGlobalAlarms` |
+| Before Preprod terraform destroy | `destroy.yml` | `./deployment/sync_chatbot_sns_topic detach` |
+
+`attach` remove-then-re-adds the ARN so a previously listed-but-unsubscribed topic is repaired. After a **Test** apply while Preprod is live, Terraform may drop the CI-attached Preprod ARN (desired state is Test + Dev only); re-run Preprod deploy (or the attach script) to restore Slack paging.
 
 New AWS account, first env: leave manage `true` and additional ARNs empty — only that env’s SNS is attached. If ownership later moves between envs in the same account, apply the previous owner with manage `false` first (destroys its Chatbot resources), then apply the new owner.
 
