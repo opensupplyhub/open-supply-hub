@@ -92,3 +92,6 @@ is_database_private_link_consumer = true
 
 enable_homepage_proxy   = false
 craft_cms_origin_domain = ""
+
+# Shares Chatbot channel config with Production (same Slack channel / shared account).
+aws_chatbot_manage_channel_configuration = false
