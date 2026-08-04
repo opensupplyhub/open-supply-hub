@@ -37,20 +37,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        # Temporary for 2.28.0 (OSDEV-2949) — one-time cleanup that strips the
-        # nested 'internal_ID' (not part of the partner field JSON Schema) from
-        # 'rsc_grievance_mechanism' values. The ExtendedField database trigger
-        # refreshes the affected FacilityIndex rows. Remove after the release
-        # has been deployed everywhere.
-        call_command('remove_rsc_grievance_mechanism_nested_internal_ids')
-        # Temporary for 2.28.0 — recompute claim_info and approved_claim
-        # without closing_date (OSDEV-2977), refresh processing_type after
-        # migration 0220 changes index_processing_type() (OSDEV-1034), and
-        # refresh sector after migration 0223 changes index_sector()
-        # (OSDEV-992). Remove after the release has been deployed everywhere.
-        call_command(
-            'backfill_facility_index',
-            fields='claim_info,approved_claim,processing_type,sector',
-            parallel=backfill_parallel_worker_count(),
-            batch_size=10000,
-        )
