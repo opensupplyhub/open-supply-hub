@@ -3,7 +3,11 @@ from api.models.facility.facility_manager_index_new \
     import FacilityIndexNewManager
 from api.models.embed_field import EmbedField
 from api.models import Contributor
-from api.helpers.helpers import get_csv_values, parse_raw_data
+from api.helpers.helpers import (
+    get_csv_values,
+    parse_raw_data,
+    try_parse_int_from_float,
+)
 from api.models.source import Source
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
@@ -59,7 +63,7 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
             )
             return [
                 (
-                    data_values[index]
+                    try_parse_int_from_float(data_values[index])
                     if (index := field_indexes.get(field)) is not None
                     and index < len(data_values)
                     else ""
@@ -97,11 +101,12 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
 
     def _get_list_field_indexes(self, list_header: str):
         if list_header not in self._list_field_indexes_by_header:
+            # Last duplicate header wins, matching get_raw_json().
             exact_indexes = {}
             casefold_indexes = {}
             for index, field in enumerate(get_csv_values(list_header)):
-                exact_indexes.setdefault(field, index)
-                casefold_indexes.setdefault(field.casefold(), index)
+                exact_indexes[field] = index
+                casefold_indexes[field.casefold()] = index
 
             field_indexes = {
                 field: exact_indexes.get(

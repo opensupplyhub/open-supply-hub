@@ -288,6 +288,42 @@ class FacilityDownloadSerializerEmbedModeTest(TestCase):
             ],
         )
 
+    def test_get_contributor_custom_fields_parse_float_like_integers(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="total_number_of_employees",
+            display_name="Total Number of Employees",
+            visible=True,
+            searchable=True,
+        )
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] = (
+            "extra_1,extra_2,parent_company,total_number_of_employees"
+        )
+        info["raw_data"] = '"Extra 1","Extra 2","Parent","250.0"'
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertEqual(
+            serializer.get_contributor_custom_fields(self.facility_one),
+            ["Extra 1", "Extra 2", "250"],
+        )
+
+    def test_get_contributor_custom_fields_duplicate_headers_use_last_value(
+        self,
+    ):
+        info = self.facility_one.custom_field_info[0]
+        info["list_header"] = "extra_1,extra_2,extra_1"
+        info["raw_data"] = '"first","middle","last"'
+
+        serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
+
+        self.assertEqual(
+            serializer.get_contributor_custom_fields(self.facility_one),
+            ["last", "middle"],
+        )
+
     def test_get_list_custom_fields_caches_header_indexes(self):
         serializer = FacilityDownloadSerializerEmbedMode(contributor_id="1")
         list_header = self.facility_one.custom_field_info[0]["list_header"]

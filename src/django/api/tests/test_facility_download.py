@@ -759,7 +759,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(row_by_header["processing_type"], "")
         self.assertEqual(row_by_header["product_type"], "")
 
-    def test_embed_standard_fields_match_map_visibility(self):
+    def test_embed_joins_owner_extended_fields_and_ignores_others(self):
         EmbedField.objects.create(
             embed_config=self.embed_config,
             order=4,
