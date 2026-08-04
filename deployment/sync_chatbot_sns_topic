@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Attach or detach an SNS topic ARN on a shared AWS Chatbot Slack channel
 # configuration (used for ephemeral Preprod in the Dev/Test/Preprod account).
@@ -58,6 +58,8 @@ if [[ "$ACTION" != "attach" && "$ACTION" != "detach" ]]; then
 fi
 
 echo "Action: ${ACTION}"
+echo "Chatbot configuration: ${CONFIGURATION_NAME}"
+echo "SNS topic ARN: ${TOPIC_ARN}"
 
 function load_config() {
   aws chatbot describe-slack-channel-configurations \
@@ -73,7 +75,7 @@ function load_config() {
 CONFIG_JSON="$(load_config)"
 
 if [[ -z "$CONFIG_JSON" || "$CONFIG_JSON" == "null" ]]; then
-  echo "Chatbot Slack channel configuration not found" >&2
+  echo "Chatbot Slack channel configuration '${CONFIGURATION_NAME}' not found in ${REGION}" >&2
   exit 1
 fi
 
@@ -83,6 +85,9 @@ IAM_ROLE_ARN="$(jq -r '.IamRoleArn' <<<"$CONFIG_JSON")"
 LOGGING_LEVEL="$(jq -r '.LoggingLevel // "ERROR"' <<<"$CONFIG_JSON")"
 CURRENT_TOPICS_JSON="$(jq -c '.SnsTopicArns // []' <<<"$CONFIG_JSON")"
 GUARDRAIL_JSON="$(jq -c '.GuardrailPolicyArns // []' <<<"$CONFIG_JSON")"
+
+echo "ChatConfigurationArn: ${CHAT_CONFIGURATION_ARN}"
+echo "Current SNS topics: ${CURRENT_TOPICS_JSON}"
 
 function update_topics() {
   local topics_json="$1"
@@ -105,11 +110,10 @@ function update_topics() {
       + (if ($guardrails | length) > 0 then {GuardrailPolicyArns: $guardrails} else {} end)'
   )"
 
-  # Silence CLI output.
+  echo "Updating Chatbot SNS topics to: ${topics_json}"
   aws chatbot update-slack-channel-configuration \
     --region "$REGION" \
-    --cli-input-json "$payload" \
-    >/dev/null 2>&1
+    --cli-input-json "$payload"
 }
 
 WITHOUT_TOPIC_JSON="$(
@@ -119,16 +123,16 @@ WITHOUT_TOPIC_JSON="$(
 case "$ACTION" in
   detach)
     if [[ "$(jq --arg arn "$TOPIC_ARN" 'any(. == $arn)' <<<"$CURRENT_TOPICS_JSON")" != "true" ]]; then
-      echo "nothing to detach"
+      echo "Topic ARN not present on Chatbot config; nothing to detach."
       exit 0
     fi
     update_topics "$WITHOUT_TOPIC_JSON"
-    echo "Detached"
+    echo "Detached ${TOPIC_ARN} from ${CONFIGURATION_NAME}"
     ;;
   attach)
     # Always remove-then-add so a previously listed-but-unsubscribed ARN is repaired.
     if [[ "$(jq --arg arn "$TOPIC_ARN" 'any(. == $arn)' <<<"$CURRENT_TOPICS_JSON")" == "true" ]]; then
-      echo "Topic already listed; refreshing subscription"
+      echo "Topic ARN already listed; removing first to force subscription refresh."
       update_topics "$WITHOUT_TOPIC_JSON"
       CONFIG_JSON="$(load_config)"
       CURRENT_TOPICS_JSON="$(jq -c '.SnsTopicArns // []' <<<"$CONFIG_JSON")"
@@ -139,6 +143,6 @@ case "$ACTION" in
         ' <<<"$CURRENT_TOPICS_JSON"
     )"
     update_topics "$WITH_TOPIC_JSON"
-    echo "Attached"
+    echo "Attached ${TOPIC_ARN} to ${CONFIGURATION_NAME}"
     ;;
 esac
