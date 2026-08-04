@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='facilitylistitem',
             name='date_of_source',
-            field=models.CharField(blank=True, help_text='Timestamp stated by the external source, kept as raw text (specific date, month, and/or year).', max_length=200, null=True),
+            field=models.CharField(blank=True, help_text='Date stated by the external source, at whatever precision is available, as an ISO 8601 reduced-precision string: YYYY, YYYY-MM, or YYYY-MM-DD.', max_length=10, null=True),
         ),
         migrations.AddField(
             model_name='facilitylistitem',
