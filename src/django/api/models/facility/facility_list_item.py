@@ -214,11 +214,12 @@ class FacilityListItem(models.Model):
                    'Source.source_type.')
     )
     date_of_source = models.CharField(
-        max_length=200,
+        max_length=10,
         null=True,
         blank=True,
-        help_text=('Timestamp stated by the external source, kept as raw text '
-                   '(specific date, month, and/or year).')
+        help_text=('Date stated by the external source, at whatever '
+                   'precision is available, as an ISO 8601 reduced-precision '
+                   'string: YYYY, YYYY-MM, or YYYY-MM-DD.')
     )
 
     # --- Data-collection provenance (OSDEV-3071) ---
