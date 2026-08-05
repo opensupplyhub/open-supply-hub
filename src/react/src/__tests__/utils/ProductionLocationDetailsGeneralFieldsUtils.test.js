@@ -525,6 +525,38 @@ describe('getDataCenterFieldGroups', () => {
         expect(findField(utility, 'capacity_units')).toBeUndefined();
     });
 
+    it('passes provenance through to drawer contributions', () => {
+        const provenance = {
+            source_name: 'US EPA FRS',
+            source_link: 'https://example.com/dc?id=1',
+        };
+        const fixture = {
+            type: 'Feature',
+            properties: {
+                is_data_center: true,
+                extended_fields: {
+                    name_operator: [
+                        {
+                            value: { raw_value: 'Equinix' },
+                            contributor_id: 1,
+                            contributor_name: 'Contributor A',
+                            created_at: '2020-01-01T00:00:00.000Z',
+                            provenance,
+                        },
+                    ],
+                },
+            },
+        };
+        const groups = getDataCenterFieldGroups(fixture);
+        const operator = findField(
+            findGroup(groups, 'Named Entities'),
+            'name_operator',
+        );
+        expect(operator.drawerData.promotedContribution.provenance).toEqual(
+            provenance,
+        );
+    });
+
     it('includes additional contributors in drawer contributions', () => {
         const fixture = {
             type: 'Feature',

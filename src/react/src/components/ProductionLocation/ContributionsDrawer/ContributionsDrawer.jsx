@@ -98,6 +98,7 @@ const ContributionsDrawer = ({
                             date={promotedContribution.date}
                             promoted
                             userId={promotedContribution.userId}
+                            provenance={promotedContribution.provenance}
                             data-testid="contribution-card-promoted"
                             spotlightGaProfileBase={spotlightGaProfileBase}
                         />
@@ -131,6 +132,7 @@ const ContributionsDrawer = ({
                                 sourceName={item.sourceName}
                                 date={item.date}
                                 userId={item.userId}
+                                provenance={item.provenance}
                                 data-testid="contribution-card"
                                 spotlightGaProfileBase={spotlightGaProfileBase}
                             />
