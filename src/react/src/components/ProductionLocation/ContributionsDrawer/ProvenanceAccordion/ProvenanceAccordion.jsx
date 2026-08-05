@@ -24,9 +24,7 @@ const ProvenanceAccordion = ({
 
     if (!provenance) return null;
 
-    const rows = PROVENANCE_FIELD_LABELS.filter(
-        ({ key }) => provenance[key],
-    );
+    const rows = PROVENANCE_FIELD_LABELS.filter(({ key }) => provenance[key]);
     if (!rows.length) return null;
 
     const handleToggle = () => setIsOpen(previous => !previous);
