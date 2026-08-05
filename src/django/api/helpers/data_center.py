@@ -84,13 +84,61 @@ PROVENANCE_FIELDS = (
 )
 
 
+DATE_OF_SOURCE_FORMAT_MESSAGE = (
+    'must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format'
+)
+
+
+def normalize_date_of_source(value):
+    """
+    Validate and normalize a date_of_source value as an ISO 8601
+    reduced-precision date string: YYYY, YYYY-MM, or YYYY-MM-DD — whatever
+    precision the external source provides. Returns the normalized string,
+    or None when the value is not a valid (partial) date.
+    """
+    from datetime import date
+
+    if isinstance(value, date):
+        return value.isoformat()
+    if not isinstance(value, str):
+        return None
+
+    normalized = value.strip()
+    parts = normalized.split('-')
+
+    if not all(part.isdigit() for part in parts):
+        return None
+
+    if len(parts) == 1 and len(parts[0]) == 4:
+        return normalized
+    if len(parts) == 2 and len(parts[0]) == 4 and len(parts[1]) == 2:
+        if 1 <= int(parts[1]) <= 12:
+            return normalized
+        return None
+    if (
+        len(parts) == 3
+        and len(parts[0]) == 4
+        and len(parts[1]) == 2
+        and len(parts[2]) == 2
+    ):
+        try:
+            date(int(parts[0]), int(parts[1]), int(parts[2]))
+        except ValueError:
+            return None
+        return normalized
+
+    return None
+
+
 def extract_provenance(raw_data):
     """
     Return a dict of provenance field -> value from a raw contribution row.
 
     Only present, non-empty values are included, so absent provenance leaves
-    the FacilityListItem columns as NULL. Safe to call on any path; returns an
-    empty dict when the row carries no provenance.
+    the FacilityListItem columns as NULL. `date_of_source` is normalized to
+    an ISO reduced-precision date string (YYYY, YYYY-MM, or YYYY-MM-DD) and
+    omitted when invalid. Safe to call on any path; returns an empty dict
+    when the row carries no provenance.
     """
     if not raw_data:
         return {}
@@ -98,7 +146,12 @@ def extract_provenance(raw_data):
     provenance = {}
     for field in PROVENANCE_FIELDS:
         value = raw_data.get(field)
-        if value not in (None, ''):
-            provenance[field] = value
+        if value in (None, ''):
+            continue
+        if field == 'date_of_source':
+            value = normalize_date_of_source(value)
+            if value is None:
+                continue
+        provenance[field] = value
 
     return provenance
