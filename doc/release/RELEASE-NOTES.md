@@ -3,6 +3,20 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.29.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Bugfix
+* [OSDEV-2384](https://opensupplyhub.atlassian.net/browse/OSDEV-2384) - Fixed embedded-map CSV and XLSX downloads from `GET /api/facilities-downloads/` returning empty configured custom-field columns when list-upload headers used mixed-case names such as `program_1_Name`. Those headers now resolve by their original column position, with exact-case matching preferred before a case-insensitive fallback. Custom embed fields still respect `visible=True`; the six standard extended-field columns remain always present, scoped to the embed contributor, and join that contributor's values with `|`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
+
 ## Release 2.28.0
 
 ## Introduction
