@@ -166,6 +166,7 @@ describe('getVisibleFields', () => {
                         sourceName: 'Source',
                         date: '2020-06-15T12:00:00.000Z',
                         userId: undefined,
+                        provenance: null,
                     },
                     contributions: [],
                 },
@@ -210,6 +211,7 @@ describe('getVisibleFields', () => {
                     sourceName: null,
                     date: null,
                     userId: undefined,
+                    provenance: null,
                 },
                 contributions: [],
             });
@@ -223,6 +225,7 @@ describe('getVisibleFields', () => {
                     sourceName: 'Org',
                     date: '2021-01-01T00:00:00.000Z',
                     userId: 10,
+                    provenance: null,
                 },
                 contributions: [],
             });
