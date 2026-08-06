@@ -1,5 +1,6 @@
 import React from 'react';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { MemoryRouter, Route, Router } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
 import { screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDetailsContainer from '../../components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
@@ -120,5 +121,46 @@ describe('ProductionLocationDetailsContainer', () => {
         });
 
         expect(screen.queryByTestId('details-content')).not.toBeInTheDocument();
+    });
+
+    test('redirects when loaded facility id differs from requested alias os id', () => {
+        const history = createMemoryHistory({
+            initialEntries: ['/production-locations/MX2024211WFBSJJ'],
+        });
+
+        renderWithProviders(
+            <Router history={history}>
+                <Route
+                    path="/production-locations/:osID"
+                    component={ProductionLocationDetailsContainer}
+                />
+            </Router>,
+            {
+                preloadedState: {
+                    facilities: {
+                        singleFacility: {
+                            data: { id: 'MX2024211T0VH2S' },
+                            fetching: false,
+                            error: null,
+                        },
+                    },
+                    filters: { contributors: [] },
+                    featureFlags: {
+                        flags: { enable_production_location_page: true },
+                    },
+                    embeddedMap: { embed: null },
+                    partnerFieldGroups: {
+                        fetching: false,
+                        data: { results: [] },
+                        error: null,
+                    },
+                },
+            },
+        );
+
+        expect(history.location.pathname).toBe(
+            '/production-locations/MX2024211T0VH2S',
+        );
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     });
 });
