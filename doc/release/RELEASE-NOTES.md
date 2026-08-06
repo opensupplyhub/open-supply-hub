@@ -11,6 +11,15 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API changes
 * [OSDEV-3176](https://opensupplyhub.atlassian.net/browse/OSDEV-3176) - The no-op detection added to the claimed-details update endpoint (`PUT /api/facility-claims/{id}/claimed/`) in [OSDEV-3094](https://opensupplyhub.atlassian.net/browse/OSDEV-3094) now treats a NULL column and an empty string as the same value for text fields, so submitting a blank field that was already empty no longer counts as a change. Previously the two were compared exactly: because the claim edit form converts every null in the `GET` response to `''` when loading (`fetchClaimedFacilityDetails`) and PUTs the same object back, a claimant's first save wrote `''` over every NULL — a real change, so the claim saved, `updated_at` bumped (feeding the claimed section's "last updated" date), and list contributors were emailed, with nothing visible altered. 2,999 of 3,586 approved claims hold at least one such NULL, so nearly every claimant would have seen one unexplained date bump on their first save after 2.28. The equivalence is keyed on model field type (`CharField`/`TextField` and subclasses), so it covers fields added to the tracked groups automatically; the four `*_publicly_visible` booleans are unaffected because they are NOT NULL. Clearing a field that currently holds a value still saves as before.
+* Release date: *Provide release date*
+
+### Bugfix
+* [OSDEV-2384](https://opensupplyhub.atlassian.net/browse/OSDEV-2384) - Fixed embedded-map CSV and XLSX downloads from `GET /api/facilities-downloads/` returning empty configured custom-field columns when list-upload headers used mixed-case names such as `program_1_Name`. Those headers now resolve by their original column position, with exact-case matching preferred before a case-insensitive fallback. Custom embed fields still respect `visible=True`; the six standard extended-field columns remain always present, scoped to the embed contributor, and join that contributor's values with `|`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
 
 ## Release 2.28.0
 
