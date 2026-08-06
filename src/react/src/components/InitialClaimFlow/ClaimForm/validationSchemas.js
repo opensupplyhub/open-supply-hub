@@ -144,7 +144,14 @@ export const businessStepSchema = Yup.object().shape({
 
 const SELECT_OPTION_MAX_LENGTH = 50;
 const FACILITY_TYPE_JOINED_MAX_LENGTH = 300;
+const TEXT_FIELD_MAX_LENGTH = 200;
 const DESCRIPTION_MAX_LENGTH = 1000;
+
+const maxLengthTextField = (fieldLabel, baseSchema = Yup.string()) =>
+    baseSchema.max(
+        TEXT_FIELD_MAX_LENGTH,
+        `${fieldLabel} must be ${TEXT_FIELD_MAX_LENGTH} characters or fewer`,
+    );
 
 const extractSelectOptionText = value => {
     if (typeof value === 'object' && value !== null) {
@@ -189,7 +196,10 @@ const facilityTypeJoinedMaxLengthSchema = Yup.array().test(
 export const profileStepSchema = Yup.object().shape({
     // Production Location Overview
     localLanguageName: Yup.string().trim(),
-    facilityPhoneNumber: Yup.string().trim(),
+    facilityPhoneNumber: maxLengthTextField(
+        'Company phone',
+        Yup.string().trim(),
+    ),
     businessWebsite: Yup.string()
         .url('Invalid URL. Example: https://company.com')
         .max(
@@ -204,9 +214,12 @@ export const profileStepSchema = Yup.object().shape({
         ),
 
     // Company Information
-    parentCompanyName: Yup.string(),
-    officeOfficialName: Yup.string().trim(),
-    officeAddress: Yup.string().trim(),
+    parentCompanyName: maxLengthTextField('Parent company name'),
+    officeOfficialName: maxLengthTextField(
+        'Office name',
+        Yup.string().trim(),
+    ),
+    officeAddress: maxLengthTextField('Office address', Yup.string().trim()),
     officeCountryCode: Yup.string(),
 
     // Operations & Capabilities
@@ -274,8 +287,14 @@ export const profileStepSchema = Yup.object().shape({
             const num = Number(cleanValue);
             return !Number.isNaN(num) && num >= 0 && num <= 100;
         }),
-    facilityMinimumOrderQuantity: Yup.string().trim(),
-    facilityAverageLeadTime: Yup.string().trim(),
+    facilityMinimumOrderQuantity: maxLengthTextField(
+        'Minimum order quantity',
+        Yup.string().trim(),
+    ),
+    facilityAverageLeadTime: maxLengthTextField(
+        'Average lead time',
+        Yup.string().trim(),
+    ),
 
     // Compliance & Partnerships
     facilityAffiliations: Yup.array(),

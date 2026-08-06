@@ -149,4 +149,46 @@ describe('profileStepSchema select option length', () => {
             }),
         ).rejects.toThrow(/200 characters or fewer/);
     });
+
+    it.each([
+        ['facilityPhoneNumber', 'Company phone'],
+        ['parentCompanyName', 'Parent company name'],
+        ['officeOfficialName', 'Office name'],
+        ['officeAddress', 'Office address'],
+        ['facilityMinimumOrderQuantity', 'Minimum order quantity'],
+        ['facilityAverageLeadTime', 'Average lead time'],
+    ])(
+        'rejects %s longer than 200 characters',
+        async (fieldName, fieldLabel) => {
+            const longValue = 'x'.repeat(201);
+
+            await expect(
+                profileStepSchema.validateAt(fieldName, {
+                    [fieldName]: longValue,
+                }),
+            ).rejects.toThrow(
+                new RegExp(
+                    `${fieldLabel} must be 200 characters or fewer`,
+                    'i',
+                ),
+            );
+        },
+    );
+
+    it.each([
+        'facilityPhoneNumber',
+        'parentCompanyName',
+        'officeOfficialName',
+        'officeAddress',
+        'facilityMinimumOrderQuantity',
+        'facilityAverageLeadTime',
+    ])('allows %s at exactly 200 characters', async fieldName => {
+        const maxValue = 'x'.repeat(200);
+
+        await expect(
+            profileStepSchema.validateAt(fieldName, {
+                [fieldName]: maxValue,
+            }),
+        ).resolves.toBeDefined();
+    });
 });
