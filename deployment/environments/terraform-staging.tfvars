@@ -24,6 +24,11 @@ rds_database_identifier = "opensupplyhub-enc-stg"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
+# ~80% of max_connections for db.t3.large (901)
+rds_database_connections_alarm_threshold = "720"
+# ~5% of 8 GiB RAM; ~10% of 128 GB storage
+rds_free_memory_threshold_bytes = "400000000"
+rds_free_disk_threshold_bytes   = "13000000000"
 
 app_ecs_desired_count = "4"
 app_ecs_deployment_min_percent = "100"
@@ -42,6 +47,7 @@ cli_fargate_cpu = "1024"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
+gunicorn_workers        = "3"
 
 batch_default_ce_spot_fleet_bid_percentage = 60
 batch_ami_id = "ami-002e2fef4b94f8fd0"
@@ -72,3 +78,9 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.staging.servd.dev"
+
+# Shares Chatbot channel config with Production (same Slack channel / shared account).
+aws_chatbot_manage_channel_configuration = false

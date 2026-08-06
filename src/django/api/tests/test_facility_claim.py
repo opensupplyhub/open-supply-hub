@@ -126,7 +126,6 @@ class FacilityClaimTest(APITestCase):
             "business_website": "https://facility.com",
             "business_linkedin_profile": business_linkedin_profile,
             "opening_date": "2020-01-01",
-            "closing_date": "2023-12-31",
             "estimated_annual_throughput": 100000,
             "energy_coal": 500000,
             "energy_natural_gas": 300000,
@@ -177,34 +176,8 @@ class FacilityClaimTest(APITestCase):
         claim = FacilityClaim.objects.filter(facility=self.facility).first()
         self.assertIsNotNone(claim)
         self.assertIsNone(claim.opening_date)
-        self.assertIsNone(claim.closing_date)
         self.assertIsNone(claim.estimated_annual_throughput)
         self.assertIsNone(claim.energy_coal)
-
-    @override_switch("claim_a_facility", active=True)
-    def test_create_claim_with_invalid_date_range(self):
-        """Test that creating a claim with invalid date range fails."""
-        self.client.post(
-            "/user-login/",
-            {"email": self.email, "password": self.password},
-            format="json",
-        )
-
-        claim_url = f"/api/facilities/{self.facility.id}/claim/"
-        business_linkedin_profile = "https://linkedin.com/company/facility"
-        claim_data = {
-            "your_name": "John Doe",
-            "your_title": "Manager",
-            "your_business_website": "https://example.com",
-            "business_website": "https://facility.com",
-            "business_linkedin_profile": business_linkedin_profile,
-            "opening_date": "2023-12-31",
-            "closing_date": "2020-01-01",
-        }
-
-        response = self.client.post(claim_url, claim_data)
-        self.assertEqual(400, response.status_code)
-        self.assertIn("opening_date", str(response.content))
 
     @override_switch("claim_a_facility", active=True)
     def test_create_claim_saves_energy_data_to_database(self):
@@ -224,7 +197,6 @@ class FacilityClaimTest(APITestCase):
             "business_website": "https://facility.com",
             "business_linkedin_profile": business_linkedin_profile,
             "opening_date": "2020-01-01",
-            "closing_date": "2022-12-31",
             "estimated_annual_throughput": 50000,
             "energy_coal": 100000,
             "energy_natural_gas": 200000,
@@ -244,7 +216,6 @@ class FacilityClaimTest(APITestCase):
         claim = FacilityClaim.objects.filter(facility=self.facility).first()
         self.assertIsNotNone(claim)
         self.assertEqual(claim.opening_date, date(2020, 1, 1))
-        self.assertEqual(claim.closing_date, date(2022, 12, 31))
         self.assertEqual(claim.estimated_annual_throughput, 50000)
         self.assertEqual(claim.energy_coal, 100000)
         self.assertEqual(claim.energy_natural_gas, 200000)
@@ -280,7 +251,6 @@ class FacilityClaimTest(APITestCase):
 
         update_payload = {
             "opening_date": "2021-01-01",
-            "closing_date": "2022-01-01",
             "estimated_annual_throughput": 123456,
             "energy_coal": 10,
             "energy_natural_gas": 20,
@@ -315,7 +285,6 @@ class FacilityClaimTest(APITestCase):
 
         claim.refresh_from_db()
         self.assertEqual(claim.opening_date, date(2021, 1, 1))
-        self.assertEqual(claim.closing_date, date(2022, 1, 1))
         self.assertEqual(claim.estimated_annual_throughput, 123456)
         self.assertEqual(claim.energy_coal, 10)
         self.assertEqual(claim.energy_natural_gas, 20)

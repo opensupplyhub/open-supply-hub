@@ -10,7 +10,7 @@ import { userPropType } from '../../util/propTypes';
 import {
     authRegisterFormRoute,
     authLoginFormRoute,
-    mainRoute,
+    mapRoute,
     facilitiesRoute,
     contributeRoute,
 } from '../../util/constants';
@@ -140,7 +140,7 @@ function mapDispatchToProps(
             dispatch(submitLogOut());
 
             if (
-                pathname !== mainRoute &&
+                pathname !== mapRoute &&
                 !startsWith(pathname, facilitiesRoute)
             ) {
                 push(facilitiesRoute);

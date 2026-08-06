@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import EmissionsEstimateForm from './EmissionsEstimateForm';
 import {
     updateClaimOpeningDate,
-    updateClaimClosingDate,
     updateClaimEstimatedAnnualThroughput,
     updateClaimEnergyCoal,
     updateClaimEnergyNaturalGas,
@@ -61,7 +60,6 @@ const mapStateToProps = ({
 }) => ({
     formData: {
         openingDate: formData.openingDate,
-        closingDate: formData.closingDate,
         estimatedAnnualThroughput: formData.estimatedAnnualThroughput,
         energyCoal: formData.energyCoal,
         energyNaturalGas: formData.energyNaturalGas,
@@ -88,7 +86,6 @@ const mapStateToProps = ({
 const mapDispatchToProps = dispatch => {
     const valueDispatchers = {
         openingDate: date => dispatch(updateClaimOpeningDate(date)),
-        closingDate: date => dispatch(updateClaimClosingDate(date)),
         estimatedAnnualThroughput: value =>
             dispatch(updateClaimEstimatedAnnualThroughput(value)),
         energyCoal: value => dispatch(updateClaimEnergyCoal(value)),

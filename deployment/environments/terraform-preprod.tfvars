@@ -28,6 +28,11 @@ rds_multi_az = false
 rds_storage_encrypted = true
 rds_skip_final_snapshot = true
 rds_deletion_protection = false
+# ~80% of capped max_connections for db.m6in.4xlarge (5000)
+rds_database_connections_alarm_threshold = "4000"
+# ~5% of 64 GiB RAM; ~10% of 256 GB storage
+rds_free_memory_threshold_bytes = "3200000000"
+rds_free_disk_threshold_bytes   = "25000000000"
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"
@@ -46,6 +51,7 @@ cli_fargate_cpu = "2048"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
+gunicorn_workers        = "5"
 
 batch_default_ce_spot_fleet_bid_percentage = 60
 batch_ami_id = "ami-002e2fef4b94f8fd0"
@@ -76,3 +82,9 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.production.servd.dev"
+
+# Shares Chatbot channel config with Test (same AWS account / Slack channel).
+aws_chatbot_manage_channel_configuration = false

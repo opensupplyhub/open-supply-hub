@@ -235,6 +235,19 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
+      # Preprod is ephemeral and shares Test's Chatbot Slack channel config. Attach
+      # after apply so Chatbot creates a real SNS subscription (ARN-only updates
+      # before the topic exists do not backfill). See doc/ops/monitoring.md.
+      - name: Attach Preprod SNS topic to shared Chatbot config
+        if: ${{ vars.ENV_NAME == 'Preprod' }}
+        run: ./deployment/sync_chatbot_sns_topic attach
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          CHATBOT_CONFIGURATION_NAME: chatbotOpenSupplyHubTestGlobalAlarms
+          SNS_TOPIC_NAME: topicOpenSupplyHubPreprodGlobalNotifications
+
       - name: Delete debug log from S3 bucket for ${{ vars.ENV_NAME }}
         if: always()
         continue-on-error: true
@@ -278,10 +291,6 @@ jobs:
 
       - name: Build static assets
         working-directory: src/react
-        env:
-          # webpack 4 needs OpenSSL's legacy provider on node >=17.
-          # Remove when migrating off react-scripts 4 (OSDEV-2996).
-          NODE_OPTIONS: --openssl-legacy-provider
         run: yarn run build
 
       - id: project

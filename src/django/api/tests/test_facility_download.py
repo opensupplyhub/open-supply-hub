@@ -200,7 +200,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "claim_parent_company",
             "claim_number_of_workers",
             "claim_opening_date",
-            "claim_closing_date",
             "claim_estimated_annual_throughput_kg_year",
             "claim_energy_coal_j",
             "claim_energy_natural_gas_j",
@@ -638,6 +637,214 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(len(base_row), len(expected_base_row))
         self.assertEqual(base_row, expected_base_row)
 
+    def test_embed_populates_mixed_case_custom_fields(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="program_1_Name",
+            display_name="Program Name",
+            visible=True,
+            searchable=True,
+        )
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=5,
+            column_name="total_number_of_employees",
+            display_name="Total Number of Employees",
+            visible=True,
+            searchable=True,
+        )
+        self.contrib_list.header = (
+            "country,name,address,sector,extra_1,program_1_Name,"
+            "total_number_of_employees"
+        )
+        self.contrib_list.save()
+        self.contrib_list_item.raw_data = (
+            '"US","Towel Factory 42","42 Dolphin St","Apparel",'
+            '"data one","Program One","250"'
+        )
+        self.contrib_list_item.save()
+
+        alternate_source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor_two,
+        )
+        alternate_raw_data = (
+            "{'extra_2': 'alternate API custom data', "
+            "'program_1_Name': 'Alternate Program'}"
+        )
+        alternate_item = FacilityListItem.objects.create(
+            name="Towel Factory 42",
+            address="42 Dolphin St",
+            country_code="US",
+            sector=["Apparel"],
+            raw_data=alternate_raw_data,
+            raw_json=parse_raw_data(alternate_raw_data),
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=alternate_source,
+            facility=self.contrib_facility,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.contrib_facility,
+            facility_list_item=alternate_item,
+            confidence=0.85,
+            results="",
+            is_active=True,
+        )
+
+        extended_fields = [
+            ("number_of_workers", {"min": 100, "max": 200}),
+            (
+                "parent_company",
+                {"name": "Alternate Parent", "raw_value": "Alternate Parent"},
+            ),
+            (
+                "facility_type",
+                {
+                    "raw_values": ["Alternate raw value"],
+                    "matched_values": [
+                        [None, None, "Alternate Facility Type", None]
+                    ],
+                },
+            ),
+            (
+                "processing_type",
+                {
+                    "raw_values": ["Alternate raw value"],
+                    "matched_values": [
+                        [None, None, None, "Alternate Processing Type"]
+                    ],
+                },
+            ),
+            ("product_type", {"raw_values": ["Alternate Product"]}),
+        ]
+        for field_name, value in extended_fields:
+            ExtendedField.objects.create(
+                field_name=field_name,
+                value=value,
+                contributor=self.contributor_two,
+                facility=self.contrib_facility,
+                facility_list_item=alternate_item,
+            )
+
+        params = "embed=1&contributors={}&q={}".format(
+            self.contributor.id, self.contrib_facility.id
+        )
+        response = self.get_facility_download(params)
+        headers = self.get_headers(response)
+        row_by_header = dict(zip(headers, self.get_rows(response)[0]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(headers.count("parent_company"), 1)
+        self.assertEqual(row_by_header["extra_1"], "data one")
+        self.assertEqual(row_by_header["extra_2"], "")
+        self.assertEqual(row_by_header["program_1_Name"], "Program One")
+        self.assertEqual(row_by_header["total_number_of_employees"], "250")
+
+        # Standard extended headers are always present in production shape,
+        # even when the embed owner has no values for them.
+        self.assertIn("number_of_workers", headers)
+        self.assertIn("processing_type_facility_type_raw", headers)
+        self.assertIn("facility_type", headers)
+        self.assertIn("processing_type", headers)
+        self.assertIn("product_type", headers)
+        self.assertEqual(row_by_header["number_of_workers"], "")
+        self.assertEqual(row_by_header["parent_company"], "")
+        self.assertEqual(row_by_header["facility_type"], "")
+        self.assertEqual(row_by_header["processing_type"], "")
+        self.assertEqual(row_by_header["product_type"], "")
+
+    def test_embed_joins_owner_extended_fields_and_ignores_others(self):
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=4,
+            column_name="number_of_workers",
+            display_name="Number of Workers",
+            visible=True,
+            searchable=True,
+        )
+        EmbedField.objects.create(
+            embed_config=self.embed_config,
+            order=5,
+            column_name="product_type",
+            display_name="Product Type",
+            visible=True,
+            searchable=True,
+        )
+        ExtendedField.objects.create(
+            field_name="number_of_workers",
+            value={"min": 100, "max": 100},
+            contributor=self.contributor,
+            facility=self.contrib_facility,
+            facility_list_item=self.contrib_list_item,
+        )
+        # Production embed downloads join every owner value with "|".
+        ExtendedField.objects.create(
+            field_name="number_of_workers",
+            value={"min": 900, "max": 900},
+            contributor=self.contributor,
+            facility=self.contrib_facility,
+            facility_list_item=self.contrib_list_item,
+            is_verified=True,
+        )
+        ExtendedField.objects.create(
+            field_name="parent_company",
+            value={"name": "Own Parent", "raw_value": "Own Parent"},
+            contributor=self.contributor,
+            facility=self.contrib_facility,
+            facility_list_item=self.contrib_list_item,
+        )
+
+        alternate_source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor_two,
+        )
+        alternate_item = FacilityListItem.objects.create(
+            name="Towel Factory 42",
+            address="42 Dolphin St",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=alternate_source,
+            facility=self.contrib_facility,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.contrib_facility,
+            facility_list_item=alternate_item,
+            confidence=0.85,
+            results="",
+            is_active=True,
+        )
+        ExtendedField.objects.create(
+            field_name="product_type",
+            value={"raw_values": ["Alternate Product"]},
+            contributor=self.contributor_two,
+            facility=self.contrib_facility,
+            facility_list_item=alternate_item,
+        )
+
+        params = "embed=1&contributors={}&q={}".format(
+            self.contributor.id, self.contrib_facility.id
+        )
+        response = self.get_facility_download(params)
+        headers = self.get_headers(response)
+        row_by_header = dict(zip(headers, self.get_rows(response)[0]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(row_by_header["number_of_workers"], "100|900")
+        self.assertEqual(row_by_header["parent_company"], "Own Parent")
+        self.assertEqual(row_by_header["product_type"], "")
+
     def test_extended_fields(self):
         self.create_extended_fields({"list_item_id": self.list_item.id})
         params = "q={}".format(self.facility.id)
@@ -714,7 +921,6 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "",
             "20",
-            "",
             "",
             "",
             "",

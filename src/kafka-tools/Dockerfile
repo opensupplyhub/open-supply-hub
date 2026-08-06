@@ -6,6 +6,6 @@ RUN wget https://archive.apache.org/dist/kafka/3.8.0/kafka_2.13-3.8.0.tgz
 RUN tar -xzf kafka_2.13-3.8.0.tgz
 RUN ln /opt/kafka_2.13-3.8.0/bin/kafka-topics.sh /bin/kafka-topics
 WORKDIR /opt/kafka_2.13-3.8.0/
-COPY ssl.config kafka.sh list.txt .
+COPY ssl.config kafka.sh fix_replication.sh list.txt ./
 
-RUN chmod +x kafka.sh
+RUN chmod +x kafka.sh fix_replication.sh
