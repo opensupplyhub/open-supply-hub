@@ -80,6 +80,7 @@ N/A
 - [ ] I have removed debug logs, commented-out code, and unused imports.
 - [ ] Any AI-assisted code (e.g., Claude) has been reviewed, understood, and adapted to fit our codebase.
 - [ ] I have considered backward compatibility and migrations where applicable.
+- [ ] The diff contains no secrets, internal document/spreadsheet/folder IDs, internal board or channel identifiers, internal policy thresholds, or staff contact details — internal values are externalized to runtime configuration (see "Public repository hygiene" in AGENTS.md).
 
 ### Testing & Validation
 
