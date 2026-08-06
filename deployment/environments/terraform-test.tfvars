@@ -18,19 +18,32 @@ api_production_locations_cache_max_ttl     = 60
 bastion_ami = "ami-03a25ed280b358f5b"
 bastion_instance_type = "t3.nano"
 
-rds_allocated_storage = "256"
+rds_allocated_storage = "400"
 rds_engine_version = "16"
 rds_parameter_group_family = "postgres16"
 rds_instance_type = "db.t3.2xlarge"
 rds_database_identifier = "opensupplyhub-enc-tst"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
+rds_storage_type = "gp3"
+rds_iops = 12000
 rds_storage_encrypted = true
+# ~80% of max_connections for db.t3.2xlarge (3604)
+rds_database_connections_alarm_threshold = "2880"
+# ~5% of 32 GiB RAM; ~10% of 400 GB storage
+rds_free_memory_threshold_bytes = "1600000000"
+rds_free_disk_threshold_bytes   = "40000000000"
 
 anonymized_database_instance_type = "db.t3.2xlarge"
 anonymized_database_identifier = "database-anonymizer"
 anonymized_database_schedule_expression = "cron(0 5 ? * SAT *)"
 anonymized_database_dump_enabled = true
+
+# Ephemeral GitHub Actions runner on CodeBuild for DB dump/restore jobs.
+# The CodeConnections connection ARN is provided via the private
+# ci-deployment repo tfvars (codebuild_github_runner_connection_arn)
+# after the one-time OAuth setup.
+codebuild_github_runner_enabled = true
 
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
@@ -53,6 +66,7 @@ cli_fargate_cpu = "2048"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
+gunicorn_workers        = "5"
 
 batch_default_ce_spot_fleet_bid_percentage = 60
 batch_ami_id = "ami-002e2fef4b94f8fd0"
@@ -80,3 +94,11 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.staging.servd.dev"
+
+# Owns the shared-account Chatbot Slack channel config (Dev/Test/Preprod).
+# Sibling SNS ARNs live in private ci-deployment Test tfvars (aws_chatbot_additional_sns_topic_arns).
+# Dev/Preprod set aws_chatbot_manage_channel_configuration = false.
+aws_chatbot_manage_channel_configuration = true

@@ -5,7 +5,9 @@ import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 
+import ContributionDate from '../../../../Shared/ContributionDate/ContributionDate';
 import { pluralizeContributorType } from '../../utils';
+import { LAST_CONTRIBUTED_LABEL } from '../PublicContributorsSection/constants';
 import ANONYMIZED_SECTION_TITLE from './constants';
 import anonymizedSectionStyles from './styles';
 
@@ -30,6 +32,17 @@ const AnonymizedSection = ({ classes, nonPublicContributors }) => (
                             contributor.count,
                         )}
                     </Typography>
+                    <div className={classes.anonymizedDate}>
+                        <Typography
+                            className={classes.anonymizedDateLabel}
+                            component="span"
+                        >
+                            {LAST_CONTRIBUTED_LABEL}:
+                        </Typography>
+                        <ContributionDate
+                            date={contributor.last_contributed_at}
+                        />
+                    </div>
                     {index === nonPublicContributors.length - 1 ? null : (
                         <Divider />
                     )}

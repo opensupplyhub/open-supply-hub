@@ -15,7 +15,7 @@ test('Footer component', () => {
 
     // Footer links
     const donateLink = screen.getByText('Donate');
-    expect(donateLink).toHaveAttribute('href', 'https://givebutter.com/opensupplyhub2022');
+    expect(donateLink).toHaveAttribute('href', 'https://info.opensupplyhub.org/resources/donations');
 
     const subscribeLink = screen.getByText('Subscribe');
     expect(subscribeLink).toHaveAttribute('href', 'https://share.hsforms.com/1bQwXClZUTjihXk3wt1SX2Abujql');

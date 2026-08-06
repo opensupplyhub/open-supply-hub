@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.views.decorators.cache import cache_page
 from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
 
@@ -6,6 +8,10 @@ from ...models.facility.facility_index import FacilityIndex
 
 @api_view(['GET'])
 @throttle_classes([])
+@cache_page(
+    settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
+    cache="view_cache",
+)
 def active_countries_count(_):
     """
     Returns a count of disctinct country codes for active facilities.

@@ -1,6 +1,11 @@
 SELECT
 	ame.uuid AS moderation_id,
-	ame.os_id AS os_id_value,
+	-- os_id is nulled by the SET_NULL FK when a facility is deleted or
+	-- merged. Fall back to os_id_snapshot (written once at approval and
+	-- never cleared) so the contribution record page keeps showing the
+	-- originally approved OS ID. See OSDEV-2696.
+	COALESCE(NULLIF(ame.os_id_snapshot, ''), ame.os_id) AS os_id_value,
+	NULLIF(ame.os_id_snapshot, '') AS os_id_snapshot,
 	ame.contributor_id,
 	ac.name AS contributor_name,
 	au.email  AS contributor_email,

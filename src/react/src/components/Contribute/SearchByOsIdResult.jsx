@@ -19,6 +19,7 @@ import { makeSearchByOsIdResultStyles } from '../../util/styles';
 import { useResetScrollPosition } from '../../util/hooks';
 import { productionLocationPropType } from '../../util/propTypes';
 
+import ModerationPauseBanner from '../ModerationPauseBanner';
 import BackToSearchButton from './BackToSearchButton';
 import SearchByOsIdNotFoundResult from './SearchByOsIdNotFoundResult';
 import SearchByOsIdSuccessResult from './SearchByOsIdSuccessResult';
@@ -71,6 +72,7 @@ const SearchByOsIdResult = ({
 
     return (
         <div className={classes.mainContainerStyles}>
+            <ModerationPauseBanner />
             <BackToSearchButton
                 label="Back to ID search"
                 handleBackToSearch={handleBackToSearchByOsId}

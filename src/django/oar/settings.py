@@ -188,7 +188,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
-    'watchman',
     'simple_history',
     'waffle',
     'api',
@@ -204,8 +203,8 @@ INSTALLED_APPS = [
 SITE_ID = 1
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_ADAPTER = "api.adapters.OARUserAccountAdapter"
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
@@ -280,7 +279,7 @@ MIDDLEWARE = [
     'waffle.middleware.WaffleMiddleware',
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
-    'api.middleware.OriginSourceMiddleware',
+    'api.middlewares.origin_source.OriginSourceMiddleware',
     'api.middleware.DarkVisitorsMiddleware',
 ]
 
@@ -352,6 +351,11 @@ AUTH_USER_MODEL = 'api.User'
 MEMCACHED_LOCATION = f"{os.getenv('CACHE_HOST')}:{os.getenv('CACHE_PORT')}"
 MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS = int(
     os.getenv('MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS', 60 * 10)
+)
+# Compressed payloads over this size are not cached, leaving headroom
+# below memcached's ~5 MB per-item limit for key and protocol overhead.
+VIEW_RESPONSE_CACHE_MAX_BYTES = int(
+    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 4 * 1024 * 1024)
 )
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
@@ -445,15 +449,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ((os.path.join(STATIC_ROOT, "static")),)
 STATICFILES_STORAGE = "spa.storage.SPAStaticFilesStorage"
-
-# Watchman
-# https://github.com/mwarkentin/django-watchman
-
-WATCHMAN_ERROR_CODE = 503
-WATCHMAN_CHECKS = (
-    'watchman.checks.databases',
-    'watchman.checks.caches',
-)
 
 # django-ecsmanage
 # https://github.com/azavea/django-ecsmanage
@@ -696,13 +691,21 @@ KAFKA_TOPIC_DEDUPE_BASIC_NAME = os.getenv('KAFKA_TOPIC_DEDUPE_BASIC_NAME', '') #
 # Django Bleach settings
 # https://django-bleach.readthedocs.io/en/latest/
 BLEACH_ALLOWED_TAGS = [
-    'p', 'br', 'em', 'strong', 'ins', 'del', 'code', 'sup', 'sub',
+    'p', 'br', 'em', 'strong', 'ins', 'del', 'u', 's', 'code', 'sup', 'sub',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre',
-    'ul', 'ol', 'li', 'a',
+    'ul', 'ol', 'li', 'a', 'span',
 ]
 
 BLEACH_ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'target', 'title'],
+    'a': ['href', 'target', 'title', 'class'],
+    'p': ['class'],
+    'span': ['class'],
+    'strong': ['class'],
+    'em': ['class'],
+    'u': ['class'],
+    's': ['class'],
+    'sub': ['class'],
+    'sup': ['class'],
 }
 
 BLEACH_STRIP_TAGS = True

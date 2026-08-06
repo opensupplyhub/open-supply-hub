@@ -47,6 +47,8 @@ class FacilityListQueryParams:
     CONTRIBUTOR = 'contributor'
     STATUS = 'status'
     MATCH_RESPONSIBILITY = 'match_responsibility'
+    ORDERING = 'ordering'
+    ID_GT = 'id__gt'
 
 
 class FacilityListItemsQueryParams:
@@ -216,6 +218,9 @@ class APIErrorMessages:
     TEMPORARILY_UNAVAILABLE = (
         'The endpoint is temporarily unavailable. Please try again later.'
     )
+    FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
+    LIST_ALREADY_INACTIVE = 'This list is already inactive.'
+    LIST_NOT_APPROVED = 'Only an approved list can be deactivated.'
 
 
 class FacilitiesDownloadSettings:
@@ -260,6 +265,9 @@ class APIV1LocationContributionErrorMessages:
         'A valid address could not be found for the provided country and '
         'address. This may be due to incorrect, incomplete, or ambiguous '
         'information. Please verify and try again.'
+    )
+    POSSIBLE_DUPLICATE_SUBMISSION = (
+        'You recently submitted a very similar production location.'
     )
 
     @staticmethod
@@ -310,6 +318,15 @@ MIT_LIVING_WAGE_COUNTRY_CODES = ('US', 'PR', 'VI')
 # entry behaves consistently no matter which caller warmed it.
 PARTNER_FIELD_LIST_CACHE_TTL_SECONDS = 60
 
+# Cache key + TTL (seconds) for the contributors whose identity must be hidden.
+MASKED_CONTRIBUTOR_IDS_CACHE_KEY = 'masked_contributor_ids'
+MASKED_CONTRIBUTOR_IDS_CACHE_TTL_SECONDS = 60
+
+# Label shown in place of a masked contributor's name in paid products. The
+# real contributor type (e.g. Union) is replaced by this neutral label in the
+# response only; the stored `Contributor.contrib_type` is never changed.
+MASKED_CONTRIBUTOR_LABEL = 'Other'
+
 CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_created_at', 'created_at'),
     ('claim_name_in_native_language', 'facility_name_native_language'),
@@ -341,7 +358,6 @@ CLAIMED_DOWNLOAD_FIELDS_MAPPING = [
     ('claim_parent_company', 'parent_company_name'),
     ('claim_number_of_workers', 'facility_workers_count'),
     ('claim_opening_date', 'opening_date'),
-    ('claim_closing_date', 'closing_date'),
     (
         'claim_estimated_annual_throughput_kg_year',
         'estimated_annual_throughput',

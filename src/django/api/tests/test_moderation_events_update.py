@@ -11,6 +11,9 @@ from api.models import (
     Contributor,
 )
 from api.signals import moderation_event_update_handler_for_opensearch
+from api.serializers.v1.moderation_event_update_serializer import (
+    ModerationEventUpdateSerializer,
+)
 
 
 @override_settings(DEBUG=True)
@@ -94,6 +97,60 @@ class ModerationEventsUpdateTest(APITestCase):
 
         self.assertEqual(404, response.status_code)
 
+    def test_moderation_event_os_id_falls_back_to_snapshot(self):
+        # When the live os FK has been nulled (facility deleted/merged) but the
+        # snapshot is retained, the PATCH response should surface the snapshot
+        # as os_id (mirroring the GET endpoints) and expose os_id_snapshot.
+        # See OSDEV-2920.
+        self.moderation_event.os = None
+        self.moderation_event.os_id_snapshot = 'US2020123ABC123'
+        self.moderation_event.save()
+
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "APPROVED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertEqual('US2020123ABC123', body['os_id'])
+        self.assertEqual('US2020123ABC123', body['os_id_snapshot'])
+
+    def test_moderation_event_os_id_prefers_snapshot_over_live_fk(self):
+        # Mirror GET's COALESCE(NULLIF(os_id_snapshot, ''), os_id): when both a
+        # live os FK and a differing snapshot are present, the snapshot wins.
+        serializer = ModerationEventUpdateSerializer()
+
+        class _Obj:
+            os_id = 'US2020111LIVE11'
+            os_id_snapshot = 'US2020999SNAP99'
+
+        self.assertEqual('US2020999SNAP99', serializer.get_os_id(_Obj()))
+
+    def test_moderation_event_os_id_null_without_snapshot_or_facility(self):
+        # No live facility and no snapshot -> both null (not empty string).
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({"status": "APPROVED"}),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertIsNone(body['os_id'])
+        self.assertIsNone(body['os_id_snapshot'])
+
     def test_moderation_event_invalid_status(self):
         self.client.login(
             email=self.superemail,
@@ -149,6 +206,64 @@ class ModerationEventsUpdateTest(APITestCase):
             self.moderation_event.action_reason_text_raw,
             "Raw reason text with 30 characters"
         )
+
+    def test_moderation_event_rejected_sanitizes_raw_html(self):
+        self.client.login(
+            email=self.superemail,
+            password=self.superpassword
+        )
+        quill_html = (
+            '<blockquote>Quote</blockquote>'
+            '<pre data-language="plain">code</pre>'
+            '<p class="ql-direction-rtl">'
+            'text <u class="ql-font-serif">underlined</u> '
+            '<s class="ql-font-monospace">struck</s> '
+            '<span class="ql-font-monospace">mono</span> '
+            '<strong class="ql-font-serif">bold</strong> '
+            '<em class="ql-font-monospace">italic</em> '
+            '<sub class="ql-font-serif">low</sub>'
+            '<sup class="ql-font-monospace">high</sup> '
+            '<a href="https://example.com" class="ql-link">link</a>'
+            '<script>alert(1)</script></p>'
+        )
+        response = self.client.patch(
+            "/api/v1/moderation-events/{}/"
+            .format("f65ec710-f7b9-4f50-b960-135a7ab24ee6"),
+            data=json.dumps({
+                "status": "REJECTED",
+                "action_reason_text_cleaned": (
+                    "Cleaned reason text with 30 characters"
+                ),
+                "action_reason_text_raw": quill_html
+            }),
+            content_type="application/json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.moderation_event.refresh_from_db()
+        raw = self.moderation_event.action_reason_text_raw
+
+        # Quill formatting tags survive sanitization.
+        self.assertIn('<blockquote>Quote</blockquote>', raw)
+        self.assertIn('<pre>code</pre>', raw)
+        # class survives on every inline tag allowed in
+        # BLEACH_ALLOWED_ATTRIBUTES.
+        self.assertIn('class="ql-direction-rtl"', raw)
+        self.assertIn('<u class="ql-font-serif">underlined</u>', raw)
+        self.assertIn('<s class="ql-font-monospace">struck</s>', raw)
+        self.assertIn(
+            '<span class="ql-font-monospace">mono</span>', raw
+        )
+        self.assertIn('<strong class="ql-font-serif">bold</strong>', raw)
+        self.assertIn('<em class="ql-font-monospace">italic</em>', raw)
+        self.assertIn('<sub class="ql-font-serif">low</sub>', raw)
+        self.assertIn('<sup class="ql-font-monospace">high</sup>', raw)
+        # <a> keeps href and class.
+        self.assertIn('href="https://example.com"', raw)
+        self.assertIn('class="ql-link"', raw)
+        # Disallowed markup is stripped.
+        self.assertNotIn('<script', raw)
+        self.assertNotIn('data-language', raw)
 
     def test_moderation_event_rejected_with_invalid_reason_text(self):
         self.client.login(

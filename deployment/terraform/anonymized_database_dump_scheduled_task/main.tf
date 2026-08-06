@@ -122,8 +122,9 @@ module "database_anonymizer_task" {
 }
 
 module "ecr_repository_database_anonymizer" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+  source = "../modules/ecr-repository"
 
   repository_name         = "${lower(replace(var.project, " ", ""))}-anonymized-database-dump-${lower(var.environment)}"
+  image_tag_mutability    = "IMMUTABLE"
   attach_lifecycle_policy = true
 }

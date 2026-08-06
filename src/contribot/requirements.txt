@@ -1,0 +1,11 @@
+boto3>=1.35
+requests>=2.33
+pandas>=2.2
+openpyxl>=3.1.5
+google-api-python-client>=2.150
+google-auth>=2.30
+cleanco>=2.3
+rapidfuzz>=3.5
+Jinja2>=3.1.5
+Unidecode>=1.4
+tqdm>=4.68

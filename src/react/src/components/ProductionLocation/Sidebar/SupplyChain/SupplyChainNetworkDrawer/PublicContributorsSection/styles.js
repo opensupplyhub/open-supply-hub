@@ -60,5 +60,21 @@ export default () =>
             fontSize: '1.15rem',
             color: COLOURS.NEAR_BLACK,
             fontWeight: 500,
+            marginBottom: '4px',
+        }),
+        listDate: Object.freeze({
+            marginTop: '2px',
+        }),
+        lastContributed: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '1rem',
+            color: COLOURS.DARK_GREY,
+            marginBottom: '8px',
+        }),
+        lastContributedLabel: Object.freeze({
+            fontSize: '1rem',
+            color: COLOURS.DARK_GREY,
         }),
     });

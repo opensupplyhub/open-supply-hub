@@ -12,7 +12,13 @@ from api.constants import OriginSource
 
 class FacilityIndex(models.Model):
     """
-    Stores denormalized indexes for the facility's name, id, contributors_count
+    Stores denormalized indexes for the facility name, id, and
+    contributors_count.
+
+    When this model changes (new column, renamed field,
+    etc.), also update index_facilities() SQL (src/django/sqls/) and, if
+    targeted backfills are used, FACILITY_INDEX_FIELD_SPECS in
+    api/facility_index_backfill/specs.py.
     """
     id = models.CharField(
         max_length=32,

@@ -218,6 +218,7 @@ function NonVectorTileFilterSidebarFacilitiesTab({
                         setLoginRequiredDialogIsOpen={
                             setLoginRequiredDialogIsOpen
                         }
+                        anonymisedOnly={get(data, 'anonymised_only', false)}
                     />
                 </div>
             </Typography>

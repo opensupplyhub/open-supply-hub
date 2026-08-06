@@ -86,13 +86,13 @@ const FacilityDetailsContributorsDrawer = ({
                                 >
                                     {contributor.contributor_name}
                                 </Link>
-                                {contributor.list_names.map((listName, i) => (
+                                {contributor.lists.map((list, i) => (
                                     <Typography
-                                        key={`${
-                                            contributor.id + i
-                                        } ${listName}`}
+                                        key={`${contributor.id + i} ${
+                                            list.name
+                                        }`}
                                     >
-                                        {listName}
+                                        {list.name}
                                     </Typography>
                                 ))}
                             </div>

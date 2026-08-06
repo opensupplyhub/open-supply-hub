@@ -30,6 +30,8 @@ from api.moderation_event_actions.creation.location_contribution \
     .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.serializers.v1.duplicate_override_query_param_serializer \
+    import DuplicateOverrideQueryParamSerializer
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
 from api.models.partner_field import PartnerField
@@ -193,6 +195,24 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        duplicate_override_serializer = DuplicateOverrideQueryParamSerializer(
+            data=request.query_params
+        )
+        if not duplicate_override_serializer.is_valid():
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
+                    'errors': [{
+                        'field': 'duplicate_override',
+                        'detail': str(
+                            duplicate_override_serializer
+                            .errors['duplicate_override'][0]
+                        )
+                    }]
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
@@ -200,7 +220,11 @@ class ProductionLocations(ViewSet):
         event_dto = CreateModerationEventDTO(
             contributor=request.user.contributor,
             raw_data=request.data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            duplicate_override=(
+                duplicate_override_serializer
+                .validated_data['duplicate_override']
+            ),
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 
@@ -301,7 +325,9 @@ class ProductionLocations(ViewSet):
         """
         all_partner_fields = get_cached_all_partner_fields()
         partner_field_names = [
-            field.name for field in all_partner_fields if field.active
+            field.name
+            for field in all_partner_fields
+            if field.active and field.available_in_api
         ]
 
         if not partner_field_names:

@@ -31,7 +31,10 @@ from api.constants import (
 )
 from api.exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
-from ...mail import send_facility_list_rejection_email
+from ...mail import (
+    send_facility_list_rejection_email,
+    send_facility_list_submission_confirmation_email,
+)
 from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_list import FacilityList
 from ...models.facility.facility_list_item import FacilityListItem
@@ -173,6 +176,8 @@ class FacilityListViewSet(ModelViewSet):
             source_type=Source.LIST,
             facility_list=new_list)
         log.info(f'[List Upload] Source created. ID {source.id}.')
+
+        send_facility_list_submission_confirmation_email(request, new_list)
 
         if not DEBUG:
             submit_parse_job(new_list)

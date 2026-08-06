@@ -223,9 +223,8 @@
           "type": "date",
           "format": "yyyy"
         },
-        "closed_at": {
-          "type": "date",
-          "format": "yyyy-MM"
+        "is_closed": {
+          "type": "boolean"
         },
         "estimated_annual_throughput": {
           "type": "float"

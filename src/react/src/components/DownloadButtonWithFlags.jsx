@@ -10,6 +10,7 @@ function DownloadButtonWithFlags({
     isSameContributor,
     userAllowedRecords,
     setLoginRequiredDialogIsOpen,
+    anonymisedOnly,
 }) {
     const count = facilitiesCount == null ? 0 : facilitiesCount;
 
@@ -18,7 +19,10 @@ function DownloadButtonWithFlags({
             flag={PRIVATE_INSTANCE}
             alternative={
                 <DownloadFacilitiesButton
-                    disabled={embed && count > FACILITIES_DOWNLOAD_LIMIT}
+                    disabled={
+                        anonymisedOnly ||
+                        (embed && count > FACILITIES_DOWNLOAD_LIMIT)
+                    }
                     upgrade={
                         !embed &&
                         !isSameContributor &&
@@ -28,15 +32,17 @@ function DownloadButtonWithFlags({
                     setLoginRequiredDialogIsOpen={setLoginRequiredDialogIsOpen}
                     facilitiesCount={count}
                     isSameContributor={isSameContributor}
+                    anonymisedOnly={anonymisedOnly}
                 />
             }
         >
             <DownloadFacilitiesButton
-                disabled={count > FACILITIES_DOWNLOAD_LIMIT}
+                disabled={anonymisedOnly || count > FACILITIES_DOWNLOAD_LIMIT}
                 userAllowedRecords={FACILITIES_DOWNLOAD_LIMIT}
                 setLoginRequiredDialogIsOpen={setLoginRequiredDialogIsOpen}
                 facilitiesCount={count}
                 isSameContributor={isSameContributor}
+                anonymisedOnly={anonymisedOnly}
             />
         </FeatureFlag>
     );
@@ -48,11 +54,13 @@ DownloadButtonWithFlags.propTypes = {
     isSameContributor: bool,
     userAllowedRecords: number.isRequired,
     setLoginRequiredDialogIsOpen: func.isRequired,
+    anonymisedOnly: bool,
 };
 
 DownloadButtonWithFlags.defaultProps = {
     facilitiesCount: 0,
     isSameContributor: false,
+    anonymisedOnly: false,
 };
 
 export default DownloadButtonWithFlags;

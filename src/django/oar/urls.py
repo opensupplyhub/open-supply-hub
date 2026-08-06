@@ -27,7 +27,7 @@ from api.views.stripe.download_locations_checkout_webhook_view \
      import DownloadLocationsCheckoutWebhookView
 from api.admin import admin_site
 from api.facilities_download_view_set import FacilitiesDownloadViewSet
-from web.views import environment
+from web.views import environment, health_check
 
 from rest_framework import routers, permissions
 from drf_yasg.views import get_schema_view
@@ -83,6 +83,11 @@ v1_custom_routes = [
 
 public_apis = [
     path('api/', include(router.urls)),
+    path(
+        'api/facility-lists/<int:pk>/deactivate/',
+        views.FacilityListDeactivateView.as_view(),
+        name='facility-list-deactivate',
+    ),
     path('api/contributors/active_count/', views.active_contributors_count,
          name='active_contributors_count'),
     path('api/contributors/', views.all_contributors,
@@ -106,9 +111,10 @@ public_apis = [
     path('api/claim-statuses/', views.claim_statuses, name='claim_statuses'),
     path('api/facility-processing-types/', views.facility_processing_types,
          name='facility_processing_types'),
-    path('api/parent-companies/', views.parent_companies,
+    path('api/parent-companies/', views.ParentCompanies.as_view(),
          name='parent_companies'),
-    path('api/product-types/', views.product_types, name='product_types'),
+    path('api/product-types/', views.ProductTypes.as_view(),
+         name='product_types'),
     path('api/sectors/', views.sectors, name='sectors'),
     path(
         'api/partner-fields/',
@@ -160,7 +166,7 @@ internal_apis = [
     path('admin/', admin_site.urls),
     path('accounts/', include('allauth.urls')),
     path('ckeditor5/', include('django_ckeditor_5.urls')),
-    path('health-check/', include('watchman.urls')),
+    path('health-check/', health_check, name='health-check'),
     path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('dj_rest_auth.urls')),
     path(

@@ -5,6 +5,12 @@ import requests
 
 ZERO_RESULTS = "ZERO_RESULTS"
 GEOCODING_URL = "https://maps.googleapis.com/maps/api/geocode/json"
+# Bounds how long a hung geocoding request can stall a caller. Matters more
+# now that DuplicateSubmissionProcessor holds a per-contributor DB lock
+# across this call for SLC CREATE submissions - without a timeout, a hung
+# request here would block that contributor's other submissions instead of
+# just this one.
+GEOCODING_REQUEST_TIMEOUT_SECONDS = 10
 
 
 def create_geocoding_params(address, country_code):
@@ -77,7 +83,9 @@ def find_valid_country_code(data, country_code):
 
 def geocode_address(address, country_code, validate_country=True):
     params = create_geocoding_params(address, country_code)
-    r = requests.get(GEOCODING_URL, params=params)
+    r = requests.get(
+        GEOCODING_URL, params=params, timeout=GEOCODING_REQUEST_TIMEOUT_SECONDS
+    )
 
     if r.status_code != 200:
         raise ValueError("Geocoding request failed with status {}"

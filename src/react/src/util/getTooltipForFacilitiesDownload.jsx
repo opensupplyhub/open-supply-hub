@@ -14,8 +14,11 @@ const getTooltipForFacilitiesDownload = ({
     classes,
     facilitiesCount,
     isSameContributor,
+    anonymisedOnly,
 }) => {
     const tooltipTexts = {
+        anonymisedOnly:
+            'Downloads are not available for anonymised contributor data. This data remains viewable on individual facility profiles but is excluded from data downloads and the API to help protect contributors and workers.',
         availableDownloads: `Registered users can download up to ${FREE_FACILITIES_DOWNLOAD_LIMIT} production
         locations annually for free. This account has ${userAllowedRecords} production locations available to
         download. Additional downloads are available for purchase.`,
@@ -29,6 +32,14 @@ const getTooltipForFacilitiesDownload = ({
         sameContributor:
             'You are downloading data for the same contributor as your account. Downloading data for the same contributor is free.',
     };
+
+    if (anonymisedOnly) {
+        return (
+            <p className={classes.downloadTooltip}>
+                {tooltipTexts.anonymisedOnly}
+            </p>
+        );
+    }
 
     // Determine base tooltip.
     let tooltipText;

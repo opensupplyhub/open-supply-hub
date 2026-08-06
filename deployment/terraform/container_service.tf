@@ -82,11 +82,12 @@ resource "aws_lb_target_group" "app" {
   name = "tg${local.short}App"
 
   health_check {
-    healthy_threshold   = "3"
-    interval            = "30"
-    matcher             = "200"
-    protocol            = "HTTP"
-    timeout             = "3"
+    healthy_threshold = "3"
+    interval          = "30"
+    matcher           = "200"
+    protocol          = "HTTP"
+    timeout           = "3"
+    # App liveness only. See doc/ops/monitoring.md.
     path                = "/health-check/"
     unhealthy_threshold = "2"
   }
@@ -108,7 +109,7 @@ resource "aws_lb_listener" "app" {
   load_balancer_arn = aws_lb.app.id
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-2023-04"
   certificate_arn   = module.cert_lb.arn
 
   default_action {
@@ -155,7 +156,7 @@ data "template_file" "app" {
     postgres_user                                 = var.rds_database_username
     postgres_password                             = var.rds_database_password
     postgres_db                                   = var.rds_database_name
-    gunicorn_workers                              = 1
+    gunicorn_workers                              = var.gunicorn_workers
     gunicorn_worker_timeout                       = var.gunicorn_worker_timeout
     google_server_side_api_key                    = var.google_server_side_api_key
     google_client_side_api_key                    = var.google_client_side_api_key

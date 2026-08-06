@@ -9,6 +9,17 @@
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_usage.py\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "if": "Bash(git push:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/check-platform-dependencies.py",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

@@ -91,46 +91,85 @@ resource "aws_s3_bucket_public_access_block" "files" {
   restrict_public_buckets = true
 }
 
+data "aws_iam_policy_document" "files" {
+  statement {
+    sid    = "denyInsecureTransport"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      aws_s3_bucket.files.arn,
+      "${aws_s3_bucket.files.arn}/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values = [
+        "false"
+      ]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "files" {
+  bucket = aws_s3_bucket.files.id
+  policy = data.aws_iam_policy_document.files.json
+}
+
 #
 # ECR resources
 #
 module "ecr_repository_app" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+  source = "./modules/ecr-repository"
 
   repository_name = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}"
 
+  image_tag_mutability    = "IMMUTABLE"
   attach_lifecycle_policy = true
 }
 
 module "ecr_repository_app_dd" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+  source = "./modules/ecr-repository"
 
   repository_name = "${lower(replace(var.project, " ", ""))}-deduplicate-${lower(var.environment)}"
 
+  image_tag_mutability    = "IMMUTABLE"
   attach_lifecycle_policy = true
 }
 
 
 module "ecr_repository_batch" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+  source = "./modules/ecr-repository"
 
   repository_name = "${lower(replace(var.project, " ", ""))}-batch-${lower(var.environment)}"
 
+  image_tag_mutability    = "IMMUTABLE"
   attach_lifecycle_policy = true
 }
 
 module "ecr_repository_kafka" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+  source = "./modules/ecr-repository"
 
   repository_name = "${lower(replace(var.project, " ", ""))}-kafka-${lower(var.environment)}"
 
+  image_tag_mutability    = "IMMUTABLE"
   attach_lifecycle_policy = true
 }
 
 module "ecr_repository_logstash" {
-  source = "github.com/azavea/terraform-aws-ecr-repository?ref=1.0.0"
+  source = "./modules/ecr-repository"
 
   repository_name = "${lower(replace(var.project, " ", ""))}-logstash-${lower(var.environment)}"
 
+  image_tag_mutability    = "IMMUTABLE"
   attach_lifecycle_policy = true
 }

@@ -33,6 +33,7 @@ from .facility.facility_activity_report_view_set import (
 from .facility.facility_claim_view_set import FacilityClaimViewSet
 from .facility.facilities_view_set import FacilitiesViewSet
 from .facility.facility_list_view_set import FacilityListViewSet
+from .facility.facility_list_deactivate_view import FacilityListDeactivateView
 from .facility.facility_match_view_set import FacilityMatchViewSet
 from .facility.facility_parameters import (
     facility_parameters,
@@ -69,8 +70,8 @@ from .make_report import (
     _report_hubspot_error_to_rollbar,
 )
 from .number_of_workers_ranges import number_of_workers_ranges
-from .parent_companies import parent_companies
-from .product_types import product_types
+from .parent_companies import ParentCompanies
+from .product_types import ProductTypes
 from .sectors import sectors
 from .claim_statuses import claim_statuses
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet

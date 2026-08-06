@@ -76,13 +76,14 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.2.0"
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.3.0"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
   engine_version              = var.rds_engine_version
   instance_type               = var.rds_instance_type
   storage_type                = var.rds_storage_type
+  iops                        = var.rds_iops
   database_identifier         = var.rds_database_identifier
   database_name               = var.rds_database_name
   database_username           = var.rds_database_username
@@ -103,14 +104,15 @@ module "database_enc" {
   deletion_protection         = var.rds_deletion_protection
   snapshot_identifier         = var.snapshot_identifier
 
-  alarm_cpu_threshold                = var.rds_cpu_threshold_percent
-  alarm_disk_queue_threshold         = var.rds_disk_queue_threshold
-  alarm_free_disk_threshold          = var.rds_free_disk_threshold_bytes
-  alarm_free_memory_threshold        = var.rds_free_memory_threshold_bytes
-  alarm_cpu_credit_balance_threshold = var.rds_cpu_credit_balance_threshold
-  alarm_actions                      = [aws_sns_topic.global.arn]
-  ok_actions                         = [aws_sns_topic.global.arn]
-  insufficient_data_actions          = [aws_sns_topic.global.arn]
+  alarm_cpu_threshold                  = var.rds_cpu_threshold_percent
+  alarm_disk_queue_threshold           = var.rds_disk_queue_threshold
+  alarm_free_disk_threshold            = var.rds_free_disk_threshold_bytes
+  alarm_free_memory_threshold          = var.rds_free_memory_threshold_bytes
+  alarm_cpu_credit_balance_threshold   = var.rds_cpu_credit_balance_threshold
+  alarm_database_connections_threshold = var.rds_database_connections_alarm_threshold
+  alarm_actions                        = [aws_sns_topic.global.arn]
+  ok_actions                           = [aws_sns_topic.global.arn]
+  insufficient_data_actions            = [aws_sns_topic.global.arn]
 
   project     = var.project
   environment = var.environment

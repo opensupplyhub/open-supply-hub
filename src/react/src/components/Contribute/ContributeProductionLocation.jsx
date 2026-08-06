@@ -7,6 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
+import ModerationPauseBanner from '../ModerationPauseBanner';
 import SearchByOsIdTab from './SearchByOsIdTab';
 import SearchByNameAndAddressTab from './SearchByNameAndAddressTab';
 import RequireAuthNotice from '../RequireAuthNotice';
@@ -63,6 +64,7 @@ const ContributeProductionLocation = ({
 
     return (
         <div className={classes.mainContainerStyles}>
+            <ModerationPauseBanner />
             <Typography component="h1" className={classes.titleStyles}>
                 {TITLE}
             </Typography>

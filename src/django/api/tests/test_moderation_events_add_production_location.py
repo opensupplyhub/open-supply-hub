@@ -12,6 +12,7 @@ from api.models.facility.facility_match_temp import FacilityMatchTemp
 from api.models.source import Source
 from api.models.partner_field import PartnerField
 from api.models.extended_field import ExtendedField
+from api.models.moderation_event import ModerationEvent
 from api.tests.base_moderation_events_production_location_test import (
     BaseModerationEventsProductionLocationTest,
 )
@@ -90,6 +91,65 @@ class ModerationEventsAddProductionLocationTest(
         )
 
         self.assert_success_response(response, 201, 'NEW_LOCATION')
+
+    def test_approval_sets_os_id_snapshot(self):
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(201, response.status_code)
+        event = ModerationEvent.objects.get(uuid=self.moderation_event_id)
+        self.assertEqual(event.os_id_snapshot, response.data["os_id"])
+        self.assertEqual(event.os_id_snapshot, event.os_id)
+
+    def test_os_id_snapshot_is_not_overwritten_on_reapproval(self):
+        """
+        Re-approving an event (admin reset of status to PENDING followed by
+        a second approval) must not overwrite the os_id_snapshot captured
+        at first approval — that is the audit trail.
+        """
+        original_snapshot = 'US1900000ORIGINAL'
+        self.moderation_event.os_id_snapshot = original_snapshot
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(201, response.status_code)
+        event = ModerationEvent.objects.get(uuid=self.moderation_event_id)
+        self.assertEqual(event.os_id_snapshot, original_snapshot)
+        self.assertNotEqual(event.os_id_snapshot, event.os_id)
+
+    def test_os_id_snapshot_persists_when_os_id_is_nulled(self):
+        """
+        Simulates the SET_NULL cascade that fires on the os FK during a
+        facility merge/delete: os_id is nulled (bypassing ORM signals),
+        but os_id_snapshot must remain to preserve the audit trail.
+        """
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(201, response.status_code)
+        os_id = response.data["os_id"]
+
+        ModerationEvent.objects.filter(
+            uuid=self.moderation_event_id
+        ).update(os_id=None)
+
+        event = ModerationEvent.objects.get(uuid=self.moderation_event_id)
+        self.assertIsNone(event.os_id)
+        self.assertEqual(event.os_id_snapshot, os_id)
 
     def test_successful_email_sending_for_new_location_created_from_slc_source(
             self):

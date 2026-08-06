@@ -159,6 +159,17 @@ class ModerationEvent(models.Model):
         help_text='Raw version of the action reason text.'
     )
 
+    os_id_snapshot = models.CharField(
+        max_length=32,
+        blank=True,
+        default='',
+        help_text=(
+            'OS ID captured at first approval. Written once and never '
+            'overwritten; persists through facility deletion or merging, '
+            'unlike the os FK (on_delete=SET_NULL).'
+        )
+    )
+
     backfilled_fields = ArrayField(
         models.CharField(max_length=50),
         default=list,

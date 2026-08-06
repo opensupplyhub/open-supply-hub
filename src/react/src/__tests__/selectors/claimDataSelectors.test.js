@@ -98,7 +98,14 @@ describe('getClaimDisplayData', () => {
         expect(contributorUserId).toBe(99);
     });
 
-    it('prefers approved_at for claimedAt', () => {
+    it('prefers updated_at for claimedAt when present (OSDEV-2679)', () => {
+        const { claimedAt } = getClaimDisplayData(
+            makeState(makeClaimInfo({ updated_at: '2023-09-30' })),
+        );
+        expect(claimedAt).toBe('2023-09-30');
+    });
+
+    it('prefers approved_at for claimedAt when updated_at is absent', () => {
         const { claimedAt } = getClaimDisplayData(makeState(makeClaimInfo()));
         expect(claimedAt).toBe('2023-05-15');
     });

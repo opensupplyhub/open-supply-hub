@@ -15,7 +15,9 @@ on:
 
 jobs:
   save-anonymized-db:
-    runs-on: self-hosted
+    # Ephemeral GitHub Actions runner on AWS CodeBuild (Test account); the
+    # project is managed by deployment/terraform/codebuild_github_runner.
+    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
     environment: Test
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}

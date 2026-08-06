@@ -938,9 +938,10 @@ class DatabaseSynchronizer:
 
     def __setup_source_database_connection(self):
         '''Set up database connection for source.'''
-        # Configure source database.
+        # Copy the normalized default config so runtime-added aliases get
+        # Django's required keys (OPTIONS, TIME_ZONE, CONN_MAX_AGE, etc.).
         settings.DATABASES['source'] = {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            **settings.DATABASES['default'],
             'NAME': self.__source_config['NAME'],
             'USER': self.__source_config['USER'],
             'PASSWORD': self.__source_config['PASSWORD'],

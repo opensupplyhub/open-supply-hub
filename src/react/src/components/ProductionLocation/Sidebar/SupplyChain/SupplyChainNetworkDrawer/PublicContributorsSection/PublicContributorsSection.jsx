@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 
 import { makeProfileRouteLink } from '../../../../../../util/util';
-import UPLOADED_VIA_LIST_LABEL from './constants';
+import ContributionDate from '../../../../Shared/ContributionDate/ContributionDate';
+import { UPLOADED_VIA_LIST_LABEL, LAST_CONTRIBUTED_LABEL } from './constants';
 import publicContributorsSectionStyles from './styles';
 
 const PublicContributorsSection = ({ classes, publicContributors }) => (
@@ -29,32 +30,43 @@ const PublicContributorsSection = ({ classes, publicContributors }) => (
                             {contributor.contributor_type}
                         </Typography>
                     )}
-                    {contributor.list_names &&
-                        contributor.list_names
-                            .map((name, i) => ({
-                                name,
-                                key: `${contributor.id}-${i}`,
-                            }))
-                            .filter(({ name }) => name)
-                            .map(({ name: listName, key }) => (
-                                <div key={key} className={classes.listEntry}>
-                                    <Typography
-                                        className={classes.listEntryLabel}
-                                        component="p"
-                                    >
-                                        <ListIcon
-                                            className={classes.listIcon}
-                                        />
-                                        {UPLOADED_VIA_LIST_LABEL}
-                                    </Typography>
-                                    <Typography
-                                        className={classes.listName}
-                                        component="p"
-                                    >
-                                        {listName}
-                                    </Typography>
+                    {contributor.lists.length === 0 ? (
+                        <div className={classes.lastContributed}>
+                            <Typography
+                                className={classes.lastContributedLabel}
+                                component="span"
+                            >
+                                {LAST_CONTRIBUTED_LABEL}:
+                            </Typography>
+                            <ContributionDate
+                                date={contributor.last_contributed_at}
+                            />
+                        </div>
+                    ) : (
+                        contributor.lists.map(list => (
+                            <div
+                                key={`${contributor.id}-${list.name}`}
+                                className={classes.listEntry}
+                            >
+                                <Typography
+                                    className={classes.listEntryLabel}
+                                    component="p"
+                                >
+                                    <ListIcon className={classes.listIcon} />
+                                    {UPLOADED_VIA_LIST_LABEL}
+                                </Typography>
+                                <Typography
+                                    className={classes.listName}
+                                    component="p"
+                                >
+                                    {list.name}
+                                </Typography>
+                                <div className={classes.listDate}>
+                                    <ContributionDate date={list.uploaded_at} />
                                 </div>
-                            ))}
+                            </div>
+                        ))
+                    )}
                 </div>
             ))}
         </div>
