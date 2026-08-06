@@ -19,6 +19,7 @@ const toDrawerContribution = (item, value) => ({
     sourceName: item.contributor_name || null,
     date: item.created_at || null,
     userId: item.contributor_id != null ? item.contributor_id : undefined,
+    provenance: item.provenance || null,
 });
 
 const getStatusLabel = isFromClaim =>
@@ -402,6 +403,7 @@ const buildDataCenterDataPoint = (data, field) => {
         sourceName: item.contributor_name || null,
         date: item.created_at || null,
         userId: item.contributor_id != null ? item.contributor_id : undefined,
+        provenance: item.provenance || null,
     });
 
     const promotedContribution = toContribution(values[0]);

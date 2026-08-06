@@ -43,6 +43,10 @@ from api.helpers.data_center import is_data_center
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
+    # Extended-field entries on the details endpoint carry the per-row
+    # provenance of the FacilityListItem they came from (OSDEV-3073).
+    include_extended_field_provenance = True
+
     other_names = SerializerMethodField()
     other_addresses = SerializerMethodField()
     other_locations = SerializerMethodField()
