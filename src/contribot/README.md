@@ -84,24 +84,25 @@ On each run, `fetch_lists`:
 
 ### Secrets Manager
 
-Store sensitive values in AWS Secrets Manager. Lambdas receive each secret's ARN as an environment variable and load the value at runtime via `GetSecretValue`.
+Store sensitive values in AWS Secrets Manager. Each Lambda receives only the secret ARNs it needs and loads values at runtime via `GetSecretValue`.
 
-| Secret (Secrets Manager) | Environment variable                  | Description                                                                |
-| ------------------------ | ------------------------------------- | -------------------------------------------------------------------------- |
-| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | API token used to authenticate requests to Open Supply Hub.                |
-| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | API token used to post items to the Monday board.                          |
-| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | Webhook URL used to send Slack notifications.                              |
-| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | Google service account credentials used to upload reports to Google Drive. |
+| Secret (Secrets Manager) | Environment variable                  | Used by         | Description                                                                |
+| ------------------------ | ------------------------------------- | --------------- | -------------------------------------------------------------------------- |
+| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
+| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | `notify`        | API token used to post items to the Monday board.                          |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | `notify`        | Webhook URL used to send Slack notifications.                              |
+| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
 
-Nonsensitive configuration can be set as plain Lambda environment variables.
+Nonsensitive configuration is set as plain Lambda environment variables. Each function receives only the variables it uses.
 
-| Variable                           | Description                                                       |
-| ---------------------------------- | ----------------------------------------------------------------- |
-| `OS_HUB_API_URL`                   | Base URL of the Open Supply Hub API.                              |
-| `MONDAY_API_URL`                   | Base URL of the Monday.com API.                                   |
-| `AWS_STORAGE_BUCKET_NAME`          | S3 bucket where uploaded facility list files are stored.          |
-| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | Google Drive folder ID where validation reports are uploaded.     |
-| `MONDAY_BOARD_ID`                  | ID of the Monday board to post the update.                        |
-| `CONTRIBOT_STATE_TABLE_NAME`       | DynamoDB table that stores the state of processed facility lists. |
+| Variable                           | Used by                        | Description                                                              |
+| ---------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| `CONTRIBOT_STATE_TABLE_NAME`       | all                            | DynamoDB table that stores the state of processed facility lists.        |
+| `LAST_LIST_ID`                     | `fetch_lists`                  | Fallback resume cursor when the DynamoDB `__CURSOR__` item is missing.   |
+| `OS_HUB_API_URL`                   | `fetch_lists`                  | Base URL of the Open Supply Hub API.                                     |
+| `AWS_STORAGE_BUCKET_NAME`          | `process_list`                 | S3 bucket where uploaded facility list files are stored.                 |
+| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | `process_list`                 | Google Drive folder ID where validation reports are uploaded.            |
+| `MONDAY_API_URL`                   | `notify`                       | Base URL of the Monday.com API.                                          |
+| `MONDAY_BOARD_ID`                  | `notify`                       | ID of the Monday board to post the update.                               |
