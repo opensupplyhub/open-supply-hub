@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Architecture/Environment changes
+* [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Implemented the ContriBot `fetch_lists` Lambda (replacing the 2.28.0 stub): paginates `GET /api/admin-facility-lists/` using a DynamoDB `__CURSOR__` watermark (with `LAST_LIST_ID` fallback), enqueues new lists as `PENDING` with contributor metadata, and feeds Step Functions Map state with `{list_id}` items. Shared modules under `src/contribot/lib/` (`lists_repository.py`, `os_hub_api.py`) bundle via an updated Makefile. Terraform sets env-specific `OS_HUB_API_URL`, adds `contribot_last_list_id`, and raises ContriBot Lambda timeouts to 900 seconds; `process_list` and `notify` remain stubs.
+
 ### Bugfix
 * [OSDEV-2384](https://opensupplyhub.atlassian.net/browse/OSDEV-2384) - Fixed embedded-map CSV and XLSX downloads from `GET /api/facilities-downloads/` returning empty configured custom-field columns when list-upload headers used mixed-case names such as `program_1_Name`. Those headers now resolve by their original column position, with exact-case matching preferred before a case-insensitive fallback. Custom embed fields still respect `visible=True`; the six standard extended-field columns remain always present, scoped to the embed contributor, and join that contributor's values with `|`.
 
