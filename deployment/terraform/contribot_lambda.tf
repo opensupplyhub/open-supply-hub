@@ -144,7 +144,7 @@ resource "aws_lambda_function" "contribot_process_list" {
   handler          = "handler.handler"
   runtime          = "python3.10"
   timeout          = 900
-  memory_size      = 512
+  memory_size      = 1024
 
   environment {
     variables = local.contribot_lambda_environment

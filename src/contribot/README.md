@@ -8,18 +8,19 @@ ContriBot polls Open Supply Hub for newly processed facility lists, validates fa
 
 ## Facility List Validation
 
-Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py). The `ContriBot` class reads a contributor Excel workbook, runs table- and column-level quality checks (missing columns, bad countries, whitespace issues, duplicate rows, and more), applies optional auto-fixes, and writes an annotated output workbook with **Summary**, **Findings**, **Similarities**, and **Fixes** sheets. Findings are driven by error codes in a configuration workbook (`0000.error_codes.xlsx`).
+Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py). The `ContriBot` class reads a contributor Excel workbook, runs table- and column-level quality checks (missing columns, bad countries, whitespace issues, duplicate rows, and more), applies optional auto-fixes, and writes an annotated output workbook with **Summary**, **Findings**, **Similarities**, and **Fixes** sheets. Findings are driven by error codes in the bundled configuration workbook ([`lib/0000.error_codes.xlsx`](lib/0000.error_codes.xlsx)).
 
 Run the unit tests locally:
 
 ```bash
-cd src/contribot/lib && python -m pytest tests/test_contribot.py tests/test_lists_repository.py tests/test_os_hub_api.py
+cd src/contribot/lib && python -m pytest tests/
 cd src/contribot/fetch_lists && python -m pytest tests/test_handler.py
+cd src/contribot/process_list && python -m pytest tests/test_handler.py
 ```
 
 ## Lambda Source Code
 
-Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py) and [`os_hub_api.py`](lib/os_hub_api.py) for `fetch_lists`).
+Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), and [`google_drive.py`](lib/google_drive.py)).
 
 | Lambda         | Handler source                                       | Deployment package                                                                                                                     |
 | -------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,7 +36,7 @@ Build all deployment zips from this directory:
 make -C src/contribot
 ```
 
-Each package Makefile builds `deployment/terraform/lambda-functions/<name>/<name>.zip` (for `fetch_lists`, the zip includes `handler.py` plus shared `lib/` modules). Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
+Each package Makefile builds `deployment/terraform/lambda-functions/<name>/<name>.zip`. `fetch_lists` zips `handler.py` plus shared `lib/` modules; `process_list` additionally installs `requirements.txt` into the zip and bundles `lib/contribot.py`, helpers, and `0000.error_codes.xlsx`. Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
 
 ## Architecture
 
@@ -60,7 +61,7 @@ flowchart LR
 
 ### State Management
 
-DynamoDB stores one item per facility list (hash key `list_id`) with `contributor_id`, `list_name`, `status`, `started_at`, and `finished_at`.
+DynamoDB stores one item per facility list (hash key `list_id`) with `contributor_id`, `list_name`, `file_name`, `status`, `started_at`, and `finished_at`.
 
 On each run, `fetch_lists`:
 
@@ -69,14 +70,14 @@ On each run, `fetch_lists`:
 3. Writes each returned list as a `PENDING` row **before** returning Map items to Step Functions.
 4. Conditionally advances `__CURSOR__.last_list_id` to the highest fetched id.
 
-`process_list` later updates `status` / `finished_at` after a list is handled.
+`process_list` marks the row `PROCESSING`, downloads the workbook from S3 using `file_name` as the object key, runs ContriBot, uploads the `.~PROCESSED.` report to Google Drive, stores `report_url` / summary stats on the row, and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it raises so Step Functions `Catch` can route to `notify` with `$.error`. Final `PROCESSED` / `FAILED` status is recorded by `notify`.
 
 ## Process
 
 | Step | Description                                                                                                    |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
-| 2    | For each list, download the file from S3, run facility list validation, and upload the report to Google Drive. |
+| 2    | For each list, download the `.xlsx` from S3, run facility list validation, and upload the report to Google Drive. |
 | 3    | Send notifications to Slack and Monday so that data moderators can review the report.                          |
 
 ## Configuration
