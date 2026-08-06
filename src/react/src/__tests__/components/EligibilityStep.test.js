@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
-import { mainRoute } from '../../util/constants';
+import { mapRoute } from '../../util/constants';
 
 const mockHistoryPush = jest.fn();
 
@@ -236,7 +236,7 @@ describe('EligibilityStep component', () => {
         backButton.click();
 
         expect(mockHistoryPush).toHaveBeenCalledTimes(1);
-        expect(mockHistoryPush).toHaveBeenCalledWith(mainRoute);
+        expect(mockHistoryPush).toHaveBeenCalledWith(mapRoute);
     });
 
     test('closes dialog without resetting selection when "Continue to Claim" is clicked', () => {

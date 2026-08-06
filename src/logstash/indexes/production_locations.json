@@ -223,10 +223,6 @@
           "type": "date",
           "format": "yyyy"
         },
-        "closed_at": {
-          "type": "date",
-          "format": "yyyy-MM"
-        },
         "is_closed": {
           "type": "boolean"
         },

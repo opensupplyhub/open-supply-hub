@@ -1041,7 +1041,7 @@ class ProductionLocationsTest(BaseAPITest):
         result = response.json()
         self.assertEqual(result["os_id"], os_id)
         self.assertEqual(result["opened_at"], "2023")
-        self.assertEqual(result["closed_at"], "2024-09")
+        self.assertNotIn("closed_at", result)
         self.assertEqual(result["estimated_annual_throughput"], 122)
         self.assertEqual(
             result["actual_annual_energy_consumption"],

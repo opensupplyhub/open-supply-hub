@@ -115,7 +115,6 @@ export const updateClaimALocalLanguageName = createAction(
 
 // Free Emissions Estimate actions
 export const updateClaimOpeningDate = createAction('UPDATE_CLAIM_OPENING_DATE');
-export const updateClaimClosingDate = createAction('UPDATE_CLAIM_CLOSING_DATE');
 export const updateClaimEstimatedAnnualThroughput = createAction(
     'UPDATE_CLAIM_ESTIMATED_ANNUAL_THROUGHPUT',
 );

@@ -63,6 +63,64 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         self.assertIn('claim_info IS NOT NULL', sql)
         self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
+    def test_list_field_names_includes_approved_claim(self):
+        self.assertIn('approved_claim', list_field_names())
+
+    def test_build_update_sql_includes_approved_claim_column(self):
+        spec = get_field_spec('approved_claim')
+        sql = build_update_sql(spec)
+
+        self.assertIn('approved_claim =', sql)
+        self.assertIn('index_approved_claim(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_approved_claim_filter(self):
+        spec = get_field_spec('approved_claim')
+        sql = build_count_sql(spec)
+
+        self.assertIn('approved_claim IS NOT NULL', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_list_field_names_includes_processing_type(self):
+        self.assertIn('processing_type', list_field_names())
+
+    def test_build_update_sql_includes_processing_type_column(self):
+        spec = get_field_spec('processing_type')
+        sql = build_update_sql(spec)
+
+        self.assertIn('processing_type =', sql)
+        self.assertIn('index_processing_type(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_processing_type_filter(self):
+        spec = get_field_spec('processing_type')
+        sql = build_count_sql(spec)
+
+        self.assertIn("field_name = 'processing_type'", sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_list_field_names_includes_sector(self):
+        self.assertIn('sector', list_field_names())
+
+    def test_build_update_sql_includes_sector_column(self):
+        spec = get_field_spec('sector')
+        sql = build_update_sql(spec)
+
+        self.assertIn('sector =', sql)
+        self.assertIn('index_sector(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_sector_filter(self):
+        spec = get_field_spec('sector')
+        sql = build_count_sql(spec)
+
+        self.assertIn('GROUP BY aso.contributor_id', sql)
+        self.assertIn('HAVING COUNT(*) > 1', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
     def test_build_count_sql_omits_filter_when_not_configured(self):
         spec = {
             'columns': {'foo': 'bar'},
