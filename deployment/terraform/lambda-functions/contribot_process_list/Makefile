@@ -3,6 +3,11 @@ STAGING = .staging
 ZIP = contribot_process_list.zip
 REQUIREMENTS = $(CONTRIBOT_SRC)/requirements.txt
 
+# Must match aws_lambda_function.contribot_process_list.runtime.
+PYTHON_VERSION = 3.10
+# Default Lambda arch is x86_64 (no architectures = [...] override in Terraform).
+LAMBDA_PLATFORM = manylinux2014_x86_64
+
 # boto3/botocore ship in the Lambda runtime; bundling them bloats the zip.
 EXCLUDE_PACKAGES = boto3 botocore s3transfer jmespath
 
@@ -24,7 +29,14 @@ all:
 	for f in $(LIB_MODULES); do \
 		cp $(CONTRIBOT_SRC)/lib/$$f $(STAGING)/lib/; \
 	done
-	pip install -q -t $(STAGING) -r $(REQUIREMENTS)
+	# Cross-compile for the Lambda runtime: host pip may be a different Python
+	# (e.g. 3.11), which produces cpython-311 .so files that fail to import on
+	# python3.10 with Runtime.ImportModuleError for numpy/pandas.
+	pip install -q -t $(STAGING) -r $(REQUIREMENTS) \
+		--platform $(LAMBDA_PLATFORM) \
+		--implementation cp \
+		--python-version $(PYTHON_VERSION) \
+		--only-binary=:all:
 	for pkg in $(EXCLUDE_PACKAGES); do \
 		pkg_hyphen=$$(echo "$$pkg" | tr '_' '-'); \
 		rm -rf $(STAGING)/$$pkg $(STAGING)/$$pkg-*.dist-info $(STAGING)/$$pkg_hyphen-*.dist-info; \
