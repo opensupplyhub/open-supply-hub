@@ -1,4 +1,5 @@
 import { createAction } from 'redux-act';
+import { isEmpty } from 'lodash';
 
 import apiRequest from '../util/apiRequest';
 import {
@@ -65,19 +66,23 @@ export const resetPendingModerationEvent = createAction(
 export function createProductionLocation(
     contribData,
     duplicateOverride = false,
+    ignoreWarnings = false,
 ) {
     const requestData = parseContribData(contribData);
 
     return async dispatch => {
         dispatch(startCreateProductionLocation(requestData));
 
+        const params = {
+            ...(duplicateOverride ? { duplicate_override: true } : {}),
+            ...(ignoreWarnings ? { ignore_warnings: true } : {}),
+        };
+
         try {
             const { data } = await apiRequest.post(
                 makeProductionLocationURL(),
                 requestData,
-                duplicateOverride
-                    ? { params: { duplicate_override: true } }
-                    : undefined,
+                isEmpty(params) ? undefined : { params },
             );
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {

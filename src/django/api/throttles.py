@@ -53,6 +53,19 @@ class DuplicateThrottle(BaseThrottle):
         except (TypeError, ValueError):
             return str(data)
 
+    def _build_cache_key(self, request, view):
+        data_str = self._serialize_data(request.data)
+        pk = view.kwargs.get("pk")
+        pk_prefix = f":{pk}" if pk else ""
+        # Query params are included so that requests with the same body but
+        # different query params (e.g. a duplicate-check override retry via
+        # ?duplicate_override=true) aren't mistaken for the same request.
+        query_str = self._serialize_data(dict(request.query_params))
+        data_hash = hashlib.sha256(
+            f"{data_str}{query_str}".encode()
+        ).hexdigest()
+        return f"duplicate:{request.user.id}{pk_prefix}:{data_hash}"
+
     def allow_request(self, request, view):
         if request.method not in ["POST", "PATCH"]:
             return True
@@ -69,16 +82,7 @@ class DuplicateThrottle(BaseThrottle):
                 detail="Request data too large. Maximum size is 1MB."
             )
 
-        pk = view.kwargs.get("pk")
-        pk_prefix = f":{pk}" if pk else ""
-        # Query params are included so that requests with the same body but
-        # different query params (e.g. a duplicate-check override retry via
-        # ?duplicate_override=true) aren't mistaken for the same request.
-        query_str = self._serialize_data(dict(request.query_params))
-        data_hash = hashlib.sha256(
-            f"{data_str}{query_str}".encode()
-        ).hexdigest()
-        cache_key = f"duplicate:{request.user.id}{pk_prefix}:{data_hash}"
+        cache_key = self._build_cache_key(request, view)
 
         if self.cache.get(cache_key):
             raise Throttled(
@@ -91,3 +95,19 @@ class DuplicateThrottle(BaseThrottle):
             timeout=DUPLICATE_THROTTLE_TIMEOUT
         )
         return True
+
+    def clear(self, request, view):
+        """
+        Remove the throttle entry recorded for this request. Views call this
+        when a request is rejected without side effects (e.g. a 409 from the
+        duplicate or submission-quality check), so an identical retry isn't
+        blocked as a duplicate of an attempt that created nothing. The entry
+        is still recorded up front by allow_request, which keeps concurrent
+        identical requests (double-clicks) blocked while the first one is
+        in flight.
+        """
+        if request.method not in ["POST", "PATCH"]:
+            return
+        if not request.user.is_authenticated or not request.data:
+            return
+        self.cache.delete(self._build_cache_key(request, view))

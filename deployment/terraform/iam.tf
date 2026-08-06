@@ -93,6 +93,33 @@ resource "aws_iam_role_policy" "s3_read_write_files_bucket" {
   policy = data.aws_iam_policy_document.s3_read_write_files_bucket.json
 }
 
+# Lets the Django app task invoke Claude Haiku via Bedrock for the SLC
+# submission quality check (SubmissionQualityProcessor), using the task's
+# IAM role rather than a long-lived API key. The inference profile resource
+# is scoped to this account/region; the underlying foundation-model
+# resource must allow every region the profile can route to, per AWS's
+# guidance for cross-region inference profiles, hence the region wildcard.
+data "aws_iam_policy_document" "bedrock_invoke_submission_quality_model" {
+  statement {
+    effect = "Allow"
+
+    resources = [
+      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
+    ]
+
+    actions = [
+      "bedrock:InvokeModel",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "bedrock_invoke_submission_quality_model" {
+  name   = "BedrockInvokeSubmissionQualityModel"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.bedrock_invoke_submission_quality_model.json
+}
+
 #
 # ALB IAM resources
 #

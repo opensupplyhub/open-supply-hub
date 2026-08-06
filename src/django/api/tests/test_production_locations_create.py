@@ -17,11 +17,28 @@ from api.models.source import Source
 from api.models.user import User
 from api.models.facility.facility import Facility
 from api.views.v1.url_names import URLNames
+from api.services.submission_quality_service import (
+    QualityVerdict,
+    SubmissionQualityVerdicts,
+)
 from api.tests.test_data import geocoding_data
 
 
 class TestProductionLocationsCreate(APITestCase):
     def setUp(self):
+        # This endpoint also runs SubmissionQualityProcessor for CREATE/SLC
+        # submissions, which would otherwise make a real Bedrock call for
+        # every such test in this file. These tests aren't exercising that
+        # processor, so it's neutralized here (fail-open "no verdict").
+        quality_check_patcher = patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=None,
+        )
+        quality_check_patcher.start()
+        self.addCleanup(quality_check_patcher.stop)
+
         self.url = reverse(URLNames.PRODUCTION_LOCATIONS + '-list')
         self.common_valid_req_body = json.dumps({
             'name': 'Blue Horizon Facility',
@@ -195,6 +212,68 @@ class TestProductionLocationsCreate(APITestCase):
             throttled_response_body_dict["detail"],
             "Duplicate request submitted, please try again later."
         )
+
+        # The 429 itself must not clear the throttle entry (only
+        # substantive rejections like a 409 do), so a third identical
+        # request is still throttled.
+        third_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(third_response.status_code, 429)
+
+    @patch('api.geocoding.requests.get')
+    def test_rejected_submission_does_not_trigger_duplicate_throttle(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # The quality check only runs for SLC-sourced CREATE submissions.
+        slc_req_body = json.dumps({
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US'
+        })
+        flagged_verdicts = SubmissionQualityVerdicts(
+            name_quality=QualityVerdict(
+                flagged=True, reason='The name looks like test data.'
+            ),
+            address_quality=QualityVerdict(flagged=False, reason=''),
+            address_country_mismatch=QualityVerdict(
+                flagged=False, reason=''
+            ),
+            multiple_locations=QualityVerdict(flagged=False, reason=''),
+        )
+        with patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=flagged_verdicts,
+        ):
+            first_response = self.client.post(
+                self.url,
+                slc_req_body,
+                content_type='application/json'
+            )
+            self.assertEqual(first_response.status_code, 409)
+
+            # The rejected attempt created nothing, so an identical retry
+            # (the contributor clicked "Go back and edit" and resubmitted
+            # unchanged data) must reach the quality check again rather
+            # than being blocked by DuplicateThrottle.
+            retry_response = self.client.post(
+                self.url,
+                slc_req_body,
+                content_type='application/json'
+            )
+            self.assertEqual(retry_response.status_code, 409)
+            retry_body_dict = json.loads(retry_response.content)
+            self.assertEqual(
+                retry_body_dict['warnings'][0]['type'], 'name_quality'
+            )
 
     @override_switch('disable_list_uploading', active=True)
     def test_client_cannot_post_when_upload_is_blocked(self):

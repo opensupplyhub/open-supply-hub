@@ -174,6 +174,31 @@ describe("ProductionLocationInfo component, test input fields for POST v1/produc
         await waitFor(() => expect(submitButton).toBeEnabled());
     });
 
+    test("shows every triggered client-side warning together in one dialog", async () => {
+        const { getByRole, getByText, getByPlaceholderText, getByTestId } = renderComponent();
+
+        const nameInput = getByPlaceholderText("Enter the name");
+        const addressInput = getByPlaceholderText("Enter the full address");
+        const countrySelect = getByTestId("mocked-select-country");
+
+        fireEvent.change(nameInput, { target: { value: "Test Name" } });
+        // Short enough to also read as a PO Box, so both client-side
+        // address checks fire from a single field value.
+        fireEvent.change(addressInput, { target: { value: "PO Box 1" } });
+        fireEvent.change(countrySelect, { target: { value: "US" } });
+
+        const submitButton = getByRole("button", { name: /Submit/i });
+        await waitFor(() => expect(submitButton).toBeEnabled());
+        fireEvent.click(submitButton);
+
+        await waitFor(() =>
+            expect(getByText("Please Review Before Submitting")).toBeInTheDocument(),
+        );
+        expect(getByText("Address May Contain a PO Box")).toBeInTheDocument();
+        expect(getByText("Address Appears Short")).toBeInTheDocument();
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
     test("displays additional information form when icon button is clicked", () => {
         const { getByTestId, getByText, queryByText } = renderComponent();
 
@@ -620,5 +645,247 @@ describe("ProductionLocationInfo component, possible duplicate submission dialog
         );
 
         expect(getByText(/wait at least 30 minutes/)).toBeInTheDocument();
+    });
+});
+
+describe("ProductionLocationInfo component, server-side submission quality warnings dialog", () => {
+    const defaultState = {
+        filterOptions: {
+            countries: {
+                data: [{ value: "US", label: "United States" }],
+                error: null,
+                fetching: false,
+            },
+            facilityProcessingType: {
+                data: [],
+                error: null,
+                fetching: false,
+            },
+        },
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        featureFlags: {
+            flags: {
+                disable_list_uploading: false,
+            },
+            fetching: false,
+        },
+        contributeProductionLocation: {
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: {
+                    errorSource: "CLIENT",
+                    detail: "This submission may have one or more data-quality issues. Please review the warnings below.",
+                    errors: null,
+                    rawData: {
+                        detail: "This submission may have one or more data-quality issues. Please review the warnings below.",
+                        warnings: [
+                            {
+                                type: "name_quality",
+                                title: "Name May Not Look Like a Facility Name",
+                                message: "The name looks like test data.",
+                            },
+                            {
+                                type: "address_country_mismatch",
+                                title: "Address May Not Match Selected Country",
+                                message: "The address does not appear to be in the selected country.",
+                            },
+                        ],
+                    },
+                },
+            },
+            singleProductionLocation: {
+                data: {},
+                fetching: false,
+                error: null,
+            },
+        },
+    };
+
+    const defaultProps = {
+        submitMethod: "POST",
+    };
+
+    const renderComponent = (props = {}, preloadedState = defaultState) =>
+        renderWithProviders(
+            <Router>
+                <ProductionLocationInfo {...defaultProps} {...props} />
+            </Router>,
+            { preloadedState },
+        );
+
+    test("shows every returned server-side warning together in one dialog", () => {
+        const { getByText, queryByText } = renderComponent();
+
+        expect(getByText("Please Review Before Submitting")).toBeInTheDocument();
+        expect(getByText("Name May Not Look Like a Facility Name")).toBeInTheDocument();
+        expect(getByText("Address May Not Match Selected Country")).toBeInTheDocument();
+        expect(queryByText("Data submission failed.")).not.toBeInTheDocument();
+    });
+
+    test("dismisses the dialog on 'Go back and edit' without resubmitting", async () => {
+        const { getByText, queryByText } = renderComponent();
+
+        fireEvent.click(getByText("Go back and edit"));
+
+        await waitFor(() =>
+            expect(queryByText("Please Review Before Submitting")).not.toBeInTheDocument(),
+        );
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
+    test("resubmits with ignore_warnings when 'Submit anyway' is clicked", async () => {
+        const { getByText } = renderComponent();
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(1));
+        const [, body, config] = apiRequest.post.mock.calls[0];
+        expect(body.ignore_warnings).toBeUndefined();
+        expect(config.params.ignore_warnings).toBe(true);
+    });
+});
+
+describe("ProductionLocationInfo component, override accumulation across the duplicate and quality warning dialogs", () => {
+    const duplicateRawData = {
+        detail: "You recently submitted a very similar production location.",
+        duplicate_of: {
+            moderation_id: "abc-123",
+            created_at: "2026-07-24T12:00:00.000Z",
+            name: "Blue Horizon Facility",
+            address: "990 Spring Garden St., Philadelphia PA 19123",
+            country: "US",
+            duplicate_check_window_minutes: 30,
+        },
+    };
+
+    const warningsRawData = {
+        detail: "This submission may have one or more data-quality issues. Please review the warnings below.",
+        warnings: [
+            {
+                type: "name_quality",
+                title: "Name May Not Look Like a Facility Name",
+                message: "The name looks like test data.",
+            },
+        ],
+    };
+
+    const stateWithError = rawData => ({
+        filterOptions: {
+            countries: {
+                data: [{ value: "US", label: "United States" }],
+                error: null,
+                fetching: false,
+            },
+            facilityProcessingType: {
+                data: [],
+                error: null,
+                fetching: false,
+            },
+        },
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        featureFlags: {
+            flags: {
+                disable_list_uploading: false,
+            },
+            fetching: false,
+        },
+        contributeProductionLocation: {
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: {
+                    errorSource: "CLIENT",
+                    detail: rawData.detail,
+                    errors: null,
+                    rawData,
+                },
+            },
+            singleProductionLocation: {
+                data: {},
+                fetching: false,
+                error: null,
+            },
+        },
+    });
+
+    const renderComponent = preloadedState =>
+        renderWithProviders(
+            <Router>
+                <ProductionLocationInfo submitMethod="POST" />
+            </Router>,
+            { preloadedState },
+        );
+
+    test("carries the granted duplicate override when confirming the quality warnings dialog", async () => {
+        apiRequest.post.mockRejectedValue({
+            response: { status: 422, data: warningsRawData },
+        });
+
+        const { getByText, getAllByText } = renderComponent(
+            stateWithError(duplicateRawData),
+        );
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(1));
+        expect(apiRequest.post.mock.calls[0][2].params).toEqual({
+            duplicate_override: true,
+        });
+
+        // Wait for the quality warnings dialog to open AND the duplicate
+        // dialog to finish its exit transition, so there is only one
+        // 'Submit anyway' button left in the document.
+        await waitFor(() => {
+            expect(getByText("Name May Not Look Like a Facility Name")).toBeInTheDocument();
+            expect(getAllByText("Submit anyway")).toHaveLength(1);
+        });
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(2));
+        expect(apiRequest.post.mock.calls[1][2].params).toEqual({
+            duplicate_override: true,
+            ignore_warnings: true,
+        });
+    });
+
+    test("carries the granted quality override when confirming the duplicate dialog", async () => {
+        apiRequest.post.mockRejectedValue({
+            response: { status: 409, data: duplicateRawData },
+        });
+
+        const { getByText, getAllByText } = renderComponent(
+            stateWithError(warningsRawData),
+        );
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(1));
+        expect(apiRequest.post.mock.calls[0][2].params).toEqual({
+            ignore_warnings: true,
+        });
+
+        // Wait for the duplicate dialog to open AND the quality warnings
+        // dialog to finish its exit transition, so there is only one
+        // 'Submit anyway' button left in the document.
+        await waitFor(() => {
+            expect(getByText("Possible Duplicate Submission")).toBeInTheDocument();
+            expect(getAllByText("Submit anyway")).toHaveLength(1);
+        });
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(2));
+        expect(apiRequest.post.mock.calls[1][2].params).toEqual({
+            duplicate_override: true,
+            ignore_warnings: true,
+        });
     });
 });

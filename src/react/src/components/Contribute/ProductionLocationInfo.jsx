@@ -140,15 +140,25 @@ const ProductionLocationInfo = ({
         setShowPostSubmitErrorNotification,
     ] = useState(false);
 
-    const [activeWarningIndex, setActiveWarningIndex] = useState(null);
+    const [showClientWarningsDialog, setShowClientWarningsDialog] = useState(
+        false,
+    );
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
     let handleProductionLocation;
     switch (submitMethod) {
         case 'POST':
-            handleProductionLocation = (data, duplicateOverride) =>
-                handleCreateProductionLocation(data, duplicateOverride);
+            handleProductionLocation = (
+                data,
+                duplicateOverride,
+                ignoreWarnings,
+            ) =>
+                handleCreateProductionLocation(
+                    data,
+                    duplicateOverride,
+                    ignoreWarnings,
+                );
             break;
         case 'PATCH':
             handleProductionLocation = data =>
@@ -166,9 +176,40 @@ const ProductionLocationInfo = ({
         setShowDuplicateSubmissionDialog,
     ] = useState(false);
 
+    // Shows the server-returned `warnings` array (from
+    // SubmissionQualityProcessor) all at once, in a single dialog, rather
+    // than stepping through them one at a time - they already arrive
+    // together in one response, from one LLM call. "Submit anyway"
+    // resubmits with ignoreWarnings=true, which skips the LLM quality
+    // check entirely on that resubmission.
+    const [
+        showServerWarningsDialog,
+        setShowServerWarningsDialog,
+    ] = useState(false);
+    const serverWarnings = pendingModerationEventError?.rawData?.warnings ?? [];
+
+    // The duplicate check and the quality check run sequentially on the
+    // backend, so a single submission can trip them one after the other.
+    // Overrides granted via the dialogs must accumulate across
+    // resubmissions - otherwise confirming one warning would re-trigger
+    // the other check and bounce the contributor between the two dialogs
+    // forever. A ref (not state) because the resubmission fires in the
+    // same tick the override is granted.
+    const grantedOverridesRef = useRef({
+        duplicateOverride: false,
+        ignoreWarnings: false,
+    });
+
     const contributionForm = useSingleLocationContributionForm(values => {
         setShowPostSubmitErrorNotification(false);
         setShowDuplicateSubmissionDialog(false);
+        setShowServerWarningsDialog(false);
+        // A fresh submission from the form starts the override cycle over;
+        // confirmations granted for a previous submission don't carry over.
+        grantedOverridesRef.current = {
+            duplicateOverride: false,
+            ignoreWarnings: false,
+        };
         handleProductionLocation(values);
     });
 
@@ -359,6 +400,8 @@ const ProductionLocationInfo = ({
 
         if (pendingModerationEventError.rawData?.duplicate_of) {
             setShowDuplicateSubmissionDialog(true);
+        } else if (pendingModerationEventError.rawData?.warnings?.length) {
+            setShowServerWarningsDialog(true);
         } else {
             setShowPostSubmitErrorNotification(true);
         }
@@ -440,19 +483,23 @@ const ProductionLocationInfo = ({
         contributionForm.values.processingType,
     ]);
 
-    const runWarningChecks = (startIndex = 0) => {
+    // Evaluates every client-side check against the current form values
+    // and returns all of the ones that fire, rather than stopping at the
+    // first match, so they can all be shown to the contributor at once.
+    const getClientWarnings = () => {
         const { values } = contributionForm;
-        for (let i = startIndex; i < SUBMISSION_WARNING_CHECKS.length; i += 1) {
-            const { field, condition } = SUBMISSION_WARNING_CHECKS[i];
-            if (condition(values[field])) {
-                setActiveWarningIndex(i);
-                return;
-            }
-        }
-        contributionForm.handleSubmit();
+        return SUBMISSION_WARNING_CHECKS.filter(({ field, condition }) =>
+            condition(values[field]),
+        );
     };
 
-    const handleSubmitClick = () => runWarningChecks(0);
+    const handleSubmitClick = () => {
+        if (getClientWarnings().length > 0) {
+            setShowClientWarningsDialog(true);
+        } else {
+            contributionForm.handleSubmit();
+        }
+    };
 
     const activeSubmitButton = (
         <Button
@@ -1214,37 +1261,51 @@ const ProductionLocationInfo = ({
                 </Paper>
             </div>
             <ContributionWarningDialog
-                open={activeWarningIndex !== null}
-                onClose={() => setActiveWarningIndex(null)}
+                open={showClientWarningsDialog}
+                onClose={() => setShowClientWarningsDialog(false)}
                 onSubmitAnyway={() => {
-                    const next = activeWarningIndex + 1;
-                    setActiveWarningIndex(null);
-                    runWarningChecks(next);
+                    setShowClientWarningsDialog(false);
+                    contributionForm.handleSubmit();
                 }}
-                title={
-                    activeWarningIndex !== null
-                        ? SUBMISSION_WARNING_CHECKS[activeWarningIndex].title
-                        : ''
-                }
-                message={
-                    activeWarningIndex !== null
-                        ? SUBMISSION_WARNING_CHECKS[activeWarningIndex].message
-                        : ''
-                }
+                warnings={getClientWarnings()}
             />
             <ContributionWarningDialog
                 open={showDuplicateSubmissionDialog}
                 onClose={() => setShowDuplicateSubmissionDialog(false)}
                 onSubmitAnyway={() => {
                     setShowDuplicateSubmissionDialog(false);
-                    handleProductionLocation(contributionForm.values, true);
+                    grantedOverridesRef.current.duplicateOverride = true;
+                    handleProductionLocation(
+                        contributionForm.values,
+                        true,
+                        grantedOverridesRef.current.ignoreWarnings,
+                    );
                 }}
-                title="Possible Duplicate Submission"
-                message={`You recently submitted a very similar production location. Please wait at least ${
-                    pendingModerationEventError?.rawData?.duplicate_of
-                        ?.duplicate_check_window_minutes ??
-                    DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES
-                } minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`}
+                warnings={[
+                    {
+                        title: 'Possible Duplicate Submission',
+                        message: `You recently submitted a very similar production location. Please wait at least ${
+                            pendingModerationEventError?.rawData
+                                ?.duplicate_of
+                                ?.duplicate_check_window_minutes ??
+                            DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES
+                        } minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`,
+                    },
+                ]}
+            />
+            <ContributionWarningDialog
+                open={showServerWarningsDialog}
+                onClose={() => setShowServerWarningsDialog(false)}
+                onSubmitAnyway={() => {
+                    setShowServerWarningsDialog(false);
+                    grantedOverridesRef.current.ignoreWarnings = true;
+                    handleProductionLocation(
+                        contributionForm.values,
+                        grantedOverridesRef.current.duplicateOverride,
+                        true,
+                    );
+                }}
+                warnings={serverWarnings}
             />
             {showProductionLocationDialog &&
             (pendingModerationEventData?.cleaned_data ||
@@ -1366,8 +1427,18 @@ function mapDispatchToProps(dispatch) {
         fetchCountries: () => dispatch(fetchCountryOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
-        handleCreateProductionLocation: (data, duplicateOverride) =>
-            dispatch(createProductionLocation(data, duplicateOverride)),
+        handleCreateProductionLocation: (
+            data,
+            duplicateOverride,
+            ignoreWarnings,
+        ) =>
+            dispatch(
+                createProductionLocation(
+                    data,
+                    duplicateOverride,
+                    ignoreWarnings,
+                ),
+            ),
         handleUpdateProductionLocation: (data, osID) =>
             dispatch(updateProductionLocation(data, osID)),
         fetchModerationEvent: moderationID =>

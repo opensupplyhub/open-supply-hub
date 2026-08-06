@@ -1,5 +1,5 @@
 import React from 'react';
-import { bool, func, object, string } from 'prop-types';
+import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -11,12 +11,17 @@ import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import { makeContributionWarningDialogStyles } from '../../util/styles';
 
+const MULTIPLE_WARNINGS_TITLE = 'Please Review Before Submitting';
+
+// Displays every warning passed in at once (rather than one dialog per
+// warning), so a contributor sees the full set of issues - whether they're
+// detected on the client or returned together from the server - in a
+// single screen instead of clicking through them one at a time.
 const ContributionWarningDialog = ({
     open,
     onClose,
     onSubmitAnyway,
-    title,
-    message,
+    warnings,
     classes,
 }) => (
     <Dialog
@@ -34,13 +39,29 @@ const ContributionWarningDialog = ({
         </IconButton>
         <DialogTitle id="contribution-warning-dialog-title" disableTypography>
             <Typography className={classes.dialogTitleStyles}>
-                {title}
+                {warnings.length > 1
+                    ? MULTIPLE_WARNINGS_TITLE
+                    : warnings[0]?.title}
             </Typography>
         </DialogTitle>
         <DialogContent>
-            <Typography className={classes.dialogBodyStyles}>
-                {message}
-            </Typography>
+            {warnings.map(warning => (
+                <div
+                    key={warning.title}
+                    className={classes.warningItemStyles}
+                >
+                    {warnings.length > 1 && (
+                        <Typography
+                            className={classes.warningItemTitleStyles}
+                        >
+                            {warning.title}
+                        </Typography>
+                    )}
+                    <Typography className={classes.dialogBodyStyles}>
+                        {warning.message}
+                    </Typography>
+                </div>
+            ))}
         </DialogContent>
         <DialogActions className={classes.dialogActionsStyles}>
             <Button
@@ -72,8 +93,12 @@ ContributionWarningDialog.propTypes = {
     open: bool.isRequired,
     onClose: func.isRequired,
     onSubmitAnyway: func.isRequired,
-    title: string.isRequired,
-    message: string.isRequired,
+    warnings: arrayOf(
+        shape({
+            title: string.isRequired,
+            message: string.isRequired,
+        }),
+    ).isRequired,
     classes: object.isRequired,
 };
 
