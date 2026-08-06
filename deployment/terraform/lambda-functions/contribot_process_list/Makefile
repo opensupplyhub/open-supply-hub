@@ -41,7 +41,9 @@ all:
 		pkg_hyphen=$$(echo "$$pkg" | tr '_' '-'); \
 		rm -rf $(STAGING)/$$pkg $(STAGING)/$$pkg-*.dist-info $(STAGING)/$$pkg_hyphen-*.dist-info; \
 	done
-	rm -rf $(STAGING)/googleapiclient/discovery_cache/documents
+	# Keep only Drive v3 discovery (full documents/ is ~79MB). build() defaults
+	# to static_discovery=True and raises UnknownApiNameOrVersion without it.
+	find $(STAGING)/googleapiclient/discovery_cache/documents -type f ! -name 'drive.v3.json' -delete 2>/dev/null || true
 	find $(STAGING) -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
 	find $(STAGING) -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true
 	find $(STAGING) -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true

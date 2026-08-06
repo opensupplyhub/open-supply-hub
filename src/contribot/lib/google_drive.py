@@ -45,7 +45,15 @@ class GoogleDrive:
             info,
             scopes=SCOPES,
         )
-        self._service = build("drive", "v3", credentials=credentials, cache_discovery=False)
+        # static_discovery=True uses the bundled drive.v3.json (kept in the
+        # Lambda zip); without it, build() raises UnknownApiNameOrVersion.
+        self._service = build(
+            "drive",
+            "v3",
+            credentials=credentials,
+            cache_discovery=False,
+            static_discovery=True,
+        )
 
     def upload_file(self, path: str, *, name: Optional[str] = None) -> str:
         """Upload ``path`` into the shared directory and return a view URL."""

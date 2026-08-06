@@ -30,7 +30,13 @@ def test_constructor_loads_secret_and_builds_service(monkeypatch):
     secrets.get_secret_value.assert_called_once_with(
         SecretId="arn:aws:secretsmanager:us-east-1:123:secret:gdrive"
     )
-    mock_build.assert_called_once()
+    mock_build.assert_called_once_with(
+        "drive",
+        "v3",
+        credentials=mock_creds.from_service_account_info.return_value,
+        cache_discovery=False,
+        static_discovery=True,
+    )
     assert drive._folder_id == "folder-1"
 
 
