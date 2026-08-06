@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0220_fix_processing_type_search_index'),
+        ('api', '0223_fix_sector_search_index'),
     ]
 
     operations = [

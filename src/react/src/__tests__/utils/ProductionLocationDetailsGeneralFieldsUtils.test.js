@@ -166,6 +166,7 @@ describe('getVisibleFields', () => {
                         sourceName: 'Source',
                         date: '2020-06-15T12:00:00.000Z',
                         userId: undefined,
+                        provenance: null,
                     },
                     contributions: [],
                 },
@@ -210,6 +211,7 @@ describe('getVisibleFields', () => {
                     sourceName: null,
                     date: null,
                     userId: undefined,
+                    provenance: null,
                 },
                 contributions: [],
             });
@@ -223,6 +225,7 @@ describe('getVisibleFields', () => {
                     sourceName: 'Org',
                     date: '2021-01-01T00:00:00.000Z',
                     userId: 10,
+                    provenance: null,
                 },
                 contributions: [],
             });
@@ -523,6 +526,38 @@ describe('getDataCenterFieldGroups', () => {
         // The units field is merged, not a standalone data point.
         const utility = findGroup(groups, 'Utility Usage');
         expect(findField(utility, 'capacity_units')).toBeUndefined();
+    });
+
+    it('passes provenance through to drawer contributions', () => {
+        const provenance = {
+            source_name: 'US EPA FRS',
+            source_link: 'https://example.com/dc?id=1',
+        };
+        const fixture = {
+            type: 'Feature',
+            properties: {
+                is_data_center: true,
+                extended_fields: {
+                    name_operator: [
+                        {
+                            value: { raw_value: 'Equinix' },
+                            contributor_id: 1,
+                            contributor_name: 'Contributor A',
+                            created_at: '2020-01-01T00:00:00.000Z',
+                            provenance,
+                        },
+                    ],
+                },
+            },
+        };
+        const groups = getDataCenterFieldGroups(fixture);
+        const operator = findField(
+            findGroup(groups, 'Named Entities'),
+            'name_operator',
+        );
+        expect(operator.drawerData.promotedContribution.provenance).toEqual(
+            provenance,
+        );
     });
 
     it('includes additional contributors in drawer contributions', () => {
