@@ -52,8 +52,9 @@ class V1UtilsTests(TestCase):
     def test_serialize_params_with_invalid_contributor_id(self):
         query_dict = QueryDict('', mutable=True)
         query_dict.setlist('contributor_id', ['not-a-number'])
-        serialized_params, error_response = \
-            serialize_params(ProductionLocationsSerializer, query_dict)
+        _, error_response = serialize_params(
+            ProductionLocationsSerializer, query_dict
+        )
         self.assertIsNotNone(error_response)
 
     def test_serialize_params_with_single_values(self):
