@@ -215,10 +215,7 @@ export const profileStepSchema = Yup.object().shape({
 
     // Company Information
     parentCompanyName: maxLengthTextField('Parent company name'),
-    officeOfficialName: maxLengthTextField(
-        'Office name',
-        Yup.string().trim(),
-    ),
+    officeOfficialName: maxLengthTextField('Office name', Yup.string().trim()),
     officeAddress: maxLengthTextField('Office address', Yup.string().trim()),
     officeCountryCode: Yup.string(),
 
