@@ -81,8 +81,8 @@ instance_source = "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
-enable_homepage_proxy   = true
-craft_cms_origin_domain = "open-supply.production.servd.dev"
+enable_homepage_proxy   = false
+craft_cms_origin_domain = ""
 
 is_database_private_link_provider = true
 

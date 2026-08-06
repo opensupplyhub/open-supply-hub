@@ -95,8 +95,8 @@ instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
-enable_homepage_proxy   = true
-craft_cms_origin_domain = "open-supply.staging.servd.dev"
+enable_homepage_proxy   = false
+craft_cms_origin_domain = ""
 
 # Owns the shared-account Chatbot Slack channel config (Dev/Test/Preprod).
 # Sibling SNS ARNs live in private ci-deployment Test tfvars (aws_chatbot_additional_sns_topic_arns).
