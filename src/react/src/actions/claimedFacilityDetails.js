@@ -157,7 +157,6 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                         : null,
                 parent_company_name: parentCompanyName,
                 opening_date: data.opening_date || null,
-                closing_date: data.closing_date || null,
                 estimated_annual_throughput:
                     data.estimated_annual_throughput || null,
             },
@@ -277,9 +276,6 @@ export const updateClaimedFacilityLocation = createAction(
 
 export const updateClaimedFacilityOpeningDate = createAction(
     'UPDATE_CLAIMED_FACILITY_OPENING_DATE',
-);
-export const updateClaimedFacilityClosingDate = createAction(
-    'UPDATE_CLAIMED_FACILITY_CLOSING_DATE',
 );
 export const updateClaimedEstimatedAnnualThroughput = createAction(
     'UPDATE_CLAIMED_ESTIMATED_ANNUAL_THROUGHPUT',

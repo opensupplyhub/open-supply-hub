@@ -852,7 +852,6 @@ class FacilitiesViewSet(ListModelMixin,
                             "sector": ["Apparel"],
                             "location": null,
                             "opening_date": null,
-                            "closing_date": null,
                             "estimated_annual_throughput": null,
                             "actual_annual_energy_consumption": {
                                 "coal": null,
@@ -2343,7 +2342,6 @@ class FacilitiesViewSet(ListModelMixin,
                     "number_of_workers"
                 ),
                 opening_date=validated_data.get("opening_date"),
-                closing_date=validated_data.get("closing_date"),
                 estimated_annual_throughput=validated_data.get(
                     "estimated_annual_throughput"
                 ),

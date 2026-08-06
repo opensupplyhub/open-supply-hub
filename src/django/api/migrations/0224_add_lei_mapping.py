@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0219_add_contributor_anonymise_in_paid_products'),
+        ('api', '0223_fix_sector_search_index'),
     ]
 
     operations = [
