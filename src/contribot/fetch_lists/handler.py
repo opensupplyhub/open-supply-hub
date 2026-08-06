@@ -28,7 +28,7 @@ def handler(event, context):
         params={
             "id__gt": last_id,
             "ordering": "id",
-            "status": FacilityListStatus.PENDING,
+            "status": FacilityListStatus.PENDING.value,
         },
     )
     logger.info("Fetched %s list(s) after id__gt=%s", len(facility_lists), last_id)
