@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from rest_framework import status
 
 from api.moderation_event_actions.creation.location_contribution \
@@ -57,10 +58,12 @@ class GeocodingProcessor(ContributionProcessor):
                         status.HTTP_422_UNPROCESSABLE_ENTITY
 
                     return event_dto
-            except ValueError as value_err:
+            except (
+                ValueError, requests.exceptions.RequestException
+            ) as geocoding_err:
                 log.error(
                     (f'[API V1 Location Upload] Internal Geocoding Error: '
-                     f'{value_err}')
+                     f'{geocoding_err}')
                 )
                 event_dto.errors = {
                     'detail': APIV1CommonErrorMessages.COMMON_INTERNAL_ERROR

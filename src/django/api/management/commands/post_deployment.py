@@ -1,31 +1,5 @@
-from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
-
-# Temporary for the OSDEV-1034 and OSDEV-2977 backfills. Each worker is a
-# subprocess (~150-200 MB RSS), so size parallelism to the CLI task memory.
-# Remove this map, the helper below, and the backfill call once the release
-# has been deployed everywhere.
-BACKFILL_PARALLEL_BY_ENVIRONMENT = {
-    'Local': 2,
-    'Development': 1,
-    'Test': 10,
-    'Staging': 10,
-    'Preprod': 10,
-    'Production': 10,
-    'Rba': 10,
-}
-
-# Fallback when settings.ENVIRONMENT is not in the map
-# (e.g. a new deploy target).
-BACKFILL_PARALLEL_DEFAULT = 2
-
-
-def backfill_parallel_worker_count() -> int:
-    return BACKFILL_PARALLEL_BY_ENVIRONMENT.get(
-        settings.ENVIRONMENT,
-        BACKFILL_PARALLEL_DEFAULT,
-    )
 
 
 class Command(BaseCommand):
@@ -37,19 +11,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        # Temporary for 2.28.0 (OSDEV-2949) — one-time cleanup that strips the
-        # nested 'internal_ID' (not part of the partner field JSON Schema) from
-        # 'rsc_grievance_mechanism' values. The ExtendedField database trigger
-        # refreshes the affected FacilityIndex rows. Remove after the release
-        # has been deployed everywhere.
-        call_command('remove_rsc_grievance_mechanism_nested_internal_ids')
-        # Temporary for 2.28.0 — recompute claim_info and approved_claim
-        # without closing_date (OSDEV-2977), and refresh processing_type after
-        # migration 0220 changes index_processing_type() (OSDEV-1034).
-        # Remove after the release has been deployed everywhere.
-        call_command(
-            'backfill_facility_index',
-            fields='claim_info,approved_claim,processing_type',
-            parallel=backfill_parallel_worker_count(),
-            batch_size=10000,
-        )
