@@ -20,13 +20,11 @@ from lib.s3_storage import S3Storage
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-ERROR_CODES_FILENAME = "0000.error_codes.xlsx"
-
 
 def handler(event, context):
     """Lambda entry point: validate one facility list and upload its report."""
     list_id = str(event.get("list_id", "")).strip()
-    if not list_id or list_id == "unknown":
+    if not list_id:
         raise ValueError("event.list_id is required")
 
     repository = ListsRepository()
@@ -61,7 +59,7 @@ def handler(event, context):
             raise RuntimeError(f"S3 download produced no file at {source_path}")
 
         config_path = str(
-            Path(__file__).resolve().parent / "lib" / ERROR_CODES_FILENAME
+            Path(__file__).resolve().parent / "lib" / "0000.error_codes.xlsx"
         )
         if not os.path.isfile(config_path):
             raise RuntimeError(f"Error-codes workbook not found at {config_path}")
