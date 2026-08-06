@@ -66,7 +66,7 @@ DynamoDB stores one item per facility list (hash key `list_id`) with `contributo
 On each run, `fetch_lists`:
 
 1. Reads a dedicated `__CURSOR__` DynamoDB item (`last_list_id`) for the resume watermark (`0` when missing).
-2. Queries `GET /api/admin-facility-lists/?id__gt={last_id}&ordering=id`.
+2. Queries `GET /api/admin-facility-lists/?id__gt={last_id}&ordering=id&status=PENDING`.
 3. Writes each returned list as a `PENDING` row **before** returning Map items to Step Functions.
 4. Conditionally advances `__CURSOR__.last_list_id` to the highest fetched id.
 

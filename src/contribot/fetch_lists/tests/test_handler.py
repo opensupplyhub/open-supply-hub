@@ -42,7 +42,7 @@ def test_handler_empty_table_queries_id_gt_zero(mock_repo_cls, mock_api_cls, env
     assert result == {"lists": []}
     mock_api_cls.assert_called_once_with()
     api.fetch_lists.assert_called_once_with(
-        params={"id__gt": 0, "ordering": "id"},
+        params={"id__gt": 0, "ordering": "id", "status": "PENDING"},
     )
     repo.advance_cursor.assert_not_called()
     repo.put_list.assert_not_called()
@@ -78,7 +78,7 @@ def test_handler_uses_cursor_and_enqueues(mock_repo_cls, mock_api_cls, env):
     result = handler.handler({}, None)
 
     api.fetch_lists.assert_called_once_with(
-        params={"id__gt": 100, "ordering": "id"},
+        params={"id__gt": 100, "ordering": "id", "status": "PENDING"},
     )
     assert result == {
         "lists": [{"list_id": "101"}, {"list_id": "102"}],
