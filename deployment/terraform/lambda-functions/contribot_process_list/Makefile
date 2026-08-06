@@ -26,7 +26,8 @@ all:
 	done
 	pip install -q -t $(STAGING) -r $(REQUIREMENTS)
 	for pkg in $(EXCLUDE_PACKAGES); do \
-		rm -rf $(STAGING)/$$pkg $(STAGING)/$$pkg-*.dist-info $(STAGING)/$${pkg//_/-}-*.dist-info; \
+		pkg_hyphen=$$(echo "$$pkg" | tr '_' '-'); \
+		rm -rf $(STAGING)/$$pkg $(STAGING)/$$pkg-*.dist-info $(STAGING)/$$pkg_hyphen-*.dist-info; \
 	done
 	rm -rf $(STAGING)/googleapiclient/discovery_cache/documents
 	find $(STAGING) -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
