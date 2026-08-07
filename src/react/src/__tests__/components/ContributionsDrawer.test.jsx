@@ -153,4 +153,128 @@ describe('ContributionsDrawer', () => {
             screen.getByTestId('contribution-card-promoted'),
         ).toBeInTheDocument();
     });
+
+    test('renders provenance block only for contributions that carry it', () => {
+        renderContributionsDrawer({
+            open: true,
+            onClose: () => {},
+            contributions: [
+                {
+                    value: 'Value A',
+                    sourceName: 'Source A',
+                    date: '2022-01-01',
+                    userId: 1,
+                    provenance: {
+                        source_name: 'US EPA FRS',
+                        source_link: 'https://example.com/dc?id=1',
+                        information_source_type: 'air quality permit',
+                        date_of_source: '2024-06',
+                        ai_usage_notes: 'AI-extracted; human reviewed',
+                    },
+                },
+                {
+                    value: 'Value B',
+                    sourceName: 'Source B',
+                    date: '2022-02-01',
+                    userId: 2,
+                },
+            ],
+        });
+
+        // Only the first contribution carries provenance.
+        expect(
+            screen.getAllByTestId('contribution-card-provenance'),
+        ).toHaveLength(1);
+
+        // Collapsed by default; expand the accordion to reveal the details.
+        const toggle = screen.getByTestId('provenance-accordion-toggle');
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        fireEvent.click(toggle);
+        expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+        expect(screen.getByText('US EPA FRS')).toBeInTheDocument();
+        expect(screen.getByText('air quality permit')).toBeInTheDocument();
+        expect(
+            screen.getByText('AI-extracted; human reviewed'),
+        ).toBeInTheDocument();
+        const link = screen.getByText('https://example.com/dc?id=1');
+        expect(link).toHaveAttribute('href', 'https://example.com/dc?id=1');
+        expect(link).toHaveAttribute('target', '_blank');
+    });
+
+    test('does not render provenance block when no contribution carries it', () => {
+        renderContributionsDrawer({
+            open: true,
+            onClose: () => {},
+            promotedContribution: {
+                value: 'Promoted Value',
+                sourceName: 'Promoted Source',
+                date: '2023-01-01',
+                userId: 10,
+            },
+            contributions: [
+                {
+                    value: 'Value A',
+                    sourceName: 'Source A',
+                    date: '2022-01-01',
+                    userId: 1,
+                },
+            ],
+        });
+
+        expect(
+            screen.queryByTestId('contribution-card-provenance'),
+        ).not.toBeInTheDocument();
+    });
+
+    test('renders provenance on the promoted card when present', () => {
+        renderContributionsDrawer({
+            open: true,
+            onClose: () => {},
+            promotedContribution: {
+                value: 'Promoted Value',
+                sourceName: 'Promoted Source',
+                date: '2023-01-01',
+                userId: 10,
+                provenance: { source_name: 'Operator website' },
+            },
+        });
+
+        expect(
+            screen.getByTestId('contribution-card-provenance'),
+        ).toBeInTheDocument();
+        fireEvent.click(screen.getByTestId('provenance-accordion-toggle'));
+        expect(screen.getByText('Operator website')).toBeInTheDocument();
+    });
+
+    test('provenance accordion toggles open and closed', () => {
+        renderContributionsDrawer({
+            open: true,
+            onClose: () => {},
+            contributions: [
+                {
+                    value: 'Value A',
+                    sourceName: 'Source A',
+                    date: '2022-01-01',
+                    userId: 1,
+                    provenance: { source_name: 'US EPA FRS' },
+                },
+            ],
+        });
+
+        const toggle = screen.getByTestId('provenance-accordion-toggle');
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        expect(
+            screen.getByTestId('provenance-accordion-expand-more'),
+        ).toBeInTheDocument();
+
+        fireEvent.click(toggle);
+        expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        expect(
+            screen.getByTestId('provenance-accordion-expand-less'),
+        ).toBeInTheDocument();
+
+        fireEvent.click(toggle);
+        expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    });
 });

@@ -25,7 +25,7 @@ class FacilityIndexExtendedFieldListSerializer:
                              'contributor_id', 'value_count', 'is_from_claim',
                              'field_name', 'verified_count', 'source_by',
                              'unit', 'label', 'base_url', 'display_text',
-                             'json_schema']
+                             'json_schema', 'provenance']
         self.data: list = []
 
         if exclude_fields:
@@ -42,6 +42,7 @@ class FacilityIndexExtendedFieldListSerializer:
             'contributor_id': self._get_contributor_id,
             'is_from_claim': self._get_is_from_claim,
             'verified_count': self._get_verified_count,
+            'provenance': self._get_provenance,
         }
         context_overrides = {
             'source_by',
@@ -116,6 +117,17 @@ class FacilityIndexExtendedFieldListSerializer:
         if is_contribution_masked(contributor, self.masked_contributors):
             return False
         return contributor.get('id') == claimant_contributor_id
+
+    def _get_provenance(self, extended_field: dict) -> Union[None, dict]:
+        """Per-row provenance of the FacilityListItem this field came from.
+        None when the row carries no provenance data or the
+        field has no list item (e.g. claim-born fields)."""
+        list_item_id = extended_field.get('facility_list_item_id')
+        if list_item_id is None:
+            return None
+        return self.context.get(
+            'provenance_by_list_item_id', {}
+        ).get(list_item_id)
 
     def _get_verified_count(self, extended_field: dict) -> int:
         count = 0

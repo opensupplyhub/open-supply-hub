@@ -13,7 +13,7 @@ import GeneralInformationIcon from '../../Icons/GeneralInformation';
 import DataPoint from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 import getSelectedDrawerField from '../utils';
-import getVisibleFields from './utils';
+import getVisibleFields, { getDataCenterFieldGroups } from './utils';
 import useDrawerState from '../hooks';
 import { SHOW_ADDITIONAL_IDENTIFIERS } from '../../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
@@ -52,9 +52,23 @@ const ProductionLocationDetailsGeneralFields = ({
         [data, showAdditionalIdentifiers],
     );
 
+    const isDataCenter = !!data?.properties?.is_data_center;
+    const dataCenterGroups = useMemo(
+        () => (isDataCenter ? getDataCenterFieldGroups(data) : []),
+        [data, isDataCenter],
+    );
+
+    const allFields = useMemo(
+        () =>
+            dataCenterGroups.reduce((acc, group) => acc.concat(group.fields), [
+                ...visibleFields,
+            ]),
+        [visibleFields, dataCenterGroups],
+    );
+
     const selectedDrawerField = useMemo(
-        () => getSelectedDrawerField(visibleFields, openDrawerFieldKey),
-        [visibleFields, openDrawerFieldKey],
+        () => getSelectedDrawerField(allFields, openDrawerFieldKey),
+        [allFields, openDrawerFieldKey],
     );
 
     const renderDataPoints = items =>
@@ -119,6 +133,28 @@ const ProductionLocationDetailsGeneralFields = ({
             <Grid item xs={12} className={classes.dataList}>
                 {renderDataPoints(visibleFields)}
             </Grid>
+            {dataCenterGroups.map(group => (
+                <React.Fragment key={group.label}>
+                    <Grid item container xs={12} className={classes.titleRow}>
+                        <Typography
+                            variant="title"
+                            className={classes.title}
+                            component="h3"
+                        >
+                            {group.label}
+                        </Typography>
+                        <IconComponent
+                            title={`${group.label} information for this production location. ${group.description}`}
+                            icon={InfoOutlined}
+                            className={classes.infoIcon}
+                        />
+                    </Grid>
+                    <Divider className={classes.divider} />
+                    <Grid item xs={12} className={classes.dataList}>
+                        {renderDataPoints(group.fields)}
+                    </Grid>
+                </React.Fragment>
+            ))}
             <ContributionsDrawer
                 open={isDrawerOpen}
                 onClose={closeDrawer}

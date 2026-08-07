@@ -2265,6 +2265,166 @@ class TestLocationContributionStrategy(APITestCase):
             'nested_schema_field'
         )
 
+    def test_data_center_contribution_with_provenance_creates_event(self):
+        # OSDEV-3068: a v1 contribution carrying data-center attribute fields
+        # and per-row provenance is accepted; the DC fields reach
+        # cleaned_data['fields'] (for ExtendedField creation at approval) and
+        # the provenance keys reach cleaned_data['raw_json'] (read by
+        # extract_provenance at approval).
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Horizon Data Center',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'location_type': 'Data Center',
+            'name_operator': 'Blue Horizon Ops',
+            'capacity': '20',
+            'capacity_units': 'MW',
+            'source_name': 'US EPA FRS',
+            'source_link': 'https://example.com/dc?id=1',
+            'information_source_type': 'air quality permit',
+            'date_of_source': '2024-06-15',
+            'data_collection_methodology': 'downloaded from source',
+            'ai_usage_notes': 'AI used to extract fields; human reviewed',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            },
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+        cleaned_fields = result.moderation_event.cleaned_data['fields']
+        self.assertEqual(cleaned_fields.get('name_operator'),
+                         'Blue Horizon Ops')
+        self.assertEqual(cleaned_fields.get('capacity'), '20')
+        self.assertEqual(cleaned_fields.get('capacity_units'), 'MW')
+        # location_type maps to facility_type and resolves to Data Center.
+        facility_type = cleaned_fields.get('facility_type')
+        self.assertIsNotNone(facility_type)
+
+        raw_json = result.moderation_event.cleaned_data['raw_json']
+        self.assertEqual(raw_json.get('source_name'), 'US EPA FRS')
+        self.assertEqual(raw_json.get('source_link'),
+                         'https://example.com/dc?id=1')
+        self.assertEqual(raw_json.get('information_source_type'),
+                         'air quality permit')
+        self.assertEqual(raw_json.get('date_of_source'), '2024-06-15')
+        self.assertEqual(raw_json.get('data_collection_methodology'),
+                         'downloaded from source')
+        self.assertEqual(raw_json.get('ai_usage_notes'),
+                         'AI used to extract fields; human reviewed')
+
+    def test_provenance_fields_are_lenient_free_text(self):
+        # Provenance values are recorded as provided - no format validation
+        # (e.g. source_link does not need to be a well-formed URL). The
+        # exception is date_of_source, which must be an ISO (partial) date -
+        # here at month precision, since that is all the source provided.
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Horizon Data Center',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'source_link': 'not a url at all',
+            'date_of_source': '2024-06',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            },
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        raw_json = result.moderation_event.cleaned_data['raw_json']
+        self.assertEqual(raw_json.get('source_link'), 'not a url at all')
+        self.assertEqual(raw_json.get('date_of_source'), '2024-06')
+
+    def test_invalid_date_of_source_is_rejected(self):
+        # date_of_source must be an ISO reduced-precision date:
+        # YYYY, YYYY-MM, or YYYY-MM-DD.
+        for invalid in ['June 2024', '2024-13', '15/06/24']:
+            with self.subTest(invalid=invalid):
+                input_data = {
+                    'source': 'API',
+                    'name': 'Blue Horizon Data Center',
+                    'address': '990 Spring Garden St., Philadelphia PA 19123',
+                    'country': 'US',
+                    'date_of_source': invalid,
+                    'coordinates': {
+                        'lat': 51.078389,
+                        'lng': 16.978477
+                    },
+                }
+
+                event_dto = CreateModerationEventDTO(
+                    contributor=self.contributor,
+                    raw_data=input_data,
+                    request_type=ModerationEvent.RequestType.CREATE.value
+                )
+                result = self.moderation_event_creator.perform_event_creation(
+                    event_dto
+                )
+
+                self.assertEqual(
+                    result.status_code,
+                    status.HTTP_422_UNPROCESSABLE_ENTITY
+                )
+                self.assertEqual(
+                    result.errors['errors'][0]['field'],
+                    'date_of_source'
+                )
+
+    def test_provenance_field_exceeding_column_size_is_rejected(self):
+        # The only provenance validation kept: max lengths mirroring the
+        # FacilityListItem column sizes, so accepted values can always be
+        # persisted.
+        input_data = {
+            'source': 'API',
+            'name': 'Blue Horizon Data Center',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'source_name': 'X' * 501,
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            },
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.CREATE.value
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(
+            result.status_code,
+            status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertEqual(
+            result.errors['errors'][0]['field'],
+            'source_name'
+        )
+
         detail = result.errors['errors'][0]['detail']
         self.assertTrue(
             'email' in detail.lower() or 'contact' in detail.lower()

@@ -174,6 +174,12 @@ def create_extendedfield(field, field_value, item, contributor):
             field_value = {
                 'raw_value': field_value,
             }
+        elif field in ExtendedField.DATA_CENTER_FIELDS:
+            if (field in ExtendedField.DATA_CENTER_NUMERICAL_FIELDS):
+                field_value = get_integer_or_double_value(field_value)
+            field_value = {
+                'raw_value': field_value,
+            }
         elif field == ExtendedField.ISIC_4:
             normalized_isic = get_isic_4_extendedfield_value(field_value)
             if not normalized_isic.get('raw_value'):
@@ -229,7 +235,7 @@ RAW_DATA_FIELDS = (
     ExtendedField.LEI_ID,
     ExtendedField.RBA_ID,
     ExtendedField.ISIC_4,
-)
+) + ExtendedField.DATA_CENTER_FIELDS
 
 
 def create_extendedfields_for_single_item(
@@ -371,3 +377,15 @@ def get_product_types():
     product_types = list(set(product_types))
     product_types.sort()
     return product_types
+
+
+def get_integer_or_double_value(value):
+    try:
+        val = int(value)
+        return val
+    except ValueError:
+        try:
+            val = float(value)
+            return val
+        except ValueError:
+            return str(value)
