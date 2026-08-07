@@ -99,12 +99,18 @@ resource "aws_iam_role_policy" "s3_read_write_files_bucket" {
 # is scoped to this account/region; the underlying foundation-model
 # resource must allow every region the profile can route to, per AWS's
 # guidance for cross-region inference profiles, hence the region wildcard.
+#
+# The inference-profile region is pinned to eu-west-1 to match the app's
+# BEDROCK_AWS_REGION default (the region the AnthropicBedrock client
+# actually invokes in), not var.aws_region. The eu.* profile is only
+# invocable from EU regions, so tying this ARN to var.aws_region would
+# silently break the check (which fails open) on any non-EU deployment.
 data "aws_iam_policy_document" "bedrock_invoke_submission_quality_model" {
   statement {
     effect = "Allow"
 
     resources = [
-      "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "arn:aws:bedrock:eu-west-1:${data.aws_caller_identity.current.account_id}:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0",
       "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0",
     ]
 
