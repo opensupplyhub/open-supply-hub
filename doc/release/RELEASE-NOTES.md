@@ -55,6 +55,8 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * New `src/kafka-tools/fix_replication.sh` performs the one-time remediation on existing topics: it builds a partition reassignment plan for topics below the target RF, repairs topic-level `min.insync.replicas` overrides (which the cluster default does not affect), and fails non-zero unless every topic ends at `min.insync.replicas <= replication factor - 1`. Dry run by default; `--execute` applies.
   * `deployment/terraform/task-definitions/app_kafka.json` splits `entryPoint` into `/bin/bash` with `command` `./kafka.sh`, so ECS `run-task` can override the command (ECS cannot override `entryPoint`). The existing task's behavior is unchanged.
   * New `deployment/run_kafka_cmd` runs an arbitrary command in the `AppKafka` Fargate task, following the same pattern as `run_cli_task`, printing the CloudWatch log stream and propagating the container exit code.
+* [OSDEV-3215](https://opensupplyhub.atlassian.net/browse/OSDEV-3215) - Disabled the flags for redirecting to the new homepage across all environments. All environments now behave consistently, and the root page remains `/map`.
+
 
 ### Code/API changes
 * [OSDEV-2652](https://opensupplyhub.atlassian.net/browse/OSDEV-2652) - Added `POST /api/facility-lists/{list_id}/deactivate/` so contributors can deactivate their own uploaded lists:
