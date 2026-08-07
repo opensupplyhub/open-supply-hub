@@ -122,11 +122,7 @@ function ProductionLocationDetailsContainer({
     // when URL casing does not match the canonical OS ID, redirect to the
     // appropriate production location URL. Only redirect once the loaded data
     // corresponds to the current URL request (see requestedOsId).
-    if (
-        data?.id &&
-        requestedOsId === requestedId &&
-        requestedId !== loadedId
-    ) {
+    if (data?.id && requestedOsId === requestedId && requestedId !== loadedId) {
         return (
             <Redirect
                 to={makeFacilityDetailLinkOnRedirect(
