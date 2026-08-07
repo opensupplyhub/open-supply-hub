@@ -1,5 +1,5 @@
 import React from 'react';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { MemoryRouter, Route, Switch } from 'react-router-dom';
 import { screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDetailsContainer from '../../components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
@@ -45,7 +45,12 @@ jest.mock('../../actions/partnerFieldGroups', () => ({
 
 const baseState = {
     facilities: {
-        singleFacility: { data: null, fetching: false, error: null },
+        singleFacility: {
+            data: null,
+            fetching: false,
+            error: null,
+            requestedOsId: null,
+        },
     },
     filters: { contributors: [] },
     featureFlags: {},
@@ -103,7 +108,10 @@ describe('ProductionLocationDetailsContainer', () => {
     test('renders main content when data is loaded', () => {
         renderContainer({
             facilities: {
-                singleFacility: { data: { id: 'OS12345' } },
+                singleFacility: {
+                    data: { id: 'OS12345' },
+                    requestedOsId: 'OS12345',
+                },
             },
         });
 
@@ -120,5 +128,111 @@ describe('ProductionLocationDetailsContainer', () => {
         });
 
         expect(screen.queryByTestId('details-content')).not.toBeInTheDocument();
+    });
+
+    test('redirects when loaded facility id differs from requested alias os id', () => {
+        renderWithProviders(
+            <MemoryRouter
+                initialEntries={['/production-locations/MX2024211WFBSJJ']}
+            >
+                <Switch>
+                    <Route
+                        path="/production-locations/MX2024211T0VH2S"
+                        render={() => <div data-testid="redirect-target" />}
+                    />
+                    <Route
+                        path="/production-locations/:osID"
+                        component={ProductionLocationDetailsContainer}
+                    />
+                </Switch>
+            </MemoryRouter>,
+            {
+                preloadedState: {
+                    facilities: {
+                        singleFacility: {
+                            data: { id: 'MX2024211T0VH2S' },
+                            fetching: false,
+                            error: null,
+                            requestedOsId: 'MX2024211WFBSJJ',
+                        },
+                    },
+                    filters: { contributors: [] },
+                    featureFlags: {
+                        flags: { enable_production_location_page: true },
+                    },
+                    embeddedMap: { embed: null },
+                    partnerFieldGroups: {
+                        fetching: false,
+                        data: { results: [] },
+                        error: null,
+                    },
+                },
+            },
+        );
+
+        expect(screen.getByTestId('redirect-target')).toBeInTheDocument();
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+
+    test('shows spinner instead of redirecting when loaded data is stale', () => {
+        renderContainer(
+            {
+                facilities: {
+                    singleFacility: {
+                        data: { id: 'MX2024211T0VH2S' },
+                        fetching: false,
+                        error: null,
+                        requestedOsId: 'MX2024211WFBSJJ',
+                    },
+                },
+            },
+            'MX2024211DIFFERENT',
+        );
+
+        expect(screen.getByRole('progressbar')).toBeInTheDocument();
+        expect(screen.queryByTestId('details-content')).not.toBeInTheDocument();
+    });
+
+    test('redirects when URL casing differs from canonical OS ID', () => {
+        renderWithProviders(
+            <MemoryRouter
+                initialEntries={['/production-locations/mx2024211t0vh2s']}
+            >
+                <Switch>
+                    <Route
+                        path="/production-locations/MX2024211T0VH2S"
+                        render={() => <div data-testid="redirect-target" />}
+                    />
+                    <Route
+                        path="/production-locations/:osID"
+                        component={ProductionLocationDetailsContainer}
+                    />
+                </Switch>
+            </MemoryRouter>,
+            {
+                preloadedState: {
+                    facilities: {
+                        singleFacility: {
+                            data: { id: 'MX2024211T0VH2S' },
+                            fetching: false,
+                            error: null,
+                            requestedOsId: 'mx2024211t0vh2s',
+                        },
+                    },
+                    filters: { contributors: [] },
+                    featureFlags: {
+                        flags: { enable_production_location_page: true },
+                    },
+                    embeddedMap: { embed: null },
+                    partnerFieldGroups: {
+                        fetching: false,
+                        data: { results: [] },
+                        error: null,
+                    },
+                },
+            },
+        );
+
+        expect(screen.getByTestId('redirect-target')).toBeInTheDocument();
     });
 });

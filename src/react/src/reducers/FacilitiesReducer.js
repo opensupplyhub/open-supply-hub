@@ -48,6 +48,7 @@ const initialState = Object.freeze({
         data: null,
         fetching: false,
         error: null,
+        requestedOsId: null,
     }),
 });
 
@@ -152,12 +153,13 @@ export default createReducer(
             update(state, {
                 facilities: { $set: initialState.facilities },
             }),
-        [startFetchSingleFacility]: state =>
+        [startFetchSingleFacility]: (state, osID) =>
             update(state, {
                 singleFacility: {
                     data: { $set: null },
                     fetching: { $set: true },
                     error: { $set: null },
+                    requestedOsId: { $set: osID || null },
                 },
             }),
         [failFetchSingleFacility]: (state, payload) =>
