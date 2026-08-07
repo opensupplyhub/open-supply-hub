@@ -1,6 +1,5 @@
 import React from 'react';
-import { MemoryRouter, Route, Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Route, Switch } from 'react-router-dom';
 import { screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDetailsContainer from '../../components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
@@ -124,17 +123,21 @@ describe('ProductionLocationDetailsContainer', () => {
     });
 
     test('redirects when loaded facility id differs from requested alias os id', () => {
-        const history = createMemoryHistory({
-            initialEntries: ['/production-locations/MX2024211WFBSJJ'],
-        });
-
         renderWithProviders(
-            <Router history={history}>
-                <Route
-                    path="/production-locations/:osID"
-                    component={ProductionLocationDetailsContainer}
-                />
-            </Router>,
+            <MemoryRouter
+                initialEntries={['/production-locations/MX2024211WFBSJJ']}
+            >
+                <Switch>
+                    <Route
+                        path="/production-locations/MX2024211T0VH2S"
+                        render={() => <div data-testid="redirect-target" />}
+                    />
+                    <Route
+                        path="/production-locations/:osID"
+                        component={ProductionLocationDetailsContainer}
+                    />
+                </Switch>
+            </MemoryRouter>,
             {
                 preloadedState: {
                     facilities: {
@@ -158,9 +161,7 @@ describe('ProductionLocationDetailsContainer', () => {
             },
         );
 
-        expect(history.location.pathname).toBe(
-            '/production-locations/MX2024211T0VH2S',
-        );
+        expect(screen.getByTestId('redirect-target')).toBeInTheDocument();
         expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     });
 });
