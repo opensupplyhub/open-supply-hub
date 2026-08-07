@@ -1836,7 +1836,8 @@ const EMBEDDED_SEPARATOR_PATTERN = /[,\\/&]|\band\b/i;
 export const hasEmbeddedSeparator = fieldValue => {
     if (!Array.isArray(fieldValue)) return false;
     return fieldValue.some(
-        item => typeof item?.label === 'string' &&
+        item =>
+            typeof item?.label === 'string' &&
             EMBEDDED_SEPARATOR_PATTERN.test(item.label),
     );
 };

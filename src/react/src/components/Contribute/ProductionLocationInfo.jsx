@@ -182,10 +182,9 @@ const ProductionLocationInfo = ({
     // together in one response, from one LLM call. "Submit anyway"
     // resubmits with ignoreWarnings=true, which skips the LLM quality
     // check entirely on that resubmission.
-    const [
-        showServerWarningsDialog,
-        setShowServerWarningsDialog,
-    ] = useState(false);
+    const [showServerWarningsDialog, setShowServerWarningsDialog] = useState(
+        false,
+    );
     const serverWarnings = pendingModerationEventError?.rawData?.warnings ?? [];
 
     // The duplicate check and the quality check run sequentially on the
@@ -1285,8 +1284,7 @@ const ProductionLocationInfo = ({
                     {
                         title: 'Possible Duplicate Submission',
                         message: `You recently submitted a very similar production location. Please wait at least ${
-                            pendingModerationEventError?.rawData
-                                ?.duplicate_of
+                            pendingModerationEventError?.rawData?.duplicate_of
                                 ?.duplicate_check_window_minutes ??
                             DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES
                         } minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`,

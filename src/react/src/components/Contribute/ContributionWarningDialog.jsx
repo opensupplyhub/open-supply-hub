@@ -46,14 +46,9 @@ const ContributionWarningDialog = ({
         </DialogTitle>
         <DialogContent>
             {warnings.map(warning => (
-                <div
-                    key={warning.title}
-                    className={classes.warningItemStyles}
-                >
+                <div key={warning.title} className={classes.warningItemStyles}>
                     {warnings.length > 1 && (
-                        <Typography
-                            className={classes.warningItemTitleStyles}
-                        >
+                        <Typography className={classes.warningItemTitleStyles}>
                             {warning.title}
                         </Typography>
                     )}
