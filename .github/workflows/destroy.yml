@@ -99,6 +99,18 @@ jobs:
           terraform_version: 1.13.3
           terraform_wrapper: false
 
+      # Detach before destroy so Test's Chatbot config does not keep a stale
+      # Preprod SNS ARN. See doc/ops/monitoring.md.
+      - name: Detach Preprod SNS topic from shared Chatbot config
+        if: ${{ vars.ENV_NAME == 'Preprod' }}
+        run: ./deployment/sync_chatbot_sns_topic detach
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          CHATBOT_CONFIGURATION_NAME: chatbotOpenSupplyHubTestGlobalAlarms
+          SNS_TOPIC_NAME: topicOpenSupplyHubPreprodGlobalNotifications
+
       - name: Terraform destroy for ${{ vars.ENV_NAME }}
         run: ./deployment/infra destroy
         env:
