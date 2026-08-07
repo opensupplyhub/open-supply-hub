@@ -18,15 +18,24 @@ module "msk_cluster" {
 
 # Keep the current MSK configuration referenced intentionally; remove when no longer needed.
 resource "aws_msk_configuration" "msk_config" {
-  name              = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
-  kafka_versions    = ["3.4.0", "3.9.x"]
-  server_properties = ""
+  name           = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-msk"
+  kafka_versions = ["3.4.0", "3.9.x"]
+  # With 2 brokers (2 AZs), RF=2 with MinISR=1 is the highest-availability
+  # option: MinISR must stay below RF so a single broker failure or rolling
+  # MSK update doesn't block producers using acks=all.
+  #
+  # These are cluster DEFAULTS only - they do not apply to a topic that sets its
+  # own min.insync.replicas, and they do not change the replication factor of
+  # existing topics. Both are handled by src/kafka-tools/fix_replication.sh.
+  server_properties = <<-EOT
+    default.replication.factor=2
+    min.insync.replicas=1
+  EOT
 
   lifecycle {
     prevent_destroy = false
     ignore_changes = [
       kafka_versions,
-      server_properties,
     ]
   }
 }

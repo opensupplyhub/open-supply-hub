@@ -299,15 +299,22 @@ variable "rds_disk_queue_threshold" {
 }
 
 variable "rds_free_disk_threshold_bytes" {
-  default = "5000000000"
+  description = "FreeStorageSpace below which SNS pages (~10% of rds_allocated_storage; set per env in deployment/environments)"
+  default     = "5000000000"
 }
 
 variable "rds_free_memory_threshold_bytes" {
-  default = "128000000"
+  description = "FreeableMemory below which SNS pages (~5% of instance RAM; set per env in deployment/environments)"
+  default     = "128000000"
 }
 
 variable "rds_cpu_credit_balance_threshold" {
   default = "30"
+}
+
+variable "rds_database_connections_alarm_threshold" {
+  description = "Average DatabaseConnections above which SNS pages (~80% of instance max_connections; set per env in deployment/environments)"
+  default     = "90"
 }
 
 variable "rds_work_mem" {
@@ -639,7 +646,8 @@ variable "ec_memcached_alarm_cpu_threshold_percent" {
 }
 
 variable "ec_memcached_alarm_memory_threshold_bytes" {
-  default = "10000000"
+  description = "FreeableMemory below which SNS pages (~16% of cache.t3.medium RAM / 500 MB; shared across envs)"
+  default     = "500000000"
 }
 
 variable "ec_memcached_max_item_size" {
@@ -1122,6 +1130,46 @@ variable "database_private_link_vpc_endpoint_service_name" {
   default     = ""
 }
 
+# AWS Chatbot → Slack (CloudWatch alarms on aws_sns_topic.global).
+# One Slack channel may have only one Chatbot config per AWS account. See doc/ops/monitoring.md.
+
+variable "aws_chatbot_manage_channel_configuration" {
+  type        = bool
+  description = "If true, this env creates/updates the Chatbot Slack channel config (and IAM role). Set false for sibling envs that share the same AWS account and Slack channel."
+  default     = true
+}
+
+variable "aws_chatbot_additional_sns_topic_arns" {
+  type        = list(string)
+  description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Set in private ci-deployment tfvars; omit until those topics exist."
+  sensitive   = true
+  default     = []
+}
+
+variable "aws_chatbot_slack_team_id" {
+  type        = string
+  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Required when aws_chatbot_manage_channel_configuration is true."
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = !var.aws_chatbot_manage_channel_configuration || length(var.aws_chatbot_slack_team_id) > 0
+    error_message = "aws_chatbot_slack_team_id must be a non-empty Slack workspace ID when managing the Chatbot channel configuration."
+  }
+}
+
+variable "aws_chatbot_slack_channel_id" {
+  type        = string
+  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Required when aws_chatbot_manage_channel_configuration is true."
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = !var.aws_chatbot_manage_channel_configuration || length(var.aws_chatbot_slack_channel_id) > 0
+    error_message = "aws_chatbot_slack_channel_id must be a non-empty Slack channel ID when managing the Chatbot channel configuration."
+  }
+}
+
 # ContriBot variables
 
 variable "contribot_monday_board_id" {
@@ -1140,4 +1188,10 @@ variable "contribot_schedule_expression" {
   type        = string
   description = "Schedule expression for the ContriBot Step Functions workflow."
   default     = "rate(5 minutes)"
+}
+
+variable "contribot_last_list_id" {
+  type        = string
+  description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."
+  default     = "NaN"
 }

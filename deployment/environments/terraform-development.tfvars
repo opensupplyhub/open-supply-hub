@@ -25,6 +25,11 @@ rds_database_identifier = "opensupplyhub-enc-dev"
 rds_database_name = "opensupplyhub"
 rds_multi_az = false
 rds_storage_encrypted = true
+# ~80% of max_connections for db.t3.micro (112)
+rds_database_connections_alarm_threshold = "90"
+# ~5% of 1 GiB RAM; ~10% of 128 GB storage
+rds_free_memory_threshold_bytes = "128000000"
+rds_free_disk_threshold_bytes   = "13000000000"
 
 app_ecs_desired_count = "1"
 app_ecs_deployment_min_percent = "100"
@@ -79,3 +84,6 @@ vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 enable_homepage_proxy   = true
 craft_cms_origin_domain = "open-supply.staging.servd.dev"
+
+# Shares Chatbot channel config with Test (same AWS account / Slack channel).
+aws_chatbot_manage_channel_configuration = false

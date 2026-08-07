@@ -45,6 +45,21 @@ docker compose exec django python manage.py test
 - To update the GitHub engineering release notes, use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
 - To create Confluence release notes and a Slack post draft, use the [confluence-release-notes](.agent/skills/confluence-release-notes/SKILL.md) skill.
 
+### Pull request template
+
+IMPORTANT: Every PR body must follow the repository template at [pull_request_template.md](pull_request_template.md). Read that file before drafting a PR description, and reproduce its sections in order with the guidance HTML comments removed:
+
+1. `## Jira Ticket` — link as `[OSDEV-123](https://opensupplyhub.atlassian.net/browse/OSDEV-123)`, derived from the branch name when possible.
+2. `## Summary of Changes` — what changed and why, including the root cause found and the approach taken.
+3. `## Type of Change` — check every box that applies.
+4. `## Testing` — how the change was verified; screenshots or a recording for UI changes, requests/queries for backend changes.
+5. `## Known TODO Items` — deferred work, follow-up tickets, known limitations, or `None`.
+6. `## Checklist` — keep the Implementation / Testing & Validation / Documentation & Communication / Final Review subsections.
+
+Do not invent, drop, or reorder sections. Leave a section as `N/A` only when it genuinely does not apply. Never check a checklist box on the user's behalf unless the work was actually verified — leave it unchecked and flag it instead.
+
+`pull_request_template.md` is the single source of truth: if it changes, follow the file rather than the summary above.
+
 IMPORTANT: Before creating a PR, always check whether `doc/release/RELEASE-NOTES.md` has been updated on the current branch. If it has not been updated, prompt the user to update it before opening the PR.
 
 IMPORTANT: When the user asks to add, update, or write a release notes entry, always use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.

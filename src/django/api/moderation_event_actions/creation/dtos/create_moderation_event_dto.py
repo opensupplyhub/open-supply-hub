@@ -21,3 +21,4 @@ class CreateModerationEventDTO:
     status_code: int = status.HTTP_202_ACCEPTED
     moderation_event: ModerationEvent = None
     backfilled_fields: List[str] = field(default_factory=list)
+    duplicate_override: bool = False

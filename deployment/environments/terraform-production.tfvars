@@ -25,6 +25,11 @@ rds_database_identifier    = "opensupplyhub-enc-prd"
 rds_database_name          = "opensupplyhub"
 rds_multi_az               = false
 rds_storage_encrypted      = true
+# ~80% of capped max_connections for db.m6in.4xlarge (5000)
+rds_database_connections_alarm_threshold = "4000"
+# ~5% of 64 GiB RAM; ~10% of 256 GB storage
+rds_free_memory_threshold_bytes = "3200000000"
+rds_free_disk_threshold_bytes   = "25000000000"
 
 app_ecs_desired_count          = "10"
 app_ecs_deployment_min_percent = "100"
@@ -80,3 +85,8 @@ enable_homepage_proxy   = true
 craft_cms_origin_domain = "open-supply.production.servd.dev"
 
 is_database_private_link_provider = true
+
+# Owns the shared-account Chatbot Slack channel config for Production/Staging/RBA.
+# Sibling SNS ARNs live in private ci-deployment Production tfvars.
+# Staging/RBA set aws_chatbot_manage_channel_configuration = false.
+aws_chatbot_manage_channel_configuration = true
