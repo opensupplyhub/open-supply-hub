@@ -1831,6 +1831,17 @@ export const isShortAddress = value => {
     return value.trim().length < SLC_FORM_CONSTRAINTS.MIN_ADDRESS_LENGTH;
 };
 
+const EMBEDDED_SEPARATOR_PATTERN = /[,\\/&]|\band\b/i;
+
+export const hasEmbeddedSeparator = fieldValue => {
+    if (!Array.isArray(fieldValue)) return false;
+    return fieldValue.some(
+        item =>
+            typeof item?.label === 'string' &&
+            EMBEDDED_SEPARATOR_PATTERN.test(item.label),
+    );
+};
+
 // ─── SLC Validation Test Registry ──────────────────────────────────────────
 //
 // To add a new check: add an entry to SLC_TEXT_FIELD_TESTS or
@@ -1890,6 +1901,11 @@ const SLC_ARRAY_FIELD_TESTS = Object.freeze({
             !value ||
             value.length <= SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
     }),
+    'no-embedded-separators': Object.freeze({
+        message: ({ label }) =>
+            `${label} must be entered as separate values. Remove any comma, slash, ampersand, backslash, or "and" used to combine multiple values, and add each one separately instead.`,
+        test: value => !hasEmbeddedSeparator(value),
+    }),
 });
 
 // ─── Per-field validation config ───────────────────────────────────────────
@@ -1931,15 +1947,19 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
     }),
     productType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only', 'max-product-type-count'],
+        tests: [
+            'latin-characters-only',
+            'max-product-type-count',
+            'no-embedded-separators',
+        ],
     }),
     locationType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only'],
+        tests: ['latin-characters-only', 'no-embedded-separators'],
     }),
     processingType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only'],
+        tests: ['latin-characters-only', 'no-embedded-separators'],
     }),
     numberOfWorkers: Object.freeze({
         type: 'text',

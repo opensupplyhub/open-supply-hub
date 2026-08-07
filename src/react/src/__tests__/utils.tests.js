@@ -94,6 +94,7 @@ const {
     getFilteredSearchForEmbed,
     makeFacilityDetailLinkOnRedirect,
     splitContributorsIntoPublicAndNonPublic,
+    hasEmbeddedSeparator,
 } = require('../util/util');
 
 const {
@@ -2550,6 +2551,48 @@ describe('slcValidationSchema', () => {
         );
     });
 
+    it('fails when a product type value contains an embedded separator', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            productType: [
+                { label: 'Assembly, Cut and Sew', value: 'Assembly, Cut and Sew' },
+            ],
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Product type(s) must be entered as separate values.'
+        );
+    });
+
+    it('fails when a location type value contains an embedded separator', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            locationType: [
+                { label: 'Office/Warehouse', value: 'Office/Warehouse' },
+            ],
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Location type(s) must be entered as separate values.'
+        );
+    });
+
+    it('fails when a processing type value contains an embedded separator', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            processingType: [
+                { label: 'Dyeing & Finishing', value: 'Dyeing & Finishing' },
+            ],
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Processing type(s) must be entered as separate values.'
+        );
+    });
+
     // Number of workers field.
     it('fails when number of workers has trailing and leading spaces', async () => {
         const data = {
@@ -3187,5 +3230,28 @@ describe('makeLogDownloadUrl', () => {
             'countries=IN',
             'sectors=Apparel',
         ].forEach(fragment => expect(recoveredPath).toContain(fragment));
+    });
+});
+
+describe('hasEmbeddedSeparator', () => {
+    it('returns false for a non-array value', () => {
+        expect(hasEmbeddedSeparator(null)).toBe(false);
+        expect(hasEmbeddedSeparator(undefined)).toBe(false);
+        expect(hasEmbeddedSeparator('Assembly')).toBe(false);
+    });
+
+    it('returns false when no item label contains a separator', () => {
+        const values = [{ label: 'Assembly', value: 'assembly' }, { label: 'Sandblasting', value: 'sandblasting' }];
+        expect(hasEmbeddedSeparator(values)).toBe(false);
+    });
+
+    it.each([
+        ['comma', 'Assembly, Cut and Sew'],
+        ['slash', 'Assembly/Cut'],
+        ['backslash', 'Assembly\\Cut'],
+        ['ampersand', 'Assembly & Sew'],
+        ['the word "and"', 'Assembly and Sew'],
+    ])('returns true when a label contains a %s separator', (_, label) => {
+        expect(hasEmbeddedSeparator([{ label, value: label }])).toBe(true);
     });
 });
