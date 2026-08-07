@@ -113,6 +113,21 @@ class SubmissionQualityVerdicts:
     multiple_locations: QualityVerdict
 
 
+def _build_verdict(verdict: dict) -> QualityVerdict:
+    # The tool input_schema types these fields, but the model's output is
+    # not hard-validated against that schema, so guard the types here.
+    # A non-bool flagged would otherwise sail through this frozen
+    # dataclass (which does no runtime type checking) and be treated as
+    # truthy downstream, showing a false-positive warning.
+    flagged = verdict['flagged']
+    reason = verdict['reason']
+    if not isinstance(flagged, bool) or not isinstance(reason, str):
+        raise TypeError(
+            f'Unexpected verdict field types: {verdict!r}'
+        )
+    return QualityVerdict(flagged=flagged, reason=reason)
+
+
 class SubmissionQualityService:
     '''
     Evaluates all AI-judgable SLC submission quality checks (name quality,
@@ -163,31 +178,35 @@ class SubmissionQualityService:
 
     @staticmethod
     def __parse_response(response) -> Optional[SubmissionQualityVerdicts]:
-        tool_use = next(
-            (block for block in response.content
-             if block.type == 'tool_use'),
-            None,
-        )
-        if tool_use is None:
-            logger.error(
-                'Submission quality check returned no tool_use block; '
-                'skipping (fail open).'
-            )
-            return None
-
+        # Every access below - including response.content and block.type -
+        # is inside the try so that any unexpected response shape fails
+        # open (logs and returns None) rather than propagating and turning
+        # this advisory check into a hard submission failure.
         try:
+            tool_use = next(
+                (block for block in response.content
+                 if block.type == 'tool_use'),
+                None,
+            )
+            if tool_use is None:
+                logger.error(
+                    'Submission quality check returned no tool_use block; '
+                    'skipping (fail open).'
+                )
+                return None
+
             data = tool_use.input
             return SubmissionQualityVerdicts(
-                name_quality=QualityVerdict(**data['name_quality']),
-                address_quality=QualityVerdict(**data['address_quality']),
-                address_country_mismatch=QualityVerdict(
-                    **data['address_country_mismatch']
+                name_quality=_build_verdict(data['name_quality']),
+                address_quality=_build_verdict(data['address_quality']),
+                address_country_mismatch=_build_verdict(
+                    data['address_country_mismatch']
                 ),
-                multiple_locations=QualityVerdict(
-                    **data['multiple_locations']
+                multiple_locations=_build_verdict(
+                    data['multiple_locations']
                 ),
             )
-        except (KeyError, TypeError):
+        except Exception:
             logger.exception(
                 'Submission quality check returned an unexpected shape; '
                 'skipping (fail open).'
