@@ -116,6 +116,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 delete_contribot_lambda_zips
                 ;;
             destroy)
+                # Build the gitignored ContriBot Lambda archives. Terraform still
+                # evaluates the full configuration when planning a destroy, so
+                # filebase64sha256() fails if these zips are missing.
+                make -sC lambda-functions/contribot_fetch_lists
+                make -sC lambda-functions/contribot_process_list
+                make -sC lambda-functions/contribot_notify
+
+                echo "Terraform init"
                 terraform init \
                   -backend-config="bucket=${SETTINGS_BUCKET}" \
                   -backend-config="key=terraform/state"

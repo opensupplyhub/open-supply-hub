@@ -56,6 +56,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
   * `deployment/terraform/task-definitions/app_kafka.json` splits `entryPoint` into `/bin/bash` with `command` `./kafka.sh`, so ECS `run-task` can override the command (ECS cannot override `entryPoint`). The existing task's behavior is unchanged.
   * New `deployment/run_kafka_cmd` runs an arbitrary command in the `AppKafka` Fargate task, following the same pattern as `run_cli_task`, printing the CloudWatch log stream and propagating the container exit code.
 * [OSDEV-3215](https://opensupplyhub.atlassian.net/browse/OSDEV-3215) - Disabled the flags for redirecting to the new homepage across all environments. All environments now behave consistently, and the root page remains `/map`.
+* [OSDEV-3218](https://opensupplyhub.atlassian.net/browse/OSDEV-3218) - Fixed `terraform destroy` failing with `filebase64sha256(): no such file or directory` for the three ContriBot Lambda archives. The `destroy` branch of `deployment/infra` now builds them with `make -sC` before `terraform init`, mirroring `plan`. Previously only `plan` built the zips (and `apply` downloaded them from S3), and because `contribot_*/*.zip` is gitignored, a destroy never had them on disk — while Terraform still evaluates the full configuration when planning a destroy.
 
 
 ### Code/API changes
