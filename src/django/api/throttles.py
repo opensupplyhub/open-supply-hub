@@ -47,20 +47,36 @@ class DuplicateThrottle(BaseThrottle):
     cache = caches['api_throttling']
     MAX_REQUEST_SIZE = 1024 * 1024  # 1MB limit
 
+    # Query params that change a request's effective behavior and so should
+    # produce a distinct cache key. Only their "true" state is recognized -
+    # see _canonical_overrides.
+    OVERRIDE_QUERY_PARAMS = ("duplicate_override", "ignore_warnings")
+
     def _serialize_data(self, data):
         try:
             return json.dumps(data, sort_keys=True)
         except (TypeError, ValueError):
             return str(data)
 
+    def _canonical_overrides(self, request):
+        # Only a recognized override flag in its "true" state changes a
+        # request's effective behavior; an absent flag, an explicit
+        # "=false", or any unrelated query param is equivalent to the
+        # default. Hashing only the true-valued flags keeps an override
+        # retry (e.g. ?duplicate_override=true) distinct from the original,
+        # while stopping a semantically-identical request that merely adds
+        # ?ignore_warnings=false (or any other param) from getting a fresh
+        # cache key and bypassing the throttle.
+        return sorted(
+            name for name in self.OVERRIDE_QUERY_PARAMS
+            if request.query_params.get(name) == "true"
+        )
+
     def _build_cache_key(self, request, view):
         data_str = self._serialize_data(request.data)
         pk = view.kwargs.get("pk")
         pk_prefix = f":{pk}" if pk else ""
-        # Query params are included so that requests with the same body but
-        # different query params (e.g. a duplicate-check override retry via
-        # ?duplicate_override=true) aren't mistaken for the same request.
-        query_str = self._serialize_data(dict(request.query_params))
+        query_str = self._serialize_data(self._canonical_overrides(request))
         data_hash = hashlib.sha256(
             f"{data_str}{query_str}".encode()
         ).hexdigest()

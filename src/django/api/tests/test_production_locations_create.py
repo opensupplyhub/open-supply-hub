@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.core import mail
+from django.core.cache import caches
 from allauth.account.models import EmailAddress
 from django.contrib.gis.geos import Point
 from waffle.testutils import override_switch
@@ -38,6 +39,13 @@ class TestProductionLocationsCreate(APITestCase):
         )
         quality_check_patcher.start()
         self.addCleanup(quality_check_patcher.stop)
+
+        # DuplicateThrottle uses the shared 'api_throttling' cache (Redis),
+        # which persists across test runs. Because the test DB resets
+        # auto-increment user ids deterministically, a stale entry from an
+        # earlier run can collide with this run's cache key and turn an
+        # expected 202/503 into a spurious 429. Clear it for a hermetic run.
+        caches['api_throttling'].clear()
 
         self.url = reverse(URLNames.PRODUCTION_LOCATIONS + '-list')
         self.common_valid_req_body = json.dumps({
@@ -222,6 +230,60 @@ class TestProductionLocationsCreate(APITestCase):
             content_type='application/json'
         )
         self.assertEqual(third_response.status_code, 429)
+
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_throttle_not_bypassed_by_default_query_param(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # An accepted submission with no query params.
+        first_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(first_response.status_code, 202)
+
+        # ?ignore_warnings=false is the default and has the same effective
+        # behavior as omitting it, so the identical body must still be
+        # throttled as a duplicate rather than getting a fresh cache key.
+        false_response = self.client.post(
+            f'{self.url}?ignore_warnings=false',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(false_response.status_code, 429)
+
+        # An unrelated query param must not create a fresh cache key either.
+        unrelated_response = self.client.post(
+            f'{self.url}?foo=bar',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(unrelated_response.status_code, 429)
+
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_throttle_allows_true_override_retry(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        first_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(first_response.status_code, 202)
+
+        # A true-valued override flag is a deliberate retry and must remain
+        # a distinct cache key, so it is not blocked by the throttle.
+        override_response = self.client.post(
+            f'{self.url}?ignore_warnings=true',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertNotEqual(override_response.status_code, 429)
 
     @patch('api.geocoding.requests.get')
     def test_rejected_submission_does_not_trigger_duplicate_throttle(
