@@ -1,6 +1,6 @@
 ---
 name: pr-description
-description: Write high-quality pull request descriptions based on Google's CL description best practices. Use when creating a pull request, writing a PR description, or when the user asks to describe changes for a PR or merge request.
+description: Write high-quality pull request descriptions using the repository's pull_request_template.md and Google's CL description best practices. Use when creating a pull request, writing a PR description, or when the user asks to describe changes for a PR or merge request.
 ---
 
 # Writing Good PR Descriptions
@@ -15,6 +15,63 @@ A PR description is a public record of change. It must communicate:
 The description becomes a permanent part of version control history. Future developers will search for the PR based on its description. If all the important information is in the code and not the description, it will be much harder to locate. And even after finding it, they need to understand _why_ the change was made — code reveals what the software does, but not why it exists.
 
 IMPORTANT: THE DESCRIPTION SHOULD BE EASY TO READ AND CONCISE!!!
+
+## Required Structure
+
+IMPORTANT: The PR body MUST follow the repository template at [`pull_request_template.md`](../../../pull_request_template.md) (repo root). Read that file first — it is the single source of truth. If it has changed, follow the file, not the outline below.
+
+Reproduce every section, in order, with the guidance HTML comments stripped out:
+
+```markdown
+## Jira Ticket
+
+[OSDEV-123](https://opensupplyhub.atlassian.net/browse/OSDEV-123)
+
+---
+
+## Summary of Changes
+
+<the what/why writing described in the rest of this skill>
+
+---
+
+## Type of Change
+
+- [x] <only the boxes that apply>
+
+---
+
+## Testing
+
+<how the change was verified>
+
+---
+
+## Known TODO Items
+
+<deferred work, follow-up tickets, known limitations — or "None">
+
+---
+
+## Checklist
+
+### Implementation
+### Testing & Validation
+### Documentation & Communication
+### Final Review
+```
+
+Rules:
+
+- **Do not** invent, drop, rename, or reorder sections, and keep the `---` separators.
+- Replace each `N/A` placeholder with real content. Leave `N/A` only when the section genuinely does not apply, and explain why in **Summary of Changes**.
+- **Jira Ticket**: derive the ticket id from the branch name (see Gathering Context) and link it in the `[OSDEV-123](...)` format. Use `N/A` only for PRs with no ticket.
+- **Type of Change**: check all applicable boxes. This drives what reviewers look at, so be accurate — a UI change needs the UI box, a schema change needs the backend box.
+- **Testing**: list the scenarios actually covered (happy path, edge cases, regressions). Attach screenshots or a recording for UI changes; note the requests/queries run for backend changes.
+- **Known TODO Items**: write `None` rather than deleting the section.
+- **Checklist**: keep all four subsections and every item. Only check a box when the work was genuinely done and verified. Never check boxes on the author's behalf by assumption — leave them unchecked and tell the user which ones need their attention. Uncheck (or annotate) items that don't apply.
+
+Everything below applies to the **PR title** and the **Summary of Changes** section.
 
 ## Gathering Context
 
@@ -35,6 +92,8 @@ And then fetch the ticket details from JIRA using the ticket id to get additiona
 
 ## First Line
 
+This is the PR title, and it doubles as the opening line of **Summary of Changes**.
+
 - Short summary of specifically **what** is being done.
 - Complete sentence, written as though it were an order (imperative mood).
 - Followed by an empty line.
@@ -48,6 +107,8 @@ Say "**Delete** the FizzBuzz RPC and **replace** it with the new system." instea
 The rest of the description does not need to be imperative.
 
 ## Body is Informative
+
+This is the rest of **Summary of Changes**. The remaining template sections (Testing, Known TODO Items, Checklist) cover their own ground — don't duplicate them here.
 
 The rest of the description should fill in the details and include any supplemental information a reader needs to understand the changelist holistically:
 
@@ -121,3 +182,12 @@ Bad:
 ## Review Before Submitting
 
 PRs can undergo significant change during review. Review the description before submitting to ensure it still reflects what the PR does.
+
+Before opening or updating the PR, confirm:
+
+- [ ] Every section of `pull_request_template.md` is present, in order, with the HTML comments removed.
+- [ ] No leftover `N/A` placeholders except where the section truly does not apply.
+- [ ] The Jira link resolves and matches the branch's ticket.
+- [ ] Type of Change reflects what the diff actually touches.
+- [ ] Checked checklist items are all genuinely true; unverified ones are left unchecked and raised with the user.
+- [ ] `doc/release/RELEASE-NOTES.md` has been updated on this branch (see AGENTS.md) — if not, prompt the user before opening the PR.
