@@ -825,7 +825,7 @@ describe("ProductionLocationInfo component, override accumulation across the dup
 
     test("carries the granted duplicate override when confirming the quality warnings dialog", async () => {
         apiRequest.post.mockRejectedValue({
-            response: { status: 422, data: warningsRawData },
+            response: { status: 409, data: warningsRawData },
         });
 
         const { getByText, getAllByText } = renderComponent(
