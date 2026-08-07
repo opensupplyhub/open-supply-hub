@@ -1,4 +1,3 @@
-import querystring from 'querystring';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
@@ -44,7 +43,6 @@ import startCase from 'lodash/startCase';
 import toLower from 'lodash/toLower';
 import { isURL, isInt } from 'validator';
 import { featureCollection, bbox } from '@turf/turf';
-import hash from 'object-hash';
 import * as XLSX from 'xlsx';
 import moment from 'moment';
 import removeAccents from 'remove-accents';
@@ -55,6 +53,8 @@ import {
     string as stringYup,
     array as arrayYup,
 } from 'yup';
+import hash from './stableHash';
+import querystring from './qs';
 
 import {
     OTHER,
@@ -427,6 +427,11 @@ export const createQueryStringFromSearchFilters = (
     withEmbed,
     detail,
 ) => {
+    // Note: The values that we are using to construct this filter are also used
+    // in the home_uri_rewrite.js CloudFront function to redirect users to the
+    // map page with the correct filters applied. If you change the names of any
+    // of these query string parameters, you will also need to update the CloudFront
+    // function to match.
     const inputForQueryString = Object.freeze({
         q: facilityFreeTextQuery,
         contributors: createCompactSortedQuerystringInputObject(contributors),
@@ -2056,7 +2061,6 @@ export const filterFreeEmissionsEstimateFields = formData => {
     const {
         energySourcesData,
         openingDateField,
-        closingDateField,
         estimatedAnnualThroughputField,
     } = freeEmissionsEstimateFormConfig;
 
@@ -2073,7 +2077,6 @@ export const filterFreeEmissionsEstimateFields = formData => {
     // Use Set for O(1) date and throughput field lookups.
     const dateAndThroughputFieldNames = new Set([
         openingDateField.valueFieldName,
-        closingDateField.valueFieldName,
         estimatedAnnualThroughputField.valueFieldName,
     ]);
 

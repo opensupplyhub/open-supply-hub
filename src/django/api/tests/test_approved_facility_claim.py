@@ -185,6 +185,138 @@ class ApprovedFacilityClaimTest(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
 
     @override_switch("claim_a_facility", active=True)
+    def test_noop_claim_profile_update_skips_save(self):
+        # Re-submitting the edit form without changing anything must not
+        # bump updated_at (which feeds the claimed section's "last
+        # updated" date) or notify list contributors.
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
+        self.facility_claim.save()
+
+        payload = {
+            "facility_description": "test_facility_description",
+            "facility_phone_number_publicly_visible": False,
+            "point_of_contact_publicly_visible": False,
+            "office_info_publicly_visible": False,
+            "facility_website_publicly_visible": False,
+        }
+        api_url = "/api/facility-claims/{}/claimed/".format(
+            self.facility_claim.id
+        )
+
+        first_response = self.client.put(api_url, payload)
+        self.assertEqual(200, first_response.status_code)
+        self.assertEqual(len(mail.outbox), 1)
+        updated_at_after_first_save = FacilityClaim.objects.get(
+            pk=self.facility_claim.id
+        ).updated_at
+
+        second_response = self.client.put(api_url, payload)
+        self.assertEqual(200, second_response.status_code)
+
+        # No new email and no updated_at bump for the identical payload.
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(
+            FacilityClaim.objects.get(pk=self.facility_claim.id).updated_at,
+            updated_at_after_first_save,
+        )
+
+        # Changing a single field must still save: a false "no change"
+        # here would silently drop the claimant's edit.
+        changed_payload = dict(
+            payload, facility_description="a different description"
+        )
+        third_response = self.client.put(api_url, changed_payload)
+        self.assertEqual(200, third_response.status_code)
+        self.assertEqual(len(mail.outbox), 2)
+        claim_after_change = FacilityClaim.objects.get(
+            pk=self.facility_claim.id
+        )
+        self.assertEqual(
+            claim_after_change.facility_description,
+            "a different description",
+        )
+        self.assertGreater(
+            claim_after_change.updated_at,
+            updated_at_after_first_save,
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_blank_text_fields_stored_as_null_are_not_a_change(self):
+        # The claim form submits '' for every field left blank, but most
+        # approved claims hold NULL in those columns. NULL and '' are
+        # indistinguishable to anyone reading the profile, so submitting ''
+        # over a NULL must not count as an edit — otherwise nearly every
+        # claimant's first save bumps the claimed section's "last updated"
+        # date without changing anything they can see.
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
+        self.facility_claim.save()
+
+        self.assertIsNone(self.facility_claim.facility_website)
+        self.assertIsNone(self.facility_claim.office_official_name)
+
+        updated_at_before = FacilityClaim.objects.get(
+            pk=self.facility_claim.id
+        ).updated_at
+
+        response = self.client.put(
+            "/api/facility-claims/{}/claimed/".format(self.facility_claim.id),
+            {
+                # unchanged values the claim already holds
+                "facility_description": "description",
+                "facility_phone_number": "12345",
+                "facility_phone_number_publicly_visible": False,
+                "facility_website_publicly_visible": False,
+                "point_of_contact_publicly_visible": False,
+                "office_info_publicly_visible": False,
+                # blank in the form, NULL in the database
+                "facility_website": "",
+                "facility_name_english": "",
+                "office_official_name": "",
+                "point_of_contact_person_name": "",
+            },
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(len(mail.outbox), 0)
+
+        claim = FacilityClaim.objects.get(pk=self.facility_claim.id)
+        self.assertEqual(claim.updated_at, updated_at_before)
+        # Nothing was written, so the columns keep their NULLs.
+        self.assertIsNone(claim.facility_website)
+        self.assertIsNone(claim.office_official_name)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_clearing_a_populated_text_field_still_saves(self):
+        # The NULL/'' equivalence must not swallow a real edit: emptying a
+        # field that currently holds a value is a change the claimant
+        # intended, and it has to persist.
+        self.facility_claim.status = FacilityClaimStatuses.APPROVED
+        self.facility_claim.save()
+
+        updated_at_before = FacilityClaim.objects.get(
+            pk=self.facility_claim.id
+        ).updated_at
+
+        response = self.client.put(
+            "/api/facility-claims/{}/claimed/".format(self.facility_claim.id),
+            {
+                "facility_description": "",
+                "facility_phone_number": "12345",
+                "facility_phone_number_publicly_visible": False,
+                "facility_website_publicly_visible": False,
+                "point_of_contact_publicly_visible": False,
+                "office_info_publicly_visible": False,
+            },
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(len(mail.outbox), 1)
+
+        claim = FacilityClaim.objects.get(pk=self.facility_claim.id)
+        self.assertGreater(claim.updated_at, updated_at_before)
+        self.assertEqual(claim.facility_description, "")
+
+    @override_switch("claim_a_facility", active=True)
     def test_updating_claim_profile_refreshes_indexed_claim_info(self):
         # OSDEV-2679: editing an approved claim must refresh the indexed
         # claim_info blob (this happens via the DB trigger

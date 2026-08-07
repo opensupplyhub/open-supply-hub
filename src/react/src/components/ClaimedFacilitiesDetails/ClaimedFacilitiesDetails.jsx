@@ -57,7 +57,6 @@ import {
     updateClaimedFacilityOfficeCountry,
     updateClaimedFacilityOfficePhone,
     updateClaimedFacilityOpeningDate,
-    updateClaimedFacilityClosingDate,
     updateClaimedEstimatedAnnualThroughput,
     updateClaimedEnergyCoal,
     updateClaimedEnergyNaturalGas,
@@ -104,7 +103,6 @@ import { USER_DEFAULT_STATE, mockedSectors } from '../../util/constants';
 import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
 import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
 import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
-import MonthYearPicker from '../FreeEmissionsEstimate/MonthYearPicker.jsx';
 import claimedFacilityDetailsSchema from './validationSchema';
 
 const createCountrySelectOptions = memoize(
@@ -113,7 +111,6 @@ const createCountrySelectOptions = memoize(
 
 const {
     openingDateField,
-    closingDateField,
     estimatedAnnualThroughputField,
     energyConsumptionLabel,
     energySourcesData,
@@ -166,7 +163,6 @@ function ClaimedFacilitiesDetails({
     errorUpdating,
     updateParentCompany,
     updateOpeningDate,
-    updateClosingDate,
     updateEstimatedAnnualThroughput,
     energyValueUpdaters,
     energyEnabledUpdaters,
@@ -286,7 +282,6 @@ function ClaimedFacilitiesDetails({
     const emissionsValidationValues = useMemo(
         () => ({
             openingDate: facilityData.opening_date,
-            closingDate: facilityData.closing_date,
             estimatedAnnualThroughput: facilityData.estimated_annual_throughput,
             energyCoal: facilityData.energy_coal,
             energyNaturalGas: facilityData.energy_natural_gas,
@@ -677,33 +672,6 @@ function ClaimedFacilitiesDetails({
                                     onChange={updateOpeningDate}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={6}>
-                                <MonthYearPicker
-                                    value={data.closing_date || ''}
-                                    label={closingDateField.label}
-                                    tooltipText={closingDateField.tooltipText}
-                                    placeholderMonth={
-                                        closingDateField.placeholderMonth
-                                    }
-                                    placeholderYear={
-                                        closingDateField.placeholderYear
-                                    }
-                                    helperText={
-                                        getEmissionError('closingDate') && (
-                                            <InputErrorText
-                                                text={getEmissionError(
-                                                    'closingDate',
-                                                )}
-                                            />
-                                        )
-                                    }
-                                    disabled={updating}
-                                    error={Boolean(
-                                        getEmissionError('closingDate'),
-                                    )}
-                                    onChange={updateClosingDate}
-                                />
-                            </Grid>
                         </Grid>
                         <div>
                             <InputSection
@@ -978,7 +946,6 @@ ClaimedFacilitiesDetails.propTypes = {
     updateOfficeVisibility: func.isRequired,
     updateParentCompany: func.isRequired,
     updateOpeningDate: func.isRequired,
-    updateClosingDate: func.isRequired,
     updateEstimatedAnnualThroughput: func.isRequired,
     energyValueUpdaters: object.isRequired,
     energyEnabledUpdaters: object.isRequired,
@@ -1096,8 +1063,6 @@ function mapDispatchToProps(
         ),
         updateOpeningDate: value =>
             dispatch(updateClaimedFacilityOpeningDate(value)),
-        updateClosingDate: value =>
-            dispatch(updateClaimedFacilityClosingDate(value)),
         updateEstimatedAnnualThroughput: makeDispatchValueFn(
             updateClaimedEstimatedAnnualThroughput,
         ),

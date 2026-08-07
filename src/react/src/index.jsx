@@ -3,17 +3,23 @@ import 'core-js';
 import React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
-import { unregister } from './registerServiceWorker';
 import { store } from './configureStore';
 import './index.css';
 import App from './App';
 
-/* eslint-disable react/jsx-filename-extension */
 render(
     <Provider store={store}>
         <App />
     </Provider>,
     document.getElementById('root'),
 );
-unregister();
-/* eslint-enable react/jsx-filename-extension */
+
+// A service worker was registered by earlier versions of this app (CRA
+// default). Keep unregistering so returning visitors drop the stale cache.
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+        .then(registration => {
+            registration.unregister();
+        })
+        .catch(() => {});
+}

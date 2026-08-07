@@ -12,7 +12,8 @@ from rest_framework.exceptions import (
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
-from django.db import transaction
+from django.core.exceptions import FieldDoesNotExist
+from django.db import models, transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
@@ -46,6 +47,113 @@ from ...serializers import (
     FacilityClaimListQueryParamsSerializer
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
+
+
+# Field groups the claimed-details PUT applies in bulk. get_claimed_details
+# iterates these same tuples when copying request values onto the claim, so
+# a field added to any group is tracked for no-op detection automatically.
+CLAIM_PROFILE_ARRAY_FIELDS = (
+    'facility_affiliations',
+    'facility_certifications',
+    'facility_product_types',
+    'facility_production_types',
+    'sector',
+)
+
+CLAIM_PROFILE_DATE_FIELDS = (
+    'opening_date',
+)
+
+CLAIM_PROFILE_EMISSION_FIELDS = (
+    'estimated_annual_throughput',
+    'energy_coal',
+    'energy_natural_gas',
+    'energy_diesel',
+    'energy_kerosene',
+    'energy_biomass',
+    'energy_charcoal',
+    'energy_animal_waste',
+    'energy_electricity',
+    'energy_other',
+)
+
+CLAIM_PROFILE_SIMPLE_FIELDS = (
+    'facility_description',
+    'facility_name_english',
+    'facility_name_native_language',
+    'facility_address',
+    'facility_phone_number',
+    'facility_phone_number_publicly_visible',
+    'facility_website',
+    'facility_website_publicly_visible',
+    'facility_minimum_order_quantity',
+    'facility_average_lead_time',
+    'point_of_contact_person_name',
+    'point_of_contact_email',
+    'point_of_contact_publicly_visible',
+    'office_official_name',
+    'office_address',
+    'office_country_code',
+    'office_phone_number',
+    'office_info_publicly_visible',
+)
+
+# Fields get_claimed_details assigns individually rather than through the
+# group loops above. A new individually-assigned field must be added here
+# by hand, or edits touching only that field would be dropped as "no-op".
+CLAIM_PROFILE_INDIVIDUAL_FIELDS = (
+    'parent_company_id',
+    'parent_company_name',
+    'facility_workers_count',
+    'facility_female_workers_percentage',
+    'facility_type',
+    'other_facility_type',
+    'facility_location',
+)
+
+# Every claim field the claimed-details PUT can modify. Used to detect
+# no-op saves: an unconditional save bumps updated_at even when nothing
+# changed, which pollutes the claimed section's "last updated" date and
+# makes claim-data recency untrustworthy across channels.
+CLAIM_PROFILE_TRACKED_FIELDS = (
+    CLAIM_PROFILE_INDIVIDUAL_FIELDS
+    + CLAIM_PROFILE_ARRAY_FIELDS
+    + CLAIM_PROFILE_DATE_FIELDS
+    + CLAIM_PROFILE_EMISSION_FIELDS
+    + CLAIM_PROFILE_SIMPLE_FIELDS
+)
+
+
+def get_tracked_claim_value(claim, field_name):
+    """Return the claim field value normalized through the model field's
+    to_python, so raw request values (e.g. the string "False" from a form
+    submit) compare equal to their saved database representation.
+
+    Text fields additionally treat NULL and the empty string as the same
+    value. They are distinct in the database but identical everywhere a
+    user can see them, and the claim form submits '' for every field left
+    blank — so without this, the first save of a claim holding NULLs
+    counts as a change and bumps updated_at without altering anything
+    visible. Most approved claims carry such NULLs, so nearly every
+    claimant would have seen one unexplained "last updated" bump.
+
+    Deliberately keyed on field type rather than name: the visibility
+    booleans in CLAIM_PROFILE_SIMPLE_FIELDS keep NULL and False distinct,
+    since those genuinely differ (unanswered vs. answered "no").
+    """
+    value = getattr(claim, field_name)
+    try:
+        model_field = claim._meta.get_field(field_name)
+    except FieldDoesNotExist:
+        # Attname-only entries such as parent_company_id.
+        return value
+    try:
+        value = model_field.to_python(value)
+    except Exception:
+        return value
+    if isinstance(model_field, (models.CharField, models.TextField)):
+        return '' if value is None else value
+    return value
 
 
 class FacilityClaimViewSet(ModelViewSet):
@@ -337,6 +445,11 @@ class FacilityClaimViewSet(ModelViewSet):
                 response_data = ApprovedFacilityClaimSerializer(claim).data
                 return Response(response_data)
 
+            snapshot = {
+                field: get_tracked_claim_value(claim, field)
+                for field in CLAIM_PROFILE_TRACKED_FIELDS
+            }
+
             prev_location = claim.facility_location
             location_data = request.data.get('facility_location') or ''
             if location_data != '':
@@ -404,21 +517,14 @@ class FacilityClaimViewSet(ModelViewSet):
                 other_facility_type = None
             claim.other_facility_type = other_facility_type
 
-            array_field_names = (
-                'facility_affiliations',
-                'facility_certifications',
-                'facility_product_types',
-                'facility_production_types',
-                'sector',
-            )
-            for field_name in array_field_names:
+            for field_name in CLAIM_PROFILE_ARRAY_FIELDS:
                 data = request.data.get(field_name)
                 if data:
                     setattr(claim, field_name, data)
                 else:
                     setattr(claim, field_name, None)
 
-            for date_field in ('opening_date', 'closing_date'):
+            for date_field in CLAIM_PROFILE_DATE_FIELDS:
                 value = request.data.get(date_field)
 
                 if not value:
@@ -434,19 +540,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 except (ValueError, TypeError):
                     setattr(claim, date_field, None)
 
-            emission_fields = (
-                'estimated_annual_throughput',
-                'energy_coal',
-                'energy_natural_gas',
-                'energy_diesel',
-                'energy_kerosene',
-                'energy_biomass',
-                'energy_charcoal',
-                'energy_animal_waste',
-                'energy_electricity',
-                'energy_other',
-            )
-            for field_name in emission_fields:
+            for field_name in CLAIM_PROFILE_EMISSION_FIELDS:
                 value = request.data.get(field_name, None)
 
                 if not value:
@@ -458,29 +552,19 @@ class FacilityClaimViewSet(ModelViewSet):
                 except (ValueError, TypeError):
                     setattr(claim, field_name, None)
 
-            field_names = (
-                'facility_description',
-                'facility_name_english',
-                'facility_name_native_language',
-                'facility_address',
-                'facility_phone_number',
-                'facility_phone_number_publicly_visible',
-                'facility_website',
-                'facility_website_publicly_visible',
-                'facility_minimum_order_quantity',
-                'facility_average_lead_time',
-                'point_of_contact_person_name',
-                'point_of_contact_email',
-                'point_of_contact_publicly_visible',
-                'office_official_name',
-                'office_address',
-                'office_country_code',
-                'office_phone_number',
-                'office_info_publicly_visible',
-            )
-
-            for field_name in field_names:
+            for field_name in CLAIM_PROFILE_SIMPLE_FIELDS:
                 setattr(claim, field_name, request.data.get(field_name))
+
+            # Skip the save (and its side effects: updated_at bump, claim
+            # reindex trigger, extended-field rebuild, notification email)
+            # when no tracked value actually changed.
+            has_changes = any(
+                snapshot[field] != get_tracked_claim_value(claim, field)
+                for field in CLAIM_PROFILE_TRACKED_FIELDS
+            )
+            if not has_changes:
+                response_data = ApprovedFacilityClaimSerializer(claim).data
+                return Response(response_data)
 
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)

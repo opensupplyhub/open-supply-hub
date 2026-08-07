@@ -42,6 +42,7 @@ src/dedupe-hub/api/coverage
 ## Test artifacts
 src/django/*.csv
 src/django/*.xlsx
+src/django/media/
 
 
 # macOS
