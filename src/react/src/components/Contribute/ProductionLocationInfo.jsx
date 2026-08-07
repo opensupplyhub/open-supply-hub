@@ -64,6 +64,11 @@ import RequireAuthNotice from '../RequireAuthNotice';
 import StyledTooltip from '../StyledTooltip';
 
 import InputErrorText from './InputErrorText';
+import DataCenterFields from './DataCenterFields/DataCenterFields';
+import {
+    DATA_CENTER_FORM_INITIAL_VALUES,
+    DATA_CENTER_TYPE_VALUE,
+} from './DataCenterFields/constants';
 import ContributionWarningDialog from './ContributionWarningDialog';
 import ProductionLocationDialog from './ProductionLocationDialog';
 import PostContributionSubmitErrorNotification from './PostContributionSubmitErrorNotification/PostContributionSubmitErrorNotification';
@@ -187,8 +192,31 @@ const ProductionLocationInfo = ({
             processingType: [],
             numberOfWorkers: '',
             parentCompany: '',
+            ...DATA_CENTER_FORM_INITIAL_VALUES,
         });
     };
+
+    // Data-center sections show when the contributor selects Data Center as
+    // a location type (OSDEV-3074).
+    const isDataCenterSelected = (
+        contributionForm.values.locationType || []
+    ).some(option => (option?.value ?? option) === DATA_CENTER_TYPE_VALUE);
+
+    useEffect(() => {
+        // Clear data-center fields when Data Center is deselected so stale
+        // values are never submitted.
+        if (!isDataCenterSelected) {
+            const hasDataCenterValues = Object.keys(
+                DATA_CENTER_FORM_INITIAL_VALUES,
+            ).some(fieldName => contributionForm.values[fieldName]);
+            if (hasDataCenterValues) {
+                contributionForm.setValues({
+                    ...contributionForm.values,
+                    ...DATA_CENTER_FORM_INITIAL_VALUES,
+                });
+            }
+        }
+    }, [isDataCenterSelected]);
 
     const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
     const onSwitchChange = () => {
@@ -227,6 +255,17 @@ const ProductionLocationInfo = ({
 
     useEffect(() => {
         if (singleProductionLocationData && osID) {
+            // Pre-select the Data Center location type when the existing
+            // record is classified as a data center (OSDEV-3074). The v1
+            // response's location_type derives from the facility_type
+            // extended fields.
+            const existingLocationTypes = [].concat(
+                singleProductionLocationData.location_type ?? [],
+            );
+            const isExistingDataCenter = existingLocationTypes.includes(
+                DATA_CENTER_TYPE_VALUE,
+            );
+
             contributionForm.setValues({
                 ...contributionForm.values,
                 name: singleProductionLocationData.name ?? '',
@@ -237,7 +276,22 @@ const ProductionLocationInfo = ({
                           label: singleProductionLocationData?.country.name,
                       }
                     : null,
+                ...(isExistingDataCenter && {
+                    locationType: [
+                        {
+                            value: DATA_CENTER_TYPE_VALUE,
+                            label: DATA_CENTER_TYPE_VALUE,
+                        },
+                    ],
+                }),
             });
+
+            if (isExistingDataCenter) {
+                // The locationType select lives behind the Additional
+                // information switch; open it so the pre-selected value is
+                // visible and is not wiped by the switch's reset handler.
+                setShowAdditionalInfo(true);
+            }
         }
     }, [singleProductionLocationData, osID]);
 
@@ -1186,6 +1240,11 @@ const ProductionLocationInfo = ({
                                     />
                                 </div>
                             </>
+                        )}
+                        {isDataCenterSelected && (
+                            <DataCenterFields
+                                contributionForm={contributionForm}
+                            />
                         )}
                     </div>
                     {showPostSubmitErrorNotification && (
