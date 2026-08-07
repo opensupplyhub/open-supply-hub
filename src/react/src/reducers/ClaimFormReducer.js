@@ -9,6 +9,7 @@ import {
     startSubmitClaimFormData,
     failSubmitClaimFormData,
     completeSubmitClaimFormData,
+    clearClaimFormSubmissionError,
     updateOsIdToClaim,
 } from '../actions/claimForm';
 
@@ -134,6 +135,12 @@ const claimFormReducer = createReducer(
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: data },
+                },
+            }),
+        [clearClaimFormSubmissionError]: state =>
+            update(state, {
+                submissionState: {
+                    error: { $set: null },
                 },
             }),
         [updateOsIdToClaim]: (state, osId) =>
