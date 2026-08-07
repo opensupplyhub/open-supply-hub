@@ -152,8 +152,8 @@ export function fetchSingleFacility(
     contributors = null,
     useCreatedAtForDataPoints = false,
 ) {
-    return dispatch => {
-        dispatch(startFetchSingleFacility());
+    return (dispatch, getState) => {
+        dispatch(startFetchSingleFacility(osID));
 
         if (!osID) {
             return dispatch(
@@ -174,17 +174,28 @@ export function fetchSingleFacility(
               )
             : makeGetFacilityByOSIdURL(osID, useCreatedAtForDataPoints);
 
+        const isCurrentRequest = () =>
+            getState().facilities.singleFacility.requestedOsId === osID;
+
         return apiRequest
             .get(fetchUrl)
-            .then(({ data }) => dispatch(completeFetchSingleFacility(data)))
-            .catch(err =>
+            .then(({ data }) => {
+                if (!isCurrentRequest()) {
+                    return;
+                }
+                dispatch(completeFetchSingleFacility(data));
+            })
+            .catch(err => {
+                if (!isCurrentRequest()) {
+                    return;
+                }
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching that facility',
                         failFetchSingleFacility,
                     ),
-                ),
-            );
+                );
+            });
     };
 }
