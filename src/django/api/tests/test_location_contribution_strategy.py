@@ -2425,7 +2425,7 @@ class TestLocationContributionStrategy(APITestCase):
             'source_name'
         )
 
-        detail = result.errors['errors'][0]['detail']
-        self.assertTrue(
-            'email' in detail.lower() or 'contact' in detail.lower()
+        self.assertEqual(
+            result.errors['errors'][0]['detail'],
+            'Field source_name cannot be longer than 500 characters.'
         )
