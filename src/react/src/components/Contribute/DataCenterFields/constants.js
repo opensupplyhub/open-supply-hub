@@ -27,8 +27,7 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
     name_permit_holder:
         'Enter the entity named as the permit holder. For example: on ' +
         'government-issued air quality permits.',
-    name_site_other:
-        'Enter an alternative or previous name for the same site.',
+    name_site_other: 'Enter an alternative or previous name for the same site.',
     name_unspecified:
         'Enter a name associated with the site when the relationship to the ' +
         'site is unclear.',
@@ -45,8 +44,7 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
     ups_capacity:
         'Enter the capacity of the uninterruptible power supply (UPS) ' +
         'system.',
-    backup_generator_capacity:
-        'Enter the capacity of the backup generators.',
+    backup_generator_capacity: 'Enter the capacity of the backup generators.',
     pue:
         'Enter the Power Usage Effectiveness: the ratio of total energy ' +
         'used to energy delivered to computing equipment. For example: 1.25.',
@@ -88,10 +86,8 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
         'data hall space or white space.',
     floor_space: 'Enter the floor space of the data center.',
     overall_area: 'Enter the overall or full building area.',
-    other_area:
-        'Enter any other area not captured by the fields above.',
-    other_area_notes:
-        'Describe the type of area entered in Other Area.',
+    other_area: 'Enter any other area not captured by the fields above.',
+    other_area_notes: 'Describe the type of area entered in Other Area.',
     number_of_servers: 'Enter the number of servers, if known.',
     number_of_racks: 'Enter the number of racks, if known.',
     // Source details (provenance)
@@ -106,8 +102,7 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
     date_of_source:
         'Enter the date stated by the source, at whatever precision is ' +
         'available: YYYY, YYYY-MM, or YYYY-MM-DD.',
-    notes:
-        'Enter notes on any judgment calls made while collecting the data.',
+    notes: 'Enter notes on any judgment calls made while collecting the data.',
     data_collection_methodology:
         'Enter how the data was collected. For example: copied from ' +
         'website, downloaded directly from source.',

@@ -529,16 +529,21 @@ describe("ProductionLocationInfo component, data-center prefill for UPDATE (OSDE
         );
 
     test("pre-selects Data Center and shows the data-center sections when the record is a data center", async () => {
-        const { getByTestId, getByText } = renderComponent(
-            makeState(['Data Center']),
-        );
+        const { getByTestId } = renderComponent(makeState(['Data Center']));
 
+        // The data-center sections only render when the Data Center location
+        // type is pre-selected, so their presence proves the prefill worked.
         await waitFor(() =>
             expect(getByTestId('data-center-fields')).toBeInTheDocument(),
         );
         // The Additional information section is opened so the pre-selected
-        // location type is visible.
-        expect(getByText('Data Center')).toBeInTheDocument();
+        // location type is visible/editable.
+        expect(
+            getByTestId('switch-additional-info-fields'),
+        ).toBeInTheDocument();
+        expect(
+            getByTestId('data-center-section-Utility Usage'),
+        ).toBeInTheDocument();
     });
 
     test("does not show the data-center sections for a production location", async () => {
