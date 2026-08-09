@@ -2061,6 +2061,15 @@ export const slcValidationSchema = objectYup({
     parentCompany: buildFieldValidation(
         SLC_FIELD_VALIDATION_CONFIG.parentCompany,
     ).label('Parent company'),
+    // Data-center provenance (OSDEV-3074). Mirrors the server-side rule:
+    // ISO 8601 reduced precision - YYYY, YYYY-MM, or YYYY-MM-DD.
+    dateOfSource: stringYup()
+        .matches(/^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/, {
+            message:
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            excludeEmptyString: true,
+        })
+        .label('Date of source'),
 });
 
 /* eslint-disable camelcase */

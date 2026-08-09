@@ -355,4 +355,40 @@ describe('slcValidationSchema', () => {
             );
         });
     });
+
+    describe('dateOfSource field (data-center provenance, OSDEV-3074)', () => {
+        it('accepts an empty value', async () => {
+            await expect(isValid({ dateOfSource: '' })).resolves.toBe(true);
+        });
+
+        it('accepts ISO reduced-precision dates (YYYY, YYYY-MM, YYYY-MM-DD)', async () => {
+            await expect(isValid({ dateOfSource: '2024' })).resolves.toBe(
+                true,
+            );
+            await expect(isValid({ dateOfSource: '2024-06' })).resolves.toBe(
+                true,
+            );
+            await expect(
+                isValid({ dateOfSource: '2024-06-15' }),
+            ).resolves.toBe(true);
+        });
+
+        it('rejects free-text and out-of-range dates', async () => {
+            await expect(
+                validate({ dateOfSource: 'June 2024' }),
+            ).rejects.toThrow(
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            );
+            await expect(
+                validate({ dateOfSource: '2024-13' }),
+            ).rejects.toThrow(
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            );
+            await expect(
+                validate({ dateOfSource: '15/06/2024' }),
+            ).rejects.toThrow(
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            );
+        });
+    });
 });
