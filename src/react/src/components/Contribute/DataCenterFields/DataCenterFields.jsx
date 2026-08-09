@@ -43,9 +43,6 @@ const DataCenterFields = ({ classes, contributionForm }) => {
                 value={contributionForm.values[formName] ?? ''}
                 onChange={handleFieldChange(formName)}
                 placeholder={placeholder}
-                // Applied to the native input (not the wrapper) so the
-                // accessible name belongs to the focusable control.
-                inputProps={{ 'aria-label': label }}
                 error={hasError}
                 helperText={
                     hasError && (
@@ -56,6 +53,7 @@ const DataCenterFields = ({ classes, contributionForm }) => {
                 }
                 FormHelperTextProps={{ className: classes.helperText }}
                 InputProps={{
+                    'aria-label': label,
                     classes: {
                         notchedOutline: classes.notchedOutlineStyles,
                     },
