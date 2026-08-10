@@ -13,6 +13,7 @@ import {
     updateParentCompanyFilter,
     updateFacilityTypeFilter,
     updateProcessingTypeFilter,
+    updateIsic4Filter,
     updateProductTypeFilter,
     updateNumberofWorkersFilter,
     updateNativeLanguageNameFilter,
@@ -55,6 +56,7 @@ const initialState = Object.freeze({
     parentCompany: Object.freeze([]),
     facilityType: Object.freeze([]),
     processingType: Object.freeze([]),
+    isic4: Object.freeze([]),
     productType: Object.freeze([]),
     numberOfWorkers: Object.freeze([]),
     dataSources: Object.freeze([]),
@@ -122,6 +124,10 @@ export default createReducer(
         [updateProcessingTypeFilter]: (state, payload) =>
             update(state, {
                 processingType: { $set: payload },
+            }),
+        [updateIsic4Filter]: (state, payload) =>
+            update(state, {
+                isic4: { $set: payload },
             }),
         [updateProductTypeFilter]: (state, payload) =>
             update(state, {

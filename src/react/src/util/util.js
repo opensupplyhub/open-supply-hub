@@ -214,6 +214,8 @@ export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
+export const makeGetTaxonomyCountsURL = kind =>
+    `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
@@ -414,6 +416,7 @@ export const createQueryStringFromSearchFilters = (
         parentCompany = [],
         facilityType = [],
         processingType = [],
+        isic4 = [],
         productType = [],
         numberOfWorkers = [],
         nativeLanguageName = '',
@@ -449,6 +452,7 @@ export const createQueryStringFromSearchFilters = (
         processing_type: createCompactSortedQuerystringInputObject(
             processingType,
         ),
+        isic_4: createCompactSortedQuerystringInputObject(isic4),
         product_type: createCompactSortedQuerystringInputObject(productType),
         number_of_workers: createCompactSortedQuerystringInputObject(
             numberOfWorkers,
@@ -520,6 +524,7 @@ export const createFiltersFromQueryString = qs => {
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
+        isic_4: isic4 = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
         native_language_name: nativeLanguageName = '',
@@ -545,6 +550,7 @@ export const createFiltersFromQueryString = qs => {
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
         processingType: createSelectOptionsFromParams(processingType),
+        isic4: createSelectOptionsFromParams(isic4),
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,

@@ -26,6 +26,14 @@ PROCESSING_TYPE_FILTER = (
     ")"
 )
 
+ISIC_4_FILTER = (
+    "EXISTS ("
+    "SELECT 1 FROM api_extendedfield aef "
+    "WHERE aef.facility_id = afi.id "
+    "AND aef.field_name = 'isic_4'"
+    ")"
+)
+
 # Only facilities where a single contributor has more than one matched list
 # item can change when index_sector() is recomputed (the OSDEV-992 change
 # keeps one item per contributor instead of all of them); this skips the
@@ -102,6 +110,39 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': PROCESSING_TYPE_FILTER,
+    },
+    'isic_4': {
+        'columns': {
+            'isic_section': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_section) "
+                "FROM index_isic_section(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_division': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_division) "
+                "FROM index_isic_division(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_group': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_group) "
+                "FROM index_isic_group(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_class': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_class) "
+                "FROM index_isic_class(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+        },
+        'filter_sql': ISIC_4_FILTER,
     },
     'sector': {
         'columns': {

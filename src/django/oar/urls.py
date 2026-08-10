@@ -111,6 +111,8 @@ public_apis = [
     path('api/claim-statuses/', views.claim_statuses, name='claim_statuses'),
     path('api/facility-processing-types/', views.facility_processing_types,
          name='facility_processing_types'),
+    path('api/taxonomy-counts/', views.TaxonomyCountsView.as_view(),
+         name='taxonomy_counts'),
     path('api/parent-companies/', views.ParentCompanies.as_view(),
          name='parent_companies'),
     path('api/product-types/', views.ProductTypes.as_view(),

@@ -1,16 +1,20 @@
-import React, { useEffect } from 'react';
-import { bool, func } from 'prop-types';
+import React, { Suspense, useEffect } from 'react';
+import { bool, func, object } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
+import HierarchicalTaxonomySearch, {
+    TAXONOMY_KINDS,
+} from './Filters/HierarchicalTaxonomySearch';
 
 import {
     updateContributorTypeFilter,
     updateParentCompanyFilter,
     updateFacilityTypeFilter,
     updateProcessingTypeFilter,
+    updateIsic4Filter,
     updateProductTypeFilter,
     updateNumberofWorkersFilter,
     updateNativeLanguageNameFilter,
@@ -20,6 +24,7 @@ import {
     fetchContributorTypeOptions,
     fetchFacilityProcessingTypeOptions,
     fetchNumberOfWorkersOptions,
+    fetchTaxonomyCountsIfNeeded,
 } from '../actions/filterOptions';
 
 import {
@@ -48,9 +53,14 @@ const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
 
+const LazyIsicTaxonomySearch = React.lazy(() =>
+    import('./Filters/HierarchicalTaxonomySearch/IsicTaxonomySearch'),
+);
+
 function FilterSidebarExtendedSearch({
     contributorTypeOptions,
     facilityProcessingTypeOptions,
+    taxonomyCounts,
     numberOfWorkersOptions,
     contributorTypes,
     updateContributorType,
@@ -60,6 +70,8 @@ function FilterSidebarExtendedSearch({
     updateFacilityType,
     processingType,
     updateProcessingType,
+    isic4,
+    updateIsic4,
     productType,
     updateProductType,
     numberOfWorkers,
@@ -70,6 +82,7 @@ function FilterSidebarExtendedSearch({
     embedExtendedFields,
     fetchContributorTypes,
     fetchFacilityProcessingType,
+    fetchTaxonomyCountsForKind,
     fetchNumberOfWorkers,
     isSideBarSearch,
 }) {
@@ -80,7 +93,7 @@ function FilterSidebarExtendedSearch({
     }, [contributorTypeOptions, fetchContributorTypes]);
 
     useEffect(() => {
-        if (!facilityProcessingTypeOptions) {
+        if (embed && !facilityProcessingTypeOptions) {
             fetchFacilityProcessingType();
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
@@ -138,6 +151,38 @@ function FilterSidebarExtendedSearch({
                         aria-label="Parent company"
                         disabled={fetchingFacilities}
                     />
+                </div>
+            </ShowOnly>
+            <ShowOnly when={!embed}>
+                <div className="form__field">
+                    <HierarchicalTaxonomySearch
+                        label="Facility type & processing type"
+                        placeholder="Search facility or processing type"
+                        counts={taxonomyCounts.facility_processing}
+                        facilityType={facilityType}
+                        processingType={processingType}
+                        onFacilityTypeChange={updateFacilityType}
+                        onProcessingTypeChange={updateProcessingType}
+                        onRequestCounts={() =>
+                            fetchTaxonomyCountsForKind(
+                                TAXONOMY_KINDS.FACILITY_PROCESSING,
+                            )
+                        }
+                        disabled={fetchingFacilities}
+                    />
+                </div>
+                <div className="form__field">
+                    <Suspense fallback={null}>
+                        <LazyIsicTaxonomySearch
+                            counts={taxonomyCounts.isic4}
+                            isic4={isic4}
+                            onIsic4Change={updateIsic4}
+                            onRequestCounts={() =>
+                                fetchTaxonomyCountsForKind(TAXONOMY_KINDS.ISIC4)
+                            }
+                            disabled={fetchingFacilities}
+                        />
+                    </Suspense>
                 </div>
             </ShowOnly>
             <ShowOnly
@@ -238,22 +283,30 @@ function FilterSidebarExtendedSearch({
 FilterSidebarExtendedSearch.defaultProps = {
     contributorTypeOptions: null,
     facilityProcessingTypeOptions: null,
+    taxonomyCounts: Object.freeze({
+        facility_processing: null,
+        isic4: null,
+    }),
     numberOfWorkersOptions: null,
 };
 
 FilterSidebarExtendedSearch.propTypes = {
     contributorTypeOptions: contributorTypeOptionsPropType,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
+    taxonomyCounts: object,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     updateContributorType: func.isRequired,
     contributorTypes: contributorTypeOptionsPropType.isRequired,
     parentCompany: contributorOptionsPropType.isRequired,
     facilityType: facilityTypeOptionsPropType.isRequired,
     processingType: processingTypeOptionsPropType.isRequired,
+    isic4: facilityTypeOptionsPropType,
+    updateIsic4: func.isRequired,
     productType: productTypeOptionsPropType.isRequired,
     numberOfWorkers: numberOfWorkerOptionsPropType.isRequired,
     fetchingFacilities: bool.isRequired,
     fetchingExtendedOptions: bool.isRequired,
+    fetchTaxonomyCountsForKind: func.isRequired,
 };
 
 function mapStateToProps({
@@ -266,6 +319,10 @@ function mapStateToProps({
             data: facilityProcessingTypeOptions,
             fetching: fetchingFacilityProcessingType,
         },
+        taxonomyCounts: {
+            facility_processing: { data: facilityProcessingCounts } = {},
+            isic4: { data: isic4Counts } = {},
+        } = {},
         numberOfWorkers: {
             data: numberOfWorkersOptions,
             fetching: fetchingNumberOfWorkers,
@@ -276,6 +333,7 @@ function mapStateToProps({
         parentCompany,
         facilityType,
         processingType,
+        isic4,
         productType,
         numberOfWorkers,
         nativeLanguageName,
@@ -288,11 +346,16 @@ function mapStateToProps({
     return {
         contributorTypeOptions,
         facilityProcessingTypeOptions,
+        taxonomyCounts: {
+            facility_processing: facilityProcessingCounts,
+            isic4: isic4Counts,
+        },
         numberOfWorkersOptions,
         contributorTypes,
         parentCompany,
         facilityType,
         processingType,
+        isic4,
         productType,
         numberOfWorkers,
         nativeLanguageName,
@@ -313,6 +376,7 @@ function mapDispatchToProps(dispatch) {
         updateParentCompany: v => dispatch(updateParentCompanyFilter(v)),
         updateFacilityType: v => dispatch(updateFacilityTypeFilter(v)),
         updateProcessingType: v => dispatch(updateProcessingTypeFilter(v)),
+        updateIsic4: v => dispatch(updateIsic4Filter(v)),
         updateProductType: v => dispatch(updateProductTypeFilter(v)),
         updateNumberOfWorkers: v => dispatch(updateNumberofWorkersFilter(v)),
         updateNativeLanguageName: e =>
@@ -320,6 +384,8 @@ function mapDispatchToProps(dispatch) {
         fetchContributorTypes: () => dispatch(fetchContributorTypeOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
+        fetchTaxonomyCountsForKind: kind =>
+            dispatch(fetchTaxonomyCountsIfNeeded({ kinds: [kind] })),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
     };
 }

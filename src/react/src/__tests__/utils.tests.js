@@ -20,6 +20,7 @@ const {
     makeMergeTwoFacilitiesAPIURL,
     makeLogDownloadUrl,
     makeGetFacilitiesURLWithQueryString,
+    makeGetTaxonomyCountsURL,
     getValueFromObject,
     createQueryStringFromSearchFilters,
     allFiltersAreEmpty,
@@ -193,6 +194,15 @@ it('creates an API URL for getting all facilities', () => {
     expect(makeGetFacilitiesURL()).toEqual(expectedMatch);
 });
 
+it('creates an API URL for getting taxonomy counts', () => {
+    expect(makeGetTaxonomyCountsURL('facility_processing')).toEqual(
+        '/api/taxonomy-counts/?kind=facility_processing',
+    );
+    expect(makeGetTaxonomyCountsURL('isic4')).toEqual(
+        '/api/taxonomy-counts/?kind=isic4',
+    );
+});
+
 it('creates an API URL for getting a single facility by OS ID', () => {
     const expectedMatch = '/api/facilities/12345/?created_at_of_data_points=false&pending_claim_info=true';
     expect(makeGetFacilityByOSIdURL(12345)).toEqual(expectedMatch);
@@ -270,6 +280,22 @@ it('creates a querystring from a set of filter selection', () => {
             .concat('&contributor_types=foo&countries=bar&sectors=baz');
     expect(createQueryStringFromSearchFilters(allFilters))
         .toEqual(expectedAllFiltersMatch);
+
+    const isic4FilterSelections = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        isic4: [
+            { value: 'section:C', label: 'C - Manufacturing' },
+            { value: 'class:0111', label: '0111 - Growing of cereals' },
+        ],
+    };
+
+    expect(createQueryStringFromSearchFilters(isic4FilterSelections)).toEqual(
+        'isic_4=class%3A0111&isic_4=section%3AC',
+    );
 
     const partnerSharedFilters = {
         facilityFreeTextQuery: '',
@@ -692,6 +718,39 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(processingTypeString),
     ).toMatchObject(expectedProcessingTypeMatch);
+
+    const isic4String =
+        '?isic_4=section%3AC&isic_4=class%3A0111&isic_4=division%3A01';
+    const expectedIsic4Match = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        statuses: [],
+        lists: [],
+        parentCompany: [],
+        facilityType: [],
+        processingType: [],
+        isic4: [
+            { value: 'section:C', label: 'section:C' },
+            { value: 'class:0111', label: 'class:0111' },
+            { value: 'division:01', label: 'division:01' },
+        ],
+        productType: [],
+        numberOfWorkers: [],
+        nativeLanguageName: '',
+        combineContributors: '',
+        boundary: null,
+        sortAlgorithm: {
+            value: 'name_asc',
+            label: 'A to Z',
+        },
+    };
+
+    expect(createFiltersFromQueryString(isic4String)).toMatchObject(
+        expectedIsic4Match,
+    );
 
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {

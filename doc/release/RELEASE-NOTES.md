@@ -9,8 +9,20 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Database changes
+
+#### Migrations
+* `0224_add_isic_to_facility_index.py` - Adds `isic_section`, `isic_division`, `isic_group`, and `isic_class` array columns to `FacilityIndex`, plus SQL helpers to extract normalized ISIC Rev 4 codes from `isic_4` extended fields during indexing.
+
+#### Schema changes
+* [OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - `FacilityIndex` now stores normalized ISIC Rev 4 codes at section, division, group, and class levels so facilities can be filtered and counted by ISIC category.
+
 ### Code/API changes
+* [OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - Added `GET /api/taxonomy-counts/?kind=facility_processing|isic4` to return per-node facility counts for the main search UI. `kind=facility_processing` responses are cached in Memcached for one hour; `kind=isic4` uses the default view-cache TTL. Extended `GET /api/facilities/` with a repeatable `isic_4` query parameter (`section:A`, `division:01`, `group:011`, `class:0111`) that filters against the new indexed ISIC columns.
 * [OSDEV-3176](https://opensupplyhub.atlassian.net/browse/OSDEV-3176) - The no-op detection added to the claimed-details update endpoint (`PUT /api/facility-claims/{id}/claimed/`) in [OSDEV-3094](https://opensupplyhub.atlassian.net/browse/OSDEV-3094) now treats a NULL column and an empty string as the same value for text fields, so submitting a blank field that was already empty no longer counts as a change. Previously the two were compared exactly: because the claim edit form converts every null in the `GET` response to `''` when loading (`fetchClaimedFacilityDetails`) and PUTs the same object back, a claimant's first save wrote `''` over every NULL — a real change, so the claim saved, `updated_at` bumped (feeding the claimed section's "last updated" date), and list contributors were emailed, with nothing visible altered. 2,999 of 3,586 approved claims hold at least one such NULL, so nearly every claimant would have seen one unexplained date bump on their first save after 2.28. The equivalence is keyed on model field type (`CharField`/`TextField` and subclasses), so it covers fields added to the tracked groups automatically; the four `*_publicly_visible` booleans are unaffected because they are NOT NULL. Clearing a field that currently holds a value still saves as before.
+
+### What's new
+* [OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - On the main facility search page (non-embed), replaced separate Facility Type and Processing Type dropdowns with a combined hierarchical autocomplete and added an ISIC Rev 4 hierarchical search filter. Both fields show facility counts per taxonomy node. Embedded maps keep the existing dropdown filters.
 
 ### Architecture/Environment changes
 * [OSDEV-2928](https://opensupplyhub.atlassian.net/browse/OSDEV-2928) - Implemented the ContriBot `fetch_lists` Lambda (replacing the 2.28.0 stub): paginates `GET /api/admin-facility-lists/` using a DynamoDB `__CURSOR__` watermark (with `LAST_LIST_ID` fallback), enqueues new lists as `PENDING` with contributor metadata, and feeds Step Functions Map state with `{list_id}` items. Shared modules under `src/contribot/lib/` (`lists_repository.py`, `os_hub_api.py`) bundle via an updated Makefile. Terraform sets env-specific `OS_HUB_API_URL`, adds `contribot_last_list_id`, and raises ContriBot Lambda timeouts to 900 seconds; `process_list` and `notify` remain stubs.
@@ -21,6 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+    * `reindex_database`
 
 
 ## Release 2.28.0

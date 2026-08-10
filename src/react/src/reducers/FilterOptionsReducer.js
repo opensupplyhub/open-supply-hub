@@ -26,6 +26,9 @@ import {
     startFetchFacilityProcessingTypeOptions,
     failFetchFacilityProcessingTypeOptions,
     completeFetchFacilityProcessingTypeOptions,
+    startFetchTaxonomyCounts,
+    failFetchTaxonomyCounts,
+    completeFetchTaxonomyCounts,
     startFetchNumberOfWorkersOptions,
     failFetchNumberOfWorkersOptions,
     completeFetchNumberOfWorkersTypeOptions,
@@ -75,6 +78,18 @@ const initialState = Object.freeze({
         data: null,
         fetching: false,
         error: null,
+    }),
+    taxonomyCounts: Object.freeze({
+        facility_processing: Object.freeze({
+            data: null,
+            fetching: false,
+            error: null,
+        }),
+        isic4: Object.freeze({
+            data: null,
+            fetching: false,
+            error: null,
+        }),
     }),
     productType: Object.freeze({
         data: null,
@@ -272,6 +287,34 @@ export default createReducer(
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
+                },
+            }),
+        [startFetchTaxonomyCounts]: (state, kind) =>
+            update(state, {
+                taxonomyCounts: {
+                    [kind]: {
+                        fetching: { $set: true },
+                        error: { $set: null },
+                    },
+                },
+            }),
+        [failFetchTaxonomyCounts]: (state, { kind, error }) =>
+            update(state, {
+                taxonomyCounts: {
+                    [kind]: {
+                        fetching: { $set: false },
+                        error: { $set: error },
+                    },
+                },
+            }),
+        [completeFetchTaxonomyCounts]: (state, { kind, data }) =>
+            update(state, {
+                taxonomyCounts: {
+                    [kind]: {
+                        fetching: { $set: false },
+                        error: { $set: null },
+                        data: { $set: data },
+                    },
                 },
             }),
         [startFetchNumberOfWorkersOptions]: state =>

@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
+from api.isic import parse_isic4_filter_values
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -72,6 +73,8 @@ class FacilityIndexNewManager(models.Manager):
         )
 
         sectors = params.getlist(FacilitiesQueryParams.SECTOR)
+
+        isic_4_filters = params.getlist(FacilitiesQueryParams.ISIC_4)
 
         from .facility_index import FacilityIndex
         facilities_qs = FacilityIndex.objects.all()
@@ -203,6 +206,13 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs = facilities_qs.filter(
                 sector__overlap=sectors
             )
+
+        parsed_isic_filters = parse_isic4_filter_values(isic_4_filters)
+        if parsed_isic_filters:
+            isic_filter = Q()
+            for field_name, code in parsed_isic_filters:
+                isic_filter |= Q(**{f'{field_name}__overlap': [code]})
+            facilities_qs = facilities_qs.filter(isic_filter)
 
         partner_contributors = params.getlist(
             FacilitiesQueryParams.PARTNER_CONTRIBUTOR

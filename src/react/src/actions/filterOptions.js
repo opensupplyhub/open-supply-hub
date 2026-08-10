@@ -15,6 +15,7 @@ import {
     makeGetGroupedSectorsURL,
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
+    makeGetTaxonomyCountsURL,
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
     mapDjangoChoiceTuplesValueToSelectOptions,
@@ -96,6 +97,14 @@ export const failFetchFacilityProcessingTypeOptions = createAction(
 );
 export const completeFetchFacilityProcessingTypeOptions = createAction(
     'COMPLETE_FETCH_FACILITY_PROCESSING_TYPE_OPTIONS',
+);
+
+export const startFetchTaxonomyCounts = createAction(
+    'START_FETCH_TAXONOMY_COUNTS',
+);
+export const failFetchTaxonomyCounts = createAction('FAIL_FETCH_TAXONOMY_COUNTS');
+export const completeFetchTaxonomyCounts = createAction(
+    'COMPLETE_FETCH_TAXONOMY_COUNTS',
 );
 
 export const startFetchNumberOfWorkersOptions = createAction(
@@ -301,6 +310,46 @@ export function fetchFacilityProcessingTypeOptions() {
             );
     };
 }
+
+export function fetchTaxonomyCounts(kind) {
+    return dispatch => {
+        dispatch(startFetchTaxonomyCounts(kind));
+
+        return apiRequest
+            .get(makeGetTaxonomyCountsURL(kind))
+            .then(({ data }) =>
+                dispatch(completeFetchTaxonomyCounts({ kind, data })),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching taxonomy counts',
+                        messages =>
+                            failFetchTaxonomyCounts({
+                                kind,
+                                error: messages,
+                            }),
+                    ),
+                ),
+            );
+    };
+}
+
+export const fetchTaxonomyCountsIfNeeded =
+    ({ kinds = ['facility_processing', 'isic4'] } = {}) =>
+    (dispatch, getState) => {
+        kinds.forEach(kind => {
+            const { data, fetching } =
+                getState().filterOptions.taxonomyCounts[kind] ?? {};
+
+            if (data !== null || fetching) {
+                return;
+            }
+
+            dispatch(fetchTaxonomyCounts(kind));
+        });
+    };
 
 export function fetchNumberOfWorkersOptions() {
     return dispatch => {

@@ -111,3 +111,7 @@ dumps
 
 # Mocks
 src/react/src/mocks/
+
+# Taxonomy source (generated JSON/JS are committed; keep ODS + script locally)
+scripts/taxonomy/ISIC_Rev4.ods
+scripts/generate_taxonomy_constants.py
