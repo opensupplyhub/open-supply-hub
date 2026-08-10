@@ -12,6 +12,9 @@ from api.models import (
     User,
 )
 from api.models.facility.facility_index import FacilityIndex
+from api.serializers.facility.facility_index_details_serializer import (
+    FacilityIndexDetailsSerializer,
+)
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 from django.contrib.gis.geos import Point
@@ -180,6 +183,52 @@ class SectorSearchIndexAlignmentTest(FacilityAPITestCaseBase):
 
         self.assertEqual([], self._search_ids("Toys"))
         self.assertEqual([self.facility.id], self._search_ids("Apparel"))
+
+    def test_search_index_matches_profile_display_parity(self):
+        # Parity guard: the searchable FacilityIndex.sector column and the
+        # profile's sector field are computed by two separate
+        # implementations (index_sector() in SQL, get_sector() in Python).
+        # Build one facility exercising every selection rule - superseded
+        # items, a second contributor, an inactive source, and an approved
+        # claim - and assert both implementations produce the same values.
+        # If display logic changes without index_sector(), this fails.
+        self._create_matched_item(
+            self.source, ["Toys", "Footwear"], row_index=2
+        )
+
+        source_two = self._create_second_contributor_source()
+        self._create_matched_item(source_two, ["Electronics"], row_index=3)
+        inactive_source_two = Source.objects.create(
+            facility_list=FacilityList.objects.create(
+                header="header", file_name="three", name="Third List"
+            ),
+            source_type=Source.LIST,
+            is_active=False,
+            is_public=True,
+            contributor=source_two.contributor,
+        )
+        self._create_matched_item(
+            inactive_source_two, ["Mining"], row_index=4
+        )
+
+        FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            contact_person="test",
+            sector=["Health"],
+            status=FacilityClaimStatuses.APPROVED,
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        serialized = FacilityIndexDetailsSerializer(facility_index).data
+        displayed = {
+            value
+            for entry in serialized["properties"]["sector"]
+            for value in entry["values"]
+        }
+
+        self.assertTrue(displayed)
+        self.assertEqual(displayed, set(facility_index.sector))
 
     def test_approved_claim_sectors_are_searchable(self):
         FacilityClaim.objects.create(
