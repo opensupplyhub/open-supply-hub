@@ -67,6 +67,19 @@ describe('HierarchicalTaxonomySearch component', () => {
         expect(onProcessingTypeChange).toHaveBeenCalledWith([]);
     });
 
+    test('selecting an option clears the search input', () => {
+        const { getAllByRole, getByRole } = renderComponent();
+
+        fireEvent.focus(getByRole('combobox'));
+        fireEvent.change(getByRole('combobox'), {
+            target: { value: 'material' },
+        });
+
+        fireEvent.click(getAllByRole('option')[0]);
+
+        expect(getByRole('combobox')).toHaveValue('');
+    });
+
     test('deselecting a facility type chip clears its processing-type children', () => {
         const onFacilityTypeChange = jest.fn();
         const onProcessingTypeChange = jest.fn();

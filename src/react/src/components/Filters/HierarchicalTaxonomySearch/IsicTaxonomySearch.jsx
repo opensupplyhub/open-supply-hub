@@ -1,44 +1,30 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import InputLabel from '@material-ui/core/InputLabel';
-import CheckBoxIcon from '@material-ui/icons/CheckBox';
-import CheckBoxOutlineBlankIcon from '@material-ui/icons/CheckBoxOutlineBlank';
 import { withStyles } from '@material-ui/core/styles';
 
-import SearchIcon from '../../SearchIcon';
 import {
     getIsic4SearchIndex,
     getIsic4VisibleRows,
 } from '../../../data/isic4SearchIndex';
+import TaxonomySearchControl from './TaxonomySearchControl';
+import TaxonomyResultRow from './TaxonomyResultRow';
 import {
     getIsic4NodeKey,
     isIsic4NodeSelected,
     toggleIsic4Node,
 } from './isicUtils';
-import { splitLabelForHighlight } from './utils';
+import {
+    filterRowsByExpandedState,
+    getExpandedNodeIdsForRows,
+    getIsic4ParentNodeId,
+} from './utils';
 import styles from './styles';
 
 const reactSelectOptionPropType = shape({
     value: string.isRequired,
     label: string.isRequired,
 });
-
-function HighlightedLabel({ label, highlightQuery, classes }) {
-    const parts = splitLabelForHighlight(label, highlightQuery);
-
-    return (
-        <span>
-            {parts.map((part, index) => (
-                <span
-                    key={`${index}-${part.text}`}
-                    className={part.highlighted ? classes.highlight : undefined}
-                >
-                    {part.text}
-                </span>
-            ))}
-        </span>
-    );
-}
 
 function IsicTaxonomySearch({
     counts,
@@ -51,14 +37,64 @@ function IsicTaxonomySearch({
     const [query, setQuery] = useState('');
     const [activeRowIndex, setActiveRowIndex] = useState(-1);
     const [isFocused, setIsFocused] = useState(false);
+    const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
     const countsRequestedRef = useRef(false);
     const inputRef = useRef(null);
 
     const searchIndex = useMemo(() => getIsic4SearchIndex(), []);
 
-    const { rows, hint } = useMemo(
-        () => getIsic4VisibleRows(searchIndex.flatNodes, query),
-        [query, searchIndex],
+    const nodeById = useMemo(
+        () => new Map(searchIndex.flatNodes.map(node => [node.id, node])),
+        [searchIndex],
+    );
+
+    const trimmedQuery = query.trim();
+    const isSearching = trimmedQuery.length > 0;
+
+    const { rows, hint } = useMemo(() => {
+        if (isSearching) {
+            return getIsic4VisibleRows(searchIndex.flatNodes, query);
+        }
+
+        const browseRows = searchIndex.flatNodes.map(node => ({
+            node,
+            depth: node.depth,
+            isParent: node.kind !== 'class',
+            highlightQuery: '',
+        }));
+
+        return Object.freeze({
+            rows: browseRows,
+            hint: 'Type to search all ISIC levels, or select a section to browse',
+        });
+    }, [isSearching, query, searchIndex]);
+
+    useEffect(() => {
+        if (isSearching) {
+            setExpandedNodeIds(
+                getExpandedNodeIdsForRows(
+                    rows,
+                    getIsic4NodeKey,
+                    getIsic4ParentNodeId,
+                    nodeById,
+                ),
+            );
+            return;
+        }
+
+        setExpandedNodeIds(new Set());
+    }, [isSearching, rows, nodeById]);
+
+    const visibleRows = useMemo(
+        () =>
+            filterRowsByExpandedState(
+                rows,
+                expandedNodeIds,
+                getIsic4ParentNodeId,
+                nodeById,
+                isSearching,
+            ),
+        [rows, expandedNodeIds, nodeById, isSearching],
     );
 
     const selectedChips = useMemo(
@@ -66,13 +102,11 @@ function IsicTaxonomySearch({
             isic4.map(option => ({
                 id: option.value,
                 label: option.label,
-                context: option.value.split(':')[0],
             })),
         [isic4],
     );
 
-    const showResultsPanel =
-        isFocused || query.trim().length > 0 || selectedChips.length > 0;
+    const showResultsPanel = isFocused || query.trim().length > 0;
 
     const requestCountsIfNeeded = () => {
         if (countsRequestedRef.current || !onRequestCounts) {
@@ -90,6 +124,20 @@ function IsicTaxonomySearch({
 
     const handleToggleNode = node => {
         onIsic4Change(toggleIsic4Node(node, isic4));
+        setQuery('');
+        setActiveRowIndex(-1);
+    };
+
+    const handleToggleExpand = nodeId => {
+        setExpandedNodeIds(current => {
+            const next = new Set(current);
+            if (next.has(nodeId)) {
+                next.delete(nodeId);
+            } else {
+                next.add(nodeId);
+            }
+            return next;
+        });
     };
 
     const handleRemoveChip = chipId => {
@@ -97,23 +145,23 @@ function IsicTaxonomySearch({
     };
 
     const handleInputKeyDown = event => {
-        if (!showResultsPanel || rows.length === 0) {
+        if (!showResultsPanel || visibleRows.length === 0) {
             return;
         }
 
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             setActiveRowIndex(current =>
-                current >= rows.length - 1 ? 0 : current + 1,
+                current >= visibleRows.length - 1 ? 0 : current + 1,
             );
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
             setActiveRowIndex(current =>
-                current <= 0 ? rows.length - 1 : current - 1,
+                current <= 0 ? visibleRows.length - 1 : current - 1,
             );
         } else if (event.key === 'Enter' && activeRowIndex >= 0) {
             event.preventDefault();
-            handleToggleNode(rows[activeRowIndex].node);
+            handleToggleNode(visibleRows[activeRowIndex].node);
         } else if (event.key === 'Escape') {
             setQuery('');
             setActiveRowIndex(-1);
@@ -137,60 +185,33 @@ function IsicTaxonomySearch({
         <div className={classes.root}>
             <InputLabel
                 shrink={false}
-                htmlFor="isic4-taxonomy-search"
+                component="div"
                 className={classes.inputLabelStyle}
             >
                 {label}
             </InputLabel>
-            <div className={classes.searchInputWrapper}>
-                <span className={classes.searchIcon} aria-hidden="true">
-                    <SearchIcon />
-                </span>
-                <input
-                    ref={inputRef}
-                    id="isic4-taxonomy-search"
-                    type="text"
-                    className={classes.searchInput}
-                    value={query}
-                    placeholder="Search ISIC section, division, group, or class"
-                    disabled={disabled}
-                    aria-controls={showResultsPanel ? listboxId : undefined}
-                    aria-autocomplete="list"
-                    aria-expanded={showResultsPanel && rows.length > 0}
-                    role="combobox"
-                    onFocus={handleFocus}
-                    onBlur={() => setIsFocused(false)}
-                    onChange={event => {
-                        setQuery(event.target.value);
-                        setActiveRowIndex(-1);
-                        requestCountsIfNeeded();
-                    }}
-                    onKeyDown={handleInputKeyDown}
-                />
-            </div>
-
-            {selectedChips.length > 0 && (
-                <div className={classes.chips}>
-                    {selectedChips.map(chip => (
-                        <span key={chip.id} className={classes.chip}>
-                            <span className={classes.chipLabel}>
-                                {chip.label}
-                            </span>
-                            <span className={classes.chipContext}>
-                                · {chip.context}
-                            </span>
-                            <button
-                                type="button"
-                                className={classes.chipRemove}
-                                aria-label={`Remove ${chip.label}`}
-                                onClick={() => handleRemoveChip(chip.id)}
-                            >
-                                ×
-                            </button>
-                        </span>
-                    ))}
-                </div>
-            )}
+            <TaxonomySearchControl
+                inputId="isic4-taxonomy-search"
+                inputRef={inputRef}
+                query={query}
+                onQueryChange={value => {
+                    setQuery(value);
+                    setActiveRowIndex(-1);
+                    requestCountsIfNeeded();
+                }}
+                placeholder="Search ISIC section, division, group, or class"
+                disabled={disabled}
+                isFocused={isFocused}
+                onFocus={handleFocus}
+                onBlur={() => setIsFocused(false)}
+                onKeyDown={handleInputKeyDown}
+                selectedChips={selectedChips}
+                onRemoveChip={handleRemoveChip}
+                classes={classes}
+                listboxId={listboxId}
+                showResultsPanel={showResultsPanel}
+                resultsCount={visibleRows.length}
+            />
 
             {showResultsPanel && (
                 <div
@@ -200,72 +221,41 @@ function IsicTaxonomySearch({
                     aria-label={label}
                     aria-multiselectable="true"
                 >
-                    {rows.length === 0 ? (
+                    {visibleRows.length === 0 ? (
                         <div className={classes.emptyResults}>
                             No matching ISIC categories
                         </div>
                     ) : (
-                        rows.map((row, index) => {
+                        visibleRows.map((row, index) => {
                             const { node, depth, isParent, highlightQuery } =
                                 row;
                             const selected = isIsic4NodeSelected(node, isic4);
                             const count = getCountForNode(node);
                             const rowId = getIsic4NodeKey(node);
-                            const indentStyle = {
-                                paddingLeft: `${12 + depth * 22}px`,
-                            };
 
                             return (
                                 <div
                                     key={rowId}
                                     id={`${listboxId}-option-${index}`}
-                                    role="option"
-                                    aria-selected={selected}
-                                    className={`${classes.resultRow} ${
-                                        selected || index === activeRowIndex
-                                            ? classes.resultRowSelected
-                                            : ''
-                                    }`}
-                                    style={indentStyle}
-                                    onMouseDown={event =>
-                                        event.preventDefault()
-                                    }
                                     onMouseEnter={() =>
                                         setActiveRowIndex(index)
                                     }
-                                    onClick={() => handleToggleNode(node)}
                                 >
-                                    {selected ? (
-                                        <CheckBoxIcon
-                                            className={`${classes.resultRowIcon} ${classes.resultRowIconSelected}`}
-                                            aria-hidden="true"
-                                        />
-                                    ) : (
-                                        <CheckBoxOutlineBlankIcon
-                                            className={classes.resultRowIcon}
-                                            aria-hidden="true"
-                                        />
-                                    )}
-                                    <span
-                                        className={`${classes.resultRowLabel} ${
-                                            isParent
-                                                ? classes.resultRowLabelParent
-                                                : ''
-                                        }`}
-                                    >
-                                        <HighlightedLabel
-                                            label={node.displayLabel}
-                                            highlightQuery={highlightQuery}
-                                            classes={classes}
-                                        />
-                                    </span>
-                                    {count != null && (
-                                        <span
-                                            className={classes.resultRowCount}
-                                        >
-                                            {count.toLocaleString()}
-                                        </span>
-                                    )}
+                                    <TaxonomyResultRow
+                                        node={node}
+                                        depth={depth}
+                                        isParent={isParent}
+                                        highlightQuery={highlightQuery}
+                                        selected={selected}
+                                        active={index === activeRowIndex}
+                                        expanded={expandedNodeIds.has(rowId)}
+                                        count={count}
+                                        onToggleExpand={() =>
+                                            handleToggleExpand(rowId)
+                                        }
+                                        onSelect={() => handleToggleNode(node)}
+                                        classes={classes}
+                                    />
                                 </div>
                             );
                         })

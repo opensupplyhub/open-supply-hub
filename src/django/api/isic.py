@@ -1,6 +1,7 @@
 import re
 
-# Matches ISIC display strings like "C - Manufacturing" or "0111 - Growing of cereals".
+# Matches ISIC display strings like "C - Manufacturing" or
+# "0111 - Growing of cereals".
 ISIC_DISPLAY_CODE_PATTERN = re.compile(
     r'^\s*([A-Za-z]|\d+)\s*-\s+',
 )
@@ -15,7 +16,8 @@ def normalize_isic_code(raw_string):
         "0111 - Growing of cereals (except rice), ..." -> "0111"
         "62 - Computer programming, ..." -> "62"
 
-    Returns None when the input is empty or does not contain a recognizable code.
+    Returns None when the input is empty or does not contain a
+    recognizable code.
     """
     if raw_string is None:
         return None

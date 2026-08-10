@@ -22,7 +22,6 @@ import {
 
 import {
     fetchContributorTypeOptions,
-    fetchFacilityProcessingTypeOptions,
     fetchNumberOfWorkersOptions,
     fetchTaxonomyCountsIfNeeded,
 } from '../actions/filterOptions';
@@ -32,16 +31,11 @@ import {
     contributorTypeOptionsPropType,
     facilityTypeOptionsPropType,
     processingTypeOptionsPropType,
-    facilityProcessingTypeOptionsPropType,
     productTypeOptionsPropType,
     numberOfWorkerOptionsPropType,
 } from '../util/propTypes';
 
-import {
-    getValueFromEvent,
-    mapProcessingTypeOptions,
-    mapFacilityTypeOptions,
-} from '../util/util';
+import { getValueFromEvent } from '../util/util';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
 const PARENT_COMPANY = 'PARENT_COMPANY';
@@ -59,7 +53,6 @@ const LazyIsicTaxonomySearch = React.lazy(() =>
 
 function FilterSidebarExtendedSearch({
     contributorTypeOptions,
-    facilityProcessingTypeOptions,
     taxonomyCounts,
     numberOfWorkersOptions,
     contributorTypes,
@@ -81,7 +74,6 @@ function FilterSidebarExtendedSearch({
     embed,
     embedExtendedFields,
     fetchContributorTypes,
-    fetchFacilityProcessingType,
     fetchTaxonomyCountsForKind,
     fetchNumberOfWorkers,
     isSideBarSearch,
@@ -91,12 +83,6 @@ function FilterSidebarExtendedSearch({
             fetchContributorTypes();
         }
     }, [contributorTypeOptions, fetchContributorTypes]);
-
-    useEffect(() => {
-        if (embed && !facilityProcessingTypeOptions) {
-            fetchFacilityProcessingType();
-        }
-    }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
 
     useEffect(() => {
         if (!numberOfWorkersOptions) {
@@ -153,7 +139,19 @@ function FilterSidebarExtendedSearch({
                     />
                 </div>
             </ShowOnly>
-            <ShowOnly when={!embed}>
+            <ShowOnly
+                when={
+                    !embed ||
+                    isExtendedFieldForThisContributor(
+                        FACILITY_TYPE,
+                        embedExtendedFields,
+                    ) ||
+                    isExtendedFieldForThisContributor(
+                        PROCESSING_TYPE,
+                        embedExtendedFields,
+                    )
+                }
+            >
                 <div className="form__field">
                     <HierarchicalTaxonomySearch
                         label="Facility type & processing type"
@@ -171,6 +169,8 @@ function FilterSidebarExtendedSearch({
                         disabled={fetchingFacilities}
                     />
                 </div>
+            </ShowOnly>
+            <ShowOnly when={!embed}>
                 <div className="form__field">
                     <Suspense fallback={null}>
                         <LazyIsicTaxonomySearch
@@ -183,54 +183,6 @@ function FilterSidebarExtendedSearch({
                             disabled={fetchingFacilities}
                         />
                     </Suspense>
-                </div>
-            </ShowOnly>
-            <ShowOnly
-                when={
-                    !embed ||
-                    isExtendedFieldForThisContributor(
-                        FACILITY_TYPE,
-                        embedExtendedFields,
-                    )
-                }
-            >
-                <div className="form__field">
-                    <StyledSelect
-                        label="Facility Type"
-                        name={FACILITY_TYPE}
-                        options={mapFacilityTypeOptions(
-                            facilityProcessingTypeOptions || [],
-                            processingType,
-                        )}
-                        value={facilityType}
-                        onChange={updateFacilityType}
-                        disabled={fetchingExtendedOptions || fetchingFacilities}
-                        isSideBarSearch={isSideBarSearch}
-                    />
-                </div>
-            </ShowOnly>
-            <ShowOnly
-                when={
-                    !embed ||
-                    isExtendedFieldForThisContributor(
-                        PROCESSING_TYPE,
-                        embedExtendedFields,
-                    )
-                }
-            >
-                <div className="form__field">
-                    <StyledSelect
-                        label="Processing Type"
-                        name={PROCESSING_TYPE}
-                        options={mapProcessingTypeOptions(
-                            facilityProcessingTypeOptions || [],
-                            facilityType,
-                        )}
-                        value={processingType}
-                        onChange={updateProcessingType}
-                        disabled={fetchingExtendedOptions || fetchingFacilities}
-                        isSideBarSearch={isSideBarSearch}
-                    />
                 </div>
             </ShowOnly>
             <ShowOnly
@@ -282,17 +234,16 @@ function FilterSidebarExtendedSearch({
 
 FilterSidebarExtendedSearch.defaultProps = {
     contributorTypeOptions: null,
-    facilityProcessingTypeOptions: null,
     taxonomyCounts: Object.freeze({
         facility_processing: null,
         isic4: null,
     }),
     numberOfWorkersOptions: null,
+    isic4: [],
 };
 
 FilterSidebarExtendedSearch.propTypes = {
     contributorTypeOptions: contributorTypeOptionsPropType,
-    facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     taxonomyCounts: object,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     updateContributorType: func.isRequired,
@@ -314,10 +265,6 @@ function mapStateToProps({
         contributorTypes: {
             data: contributorTypeOptions,
             fetching: fetchingContributorTypes,
-        },
-        facilityProcessingType: {
-            data: facilityProcessingTypeOptions,
-            fetching: fetchingFacilityProcessingType,
         },
         taxonomyCounts: {
             facility_processing: { data: facilityProcessingCounts } = {},
@@ -345,7 +292,6 @@ function mapStateToProps({
 }) {
     return {
         contributorTypeOptions,
-        facilityProcessingTypeOptions,
         taxonomyCounts: {
             facility_processing: facilityProcessingCounts,
             isic4: isic4Counts,
@@ -362,9 +308,7 @@ function mapStateToProps({
         fetchingFacilities,
         facilities,
         fetchingExtendedOptions:
-            fetchingContributorTypes ||
-            fetchingFacilityProcessingType ||
-            fetchingNumberOfWorkers,
+            fetchingContributorTypes || fetchingNumberOfWorkers,
         embed: !!embed,
         embedExtendedFields: config.extended_fields,
     };
@@ -382,8 +326,6 @@ function mapDispatchToProps(dispatch) {
         updateNativeLanguageName: e =>
             dispatch(updateNativeLanguageNameFilter(getValueFromEvent(e))),
         fetchContributorTypes: () => dispatch(fetchContributorTypeOptions()),
-        fetchFacilityProcessingType: () =>
-            dispatch(fetchFacilityProcessingTypeOptions()),
         fetchTaxonomyCountsForKind: kind =>
             dispatch(fetchTaxonomyCountsIfNeeded({ kinds: [kind] })),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),

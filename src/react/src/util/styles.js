@@ -191,6 +191,63 @@ export const claimAFacilityFormStyles = Object.freeze({
     }),
 });
 
+export const FILTER_MULTI_VALUE_REMOVE_COLORS = Object.freeze({
+    dangerLight: '#FFBDAD',
+    danger: '#DE350B',
+    label: 'hsl(0, 0%, 20%)',
+});
+
+export const filterMultiValueLabelStyle = Object.freeze({
+    borderRadius: '2px',
+    color: FILTER_MULTI_VALUE_REMOVE_COLORS.label,
+    fontFamily: 'Darker Grotesque, sans-serif',
+    fontSize: '14px',
+    fontWeight: 700,
+    lineHeight: '16px',
+    overflow: 'hidden',
+    padding: '3px',
+    paddingLeft: '6px',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+});
+
+export const filterMultiValueRemoveStyle = Object.freeze({
+    alignItems: 'center',
+    borderRadius: '2px',
+    cursor: 'pointer',
+    display: 'flex',
+    paddingLeft: '4px',
+    paddingRight: '4px',
+    ':hover': Object.freeze({
+        backgroundColor: FILTER_MULTI_VALUE_REMOVE_COLORS.dangerLight,
+        color: FILTER_MULTI_VALUE_REMOVE_COLORS.danger,
+    }),
+});
+
+export const makeFilterMultiValueChipStyles = (origin = null) =>
+    Object.freeze({
+        chip: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            margin: '2px',
+            minWidth: 0,
+            maxWidth: '100%',
+            background: multiValueBackgroundHandler('', origin),
+            borderRadius: '100px',
+            paddingLeft: '5px',
+            paddingRight: '5px',
+        }),
+        chipLabel: filterMultiValueLabelStyle,
+        chipRemove: Object.freeze({
+            ...filterMultiValueRemoveStyle,
+            border: 'none',
+            background: 'transparent',
+            color: FILTER_MULTI_VALUE_REMOVE_COLORS.label,
+            flexShrink: 0,
+            '&:hover': filterMultiValueRemoveStyle[':hover'],
+        }),
+    });
+
 export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
@@ -210,6 +267,14 @@ export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
                 paddingRight: '5px',
             };
         }),
+        multiValueLabel: Object.freeze(provided => ({
+            ...provided,
+            ...filterMultiValueLabelStyle,
+        })),
+        multiValueRemove: Object.freeze(provided => ({
+            ...provided,
+            ...filterMultiValueRemoveStyle,
+        })),
         control: Object.freeze((provided, state) => {
             const isInUse = state.isFocused || state.menuIsOpen;
             return {

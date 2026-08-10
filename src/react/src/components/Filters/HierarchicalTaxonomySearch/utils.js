@@ -26,6 +26,44 @@ export function isFacilityProcessingNodeSelected(
     return processingType.some(option => option.value === node.label);
 }
 
+export function removeFacilityProcessingNodeById(
+    nodeId,
+    facilityType = [],
+    processingType = [],
+) {
+    if (nodeId.startsWith('facility_type:')) {
+        const facilityLabel = nodeId.slice('facility_type:'.length);
+        const group = getFacilityProcessingSearchIndex().groups.find(
+            entry => entry.facilityNode.facilityType === facilityLabel,
+        );
+        const processingLabels = new Set(
+            (group?.processingNodes ?? []).map(node => node.label),
+        );
+
+        return Object.freeze({
+            facilityType: facilityType.filter(
+                option => option.value !== facilityLabel,
+            ),
+            processingType: processingType.filter(
+                option => !processingLabels.has(option.value),
+            ),
+        });
+    }
+
+    if (nodeId.startsWith('processing_type:')) {
+        const processingLabel = nodeId.split(':').slice(2).join(':');
+
+        return Object.freeze({
+            facilityType,
+            processingType: processingType.filter(
+                option => option.value !== processingLabel,
+            ),
+        });
+    }
+
+    return Object.freeze({ facilityType, processingType });
+}
+
 export function toggleFacilityProcessingNode(
     node,
     facilityType = [],
@@ -73,46 +111,71 @@ export function toggleFacilityProcessingNode(
     });
 }
 
-export function removeFacilityProcessingNodeById(
-    nodeId,
-    facilityType = [],
-    processingType = [],
-) {
-    if (nodeId.startsWith('facility_type:')) {
-        const facilityLabel = nodeId.slice('facility_type:'.length);
-        const group = getFacilityProcessingSearchIndex().groups.find(
-            entry => entry.facilityNode.facilityType === facilityLabel,
-        );
-        const processingLabels = new Set(
-            (group?.processingNodes ?? []).map(node => node.label),
-        );
-
-        return Object.freeze({
-            facilityType: facilityType.filter(
-                option => option.value !== facilityLabel,
-            ),
-            processingType: processingType.filter(
-                option => !processingLabels.has(option.value),
-            ),
-        });
-    }
-
-    if (nodeId.startsWith('processing_type:')) {
-        const processingLabel = nodeId.split(':').slice(2).join(':');
-
-        return Object.freeze({
-            facilityType,
-            processingType: processingType.filter(
-                option => option.value !== processingLabel,
-            ),
-        });
-    }
-
-    return Object.freeze({ facilityType, processingType });
-}
-
 export function getFacilityProcessingNodeKey(node) {
     return getFacilityProcessingNodeId(node);
+}
+
+export function getFacilityProcessingParentNodeId(node) {
+    if (node.kind === 'facility_type') {
+        return null;
+    }
+
+    return `facility_type:${node.facilityType}`;
+}
+
+export function getIsic4ParentNodeId(node) {
+    return node.parentId ?? null;
+}
+
+export function getAncestorNodeIds(node, getParentNodeId, nodeById) {
+    const ancestorIds = [];
+    let parentId = getParentNodeId(node);
+
+    while (parentId) {
+        ancestorIds.push(parentId);
+        const parentNode = nodeById.get(parentId);
+        parentId = parentNode ? getParentNodeId(parentNode) : null;
+    }
+
+    return ancestorIds;
+}
+
+export function getExpandedNodeIdsForRows(rows, getNodeKey, getParentNodeId, nodeById) {
+    const expandedIds = new Set();
+
+    rows.forEach(row => {
+        if (row.isParent) {
+            expandedIds.add(getNodeKey(row.node));
+        }
+
+        getAncestorNodeIds(row.node, getParentNodeId, nodeById).forEach(id =>
+            expandedIds.add(id),
+        );
+    });
+
+    return expandedIds;
+}
+
+export function filterRowsByExpandedState(
+    rows,
+    expandedNodeIds,
+    getParentNodeId,
+    nodeById,
+    showAllRows,
+) {
+    if (showAllRows) {
+        return rows;
+    }
+
+    return rows.filter(row => {
+        if (row.depth === 0) {
+            return true;
+        }
+
+        return getAncestorNodeIds(row.node, getParentNodeId, nodeById).every(id =>
+            expandedNodeIds.has(id),
+        );
+    });
 }
 
 export function splitLabelForHighlight(label, highlightQuery) {

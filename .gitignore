@@ -115,3 +115,6 @@ src/react/src/mocks/
 # Taxonomy source (generated JSON/JS are committed; keep ODS + script locally)
 scripts/taxonomy/ISIC_Rev4.ods
 scripts/generate_taxonomy_constants.py
+
+# Local dev sample-data seed commands (not for production)
+src/django/api/management/commands/seed_isic_4_sample_data.py

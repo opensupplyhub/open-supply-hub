@@ -21,14 +21,8 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
                             '62 - Computer programming, consultancy and '
                             'related activities'
                         ),
-                        'group': (
-                            '62 - Computer programming, consultancy and '
-                            'related activities'
-                        ),
-                        'class': (
-                            '620 - Computer programming, consultancy and '
-                            'related activities'
-                        ),
+                        'group': '620 - Computer programming activities',
+                        'class': '6201 - Computer programming activities',
                     },
                     {
                         'section': 'C - Manufacturing',
@@ -61,11 +55,11 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
         )
         self.assertEqual(
             self._fetch_index_array('index_isic_group', 'isic_group'),
-            ['62'],
+            ['620'],
         )
         self.assertEqual(
             self._fetch_index_array('index_isic_class', 'isic_class'),
-            ['0111', '620'],
+            ['0111', '6201'],
         )
 
     def test_index_facilities_by_populates_isic_columns(self):
@@ -78,5 +72,5 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertEqual(sorted(facility_index.isic_section), ['C', 'J'])
         self.assertEqual(facility_index.isic_division, ['62'])
-        self.assertEqual(facility_index.isic_group, ['62'])
-        self.assertEqual(sorted(facility_index.isic_class), ['0111', '620'])
+        self.assertEqual(facility_index.isic_group, ['620'])
+        self.assertEqual(sorted(facility_index.isic_class), ['0111', '6201'])

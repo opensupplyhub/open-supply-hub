@@ -22,7 +22,8 @@ class NormalizeIsicCodeTest(SimpleTestCase):
     def test_extracts_two_digit_division_code(self):
         self.assertEqual(
             normalize_isic_code(
-                '62 - Computer programming, consultancy and related activities',
+                '62 - Computer programming, consultancy and related '
+                'activities',
             ),
             '62',
         )

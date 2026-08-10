@@ -13,7 +13,7 @@ describe('HierarchicalTaxonomySearch utils', () => {
         group =>
             group.facilityNode.label === 'Textile or Material Production',
     );
-    const facilityNode = textileGroup.facilityNode;
+    const { facilityNode } = textileGroup;
     const materialCreationNode = textileGroup.processingNodes.find(
         node => node.label === 'Material Creation',
     );

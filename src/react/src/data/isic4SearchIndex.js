@@ -123,7 +123,7 @@ export function getIsic4VisibleRows(flatNodes, query = '') {
 
         addDescendants(node.id, flatNodes, visibleIds);
 
-        let parentId = node.parentId;
+        let { parentId } = node;
         while (parentId) {
             visibleIds.add(parentId);
             parentId = nodeById.get(parentId)?.parentId ?? null;

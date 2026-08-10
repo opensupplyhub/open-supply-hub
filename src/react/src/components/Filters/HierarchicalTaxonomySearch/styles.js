@@ -1,113 +1,108 @@
 import COLOURS from '../../../util/COLOURS';
-import { makeFilterStyles } from '../../../util/styles';
+import { makeFilterMultiValueChipStyles, makeFilterStyles } from '../../../util/styles';
+
+const resultRowBase = Object.freeze({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    cursor: 'pointer',
+    borderTop: `1px solid ${COLOURS.GREY}`,
+    '&:first-of-type': {
+        borderTop: 'none',
+    },
+    '&:hover': {
+        background: COLOURS.LIGHT_LAVENDER,
+    },
+});
 
 export default theme =>
     Object.freeze({
         ...makeFilterStyles(theme),
+        ...makeFilterMultiValueChipStyles(),
         root: Object.freeze({
             position: 'relative',
         }),
-        searchInputWrapper: Object.freeze({
+        searchControl: Object.freeze({
             position: 'relative',
+            display: 'flex',
+            alignItems: 'flex-start',
+            boxSizing: 'border-box',
+            border: `1px solid ${COLOURS.GREY}`,
+            minHeight: '38px',
+            padding: '2px 8px 2px 36px',
+            cursor: 'text',
+            background: COLOURS.WHITE,
+        }),
+        searchControlFocused: Object.freeze({
+            border: `1px solid ${COLOURS.DARK_PURPLE}`,
+            boxShadow: `0px 0px 8px -1px ${COLOURS.LIGHT_PURPLE}`,
         }),
         searchIcon: Object.freeze({
             position: 'absolute',
             left: '10px',
-            top: '50%',
-            transform: 'translateY(-50%)',
+            top: '8px',
             pointerEvents: 'none',
             display: 'flex',
             alignItems: 'center',
         }),
-        searchInput: Object.freeze({
-            width: '100%',
-            boxSizing: 'border-box',
-            border: `1px solid ${COLOURS.GREY}`,
-            fontSize: '16px',
-            padding: '8px 16px 8px 36px',
-            fontWeight: 400,
-            fontFamily: theme.typography.fontFamily,
-            '&:focus': {
-                border: `1px solid ${COLOURS.DARK_PURPLE}`,
-                outline: 'none',
-                boxShadow: `0px 0px 8px -1px ${COLOURS.LIGHT_PURPLE}`,
-            },
-        }),
-        chips: Object.freeze({
+        searchValueContainer: Object.freeze({
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '6px',
-            marginTop: '10px',
-        }),
-        chip: Object.freeze({
-            display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
-            fontSize: '12px',
-            background: COLOURS.LIGHT_LAVENDER,
-            color: COLOURS.DARK_PURPLE,
-            borderRadius: '4px',
-            padding: '4px 8px',
-            maxWidth: '100%',
+            flex: 1,
+            minWidth: 0,
+            padding: '2px 0',
         }),
-        chipLabel: Object.freeze({
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-        }),
-        chipContext: Object.freeze({
-            opacity: 0.7,
-            flexShrink: 0,
-        }),
-        chipRemove: Object.freeze({
-            cursor: 'pointer',
-            fontSize: '16px',
-            lineHeight: 1,
-            flexShrink: 0,
+        searchInput: Object.freeze({
             border: 'none',
+            outline: 'none',
+            flex: '1 1 60px',
+            minWidth: '60px',
+            fontSize: '16px',
+            padding: '4px 0',
+            fontWeight: 400,
+            fontFamily: theme.typography.fontFamily,
             background: 'transparent',
-            color: 'inherit',
-            padding: 0,
         }),
         resultsPanel: Object.freeze({
             marginTop: '10px',
-            background: COLOURS.HOVER_GREY,
+            background: COLOURS.WHITE,
             border: `1px solid ${COLOURS.GREY}`,
-            borderRadius: '4px',
+            borderRadius: 0,
             overflow: 'hidden',
             maxHeight: '280px',
             overflowY: 'auto',
         }),
-        resultRow: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '9px 12px',
-            cursor: 'pointer',
-            borderTop: `1px solid ${COLOURS.GREY}`,
-            '&:first-of-type': {
-                borderTop: 'none',
-            },
+        resultRowParent: Object.freeze({
+            ...resultRowBase,
+            padding: '5px 12px',
+        }),
+        resultRowChild: Object.freeze({
+            ...resultRowBase,
+            padding: '1px 12px',
         }),
         resultRowSelected: Object.freeze({
             background: COLOURS.LIGHT_LAVENDER,
         }),
-        resultRowIcon: Object.freeze({
-            fontSize: '18px',
-            color: COLOURS.DARK_GREY,
+        chevronButton: Object.freeze({
+            display: 'flex',
+            padding: 0,
             flexShrink: 0,
-        }),
-        resultRowIconSelected: Object.freeze({
-            color: COLOURS.DARK_PURPLE,
         }),
         resultRowLabel: Object.freeze({
             fontSize: '14px',
             color: COLOURS.BLACK,
             flex: 1,
             minWidth: 0,
+            textAlign: 'left',
         }),
         resultRowLabelParent: Object.freeze({
+            fontSize: '16px',
             fontWeight: 700,
+            color: COLOURS.BLACK,
+            flex: 1,
+            minWidth: 0,
+            textAlign: 'left',
         }),
         resultRowCount: Object.freeze({
             marginLeft: 'auto',
