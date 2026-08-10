@@ -1,0 +1,10 @@
+# Approver allowlist for the single-approval merge rule.
+#
+# Every PR requires one approving review, and it must come from a user
+# listed here (enforced via the "Require review from Code Owners" setting
+# in the Protected branches ruleset). Anyone with write access can still
+# review and comment; only approvals from the users below satisfy the rule.
+#
+# To change the allowlist, edit this file in a PR like any other change.
+
+* @daniellekain @vlad-shapik @valencia-max @ColumbusLeonardOSHub @VadimKovalenkoSNF @protsack-stephan
