@@ -3,7 +3,11 @@ from api.models.facility.facility_manager_index_new \
     import FacilityIndexNewManager
 from api.models.embed_field import EmbedField
 from api.models import Contributor
-from api.helpers.helpers import get_raw_json, parse_raw_data
+from api.helpers.helpers import (
+    get_csv_values,
+    parse_raw_data,
+    try_parse_int_from_float,
+)
 from api.models.source import Source
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
@@ -11,11 +15,9 @@ from api.serializers.facility.facility_download_serializer_base import (
 
 
 class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
-    embed_fields = []
-    contributor_id = None
-
     def __init__(self, *args, **kwargs):
         self.contributor_id = int(kwargs.pop("contributor_id", None))
+        self._list_field_indexes_by_header = {}
         super().__init__(*args, **kwargs)
         fields = self.get_embed_fields(self.contributor_id)
         self.embed_fields = [
@@ -40,26 +42,37 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
             self.get_is_closed(facility),
         ]
 
-    def get_contributor_custom_fields(self, facility: FacilityIndexNewManager):
-        infos = [
-            info
-            for info in facility.custom_field_info
-            if str(info["contributor_id"]) == str(self.contributor_id)
-        ]
-        info = infos[0] if len(infos) > 0 else None
-        raw_json = dict()
+    def get_contributor_custom_fields(
+        self, facility: FacilityIndexNewManager
+    ) -> List[str]:
+        info = next(
+            (
+                item
+                for item in facility.custom_field_info
+                if str(item["contributor_id"]) == str(self.contributor_id)
+            ),
+            None,
+        )
+        if info is None:
+            return [""] * len(self.embed_fields)
 
-        if info is not None:
-            if info["source_type"] == Source.LIST:
-                raw_json = get_raw_json(info["raw_data"], info["list_header"])
-            else:
-                raw_json = parse_raw_data(info["raw_data"])
+        if info["source_type"] == Source.LIST:
+            data_values = get_csv_values(info["raw_data"])
+            field_indexes = self._get_list_field_indexes(
+                info["list_header"]
+            )
+            return [
+                (
+                    try_parse_int_from_float(data_values[index])
+                    if (index := field_indexes.get(field)) is not None
+                    and index < len(data_values)
+                    else ""
+                )
+                for field in self.embed_fields
+            ]
 
-        res = [raw_json.get(field, "") for field in self.embed_fields]
-        return res
-
-    def check_embed_contributor(self, contributor_id: int) -> bool:
-        return self.contributor_id == contributor_id
+        raw_json = parse_raw_data(info["raw_data"])
+        return [raw_json.get(field, "") for field in self.embed_fields]
 
     def get_extended_fields_raw(self, facility: FacilityIndexNewManager):
         return [
@@ -68,19 +81,40 @@ class FacilityDownloadSerializerEmbedMode(FacilityDownloadSerializerBase):
             if self.check_embed_contributor(field["contributor"]["id"])
         ]
 
+    def check_embed_contributor(self, contributor_id: int) -> bool:
+        return self.contributor_id == contributor_id
+
     @staticmethod
     def get_embed_fields(contributor_id: int) -> List[str]:
-        embed_fields = []
         contributor = Contributor.objects.get(id=contributor_id)
-        config = contributor.embed_config
-
-        if config and EmbedField.objects.filter(embed_config=config).exists():
-            embed_fields = EmbedField.objects.filter(
-                embed_config=config, visible=True
-            ).order_by("order")
+        if contributor.embed_config_id is None:
+            return []
 
         return [
-            field["column_name"]
-            for field in embed_fields.values("column_name")
-            if field["column_name"]
+            column_name
+            for column_name in EmbedField.objects.filter(
+                embed_config_id=contributor.embed_config_id,
+                visible=True,
+            ).order_by("order").values_list("column_name", flat=True)
+            if column_name
         ]
+
+    def _get_list_field_indexes(self, list_header: str):
+        if list_header not in self._list_field_indexes_by_header:
+            # Last duplicate header wins, matching get_raw_json().
+            exact_indexes = {}
+            casefold_indexes = {}
+            for index, field in enumerate(get_csv_values(list_header)):
+                exact_indexes[field] = index
+                casefold_indexes[field.casefold()] = index
+
+            field_indexes = {
+                field: exact_indexes.get(
+                    field,
+                    casefold_indexes.get(field.casefold()),
+                )
+                for field in self.embed_fields
+            }
+            self._list_field_indexes_by_header[list_header] = field_indexes
+
+        return self._list_field_indexes_by_header[list_header]
