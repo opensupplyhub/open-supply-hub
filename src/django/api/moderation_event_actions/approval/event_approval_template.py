@@ -166,7 +166,6 @@ class EventApprovalTemplate(ABC):
         return Source.objects.create(
             contributor=contributor,
             source_type=Source.SINGLE,
-            is_active=not anonymize,
             is_public=not anonymize,
             create=True,
         )

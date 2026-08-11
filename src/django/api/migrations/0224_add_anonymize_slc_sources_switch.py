@@ -20,7 +20,7 @@ def delete_switch(apps, schema_editor):
 class Migration(migrations.Migration):
     """
     Migration to introduce a switch that anonymizes sources created for
-    approved SLC moderation events by marking them inactive and non-public.
+    approved SLC moderation events by marking them non-public.
     """
 
     dependencies = [

@@ -205,7 +205,7 @@ class ModerationEventsUpdateProductionLocationTest(
 
     def test_creation_of_source(self):
         # The anonymize_slc_sources switch is active by default, so a source
-        # created for an approved SLC event is inactive and non-public.
+        # created for an approved SLC event is non-public.
         self.login_as_superuser()
         response = self.client.patch(
             self.get_url(),
@@ -221,7 +221,7 @@ class ModerationEventsUpdateProductionLocationTest(
 
         source = sources.first()
 
-        self.assert_source_creation(source, is_active=False, is_public=False)
+        self.assert_source_creation(source, is_public=False)
 
     @override_switch(ANONYMIZE_SLC_SOURCES_SWITCH, active=False)
     def test_creation_of_source_with_anonymization_disabled(self):
