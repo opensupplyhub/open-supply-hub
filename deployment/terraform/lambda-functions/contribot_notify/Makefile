@@ -1,7 +1,16 @@
 CONTRIBOT_SRC = ../../../../src/contribot
+STAGING = .staging
+ZIP = contribot_notify.zip
 
 all:
-	rm -f contribot_notify.zip
-	(cd $(CONTRIBOT_SRC)/notify && zip -qXr ../../../deployment/terraform/lambda-functions/contribot_notify/contribot_notify.zip handler.py)
+	rm -f $(ZIP)
+	rm -rf $(STAGING)
+	mkdir -p $(STAGING)/lib
+	cp $(CONTRIBOT_SRC)/notify/handler.py $(STAGING)/
+	cp $(CONTRIBOT_SRC)/lib/__init__.py $(STAGING)/lib/
+	cp $(CONTRIBOT_SRC)/lib/lists_repository.py $(STAGING)/lib/
+	cp $(CONTRIBOT_SRC)/lib/slack_webhook.py $(STAGING)/lib/
+	(cd $(STAGING) && zip -qXr ../$(ZIP) .)
+	rm -rf $(STAGING)
 
 .PHONY: all

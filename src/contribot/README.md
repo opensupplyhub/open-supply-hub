@@ -4,7 +4,7 @@ Lambda functions that validate facility list uploads and notify data moderators 
 
 ## Overview
 
-ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack and Monday.
+ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack.
 
 ## Facility List Validation
 
@@ -13,8 +13,9 @@ Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py
 Run the unit tests locally:
 
 ```bash
-cd src/contribot/lib && python -m pytest tests/test_contribot.py tests/test_lists_repository.py tests/test_os_hub_api.py
+cd src/contribot/lib && python -m pytest tests/test_contribot.py tests/test_lists_repository.py tests/test_os_hub_api.py tests/test_slack_webhook.py
 cd src/contribot/fetch_lists && python -m pytest tests/test_handler.py
+cd src/contribot/notify && python -m pytest tests/test_notify_handler.py
 ```
 
 ## Lambda Source Code
@@ -55,7 +56,7 @@ flowchart LR
   Process --> S3[(S3)]
   Process --> GDrive[Google Drive]
   Notify --> Slack[Slack]
-  Notify --> Monday[Monday]
+  Notify --> DDB
 ```
 
 ### State Management
@@ -69,7 +70,7 @@ On each run, `fetch_lists`:
 3. Writes each returned list as a `PENDING` row **before** returning Map items to Step Functions.
 4. Conditionally advances `__CURSOR__.last_list_id` to the highest fetched id.
 
-`process_list` later updates `status` / `finished_at` after a list is handled.
+`notify` sets the final `status` (`PROCESSED` or `FAILED`) and `finished_at` after posting the Slack notification for a list.
 
 ## Process
 
@@ -77,7 +78,7 @@ On each run, `fetch_lists`:
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
 | 2    | For each list, download the file from S3, run facility list validation, and upload the report to Google Drive. |
-| 3    | Send notifications to Slack and Monday so that data moderators can review the report.                          |
+| 3    | Send a Slack notification so that data moderators can review the report. Failures also go to a failures-only channel. |
 
 ## Configuration
 
@@ -89,7 +90,8 @@ Store sensitive values in AWS Secrets Manager. Lambdas receive each secret's ARN
 | ------------------------ | ------------------------------------- | -------------------------------------------------------------------------- |
 | OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | API token used to authenticate requests to Open Supply Hub.                |
 | Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | API token used to post items to the Monday board.                          |
-| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | Webhook URL used to send Slack notifications.                              |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | Webhook URL for the channel that receives every notification.              |
+| Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN` | Webhook URL for the failures-only channel. Failure notifications go to both channels; leave unset to disable. |
 | Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
