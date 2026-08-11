@@ -39,6 +39,7 @@ import {
 } from '../util/propTypes';
 
 import { getValueFromEvent } from '../util/util';
+import { isIsic4TaxonomyFeatureEnabled } from '../data/loadIsic4Taxonomy';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
 const PARENT_COMPANY = 'PARENT_COMPANY';
@@ -118,11 +119,14 @@ function FilterSidebarExtendedSearch({
         );
     }
 
-    const showCombineFacilityProcessingIsic = shouldShowCombineFacilityProcessingIsic(
-        facilityType,
-        processingType,
-        isic4,
-    );
+    const isic4TaxonomyEnabled = isIsic4TaxonomyFeatureEnabled();
+    const showCombineFacilityProcessingIsic =
+        isic4TaxonomyEnabled &&
+        shouldShowCombineFacilityProcessingIsic(
+            facilityType,
+            processingType,
+            isic4,
+        );
 
     return (
         <>
@@ -194,7 +198,7 @@ function FilterSidebarExtendedSearch({
                     />
                 </div>
             </ShowOnly>
-            <ShowOnly when={!embed}>
+            <ShowOnly when={!embed && isic4TaxonomyEnabled}>
                 <div className="form__field">
                     <Suspense fallback={null}>
                         <LazyIsicTaxonomySearch

@@ -1,6 +1,7 @@
 import { ISIC_REV4_TAXONOMY } from './isicRev4Taxonomy';
 
 let isic4SearchIndex = null;
+let isic4SearchIndexVersion = null;
 
 const matchesQuery = (text, lowerQuery) =>
     text.toLowerCase().includes(lowerQuery);
@@ -9,7 +10,7 @@ export const getIsic4NodeId = node => node.id;
 
 export const getIsic4FilterValue = node => `${node.kind}:${node.code}`;
 
-function buildIsic4SearchIndex(taxonomy) {
+export function buildIsic4SearchIndex(taxonomy) {
     const flatNodes = [];
 
     taxonomy.sections.forEach(section => {
@@ -72,9 +73,18 @@ function buildIsic4SearchIndex(taxonomy) {
     return Object.freeze({ flatNodes });
 }
 
-export function getIsic4SearchIndex() {
-    if (!isic4SearchIndex) {
-        isic4SearchIndex = buildIsic4SearchIndex(ISIC_REV4_TAXONOMY);
+export function resetIsic4SearchIndex() {
+    isic4SearchIndex = null;
+    isic4SearchIndexVersion = null;
+}
+
+export function getIsic4SearchIndex(
+    taxonomy = ISIC_REV4_TAXONOMY,
+    version = 'bundled',
+) {
+    if (!isic4SearchIndex || isic4SearchIndexVersion !== version) {
+        isic4SearchIndex = buildIsic4SearchIndex(taxonomy);
+        isic4SearchIndexVersion = version;
     }
     return isic4SearchIndex;
 }

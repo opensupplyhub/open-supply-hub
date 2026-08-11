@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -7,6 +8,8 @@ import {
     getIsic4SearchIndex,
     getIsic4VisibleRows,
 } from '../../../data/isic4SearchIndex';
+import { loadIsic4Taxonomy } from '../../../data/loadIsic4Taxonomy';
+import env from '../../../util/env';
 import TaxonomySearchControl from './TaxonomySearchControl';
 import TaxonomyResultRow from './TaxonomyResultRow';
 import {
@@ -40,11 +43,60 @@ function IsicTaxonomySearch({
     const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
     const countsRequestedRef = useRef(false);
     const inputRef = useRef(null);
+    const taxonomyVersion = env('ISIC4_TAXONOMY_VERSION') ?? 'bundled';
+    const [taxonomyState, setTaxonomyState] = useState({
+        status: 'loading',
+        taxonomy: null,
+        error: null,
+    });
 
-    const searchIndex = useMemo(() => getIsic4SearchIndex(), []);
+    useEffect(() => {
+        let cancelled = false;
+
+        loadIsic4Taxonomy()
+            .then(taxonomy => {
+                if (cancelled) {
+                    return;
+                }
+
+                setTaxonomyState({
+                    status: 'ready',
+                    taxonomy,
+                    error: null,
+                });
+            })
+            .catch(error => {
+                if (cancelled) {
+                    return;
+                }
+
+                // eslint-disable-next-line no-console
+                console.error('Failed to load ISIC taxonomy', error);
+                setTaxonomyState({
+                    status: 'error',
+                    taxonomy: null,
+                    error,
+                });
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [taxonomyVersion]);
+
+    const searchIndex = useMemo(() => {
+        if (taxonomyState.status !== 'ready' || !taxonomyState.taxonomy) {
+            return null;
+        }
+
+        return getIsic4SearchIndex(taxonomyState.taxonomy, taxonomyVersion);
+    }, [taxonomyState, taxonomyVersion]);
 
     const nodeById = useMemo(
-        () => new Map(searchIndex.flatNodes.map(node => [node.id, node])),
+        () =>
+            searchIndex
+                ? new Map(searchIndex.flatNodes.map(node => [node.id, node]))
+                : new Map(),
         [searchIndex],
     );
 
@@ -52,6 +104,13 @@ function IsicTaxonomySearch({
     const isSearching = trimmedQuery.length > 0;
 
     const { rows, hint } = useMemo(() => {
+        if (!searchIndex) {
+            return Object.freeze({
+                rows: [],
+                hint: '',
+            });
+        }
+
         if (isSearching) {
             return getIsic4VisibleRows(searchIndex.flatNodes, query);
         }
@@ -181,6 +240,42 @@ function IsicTaxonomySearch({
 
     const listboxId = 'isic4-taxonomy-results';
     const label = 'International Standard Industrial Classification "ISIC"';
+
+    if (taxonomyState.status === 'loading') {
+        return (
+            <div className={classes.root}>
+                <InputLabel
+                    shrink={false}
+                    component="div"
+                    className={classes.inputLabelStyle}
+                >
+                    {label}
+                </InputLabel>
+                <CircularProgress size={24} />
+            </div>
+        );
+    }
+
+    if (taxonomyState.status === 'error') {
+        return (
+            <div className={classes.root}>
+                <InputLabel
+                    shrink={false}
+                    component="div"
+                    className={classes.inputLabelStyle}
+                >
+                    {label}
+                </InputLabel>
+                <p className={classes.hint}>
+                    Unable to load ISIC taxonomy. Try refreshing the page.
+                </p>
+            </div>
+        );
+    }
+
+    if (!searchIndex) {
+        return null;
+    }
 
     return (
         <div className={classes.root}>
