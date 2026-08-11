@@ -70,9 +70,9 @@ function TaxonomyResultRow({
             role="option"
             aria-selected={selected}
             tabIndex={0}
-            className={`${isParentRow ? classes.resultRowParent : classes.resultRowChild} ${
-                selected || active ? classes.resultRowSelected : ''
-            }`}
+            className={`${
+                isParentRow ? classes.resultRowParent : classes.resultRowChild
+            } ${selected || active ? classes.resultRowSelected : ''}`}
             style={{ paddingLeft: `${paddingLeft}px` }}
             onMouseDown={event => event.preventDefault()}
             onClick={handleRowClick}

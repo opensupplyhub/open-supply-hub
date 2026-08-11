@@ -1,5 +1,8 @@
 import COLOURS from '../../../util/COLOURS';
-import { makeFilterMultiValueChipStyles, makeFilterStyles } from '../../../util/styles';
+import {
+    makeFilterMultiValueChipStyles,
+    makeFilterStyles,
+} from '../../../util/styles';
 
 const resultRowBase = Object.freeze({
     display: 'flex',

@@ -26,8 +26,9 @@ class TaxonomyCountsView(APIView):
                 enum=list(TAXONOMY_COUNT_KINDS),
                 description=(
                     'Taxonomy to count. '
-                    'facility_processing returns counts keyed by facility or '
-                    'processing type label. isic4 returns counts keyed by '
+                    'facility_processing returns counts keyed by '
+                    'facility_type:label or processing_type:label. '
+                    'isic4 returns counts keyed by '
                     'level:code (e.g. section:C, class:0111).'
                 ),
             ),

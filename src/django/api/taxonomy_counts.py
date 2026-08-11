@@ -4,13 +4,13 @@ from django.db.models import Count, F, Func
 from api.isic import ISIC4_LEVEL_FIELDS
 from api.models.facility.facility_index import FacilityIndex
 
-FACILITY_PROCESSING_CACHE_KEY = 'taxonomy_counts:facility_processing'
+FACILITY_PROCESSING_CACHE_KEY = 'taxonomy_counts:facility_processing:v2'
 FACILITY_PROCESSING_CACHE_TIMEOUT_SECONDS = 3600
 
 
-def public_facility_index_queryset():
-    """Facilities visible on the main search map/list."""
-    return FacilityIndex.objects.filter(contributors_count__gt=0)
+def searchable_facility_index_queryset():
+    """Facilities included in GET /api/facilities/ search results."""
+    return FacilityIndex.objects.all()
 
 
 def _aggregate_array_field_counts(queryset, field_name):
@@ -27,12 +27,12 @@ def _aggregate_array_field_counts(queryset, field_name):
 
 
 def compute_facility_processing_counts():
-    queryset = public_facility_index_queryset()
+    queryset = searchable_facility_index_queryset()
     counts = {}
 
     for field_name in ('facility_type', 'processing_type'):
         for row in _aggregate_array_field_counts(queryset, field_name):
-            counts[row['value']] = row['count']
+            counts[f'{field_name}:{row["value"]}'] = row['count']
 
     return counts
 
@@ -67,7 +67,7 @@ def get_facility_processing_counts():
 
 
 def compute_isic4_counts():
-    queryset = public_facility_index_queryset()
+    queryset = searchable_facility_index_queryset()
     counts = {}
 
     for level, field_name in ISIC4_LEVEL_FIELDS.items():

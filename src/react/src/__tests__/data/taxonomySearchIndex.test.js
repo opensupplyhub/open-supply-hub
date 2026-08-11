@@ -32,6 +32,25 @@ describe('taxonomy search index', () => {
         expect(first.flatNodes.length).toBeGreaterThan(0);
     });
 
+    test('assigns namespaced count keys for facility and processing nodes', () => {
+        const { groups } = getFacilityProcessingSearchIndex();
+        const printingGroup = groups.find(
+            group =>
+                group.facilityNode.label ===
+                'Printing, Product Dyeing and Laundering',
+        );
+
+        expect(printingGroup.facilityNode.countKey).toBe(
+            'facility_type:Printing, Product Dyeing and Laundering',
+        );
+        expect(
+            printingGroup.processingNodes.find(
+                node =>
+                    node.label === 'Printing, Product Dyeing and Laundering',
+            ).countKey,
+        ).toBe('processing_type:Printing, Product Dyeing and Laundering');
+    });
+
     test('filtering "material" returns parent facility types and nested processing matches', () => {
         const { groups } = getFacilityProcessingSearchIndex();
         const { rows } = getFacilityProcessingVisibleRows(groups, 'material');

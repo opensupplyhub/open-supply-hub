@@ -65,7 +65,8 @@ function IsicTaxonomySearch({
 
         return Object.freeze({
             rows: browseRows,
-            hint: 'Type to search all ISIC levels, or select a section to browse',
+            hint:
+                'Type to search all ISIC levels, or select a section to browse',
         });
     }, [isSearching, query, searchIndex]);
 
@@ -227,8 +228,12 @@ function IsicTaxonomySearch({
                         </div>
                     ) : (
                         visibleRows.map((row, index) => {
-                            const { node, depth, isParent, highlightQuery } =
-                                row;
+                            const {
+                                node,
+                                depth,
+                                isParent,
+                                highlightQuery,
+                            } = row;
                             const selected = isIsic4NodeSelected(node, isic4);
                             const count = getCountForNode(node);
                             const rowId = getIsic4NodeKey(node);

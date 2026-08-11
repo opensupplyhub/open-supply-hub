@@ -85,11 +85,41 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['Final Product Assembly'], 1)
-        self.assertEqual(response.data['Assembly'], 1)
-        self.assertEqual(response.data['Cutting'], 1)
-        self.assertEqual(response.data['Office / HQ'], 1)
-        self.assertEqual(response.data['Office'], 1)
+        self.assertEqual(
+            response.data['facility_type:Final Product Assembly'],
+            1,
+        )
+        self.assertEqual(response.data['processing_type:Assembly'], 1)
+        self.assertEqual(response.data['processing_type:Cutting'], 1)
+        self.assertEqual(response.data['facility_type:Office / HQ'], 1)
+        self.assertEqual(response.data['processing_type:Office'], 1)
+
+    def test_facility_processing_counts_separate_colliding_labels(self):
+        shared_label = 'Printing, Product Dyeing and Laundering'
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            facility_type=[shared_label],
+            processing_type=['Dyeing'],
+        )
+        FacilityIndex.objects.filter(id=self.facility_two.id).update(
+            facility_type=['Final Product Assembly'],
+            processing_type=[shared_label],
+        )
+        caches['view_cache'].clear()
+
+        response = self.client.get(
+            reverse('taxonomy_counts'),
+            {'kind': 'facility_processing'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data[f'facility_type:{shared_label}'],
+            1,
+        )
+        self.assertEqual(
+            response.data[f'processing_type:{shared_label}'],
+            1,
+        )
 
     def test_isic4_counts_match_index(self):
         response = self.client.get(
@@ -130,16 +160,16 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
     ):
         from api.taxonomy_counts import get_facility_processing_counts
 
-        mock_compute.return_value = {'Assembly': 99}
+        mock_compute.return_value = {'processing_type:Assembly': 99}
         cache = caches['view_cache']
 
         first = get_facility_processing_counts()
         second = get_facility_processing_counts()
 
-        self.assertEqual(first, {'Assembly': 99})
-        self.assertEqual(second, {'Assembly': 99})
+        self.assertEqual(first, {'processing_type:Assembly': 99})
+        self.assertEqual(second, {'processing_type:Assembly': 99})
         mock_compute.assert_called_once()
         self.assertEqual(
             cache.get(FACILITY_PROCESSING_CACHE_KEY),
-            {'Assembly': 99},
+            {'processing_type:Assembly': 99},
         )

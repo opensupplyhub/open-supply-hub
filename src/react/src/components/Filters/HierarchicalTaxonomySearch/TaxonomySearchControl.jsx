@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-    arrayOf,
-    bool,
-    func,
-    number,
-    object,
-    shape,
-    string,
-} from 'prop-types';
+import { arrayOf, bool, func, number, object, shape, string } from 'prop-types';
 
 import FilterMultiValueChip from '../FilterMultiValueChip';
 import SearchIcon from '../../SearchIcon';
@@ -38,11 +30,7 @@ function TaxonomySearchControl({
     const showPlaceholder = selectedChips.length === 0 && !query;
 
     const handleInputKeyDown = event => {
-        if (
-            event.key === 'Backspace' &&
-            !query &&
-            selectedChips.length > 0
-        ) {
+        if (event.key === 'Backspace' && !query && selectedChips.length > 0) {
             event.preventDefault();
             onRemoveChip(selectedChips[selectedChips.length - 1].id);
             return;

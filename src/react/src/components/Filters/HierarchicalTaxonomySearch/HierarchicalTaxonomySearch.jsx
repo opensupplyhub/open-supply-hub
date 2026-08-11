@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-    arrayOf,
-    bool,
-    func,
-    object,
-    shape,
-    string,
-} from 'prop-types';
+import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -110,11 +103,13 @@ function HierarchicalTaxonomySearch({
 
         processingType.forEach(option => {
             chips.push({
-                id: `processing_type:${searchIndex.groups.find(group =>
-                    group.processingNodes.some(
-                        node => node.label === option.value,
-                    ),
-                )?.facilityNode.facilityType ?? 'unknown'}:${option.value}`,
+                id: `processing_type:${
+                    searchIndex.groups.find(group =>
+                        group.processingNodes.some(
+                            node => node.label === option.value,
+                        ),
+                    )?.facilityNode.facilityType ?? 'unknown'
+                }:${option.value}`,
                 label: option.label,
             });
         });
@@ -254,8 +249,12 @@ function HierarchicalTaxonomySearch({
                         </div>
                     ) : (
                         visibleRows.map((row, index) => {
-                            const { node, depth, isParent, highlightQuery } =
-                                row;
+                            const {
+                                node,
+                                depth,
+                                isParent,
+                                highlightQuery,
+                            } = row;
                             const selected = isFacilityProcessingNodeSelected(
                                 node,
                                 facilityType,

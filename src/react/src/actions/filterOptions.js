@@ -102,7 +102,9 @@ export const completeFetchFacilityProcessingTypeOptions = createAction(
 export const startFetchTaxonomyCounts = createAction(
     'START_FETCH_TAXONOMY_COUNTS',
 );
-export const failFetchTaxonomyCounts = createAction('FAIL_FETCH_TAXONOMY_COUNTS');
+export const failFetchTaxonomyCounts = createAction(
+    'FAIL_FETCH_TAXONOMY_COUNTS',
+);
 export const completeFetchTaxonomyCounts = createAction(
     'COMPLETE_FETCH_TAXONOMY_COUNTS',
 );
@@ -336,20 +338,20 @@ export function fetchTaxonomyCounts(kind) {
     };
 }
 
-export const fetchTaxonomyCountsIfNeeded =
-    ({ kinds = ['facility_processing', 'isic4'] } = {}) =>
-    (dispatch, getState) => {
-        kinds.forEach(kind => {
-            const { data, fetching } =
-                getState().filterOptions.taxonomyCounts[kind] ?? {};
+export const fetchTaxonomyCountsIfNeeded = ({
+    kinds = ['facility_processing', 'isic4'],
+} = {}) => (dispatch, getState) => {
+    kinds.forEach(kind => {
+        const { data, fetching } =
+            getState().filterOptions.taxonomyCounts[kind] ?? {};
 
-            if (data !== null || fetching) {
-                return;
-            }
+        if (data !== null || fetching) {
+            return;
+        }
 
-            dispatch(fetchTaxonomyCounts(kind));
-        });
-    };
+        dispatch(fetchTaxonomyCounts(kind));
+    });
+};
 
 export function fetchNumberOfWorkersOptions() {
     return dispatch => {

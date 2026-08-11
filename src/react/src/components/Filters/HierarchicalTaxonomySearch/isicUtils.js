@@ -1,4 +1,7 @@
-import { getIsic4FilterValue, getIsic4NodeId } from '../../../data/isic4SearchIndex';
+import {
+    getIsic4FilterValue,
+    getIsic4NodeId,
+} from '../../../data/isic4SearchIndex';
 
 export const makeIsic4SelectOption = node =>
     Object.freeze({

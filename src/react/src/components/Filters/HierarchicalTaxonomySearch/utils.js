@@ -140,7 +140,12 @@ export function getAncestorNodeIds(node, getParentNodeId, nodeById) {
     return ancestorIds;
 }
 
-export function getExpandedNodeIdsForRows(rows, getNodeKey, getParentNodeId, nodeById) {
+export function getExpandedNodeIdsForRows(
+    rows,
+    getNodeKey,
+    getParentNodeId,
+    nodeById,
+) {
     const expandedIds = new Set();
 
     rows.forEach(row => {
@@ -172,9 +177,11 @@ export function filterRowsByExpandedState(
             return true;
         }
 
-        return getAncestorNodeIds(row.node, getParentNodeId, nodeById).every(id =>
-            expandedNodeIds.has(id),
-        );
+        return getAncestorNodeIds(
+            row.node,
+            getParentNodeId,
+            nodeById,
+        ).every(id => expandedNodeIds.has(id));
     });
 }
 

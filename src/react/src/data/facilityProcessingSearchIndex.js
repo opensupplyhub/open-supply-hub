@@ -16,7 +16,7 @@ function buildFacilityProcessingSearchIndex(taxonomy) {
             displayLabel: entry.facilityType,
             facilityType: entry.facilityType,
             depth: 0,
-            countKey: entry.facilityType,
+            countKey: `facility_type:${entry.facilityType}`,
         });
 
         const processingNodes = entry.processingTypes.map(processingType =>
@@ -27,7 +27,7 @@ function buildFacilityProcessingSearchIndex(taxonomy) {
                 displayLabel: processingType.label,
                 facilityType: entry.facilityType,
                 depth: 1,
-                countKey: processingType.label,
+                countKey: `processing_type:${processingType.label}`,
             }),
         );
 
