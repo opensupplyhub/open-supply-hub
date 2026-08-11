@@ -4,8 +4,13 @@ from unittest.mock import patch
 from django.contrib.gis.geos import Point
 from django.test import override_settings
 from django.core import mail
+from waffle.testutils import override_switch
 
 from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
+from api.moderation_event_actions.approval.event_approval_template import (
+    ANONYMIZE_SLC_SOURCES_SWITCH,
+)
+from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -199,6 +204,48 @@ class ModerationEventsUpdateProductionLocationTest(
         )
 
     def test_creation_of_source(self):
+        # The anonymize_slc_sources switch is active by default, so a source
+        # created for an approved SLC event is inactive and non-public.
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url(),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(200, response.status_code)
+
+        sources = Source.objects.filter(contributor=self.contributor).order_by(
+            "-created_at"
+        )
+        self.assertEqual(sources.count(), 2)
+
+        source = sources.first()
+
+        self.assert_source_creation(source, is_active=False, is_public=False)
+
+    @override_switch(ANONYMIZE_SLC_SOURCES_SWITCH, active=False)
+    def test_creation_of_source_with_anonymization_disabled(self):
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url(),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(200, response.status_code)
+
+        sources = Source.objects.filter(contributor=self.contributor).order_by(
+            "-created_at"
+        )
+        self.assertEqual(sources.count(), 2)
+
+        source = sources.first()
+
+        self.assert_source_creation(source)
+
+    def test_creation_of_source_for_api_moderation_event(self):
+        self.moderation_event.source = ModerationEvent.Source.API
+        self.moderation_event.save()
+
         self.login_as_superuser()
         response = self.client.patch(
             self.get_url(),

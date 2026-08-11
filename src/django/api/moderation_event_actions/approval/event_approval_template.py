@@ -5,6 +5,7 @@ from typing import Dict, KeysView, Type, Union
 from django.contrib.gis.geos import Point
 from django.db import transaction
 from django.utils import timezone
+from waffle import switch_is_active
 
 from api.constants import (
     LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
@@ -28,6 +29,8 @@ from api.views.fields.create_nonstandard_fields import (
 )
 
 log = logging.getLogger(__name__)
+
+ANONYMIZE_SLC_SOURCES_SWITCH = 'anonymize_slc_sources'
 
 
 class EventApprovalTemplate(ABC):
@@ -154,12 +157,17 @@ class EventApprovalTemplate(ABC):
 
         return item
 
-    @staticmethod
-    def __create_source(contributor: Contributor) -> Source:
+    def __create_source(self, contributor: Contributor) -> Source:
+        anonymize = (
+            self.__event.source == ModerationEvent.Source.SLC
+            and switch_is_active(ANONYMIZE_SLC_SOURCES_SWITCH)
+        )
+
         return Source.objects.create(
             contributor=contributor,
             source_type=Source.SINGLE,
-            is_public=True,
+            is_active=not anonymize,
+            is_public=not anonymize,
             create=True,
         )
 

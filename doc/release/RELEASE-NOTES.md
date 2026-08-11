@@ -9,7 +9,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Database changes
+
+#### Migrations
+* `0224_add_anonymize_slc_sources_switch.py` - Adds the `anonymize_slc_sources` waffle switch, active by default. See OSDEV-3142.
+
 ### Code/API changes
+* [OSDEV-3142](https://opensupplyhub.atlassian.net/browse/OSDEV-3142) - Sources created for approved SLC (Single Location Contribution) moderation events are now anonymized at creation: `Source.is_active` and `Source.is_public` are set to `False`, the same effect as unchecking "is active" and "is public" on the source in the Django admin, so the contribution is not publicly attributed to the contributor. This applies when a moderator approves an SLC event via `POST /api/v1/moderation-events/{moderation_id}/production-locations/` (new location) or `PATCH /api/v1/moderation-events/{moderation_id}/production-locations/{os_id}` (contribution to an existing location) and only to moderation events with source `SLC`; API-sourced events approved through the same endpoints keep the previous behavior (`is_active=True`, `is_public=True`). The behavior is controlled by the new `anonymize_slc_sources` waffle switch, which defaults to **on**; turning it off restores the previous behavior. Existing sources are not modified.
 * [OSDEV-3176](https://opensupplyhub.atlassian.net/browse/OSDEV-3176) - The no-op detection added to the claimed-details update endpoint (`PUT /api/facility-claims/{id}/claimed/`) in [OSDEV-3094](https://opensupplyhub.atlassian.net/browse/OSDEV-3094) now treats a NULL column and an empty string as the same value for text fields, so submitting a blank field that was already empty no longer counts as a change. Previously the two were compared exactly: because the claim edit form converts every null in the `GET` response to `''` when loading (`fetchClaimedFacilityDetails`) and PUTs the same object back, a claimant's first save wrote `''` over every NULL — a real change, so the claim saved, `updated_at` bumped (feeding the claimed section's "last updated" date), and list contributors were emailed, with nothing visible altered. 2,999 of 3,586 approved claims hold at least one such NULL, so nearly every claimant would have seen one unexplained date bump on their first save after 2.28. The equivalence is keyed on model field type (`CharField`/`TextField` and subclasses), so it covers fields added to the tracked groups automatically; the four `*_publicly_visible` booleans are unaffected because they are NOT NULL. Clearing a field that currently holds a value still saves as before.
 
 ### Architecture/Environment changes
