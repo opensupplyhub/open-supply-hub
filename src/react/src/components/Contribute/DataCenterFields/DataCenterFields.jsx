@@ -60,8 +60,8 @@ const DataCenterFields = ({ classes, contributionForm }) => {
                 react/jsx-no-duplicate-props is configured with ignoreCase and
                 reports them as duplicates.
                 */
-                // eslint-disable-next-line react/jsx-no-duplicate-props
                 inputProps={{ 'aria-label': label }}
+                // eslint-disable-next-line react/jsx-no-duplicate-props
                 InputProps={{
                     classes: {
                         notchedOutline: classes.notchedOutlineStyles,
