@@ -17,7 +17,7 @@ resource "aws_db_proxy" "main_db" {
   auth {
     auth_scheme = "SECRETS"
     iam_auth    = "DISABLED"
-    secret_arn  = aws_secretsmanager_secret.proxy_secret.arn
+    secret_arn  = var.rds_master_secret_arn
   }
 
   tags = {
@@ -94,28 +94,9 @@ resource "aws_security_group_rule" "proxy_db_ingress" {
   description              = "Allow incoming traffic from RDS proxy to the database"
 }
 
-# Secret for RDS proxy
-
-resource "aws_secretsmanager_secret" "proxy_secret" {
-  name                    = "db${local.env_id_short}ProxySecret"
-  recovery_window_in_days = 0
-
-  tags = {
-    Name = "databaseProxySecret"
-  }
-}
-
-# Secret version for RDS proxy
-
-resource "aws_secretsmanager_secret_version" "proxy_secret_version" {
-  secret_id = aws_secretsmanager_secret.proxy_secret.id
-  secret_string = jsonencode({
-    username = var.db_username
-    password = var.db_password
-  })
-}
-
 # IAM role for RDS proxy
+# Proxy authenticates with the CLI-owned rds-master secret (looked up by name
+# in the root module). TF no longer creates/owns a proxy secret_version.
 
 resource "aws_iam_role" "proxy_role" {
   name               = "database${local.env_id_short}ProxyRole"
@@ -149,6 +130,6 @@ data "aws_iam_policy_document" "proxy_policy" {
   statement {
     effect    = "Allow"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.proxy_secret.arn]
+    resources = [var.rds_master_secret_arn]
   }
 }

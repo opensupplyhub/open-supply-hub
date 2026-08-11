@@ -7,24 +7,24 @@ locals {
   ipv4_cidr_pattern = "^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$"
   ipv6_cidr_pattern = "^[0-9a-fA-F:]+::[0-9a-fA-F:]+/128$"
   ipv4_whitelist = [
-    for ip in var.ip_whitelist :
+    for ip in local.ip_whitelist :
     ip if can(regex(local.ipv4_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   ipv6_whitelist = [
-    for ip in var.ip_whitelist :
+    for ip in local.ip_whitelist :
     ip if can(cidrhost(ip, 0)) && length(split(".", split("/", ip)[0])) != 4
   ]
   ipv4_denylist = [
-    for ip in var.ip_denylist :
+    for ip in local.ip_denylist :
     ip if can(regex(local.ipv4_cidr_pattern, ip)) && can(cidrhost(ip, 0))
   ]
   ipv6_denylist = [
-    for ip in var.ip_denylist :
+    for ip in local.ip_denylist :
     ip if can(cidrhost(ip, 0)) && length(split(".", split("/", ip)[0])) != 4
   ]
   is_whitelist_enabled = length(local.ipv4_whitelist) > 0 || length(local.ipv6_whitelist) > 0
-  is_denylist_enabled  = length(local.ipv4_denylist)  > 0 || length(local.ipv6_denylist)  > 0
-  ip_list_conflict = local.is_whitelist_enabled && local.is_denylist_enabled
+  is_denylist_enabled  = length(local.ipv4_denylist) > 0 || length(local.ipv6_denylist) > 0
+  ip_list_conflict     = local.is_whitelist_enabled && local.is_denylist_enabled
   ipset_rules = {
     "BlockDenylistedIPv4" = {
       ip_set      = aws_wafv2_ip_set.ipv4_denylist
@@ -58,52 +58,52 @@ resource "null_resource" "validate_ip_lists" {
 }
 
 resource "aws_wafv2_ip_set" "ipv4_whitelist" {
-  count             = local.is_whitelist_enabled && length(local.ipv4_whitelist) > 0 ? 1 : 0
-  provider          = aws.us-east-1
-  name              = "${lower(var.environment)}-whitelist-ipv4-ipset"
-  description       = "Allowed IPv4 addresses"
-  scope             = "CLOUDFRONT"
+  count              = local.is_whitelist_enabled && length(local.ipv4_whitelist) > 0 ? 1 : 0
+  provider           = aws.us-east-1
+  name               = "${lower(var.environment)}-whitelist-ipv4-ipset"
+  description        = "Allowed IPv4 addresses"
+  scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses         = local.ipv4_whitelist
-  tags = { 
+  addresses          = local.ipv4_whitelist
+  tags = {
     Environment = var.environment
   }
 }
 
 resource "aws_wafv2_ip_set" "ipv6_whitelist" {
-  count             = local.is_whitelist_enabled && length(local.ipv6_whitelist) > 0 ? 1 : 0
-  provider          = aws.us-east-1
-  name              = "${lower(var.environment)}-whitelist-ipv6-ipset"
-  description       = "Allowed IPv6 addresses"
-  scope             = "CLOUDFRONT"
+  count              = local.is_whitelist_enabled && length(local.ipv6_whitelist) > 0 ? 1 : 0
+  provider           = aws.us-east-1
+  name               = "${lower(var.environment)}-whitelist-ipv6-ipset"
+  description        = "Allowed IPv6 addresses"
+  scope              = "CLOUDFRONT"
   ip_address_version = "IPV6"
-  addresses         = local.ipv6_whitelist
-  tags = { 
+  addresses          = local.ipv6_whitelist
+  tags = {
     Environment = var.environment
   }
 }
 
 resource "aws_wafv2_ip_set" "ipv4_denylist" {
-  count             = local.is_denylist_enabled && length(local.ipv4_denylist) > 0 ? 1 : 0
-  provider          = aws.us-east-1
-  name              = "${lower(var.environment)}-denylist-ipv4-ipset"
-  description       = "Blocked IPv4 addresses"
-  scope             = "CLOUDFRONT"
+  count              = local.is_denylist_enabled && length(local.ipv4_denylist) > 0 ? 1 : 0
+  provider           = aws.us-east-1
+  name               = "${lower(var.environment)}-denylist-ipv4-ipset"
+  description        = "Blocked IPv4 addresses"
+  scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses         = local.ipv4_denylist
+  addresses          = local.ipv4_denylist
   tags = {
     Environment = var.environment
   }
 }
 
 resource "aws_wafv2_ip_set" "ipv6_denylist" {
-  count             = local.is_denylist_enabled && length(local.ipv6_denylist) > 0 ? 1 : 0
-  provider          = aws.us-east-1
-  name              = "${lower(var.environment)}-denylist-ipv6-ipset"
-  description       = "Blocked IPv6 addresses"
-  scope             = "CLOUDFRONT"
+  count              = local.is_denylist_enabled && length(local.ipv6_denylist) > 0 ? 1 : 0
+  provider           = aws.us-east-1
+  name               = "${lower(var.environment)}-denylist-ipv6-ipset"
+  description        = "Blocked IPv6 addresses"
+  scope              = "CLOUDFRONT"
   ip_address_version = "IPV6"
-  addresses         = local.ipv6_denylist
+  addresses          = local.ipv6_denylist
   tags = {
     Environment = var.environment
   }

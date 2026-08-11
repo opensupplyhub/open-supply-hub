@@ -53,7 +53,7 @@ resource "aws_chatbot_slack_channel_configuration" "global_alarms" {
 
   sns_topic_arns = concat(
     [aws_sns_topic.global.arn],
-    var.aws_chatbot_additional_sns_topic_arns,
+    local.aws_chatbot_additional_sns_topic_arns,
   )
 
   # Constrain actions Chatbot can take from Slack (notify-only use case).

@@ -14,10 +14,10 @@ locals {
     MONDAY_API_URL                      = "https://api.monday.com/v2"
     MONDAY_BOARD_ID                     = var.contribot_monday_board_id
     GOOGLE_DRIVE_SHARED_DIRECTORY_ID    = var.contribot_google_drive_shared_directory_id
-    OS_HUB_API_TOKEN_SECRET_ARN         = aws_secretsmanager_secret.contribot_os_hub_api_token.arn
-    MONDAY_API_KEY_SECRET_ARN           = aws_secretsmanager_secret.contribot_monday_api_key.arn
-    SLACK_API_URL_SECRET_ARN            = aws_secretsmanager_secret.contribot_slack_api_url.arn
-    GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = aws_secretsmanager_secret.contribot_google_drive_service_key.arn
+    OS_HUB_API_TOKEN_SECRET_ARN         = local.contribot_os_hub_api_token_arn
+    MONDAY_API_KEY_SECRET_ARN           = local.contribot_monday_api_key_arn
+    SLACK_API_URL_SECRET_ARN            = local.contribot_slack_api_url_arn
+    GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = local.contribot_google_drive_service_key_arn
   }
 }
 
@@ -43,12 +43,12 @@ data "aws_iam_policy_document" "contribot_lambda" {
       "secretsmanager:GetSecretValue",
     ]
 
-    resources = [
-      aws_secretsmanager_secret.contribot_os_hub_api_token.arn,
-      aws_secretsmanager_secret.contribot_monday_api_key.arn,
-      aws_secretsmanager_secret.contribot_slack_api_url.arn,
-      aws_secretsmanager_secret.contribot_google_drive_service_key.arn,
-    ]
+    resources = compact([
+      local.contribot_os_hub_api_token_arn,
+      local.contribot_monday_api_key_arn,
+      local.contribot_slack_api_url_arn,
+      local.contribot_google_drive_service_key_arn,
+    ])
   }
 
   statement {

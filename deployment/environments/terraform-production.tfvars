@@ -87,6 +87,59 @@ craft_cms_origin_domain = "open-supply.production.servd.dev"
 is_database_private_link_provider = true
 
 # Owns the shared-account Chatbot Slack channel config for Production/Staging/RBA.
-# Sibling SNS ARNs live in private ci-deployment Production tfvars.
+# Sibling SNS ARNs live in SM (aws_chatbot_additional_sns_topic_arns_secret_name).
 # Staging/RBA set aws_chatbot_manage_channel_configuration = false.
 aws_chatbot_manage_channel_configuration = true
+
+# ---------------------------------------------------------------------------
+# Config transferred from private ci-deployment (plain values)
+# ---------------------------------------------------------------------------
+waf_enabled = true
+memcached_view_cache_timeout_seconds = 360
+stripe_price_id = "price_1TPjKeAnUgyIppdhAECREwYL"
+hubspot_subscription_id = "12847627"
+dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
+google_drive_shared_directory_id = "12ZhHCXHJD25NbfrqGnp5AT39odskr1Si"
+aws_chatbot_slack_team_id = "T01QXEYS7CZ"
+aws_chatbot_slack_channel_id = "C062RKGU09H"
+aws_key_name = "osh-prd"
+database_anonymizer_enabled = true
+anonymizer_db_identifier = "database-anonymizer"
+anonymizer_schedule_expression = "cron(0 1 ? * SAT *)"
+enable_legacy_info_site_redirect = true
+
+# ---------------------------------------------------------------------------
+# AWS Secrets Manager secret names
+# Values live in SM; Terraform/CI resolve by name (no account IDs/ARNs in git).
+# ---------------------------------------------------------------------------
+rds_master_secret_name = "oshub/production/rds-master"
+django_secret_key_secret_name = "oshub/production/django-secret-key"
+cloudfront_auth_token_secret_name = "oshub/production/cloudfront-auth-token"
+default_from_email_secret_name = "oshub/production/default-from-email"
+data_from_email_secret_name = "oshub/production/data-from-email"
+notification_email_to_secret_name = "oshub/production/notification-email-to"
+claim_from_email_secret_name = "oshub/production/claim-from-email"
+google_server_side_api_key_secret_name = "oshub/production/google-server-side-api-key"
+google_client_side_api_key_secret_name = "oshub/production/google-client-side-api-key"
+google_analytics_key_secret_name = "oshub/production/google-analytics-key"
+google_service_account_creds_base64_secret_name = "oshub/production/google-service-account-creds-base64"
+rollbar_server_side_access_token_secret_name = "oshub/production/rollbar-server-side-access-token"
+rollbar_client_side_access_token_secret_name = "oshub/production/rollbar-client-side-access-token"
+oar_client_key_secret_name = "oshub/production/oar-client-key"
+hubspot_api_key_secret_name = "oshub/production/hubspot-api-key"
+stripe_secret_key_secret_name = "oshub/production/stripe-secret-key"
+stripe_webhook_secret_secret_name = "oshub/production/stripe-webhook-secret"
+dark_visitors_token_secret_name = "oshub/production/dark-visitors-token"
+dark_visitors_project_key_secret_name = "oshub/production/dark-visitors-project-key"
+dromo_license_key_secret_name = "oshub/production/dromo-license-key"
+external_access_cidr_blocks_secret_name = "oshub/production/external-access-cidr-blocks"
+ip_denylist_secret_name = "oshub/production/ip-denylist"
+aws_chatbot_additional_sns_topic_arns_secret_name = "oshub/production/aws-chatbot-additional-sns-topic-arns"
+vanta_assumed_role_external_ids_secret_name = "oshub/production/vanta-assumed-role-external-ids"
+vanta_assumed_role_principals_secret_name = "oshub/production/vanta-assumed-role-principals"
+anonymizer_destination_aws_account_secret_name = "oshub/production/anonymizer-destination-aws-account"
+anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-key-admin-users"
+contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
+contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
+contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"
+contribot_google_drive_service_key_secret_name = "oshub/production/contribot-google-drive-service-key"
