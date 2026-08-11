@@ -24,6 +24,11 @@ const customJestEnvironment = async () => {
     global.window = jsdom.window;
     global.document = jsdom.window.document;
     global.navigator = jsdom.window.navigator;
+    global.Blob = global.Blob || jsdom.window.Blob;
+    global.URL = global.URL || jsdom.window.URL;
+    if (typeof global.fetch === 'undefined' && jsdom.window.fetch) {
+        global.fetch = jsdom.window.fetch.bind(jsdom.window);
+    }
     global.btoa = str => Buffer.from(str, 'binary').toString('base64');
     global.atob = str => Buffer.from(str, 'base64').toString('binary');
 };

@@ -43,6 +43,7 @@ src/dedupe-hub/api/coverage
 src/django/*.csv
 src/django/*.xlsx
 src/django/media/
+src/django/taxonomy/
 
 
 # macOS
