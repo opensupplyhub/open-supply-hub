@@ -265,10 +265,9 @@ const FacilityDetailsGeneralFields = ({
     );
 
     const renderExtendedFields = () => {
-        const extendedFieldsWithoutAdditionalIdentifiers =
-            EXTENDED_FIELD_TYPES.filter(
-                field => !ADDITIONAL_IDENTIFIERS.includes(field.fieldName),
-            );
+        const extendedFieldsWithoutAdditionalIdentifiers = EXTENDED_FIELD_TYPES.filter(
+            field => !ADDITIONAL_IDENTIFIERS.includes(field.fieldName),
+        );
 
         return (
             <FeatureFlag
