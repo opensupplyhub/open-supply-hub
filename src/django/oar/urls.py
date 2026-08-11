@@ -113,6 +113,8 @@ public_apis = [
          name='facility_processing_types'),
     path('api/taxonomy-counts/', views.TaxonomyCountsView.as_view(),
          name='taxonomy_counts'),
+    path('api/taxonomy-config/', views.TaxonomyConfigView.as_view(),
+         name='taxonomy_config'),
     path('api/parent-companies/', views.ParentCompanies.as_view(),
          name='parent_companies'),
     path('api/product-types/', views.ProductTypes.as_view(),

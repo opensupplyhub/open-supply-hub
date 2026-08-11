@@ -19,6 +19,7 @@ from api.isic_taxonomy.errors import (
 )
 from api.isic_taxonomy.generator import generate_js_bundle, generate_json
 from api.isic_taxonomy.parser import normalize_extension
+from api.isic_taxonomy.runtime_config import invalidate_taxonomy_config_cache
 from api.isic_taxonomy.validator import validate_file
 from api.migrations._tigerline_helper import get_s3_client
 
@@ -198,6 +199,7 @@ def _update_config_after_publish(
         if activate:
             config.is_active = True
         config.save()
+    invalidate_taxonomy_config_cache()
 
 
 def _store_last_error(config, message: str) -> None:

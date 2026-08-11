@@ -17,6 +17,7 @@ from api.isic_taxonomy.errors import (
 )
 from api.isic_taxonomy.parser import normalize_extension
 from api.isic_taxonomy.publisher import parse_and_validate, publish_taxonomy
+from api.isic_taxonomy.runtime_config import invalidate_taxonomy_config_cache
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 
 
@@ -126,6 +127,7 @@ def isic_taxonomy_admin_view(request, admin_site):
 def _handle_toggle(request, config, *, enable: bool) -> None:
     config.is_active = enable
     config.save(update_fields=['is_active', 'updated_at'])
+    invalidate_taxonomy_config_cache()
     if enable:
         messages.success(
             request,
