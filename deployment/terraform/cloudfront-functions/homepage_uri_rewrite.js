@@ -10,6 +10,7 @@ function handler(event) {
         "countries": true, "statuses": true, "sectors": true, "parent_company": true,
         "facility_type": true, "processing_type": true, "isic_4": true, "product_type": true,
         "number_of_workers": true, "native_language_name": true, "combine_contributors": true,
+        "combine_facility_processing_isic": true,
         "boundary": true, "sort_by": true, "embed": true, "detail": true,
         "partner_contributor": true
     };

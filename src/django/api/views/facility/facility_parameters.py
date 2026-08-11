@@ -139,6 +139,18 @@ facilities_list_parameters = [
         ),
     ),
     Parameter(
+        'combine_facility_processing_isic',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'Set this to "AND" when both facility type / processing type '
+            'and ISIC Rev 4 filters are active to return only facilities '
+            'that match both filter groups. When omitted, the two groups '
+            'are combined with OR semantics.'
+        ),
+    ),
+    Parameter(
         'product_type',
         IN_QUERY,
         type=TYPE_STRING,

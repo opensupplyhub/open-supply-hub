@@ -19,6 +19,7 @@ import {
     updateNativeLanguageNameFilter,
     updateSortAlgorithm,
     updateCombineContributorsFilterOption,
+    updateCombineFacilityProcessingIsicFilterOption,
     updateBoundaryFilter,
     resetAllFilters,
     resetDrawerFilters,
@@ -45,6 +46,23 @@ import {
     updateListWithLabels,
 } from '../util/util';
 
+const shouldCombineFacilityProcessingIsic = ({
+    facilityType,
+    processingType,
+    isic4,
+}) =>
+    ((facilityType && facilityType.length > 0) ||
+        (processingType && processingType.length > 0)) &&
+    isic4 &&
+    isic4.length > 0;
+
+const maybeClearCombineFacilityProcessingIsic = state =>
+    shouldCombineFacilityProcessingIsic(state)
+        ? state
+        : update(state, {
+              combineFacilityProcessingIsic: { $set: '' },
+          });
+
 const initialState = Object.freeze({
     facilityFreeTextQuery: '',
     contributors: Object.freeze([]),
@@ -63,6 +81,7 @@ const initialState = Object.freeze({
     moderationStatuses: Object.freeze([]),
     nativeLanguageName: '',
     combineContributors: '',
+    combineFacilityProcessingIsic: '',
     boundary: null,
     lists: Object.freeze([]),
     partnerContributors: Object.freeze([]),
@@ -118,17 +137,23 @@ export default createReducer(
                 parentCompany: { $set: payload },
             }),
         [updateFacilityTypeFilter]: (state, payload) =>
-            update(state, {
-                facilityType: { $set: payload },
-            }),
+            maybeClearCombineFacilityProcessingIsic(
+                update(state, {
+                    facilityType: { $set: payload },
+                }),
+            ),
         [updateProcessingTypeFilter]: (state, payload) =>
-            update(state, {
-                processingType: { $set: payload },
-            }),
+            maybeClearCombineFacilityProcessingIsic(
+                update(state, {
+                    processingType: { $set: payload },
+                }),
+            ),
         [updateIsic4Filter]: (state, payload) =>
-            update(state, {
-                isic4: { $set: payload },
-            }),
+            maybeClearCombineFacilityProcessingIsic(
+                update(state, {
+                    isic4: { $set: payload },
+                }),
+            ),
         [updateProductTypeFilter]: (state, payload) =>
             update(state, {
                 productType: { $set: payload },
@@ -144,6 +169,10 @@ export default createReducer(
         [updateCombineContributorsFilterOption]: (state, payload) =>
             update(state, {
                 combineContributors: { $set: payload },
+            }),
+        [updateCombineFacilityProcessingIsicFilterOption]: (state, payload) =>
+            update(state, {
+                combineFacilityProcessingIsic: { $set: payload },
             }),
         [updateBoundaryFilter]: (state, payload) =>
             update(state, {
@@ -185,6 +214,9 @@ export default createReducer(
                 },
                 countries: { $set: state.countries },
                 combineContributors: { $set: state.combineContributors },
+                combineFacilityProcessingIsic: {
+                    $set: state.combineFacilityProcessingIsic,
+                },
                 lists: { $set: state.lists },
             }),
         [updateAllFilters]: (_state, payload) => payload,

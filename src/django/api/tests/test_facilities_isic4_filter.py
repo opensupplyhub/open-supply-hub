@@ -59,6 +59,7 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
             contributors_count=2,
             isic_section=['C'],
             isic_class=['1410', '1411'],
+            facility_type=['Final Product Assembly'],
         )
         FacilityIndex.objects.filter(id=self.facility_two.id).update(
             contributors_count=1,
@@ -66,6 +67,7 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
             isic_division=['62'],
             isic_group=['620'],
             isic_class=['6201'],
+            processing_type=['Batch Dyeing'],
         )
 
     def test_class_filter_returns_matching_facilities(self):
@@ -107,3 +109,44 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         ids = {feature['id'] for feature in response.data['features']}
         self.assertEqual(ids, {self.facility.id, self.facility_two.id})
+
+    def test_facility_processing_and_isic_use_or_semantics_by_default(self):
+        response = self.client.get(
+            reverse('facility-list'),
+            {
+                'facility_type': 'Final Product Assembly',
+                'isic_4': 'section:J',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        ids = {feature['id'] for feature in response.data['features']}
+        self.assertEqual(ids, {self.facility.id, self.facility_two.id})
+
+    def test_facility_processing_and_isic_use_and_when_requested(self):
+        response = self.client.get(
+            reverse('facility-list'),
+            {
+                'facility_type': 'Final Product Assembly',
+                'isic_4': 'section:J',
+                'combine_facility_processing_isic': 'AND',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        ids = {feature['id'] for feature in response.data['features']}
+        self.assertEqual(ids, set())
+
+    def test_facility_processing_and_isic_and_returns_matching_facility(self):
+        response = self.client.get(
+            reverse('facility-list'),
+            {
+                'facility_type': 'Final Product Assembly',
+                'isic_4': 'section:C',
+                'combine_facility_processing_isic': 'AND',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        ids = {feature['id'] for feature in response.data['features']}
+        self.assertEqual(ids, {self.facility.id})

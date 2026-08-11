@@ -1,7 +1,9 @@
 import React, { Suspense, useEffect } from 'react';
-import { bool, func, object } from 'prop-types';
+import { bool, func, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
@@ -18,6 +20,7 @@ import {
     updateProductTypeFilter,
     updateNumberofWorkersFilter,
     updateNativeLanguageNameFilter,
+    updateCombineFacilityProcessingIsicFilterOption,
 } from '../actions/filters';
 
 import {
@@ -47,6 +50,19 @@ const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
 
+const hasFacilityProcessingSelections = (facilityType, processingType) =>
+    (facilityType && facilityType.length > 0) ||
+    (processingType && processingType.length > 0);
+
+const shouldShowCombineFacilityProcessingIsic = (
+    facilityType,
+    processingType,
+    isic4,
+) =>
+    hasFacilityProcessingSelections(facilityType, processingType) &&
+    isic4 &&
+    isic4.length > 0;
+
 const LazyIsicTaxonomySearch = React.lazy(() =>
     import('./Filters/HierarchicalTaxonomySearch/IsicTaxonomySearch'),
 );
@@ -65,6 +81,8 @@ function FilterSidebarExtendedSearch({
     updateProcessingType,
     isic4,
     updateIsic4,
+    combineFacilityProcessingIsic,
+    updateCombineFacilityProcessingIsic,
     productType,
     updateProductType,
     numberOfWorkers,
@@ -99,6 +117,12 @@ function FilterSidebarExtendedSearch({
             </div>
         );
     }
+
+    const showCombineFacilityProcessingIsic = shouldShowCombineFacilityProcessingIsic(
+        facilityType,
+        processingType,
+        isic4,
+    );
 
     return (
         <>
@@ -185,6 +209,22 @@ function FilterSidebarExtendedSearch({
                     </Suspense>
                 </div>
             </ShowOnly>
+            <ShowOnly when={showCombineFacilityProcessingIsic}>
+                <div className="form__field" style={{ marginTop: '-8px' }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={!!combineFacilityProcessingIsic}
+                                onChange={updateCombineFacilityProcessingIsic}
+                                color="primary"
+                                value={combineFacilityProcessingIsic}
+                                disabled={fetchingFacilities}
+                            />
+                        }
+                        label="Match both facility type and ISIC categories"
+                    />
+                </div>
+            </ShowOnly>
             <ShowOnly
                 when={
                     !embed ||
@@ -240,6 +280,7 @@ FilterSidebarExtendedSearch.defaultProps = {
     }),
     numberOfWorkersOptions: null,
     isic4: [],
+    combineFacilityProcessingIsic: '',
 };
 
 FilterSidebarExtendedSearch.propTypes = {
@@ -253,6 +294,8 @@ FilterSidebarExtendedSearch.propTypes = {
     processingType: processingTypeOptionsPropType.isRequired,
     isic4: facilityTypeOptionsPropType,
     updateIsic4: func.isRequired,
+    combineFacilityProcessingIsic: string,
+    updateCombineFacilityProcessingIsic: func.isRequired,
     productType: productTypeOptionsPropType.isRequired,
     numberOfWorkers: numberOfWorkerOptionsPropType.isRequired,
     fetchingFacilities: bool.isRequired,
@@ -284,6 +327,7 @@ function mapStateToProps({
         productType,
         numberOfWorkers,
         nativeLanguageName,
+        combineFacilityProcessingIsic,
     },
     facilities: {
         facilities: { data: facilities, fetching: fetchingFacilities },
@@ -305,6 +349,7 @@ function mapStateToProps({
         productType,
         numberOfWorkers,
         nativeLanguageName,
+        combineFacilityProcessingIsic,
         fetchingFacilities,
         facilities,
         fetchingExtendedOptions:
@@ -321,6 +366,12 @@ function mapDispatchToProps(dispatch) {
         updateFacilityType: v => dispatch(updateFacilityTypeFilter(v)),
         updateProcessingType: v => dispatch(updateProcessingTypeFilter(v)),
         updateIsic4: v => dispatch(updateIsic4Filter(v)),
+        updateCombineFacilityProcessingIsic: e =>
+            dispatch(
+                updateCombineFacilityProcessingIsicFilterOption(
+                    e.target.checked ? 'AND' : '',
+                ),
+            ),
         updateProductType: v => dispatch(updateProductTypeFilter(v)),
         updateNumberOfWorkers: v => dispatch(updateNumberofWorkersFilter(v)),
         updateNativeLanguageName: e =>

@@ -752,6 +752,47 @@ it('creates a set of filters from a querystring', () => {
         expectedIsic4Match,
     );
 
+    const combineFacilityProcessingIsicString =
+        '?facility_type=Final+Product+Assembly&isic_4=section%3AC&combine_facility_processing_isic=AND';
+
+    expect(
+        createFiltersFromQueryString(combineFacilityProcessingIsicString),
+    ).toMatchObject({
+        facilityType: [
+            {
+                value: 'Final Product Assembly',
+                label: 'Final Product Assembly',
+            },
+        ],
+        isic4: [{ value: 'section:C', label: 'section:C' }],
+        combineFacilityProcessingIsic: 'AND',
+    });
+
+    expect(
+        createQueryStringFromSearchFilters({
+            facilityType: [
+                {
+                    value: 'Final Product Assembly',
+                    label: 'Final Product Assembly',
+                },
+            ],
+            isic4: [{ value: 'section:C', label: 'section:C' }],
+            combineFacilityProcessingIsic: 'AND',
+        }),
+    ).toContain('combine_facility_processing_isic=AND');
+    expect(
+        createQueryStringFromSearchFilters({
+            facilityType: [
+                {
+                    value: 'Final Product Assembly',
+                    label: 'Final Product Assembly',
+                },
+            ],
+            isic4: [{ value: 'section:C', label: 'section:C' }],
+            combineFacilityProcessingIsic: 'AND',
+        }),
+    ).toContain('isic_4=section%3AC');
+
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {
         facilityFreeTextQuery: '',

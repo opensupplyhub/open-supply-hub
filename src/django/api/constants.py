@@ -31,6 +31,7 @@ class FacilitiesQueryParams:
     CONTRIBUTOR_TYPES = 'contributor_types'
     COUNTRIES = 'countries'
     COMBINE_CONTRIBUTORS = 'combine_contributors'
+    COMBINE_FACILITY_PROCESSING_ISIC = 'combine_facility_processing_isic'
     BOUNDARY = 'boundary'
     EMBED = 'embed'
     PARENT_COMPANY = 'parent_company'

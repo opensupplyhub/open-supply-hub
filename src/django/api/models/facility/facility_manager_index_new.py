@@ -14,6 +14,45 @@ from api.models.facility.partner_contributor_filter import (
 )
 
 
+def build_facility_processing_filter(facility_types, processing_types):
+    fp_filter = Q()
+    has_filter = False
+
+    if len(facility_types):
+        standard_facility_types = []
+        for facility_type in facility_types:
+            standard_type = get_facility_and_processing_type(
+                facility_type, ['Apparel']
+            )
+            if standard_type[0] is not None:
+                standard_facility_types.append(standard_type[2])
+        fp_filter &= Q(facility_type__overlap=standard_facility_types)
+        has_filter = True
+
+    if len(processing_types):
+        standard_processing_types = []
+        for processing_type in processing_types:
+            standard_type = get_facility_and_processing_type(
+                processing_type, ['Apparel']
+            )
+            if standard_type[0] is not None:
+                standard_processing_types.append(standard_type[3])
+        fp_filter &= Q(processing_type__overlap=standard_processing_types)
+        has_filter = True
+
+    return fp_filter if has_filter else None
+
+
+def build_isic_filter(parsed_isic_filters):
+    if not parsed_isic_filters:
+        return None
+
+    isic_filter = Q()
+    for field_name, code in parsed_isic_filters:
+        isic_filter |= Q(**{f'{field_name}__overlap': [code]})
+    return isic_filter
+
+
 class FacilityIndexNewManager(models.Manager):
     def filter_by_query_params(self, params):
         """
@@ -45,6 +84,9 @@ class FacilityIndexNewManager(models.Manager):
 
         combine_contributors = params.get(
             FacilitiesQueryParams.COMBINE_CONTRIBUTORS, '')
+
+        combine_facility_processing_isic = params.get(
+            FacilitiesQueryParams.COMBINE_FACILITY_PROCESSING_ISIC, '')
 
         boundary = params.get(
             FacilitiesQueryParams.BOUNDARY, None
@@ -160,29 +202,22 @@ class FacilityIndexNewManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        if len(facility_types):
-            standard_facility_types = []
-            for facility_type in facility_types:
-                standard_type = get_facility_and_processing_type(
-                    facility_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_facility_types.append(standard_type[2])
-            facilities_qs = facilities_qs.filter(
-                facility_type__overlap=standard_facility_types
-            )
+        fp_filter = build_facility_processing_filter(
+            facility_types,
+            processing_types,
+        )
+        parsed_isic_filters = parse_isic4_filter_values(isic_4_filters)
+        isic_filter = build_isic_filter(parsed_isic_filters)
 
-        if len(processing_types):
-            standard_processing_types = []
-            for processing_type in processing_types:
-                standard_type = get_facility_and_processing_type(
-                    processing_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_processing_types.append(standard_type[3])
-            facilities_qs = facilities_qs.filter(
-                processing_type__overlap=standard_processing_types
-            )
+        if fp_filter and isic_filter:
+            if combine_facility_processing_isic.upper() == 'AND':
+                facilities_qs = facilities_qs.filter(fp_filter & isic_filter)
+            else:
+                facilities_qs = facilities_qs.filter(fp_filter | isic_filter)
+        elif fp_filter:
+            facilities_qs = facilities_qs.filter(fp_filter)
+        elif isic_filter:
+            facilities_qs = facilities_qs.filter(isic_filter)
 
         if len(product_types):
             clean_product_types = []
@@ -206,13 +241,6 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs = facilities_qs.filter(
                 sector__overlap=sectors
             )
-
-        parsed_isic_filters = parse_isic4_filter_values(isic_4_filters)
-        if parsed_isic_filters:
-            isic_filter = Q()
-            for field_name, code in parsed_isic_filters:
-                isic_filter |= Q(**{f'{field_name}__overlap': [code]})
-            facilities_qs = facilities_qs.filter(isic_filter)
 
         partner_contributors = params.getlist(
             FacilitiesQueryParams.PARTNER_CONTRIBUTOR

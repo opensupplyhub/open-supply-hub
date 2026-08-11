@@ -48,6 +48,9 @@ export const updateNativeLanguageNameFilter = createAction(
 export const updateCombineContributorsFilterOption = createAction(
     'UPDATE_COMBINE_CONTRIBUTORS_FILTER_OPTION',
 );
+export const updateCombineFacilityProcessingIsicFilterOption = createAction(
+    'UPDATE_COMBINE_FACILITY_PROCESSING_ISIC_FILTER_OPTION',
+);
 export const updateDataSourceFilter = createAction('UPDATE_DATA_SOURCE_FILTER');
 export const updateModerationStatusFilter = createAction(
     'UPDATE_MODERATION_STATUS_FILTER',
