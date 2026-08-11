@@ -52,8 +52,17 @@ const DataCenterFields = ({ classes, contributionForm }) => {
                     )
                 }
                 FormHelperTextProps={{ className: classes.helperText }}
+                /*
+                `inputProps` (lowercase) targets the native <input>, so the
+                accessible name belongs to the focusable control, while
+                `InputProps` (capital) targets the Input wrapper and is used
+                only for styling. They are separate MUI APIs, but
+                react/jsx-no-duplicate-props is configured with ignoreCase and
+                reports them as duplicates.
+                */
+                // eslint-disable-next-line react/jsx-no-duplicate-props
+                inputProps={{ 'aria-label': label }}
                 InputProps={{
-                    'aria-label': label,
                     classes: {
                         notchedOutline: classes.notchedOutlineStyles,
                     },
