@@ -1,0 +1,256 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/isic_taxonomy.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script src="{% static 'admin/js/isic_taxonomy.js' %}" defer></script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; {% translate 'ISIC Taxonomy' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" class="isic-taxonomy-admin">
+  <h1>{% translate 'ISIC Rev 4 Taxonomy' %}</h1>
+
+  <section class="isic-taxonomy-info module" aria-labelledby="isic-taxonomy-info-heading">
+    <h2 id="isic-taxonomy-info-heading">{% translate 'Upload requirements' %}</h2>
+    <p>
+      {% blocktranslate %}
+      Upload a taxonomy spreadsheet using the same 11-column schema as the
+      official ISIC Rev 4 template. Publishing is atomic: validation and
+      parsing run first, artifacts upload to S3, and the active version is
+      swapped only when every step succeeds.
+      {% endblocktranslate %}
+    </p>
+
+    <div class="isic-taxonomy-info-grid">
+      <div>
+        <h3>{% translate 'Accepted formats' %}</h3>
+        <ul>
+          {% for extension in allowed_extensions %}
+            <li><code>{{ extension }}</code></li>
+          {% endfor %}
+        </ul>
+        <p class="help">
+          {% blocktranslate with max_mb=max_file_size_mb %}
+          Maximum file size: {{ max_mb }} MB.
+          {% endblocktranslate %}
+        </p>
+      </div>
+
+      <div>
+        <h3>{% translate 'Required headers' %}</h3>
+        <p class="help">{% translate 'Exact column names, case-insensitive.' %}</p>
+        <table class="isic-taxonomy-headers">
+          <thead>
+            <tr>
+              <th scope="col">{% translate 'Column' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for header in required_headers %}
+              <tr>
+                <td><code>{{ header }}</code></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3>{% translate 'Character allowlist' %}</h3>
+        <p>
+          {% blocktranslate %}
+          Labels and descriptions must match this pattern (Unicode letters,
+          digits, underscore, and common punctuation):
+          {% endblocktranslate %}
+        </p>
+        <p><code class="isic-taxonomy-pattern">{{ label_char_pattern }}</code></p>
+        <h3>{% translate 'Expected hierarchy' %}</h3>
+        <p>{% translate 'Section → Division → Group → Class' %}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="isic-taxonomy-status module" aria-labelledby="isic-taxonomy-status-heading">
+    <h2 id="isic-taxonomy-status-heading">{% translate 'Current status' %}</h2>
+    <dl class="isic-taxonomy-status-list">
+      <div>
+        <dt>{% translate 'Visibility' %}</dt>
+        <dd>
+          {% if config.is_active %}
+            <span class="isic-taxonomy-badge isic-taxonomy-badge--active">
+              {% translate 'Enabled' %}
+            </span>
+          {% else %}
+            <span class="isic-taxonomy-badge isic-taxonomy-badge--inactive">
+              {% translate 'Disabled' %}
+            </span>
+          {% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt>{% translate 'Version' %}</dt>
+        <dd>{{ config.version|default:'0' }}</dd>
+      </div>
+      <div>
+        <dt>{% translate 'Counts' %}</dt>
+        <dd>
+          {% blocktranslate with sections=config.section_count divisions=config.division_count groups=config.group_count classes=config.class_count %}
+          {{ sections }} sections, {{ divisions }} divisions,
+          {{ groups }} groups, {{ classes }} classes
+          {% endblocktranslate %}
+        </dd>
+      </div>
+      <div>
+        <dt>{% translate 'Last published' %}</dt>
+        <dd>
+          {% if config.published_at %}
+            {{ config.published_at }}
+          {% else %}
+            {% translate 'Never' %}
+          {% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt>{% translate 'Uploaded by' %}</dt>
+        <dd>
+          {% if config.uploaded_by %}
+            {{ config.uploaded_by.email }}
+          {% else %}
+            {% translate 'Unknown' %}
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+
+    {% if config.last_error %}
+      <div class="isic-taxonomy-last-error" role="alert">
+        <h3>{% translate 'Most recent publish error' %}</h3>
+        <pre>{{ config.last_error }}</pre>
+      </div>
+    {% endif %}
+
+    <form method="post" class="isic-taxonomy-toggle-form">
+      {% csrf_token %}
+      {% if config.is_active %}
+        <input type="hidden" name="action" value="disable">
+        <button type="submit" class="button cancel-link">
+          {% translate 'Disable in extended search' %}
+        </button>
+      {% else %}
+        <input type="hidden" name="action" value="enable">
+        <button type="submit" class="button default">
+          {% translate 'Enable in extended search' %}
+        </button>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="isic-taxonomy-upload module" aria-labelledby="isic-taxonomy-upload-heading">
+    <h2 id="isic-taxonomy-upload-heading">{% translate 'Upload spreadsheet' %}</h2>
+
+    {% if validation_errors %}
+      <div class="isic-taxonomy-errors" role="alert">
+        <h3>{% translate 'Validation errors' %}</h3>
+        <ul>
+          {% for error in validation_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="isic-taxonomy-upload-form">
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        {% for field in form %}
+          <div class="form-row">
+            {{ field.errors }}
+            <div>
+              <label{% if field.field.required %} class="required"{% endif %} for="{{ field.id_for_label }}">
+                {{ field.label }}:
+              </label>
+              {{ field }}
+              {% if field.help_text %}
+                <p class="help">{{ field.help_text }}</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </fieldset>
+      <div class="submit-row">
+        <button type="submit" name="action" value="preview" class="button">
+          {% translate 'Preview hierarchy' %}
+        </button>
+        <button type="submit" name="action" value="publish" class="button default">
+          {% translate 'Validate and publish' %}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  {% if preview_taxonomy %}
+    <section class="isic-taxonomy-preview module" aria-labelledby="isic-taxonomy-preview-heading">
+      <div class="isic-taxonomy-preview-header">
+        <h2 id="isic-taxonomy-preview-heading">{% translate 'Hierarchy preview' %}</h2>
+        {% if preview_counts %}
+          <p class="help">
+            {% blocktranslate with sections=preview_counts.section_count divisions=preview_counts.division_count groups=preview_counts.group_count classes=preview_counts.class_count %}
+            {{ sections }} sections, {{ divisions }} divisions,
+            {{ groups }} groups, {{ classes }} classes
+            {% endblocktranslate %}
+          </p>
+        {% endif %}
+        <div class="isic-taxonomy-preview-actions">
+          <button type="button" class="button" data-isic-expand-all>
+            {% translate 'Expand all' %}
+          </button>
+          <button type="button" class="button" data-isic-collapse-all>
+            {% translate 'Collapse all' %}
+          </button>
+        </div>
+      </div>
+
+      <div class="isic-taxonomy-accordion" data-isic-accordion>
+        {% for section in preview_taxonomy.sections %}
+          <details class="isic-accordion isic-accordion--section">
+            <summary>{{ section.displayLabel }}</summary>
+            <div class="isic-accordion__body">
+              {% for division in section.divisions %}
+                <details class="isic-accordion isic-accordion--division">
+                  <summary>{{ division.displayLabel }}</summary>
+                  <div class="isic-accordion__body">
+                    {% for group in division.groups %}
+                      <details class="isic-accordion isic-accordion--group">
+                        <summary>{{ group.displayLabel }}</summary>
+                        <div class="isic-accordion__body">
+                          <ul class="isic-accordion-classes">
+                            {% for class in group.classes %}
+                              <li>{{ class.displayLabel }}</li>
+                            {% endfor %}
+                          </ul>
+                        </div>
+                      </details>
+                    {% endfor %}
+                  </div>
+                </details>
+              {% endfor %}
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

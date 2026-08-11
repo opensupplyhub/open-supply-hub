@@ -1,0 +1,32 @@
+{% load i18n %}
+<button class="sticky toggle-nav-sidebar" id="toggle-nav-sidebar" aria-label="{% translate 'Toggle navigation' %}"></button>
+<nav class="sticky" id="nav-sidebar" aria-label="{% translate 'Sidebar' %}">
+  <input type="search" id="nav-filter"
+         placeholder="{% translate 'Start typing to filter…' %}"
+         aria-label="{% translate 'Filter navigation items' %}">
+  {% if perms.api.change_isictaxonomyconfig %}
+    <div class="app-api module{% if request.resolver_match.url_name == 'isic_taxonomy' %} current-app{% endif %}">
+      <table>
+        <caption>
+          <span class="section" title="{% translate 'Configuration tools' %}">
+            {% translate 'Configuration' %}
+          </span>
+        </caption>
+        <thead class="visually-hidden">
+          <tr>
+            <th scope="col">{% translate 'Page name' %}</th>
+          </tr>
+        </thead>
+        <tr class="model-isic-taxonomy{% if request.resolver_match.url_name == 'isic_taxonomy' %} current-model{% endif %}">
+          <th scope="row" id="api-isic-taxonomy">
+            <a href="{% url 'admin:isic_taxonomy' %}"
+               {% if request.resolver_match.url_name == 'isic_taxonomy' %}aria-current="page"{% endif %}>
+              {% translate 'ISIC Taxonomy' %}
+            </a>
+          </th>
+        </tr>
+      </table>
+    </div>
+  {% endif %}
+  {% include 'admin/app_list.html' with app_list=available_apps show_changelinks=False %}
+</nav>
