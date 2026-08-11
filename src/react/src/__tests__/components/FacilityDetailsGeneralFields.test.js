@@ -642,4 +642,95 @@ describe('FacilityDetailsGeneralFields component', () => {
 
         expect(queryByText('Facility Type')).not.toBeInTheDocument();
     });
+
+    describe('data center fields (OSDEV-3227)', () => {
+        const dataCenterExtendedField = (rawValue, fieldName) => [
+            {
+                id: 1,
+                is_verified: false,
+                value: { raw_value: rawValue },
+                created_at: '2025-01-01T00:00:00.000Z',
+                updated_at: '2025-01-01T00:00:00.000Z',
+                contributor_name: 'Test Contributor',
+                contributor_id: 1,
+                value_count: 1,
+                is_from_claim: false,
+                field_name: fieldName,
+                verified_count: 0,
+                source_by: null,
+                unit: null,
+                label: null,
+                base_url: null,
+                display_text: null,
+                json_schema: null,
+            },
+        ];
+
+        const dataCenterData = {
+            ...mockData,
+            properties: {
+                ...mockData.properties,
+                is_data_center: true,
+                extended_fields: {
+                    ...mockData.properties.extended_fields,
+                    name_operator: dataCenterExtendedField(
+                        'Equinix',
+                        'name_operator',
+                    ),
+                    capacity: dataCenterExtendedField('20', 'capacity'),
+                    capacity_units: dataCenterExtendedField(
+                        'MW',
+                        'capacity_units',
+                    ),
+                    operational_status: dataCenterExtendedField(
+                        'operational',
+                        'operational_status',
+                    ),
+                },
+            },
+        };
+
+        test('renders grouped data center fields when is_data_center is true', () => {
+            const { getByText } = renderComponent({ data: dataCenterData });
+
+            expect(getByText('Named Entities')).toBeInTheDocument();
+            expect(getByText('Utility Usage')).toBeInTheDocument();
+            expect(getByText('Operating Information')).toBeInTheDocument();
+            expect(getByText('Operator')).toBeInTheDocument();
+            expect(getByText('Equinix')).toBeInTheDocument();
+        });
+
+        test('combines a measure with its units into one value', () => {
+            const { getByText, queryByText } = renderComponent({
+                data: dataCenterData,
+            });
+
+            expect(getByText('20 MW')).toBeInTheDocument();
+            // The units field is merged, not rendered on its own.
+            expect(queryByText('Capacity units')).not.toBeInTheDocument();
+        });
+
+        test('omits groups with no contributed values', () => {
+            const { queryByText } = renderComponent({ data: dataCenterData });
+
+            expect(queryByText('Building Information')).not.toBeInTheDocument();
+        });
+
+        test('does not render data center groups for a production location', () => {
+            const { queryByText } = renderComponent();
+
+            expect(queryByText('Named Entities')).not.toBeInTheDocument();
+            expect(queryByText('Utility Usage')).not.toBeInTheDocument();
+        });
+
+        test('does not render data center groups in embed mode', () => {
+            const { queryByText } = renderComponent({
+                data: dataCenterData,
+                embed: true,
+                embedConfig: { embed_fields: [] },
+            });
+
+            expect(queryByText('Named Entities')).not.toBeInTheDocument();
+        });
+    });
 });
