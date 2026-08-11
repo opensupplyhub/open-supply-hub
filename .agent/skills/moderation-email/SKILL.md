@@ -18,6 +18,17 @@ Input: a Google Sheets link to the tagged tab of a `~PROCESSED` list
 report. Output: the finished contributor email (`email.md` + `email.html`)
 in `<output_dir>/<list-id>/`.
 
+## Prerequisites
+
+- **Google Drive access from your agent** (the claude.ai Google Drive
+  integration or equivalent) — steps below use `get_file_metadata` /
+  `read_file_content` / Drive search. No Drive access? Download the
+  tagged sheet as CSV yourself and give the skill the local file path;
+  everything from parsing onward works the same.
+- `python3` on PATH (the two helper scripts are dependency-free).
+- `open` in step 5 is macOS; use your platform's equivalent
+  (`xdg-open`, `start`) elsewhere.
+
 ## 0. Load the moderator config — required
 
 Read `~/.config/os-hub/moderation-email.json`. If it is missing or

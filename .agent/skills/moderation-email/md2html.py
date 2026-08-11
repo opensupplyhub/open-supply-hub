@@ -64,9 +64,13 @@ def render(src: str) -> str:
     lines = src.split('\n')
     if lines and lines[0].startswith(':::'):
         mode = lines[0][3:].strip()
-        end = next(i for i, l in enumerate(lines[1:], 1) if l.strip() == ':::')
-        out.insert(1, render_banner(mode, lines[1:end]))
-        lines = lines[end + 1:]
+        end = next(
+            (i for i, l in enumerate(lines[1:], 1) if l.strip() == ':::'),
+            None,
+        )
+        if end is not None:  # unclosed banner: render the file as-is
+            out.insert(1, render_banner(mode, lines[1:end]))
+            lines = lines[end + 1:]
     in_list = in_table = False
     table_row_idx = 0
     for ln in lines:
