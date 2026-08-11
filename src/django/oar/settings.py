@@ -188,7 +188,6 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'dj_rest_auth.registration',
-    'watchman',
     'simple_history',
     'waffle',
     'api',
@@ -280,7 +279,7 @@ MIDDLEWARE = [
     'waffle.middleware.WaffleMiddleware',
     'api.middleware.RequestLogMiddleware',
     'api.middleware.RequestMeterMiddleware',
-    'api.middleware.OriginSourceMiddleware',
+    'api.middlewares.origin_source.OriginSourceMiddleware',
     'api.middleware.DarkVisitorsMiddleware',
 ]
 
@@ -450,15 +449,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = ((os.path.join(STATIC_ROOT, "static")),)
 STATICFILES_STORAGE = "spa.storage.SPAStaticFilesStorage"
-
-# Watchman
-# https://github.com/mwarkentin/django-watchman
-
-WATCHMAN_ERROR_CODE = 503
-WATCHMAN_CHECKS = (
-    'watchman.checks.databases',
-    'watchman.checks.caches',
-)
 
 # django-ecsmanage
 # https://github.com/azavea/django-ecsmanage

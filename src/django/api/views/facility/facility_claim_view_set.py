@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import FieldDoesNotExist
-from django.db import transaction
+from django.db import models, transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
@@ -62,7 +62,6 @@ CLAIM_PROFILE_ARRAY_FIELDS = (
 
 CLAIM_PROFILE_DATE_FIELDS = (
     'opening_date',
-    'closing_date',
 )
 
 CLAIM_PROFILE_EMISSION_FIELDS = (
@@ -128,7 +127,20 @@ CLAIM_PROFILE_TRACKED_FIELDS = (
 def get_tracked_claim_value(claim, field_name):
     """Return the claim field value normalized through the model field's
     to_python, so raw request values (e.g. the string "False" from a form
-    submit) compare equal to their saved database representation."""
+    submit) compare equal to their saved database representation.
+
+    Text fields additionally treat NULL and the empty string as the same
+    value. They are distinct in the database but identical everywhere a
+    user can see them, and the claim form submits '' for every field left
+    blank — so without this, the first save of a claim holding NULLs
+    counts as a change and bumps updated_at without altering anything
+    visible. Most approved claims carry such NULLs, so nearly every
+    claimant would have seen one unexplained "last updated" bump.
+
+    Deliberately keyed on field type rather than name: the visibility
+    booleans in CLAIM_PROFILE_SIMPLE_FIELDS keep NULL and False distinct,
+    since those genuinely differ (unanswered vs. answered "no").
+    """
     value = getattr(claim, field_name)
     try:
         model_field = claim._meta.get_field(field_name)
@@ -136,9 +148,12 @@ def get_tracked_claim_value(claim, field_name):
         # Attname-only entries such as parent_company_id.
         return value
     try:
-        return model_field.to_python(value)
+        value = model_field.to_python(value)
     except Exception:
         return value
+    if isinstance(model_field, (models.CharField, models.TextField)):
+        return '' if value is None else value
+    return value
 
 
 class FacilityClaimViewSet(ModelViewSet):

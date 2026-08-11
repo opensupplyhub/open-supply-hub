@@ -1,6 +1,8 @@
 import json
 from unittest.mock import Mock, patch
 
+from api.models import ExtendedField
+from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
@@ -13,6 +15,70 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
     def setUp(self):
         super(FacilityAndProcessingTypeAPITest, self).setUp()
         self.url = reverse("facility-list")
+
+    def _create_processing_type_extended_field(
+        self, raw_value, matched_values
+    ):
+        # The ExtendedField insert trigger reindexes FacilityIndex, so the
+        # facility must be linked directly for index_processing_type() to
+        # pick the value up.
+        return ExtendedField.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            facility_list_item=self.list_item,
+            field_name=ExtendedField.PROCESSING_TYPE,
+            value={
+                "raw_values": raw_value,
+                "matched_values": matched_values,
+            },
+        )
+
+    def test_processing_type_indexed_when_tagged_as_facility_type(self):
+        # "Final Product Assembly" is both a facility type and a processing
+        # type, so the taxonomy matcher tags it FACILITY_TYPE even when it is
+        # contributed as a processing type. It must still be indexed in (and
+        # searchable via) processing_type. Regression test for OSDEV-1034.
+        self._create_processing_type_extended_field(
+            ["Final Product Assembly"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Final Product Assembly",
+                ]
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn(
+            "Final Product Assembly", facility_index.processing_type
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=Final%20Product%20Assembly"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_processing_type_indexed_when_tagged_as_processing_type(self):
+        # A value the matcher tags PROCESSING_TYPE (e.g. "Cutting") must keep
+        # being indexed in processing_type after the OSDEV-1034 change.
+        self._create_processing_type_extended_field(
+            ["Cutting"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Cutting",
+                ]
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("Cutting", facility_index.processing_type)
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
     #       & Dedupe Hub live database)
