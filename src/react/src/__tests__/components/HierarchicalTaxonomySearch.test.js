@@ -8,6 +8,12 @@ jest.mock('../../components/SearchIcon', () => () => (
     <span data-testid="search-icon" />
 ));
 
+const getRowSelectButtons = getAllByRole =>
+    getAllByRole('button').filter(
+        button =>
+            !/(Expand|Collapse)/.test(button.getAttribute('aria-label') || ''),
+    );
+
 describe('HierarchicalTaxonomySearch component', () => {
     const defaultProps = {
         label: 'Facility type & processing type',
@@ -39,7 +45,7 @@ describe('HierarchicalTaxonomySearch component', () => {
             target: { value: 'material' },
         });
 
-        const options = getAllByRole('option');
+        const options = getRowSelectButtons(getAllByRole);
         const optionText = options.map(option => option.textContent);
 
         expect(
@@ -75,7 +81,7 @@ describe('HierarchicalTaxonomySearch component', () => {
             target: { value: 'material' },
         });
 
-        fireEvent.click(getAllByRole('option')[0]);
+        fireEvent.click(getRowSelectButtons(getAllByRole)[0]);
 
         expect(getByRole('combobox')).toHaveValue('');
     });

@@ -18,8 +18,8 @@ const resultRowBase = Object.freeze({
     },
 });
 
-export default theme =>
-    Object.freeze({
+export default function taxonomySearchStyles(theme) {
+    return Object.freeze({
         ...makeFilterStyles(theme),
         ...makeFilterMultiValueChipStyles(),
         root: Object.freeze({
@@ -69,12 +69,19 @@ export default theme =>
         }),
         resultsPanel: Object.freeze({
             marginTop: '10px',
+            marginBottom: 0,
+            padding: 0,
+            listStyle: 'none',
             background: COLOURS.WHITE,
             border: `1px solid ${COLOURS.GREY}`,
             borderRadius: 0,
             overflow: 'hidden',
             maxHeight: '280px',
             overflowY: 'auto',
+        }),
+        resultRowItem: Object.freeze({
+            margin: 0,
+            padding: 0,
         }),
         resultRowParent: Object.freeze({
             ...resultRowBase,
@@ -98,6 +105,11 @@ export default theme =>
             flex: 1,
             minWidth: 0,
             textAlign: 'left',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            padding: 0,
+            fontFamily: 'inherit',
         }),
         resultRowLabelParent: Object.freeze({
             fontSize: '16px',
@@ -106,6 +118,11 @@ export default theme =>
             flex: 1,
             minWidth: 0,
             textAlign: 'left',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            padding: 0,
+            fontFamily: 'inherit',
         }),
         resultRowCount: Object.freeze({
             marginLeft: 'auto',
@@ -133,3 +150,4 @@ export default theme =>
             margin: '10px 2px 0',
         }),
     });
+}

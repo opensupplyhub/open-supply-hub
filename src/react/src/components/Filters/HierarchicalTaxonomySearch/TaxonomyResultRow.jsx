@@ -32,6 +32,7 @@ function HighlightedLabel({ label, highlightQuery, classes }) {
 }
 
 function TaxonomyResultRow({
+    id,
     node,
     depth,
     isParent,
@@ -42,6 +43,7 @@ function TaxonomyResultRow({
     count,
     onToggleExpand,
     onSelect,
+    onMouseEnter,
     classes,
 }) {
     const isParentRow = isParent;
@@ -54,63 +56,63 @@ function TaxonomyResultRow({
         onToggleExpand();
     };
 
-    const handleRowClick = () => {
+    const handleSelectClick = () => {
         onSelect();
     };
 
-    const handleRowKeyDown = event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            handleRowClick();
-        }
-    };
+    const rowClassName = `${
+        isParentRow ? classes.resultRowParent : classes.resultRowChild
+    } ${selected || active ? classes.resultRowSelected : ''}`;
 
     return (
-        <div
-            role="option"
-            aria-selected={selected}
-            tabIndex={0}
-            className={`${
-                isParentRow ? classes.resultRowParent : classes.resultRowChild
-            } ${selected || active ? classes.resultRowSelected : ''}`}
-            style={{ paddingLeft: `${paddingLeft}px` }}
-            onMouseDown={event => event.preventDefault()}
-            onClick={handleRowClick}
-            onKeyDown={handleRowKeyDown}
+        <li
+            id={id}
+            className={classes.resultRowItem}
+            onMouseEnter={onMouseEnter}
         >
-            {isParentRow && (
-                <IconButton
-                    onClick={handleChevronClick}
-                    className={classes.chevronButton}
-                    aria-expanded={expanded}
-                    aria-label={expanded ? 'Collapse' : 'Expand'}
-                >
-                    {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-                </IconButton>
-            )}
-            <span
-                className={
-                    isParentRow
-                        ? classes.resultRowLabelParent
-                        : classes.resultRowLabel
-                }
+            <div
+                className={rowClassName}
+                style={{ paddingLeft: `${paddingLeft}px` }}
             >
-                <HighlightedLabel
-                    label={node.displayLabel}
-                    highlightQuery={highlightQuery}
-                    classes={classes}
-                />
-            </span>
-            {count != null && (
-                <span className={classes.resultRowCount}>
-                    {count.toLocaleString()}
-                </span>
-            )}
-        </div>
+                {isParentRow && (
+                    <IconButton
+                        onClick={handleChevronClick}
+                        className={classes.chevronButton}
+                        aria-expanded={expanded}
+                        aria-label={expanded ? 'Collapse' : 'Expand'}
+                    >
+                        {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                    </IconButton>
+                )}
+                <button
+                    type="button"
+                    className={
+                        isParentRow
+                            ? classes.resultRowLabelParent
+                            : classes.resultRowLabel
+                    }
+                    aria-pressed={selected}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={handleSelectClick}
+                >
+                    <HighlightedLabel
+                        label={node.displayLabel}
+                        highlightQuery={highlightQuery}
+                        classes={classes}
+                    />
+                </button>
+                {count != null && (
+                    <span className={classes.resultRowCount}>
+                        {count.toLocaleString()}
+                    </span>
+                )}
+            </div>
+        </li>
     );
 }
 
 TaxonomyResultRow.propTypes = {
+    id: string,
     node: object.isRequired,
     depth: number.isRequired,
     isParent: bool.isRequired,
@@ -121,13 +123,16 @@ TaxonomyResultRow.propTypes = {
     count: oneOfType([number, object]),
     onToggleExpand: func,
     onSelect: func.isRequired,
+    onMouseEnter: func,
     classes: object.isRequired,
 };
 
 TaxonomyResultRow.defaultProps = {
+    id: undefined,
     expanded: false,
     count: null,
     onToggleExpand: null,
+    onMouseEnter: null,
 };
 
 export default TaxonomyResultRow;

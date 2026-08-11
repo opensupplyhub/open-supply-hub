@@ -141,12 +141,14 @@ export function getIsic4VisibleRows(flatNodes, query = '') {
 
     const matchCount = rows.filter(row => row.highlightQuery).length;
 
+    let hint = 'No matching ISIC categories';
+    if (matchCount) {
+        const categoryLabel = matchCount === 1 ? 'category' : 'categories';
+        hint = `${matchCount} matching ISIC ${categoryLabel}`;
+    }
+
     return Object.freeze({
         rows,
-        hint: matchCount
-            ? `${matchCount} matching ISIC ${
-                  matchCount === 1 ? 'category' : 'categories'
-              }`
-            : 'No matching ISIC categories',
+        hint,
     });
 }

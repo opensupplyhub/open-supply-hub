@@ -236,17 +236,15 @@ function HierarchicalTaxonomySearch({
             />
 
             {showResultsPanel && (
-                <div
+                <ul
                     id={listboxId}
                     className={classes.resultsPanel}
-                    role="listbox"
                     aria-label={label}
-                    aria-multiselectable="true"
                 >
                     {visibleRows.length === 0 ? (
-                        <div className={classes.emptyResults}>
+                        <li className={classes.emptyResults}>
                             No matching facility or processing types
-                        </div>
+                        </li>
                     ) : (
                         visibleRows.map((row, index) => {
                             const {
@@ -264,33 +262,30 @@ function HierarchicalTaxonomySearch({
                             const rowId = getFacilityProcessingNodeKey(node);
 
                             return (
-                                <div
+                                <TaxonomyResultRow
                                     key={rowId}
                                     id={`${listboxId}-option-${index}`}
                                     onMouseEnter={() =>
                                         setActiveRowIndex(index)
                                     }
-                                >
-                                    <TaxonomyResultRow
-                                        node={node}
-                                        depth={depth}
-                                        isParent={isParent}
-                                        highlightQuery={highlightQuery}
-                                        selected={selected}
-                                        active={index === activeRowIndex}
-                                        expanded={expandedNodeIds.has(rowId)}
-                                        count={count}
-                                        onToggleExpand={() =>
-                                            handleToggleExpand(rowId)
-                                        }
-                                        onSelect={() => handleToggleNode(node)}
-                                        classes={classes}
-                                    />
-                                </div>
+                                    node={node}
+                                    depth={depth}
+                                    isParent={isParent}
+                                    highlightQuery={highlightQuery}
+                                    selected={selected}
+                                    active={index === activeRowIndex}
+                                    expanded={expandedNodeIds.has(rowId)}
+                                    count={count}
+                                    onToggleExpand={() =>
+                                        handleToggleExpand(rowId)
+                                    }
+                                    onSelect={() => handleToggleNode(node)}
+                                    classes={classes}
+                                />
                             );
                         })
                     )}
-                </div>
+                </ul>
             )}
 
             <p className={classes.hint}>

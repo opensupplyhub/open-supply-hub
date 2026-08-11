@@ -98,11 +98,11 @@ export function getFacilityProcessingVisibleRows(groups, query = '') {
         });
     });
 
-    const hint = trimmedQuery
-        ? `${hitCount} matches across ${groupCount} facility ${
-              groupCount === 1 ? 'type' : 'types'
-          }`
-        : 'Browse all facility types, or type to search both levels at once';
+    let hint = 'Browse all facility types, or type to search both levels at once';
+    if (trimmedQuery) {
+        const typeLabel = groupCount === 1 ? 'type' : 'types';
+        hint = `${hitCount} matches across ${groupCount} facility ${typeLabel}`;
+    }
 
     return Object.freeze({ rows, hint });
 }
