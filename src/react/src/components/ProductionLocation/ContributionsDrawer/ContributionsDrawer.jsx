@@ -105,39 +105,48 @@ const ContributionsDrawer = ({
                     </>
                 ) : null}
 
-                <Typography
-                    className={classes.sectionLabel}
-                    component="p"
-                    variant="body1"
-                >
-                    {sectionLabel}
-                </Typography>
-                <InfoBox
-                    title={null}
-                    variant="contributions"
-                    learnMoreUrl={LEARN_MORE_OPEN_DATA_MODEL_URL}
-                    learnMoreLabel={LEARN_MORE_LABEL}
-                >
-                    {INFO_CONTRIBUTIONS_TEXT}
-                </InfoBox>
+                {/*
+                Only shown when there are other contributions: a field with a
+                single contribution would otherwise render an empty section
+                with copy about multiple organizations (OSDEV-3228).
+                */}
                 {contributionsCount > 0 ? (
-                    <div data-testid="contributions-drawer-list">
-                        {contributions.map((item, index) => (
-                            <ContributionCard
-                                key={
-                                    item.id ||
-                                    `${item.value}-${item.sourceName}-${index}`
-                                }
-                                value={item.value}
-                                sourceName={item.sourceName}
-                                date={item.date}
-                                userId={item.userId}
-                                provenance={item.provenance}
-                                data-testid="contribution-card"
-                                spotlightGaProfileBase={spotlightGaProfileBase}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <Typography
+                            className={classes.sectionLabel}
+                            component="p"
+                            variant="body1"
+                        >
+                            {sectionLabel}
+                        </Typography>
+                        <InfoBox
+                            title={null}
+                            variant="contributions"
+                            learnMoreUrl={LEARN_MORE_OPEN_DATA_MODEL_URL}
+                            learnMoreLabel={LEARN_MORE_LABEL}
+                        >
+                            {INFO_CONTRIBUTIONS_TEXT}
+                        </InfoBox>
+                        <div data-testid="contributions-drawer-list">
+                            {contributions.map((item, index) => (
+                                <ContributionCard
+                                    key={
+                                        item.id ||
+                                        `${item.value}-${item.sourceName}-${index}`
+                                    }
+                                    value={item.value}
+                                    sourceName={item.sourceName}
+                                    date={item.date}
+                                    userId={item.userId}
+                                    provenance={item.provenance}
+                                    data-testid="contribution-card"
+                                    spotlightGaProfileBase={
+                                        spotlightGaProfileBase
+                                    }
+                                />
+                            ))}
+                        </div>
+                    </>
                 ) : null}
             </div>
         </Drawer>

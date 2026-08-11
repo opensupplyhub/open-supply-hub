@@ -247,6 +247,35 @@ describe('ContributionsDrawer', () => {
         expect(screen.getByText('Operator website')).toBeInTheDocument();
     });
 
+    test('omits the other-sources section when there is a single contribution', () => {
+        renderContributionsDrawer({
+            open: true,
+            onClose: () => {},
+            fieldName: 'Operator',
+            promotedContribution: {
+                value: 'Equinix',
+                sourceName: 'Source A',
+                date: '2023-01-01',
+                userId: 10,
+            },
+            contributions: [],
+        });
+
+        // The promoted contribution is shown on its own.
+        expect(
+            screen.getByTestId('contribution-card-promoted'),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByTestId('contributions-drawer-list'),
+        ).not.toBeInTheDocument();
+        // No empty "Other Data Sources" section or multi-organization copy.
+        expect(screen.queryByText('Other Data Sources')).not.toBeInTheDocument();
+        // The subtitle reads in the singular.
+        expect(
+            screen.getByTestId('contributions-drawer-subtitle'),
+        ).toHaveTextContent('1 organization has contributed data for Operator');
+    });
+
     test('provenance accordion toggles open and closed', () => {
         renderContributionsDrawer({
             open: true,
