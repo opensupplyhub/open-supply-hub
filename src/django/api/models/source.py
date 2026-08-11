@@ -1,5 +1,5 @@
 import uuid
-from django.db import models
+from django.db import models, transaction
 from api.constants import OriginSource
 
 
@@ -83,3 +83,39 @@ class Source(models.Model):
 
     def __str__(self):
         return f'{self.display_name} ({self.id})'
+
+    def save(self, *args, **kwargs):
+        """
+        Keep extended field attribution in sync with the source.
+
+        Reassigning `contributor` (typically in Django admin) must also
+        re-attribute the extended fields contributed through this source,
+        otherwise they keep pointing at the original uploader on facility
+        detail pages, search responses and downloads. See OSDEV-2159.
+        """
+        # Imported lazily to avoid a circular import: the service imports
+        # ExtendedField, which is loaded through api.models.
+        from api.services.source_service import SourceService
+
+        # `update_fields` is read defensively; when it is passed
+        # positionally (deprecated) this falls back to running the check.
+        update_fields = kwargs.get('update_fields')
+        contributor_may_change = (
+            not self._state.adding
+            and (update_fields is None or 'contributor' in update_fields)
+        )
+        if not contributor_may_change:
+            return super().save(*args, **kwargs)
+
+        previous_contributor_id = (
+            Source.objects
+            .filter(pk=self.pk)
+            .values_list('contributor_id', flat=True)
+            .first()
+        )
+
+        with transaction.atomic():
+            result = super().save(*args, **kwargs)
+            if previous_contributor_id != self.contributor_id:
+                SourceService.reassign_extended_fields(self)
+            return result
