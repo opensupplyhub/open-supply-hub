@@ -660,6 +660,17 @@ variable "CORS_ALLOWED_ORIGIN_REGEXES" {
   default = "http://localhost, https://127.0.0.1"
 }
 
+variable "files_bucket_cors_local_origins" {
+  type = list(string)
+  default = [
+    "http://localhost:6543",
+    "http://localhost:8081",
+    "http://127.0.0.1:6543",
+    "http://127.0.0.1:8081",
+  ]
+  description = "Local dev origins allowed to fetch taxonomy bundles from the files bucket via CORS."
+}
+
 variable "topic_dedup_basic_name" {
   default = "basic_name"
 }
