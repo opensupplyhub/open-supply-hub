@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import get from 'lodash/get';
 import isNil from 'lodash/isNil';
 import filter from 'lodash/filter';
@@ -10,6 +11,7 @@ import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo/FacilityDet
 import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
 import { formatAttribution, formatExtendedField } from '../util/util';
+import { DATA_CENTER_FIELD_GROUPS } from './ProductionLocation/constants.jsx';
 
 import {
     EXTENDED_FIELD_TYPES,
@@ -33,6 +35,11 @@ const locationFieldsStyles = theme =>
             maxWidth: '1072px',
             paddingLeft: theme.spacing.unit * 3,
             paddingBottom: theme.spacing.unit * 3,
+        },
+        dataCenterGroupTitle: {
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            marginTop: theme.spacing.unit * 2,
         },
     });
 
@@ -258,9 +265,10 @@ const FacilityDetailsGeneralFields = ({
     );
 
     const renderExtendedFields = () => {
-        const extendedFieldsWithoutAdditionalIdentifiers = EXTENDED_FIELD_TYPES.filter(
-            field => !ADDITIONAL_IDENTIFIERS.includes(field.fieldName),
-        );
+        const extendedFieldsWithoutAdditionalIdentifiers =
+            EXTENDED_FIELD_TYPES.filter(
+                field => !ADDITIONAL_IDENTIFIERS.includes(field.fieldName),
+            );
 
         return (
             <FeatureFlag
@@ -273,6 +281,67 @@ const FacilityDetailsGeneralFields = ({
             </FeatureFlag>
         );
     };
+
+    /*
+    Reuses DATA_CENTER_FIELD_GROUPS as the single source of truth for the
+    field list, labels and units pairing (the same config the new details
+    page uses), and renders each field through renderExtendedField so
+    multi-contributor values and attribution behave exactly like the other
+    extended fields on this page. Units fields are merged into their measure
+    rather than rendered on their own.
+    */
+    const isDataCenter = !!get(data, 'properties.is_data_center', false);
+
+    const renderDataCenterField = ({ key, label, unitsField }) => {
+        let unit = null;
+        if (unitsField) {
+            const unitValues = get(
+                data,
+                `properties.extended_fields.${unitsField}`,
+                [],
+            );
+            unit = unitValues.length
+                ? get(unitValues[0], 'value.raw_value', null)
+                : null;
+        }
+
+        return renderExtendedField({
+            label,
+            fieldName: key,
+            formatValue: value => {
+                const rawValue = get(value, 'raw_value', null);
+                if (isNil(rawValue) || rawValue === '') {
+                    return rawValue;
+                }
+                return unit ? `${rawValue} ${unit}` : rawValue;
+            },
+        });
+    };
+
+    const renderDataCenterGroups = () =>
+        DATA_CENTER_FIELD_GROUPS.map(group => {
+            const renderedFields = group.fields
+                .map(field => renderDataCenterField(field))
+                .filter(Boolean);
+
+            if (!renderedFields.length) {
+                return null;
+            }
+
+            return (
+                <React.Fragment key={group.label}>
+                    <Grid item xs={12}>
+                        <Typography
+                            component="h3"
+                            className={classes.dataCenterGroupTitle}
+                        >
+                            {group.label}
+                        </Typography>
+                    </Grid>
+                    {renderedFields}
+                </React.Fragment>
+            );
+        }).filter(Boolean);
 
     return (
         <div className={classes.root}>
@@ -297,6 +366,7 @@ const FacilityDetailsGeneralFields = ({
                         </Grid>
                     )}
                     {embed ? renderEmbedFields() : renderExtendedFields()}
+                    {!embed && isDataCenter ? renderDataCenterGroups() : null}
                     <FeatureFlag flag={REPORT_A_FACILITY}>
                         <ShowOnly when={!!activityReport}>
                             <FacilityDetailsItem
