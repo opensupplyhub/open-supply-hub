@@ -180,7 +180,7 @@ function IsicTaxonomySearch({
     };
 
     const listboxId = 'isic4-taxonomy-results';
-    const label = 'ISIC Rev 4';
+    const label = 'International Standard Industrial Classification "ISIC"';
 
     return (
         <div className={classes.root}>
