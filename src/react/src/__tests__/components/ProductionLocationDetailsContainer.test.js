@@ -1,6 +1,6 @@
 import React from 'react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
-import { screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDetailsContainer from '../../components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import { fetchSingleFacility } from '../../actions/facilities';
@@ -59,16 +59,26 @@ const { fetchSingleFacility: realFetchSingleFacility } = jest.requireActual(
     '../../actions/facilities',
 );
 
-const baseState = {
+const defaultFacilitiesState = {
     facilities: {
-        singleFacility: {
-            data: null,
-            fetching: false,
-            error: null,
-            requestedOsId: null,
-            requestToken: null,
-        },
+        data: null,
+        fetching: false,
+        error: null,
+        nextPageURL: null,
+        isInfiniteLoading: false,
+        hasAppliedFilters: false,
     },
+    singleFacility: {
+        data: null,
+        fetching: false,
+        error: null,
+        requestedOsId: null,
+        requestToken: null,
+    },
+};
+
+const baseState = {
+    facilities: defaultFacilitiesState,
     filters: { contributors: [] },
     featureFlags: {},
     embeddedMap: { embed: null },
@@ -80,10 +90,14 @@ const renderContainer = (stateOverrides = {}, osID = 'OS12345') => {
         ...baseState,
         ...stateOverrides,
         facilities: {
-            ...baseState.facilities,
+            ...defaultFacilitiesState,
             ...(stateOverrides.facilities || {}),
+            facilities: {
+                ...defaultFacilitiesState.facilities,
+                ...(stateOverrides.facilities?.facilities || {}),
+            },
             singleFacility: {
-                ...baseState.facilities.singleFacility,
+                ...defaultFacilitiesState.singleFacility,
                 ...(stateOverrides.facilities?.singleFacility || {}),
             },
         },
@@ -107,6 +121,7 @@ describe('ProductionLocationDetailsContainer', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+        cleanup();
     });
 
     test('renders a loading spinner when fetching', () => {
@@ -282,7 +297,6 @@ describe('ProductionLocationDetailsContainer', () => {
         };
 
         beforeEach(() => {
-            fetchSingleFacility.mockImplementation(realFetchSingleFacility);
             apiRequest.get.mockReset();
         });
 
@@ -290,16 +304,25 @@ describe('ProductionLocationDetailsContainer', () => {
             const deferreds = [createDeferred(), createDeferred()];
             let callIndex = 0;
 
+            // Mount with fetch stubbed so we control the two in-flight requests
+            // the same way ProductionLocationDetailsContainer would trigger them.
+            const { reduxStore } = renderContainer({}, OS_ID);
+
+            fetchSingleFacility.mockImplementation(realFetchSingleFacility);
             apiRequest.get.mockImplementation(() => {
+                if (callIndex >= deferreds.length) {
+                    throw new Error(
+                        `Unexpected apiRequest.get call #${callIndex + 1}`,
+                    );
+                }
                 const deferred = deferreds[callIndex];
                 callIndex += 1;
                 return deferred.promise;
             });
 
-            const { reduxStore } = renderContainer({}, OS_ID);
-
-            await waitFor(() => expect(apiRequest.get).toHaveBeenCalledTimes(1));
-
+            const firstRequest = reduxStore.dispatch(
+                fetchSingleFacility(OS_ID, 0, null, true),
+            );
             const secondRequest = reduxStore.dispatch(
                 fetchSingleFacility(OS_ID, 0, null, true),
             );
@@ -312,21 +335,29 @@ describe('ProductionLocationDetailsContainer', () => {
             await secondRequest;
 
             await waitFor(() => {
+                expect(
+                    reduxStore.getState().facilities.singleFacility.data
+                        ?.properties?.name,
+                ).toBe('Second response');
+            });
+            expect(
+                reduxStore.getState().facilities.singleFacility.error,
+            ).toBeNull();
+
+            await waitFor(() => {
                 expect(screen.getByTestId('details-content')).toBeInTheDocument();
             });
 
-            expect(
-                reduxStore.getState().facilities.singleFacility.data.properties
-                    .name,
-            ).toBe('Second response');
-
             deferreds[0].resolve({ data: makeFacilityData('Stale response') });
-            await deferreds[0].promise;
+            await firstRequest;
 
             expect(
                 reduxStore.getState().facilities.singleFacility.data.properties
                     .name,
             ).toBe('Second response');
+            expect(
+                reduxStore.getState().facilities.singleFacility.error,
+            ).toBeNull();
             expect(screen.getByTestId('details-content')).toBeInTheDocument();
         });
     });
