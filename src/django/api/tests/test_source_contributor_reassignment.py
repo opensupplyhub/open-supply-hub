@@ -132,10 +132,11 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
             self.new_contributor.name,
             serialized["contributor_name"],
         )
-        self.assertEqual(
-            self.new_contributor.id,
-            serialized["contributor_id"],
-        )
+        # The serializer exposes the contributor's admin user id as
+        # `contributor_id`, not the Contributor pk. See
+        # get_contributor_id_from_facilityindex.
+        self.assertEqual(self.new_user.id, serialized["contributor_id"])
+        self.assertNotEqual(self.user.id, serialized["contributor_id"])
 
     def test_reassignment_preserves_contribution_date(self):
         # The public record reads "<date> by <contributor>"; only the
