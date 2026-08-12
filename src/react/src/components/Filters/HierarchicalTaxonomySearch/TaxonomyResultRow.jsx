@@ -76,6 +76,7 @@ function TaxonomyResultRow({
             >
                 {isParentRow && (
                     <IconButton
+                        onMouseDown={event => event.preventDefault()}
                         onClick={handleChevronClick}
                         className={classes.chevronButton}
                         aria-expanded={expanded}

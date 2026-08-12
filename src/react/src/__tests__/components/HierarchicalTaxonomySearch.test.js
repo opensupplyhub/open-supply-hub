@@ -73,6 +73,23 @@ describe('HierarchicalTaxonomySearch component', () => {
         expect(onProcessingTypeChange).toHaveBeenCalledWith([]);
     });
 
+    test('clicking expand chevron reveals nested options without closing panel', () => {
+        const { getAllByLabelText, getByRole, container } = renderComponent();
+
+        fireEvent.focus(getByRole('combobox'));
+
+        const countOptions = () =>
+            container.querySelectorAll(
+                '[id^="facility-processing-taxonomy-results-option-"]',
+            ).length;
+        const optionsBeforeExpand = countOptions();
+
+        fireEvent.click(getAllByLabelText('Expand')[0]);
+
+        expect(getAllByLabelText('Collapse').length).toBeGreaterThan(0);
+        expect(countOptions()).toBeGreaterThan(optionsBeforeExpand);
+    });
+
     test('selecting an option clears the search input', () => {
         const { getAllByRole, getByRole } = renderComponent();
 
