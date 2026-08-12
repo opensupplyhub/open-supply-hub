@@ -27,9 +27,7 @@ const SubmissionErrorsBanner = ({ classes, errors }) => {
                             {formatSubmissionErrorForDisplay(uniqueErrors[0])}
                         </span>
                     ) : (
-                        <span>
-                            Please fix the following validation errors:
-                        </span>
+                        <span>Please fix the following validation errors:</span>
                     )}
                 </Typography>
                 {uniqueErrors.length > 1 && (
@@ -55,6 +53,4 @@ SubmissionErrorsBanner.propTypes = {
     errors: array,
 };
 
-export default withStyles(submissionErrorsBannerStyles)(
-    SubmissionErrorsBanner,
-);
+export default withStyles(submissionErrorsBannerStyles)(SubmissionErrorsBanner);
