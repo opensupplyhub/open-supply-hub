@@ -39,6 +39,8 @@ export const completeFetchSingleFacility = createAction(
 );
 export const resetSingleFacility = createAction('RESET_SINGLE_FACILITY');
 
+let nextSingleFacilityRequestToken = 0;
+
 export function fetchFacilities({
     pageSize = FACILITIES_REQUEST_PAGE_SIZE,
     pushNewRoute = noop,
@@ -153,7 +155,9 @@ export function fetchSingleFacility(
     useCreatedAtForDataPoints = false,
 ) {
     return (dispatch, getState) => {
-        dispatch(startFetchSingleFacility(osID));
+        nextSingleFacilityRequestToken += 1;
+        const requestToken = nextSingleFacilityRequestToken;
+        dispatch(startFetchSingleFacility({ osID, requestToken }));
 
         if (!osID) {
             return dispatch(
@@ -175,7 +179,7 @@ export function fetchSingleFacility(
             : makeGetFacilityByOSIdURL(osID, useCreatedAtForDataPoints);
 
         const isCurrentRequest = () =>
-            getState().facilities.singleFacility.requestedOsId === osID;
+            getState().facilities.singleFacility.requestToken === requestToken;
 
         return apiRequest
             .get(fetchUrl)

@@ -1,8 +1,17 @@
 import React from 'react';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ProductionLocationDetailsContainer from '../../components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
+import { fetchSingleFacility } from '../../actions/facilities';
+import apiRequest from '../../util/apiRequest';
+
+jest.mock('../../util/apiRequest', () => ({
+    __esModule: true,
+    default: {
+        get: jest.fn(),
+    },
+}));
 
 jest.mock(
     '../../components/ProductionLocation/Sidebar/BackToSearch/BackToSearch',
@@ -25,11 +34,14 @@ jest.mock(
     () => () => <div data-testid="details-content" />,
 );
 
-jest.mock('../../actions/facilities', () => ({
-    fetchSingleFacility: () => ({ type: 'noop' }),
-    resetSingleFacility: () => ({ type: 'RESET_SINGLE_FACILITY' }),
-    fetchFacilities: () => () => {},
-}));
+jest.mock('../../actions/facilities', () => {
+    const actual = jest.requireActual('../../actions/facilities');
+    return {
+        ...actual,
+        fetchSingleFacility: jest.fn(actual.fetchSingleFacility),
+        fetchFacilities: () => () => {},
+    };
+});
 
 jest.mock('../../actions/filters', () => ({
     setFiltersFromQueryString: () => ({ type: 'noop' }),
@@ -43,6 +55,10 @@ jest.mock('../../actions/partnerFieldGroups', () => ({
     fetchPartnerFieldGroups: () => () => {},
 }));
 
+const { fetchSingleFacility: realFetchSingleFacility } = jest.requireActual(
+    '../../actions/facilities',
+);
+
 const baseState = {
     facilities: {
         singleFacility: {
@@ -50,6 +66,7 @@ const baseState = {
             fetching: false,
             error: null,
             requestedOsId: null,
+            requestToken: null,
         },
     },
     filters: { contributors: [] },
@@ -84,6 +101,14 @@ const renderContainer = (stateOverrides = {}, osID = 'OS12345') => {
 };
 
 describe('ProductionLocationDetailsContainer', () => {
+    beforeEach(() => {
+        fetchSingleFacility.mockImplementation(() => () => {});
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
     test('renders a loading spinner when fetching', () => {
         renderContainer({
             facilities: { singleFacility: { fetching: true } },
@@ -234,5 +259,75 @@ describe('ProductionLocationDetailsContainer', () => {
         );
 
         expect(screen.getByTestId('redirect-target')).toBeInTheDocument();
+    });
+
+    describe('single facility fetch race condition', () => {
+        const OS_ID = 'CN20200165JMYV0';
+
+        const makeFacilityData = name => ({
+            id: OS_ID,
+            type: 'Feature',
+            properties: {
+                name,
+                os_id: OS_ID,
+            },
+        });
+
+        const createDeferred = () => {
+            let resolve;
+            const promise = new Promise(res => {
+                resolve = res;
+            });
+            return { promise, resolve };
+        };
+
+        beforeEach(() => {
+            fetchSingleFacility.mockImplementation(realFetchSingleFacility);
+            apiRequest.get.mockReset();
+        });
+
+        test('ignores a stale response when a newer request for the same OS ID completes first', async () => {
+            const deferreds = [createDeferred(), createDeferred()];
+            let callIndex = 0;
+
+            apiRequest.get.mockImplementation(() => {
+                const deferred = deferreds[callIndex];
+                callIndex += 1;
+                return deferred.promise;
+            });
+
+            const { reduxStore } = renderContainer({}, OS_ID);
+
+            await waitFor(() => expect(apiRequest.get).toHaveBeenCalledTimes(1));
+
+            const secondRequest = reduxStore.dispatch(
+                fetchSingleFacility(OS_ID, 0, null, true),
+            );
+
+            expect(apiRequest.get).toHaveBeenCalledTimes(2);
+
+            deferreds[1].resolve({
+                data: makeFacilityData('Second response'),
+            });
+            await secondRequest;
+
+            await waitFor(() => {
+                expect(screen.getByTestId('details-content')).toBeInTheDocument();
+            });
+
+            expect(
+                reduxStore.getState().facilities.singleFacility.data.properties
+                    .name,
+            ).toBe('Second response');
+
+            deferreds[0].resolve({ data: makeFacilityData('Stale response') });
+            await deferreds[0].promise;
+
+            expect(
+                reduxStore.getState().facilities.singleFacility.data.properties
+                    .name,
+            ).toBe('Second response');
+            expect(screen.getByTestId('details-content')).toBeInTheDocument();
+        });
     });
 });
