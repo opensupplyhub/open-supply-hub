@@ -1,7 +1,6 @@
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
-import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
 import split from 'lodash/split';
 import last from 'lodash/last';
@@ -693,16 +692,40 @@ export const hasAppliedSearchFilters = filters =>
 
 export const getFeaturesFromFeatureCollection = ({ features }) => features;
 
-export const createErrorListFromResponseObject = data =>
-    flatten(
-        Object.entries(data).map(([field, errors]) => {
-            if (isArray(errors)) {
-                return errors.map(err => `${field}: ${err}`);
+const formatFieldErrorMessages = (field, errors) => {
+    if (isArray(errors)) {
+        return map(errors, err => {
+            if (isString(err)) {
+                return [`${field}: ${err}`];
+            }
+
+            // Nested serializer / list-child errors may appear inside arrays.
+            if (isObject(err)) {
+                return formatFieldErrorMessages(field, err);
             }
 
             return [];
-        }),
-    );
+        }).flat();
+    }
+
+    // DRF ListField child errors: { "0": ["Ensure this field has no more than 50 characters."] }
+    if (isObject(errors)) {
+        return map(errors, nested =>
+            formatFieldErrorMessages(field, nested),
+        ).flat();
+    }
+
+    if (isString(errors)) {
+        return [`${field}: ${errors}`];
+    }
+
+    return [];
+};
+
+export const createErrorListFromResponseObject = data =>
+    map(data, (errors, field) =>
+        formatFieldErrorMessages(field, errors),
+    ).flat();
 
 export function logErrorAndDispatchFailure(
     error,
@@ -741,13 +764,20 @@ export function logErrorAndDispatchFailure(
             }
 
             if (isObject(response.data)) {
-                return createErrorListFromResponseObject(response.data);
+                const messages = createErrorListFromResponseObject(
+                    response.data,
+                );
+                return messages.length ? messages : [defaultMessage];
             }
 
             return [defaultMessage];
         })();
 
-        return dispatch(failureAction(errorMessages));
+        return dispatch(
+            failureAction(
+                errorMessages.length ? errorMessages : [defaultMessage],
+            ),
+        );
     };
 }
 
