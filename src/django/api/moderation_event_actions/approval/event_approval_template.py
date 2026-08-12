@@ -161,6 +161,7 @@ class EventApprovalTemplate(ABC):
         anonymize = (
             self.__event.source == ModerationEvent.Source.SLC
             and switch_is_active(ANONYMIZE_SLC_SOURCES_SWITCH)
+            and not self._is_approved_claimant(contributor)
         )
 
         return Source.objects.create(
@@ -345,6 +346,16 @@ class EventApprovalTemplate(ABC):
         updating the moderation event.
         """
         raise NotImplementedError
+
+    def _is_approved_claimant(self, contributor: Contributor) -> bool:
+        """
+        Hook method to report whether the contributor is an approved
+        claimant of the target production location. An approved claimant
+        is already publicly named on the location, so their contributions
+        are exempt from anonymization and keep the claim promotion. A new
+        location cannot have a claimant yet.
+        """
+        return False
 
     @staticmethod
     def _create_new_facility(item: FacilityListItem, facility_id: str) -> None:

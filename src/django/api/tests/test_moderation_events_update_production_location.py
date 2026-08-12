@@ -6,12 +6,19 @@ from django.test import override_settings
 from django.core import mail
 from waffle.testutils import override_switch
 
-from api.constants import APIV1CommonErrorMessages, APIV1MatchTypes
+from api.constants import (
+    APIV1CommonErrorMessages,
+    APIV1MatchTypes,
+    FacilityClaimStatuses,
+)
 from api.moderation_event_actions.approval.event_approval_template import (
     ANONYMIZE_SLC_SOURCES_SWITCH,
 )
+from api.models.contributor.contributor import Contributor
 from api.models.moderation_event import ModerationEvent
+from api.models.user import User
 from api.models.facility.facility import Facility
+from api.models.facility.facility_claim import FacilityClaim
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -318,6 +325,84 @@ class ModerationEventsUpdateProductionLocationTest(
         self.assertTrue(contributor_entry.get("should_display_associations"))
 
         self.assertIn(self.contributor.id, index_row.contributors_id)
+
+    def test_approved_claimant_slc_is_not_anonymized(self):
+        # An approved claimant is already publicly named on the location,
+        # so their contributions stay attributed and keep the claim
+        # promotion.
+        FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility_one,
+            contact_person="Test Person",
+            status=FacilityClaimStatuses.APPROVED,
+        )
+
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url(),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(200, response.status_code)
+
+        source = (
+            Source.objects.filter(contributor=self.contributor)
+            .order_by("-created_at")
+            .first()
+        )
+        self.assert_source_creation(source, is_anonymized=False)
+
+    def test_unapproved_claim_does_not_exempt_from_anonymization(self):
+        FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility_one,
+            contact_person="Test Person",
+            status=FacilityClaimStatuses.PENDING,
+        )
+
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url(),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(200, response.status_code)
+
+        source = (
+            Source.objects.filter(contributor=self.contributor)
+            .order_by("-created_at")
+            .first()
+        )
+        self.assert_source_creation(source, is_anonymized=True)
+
+    def test_other_contributor_claim_does_not_exempt_from_anonymization(self):
+        other_user = User.objects.create(email="claimant@example.com")
+        other_contributor = Contributor.objects.create(
+            admin=other_user,
+            name="other claimant contributor",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        FacilityClaim.objects.create(
+            contributor=other_contributor,
+            facility=self.facility_one,
+            contact_person="Test Person",
+            status=FacilityClaimStatuses.APPROVED,
+        )
+
+        self.login_as_superuser()
+        response = self.client.patch(
+            self.get_url(),
+            data=json.dumps({"os_id": self.os_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(200, response.status_code)
+
+        source = (
+            Source.objects.filter(contributor=self.contributor)
+            .order_by("-created_at")
+            .first()
+        )
+        self.assert_source_creation(source, is_anonymized=True)
 
     def test_creation_of_source_for_api_moderation_event(self):
         self.moderation_event.source = ModerationEvent.Source.API
