@@ -3,8 +3,8 @@ from django.db import connection
 
 
 class Command(BaseCommand):
-    help = ('Install all the necessary PostgreSQL extensions for the database '
-            'based on the required DB extensions for the 1.7.0 release.')
+    help = ('Install all the necessary PostgreSQL extensions for the '
+            'database. The command is idempotent and can be re-run safely.')
 
     extensions = (
         'btree_gin',
@@ -12,6 +12,14 @@ class Command(BaseCommand):
         'postgis',
         'unaccent',
         'pgcrypto',
+        # pgaudit provides the database activity auditing required by SOC 2.
+        # It can only be created once the library is loaded at server start,
+        # which means the RDS instance must already have been rebooted after
+        # pgaudit was added to shared_preload_libraries -- see
+        # doc/ops/database-auditing.md. Until then this one extension fails
+        # with "pgaudit must be loaded via shared_preload_libraries"; the
+        # error is logged and the remaining extensions still install.
+        'pgaudit',
     )
 
     def handle(self, *args, **options):

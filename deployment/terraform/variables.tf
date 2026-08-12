@@ -298,6 +298,16 @@ variable "rds_log_autovacuum_min_duration" {
   default = "250"
 }
 
+variable "rds_shared_preload_libraries" {
+  description = "Libraries loaded at PostgreSQL server start. Must include pgaudit so that database activity auditing is available (SOC 2). Static parameter: an instance reboot is required for changes to take effect."
+  default     = "pg_stat_statements,pgaudit"
+}
+
+variable "rds_pgaudit_log" {
+  description = "Classes of SQL statements recorded by pgaudit. Supported classes: none, all, ddl, function, misc, read, role, write."
+  default     = "ddl,role"
+}
+
 variable "rds_cpu_threshold_percent" {
   default = "75"
 }

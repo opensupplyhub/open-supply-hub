@@ -64,6 +64,26 @@ resource "aws_db_parameter_group" "default" {
     value = var.rds_work_mem
   }
 
+  # pgaudit must be present in shared_preload_libraries so that the extension is
+  # loaded at server start. This is a static parameter, so the change only takes
+  # effect after the instance is rebooted -- hence apply_method =
+  # "pending-reboot". pg_stat_statements is loaded by default on PostgreSQL 11
+  # and later, and is listed explicitly here so that overriding this parameter
+  # does not silently drop it.
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = var.rds_shared_preload_libraries
+    apply_method = "pending-reboot"
+  }
+
+  # Classes of SQL statements that pgaudit records. "ddl,role" captures schema
+  # changes and privilege/role grants without logging every read or write.
+  parameter {
+    name         = "pgaudit.log"
+    value        = var.rds_pgaudit_log
+    apply_method = "pending-reboot"
+  }
+
   tags = {
     Name        = "dbpgDatabaseServer"
     Project     = var.project
