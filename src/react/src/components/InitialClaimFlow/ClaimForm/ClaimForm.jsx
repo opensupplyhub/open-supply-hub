@@ -15,14 +15,13 @@ import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
 import Business from '@material-ui/icons/Business';
-import Warning from '@material-ui/icons/Warning';
-
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactInfoStep from './Steps/ContactInfoStep/ContactInfoStep';
 import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
+import SubmissionErrorsBanner from './SubmissionErrorsBanner/SubmissionErrorsBanner';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
@@ -58,7 +57,6 @@ import {
     getNextStep,
     getPreviousStep,
     getPrefetchErrorConfig,
-    formatSubmissionErrorForDisplay,
 } from './utils';
 import {
     usePrefetchClaimData,
@@ -267,10 +265,6 @@ const ClaimForm = ({
         }
     };
 
-    const uniqueSubmissionErrors = submissionError
-        ? [...new Set(submissionError)]
-        : [];
-
     return (
         <div className={`${classes.container} notranslate`} translate="no">
             <Typography className={classes.title}>
@@ -317,56 +311,7 @@ const ClaimForm = ({
                             parentCompanyOptions={parentCompanyOptions}
                             onEmissionsValidationChange={setEmissionsHasErrors}
                         />
-                        {uniqueSubmissionErrors.length > 0 && (
-                            <div className={classes.boxWarningContainer}>
-                                <div className={classes.boxWarningContent}>
-                                    <Typography
-                                        variant="body2"
-                                        className={classes.boxWarningText}
-                                    >
-                                        <span
-                                            className={
-                                                classes.boxWarningTextIcon
-                                            }
-                                        >
-                                            <Warning
-                                                className={classes.warningIcon}
-                                            />
-                                            <strong>ERROR!</strong>
-                                        </span>
-                                        {uniqueSubmissionErrors.length === 1 ? (
-                                            <span>
-                                                {formatSubmissionErrorForDisplay(
-                                                    uniqueSubmissionErrors[0],
-                                                )}
-                                            </span>
-                                        ) : (
-                                            <span>
-                                                Please fix the following
-                                                validation errors:
-                                            </span>
-                                        )}
-                                    </Typography>
-                                    {uniqueSubmissionErrors.length > 1 && (
-                                        <ul
-                                            className={
-                                                classes.boxWarningErrorList
-                                            }
-                                        >
-                                            {uniqueSubmissionErrors.map(
-                                                message => (
-                                                    <li key={message}>
-                                                        {formatSubmissionErrorForDisplay(
-                                                            message,
-                                                        )}
-                                                    </li>
-                                                ),
-                                            )}
-                                        </ul>
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                        <SubmissionErrorsBanner errors={submissionError} />
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
                                 <Button
