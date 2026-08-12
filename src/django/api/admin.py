@@ -50,11 +50,6 @@ class ApiAdminSite(AdminSite):
                  self.admin_view(self.report_view)),
             path('reports/', self.admin_view(self.reports_list_view),
                  name='reports'),
-            path(
-                'isic-taxonomy/',
-                self.admin_view(self.isic_taxonomy_view),
-                name='isic_taxonomy',
-            ),
         ]
         return urls + base_urls
 
@@ -66,9 +61,6 @@ class ApiAdminSite(AdminSite):
         return render(request, 'reports/reports.html', {
             'names': get_report_names()
         })
-
-    def isic_taxonomy_view(self, request):
-        return isic_taxonomy_admin_view(request, self)
 
 
 admin_site = ApiAdminSite()
@@ -326,12 +318,8 @@ class IsicTaxonomyConfigAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def has_module_permission(self, request):
-        # Custom sidebar link is used instead of the default app list entry.
-        return False
-
     def changelist_view(self, request, extra_context=None):
-        return redirect('admin:isic_taxonomy')
+        return isic_taxonomy_admin_view(request, self.admin_site)
 
     def change_view(
         self,
@@ -340,7 +328,7 @@ class IsicTaxonomyConfigAdmin(admin.ModelAdmin):
         form_url='',
         extra_context=None,
     ):
-        return redirect('admin:isic_taxonomy')
+        return redirect('admin:api_isictaxonomyconfig_changelist')
 
 
 class PartnerDataFileUploadAdmin(admin.ModelAdmin):

@@ -58,10 +58,17 @@ def user_can_manage_isic_taxonomy(user) -> bool:
     )
 
 
+def get_isic_taxonomy_admin_url():
+    from django.urls import reverse
+
+    return reverse('admin:api_isictaxonomyconfig_changelist')
+
+
 def isic_taxonomy_admin_view(request, admin_site):
     if not user_can_manage_isic_taxonomy(request.user):
         raise PermissionDenied
 
+    admin_url = get_isic_taxonomy_admin_url()
     config = IsicTaxonomyConfig.load()
     validation_errors = []
     preview_taxonomy = None
@@ -72,7 +79,7 @@ def isic_taxonomy_admin_view(request, admin_site):
 
         if action in ('enable', 'disable'):
             _handle_toggle(request, config, enable=(action == 'enable'))
-            return redirect('admin:isic_taxonomy')
+            return redirect(admin_url)
 
         form = IsicTaxonomyUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -171,6 +178,7 @@ def _handle_publish(request, uploaded, config):
         return None, None, []
 
     config.refresh_from_db()
+    config.source_filename = uploaded.name
     config.source_file.save(
         uploaded.name,
         ContentFile(file_content),

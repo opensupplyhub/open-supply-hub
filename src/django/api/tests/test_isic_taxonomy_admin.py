@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
@@ -11,7 +11,7 @@ from api.isic_taxonomy.admin_views import user_can_manage_isic_taxonomy
 from api.isic_taxonomy.constants import MAX_FILE_SIZE_BYTES
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 from api.models.user import User
-from api.tests.test_isic_taxonomy import FULL_CSV_HEADER, SAMPLE_CSV
+from api.tests.test_isic_taxonomy import SAMPLE_CSV
 
 LOC_MEM_VIEW_CACHE = {
     'default': {
@@ -70,7 +70,7 @@ class IsicTaxonomyAdminViewTest(TestCase):
             version=1,
             class_count=1,
         )
-        self.admin_url = reverse('admin:isic_taxonomy')
+        self.admin_url = reverse('admin:api_isictaxonomyconfig_changelist')
         self.manager = create_staff_user()
         self.client.force_login(self.manager)
 
@@ -120,6 +120,7 @@ class IsicTaxonomyAdminViewTest(TestCase):
         self.assertContains(response, 'ISIC Taxonomy')
         self.assertContains(response, 'ISIC Rev 4 Taxonomy')
         self.assertContains(response, 'Current status')
+        self.assertContains(response, 'Not recorded')
 
     def test_preview_renders_validation_errors(self):
         bad_csv = SimpleUploadedFile(
@@ -235,6 +236,9 @@ class IsicTaxonomyAdminViewTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         mock_publish_taxonomy.assert_called_once()
+        self.assertContains(response, 'sample.csv')
+        config = IsicTaxonomyConfig.load()
+        self.assertEqual(config.source_filename, 'sample.csv')
         self.assertEqual(
             response.context['preview_taxonomy']['sections'][0]['code'],
             'A',

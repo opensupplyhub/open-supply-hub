@@ -14,7 +14,8 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
   <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-  &rsaquo; {% translate 'ISIC Taxonomy' %}
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; {% translate 'ISIC taxonomies' %}
 </div>
 {% endblock %}
 
@@ -102,6 +103,16 @@
       <div>
         <dt>{% translate 'Version' %}</dt>
         <dd>{{ config.version|default:'0' }}</dd>
+      </div>
+      <div>
+        <dt>{% translate 'Source file' %}</dt>
+        <dd>
+          {% if config.source_filename %}
+            {{ config.source_filename }}
+          {% else %}
+            {% translate 'Not recorded' %}
+          {% endif %}
+        </dd>
       </div>
       <div>
         <dt>{% translate 'Counts' %}</dt>

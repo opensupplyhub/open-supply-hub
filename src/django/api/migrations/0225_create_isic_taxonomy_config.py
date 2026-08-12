@@ -60,6 +60,18 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
+                    'source_filename',
+                    models.CharField(
+                        blank=True,
+                        default='',
+                        help_text=(
+                            'Original filename from the admin upload, for '
+                            'display only.'
+                        ),
+                        max_length=255,
+                    ),
+                ),
+                (
                     'json_s3_key',
                     models.CharField(
                         blank=True,

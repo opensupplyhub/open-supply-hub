@@ -222,7 +222,10 @@ class IsicTaxonomyParserTest(TestCase):
     def test_artifact_s3_keys_include_source_extension(self):
         keys = artifact_s3_keys(4, '.csv')
 
-        self.assertEqual(keys['json_s3_key'], 'taxonomy/isic4/v4/isic_rev4.json')
+        self.assertEqual(
+            keys['json_s3_key'],
+            'taxonomy/isic4/v4/isic_rev4.json',
+        )
         self.assertEqual(
             keys['bundle_s3_key'],
             'taxonomy/isic4/v4/isicRev4Taxonomy.js',

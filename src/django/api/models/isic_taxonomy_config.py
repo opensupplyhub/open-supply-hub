@@ -35,6 +35,12 @@ class IsicTaxonomyConfig(models.Model):
         blank=True,
         help_text='Most recently uploaded taxonomy spreadsheet.',
     )
+    source_filename = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text='Original filename from the admin upload, for display only.',
+    )
     json_s3_key = models.CharField(
         max_length=512,
         blank=True,
@@ -75,8 +81,8 @@ class IsicTaxonomyConfig(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = 'ISIC taxonomy configuration'
-        verbose_name_plural = 'ISIC taxonomy configuration'
+        verbose_name = 'ISIC taxonomy'
+        verbose_name_plural = 'ISIC taxonomies'
 
     def save(self, *args, **kwargs):
         self.pk = self.SINGLETON_PK
