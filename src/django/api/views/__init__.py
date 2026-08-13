@@ -75,6 +75,7 @@ from .parent_companies import ParentCompanies
 from .product_types import ProductTypes
 from .sectors import sectors
 from .taxonomy_config import TaxonomyConfigView
+from .isic_taxonomy import IsicTaxonomyView
 from .claim_statuses import claim_statuses
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
 from .partner_field_groups.partner_field_groups_view_set import (

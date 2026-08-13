@@ -1,5 +1,3 @@
-import { ISIC_REV4_TAXONOMY } from './isicRev4Taxonomy';
-
 let isic4SearchIndex = null;
 let isic4SearchIndexVersion = null;
 
@@ -78,10 +76,11 @@ export function resetIsic4SearchIndex() {
     isic4SearchIndexVersion = null;
 }
 
-export function getIsic4SearchIndex(
-    taxonomy = ISIC_REV4_TAXONOMY,
-    version = 'bundled',
-) {
+export function getIsic4SearchIndex(taxonomy, version = 'unknown') {
+    if (!taxonomy) {
+        throw new Error('ISIC taxonomy is required to build the search index');
+    }
+
     if (!isic4SearchIndex || isic4SearchIndexVersion !== version) {
         isic4SearchIndex = buildIsic4SearchIndex(taxonomy);
         isic4SearchIndexVersion = version;

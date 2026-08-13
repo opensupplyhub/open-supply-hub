@@ -226,10 +226,6 @@ class IsicTaxonomyParserTest(TestCase):
             keys['json_s3_key'],
             'taxonomy/isic4/v4/isic_rev4.json',
         )
-        self.assertEqual(
-            keys['bundle_s3_key'],
-            'taxonomy/isic4/v4/isicRev4Taxonomy.js',
-        )
         self.assertEqual(keys['source_s3_key'], 'taxonomy/isic4/v4/source.csv')
 
 
@@ -261,19 +257,16 @@ class IsicTaxonomyPublisherTest(TestCase):
             result['json_s3_key'],
             'taxonomy/isic4/v2/isic_rev4.json',
         )
-        self.assertEqual(
-            result['bundle_s3_key'],
-            'taxonomy/isic4/v2/isicRev4Taxonomy.js',
-        )
 
         config.refresh_from_db()
         self.assertEqual(config.version, 2)
         self.assertTrue(config.is_active)
         self.assertEqual(config.class_count, 1)
         self.assertEqual(config.last_error, '')
+        self.assertEqual(config.bundle_s3_key, '')
 
-        self.assertEqual(s3_client.put_object.call_count, 3)
-        self.assertEqual(s3_client.copy_object.call_count, 3)
+        self.assertEqual(s3_client.put_object.call_count, 2)
+        self.assertEqual(s3_client.copy_object.call_count, 2)
 
     @patch('api.isic_taxonomy.publisher.get_s3_client')
     def test_publish_taxonomy_rolls_back_on_upload_failure(

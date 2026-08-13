@@ -1,12 +1,8 @@
 jest.mock('../../util/env');
 
-const mockBundledTaxonomy = Object.freeze({
-    sections: [{ code: 'A', label: 'Bundled taxonomy' }],
+const mockTaxonomy = Object.freeze({
+    sections: [{ code: 'A', label: 'Remote taxonomy', divisions: [] }],
 });
-
-jest.mock('../../data/isicRev4Taxonomy', () => ({
-    ISIC_REV4_TAXONOMY: mockBundledTaxonomy,
-}));
 
 describe('loadIsic4Taxonomy', () => {
     let env;
@@ -22,8 +18,7 @@ describe('loadIsic4Taxonomy', () => {
             const values = {
                 ISIC4_TAXONOMY_ENABLED: 'true',
                 ISIC4_TAXONOMY_VERSION: '1',
-                ISIC4_TAXONOMY_BUNDLE_URL: '',
-                ENVIRONMENT: 'production',
+                ISIC4_TAXONOMY_URL: '/api/taxonomy/isic4/',
             };
             return values[key];
         });
@@ -58,48 +53,60 @@ describe('loadIsic4Taxonomy', () => {
         await expect(loadIsic4Taxonomy()).resolves.toBeNull();
     });
 
-    test('falls back to the bundled taxonomy when no bundle URL is configured', async () => {
-        await expect(loadIsic4Taxonomy()).resolves.toBe(mockBundledTaxonomy);
+    test('loads taxonomy JSON from the Django API endpoint', async () => {
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockTaxonomy),
+            }),
+        );
+
+        await expect(loadIsic4Taxonomy()).resolves.toBe(mockTaxonomy);
+        expect(global.fetch).toHaveBeenCalledWith('/api/taxonomy/isic4/');
     });
 
     test('caches taxonomy loads for the same version', async () => {
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockTaxonomy),
+            }),
+        );
+
         const first = await loadIsic4Taxonomy();
         const second = await loadIsic4Taxonomy();
 
-        expect(first).toBe(mockBundledTaxonomy);
+        expect(first).toBe(mockTaxonomy);
         expect(second).toBe(first);
+        expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     test('reloads taxonomy when the configured version changes', async () => {
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve(mockTaxonomy),
+            }),
+        );
+
         await loadIsic4Taxonomy();
 
         env.mockImplementation(key => {
             const values = {
                 ISIC4_TAXONOMY_ENABLED: 'true',
                 ISIC4_TAXONOMY_VERSION: '2',
-                ISIC4_TAXONOMY_BUNDLE_URL: '',
+                ISIC4_TAXONOMY_URL: '/api/taxonomy/isic4/',
             };
             return values[key];
         });
 
         const reloaded = await loadIsic4Taxonomy();
 
-        expect(reloaded).toBe(mockBundledTaxonomy);
+        expect(reloaded).toBe(mockTaxonomy);
+        expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
-    test('requests the configured bundle URL when dynamic import fails', async () => {
-        const bundleUrl = 'https://example.com/isicRev4Taxonomy.js';
-
-        env.mockImplementation(key => {
-            const values = {
-                ISIC4_TAXONOMY_ENABLED: 'true',
-                ISIC4_TAXONOMY_VERSION: 'remote',
-                ISIC4_TAXONOMY_BUNDLE_URL: bundleUrl,
-                ENVIRONMENT: 'production',
-            };
-            return values[key];
-        });
-
+    test('throws when the taxonomy API request fails', async () => {
         global.fetch = jest.fn(() =>
             Promise.resolve({
                 ok: false,
@@ -107,39 +114,8 @@ describe('loadIsic4Taxonomy', () => {
             }),
         );
 
-        await expect(loadIsic4Taxonomy()).rejects.toThrow();
-
-        expect(global.fetch).toHaveBeenCalledWith(bundleUrl);
-    });
-
-    test('rewrites minio host to localhost before fetching bundle fallback', async () => {
-        env.mockImplementation(key => {
-            const values = {
-                ISIC4_TAXONOMY_ENABLED: 'true',
-                ISIC4_TAXONOMY_VERSION: 'local',
-                ISIC4_TAXONOMY_BUNDLE_URL:
-                    'https://minio:9000/files/taxonomy/isicRev4Taxonomy.js',
-                ENVIRONMENT: 'local',
-            };
-            return values[key];
-        });
-
-        global.fetch = jest.fn(() =>
-            Promise.resolve({
-                ok: true,
-                text: () =>
-                    Promise.resolve(
-                        'export const ISIC_REV4_TAXONOMY = {"sections":[]};',
-                    ),
-            }),
-        );
-        global.URL.createObjectURL = jest.fn(() => 'blob:mock-local-bundle');
-        global.URL.revokeObjectURL = jest.fn();
-
-        await expect(loadIsic4Taxonomy()).rejects.toThrow();
-
-        expect(global.fetch).toHaveBeenCalledWith(
-            'https://localhost:9000/files/taxonomy/isicRev4Taxonomy.js',
+        await expect(loadIsic4Taxonomy()).rejects.toThrow(
+            'Failed to load ISIC taxonomy (404)',
         );
     });
 });

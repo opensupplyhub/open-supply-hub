@@ -1,5 +1,4 @@
 import env from '../util/env';
-import { ISIC_REV4_TAXONOMY } from './isicRev4Taxonomy';
 
 const cache = {
     version: null,
@@ -15,62 +14,32 @@ export function isIsic4TaxonomyFeatureEnabled() {
 function getTaxonomyVersion() {
     const version = env('ISIC4_TAXONOMY_VERSION');
     if (version == null || version === '') {
-        return 'bundled';
+        return 'unknown';
     }
     return String(version);
 }
 
-function getBundleUrl() {
-    const url = env('ISIC4_TAXONOMY_BUNDLE_URL');
-    return url || null;
+function getTaxonomyUrl() {
+    const url = env('ISIC4_TAXONOMY_URL');
+    return url || '/api/taxonomy/isic4/';
 }
 
-function rewriteBundleUrlForLocal(url) {
-    if (env('ENVIRONMENT') === 'local') {
-        return url.replace('minio', 'localhost');
+async function fetchTaxonomyFromApi(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to load ISIC taxonomy (${response.status})`);
     }
-    return url;
-}
 
-async function importBundleModule(url) {
-    const module = await import(/* @vite-ignore */ url);
-    if (!module?.ISIC_REV4_TAXONOMY) {
-        throw new Error('ISIC taxonomy bundle did not export ISIC_REV4_TAXONOMY');
+    const taxonomy = await response.json();
+    if (!taxonomy?.sections) {
+        throw new Error('ISIC taxonomy response did not include sections');
     }
-    return module.ISIC_REV4_TAXONOMY;
-}
 
-async function importBundleFromUrl(url) {
-    const rewrittenUrl = rewriteBundleUrlForLocal(url);
-
-    try {
-        return await importBundleModule(rewrittenUrl);
-    } catch (directImportError) {
-        const response = await fetch(rewrittenUrl);
-        if (!response.ok) {
-            throw directImportError;
-        }
-
-        const scriptText = await response.text();
-        const blob = new Blob([scriptText], { type: 'application/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
-
-        try {
-            return await importBundleModule(blobUrl);
-        } finally {
-            URL.revokeObjectURL(blobUrl);
-        }
-    }
+    return taxonomy;
 }
 
 async function resolveTaxonomy() {
-    const bundleUrl = getBundleUrl();
-
-    if (bundleUrl) {
-        return importBundleFromUrl(bundleUrl);
-    }
-
-    return ISIC_REV4_TAXONOMY;
+    return fetchTaxonomyFromApi(getTaxonomyUrl());
 }
 
 export async function loadIsic4Taxonomy() {

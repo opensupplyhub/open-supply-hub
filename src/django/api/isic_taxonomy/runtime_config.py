@@ -1,53 +1,41 @@
 import logging
 
-from django.conf import settings
 from django.core.cache import caches
+from django.urls import reverse
 
-from api.migrations._tigerline_helper import get_s3_client
+from api.isic_taxonomy.content import invalidate_isic4_taxonomy_content_cache
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 
 logger = logging.getLogger(__name__)
 
 TAXONOMY_CONFIG_CACHE_KEY = 'taxonomy_config:isic4'
 TAXONOMY_CONFIG_CACHE_TIMEOUT_SECONDS = 60
-BUNDLE_URL_EXPIRES_IN_SECONDS = 3600
 
 
-def invalidate_taxonomy_config_cache() -> None:
+def invalidate_taxonomy_config_cache(*, version: int | None = None) -> None:
     try:
         caches['view_cache'].delete(TAXONOMY_CONFIG_CACHE_KEY)
     except Exception:
         logger.exception('Failed to invalidate ISIC taxonomy config cache')
+    invalidate_isic4_taxonomy_content_cache(version=version)
 
 
-def get_isic4_bundle_url(bundle_s3_key: str) -> str | None:
-    if not bundle_s3_key:
-        return None
-
-    bucket_name = settings.AWS_STORAGE_BUCKET_NAME
-    if not bucket_name:
-        return None
-
-    s3_client = get_s3_client()
-    return s3_client.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': bucket_name, 'Key': bundle_s3_key},
-        ExpiresIn=BUNDLE_URL_EXPIRES_IN_SECONDS,
-    )
+def get_isic4_taxonomy_url() -> str:
+    return reverse('isic_taxonomy')
 
 
 def build_isic4_config(*, config: IsicTaxonomyConfig | None = None) -> dict:
     if config is None:
         config = IsicTaxonomyConfig.load()
 
-    bundle_url = None
-    if config.is_active and config.bundle_s3_key:
-        bundle_url = get_isic4_bundle_url(config.bundle_s3_key)
+    taxonomy_url = None
+    if config.is_active:
+        taxonomy_url = get_isic4_taxonomy_url()
 
     return {
         'enabled': config.is_active,
         'version': config.version,
-        'bundleUrl': bundle_url,
+        'taxonomyUrl': taxonomy_url,
     }
 
 
@@ -59,7 +47,7 @@ def get_isic4_environment_vars(
     return {
         'ISIC4_TAXONOMY_ENABLED': 'true' if isic4['enabled'] else 'false',
         'ISIC4_TAXONOMY_VERSION': str(isic4['version']),
-        'ISIC4_TAXONOMY_BUNDLE_URL': isic4['bundleUrl'] or '',
+        'ISIC4_TAXONOMY_URL': isic4['taxonomyUrl'] or '',
     }
 
 

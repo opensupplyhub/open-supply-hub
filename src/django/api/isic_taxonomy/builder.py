@@ -6,7 +6,7 @@ def build_taxonomy(rows: list[dict[str, str]]) -> dict:
     '''
     Build the nested ISIC Rev 4 taxonomy tree from validated row dicts.
 
-    Output matches the schema used by isicRev4Taxonomy.js and isic_rev4.json.
+    Output matches the schema used by `isic_rev4.json`.
     '''
     sections: dict[str, dict] = {}
 

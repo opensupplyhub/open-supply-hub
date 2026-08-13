@@ -125,29 +125,6 @@ resource "aws_s3_bucket_policy" "files" {
   policy = data.aws_iam_policy_document.files.json
 }
 
-# Allow browsers to dynamically import ISIC taxonomy bundles (taxonomy/*) via
-# presigned URLs. S3 CORS applies bucket-wide; origins mirror Django CORS settings.
-resource "aws_s3_bucket_cors_configuration" "files" {
-  bucket = aws_s3_bucket.files.id
-
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET", "HEAD"]
-    allowed_origins = concat(
-      [
-        "https://${local.domain_name}",
-        "https://*.openapparel.org",
-        "https://*.opensupplyhub.org",
-        "https://oar.niceandserious.com",
-        "https://dev.os-hub.net",
-      ],
-      var.files_bucket_cors_local_origins,
-    )
-    expose_headers  = ["ETag"]
-    max_age_seconds = 3600
-  }
-}
-
 #
 # ECR resources
 #

@@ -122,6 +122,52 @@ class IsicTaxonomyAdminViewTest(TestCase):
         self.assertContains(response, 'Current status')
         self.assertContains(response, 'Not recorded')
 
+    @patch('api.isic_taxonomy.admin_views.load_published_isic4_taxonomy')
+    def test_get_renders_published_hierarchy_after_refresh(
+        self,
+        mock_load_published,
+    ):
+        config = IsicTaxonomyConfig.load()
+        config.json_s3_key = 'taxonomy/isic4/v1/isic_rev4.json'
+        config.version = 1
+        config.class_count = 1
+        config.save()
+
+        mock_load_published.return_value = {
+            'sections': [
+                {
+                    'code': 'A',
+                    'displayLabel': 'A - Agriculture',
+                    'divisions': [
+                        {
+                            'code': '01',
+                            'displayLabel': '01 - Crop production',
+                            'groups': [
+                                {
+                                    'code': '011',
+                                    'displayLabel': '011 - Crops',
+                                    'classes': [
+                                        {
+                                            'displayLabel': (
+                                                '0111 - Growing of cereals'
+                                            ),
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        }
+
+        response = self.client.get(self.admin_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Taxonomy hierarchy')
+        self.assertContains(response, 'Growing of cereals')
+        mock_load_published.assert_called_once()
+
     def test_preview_renders_validation_errors(self):
         bad_csv = SimpleUploadedFile(
             'bad.csv',

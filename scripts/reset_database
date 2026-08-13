@@ -25,12 +25,6 @@ function setup_minio() {
   echo "Creating MinIO bucket $MINIO_BUCKET..."
   docker compose exec minio bash -c "mc mb --ignore-existing $MINIO_ALIAS/$MINIO_BUCKET"
 
-  echo "Configuring MinIO CORS for taxonomy bundle access on $MINIO_BUCKET..."
-  docker compose cp ./scripts/minio/files_bucket_cors.json minio:/tmp/files_bucket_cors.json
-  docker compose exec minio bash \
-          -c "mc cors set $MINIO_ALIAS/$MINIO_BUCKET /tmp/files_bucket_cors.json \
-              && rm /tmp/files_bucket_cors.json"
-
   echo "Copying fixtures to MinIO bucket $MINIO_BUCKET..."
   docker compose exec minio bash \
           -c "mkdir -p /fixtures"

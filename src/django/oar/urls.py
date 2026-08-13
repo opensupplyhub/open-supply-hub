@@ -115,6 +115,8 @@ public_apis = [
          name='taxonomy_counts'),
     path('api/taxonomy-config/', views.TaxonomyConfigView.as_view(),
          name='taxonomy_config'),
+    path('api/taxonomy/isic4/', views.IsicTaxonomyView.as_view(),
+         name='isic_taxonomy'),
     path('api/parent-companies/', views.ParentCompanies.as_view(),
          name='parent_companies'),
     path('api/product-types/', views.ProductTypes.as_view(),

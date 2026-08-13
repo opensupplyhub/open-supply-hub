@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from api.isic_taxonomy.builder import build_taxonomy, count_taxonomy_levels
 from api.isic_taxonomy.constants import (
-    JS_ARTIFACT_NAME,
     JSON_ARTIFACT_NAME,
     SOURCE_ARTIFACT_NAME,
     STAGING_PREFIX,
@@ -17,7 +16,7 @@ from api.isic_taxonomy.errors import (
     IsicTaxonomyPublishError,
     IsicTaxonomyValidationError,
 )
-from api.isic_taxonomy.generator import generate_js_bundle, generate_json
+from api.isic_taxonomy.generator import generate_json
 from api.isic_taxonomy.parser import normalize_extension
 from api.isic_taxonomy.runtime_config import invalidate_taxonomy_config_cache
 from api.isic_taxonomy.validator import validate_file
@@ -33,7 +32,6 @@ def artifact_s3_keys(
     prefix = f'{TAXONOMY_S3_PREFIX}/v{version}'
     return {
         'json_s3_key': f'{prefix}/{JSON_ARTIFACT_NAME}',
-        'bundle_s3_key': f'{prefix}/{JS_ARTIFACT_NAME}',
         'source_s3_key': f'{prefix}/{SOURCE_ARTIFACT_NAME}{source_extension}',
     }
 
@@ -85,7 +83,6 @@ def publish_taxonomy(
             f'{staging_prefix}/{SOURCE_ARTIFACT_NAME}{source_extension}'
         ),
         'json': f'{staging_prefix}/{JSON_ARTIFACT_NAME}',
-        'bundle': f'{staging_prefix}/{JS_ARTIFACT_NAME}',
     }
 
     s3_client = get_s3_client()
@@ -149,12 +146,6 @@ def _upload_staging_artifacts(
         Body=generate_json(taxonomy),
         ContentType='application/json',
     )
-    s3_client.put_object(
-        Bucket=bucket_name,
-        Key=staging_keys['bundle'],
-        Body=generate_js_bundle(taxonomy),
-        ContentType='application/javascript',
-    )
 
 
 def _promote_staging_to_version(
@@ -166,7 +157,6 @@ def _promote_staging_to_version(
     key_pairs = (
         (staging_keys['source'], final_keys['source_s3_key']),
         (staging_keys['json'], final_keys['json_s3_key']),
-        (staging_keys['bundle'], final_keys['bundle_s3_key']),
     )
     for source_key, destination_key in key_pairs:
         s3_client.copy_object(
@@ -188,7 +178,7 @@ def _update_config_after_publish(
     with transaction.atomic():
         config.version = version
         config.json_s3_key = final_keys['json_s3_key']
-        config.bundle_s3_key = final_keys['bundle_s3_key']
+        config.bundle_s3_key = ''
         config.section_count = counts['section_count']
         config.division_count = counts['division_count']
         config.group_count = counts['group_count']
@@ -199,7 +189,7 @@ def _update_config_after_publish(
         if activate:
             config.is_active = True
         config.save()
-    invalidate_taxonomy_config_cache()
+    invalidate_taxonomy_config_cache(version=version)
 
 
 def _store_last_error(config, message: str) -> None:

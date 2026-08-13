@@ -43,7 +43,7 @@ function IsicTaxonomySearch({
     const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
     const countsRequestedRef = useRef(false);
     const inputRef = useRef(null);
-    const taxonomyVersion = env('ISIC4_TAXONOMY_VERSION') ?? 'bundled';
+    const taxonomyVersion = env('ISIC4_TAXONOMY_VERSION') ?? 'unknown';
     const [taxonomyState, setTaxonomyState] = useState({
         status: 'loading',
         taxonomy: null,

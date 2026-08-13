@@ -1,3 +1,5 @@
+import logging
+
 from django import forms
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -11,6 +13,10 @@ from api.isic_taxonomy.constants import (
     MAX_FILE_SIZE_BYTES,
     REQUIRED_HEADERS,
 )
+from api.isic_taxonomy.content import (
+    IsicTaxonomyNotAvailable,
+    load_published_isic4_taxonomy,
+)
 from api.isic_taxonomy.errors import (
     IsicTaxonomyPublishError,
     IsicTaxonomyValidationError,
@@ -19,6 +25,8 @@ from api.isic_taxonomy.parser import normalize_extension
 from api.isic_taxonomy.publisher import parse_and_validate, publish_taxonomy
 from api.isic_taxonomy.runtime_config import invalidate_taxonomy_config_cache
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
+
+logger = logging.getLogger(__name__)
 
 
 class IsicTaxonomyUploadForm(forms.Form):
@@ -112,6 +120,11 @@ def isic_taxonomy_admin_view(request, admin_site):
     else:
         form = IsicTaxonomyUploadForm()
 
+    if preview_taxonomy is None:
+        preview_taxonomy, preview_counts = _load_published_taxonomy_preview(
+            config,
+        )
+
     context = {
         **admin_site.each_context(request),
         'title': 'ISIC Taxonomy',
@@ -129,6 +142,21 @@ def isic_taxonomy_admin_view(request, admin_site):
         'has_permission': True,
     }
     return render(request, 'admin/isic_taxonomy.html', context)
+
+
+def _load_published_taxonomy_preview(config):
+    if not config.json_s3_key:
+        return None, None
+
+    try:
+        taxonomy = load_published_isic4_taxonomy(config=config)
+    except IsicTaxonomyNotAvailable:
+        return None, None
+    except Exception:
+        logger.exception('Failed to load published ISIC taxonomy for admin')
+        return None, None
+
+    return taxonomy, count_taxonomy_levels(taxonomy)
 
 
 def _handle_toggle(request, config, *, enable: bool) -> None:
