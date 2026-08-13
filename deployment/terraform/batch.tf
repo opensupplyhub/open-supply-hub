@@ -75,13 +75,13 @@ data "template_file" "default_job_definition" {
     opensearch_ssl                       = var.opensearch_ssl
     opensearch_ssl_cert_verification     = var.opensearch_ssl_cert_verification
     instance_source                      = var.instance_source
-    ecs_execution_role_arn               = aws_iam_role.ecs_task_execution_role.arn
-    rds_master_secret_arn                = local.rds_master_secret_arn
-    django_secret_key_arn                = local.django_secret_key_arn
-    google_server_side_api_key_arn       = local.google_server_side_api_key_arn
-    rollbar_server_side_access_token_arn = local.rollbar_server_side_access_token_arn
-    oar_client_key_arn                   = local.oar_client_key_arn
-    data_from_email_arn                  = local.data_from_email_arn
+    ecs_execution_role_arn           = aws_iam_role.ecs_task_execution_role.arn
+    rds_master_secret_arn            = local.rds_master_secret_arn
+    django_secret_key_arn            = local.django_secret_key_arn
+    google_server_side_api_key_arn   = local.google_server_side_api_key_arn
+    rollbar_server_side_access_token = local.rollbar_server_side_access_token
+    oar_client_key_arn               = local.oar_client_key_arn
+    data_from_email_arn              = local.data_from_email_arn
   }
 }
 
@@ -173,13 +173,13 @@ data "template_file" "notifications_job_definition" {
     opensearch_ssl                       = var.opensearch_ssl
     opensearch_ssl_cert_verification     = var.opensearch_ssl_cert_verification
     instance_source                      = var.instance_source
-    ecs_execution_role_arn               = aws_iam_role.ecs_task_execution_role.arn
-    rds_master_secret_arn                = local.rds_master_secret_arn
-    django_secret_key_arn                = local.django_secret_key_arn
-    google_server_side_api_key_arn       = local.google_server_side_api_key_arn
-    rollbar_server_side_access_token_arn = local.rollbar_server_side_access_token_arn
-    oar_client_key_arn                   = local.oar_client_key_arn
-    data_from_email_arn                  = local.data_from_email_arn
+    ecs_execution_role_arn           = aws_iam_role.ecs_task_execution_role.arn
+    rds_master_secret_arn            = local.rds_master_secret_arn
+    django_secret_key_arn            = local.django_secret_key_arn
+    google_server_side_api_key_arn   = local.google_server_side_api_key_arn
+    rollbar_server_side_access_token = local.rollbar_server_side_access_token
+    oar_client_key_arn               = local.oar_client_key_arn
+    data_from_email_arn              = local.data_from_email_arn
   }
 }
 

@@ -17,6 +17,8 @@
         { "name": "HUBSPOT_API_KEY", "value": "${hubspot_api_key}" },
         { "name": "HUBSPOT_SUBSCRIPTION_ID", "value": "${hubspot_subscription_id}" },
         { "name": "REACT_APP_GOOGLE_ANALYTICS_KEY", "value": "${google_analytics_key}" },
+        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" },
+        { "name": "REACT_APP_ROLLBAR_CLIENT_SIDE_ACCESS_TOKEN", "value": "${rollbar_client_side_access_token}" },
         { "name": "OAR_CLIENT_KEY", "value": "" },
         { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
         { "name": "CACHE_HOST", "value": "${cache_host}" },
@@ -38,9 +40,7 @@
         { "name": "DATA_FROM_EMAIL", "valueFrom": "${data_from_email_arn}" },
         { "name": "NOTIFICATION_EMAIL_TO", "valueFrom": "${notification_email_to_arn}" },
         { "name": "GOOGLE_SERVER_SIDE_API_KEY", "valueFrom": "${google_server_side_api_key_arn}" },
-        { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "valueFrom": "${google_client_side_api_key_arn}" },
-        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "valueFrom": "${rollbar_server_side_access_token_arn}" },
-        { "name": "REACT_APP_ROLLBAR_CLIENT_SIDE_ACCESS_TOKEN", "valueFrom": "${rollbar_client_side_access_token_arn}" }
+        { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "valueFrom": "${google_client_side_api_key_arn}" }
     ],
     "logConfiguration": {
         "logDriver": "awslogs",

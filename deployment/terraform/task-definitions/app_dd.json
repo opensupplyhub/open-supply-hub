@@ -27,12 +27,12 @@
         { "name": "DEDUPE_HUB_LIVE", "value": "${dedupe_hub_live}" },
         { "name": "DEDUPE_HUB_NAME", "value": "${dedupe_hub_name}" },
         { "name": "DEDUPE_HUB_VERSION", "value": "${dedupe_hub_version}" },
-        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" }
+        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
+        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" }
     ],
     "secrets": [
         { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },
-        { "name": "POSTGRES_PASSWORD", "valueFrom": "${rds_master_secret_arn}:password::" },
-        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "valueFrom": "${rollbar_server_side_access_token_arn}" }
+        { "name": "POSTGRES_PASSWORD", "valueFrom": "${rds_master_secret_arn}:password::" }
     ],
     "logConfiguration": {
         "logDriver": "awslogs",

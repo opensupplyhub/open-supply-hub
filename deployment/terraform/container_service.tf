@@ -159,6 +159,13 @@ data "template_file" "app" {
     google_analytics_key                          = local.google_analytics_key
     hubspot_api_key                               = local.hubspot_api_key
     hubspot_subscription_id                       = var.hubspot_subscription_id
+    rollbar_server_side_access_token              = local.rollbar_server_side_access_token
+    rollbar_client_side_access_token              = local.rollbar_client_side_access_token
+    stripe_secret_key                             = local.stripe_secret_key
+    stripe_webhook_secret                         = local.stripe_webhook_secret
+    dark_visitors_project_key                     = local.dark_visitors_project_key
+    dark_visitors_token                           = local.dark_visitors_token
+    dromo_license_key                             = local.dromo_license_key
     external_domain                               = local.domain_name
     app_port                                      = var.app_port
     aws_region                                    = var.aws_region
@@ -191,14 +198,7 @@ data "template_file" "app" {
     claim_from_email_arn                          = local.claim_from_email_arn
     google_server_side_api_key_arn                = local.google_server_side_api_key_arn
     google_client_side_api_key_arn                = local.google_client_side_api_key_arn
-    rollbar_server_side_access_token_arn          = local.rollbar_server_side_access_token_arn
-    rollbar_client_side_access_token_arn          = local.rollbar_client_side_access_token_arn
     oar_client_key_arn                            = local.oar_client_key_arn
-    stripe_secret_key_arn                         = local.stripe_secret_key_arn
-    stripe_webhook_secret_arn                     = local.stripe_webhook_secret_arn
-    dark_visitors_project_key_arn                 = local.dark_visitors_project_key_arn
-    dark_visitors_token_arn                       = local.dark_visitors_token_arn
-    dromo_license_key_arn                         = local.dromo_license_key_arn
   }
 }
 
@@ -226,6 +226,8 @@ data "template_file" "app_cli" {
     google_analytics_key                          = local.google_analytics_key
     hubspot_api_key                               = local.hubspot_api_key
     hubspot_subscription_id                       = var.hubspot_subscription_id
+    rollbar_server_side_access_token              = local.rollbar_server_side_access_token
+    rollbar_client_side_access_token              = local.rollbar_client_side_access_token
     external_domain                               = local.domain_name
     app_port                                      = var.app_port
     aws_region                                    = var.aws_region
@@ -253,8 +255,6 @@ data "template_file" "app_cli" {
     notification_email_to_arn                     = local.notification_email_to_arn
     google_server_side_api_key_arn                = local.google_server_side_api_key_arn
     google_client_side_api_key_arn                = local.google_client_side_api_key_arn
-    rollbar_server_side_access_token_arn          = local.rollbar_server_side_access_token_arn
-    rollbar_client_side_access_token_arn          = local.rollbar_client_side_access_token_arn
   }
 }
 
@@ -291,9 +291,9 @@ data "template_file" "app_dd" {
     dedupe_hub_live                      = var.dedupe_hub_live
     dedupe_hub_name                      = var.dedupe_hub_name
     dedupe_hub_version                   = var.dedupe_hub_version
-    instance_source                      = var.instance_source
-    rds_master_secret_arn                = local.rds_master_secret_arn
-    rollbar_server_side_access_token_arn = local.rollbar_server_side_access_token_arn
+    instance_source                  = var.instance_source
+    rds_master_secret_arn            = local.rds_master_secret_arn
+    rollbar_server_side_access_token = local.rollbar_server_side_access_token
   }
 }
 

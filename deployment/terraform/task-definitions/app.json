@@ -27,6 +27,13 @@
         { "name": "HUBSPOT_API_KEY", "value": "${hubspot_api_key}" },
         { "name": "HUBSPOT_SUBSCRIPTION_ID", "value": "${hubspot_subscription_id}" },
         { "name": "REACT_APP_GOOGLE_ANALYTICS_KEY", "value": "${google_analytics_key}" },
+        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" },
+        { "name": "REACT_APP_ROLLBAR_CLIENT_SIDE_ACCESS_TOKEN", "value": "${rollbar_client_side_access_token}" },
+        { "name": "STRIPE_SECRET_KEY", "value": "${stripe_secret_key}" },
+        { "name": "STRIPE_WEBHOOK_SECRET", "value": "${stripe_webhook_secret}" },
+        { "name": "DARK_VISITORS_PROJECT_KEY", "value": "${dark_visitors_project_key}" },
+        { "name": "DARK_VISITORS_TOKEN", "value": "${dark_visitors_token}" },
+        { "name": "REACT_APP_DROMO_LICENSE_KEY", "value": "${dromo_license_key}" },
         { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
         { "name": "CACHE_HOST", "value": "${cache_host}" },
         { "name": "CACHE_PORT", "value": "${cache_port}" },
@@ -52,14 +59,7 @@
         { "name": "CLAIM_FROM_EMAIL", "valueFrom": "${claim_from_email_arn}" },
         { "name": "GOOGLE_SERVER_SIDE_API_KEY", "valueFrom": "${google_server_side_api_key_arn}" },
         { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "valueFrom": "${google_client_side_api_key_arn}" },
-        { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "valueFrom": "${rollbar_server_side_access_token_arn}" },
-        { "name": "REACT_APP_ROLLBAR_CLIENT_SIDE_ACCESS_TOKEN", "valueFrom": "${rollbar_client_side_access_token_arn}" },
-        { "name": "OAR_CLIENT_KEY", "valueFrom": "${oar_client_key_arn}" },
-        { "name": "STRIPE_SECRET_KEY", "valueFrom": "${stripe_secret_key_arn}" },
-        { "name": "STRIPE_WEBHOOK_SECRET", "valueFrom": "${stripe_webhook_secret_arn}" },
-        { "name": "DARK_VISITORS_PROJECT_KEY", "valueFrom": "${dark_visitors_project_key_arn}" },
-        { "name": "DARK_VISITORS_TOKEN", "valueFrom": "${dark_visitors_token_arn}" },
-        { "name": "REACT_APP_DROMO_LICENSE_KEY", "valueFrom": "${dromo_license_key_arn}" }
+        { "name": "OAR_CLIENT_KEY", "valueFrom": "${oar_client_key_arn}" }
     ],
     "portMappings": [
       {

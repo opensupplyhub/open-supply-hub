@@ -14,6 +14,7 @@
       { "name": "BATCH_JOB_DEF_NAME", "value": "${batch_job_def_name}" },
       { "name": "HUBSPOT_API_KEY", "value": "${hubspot_api_key}" },
       { "name": "HUBSPOT_SUBSCRIPTION_ID", "value": "${hubspot_subscription_id}" },
+      { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" },
       { "name": "BATCH_MODE", "value": "True" },
       { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
       { "name": "CACHE_HOST", "value": "${cache_host}" },
@@ -32,7 +33,6 @@
       { "name": "POSTGRES_PASSWORD", "valueFrom": "${rds_master_secret_arn}:password::" },
       { "name": "DJANGO_SECRET_KEY", "valueFrom": "${django_secret_key_arn}" },
       { "name": "GOOGLE_SERVER_SIDE_API_KEY", "valueFrom": "${google_server_side_api_key_arn}" },
-      { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "valueFrom": "${rollbar_server_side_access_token_arn}" },
       { "name": "OAR_CLIENT_KEY", "valueFrom": "${oar_client_key_arn}" },
       { "name": "DATA_FROM_EMAIL", "valueFrom": "${data_from_email_arn}" }
   ],
