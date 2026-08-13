@@ -26,12 +26,18 @@ const documentEmploymentVerificationBasedLabels = new Set(
     ),
 );
 
+const WEBSITE_MAX_LENGTH = 200;
+
 const getClaimantUrlValidationSchema = label =>
     Yup.string().when('claimantEmploymentVerificationMethod', {
         is: value => value === label,
         then: schema =>
             schema
-                .url('Invalid URL format')
+                .url('Invalid URL format. Example: https://company.com')
+                .max(
+                    WEBSITE_MAX_LENGTH,
+                    `URL must be ${WEBSITE_MAX_LENGTH} characters or fewer`,
+                )
                 .required(
                     'Employment verification URL is required on this employment verification method',
                 ),
@@ -108,7 +114,11 @@ const getCompanyUrlValidationSchema = label =>
         is: value => value === label,
         then: schema =>
             schema
-                .url('Invalid URL format')
+                .url('Invalid URL format. Example: https://company.com')
+                .max(
+                    WEBSITE_MAX_LENGTH,
+                    `URL must be ${WEBSITE_MAX_LENGTH} characters or fewer`,
+                )
                 .required('The company address verification URL is required'),
     });
 
@@ -132,25 +142,88 @@ export const businessStepSchema = Yup.object().shape({
     ),
 });
 
+const SELECT_OPTION_MAX_LENGTH = 50;
+const FACILITY_TYPE_JOINED_MAX_LENGTH = 300;
+const TEXT_FIELD_MAX_LENGTH = 200;
+const DESCRIPTION_MAX_LENGTH = 1000;
+
+const maxLengthTextField = (fieldLabel, baseSchema = Yup.string()) =>
+    baseSchema.max(
+        TEXT_FIELD_MAX_LENGTH,
+        `${fieldLabel} must be ${TEXT_FIELD_MAX_LENGTH} characters or fewer`,
+    );
+
+const extractSelectOptionText = value => {
+    if (typeof value === 'object' && value !== null) {
+        return value.value || value.label || '';
+    }
+
+    return String(value);
+};
+
+const selectOptionsMaxLengthSchema = fieldLabel =>
+    Yup.array().test(
+        'max-option-length',
+        `Each ${fieldLabel} must be ${SELECT_OPTION_MAX_LENGTH} characters or fewer. Enter values separately using Enter or Tab.`,
+        options => {
+            if (!options?.length) {
+                return true;
+            }
+
+            return options.every(
+                value =>
+                    String(extractSelectOptionText(value)).length <=
+                    SELECT_OPTION_MAX_LENGTH,
+            );
+        },
+    );
+
+// Matches BE CharField(max_length=300) on the pipe-joined facility_type string.
+const facilityTypeJoinedMaxLengthSchema = Yup.array().test(
+    'max-joined-length',
+    `Location types combined must be ${FACILITY_TYPE_JOINED_MAX_LENGTH} characters or fewer. Enter values separately using Enter or Tab.`,
+    options => {
+        if (!options?.length) {
+            return true;
+        }
+
+        const joined = options.map(extractSelectOptionText).join('|');
+        return joined.length <= FACILITY_TYPE_JOINED_MAX_LENGTH;
+    },
+);
+
 // Step 4: Profile validation.
 export const profileStepSchema = Yup.object().shape({
     // Production Location Overview
     localLanguageName: Yup.string().trim(),
-    facilityPhoneNumber: Yup.string().trim(),
-    businessWebsite: Yup.string().url('Invalid URL'),
-    facilityDescription: Yup.string().trim(),
+    facilityPhoneNumber: maxLengthTextField(
+        'Company phone',
+        Yup.string().trim(),
+    ),
+    businessWebsite: Yup.string()
+        .url('Invalid URL. Example: https://company.com')
+        .max(
+            WEBSITE_MAX_LENGTH,
+            `Website URL must be ${WEBSITE_MAX_LENGTH} characters or fewer`,
+        ),
+    facilityDescription: Yup.string()
+        .trim()
+        .max(
+            DESCRIPTION_MAX_LENGTH,
+            `Description must be ${DESCRIPTION_MAX_LENGTH} characters or fewer`,
+        ),
 
     // Company Information
-    parentCompanyName: Yup.string(),
-    officeOfficialName: Yup.string().trim(),
-    officeAddress: Yup.string().trim(),
+    parentCompanyName: maxLengthTextField('Parent company name'),
+    officeOfficialName: maxLengthTextField('Office name', Yup.string().trim()),
+    officeAddress: maxLengthTextField('Office address', Yup.string().trim()),
     officeCountryCode: Yup.string(),
 
     // Operations & Capabilities
-    sectors: Yup.array(),
-    facilityType: Yup.array(),
-    facilityProductionTypes: Yup.array(),
-    facilityProductTypes: Yup.array(),
+    sectors: selectOptionsMaxLengthSchema('sector'),
+    facilityType: facilityTypeJoinedMaxLengthSchema,
+    facilityProductionTypes: selectOptionsMaxLengthSchema('processing type'),
+    facilityProductTypes: selectOptionsMaxLengthSchema('product type'),
     numberOfWorkers: Yup.string()
         .nullable()
         .test(
@@ -211,8 +284,14 @@ export const profileStepSchema = Yup.object().shape({
             const num = Number(cleanValue);
             return !Number.isNaN(num) && num >= 0 && num <= 100;
         }),
-    facilityMinimumOrderQuantity: Yup.string().trim(),
-    facilityAverageLeadTime: Yup.string().trim(),
+    facilityMinimumOrderQuantity: maxLengthTextField(
+        'Minimum order quantity',
+        Yup.string().trim(),
+    ),
+    facilityAverageLeadTime: maxLengthTextField(
+        'Average lead time',
+        Yup.string().trim(),
+    ),
 
     // Compliance & Partnerships
     facilityAffiliations: Yup.array(),
