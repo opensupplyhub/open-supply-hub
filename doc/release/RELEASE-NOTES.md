@@ -48,6 +48,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Before deploying this release to each environment, pre-populate that environment's `oshub/<env>/…` secrets in AWS Secrets Manager using the `sm-secrets-cli` repo or any other method. This cutover prep will be performed by the assignee of [OSDEV-2929](https://opensupplyhub.atlassian.net/browse/OSDEV-2929).
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+* [OSDEV-2997](https://opensupplyhub.atlassian.net/browse/OSDEV-2997) - Enable `pgaudit` on the RDS instance in each environment, in this order. None of it is automated: the reboot causes downtime and should be a deliberate act. The full runbook and verification queries are in `doc/ops/database-auditing.md`.
+1. Apply Terraform. Both new parameters land on the parameter group as `pending-reboot` — nothing is audited yet, and the Vanta test still fails at this point.
+2. Reboot the instance in a low-traffic window: `aws rds reboot-db-instance --db-instance-identifier opensupplyhub-enc-<env>`. `shared_preload_libraries` is a static parameter, and RDS does not apply it on its own — not even during the maintenance window. Every environment runs `rds_multi_az = false`, so this is a hard restart with roughly 30-120 seconds of database downtime rather than a failover. Schedule it for Production.
+3. Run `./deployment/run_cli_task <Environment> "install_db_exts"` to create the extension. This must run after the reboot; before it, only the `pgaudit` line fails, with `pgaudit must be loaded via shared_preload_libraries` (logged, and the other extensions still install).
+4. Verify: `SHOW shared_preload_libraries;` (expect `rdsutils,pg_stat_statements,pgaudit`), `SHOW pgaudit.log;` (expect `ddl,role`), and `SELECT extname FROM pg_extension WHERE extname = 'pgaudit';`. Then re-run the Vanta test `aws-rds-pgaudit-enabled` and confirm the environment passes.
+Confirm the full pgaudit sequence on Development and Staging before running it on Production.
 
 
 ## Release 2.28.0
