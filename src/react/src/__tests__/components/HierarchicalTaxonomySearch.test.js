@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createRef } from 'react';
 import { fireEvent } from '@testing-library/react';
 
 import HierarchicalTaxonomySearch from '../../components/Filters/HierarchicalTaxonomySearch';
@@ -127,5 +127,60 @@ describe('HierarchicalTaxonomySearch component', () => {
 
         expect(onFacilityTypeChange).toHaveBeenCalledWith([]);
         expect(onProcessingTypeChange).toHaveBeenCalledWith([]);
+    });
+
+    test('commitPendingQuery adds a free-text chip for non-taxonomy text', () => {
+        const onProcessingTypeChange = jest.fn();
+        const ref = createRef();
+        const { getByRole } = renderComponent({
+            onProcessingTypeChange,
+            taxonomySearchRef: ref,
+        });
+
+        fireEvent.change(getByRole('combobox'), {
+            target: { value: 'cement mixing' },
+        });
+        ref.current.commitPendingQuery();
+
+        expect(onProcessingTypeChange).toHaveBeenCalledWith([
+            { value: 'cement mixing', label: 'cement mixing' },
+        ]);
+        expect(getByRole('combobox')).toHaveValue('');
+    });
+
+    test('commitPendingQuery ignores exact taxonomy labels', () => {
+        const onProcessingTypeChange = jest.fn();
+        const ref = createRef();
+        const { getByRole } = renderComponent({
+            onProcessingTypeChange,
+            taxonomySearchRef: ref,
+        });
+
+        fireEvent.change(getByRole('combobox'), {
+            target: { value: 'Material Creation' },
+        });
+        ref.current.commitPendingQuery();
+
+        expect(onProcessingTypeChange).not.toHaveBeenCalled();
+    });
+
+    test('Enter with no dropdown matches commits free text', () => {
+        const onProcessingTypeChange = jest.fn();
+        const { getByRole } = renderComponent({
+            onProcessingTypeChange,
+        });
+
+        fireEvent.focus(getByRole('combobox'));
+        fireEvent.change(getByRole('combobox'), {
+            target: { value: 'cement mixing' },
+        });
+        fireEvent.keyDown(getByRole('combobox'), {
+            key: 'Enter',
+            code: 'Enter',
+        });
+
+        expect(onProcessingTypeChange).toHaveBeenCalledWith([
+            { value: 'cement mixing', label: 'cement mixing' },
+        ]);
     });
 });

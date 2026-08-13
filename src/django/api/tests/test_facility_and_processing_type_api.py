@@ -33,6 +33,71 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             },
         )
 
+    def _create_facility_type_extended_field(
+        self, raw_value, matched_values
+    ):
+        return ExtendedField.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            facility_list_item=self.list_item,
+            field_name=ExtendedField.FACILITY_TYPE,
+            value={
+                "raw_values": raw_value,
+                "matched_values": matched_values,
+            },
+        )
+
+    def test_unmatched_raw_processing_type_indexed(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("cement mixing", facility_index.processing_type)
+
+    def test_unmatched_raw_facility_type_indexed(self):
+        self._create_facility_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("cement mixing", facility_index.facility_type)
+
+    def test_unmatched_raw_processing_type_not_indexed_from_inactive_source(
+        self,
+    ):
+        self.source.is_active = False
+        self.source.save()
+
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("cement mixing", facility_index.processing_type)
+
+    def test_skipped_matching_raw_facility_type_indexed(self):
+        # Non-apparel SKIPPED_MATCHING stores the raw value in slot 3 only;
+        # facility_type slot 2 is null, so the raw value must be indexed from
+        # raw_values.
+        self._create_facility_type_extended_field(
+            ["custom facility label"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "SKIPPED_MATCHING",
+                    None,
+                    "custom facility label",
+                ]
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("custom facility label", facility_index.facility_type)
+
     def test_processing_type_indexed_when_tagged_as_facility_type(self):
         # "Final Product Assembly" is both a facility type and a processing
         # type, so the taxonomy matcher tags it FACILITY_TYPE even when it is
@@ -79,6 +144,132 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
 
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertIn("Cutting", facility_index.processing_type)
+
+        response = self.client.get(self.url + "?processing_type=Cutting")
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_unmatched_raw_processing_type_by_free_text(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_unmatched_raw_processing_type_by_substring(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(self.url + "?processing_type=cement")
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_processing_type_fuzzy_typo_still_uses_taxonomy(self):
+        self._create_processing_type_extended_field(
+            ["Assembly"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Assembly",
+                ]
+            ],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=asembley"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_mixed_taxonomy_and_free_text(self):
+        self._create_processing_type_extended_field(
+            ["Cutting"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Cutting",
+                ],
+            ],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=Cutting&processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_facility_type_and_processing_type_params_are_anded(self):
+        self._create_facility_type_extended_field(
+            ["Office / HQ"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Office / HQ",
+                    "Office / HQ",
+                ]
+            ],
+        )
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?facility_type=Office%20/%20HQ&processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+        response = self.client.get(
+            self.url
+            + "?facility_type=Final%20Product%20Assembly"
+            + "&processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 0)
+
+    def test_search_free_text_below_min_length_is_ignored(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(self.url + "?processing_type=ce")
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 0)
+
+    def test_search_free_text_finds_value_in_either_column(self):
+        self._create_facility_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
     #       & Dedupe Hub live database)

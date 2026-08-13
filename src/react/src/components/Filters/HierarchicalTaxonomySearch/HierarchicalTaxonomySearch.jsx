@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
@@ -15,6 +21,8 @@ import {
     getFacilityProcessingNodeKey,
     getFacilityProcessingParentNodeId,
     isFacilityProcessingNodeSelected,
+    isFacilityProcessingTaxonomyLabel,
+    makeSelectOption,
     removeFacilityProcessingNodeById,
     toggleFacilityProcessingNode,
 } from './utils';
@@ -36,6 +44,7 @@ function HierarchicalTaxonomySearch({
     onRequestCounts,
     disabled,
     classes,
+    taxonomySearchRef,
 }) {
     const [query, setQuery] = useState('');
     const [activeRowIndex, setActiveRowIndex] = useState(-1);
@@ -167,7 +176,51 @@ function HierarchicalTaxonomySearch({
         onProcessingTypeChange(nextSelection.processingType);
     };
 
+    const commitPendingQuery = () => {
+        if (!trimmedQuery || isFacilityProcessingTaxonomyLabel(trimmedQuery)) {
+            return;
+        }
+
+        if (processingType.some(option => option.value === trimmedQuery)) {
+            setQuery('');
+            setActiveRowIndex(-1);
+            return;
+        }
+
+        onProcessingTypeChange([
+            ...processingType,
+            makeSelectOption(trimmedQuery),
+        ]);
+        setQuery('');
+        setActiveRowIndex(-1);
+    };
+
+    useImperativeHandle(taxonomySearchRef, () => ({
+        commitPendingQuery,
+    }));
+
     const handleInputKeyDown = event => {
+        if (event.key === 'Enter') {
+            if (
+                showResultsPanel &&
+                visibleRows.length > 0 &&
+                activeRowIndex >= 0
+            ) {
+                event.preventDefault();
+                handleToggleNode(visibleRows[activeRowIndex].node);
+                return;
+            }
+
+            if (
+                trimmedQuery &&
+                !isFacilityProcessingTaxonomyLabel(trimmedQuery)
+            ) {
+                event.preventDefault();
+                commitPendingQuery();
+                return;
+            }
+        }
+
         if (!showResultsPanel || visibleRows.length === 0) {
             return;
         }
@@ -182,9 +235,6 @@ function HierarchicalTaxonomySearch({
             setActiveRowIndex(current =>
                 current <= 0 ? visibleRows.length - 1 : current - 1,
             );
-        } else if (event.key === 'Enter' && activeRowIndex >= 0) {
-            event.preventDefault();
-            handleToggleNode(visibleRows[activeRowIndex].node);
         } else if (event.key === 'Escape') {
             setQuery('');
             setActiveRowIndex(-1);
@@ -244,6 +294,14 @@ function HierarchicalTaxonomySearch({
                     {visibleRows.length === 0 ? (
                         <li className={classes.emptyResults}>
                             No matching facility or processing types
+                            {trimmedQuery &&
+                            !isFacilityProcessingTaxonomyLabel(trimmedQuery) ? (
+                                <>
+                                    <br />
+                                    Press Search to match &ldquo;{trimmedQuery}
+                                    &rdquo; as free text
+                                </>
+                            ) : null}
                         </li>
                     ) : (
                         visibleRows.map((row, index) => {
@@ -303,6 +361,7 @@ HierarchicalTaxonomySearch.defaultProps = {
     processingType: [],
     disabled: false,
     onRequestCounts: null,
+    taxonomySearchRef: null,
 };
 
 HierarchicalTaxonomySearch.propTypes = {
@@ -315,6 +374,7 @@ HierarchicalTaxonomySearch.propTypes = {
     onProcessingTypeChange: func.isRequired,
     onRequestCounts: func,
     disabled: bool,
+    taxonomySearchRef: object,
 };
 
 export default withStyles(styles)(HierarchicalTaxonomySearch);

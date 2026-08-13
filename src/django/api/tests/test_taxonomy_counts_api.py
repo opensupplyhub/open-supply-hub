@@ -121,6 +121,21 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
             1,
         )
 
+    def test_facility_processing_counts_exclude_non_taxonomy_labels(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=['Assembly', 'cement mixing'],
+        )
+        caches['view_cache'].clear()
+
+        response = self.client.get(
+            reverse('taxonomy_counts'),
+            {'kind': 'facility_processing'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['processing_type:Assembly'], 1)
+        self.assertNotIn('processing_type:cement mixing', response.data)
+
     def test_isic4_counts_match_index(self):
         response = self.client.get(
             reverse('taxonomy_counts'),

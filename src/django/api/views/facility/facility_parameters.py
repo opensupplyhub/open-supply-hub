@@ -119,14 +119,22 @@ facilities_list_parameters = [
         IN_QUERY,
         type=TYPE_STRING,
         required=False,
-        description='Facility type',
+        description=(
+            'Facility type taxonomy label or free text. Taxonomy values '
+            'use exact matching; unmatched free text uses accent-insensitive '
+            'substring search across both facility type and processing type.'
+        ),
     ),
     Parameter(
         'processing_type',
         IN_QUERY,
         type=TYPE_STRING,
         required=False,
-        description='Processing type',
+        description=(
+            'Processing type taxonomy label or free text. Taxonomy values '
+            'use exact matching; unmatched free text uses accent-insensitive '
+            'substring search across both facility type and processing type.'
+        ),
     ),
     Parameter(
         'isic_4',

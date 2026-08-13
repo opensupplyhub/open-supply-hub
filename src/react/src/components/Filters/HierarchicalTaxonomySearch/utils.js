@@ -14,6 +14,21 @@ export const makeSelectOption = value =>
         label: value,
     });
 
+export function isFacilityProcessingTaxonomyLabel(value) {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return false;
+    }
+
+    const { groups } = getFacilityProcessingSearchIndex();
+
+    return groups.some(
+        ({ facilityNode, processingNodes }) =>
+            facilityNode.label === trimmed ||
+            processingNodes.some(node => node.label === trimmed),
+    );
+}
+
 export function isFacilityProcessingNodeSelected(
     node,
     facilityType = [],

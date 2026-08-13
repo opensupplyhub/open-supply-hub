@@ -1,6 +1,7 @@
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import Q
+from django.db.models import BooleanField, Q
+from django.db.models.expressions import RawSQL
 
 from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
@@ -14,33 +15,113 @@ from api.models.facility.partner_contributor_filter import (
 )
 
 
-def build_facility_processing_filter(facility_types, processing_types):
-    fp_filter = Q()
-    has_filter = False
+MIN_FREE_TEXT_FP_LENGTH = 3
 
-    if len(facility_types):
-        standard_facility_types = []
-        for facility_type in facility_types:
-            standard_type = get_facility_and_processing_type(
-                facility_type, ['Apparel']
+FREE_TEXT_FP_ARRAY_MATCH = """
+(
+    EXISTS (
+        SELECT 1 FROM unnest(facility_type) AS elem
+        WHERE unaccent(elem) ILIKE unaccent(%s)
+    )
+    OR EXISTS (
+        SELECT 1 FROM unnest(processing_type) AS elem
+        WHERE unaccent(elem) ILIKE unaccent(%s)
+    )
+)
+"""
+
+
+def _classify_fp_filter_value(value):
+    standard_type = get_facility_and_processing_type(value, ['Apparel'])
+    if standard_type[0] is not None:
+        return ('taxonomy', standard_type)
+
+    trimmed = value.strip()
+    if len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH:
+        return ('free_text', trimmed)
+
+    return (None, None)
+
+
+def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
+    taxonomy_values = []
+    free_text_terms = []
+
+    for value in values:
+        classification, data = _classify_fp_filter_value(value)
+        if classification == 'taxonomy':
+            taxonomy_values.append(data[taxonomy_slot])
+        elif classification == 'free_text':
+            free_text_terms.append(data)
+
+    parts = []
+    params = []
+
+    if taxonomy_values:
+        parts.append(f'{overlap_field} && %s::varchar[]')
+        params.append(taxonomy_values)
+
+    for term in free_text_terms:
+        parts.append(FREE_TEXT_FP_ARRAY_MATCH)
+        pattern = f'%{term}%'
+        params.extend([pattern, pattern])
+
+    return parts, params
+
+
+def build_fp_match_sql(facility_types, processing_types):
+    """
+    Build a boolean SQL expression for facility/processing type filters.
+
+    Taxonomy values use array overlap on the param's primary column.
+    Unmatched values fall back to accent-insensitive substring search across
+    both columns. Multiple values within one param are OR'd; facility_type
+    and processing_type params are AND'd.
+    """
+    param_clauses = []
+    all_params = []
+
+    for values, overlap_field, taxonomy_slot in (
+        (facility_types, 'facility_type', 2),
+        (processing_types, 'processing_type', 3),
+    ):
+        if not values:
+            continue
+
+        parts, params = _build_fp_param_sql_parts(
+            values,
+            overlap_field,
+            taxonomy_slot,
+        )
+        if parts:
+            param_clauses.append('(' + ' OR '.join(parts) + ')')
+            all_params.extend(params)
+
+    if not param_clauses:
+        return None, []
+
+    return ' AND '.join(param_clauses), all_params
+
+
+def annotate_facility_processing_match(
+    queryset,
+    facility_types,
+    processing_types,
+    annotation_name='_fp_match',
+):
+    sql, params = build_fp_match_sql(facility_types, processing_types)
+    if not sql:
+        return queryset, False
+
+    return queryset.annotate(
+        **{
+            annotation_name: RawSQL(
+                sql,
+                params,
+                output_field=BooleanField(),
             )
-            if standard_type[0] is not None:
-                standard_facility_types.append(standard_type[2])
-        fp_filter &= Q(facility_type__overlap=standard_facility_types)
-        has_filter = True
-
-    if len(processing_types):
-        standard_processing_types = []
-        for processing_type in processing_types:
-            standard_type = get_facility_and_processing_type(
-                processing_type, ['Apparel']
-            )
-            if standard_type[0] is not None:
-                standard_processing_types.append(standard_type[3])
-        fp_filter &= Q(processing_type__overlap=standard_processing_types)
-        has_filter = True
-
-    return fp_filter if has_filter else None
+        }
+    ), True
 
 
 def build_isic_filter(parsed_isic_filters):
@@ -202,20 +283,25 @@ class FacilityIndexNewManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        fp_filter = build_facility_processing_filter(
+        facilities_qs, has_fp_filter = annotate_facility_processing_match(
+            facilities_qs,
             facility_types,
             processing_types,
         )
         parsed_isic_filters = parse_isic4_filter_values(isic_4_filters)
         isic_filter = build_isic_filter(parsed_isic_filters)
 
-        if fp_filter and isic_filter:
+        if has_fp_filter and isic_filter:
             if combine_facility_processing_isic.upper() == 'AND':
-                facilities_qs = facilities_qs.filter(fp_filter & isic_filter)
+                facilities_qs = facilities_qs.filter(
+                    Q(_fp_match=True) & isic_filter
+                )
             else:
-                facilities_qs = facilities_qs.filter(fp_filter | isic_filter)
-        elif fp_filter:
-            facilities_qs = facilities_qs.filter(fp_filter)
+                facilities_qs = facilities_qs.filter(
+                    Q(_fp_match=True) | isic_filter
+                )
+        elif has_fp_filter:
+            facilities_qs = facilities_qs.filter(_fp_match=True)
         elif isic_filter:
             facilities_qs = facilities_qs.filter(isic_filter)
 

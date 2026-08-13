@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, forwardRef, useEffect } from 'react';
 import { bool, func, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -68,35 +68,36 @@ const LazyIsicTaxonomySearch = React.lazy(() =>
     import('./Filters/HierarchicalTaxonomySearch/IsicTaxonomySearch'),
 );
 
-function FilterSidebarExtendedSearch({
-    contributorTypeOptions,
-    taxonomyCounts,
-    numberOfWorkersOptions,
-    contributorTypes,
-    updateContributorType,
-    parentCompany,
-    updateParentCompany,
-    facilityType,
-    updateFacilityType,
-    processingType,
-    updateProcessingType,
-    isic4,
-    updateIsic4,
-    combineFacilityProcessingIsic,
-    updateCombineFacilityProcessingIsic,
-    productType,
-    updateProductType,
-    numberOfWorkers,
-    updateNumberOfWorkers,
-    fetchingFacilities,
-    fetchingExtendedOptions,
-    embed,
-    embedExtendedFields,
-    fetchContributorTypes,
-    fetchTaxonomyCountsForKind,
-    fetchNumberOfWorkers,
-    isSideBarSearch,
-}) {
+const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
+    const {
+        contributorTypeOptions,
+        taxonomyCounts,
+        numberOfWorkersOptions,
+        contributorTypes,
+        updateContributorType,
+        parentCompany,
+        updateParentCompany,
+        facilityType,
+        updateFacilityType,
+        processingType,
+        updateProcessingType,
+        isic4,
+        updateIsic4,
+        combineFacilityProcessingIsic,
+        updateCombineFacilityProcessingIsic,
+        productType,
+        updateProductType,
+        numberOfWorkers,
+        updateNumberOfWorkers,
+        fetchingFacilities,
+        fetchingExtendedOptions,
+        embed,
+        embedExtendedFields,
+        fetchContributorTypes,
+        fetchTaxonomyCountsForKind,
+        fetchNumberOfWorkers,
+        isSideBarSearch,
+    } = props;
     useEffect(() => {
         if (!contributorTypeOptions) {
             fetchContributorTypes();
@@ -182,6 +183,7 @@ function FilterSidebarExtendedSearch({
             >
                 <div className="form__field">
                     <HierarchicalTaxonomySearch
+                        taxonomySearchRef={ref}
                         label="Facility type & processing type"
                         placeholder="Search facility or processing type"
                         counts={taxonomyCounts.facility_processing}
@@ -274,7 +276,7 @@ function FilterSidebarExtendedSearch({
             </ShowOnly>
         </>
     );
-}
+});
 
 FilterSidebarExtendedSearch.defaultProps = {
     contributorTypeOptions: null,
@@ -387,7 +389,6 @@ function mapDispatchToProps(dispatch) {
     };
 }
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(FilterSidebarExtendedSearch);
+export default connect(mapStateToProps, mapDispatchToProps, null, {
+    forwardRef: true,
+})(FilterSidebarExtendedSearch);

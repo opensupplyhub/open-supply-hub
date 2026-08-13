@@ -1,11 +1,23 @@
 from django.core.cache import caches
 from django.db.models import Count, F, Func
 
+from api.facility_type_processing_type import (
+    ALL_FACILITY_TYPES,
+    ALL_PROCESSING_TYPES,
+)
 from api.isic import ISIC4_LEVEL_FIELDS
 from api.models.facility.facility_index import FacilityIndex
 
-FACILITY_PROCESSING_CACHE_KEY = 'taxonomy_counts:facility_processing:v2'
+FACILITY_PROCESSING_CACHE_KEY = 'taxonomy_counts:facility_processing:v3'
 FACILITY_PROCESSING_CACHE_TIMEOUT_SECONDS = 3600
+
+TAXONOMY_FACILITY_TYPE_LABELS = set(ALL_FACILITY_TYPES.values())
+TAXONOMY_PROCESSING_TYPE_LABELS = set(ALL_PROCESSING_TYPES.values())
+
+FACILITY_PROCESSING_TAXONOMY_LABELS = {
+    'facility_type': TAXONOMY_FACILITY_TYPE_LABELS,
+    'processing_type': TAXONOMY_PROCESSING_TYPE_LABELS,
+}
 
 
 def searchable_facility_index_queryset():
@@ -31,7 +43,10 @@ def compute_facility_processing_counts():
     counts = {}
 
     for field_name in ('facility_type', 'processing_type'):
+        taxonomy_labels = FACILITY_PROCESSING_TAXONOMY_LABELS[field_name]
         for row in _aggregate_array_field_counts(queryset, field_name):
+            if row['value'] not in taxonomy_labels:
+                continue
             counts[f'{field_name}:{row["value"]}'] = row['count']
 
     return counts

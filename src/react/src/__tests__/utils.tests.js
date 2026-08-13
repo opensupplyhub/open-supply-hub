@@ -719,6 +719,19 @@ it('creates a set of filters from a querystring', () => {
         createFiltersFromQueryString(processingTypeString),
     ).toMatchObject(expectedProcessingTypeMatch);
 
+    const freeTextProcessingTypeString =
+        '?processing_type=cement%20mixing';
+    const expectedFreeTextProcessingTypeMatch = {
+        processingType: [{
+            value: 'cement mixing',
+            label: 'cement mixing',
+        }],
+    };
+
+    expect(
+        createFiltersFromQueryString(freeTextProcessingTypeString),
+    ).toMatchObject(expectedFreeTextProcessingTypeMatch);
+
     const isic4String =
         '?isic_4=section%3AC&isic_4=class%3A0111&isic_4=division%3A01';
     const expectedIsic4Match = {
