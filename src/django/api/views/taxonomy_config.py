@@ -3,7 +3,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.isic_taxonomy.runtime_config import get_taxonomy_config
+from api.isic_taxonomy.runtime_config import (
+    TAXONOMY_CONFIG_BROWSER_CACHE_CONTROL,
+    get_taxonomy_config,
+)
 
 
 class TaxonomyConfigView(APIView):
@@ -17,4 +20,6 @@ class TaxonomyConfigView(APIView):
         ),
     )
     def get(self, request):
-        return Response(get_taxonomy_config())
+        response = Response(get_taxonomy_config())
+        response['Cache-Control'] = TAXONOMY_CONFIG_BROWSER_CACHE_CONTROL
+        return response

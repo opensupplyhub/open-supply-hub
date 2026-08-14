@@ -4,7 +4,6 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from api.isic_taxonomy.runtime_config import get_isic4_environment_vars
 from api.models import Facility
 
 
@@ -38,8 +37,6 @@ def environment(request):
     environment['DARK_VISITORS_PROJECT_KEY'] = (
         settings.DARK_VISITORS_PROJECT_KEY
     )
-
-    environment.update(get_isic4_environment_vars())
 
     context = {'environment': environment}
 

@@ -215,6 +215,7 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetTaxonomyCountsURL = kind =>
     `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
+export const makeGetTaxonomyConfigURL = () => '/api/taxonomy-config/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';

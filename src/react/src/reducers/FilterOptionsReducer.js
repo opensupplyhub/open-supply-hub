@@ -29,6 +29,12 @@ import {
     startFetchTaxonomyCounts,
     failFetchTaxonomyCounts,
     completeFetchTaxonomyCounts,
+    startFetchIsic4TaxonomyConfig,
+    failFetchIsic4TaxonomyConfig,
+    completeFetchIsic4TaxonomyConfig,
+    startFetchIsic4Taxonomy,
+    failFetchIsic4Taxonomy,
+    completeFetchIsic4Taxonomy,
     startFetchNumberOfWorkersOptions,
     failFetchNumberOfWorkersOptions,
     completeFetchNumberOfWorkersTypeOptions,
@@ -90,6 +96,17 @@ const initialState = Object.freeze({
             fetching: false,
             error: null,
         }),
+    }),
+    isic4TaxonomyConfig: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    isic4Taxonomy: Object.freeze({
+        data: null,
+        taxonomyUrl: null,
+        fetching: false,
+        error: null,
     }),
     productType: Object.freeze({
         data: null,
@@ -315,6 +332,51 @@ export default createReducer(
                         error: { $set: null },
                         data: { $set: data },
                     },
+                },
+            }),
+        [startFetchIsic4TaxonomyConfig]: state =>
+            update(state, {
+                isic4TaxonomyConfig: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchIsic4TaxonomyConfig]: (state, payload) =>
+            update(state, {
+                isic4TaxonomyConfig: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchIsic4TaxonomyConfig]: (state, payload) =>
+            update(state, {
+                isic4TaxonomyConfig: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: payload },
+                },
+            }),
+        [startFetchIsic4Taxonomy]: state =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchIsic4Taxonomy]: (state, payload) =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchIsic4Taxonomy]: (state, payload) =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: payload },
+                    taxonomyUrl: { $set: payload.taxonomyUrl },
                 },
             }),
         [startFetchNumberOfWorkersOptions]: state =>

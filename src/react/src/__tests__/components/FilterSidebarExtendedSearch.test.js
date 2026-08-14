@@ -3,12 +3,6 @@ import { waitFor } from '@testing-library/react';
 
 import FilterSidebarExtendedSearch from '../../components/FilterSidebarExtendedSearch';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import { isIsic4TaxonomyFeatureEnabled } from '../../data/loadIsic4Taxonomy';
-
-jest.mock('../../data/loadIsic4Taxonomy', () => ({
-    isIsic4TaxonomyFeatureEnabled: jest.fn(),
-    loadIsic4Taxonomy: jest.fn(),
-}));
 
 jest.mock(
     '../../components/Filters/HierarchicalTaxonomySearch/IsicTaxonomySearch',
@@ -44,6 +38,7 @@ const createPreloadedState = ({
     isic4 = [],
     combineFacilityProcessingIsic = '',
     embed = false,
+    isic4TaxonomyConfig = null,
 } = {}) => ({
     filterOptions: {
         contributorTypes: {
@@ -57,6 +52,17 @@ const createPreloadedState = ({
         },
         numberOfWorkers: {
             data: [],
+            fetching: false,
+            error: null,
+        },
+        isic4TaxonomyConfig: {
+            data: isic4TaxonomyConfig,
+            fetching: false,
+            error: null,
+        },
+        isic4Taxonomy: {
+            data: null,
+            taxonomyUrl: null,
             fetching: false,
             error: null,
         },
@@ -83,7 +89,19 @@ const createPreloadedState = ({
 
 describe('FilterSidebarExtendedSearch ISIC gating', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        isic4: {
+                            enabled: false,
+                            version: 1,
+                            taxonomyUrl: null,
+                        },
+                    }),
+            }),
+        );
     });
 
     const renderComponent = (preloadedState = createPreloadedState()) =>
@@ -92,17 +110,29 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
         });
 
     test('hides the ISIC filter when the taxonomy feature is disabled', () => {
-        isIsic4TaxonomyFeatureEnabled.mockReturnValue(false);
-
-        const { queryByTestId } = renderComponent();
+        const { queryByTestId } = renderComponent(
+            createPreloadedState({
+                isic4TaxonomyConfig: {
+                    enabled: false,
+                    version: 1,
+                    taxonomyUrl: null,
+                },
+            }),
+        );
 
         expect(queryByTestId('isic-taxonomy-search')).not.toBeInTheDocument();
     });
 
     test('shows the ISIC filter when the taxonomy feature is enabled', async () => {
-        isIsic4TaxonomyFeatureEnabled.mockReturnValue(true);
-
-        const { getByTestId } = renderComponent();
+        const { getByTestId } = renderComponent(
+            createPreloadedState({
+                isic4TaxonomyConfig: {
+                    enabled: true,
+                    version: 1,
+                    taxonomyUrl: '/api/taxonomy/isic4/?v=1',
+                },
+            }),
+        );
 
         await waitFor(() => {
             expect(getByTestId('isic-taxonomy-search')).toBeInTheDocument();
@@ -110,10 +140,13 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
     });
 
     test('hides the combine checkbox when the taxonomy feature is disabled', () => {
-        isIsic4TaxonomyFeatureEnabled.mockReturnValue(false);
-
         const { queryByLabelText } = renderComponent(
             createPreloadedState({
+                isic4TaxonomyConfig: {
+                    enabled: false,
+                    version: 1,
+                    taxonomyUrl: null,
+                },
                 facilityType: [{ value: 'Factory', label: 'Factory' }],
                 isic4: [{ value: '0111', label: '0111 - Growing of cereals' }],
             }),
@@ -125,10 +158,13 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
     });
 
     test('shows the combine checkbox when enabled and all selections exist', () => {
-        isIsic4TaxonomyFeatureEnabled.mockReturnValue(true);
-
         const { getByLabelText } = renderComponent(
             createPreloadedState({
+                isic4TaxonomyConfig: {
+                    enabled: true,
+                    version: 1,
+                    taxonomyUrl: '/api/taxonomy/isic4/?v=1',
+                },
                 processingType: [
                     { value: 'Printing', label: 'Printing' },
                 ],

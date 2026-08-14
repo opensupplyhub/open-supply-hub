@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
+import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
@@ -8,8 +9,7 @@ import {
     getIsic4SearchIndex,
     getIsic4VisibleRows,
 } from '../../../data/isic4SearchIndex';
-import { loadIsic4Taxonomy } from '../../../data/loadIsic4Taxonomy';
-import env from '../../../util/env';
+import { fetchIsic4TaxonomyIfNeeded } from '../../../actions/filterOptions';
 import TaxonomySearchControl from './TaxonomySearchControl';
 import TaxonomyResultRow from './TaxonomyResultRow';
 import {
@@ -36,6 +36,8 @@ function IsicTaxonomySearch({
     onRequestCounts,
     disabled,
     classes,
+    isic4Taxonomy,
+    fetchIsic4Taxonomy,
 }) {
     const [query, setQuery] = useState('');
     const [activeRowIndex, setActiveRowIndex] = useState(-1);
@@ -43,54 +45,22 @@ function IsicTaxonomySearch({
     const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
     const countsRequestedRef = useRef(false);
     const inputRef = useRef(null);
-    const taxonomyVersion = env('ISIC4_TAXONOMY_VERSION') ?? 'unknown';
-    const [taxonomyState, setTaxonomyState] = useState({
-        status: 'loading',
-        taxonomy: null,
-        error: null,
-    });
+    const { data, fetching, error } = isic4Taxonomy;
 
     useEffect(() => {
-        let cancelled = false;
+        fetchIsic4Taxonomy();
+    }, [fetchIsic4Taxonomy]);
 
-        loadIsic4Taxonomy()
-            .then(taxonomy => {
-                if (cancelled) {
-                    return;
-                }
-
-                setTaxonomyState({
-                    status: 'ready',
-                    taxonomy,
-                    error: null,
-                });
-            })
-            .catch(error => {
-                if (cancelled) {
-                    return;
-                }
-
-                // eslint-disable-next-line no-console
-                console.error('Failed to load ISIC taxonomy', error);
-                setTaxonomyState({
-                    status: 'error',
-                    taxonomy: null,
-                    error,
-                });
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [taxonomyVersion]);
+    const taxonomy = data?.taxonomy ?? null;
+    const taxonomyVersion = data?.version ?? 'unknown';
 
     const searchIndex = useMemo(() => {
-        if (taxonomyState.status !== 'ready' || !taxonomyState.taxonomy) {
+        if (!taxonomy) {
             return null;
         }
 
-        return getIsic4SearchIndex(taxonomyState.taxonomy, taxonomyVersion);
-    }, [taxonomyState, taxonomyVersion]);
+        return getIsic4SearchIndex(taxonomy, taxonomyVersion);
+    }, [taxonomy, taxonomyVersion]);
 
     const nodeById = useMemo(
         () =>
@@ -241,7 +211,11 @@ function IsicTaxonomySearch({
     const listboxId = 'isic4-taxonomy-results';
     const label = 'International Standard Industrial Classification "ISIC"';
 
-    if (taxonomyState.status === 'loading') {
+    if (!data && !fetching && !error) {
+        return null;
+    }
+
+    if (fetching || !taxonomy) {
         return (
             <div className={classes.root}>
                 <InputLabel
@@ -256,7 +230,7 @@ function IsicTaxonomySearch({
         );
     }
 
-    if (taxonomyState.status === 'error') {
+    if (error) {
         return (
             <div className={classes.root}>
                 <InputLabel
@@ -372,6 +346,12 @@ IsicTaxonomySearch.defaultProps = {
     isic4: [],
     disabled: false,
     onRequestCounts: null,
+    isic4Taxonomy: Object.freeze({
+        data: null,
+        taxonomyUrl: null,
+        fetching: false,
+        error: null,
+    }),
 };
 
 IsicTaxonomySearch.propTypes = {
@@ -380,6 +360,21 @@ IsicTaxonomySearch.propTypes = {
     onIsic4Change: func.isRequired,
     onRequestCounts: func,
     disabled: bool,
+    isic4Taxonomy: object,
+    fetchIsic4Taxonomy: func.isRequired,
 };
 
-export default withStyles(styles)(IsicTaxonomySearch);
+function mapStateToProps({ filterOptions: { isic4Taxonomy } }) {
+    return { isic4Taxonomy };
+}
+
+function mapDispatchToProps(dispatch) {
+    return {
+        fetchIsic4Taxonomy: () => dispatch(fetchIsic4TaxonomyIfNeeded()),
+    };
+}
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(withStyles(styles)(IsicTaxonomySearch));

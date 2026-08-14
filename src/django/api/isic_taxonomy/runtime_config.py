@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 
 TAXONOMY_CONFIG_CACHE_KEY = 'taxonomy_config:isic4'
 TAXONOMY_CONFIG_CACHE_TIMEOUT_SECONDS = 60
+TAXONOMY_CONFIG_BROWSER_CACHE_CONTROL = (
+    f'public, max-age={TAXONOMY_CONFIG_CACHE_TIMEOUT_SECONDS}'
+)
 
 
 def invalidate_taxonomy_config_cache(*, version: int | None = None) -> None:
@@ -20,8 +23,13 @@ def invalidate_taxonomy_config_cache(*, version: int | None = None) -> None:
     invalidate_isic4_taxonomy_content_cache(version=version)
 
 
-def get_isic4_taxonomy_url() -> str:
-    return reverse('isic_taxonomy')
+def get_isic4_taxonomy_url(
+    *,
+    config: IsicTaxonomyConfig | None = None,
+) -> str:
+    if config is None:
+        config = IsicTaxonomyConfig.load()
+    return f'{reverse("isic_taxonomy")}?v={config.version}'
 
 
 def build_isic4_config(*, config: IsicTaxonomyConfig | None = None) -> dict:
@@ -30,24 +38,12 @@ def build_isic4_config(*, config: IsicTaxonomyConfig | None = None) -> dict:
 
     taxonomy_url = None
     if config.is_active:
-        taxonomy_url = get_isic4_taxonomy_url()
+        taxonomy_url = get_isic4_taxonomy_url(config=config)
 
     return {
         'enabled': config.is_active,
         'version': config.version,
         'taxonomyUrl': taxonomy_url,
-    }
-
-
-def get_isic4_environment_vars(
-    *,
-    config: IsicTaxonomyConfig | None = None,
-) -> dict:
-    isic4 = build_isic4_config(config=config)
-    return {
-        'ISIC4_TAXONOMY_ENABLED': 'true' if isic4['enabled'] else 'false',
-        'ISIC4_TAXONOMY_VERSION': str(isic4['version']),
-        'ISIC4_TAXONOMY_URL': isic4['taxonomyUrl'] or '',
     }
 
 

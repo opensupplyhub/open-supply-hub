@@ -4,13 +4,14 @@ from django.core.cache import caches
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from api.isic_taxonomy.constants import ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL
 from api.isic_taxonomy.content import (
     TAXONOMY_CONTENT_CACHE_KEY_PREFIX,
     invalidate_isic4_taxonomy_content_cache,
 )
 from api.isic_taxonomy.runtime_config import (
+    TAXONOMY_CONFIG_BROWSER_CACHE_CONTROL,
     TAXONOMY_CONFIG_CACHE_KEY,
-    get_isic4_environment_vars,
     invalidate_taxonomy_config_cache,
 )
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
@@ -52,9 +53,13 @@ class TaxonomyConfigAPITest(TestCase):
                 'isic4': {
                     'enabled': True,
                     'version': 2,
-                    'taxonomyUrl': reverse('isic_taxonomy'),
+                    'taxonomyUrl': f'{reverse("isic_taxonomy")}?v=2',
                 },
             },
+        )
+        self.assertEqual(
+            response['Cache-Control'],
+            TAXONOMY_CONFIG_BROWSER_CACHE_CONTROL,
         )
 
     def test_disabled_config_omits_taxonomy_url(self):
@@ -95,33 +100,14 @@ class TaxonomyConfigAPITest(TestCase):
         self.assertFalse(response.json()['isic4']['enabled'])
         self.assertIsNone(response.json()['isic4']['taxonomyUrl'])
 
-    def test_environment_js_includes_isic4_fields(self):
+    def test_environment_js_does_not_include_isic4_fields(self):
         response = self.client.get(reverse('environment'))
 
         self.assertEqual(response.status_code, 200)
         body = response.content.decode('utf-8')
-        self.assertIn("'ISIC4_TAXONOMY_ENABLED': 'true'", body)
-        self.assertIn("'ISIC4_TAXONOMY_VERSION': '2'", body)
-        self.assertIn(
-            "'ISIC4_TAXONOMY_URL': "
-            f"'{reverse('isic_taxonomy')}'",
-            body,
-        )
-
-    def test_environment_vars_when_disabled(self):
-        self.config.is_active = False
-        self.config.save()
-
-        env_vars = get_isic4_environment_vars(config=self.config)
-
-        self.assertEqual(
-            env_vars,
-            {
-                'ISIC4_TAXONOMY_ENABLED': 'false',
-                'ISIC4_TAXONOMY_VERSION': '2',
-                'ISIC4_TAXONOMY_URL': '',
-            },
-        )
+        self.assertNotIn('ISIC4_TAXONOMY_ENABLED', body)
+        self.assertNotIn('ISIC4_TAXONOMY_VERSION', body)
+        self.assertNotIn('ISIC4_TAXONOMY_URL', body)
 
 
 @override_settings(
@@ -171,6 +157,10 @@ class IsicTaxonomyAPITest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), self.SAMPLE_TAXONOMY)
+        self.assertEqual(
+            response['Cache-Control'],
+            ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL,
+        )
         s3_client.get_object.assert_called_once_with(
             Bucket='test-bucket',
             Key='taxonomy/isic4/v3/isic_rev4.json',

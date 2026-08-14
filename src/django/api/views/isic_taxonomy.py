@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.isic_taxonomy.constants import ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL
 from api.isic_taxonomy.content import (
     IsicTaxonomyNotAvailable,
     load_isic4_taxonomy_content,
@@ -24,6 +25,8 @@ class IsicTaxonomyView(APIView):
     )
     def get(self, request):
         try:
-            return Response(load_isic4_taxonomy_content())
+            response = Response(load_isic4_taxonomy_content())
+            response['Cache-Control'] = ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL
+            return response
         except IsicTaxonomyNotAvailable:
             raise NotFound('ISIC taxonomy is not available.')

@@ -30,3 +30,11 @@ LABEL_CHAR_PATTERN = re.compile(r"^[\w\s,;\"'\-()./;’]+$", re.UNICODE)
 JSON_ARTIFACT_NAME = 'isic_rev4.json'
 JS_ARTIFACT_NAME = 'isicRev4Taxonomy.js'
 SOURCE_ARTIFACT_NAME = 'source'
+
+# Browser cache TTL for GET /api/taxonomy/isic4/?v=<version>. The query param
+# changes on publish, so immutable + long max-age is safe.
+ISIC4_TAXONOMY_BROWSER_CACHE_MAX_AGE_SECONDS = 31_536_000
+ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL = (
+    f'public, max-age={ISIC4_TAXONOMY_BROWSER_CACHE_MAX_AGE_SECONDS}, '
+    'immutable'
+)
