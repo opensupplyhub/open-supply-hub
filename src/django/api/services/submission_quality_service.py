@@ -18,8 +18,10 @@ BEDROCK_AWS_REGION = os.getenv('BEDROCK_AWS_REGION', 'eu-west-1')
 # stand-in (see docker-compose.yml), and those env vars would otherwise
 # shadow a developer's real AWS credentials for this call too. Setting
 # this to a named profile (e.g. in a local .env file) makes boto3 read
-# that profile's credentials instead of the ambient env vars.
-BEDROCK_AWS_PROFILE = os.getenv('BEDROCK_AWS_PROFILE')
+# that profile's credentials instead of the ambient env vars. `or None`
+# because .env.sample ships the var set-but-empty, and boto3 would treat
+# an empty string as a (nonexistent) profile name rather than "unset".
+BEDROCK_AWS_PROFILE = os.getenv('BEDROCK_AWS_PROFILE') or None
 # Cross-region inference profile ID, not a bare foundation-model ID - Claude
 # Haiku is only invocable in this account/region through an inference
 # profile (confirmed by hand against Bedrock in this account). Any Bedrock
@@ -37,7 +39,18 @@ SUBMISSION_QUALITY_MODEL_ID = os.getenv(
 # the warning (fail open).
 INVOKE_TIMEOUT_SECONDS = 5.0
 
-_INSTRUCTIONS = (
+# The system-level framing of the model call - overall task, strictness,
+# tone. Overridable per environment so the check can be tuned (e.g. made
+# more or less aggressive while watching false-positive rates) with an
+# ECS task-definition change rather than a release. Read at service
+# construction, not module import, so a change takes effect on restart
+# and tests can patch the environment. What each check MEANS deliberately
+# stays in the Field descriptions on SubmissionQualityVerdicts below:
+# those are structurally coupled to the output schema and to the
+# processor's warning mapping, so making them config would let prompt
+# text drift out of sync with the code that consumes the verdicts.
+_INSTRUCTIONS_ENV_VAR = 'SUBMISSION_QUALITY_INSTRUCTIONS'
+_DEFAULT_INSTRUCTIONS = (
     'You evaluate a single-location production facility contribution for '
     'data-quality problems, reporting a verdict for every check in the '
     'output schema. Flag a check only when there is a likely problem '
@@ -135,7 +148,11 @@ class SubmissionQualityService:
                 provider=BedrockProvider(bedrock_client=bedrock_client),
             ),
             output_type=SubmissionQualityVerdicts,
-            instructions=_INSTRUCTIONS,
+            # `or` rather than a getenv default: .env.sample ships the
+            # var set-but-empty, which must mean "use the default" too.
+            instructions=(
+                os.getenv(_INSTRUCTIONS_ENV_VAR) or _DEFAULT_INSTRUCTIONS
+            ),
             # No re-prompting on output that fails schema validation - a
             # retry is a second synchronous model call in the request
             # path. An invalid output raises instead, and evaluate()

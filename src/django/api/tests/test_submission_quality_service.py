@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -7,6 +8,7 @@ from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.models.test import TestModel
 
 from api.services.submission_quality_service import (
+    _DEFAULT_INSTRUCTIONS,
     SubmissionQualityService,
     SubmissionQualityVerdicts,
 )
@@ -107,3 +109,38 @@ class TestSubmissionQualityService(TestCase):
     def test_model_error_fails_open(self):
         result = self._evaluate_with_model(FunctionModel(_raise_runtime_error))
         self.assertIsNone(result)
+
+    def _instructions_sent_to_model(self, env_value):
+        # Instructions are read at service construction, so build a fresh
+        # service under the patched environment, then capture what the
+        # agent actually sends to the model. The capture raises so the
+        # run stops there; evaluate() failing open is irrelevant here.
+        env = {'SUBMISSION_QUALITY_INSTRUCTIONS': env_value}
+        with patch.dict(os.environ, env), patch(
+            'api.services.submission_quality_service.boto3'
+        ):
+            service = SubmissionQualityService()
+
+        captured = {}
+
+        def capture(messages, info):
+            captured['instructions'] = messages[-1].instructions
+            raise RuntimeError('captured; stop the run')
+
+        with service._agent.override(model=FunctionModel(capture)):
+            service.evaluate(name='n', address='a', country_name='c')
+        return captured['instructions']
+
+    def test_instructions_env_var_overrides_default(self):
+        self.assertEqual(
+            self._instructions_sent_to_model('Be extremely lenient.'),
+            'Be extremely lenient.',
+        )
+
+    def test_empty_instructions_env_var_falls_back_to_default(self):
+        # .env.sample ships the var set-but-empty; that must mean "use
+        # the default", not "send no instructions".
+        self.assertEqual(
+            self._instructions_sent_to_model(''),
+            _DEFAULT_INSTRUCTIONS,
+        )
