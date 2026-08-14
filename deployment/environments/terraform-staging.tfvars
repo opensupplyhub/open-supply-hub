@@ -85,9 +85,6 @@ craft_cms_origin_domain = "open-supply.staging.servd.dev"
 # Shares Chatbot channel config with Production (same Slack channel / shared account).
 aws_chatbot_manage_channel_configuration = false
 
-# ---------------------------------------------------------------------------
-# Config transferred from private ci-deployment (plain values)
-# ---------------------------------------------------------------------------
 waf_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvkaPS96l6wwhPDf12NSxe"
@@ -96,10 +93,6 @@ dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
 google_drive_shared_directory_id = "18ld9-YuqJZZE1GwBx47nih1lUJDM-3m4"
 aws_key_name = "osh-stg"
 
-# ---------------------------------------------------------------------------
-# AWS Secrets Manager secret names
-# Values live in SM; Terraform/CI resolve by name (no account IDs/ARNs in git).
-# ---------------------------------------------------------------------------
 rds_master_secret_name = "oshub/staging/rds-master"
 django_secret_key_secret_name = "oshub/staging/django-secret-key"
 cloudfront_auth_token_secret_name = "oshub/staging/cloudfront-auth-token"

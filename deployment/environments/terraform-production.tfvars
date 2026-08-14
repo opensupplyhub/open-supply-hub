@@ -91,9 +91,6 @@ is_database_private_link_provider = true
 # Staging/RBA set aws_chatbot_manage_channel_configuration = false.
 aws_chatbot_manage_channel_configuration = true
 
-# ---------------------------------------------------------------------------
-# Config transferred from private ci-deployment (plain values)
-# ---------------------------------------------------------------------------
 waf_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1TPjKeAnUgyIppdhAECREwYL"
@@ -108,10 +105,6 @@ anonymizer_db_identifier = "database-anonymizer"
 anonymizer_schedule_expression = "cron(0 1 ? * SAT *)"
 enable_legacy_info_site_redirect = true
 
-# ---------------------------------------------------------------------------
-# AWS Secrets Manager secret names
-# Values live in SM; Terraform/CI resolve by name (no account IDs/ARNs in git).
-# ---------------------------------------------------------------------------
 rds_master_secret_name = "oshub/production/rds-master"
 django_secret_key_secret_name = "oshub/production/django-secret-key"
 cloudfront_auth_token_secret_name = "oshub/production/cloudfront-auth-token"

@@ -102,9 +102,6 @@ craft_cms_origin_domain = "open-supply.staging.servd.dev"
 # Dev/Preprod set aws_chatbot_manage_channel_configuration = false.
 aws_chatbot_manage_channel_configuration = true
 
-# ---------------------------------------------------------------------------
-# Config transferred from private ci-deployment (plain values)
-# ---------------------------------------------------------------------------
 waf_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"
@@ -115,10 +112,6 @@ aws_chatbot_slack_team_id = "T01QXEYS7CZ"
 aws_chatbot_slack_channel_id = "C0BPL2HPHC3"
 aws_key_name = "osh-tst"
 
-# ---------------------------------------------------------------------------
-# AWS Secrets Manager secret names
-# Values live in SM; Terraform/CI resolve by name (no account IDs/ARNs in git).
-# ---------------------------------------------------------------------------
 rds_master_secret_name = "oshub/test/rds-master"
 django_secret_key_secret_name = "oshub/test/django-secret-key"
 cloudfront_auth_token_secret_name = "oshub/test/cloudfront-auth-token"

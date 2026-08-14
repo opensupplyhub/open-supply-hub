@@ -96,9 +96,6 @@ craft_cms_origin_domain = ""
 # Shares Chatbot channel config with Production (same Slack channel / shared account).
 aws_chatbot_manage_channel_configuration = false
 
-# ---------------------------------------------------------------------------
-# Config transferred from private ci-deployment (plain values)
-# ---------------------------------------------------------------------------
 waf_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = ""
@@ -106,10 +103,6 @@ dromo_schema_id = ""
 google_drive_shared_directory_id = ""
 aws_key_name = "osh-rba"
 
-# ---------------------------------------------------------------------------
-# AWS Secrets Manager secret names
-# Values live in SM; Terraform/CI resolve by name (no account IDs/ARNs in git).
-# ---------------------------------------------------------------------------
 rds_master_secret_name = "oshub/rba/rds-master"
 django_secret_key_secret_name = "oshub/rba/django-secret-key"
 cloudfront_auth_token_secret_name = "oshub/rba/cloudfront-auth-token"
