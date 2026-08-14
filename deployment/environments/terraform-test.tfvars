@@ -111,8 +111,8 @@ stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"
 hubspot_subscription_id = "12847627"
 dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
 google_drive_shared_directory_id = "18ld9-YuqJZZE1GwBx47nih1lUJDM-3m4"
-aws_chatbot_slack_team_id = "T24EH70RW"
-aws_chatbot_slack_channel_id = "C07FT2TLE72"
+aws_chatbot_slack_team_id = "T01QXEYS7CZ"
+aws_chatbot_slack_channel_id = "C0BPL2HPHC3"
 aws_key_name = "osh-tst"
 
 # ---------------------------------------------------------------------------
