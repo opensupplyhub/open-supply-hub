@@ -9,6 +9,7 @@ for Step Functions.
 from __future__ import annotations
 
 import logging
+from urllib.parse import unquote, urlparse
 
 from lib.lists_repository import ListsRepository
 from lib.os_hub_api import FacilityListStatus, OSHubAPI
@@ -37,13 +38,19 @@ def handler(event, context):
     max_fetched_id = last_id
 
     for facility_list in facility_lists:
+        file_url = (facility_list.get("file") or "").strip()
+        file_name = (
+            unquote(urlparse(file_url).path.lstrip("/"))
+            if file_url
+            else ""
+        )
         inserted = repository.put_list(
             facility_list["id"],
             list_name=facility_list.get("name") or "",
             contributor_id=facility_list.get("contributor_id"),
             contributor_name=facility_list.get("contributor_name") or "",
             contributor_email=facility_list.get("contributor_email") or "",
-            file_name=facility_list.get("file_name") or "",
+            file_name=file_name,
         )
         list_id = int(facility_list["id"])
         max_fetched_id = max(max_fetched_id, list_id)
