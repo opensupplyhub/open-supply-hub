@@ -1,3 +1,4 @@
+import React from 'react';
 import getVisibleFields, {
     getDataCenterFieldGroups,
 } from '../../components/ProductionLocation/ProductionLocationDetailsGeneralFields/utils';
@@ -507,6 +508,29 @@ describe('getDataCenterFieldGroups', () => {
         const groups = getDataCenterFieldGroups(dataCenterFixture);
         const utility = findGroup(groups, 'Utility Usage');
         expect(findField(utility, 'capacity').value).toBe('20 MW');
+    });
+
+    it('renders data_center_group_id as a link to the group profile', () => {
+        const groups = getDataCenterFieldGroups({
+            type: 'Feature',
+            properties: {
+                is_data_center: true,
+                extended_fields: {
+                    data_center_group_id: ef('US2026205NS8T09'),
+                },
+            },
+        });
+        const groupField = findField(
+            findGroup(groups, 'Grouping'),
+            'data_center_group_id',
+        );
+
+        // The value is a Link element pointing at the group's profile.
+        expect(React.isValidElement(groupField.value)).toBe(true);
+        expect(groupField.value.props.to).toBe(
+            '/production-locations/US2026205NS8T09',
+        );
+        expect(groupField.value.props.children).toBe('US2026205NS8T09');
     });
 
     it('groups named entities and operating info by their sections', () => {

@@ -396,10 +396,24 @@ const buildDataCenterDataPoint = (data, field) => {
         return `${value} ${NO_UNIT_SPECIFIED}`;
     };
 
-    const toContribution = item => ({
-        value: isValueWithUnit
+    /*
+    Some fields render their value as a node rather than plain text (e.g.
+    data_center_group_id links to the group's profile). The raw value is kept
+    for the drawer's contribution cards so each contributed value stays
+    readable there.
+    */
+    const displayValue = item => {
+        const value = isValueWithUnit
             ? withUnit(rawExtendedValue(item))
-            : rawExtendedValue(item),
+            : rawExtendedValue(item);
+        if (field.renderValue && value != null && value !== '') {
+            return field.renderValue(value);
+        }
+        return value;
+    };
+
+    const toContribution = item => ({
+        value: displayValue(item),
         sourceName: item.contributor_name || null,
         date: item.created_at || null,
         userId: item.contributor_id != null ? item.contributor_id : undefined,

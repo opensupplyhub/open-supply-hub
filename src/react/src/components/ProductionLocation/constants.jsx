@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import LearnMoreLink from './Shared/LearnMoreLink/LearnMoreLink';
+import { productionLocationsRoute } from '../../util/constants';
 
 export const FIELD_CONFIG = Object.freeze({
     name: Object.freeze({
@@ -266,6 +268,12 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                     'A metric indicating the water efficiency of this production location, calculated as the ratio of total water used to the amount of water delivered to the IT equipment.',
             },
             {
+                key: 'onsite_power_generation',
+                label: 'On-site Power Generation',
+                tooltipText:
+                    'Power generated on site at this production location.',
+            },
+            {
                 key: 'cooling_mechanism',
                 label: 'Cooling Mechanism',
                 tooltipText:
@@ -319,6 +327,13 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                     'The area dedicated to data processing and storage within this production location.',
             },
             {
+                key: 'non_data_area',
+                label: 'Non-Data Area',
+                unitsField: 'non_data_area_units',
+                tooltipText:
+                    'The area of this production location that is not used for data processing and storage.',
+            },
+            {
                 key: 'floor_space',
                 label: 'Floor Space',
                 unitsField: 'floor_space_units',
@@ -326,10 +341,31 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                     'The total floor space available in this production location.',
             },
             {
-                key: 'overall_area',
-                label: 'Overall Area',
-                unitsField: 'overall_area_units',
-                tooltipText: 'The overall area of this production location.',
+                key: 'number_of_floors',
+                label: 'Number of Floors',
+                tooltipText:
+                    'The total number of floors in this production location.',
+            },
+            {
+                key: 'footprint',
+                label: 'Footprint',
+                unitsField: 'footprint_units',
+                tooltipText:
+                    'The ground area occupied by this production location.',
+            },
+            {
+                key: 'building_area',
+                label: 'Building Area',
+                unitsField: 'building_area_units',
+                tooltipText:
+                    'The total area of the building occupied by this production location.',
+            },
+            {
+                key: 'land_area',
+                label: 'Land Area',
+                unitsField: 'land_area_units',
+                tooltipText:
+                    'The total area of land occupied by this production location.',
             },
             {
                 key: 'other_area',
@@ -355,6 +391,41 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 label: 'Number of Racks',
                 tooltipText:
                     'The total number of racks in this production location.',
+            },
+            {
+                key: 'number_of_buildings',
+                label: 'Number of Buildings',
+                tooltipText:
+                    'The total number of buildings occupied by this production location.',
+            },
+        ]),
+    }),
+    Object.freeze({
+        label: 'Grouping',
+        fields: Object.freeze([
+            {
+                key: 'is_group',
+                label: 'Is a Group',
+                // Yes/no question - rendered as a checkbox in the SLC form.
+                isBoolean: true,
+                tooltipText:
+                    'Indicates whether this record represents a group of data centers rather than a single one.',
+            },
+            {
+                key: 'data_center_group_id',
+                label: 'Group ID',
+                tooltipText:
+                    'The identifier of the group (building or campus) that this data center belongs to. Links to the group.',
+                /*
+                The value is the OS ID of the group's production location, so
+                it is rendered as a link to that profile on the current
+                server (OSDEV-3233).
+                */
+                renderValue: value => (
+                    <Link to={`${productionLocationsRoute}/${value}`}>
+                        {value}
+                    </Link>
+                ),
             },
         ]),
     }),

@@ -101,6 +101,44 @@ describe('DataCenterFields', () => {
         );
     });
 
+    test('renders is_group as a checkbox and stores it as a string', () => {
+        const contributionForm = makeContributionForm();
+        renderDataCenterFields(contributionForm);
+        fireEvent.click(screen.getByTestId('data-center-section-Grouping'));
+
+        const checkbox = screen.getByLabelText('Is a Group');
+        expect(checkbox).toHaveProperty('type', 'checkbox');
+        expect(checkbox.checked).toBe(false);
+
+        fireEvent.click(checkbox);
+
+        expect(contributionForm.setFieldValue).toHaveBeenCalledWith(
+            'isGroup',
+            'true',
+        );
+    });
+
+    test('unchecking is_group clears the value', () => {
+        const contributionForm = makeContributionForm({
+            values: {
+                ...DATA_CENTER_FORM_INITIAL_VALUES,
+                isGroup: 'true',
+            },
+        });
+        renderDataCenterFields(contributionForm);
+        fireEvent.click(screen.getByTestId('data-center-section-Grouping'));
+
+        const checkbox = screen.getByLabelText('Is a Group');
+        expect(checkbox.checked).toBe(true);
+
+        fireEvent.click(checkbox);
+
+        expect(contributionForm.setFieldValue).toHaveBeenCalledWith(
+            'isGroup',
+            '',
+        );
+    });
+
     test('shows a validation error for a touched invalid field', () => {
         const contributionForm = makeContributionForm({
             touched: { dateOfSource: true },

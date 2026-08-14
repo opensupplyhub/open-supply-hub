@@ -1984,6 +1984,18 @@ export const slcValidationSchema = objectYup({
     parentCompany: buildFieldValidation(
         SLC_FIELD_VALIDATION_CONFIG.parentCompany,
     ).label('Parent company'),
+    /*
+    Data-center yes/no field. Held as a string so the submit payload builder
+    keeps it (lodash `isEmpty` treats booleans as empty): 'true' when checked
+    and '' when left blank. 'false' is accepted for data submitted through
+    other channels.
+    */
+    isGroup: stringYup()
+        .oneOf(
+            ['', 'true', 'false'],
+            'Is a group must be either true or false.',
+        )
+        .label('Is a group'),
     // Data-center provenance (OSDEV-3074). Mirrors the server-side rule:
     // ISO 8601 reduced precision - YYYY, YYYY-MM, or YYYY-MM-DD.
     dateOfSource: stringYup()

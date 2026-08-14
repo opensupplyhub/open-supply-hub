@@ -53,6 +53,8 @@ class ExtendedField(models.Model):
     WATER_USAGE = 'water_usage'
     WATER_USAGE_UNITS = 'water_usage_units'
     WUE = 'wue'
+    WUE_UNITS = 'wue_units'
+    ONSITE_POWER_GENERATION = 'onsite_power_generation'
     COOLING_MECHANISM = 'cooling_mechanism'
     # Operating info
     OPERATIONAL_STATUS = 'operational_status'
@@ -65,15 +67,26 @@ class ExtendedField(models.Model):
     AREA_UNITS = 'area_units'
     DATA_AREA = 'data_area'
     DATA_AREA_UNITS = 'data_area_units'
+    NON_DATA_AREA = 'non_data_area'
+    NON_DATA_AREA_UNITS = 'non_data_area_units'
     FLOOR_SPACE = 'floor_space'
     FLOOR_SPACE_UNITS = 'floor_space_units'
-    OVERALL_AREA = 'overall_area'
-    OVERALL_AREA_UNITS = 'overall_area_units'
+    NUMBER_OF_FLOORS = 'number_of_floors'
+    FOOTPRINT = 'footprint'
+    FOOTPRINT_UNITS = 'footprint_units'
+    BUILDING_AREA = 'building_area'
+    BUILDING_AREA_UNITS = 'building_area_units'
+    LAND_AREA = 'land_area'
+    LAND_AREA_UNITS = 'land_area_units'
     OTHER_AREA = 'other_area'
     OTHER_AREA_NOTES = 'other_area_notes'
     OTHER_AREA_UNITS = 'other_area_units'
     NUMBER_OF_SERVERS = 'number_of_servers'
     NUMBER_OF_RACKS = 'number_of_racks'
+    NUMBER_OF_BUILDINGS = 'number_of_buildings'
+    # Grouping (staging for the future grouping model, see OSDEV-3233)
+    IS_GROUP = 'is_group'
+    DATA_CENTER_GROUP_ID = 'data_center_group_id'
 
     # Data center fields grouped for reuse in
     # ingestion (see extended_fields.py)
@@ -85,18 +98,22 @@ class ExtendedField(models.Model):
         UPS_CAPACITY_UNITS, BACKUP_GENERATOR_CAPACITY,
         BACKUP_GENERATOR_CAPACITY_UNITS, PUE, POWER_PROVIDERS, POWER_SOURCES,
         POWER_DENSITY, POWER_DENSITY_UNITS, WATER_USAGE, WATER_USAGE_UNITS,
-        WUE, COOLING_MECHANISM, OPERATIONAL_STATUS, IS_DATA_CENTER,
-        CERTIFICATIONS_COMPLIANCE, TIME_ZONES, DATE_OPERATIONAL, AREA,
-        AREA_UNITS, DATA_AREA, DATA_AREA_UNITS, FLOOR_SPACE, FLOOR_SPACE_UNITS,
-        OVERALL_AREA, OVERALL_AREA_UNITS, OTHER_AREA, OTHER_AREA_NOTES,
-        OTHER_AREA_UNITS, NUMBER_OF_SERVERS, NUMBER_OF_RACKS,
+        WUE, WUE_UNITS, ONSITE_POWER_GENERATION, COOLING_MECHANISM,
+        OPERATIONAL_STATUS, IS_DATA_CENTER, CERTIFICATIONS_COMPLIANCE,
+        TIME_ZONES, DATE_OPERATIONAL, AREA, AREA_UNITS, DATA_AREA,
+        DATA_AREA_UNITS, NON_DATA_AREA, NON_DATA_AREA_UNITS, FLOOR_SPACE,
+        FLOOR_SPACE_UNITS, NUMBER_OF_FLOORS, FOOTPRINT, FOOTPRINT_UNITS,
+        BUILDING_AREA, BUILDING_AREA_UNITS, LAND_AREA, LAND_AREA_UNITS,
+        OTHER_AREA, OTHER_AREA_NOTES, OTHER_AREA_UNITS, NUMBER_OF_SERVERS,
+        NUMBER_OF_RACKS, NUMBER_OF_BUILDINGS, IS_GROUP, DATA_CENTER_GROUP_ID,
     )
 
     DATA_CENTER_NUMERICAL_FIELDS = (
         CAPACITY, IT_CAPACITY, UTILITY_CAPACITY, UPS_CAPACITY,
         BACKUP_GENERATOR_CAPACITY, PUE, POWER_DENSITY, WATER_USAGE,
-        WUE, AREA, DATA_AREA, FLOOR_SPACE, OVERALL_AREA, OTHER_AREA,
-        NUMBER_OF_SERVERS, NUMBER_OF_RACKS
+        WUE, AREA, DATA_AREA, NON_DATA_AREA, FLOOR_SPACE, NUMBER_OF_FLOORS,
+        FOOTPRINT, BUILDING_AREA, LAND_AREA, OTHER_AREA,
+        NUMBER_OF_SERVERS, NUMBER_OF_RACKS, NUMBER_OF_BUILDINGS
     )
 
     FIELD_CHOICES = (

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { object } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Collapse from '@material-ui/core/Collapse';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -29,6 +31,35 @@ const DataCenterFields = ({ classes, contributionForm }) => {
         contributionForm.setFieldValue(formName, event.target.value);
         contributionForm.setFieldTouched(formName, true, false);
     };
+
+    /*
+    Yes/no fields render as a checkbox. The value is kept as the string
+    'true' (checked) or '' (unchecked) rather than a boolean, because the
+    submit payload builder drops boolean values: `parseContribData` filters
+    with lodash `isEmpty`, which treats both `true` and `false` as empty.
+    Leaving it blank when unchecked also matches the schema, where the field
+    may be true, false or blank.
+    */
+    const renderCheckbox = (formName, label) => (
+        <FormControlLabel
+            className={classes.checkboxLabel}
+            control={
+                <Checkbox
+                    id={`dc_${formName}`}
+                    checked={contributionForm.values[formName] === 'true'}
+                    onChange={event => {
+                        contributionForm.setFieldValue(
+                            formName,
+                            event.target.checked ? 'true' : '',
+                        );
+                        contributionForm.setFieldTouched(formName, true, false);
+                    }}
+                    inputProps={{ 'aria-label': label }}
+                />
+            }
+            label="Yes"
+        />
+    );
 
     const renderInput = (formName, label, placeholder) => {
         const hasError =
@@ -137,7 +168,12 @@ const DataCenterFields = ({ classes, contributionForm }) => {
                                                 {field.description}
                                             </Typography>
                                         ) : null}
-                                        {field.unitsFormName ? (
+                                        {field.isCheckbox ? (
+                                            renderCheckbox(
+                                                field.formName,
+                                                field.label,
+                                            )
+                                        ) : field.unitsFormName ? (
                                             <div className={classes.unitsRow}>
                                                 <div
                                                     className={

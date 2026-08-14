@@ -50,6 +50,9 @@ export default theme =>
             color: COLOURS.DARK_GREY,
             margin: '0 0 6px 0',
         }),
+        checkboxLabel: Object.freeze({
+            marginLeft: 0,
+        }),
         unitsRow: Object.freeze({
             display: 'flex',
             gap: '8px',
