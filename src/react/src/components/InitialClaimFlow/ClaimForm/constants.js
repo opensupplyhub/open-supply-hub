@@ -47,3 +47,32 @@ export const STEP_ICONS = Object.freeze({
 });
 
 export const TOTAL_STEPS = 4;
+
+/**
+ * Maps API/serializer field names to the labels shown on the Claim form UI.
+ * Used when formatting server validation errors for the error banner.
+ * Falls back to startCase(camelCase(field)) when a field is not listed.
+ */
+export const CLAIM_FORM_API_FIELD_LABELS = Object.freeze({
+    facility_type: 'Location Type(s)',
+    facility_product_types: 'Product Types',
+    facility_production_types: 'Processing Type(s)',
+    facility_description: 'Production Location Description',
+    facility_phone_number: 'Company Phone',
+    business_website: 'Company Website',
+    local_language_name: 'Production Location Name in Native Language',
+    parent_company_name: 'Parent Company Name / Supplier Group',
+    office_official_name: 'Office Name',
+    office_address: 'Office Address',
+    office_country_code: 'Office Country',
+    number_of_workers: 'Number of Workers',
+    facility_female_workers_percentage: 'Percentage of Female Workers',
+    facility_minimum_order_quantity: 'Minimum Order Quantity',
+    facility_average_lead_time: 'Average Lead Time',
+    facility_affiliations: 'Affiliations',
+    facility_certifications: 'Certifications / Standards / Regulations',
+    sectors: 'Industry / Sectors',
+    your_name: 'Your Name',
+    your_title: 'Your Job Title',
+    your_business_website: 'Website URL',
+});

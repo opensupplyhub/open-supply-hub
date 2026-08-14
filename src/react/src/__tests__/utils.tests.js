@@ -1022,6 +1022,30 @@ it('creates a list of field errors from a Django error object', () => {
     expect(errorMessages).toEqual(expectedErrorMessages);
 });
 
+it('creates a list of field errors from nested Django ListField errors', () => {
+    const djangoErrors = {
+        facility_product_types: {
+            0: ['Ensure this field has no more than 50 characters.'],
+        },
+        facility_production_types: {
+            0: ['Ensure this field has no more than 50 characters.'],
+        },
+        business_website: [
+            'Ensure this field has no more than 200 characters.',
+        ],
+    };
+
+    const expectedErrorMessages = [
+        'facility_product_types: Ensure this field has no more than 50 characters.',
+        'facility_production_types: Ensure this field has no more than 50 characters.',
+        'business_website: Ensure this field has no more than 200 characters.',
+    ];
+
+    const errorMessages = createErrorListFromResponseObject(djangoErrors);
+
+    expect(errorMessages).toEqual(expectedErrorMessages);
+});
+
 it('correctly maps a list of Choice tuples from Django into an array of select options', () => {
     const expectedOptions = [
         {

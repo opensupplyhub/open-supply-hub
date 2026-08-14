@@ -63,3 +63,21 @@ Do not invent, drop, or reorder sections. Leave a section as `N/A` only when it 
 IMPORTANT: Before creating a PR, always check whether `doc/release/RELEASE-NOTES.md` has been updated on the current branch. If it has not been updated, prompt the user to update it before opening the PR.
 
 IMPORTANT: When the user asks to add, update, or write a release notes entry, always use the [release-notes](.agent/skills/release-notes/SKILL.md) skill.
+
+## Public repository hygiene
+
+This repository is public. Before committing, verify the diff contains no:
+
+- secrets, tokens, or credentials of any kind;
+- internal document, spreadsheet, or shared-drive folder identifiers
+  (publishing an ID can make a link-shared document effectively public);
+- internal project-management identifiers (board or channel names/IDs);
+- internal policy thresholds or escalation/routing rules;
+- staff names or contact details in code, configuration, or comments.
+
+When a change needs such a value at runtime, externalize it: read it from
+an uncommitted per-user configuration file or environment variable, commit
+a placeholder `config.example`, and document where teammates obtain the
+real values internally. Prefer fetching internal content (e.g. document
+text) at runtime over embedding it. When unsure whether something is safe
+to publish, ask before committing.
