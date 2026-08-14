@@ -495,11 +495,10 @@ export const fetchIsic4TaxonomyConfigIfNeeded = () => async (
     dispatch,
     getState,
 ) => {
-    const { data, fetching } =
-        getState().filterOptions.isic4TaxonomyConfig ?? {};
+    const { config, fetching } = getState().filterOptions.isic4Taxonomy ?? {};
 
-    if (data !== null || fetching) {
-        return data;
+    if (config != null || fetching) {
+        return config;
     }
 
     return dispatch(fetchIsic4TaxonomyConfig());
@@ -509,8 +508,18 @@ export function fetchIsic4Taxonomy() {
     return async (dispatch, getState) => {
         await dispatch(fetchIsic4TaxonomyConfigIfNeeded());
 
-        const isic4Config = getState().filterOptions.isic4TaxonomyConfig.data;
+        const isic4Config = getState().filterOptions.isic4Taxonomy?.config;
         if (!isic4Config?.enabled || !isic4Config.taxonomyUrl) {
+            return null;
+        }
+
+        const { data, fetching } = getState().filterOptions.isic4Taxonomy ?? {};
+
+        if (data != null) {
+            return data;
+        }
+
+        if (fetching) {
             return null;
         }
 
@@ -541,14 +550,8 @@ export function fetchIsic4Taxonomy() {
                 );
             }
 
-            const payload = {
-                taxonomy,
-                version: String(isic4Config.version),
-                taxonomyUrl: isic4Config.taxonomyUrl,
-            };
-
-            dispatch(completeFetchIsic4Taxonomy(payload));
-            return payload;
+            dispatch(completeFetchIsic4Taxonomy(taxonomy));
+            return taxonomy;
         } catch (err) {
             return dispatch(
                 logErrorAndDispatchFailure(
@@ -560,25 +563,3 @@ export function fetchIsic4Taxonomy() {
         }
     };
 }
-
-export const fetchIsic4TaxonomyIfNeeded = () => async (dispatch, getState) => {
-    await dispatch(fetchIsic4TaxonomyConfigIfNeeded());
-
-    const isic4Config = getState().filterOptions.isic4TaxonomyConfig.data;
-    if (!isic4Config?.enabled || !isic4Config.taxonomyUrl) {
-        return null;
-    }
-
-    const { data, fetching, taxonomyUrl } =
-        getState().filterOptions.isic4Taxonomy ?? {};
-
-    if (data !== null && taxonomyUrl === isic4Config.taxonomyUrl) {
-        return data;
-    }
-
-    if (fetching) {
-        return null;
-    }
-
-    return dispatch(fetchIsic4Taxonomy());
-};

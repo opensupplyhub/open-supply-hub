@@ -39,6 +39,7 @@ const createPreloadedState = ({
     combineFacilityProcessingIsic = '',
     embed = false,
     isic4TaxonomyConfig = null,
+    isic4TaxonomyData = null,
 } = {}) => ({
     filterOptions: {
         contributorTypes: {
@@ -55,14 +56,9 @@ const createPreloadedState = ({
             fetching: false,
             error: null,
         },
-        isic4TaxonomyConfig: {
-            data: isic4TaxonomyConfig,
-            fetching: false,
-            error: null,
-        },
         isic4Taxonomy: {
-            data: null,
-            taxonomyUrl: null,
+            config: isic4TaxonomyConfig,
+            data: isic4TaxonomyData,
             fetching: false,
             error: null,
         },
@@ -155,6 +151,30 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
         expect(
             queryByLabelText('Match both facility type and ISIC categories'),
         ).not.toBeInTheDocument();
+    });
+
+    test('shows a config error message when taxonomy settings fail to load', async () => {
+        global.fetch = jest.fn(() =>
+            Promise.resolve({
+                ok: false,
+                status: 500,
+                json: () => Promise.resolve(null),
+            }),
+        );
+
+        const { getByText } = renderComponent(
+            createPreloadedState({
+                isic4TaxonomyConfig: null,
+            }),
+        );
+
+        await waitFor(() => {
+            expect(
+                getByText(
+                    'Unable to load ISIC taxonomy settings. Try refreshing the page.',
+                ),
+            ).toBeInTheDocument();
+        });
     });
 
     test('shows the combine checkbox when enabled and all selections exist', () => {

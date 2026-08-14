@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import InputLabel from '@material-ui/core/InputLabel';
 import { withStyles } from '@material-ui/core/styles';
@@ -9,12 +9,13 @@ import {
     getIsic4SearchIndex,
     getIsic4VisibleRows,
 } from '../../../data/isic4SearchIndex';
-import { fetchIsic4TaxonomyIfNeeded } from '../../../actions/filterOptions';
+import { fetchIsic4Taxonomy } from '../../../actions/filterOptions';
 import TaxonomySearchControl from './TaxonomySearchControl';
 import TaxonomyResultRow from './TaxonomyResultRow';
 import {
     getIsic4NodeKey,
     isIsic4NodeSelected,
+    resolveIsic4FilterLabels,
     toggleIsic4Node,
 } from './isicUtils';
 import {
@@ -37,22 +38,26 @@ function IsicTaxonomySearch({
     disabled,
     classes,
     isic4Taxonomy,
-    fetchIsic4Taxonomy,
 }) {
+    const dispatch = useDispatch();
     const [query, setQuery] = useState('');
     const [activeRowIndex, setActiveRowIndex] = useState(-1);
     const [isFocused, setIsFocused] = useState(false);
     const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
     const countsRequestedRef = useRef(false);
     const inputRef = useRef(null);
-    const { data, fetching, error } = isic4Taxonomy;
+    const { config: isic4TaxonomyConfig, data: taxonomy, fetching, error } =
+        isic4Taxonomy ?? {};
+    const taxonomyVersion =
+        isic4TaxonomyConfig?.version != null
+            ? String(isic4TaxonomyConfig.version)
+            : 'unknown';
 
     useEffect(() => {
-        fetchIsic4Taxonomy();
-    }, [fetchIsic4Taxonomy]);
-
-    const taxonomy = data?.taxonomy ?? null;
-    const taxonomyVersion = data?.version ?? 'unknown';
+        if (!taxonomy && !fetching && !error) {
+            dispatch(fetchIsic4Taxonomy());
+        }
+    }, [dispatch, taxonomy, fetching, error]);
 
     const searchIndex = useMemo(() => {
         if (!taxonomy) {
@@ -126,6 +131,22 @@ function IsicTaxonomySearch({
             ),
         [rows, expandedNodeIds, nodeById, isSearching],
     );
+
+    useEffect(() => {
+        if (!searchIndex || !isic4.length) {
+            return;
+        }
+
+        const resolved = resolveIsic4FilterLabels(isic4, searchIndex.flatNodes);
+        if (
+            resolved.some(
+                (option, index) => option.label !== isic4[index].label,
+            )
+        ) {
+            onIsic4Change(resolved);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchIndex, isic4]);
 
     const selectedChips = useMemo(
         () =>
@@ -211,7 +232,7 @@ function IsicTaxonomySearch({
     const listboxId = 'isic4-taxonomy-results';
     const label = 'International Standard Industrial Classification "ISIC"';
 
-    if (!data && !fetching && !error) {
+    if (!taxonomy && !fetching && !error) {
         return null;
     }
 
@@ -347,8 +368,8 @@ IsicTaxonomySearch.defaultProps = {
     disabled: false,
     onRequestCounts: null,
     isic4Taxonomy: Object.freeze({
+        config: null,
         data: null,
-        taxonomyUrl: null,
         fetching: false,
         error: null,
     }),
@@ -361,20 +382,19 @@ IsicTaxonomySearch.propTypes = {
     onRequestCounts: func,
     disabled: bool,
     isic4Taxonomy: object,
-    fetchIsic4Taxonomy: func.isRequired,
 };
 
-function mapStateToProps({ filterOptions: { isic4Taxonomy } }) {
+function mapStateToProps({
+    filterOptions: {
+        isic4Taxonomy = Object.freeze({
+            config: null,
+            data: null,
+            fetching: false,
+            error: null,
+        }),
+    } = {},
+}) {
     return { isic4Taxonomy };
 }
 
-function mapDispatchToProps(dispatch) {
-    return {
-        fetchIsic4Taxonomy: () => dispatch(fetchIsic4TaxonomyIfNeeded()),
-    };
-}
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(withStyles(styles)(IsicTaxonomySearch));
+export default connect(mapStateToProps)(withStyles(styles)(IsicTaxonomySearch));

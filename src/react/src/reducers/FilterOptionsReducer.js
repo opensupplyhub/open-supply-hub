@@ -97,14 +97,9 @@ const initialState = Object.freeze({
             error: null,
         }),
     }),
-    isic4TaxonomyConfig: Object.freeze({
-        data: null,
-        fetching: false,
-        error: null,
-    }),
     isic4Taxonomy: Object.freeze({
+        config: null,
         data: null,
-        taxonomyUrl: null,
         fetching: false,
         error: null,
     }),
@@ -336,26 +331,32 @@ export default createReducer(
             }),
         [startFetchIsic4TaxonomyConfig]: state =>
             update(state, {
-                isic4TaxonomyConfig: {
+                isic4Taxonomy: {
                     fetching: { $set: true },
                     error: { $set: null },
                 },
             }),
         [failFetchIsic4TaxonomyConfig]: (state, payload) =>
             update(state, {
-                isic4TaxonomyConfig: {
+                isic4Taxonomy: {
                     fetching: { $set: false },
                     error: { $set: payload },
                 },
             }),
-        [completeFetchIsic4TaxonomyConfig]: (state, payload) =>
-            update(state, {
-                isic4TaxonomyConfig: {
+        [completeFetchIsic4TaxonomyConfig]: (state, payload) => {
+            const previousVersion = state.isic4Taxonomy.config?.version;
+            const versionChanged =
+                previousVersion != null && previousVersion !== payload.version;
+
+            return update(state, {
+                isic4Taxonomy: {
                     fetching: { $set: false },
                     error: { $set: null },
-                    data: { $set: payload },
+                    config: { $set: payload },
+                    ...(versionChanged ? { data: { $set: null } } : {}),
                 },
-            }),
+            });
+        },
         [startFetchIsic4Taxonomy]: state =>
             update(state, {
                 isic4Taxonomy: {
@@ -370,13 +371,12 @@ export default createReducer(
                     error: { $set: payload },
                 },
             }),
-        [completeFetchIsic4Taxonomy]: (state, payload) =>
+        [completeFetchIsic4Taxonomy]: (state, taxonomy) =>
             update(state, {
                 isic4Taxonomy: {
                     fetching: { $set: false },
                     error: { $set: null },
-                    data: { $set: payload },
-                    taxonomyUrl: { $set: payload.taxonomyUrl },
+                    data: { $set: taxonomy },
                 },
             }),
         [startFetchNumberOfWorkersOptions]: state =>

@@ -138,7 +138,10 @@ class IsicTaxonomyAPITest(TestCase):
         )
 
     @patch('api.isic_taxonomy.content.get_s3_client')
-    def test_returns_taxonomy_json_from_private_bucket(self, mock_get_s3_client):
+    def test_returns_taxonomy_json_from_private_bucket(
+        self,
+        mock_get_s3_client,
+    ):
         s3_client = MagicMock()
         mock_get_s3_client.return_value = s3_client
         s3_client.get_object.return_value = {
@@ -146,8 +149,8 @@ class IsicTaxonomyAPITest(TestCase):
                 read=MagicMock(
                     return_value=(
                         '{"sections": [{"code": "A", "label": "Agriculture", '
-                        '"displayLabel": "A - Agriculture", "kind": "section", '
-                        '"divisions": []}]}'
+                        '"displayLabel": "A - Agriculture", '
+                        '"kind": "section", "divisions": []}]}'
                     ).encode('utf-8'),
                 ),
             ),
