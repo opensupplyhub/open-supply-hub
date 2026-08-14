@@ -95,8 +95,7 @@ resource "aws_security_group_rule" "proxy_db_ingress" {
 }
 
 # IAM role for RDS proxy
-# Proxy authenticates with the CLI-owned rds-master secret (looked up by name
-# in the root module). TF no longer creates/owns a proxy secret_version.
+# Proxy authenticates with the CLI-owned rds-master secret
 
 resource "aws_iam_role" "proxy_role" {
   name               = "database${local.env_id_short}ProxyRole"

@@ -1234,7 +1234,6 @@ variable "contribot_last_list_id" {
 # ---------------------------------------------------------------------------
 # AWS Secrets Manager secret names (public tfvars). Values are CLI-owned in SM.
 # When a name is set, Terraform resolves ARN/value via data sources in secrets.tf.
-# Empty name falls back to the legacy plaintext variable for local/dev transition.
 # ---------------------------------------------------------------------------
 
 variable "rds_master_secret_name" {

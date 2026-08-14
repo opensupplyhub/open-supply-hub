@@ -3,7 +3,7 @@
 #
 # Public tfvars supply secret *names* only. Terraform resolves ARNs/values at
 # plan/apply via data sources. When a *_secret_name is empty, locals fall back
-# to the legacy plaintext variable for local/dev transition.
+# to the legacy plaintext variable.
 #
 # count is used even for "common" secrets so plan works when names are unset.
 #
