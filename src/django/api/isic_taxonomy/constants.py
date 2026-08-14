@@ -25,7 +25,7 @@ STAGING_PREFIX = f'{TAXONOMY_S3_PREFIX}/staging'
 SECTION_CODE_PATTERN = re.compile(r'^[A-U]$')
 
 # Unicode-aware word chars plus punctuation used in official ISIC labels.
-LABEL_CHAR_PATTERN = re.compile(r"^[\w\s,;\"'\-()./;’]+$", re.UNICODE)
+LABEL_CHAR_PATTERN = re.compile(r"^[\w\s,;\"'\-()./’]+$", re.UNICODE)
 
 JSON_ARTIFACT_NAME = 'isic_rev4.json'
 JS_ARTIFACT_NAME = 'isicRev4Taxonomy.js'

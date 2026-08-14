@@ -3,6 +3,9 @@ FUNCTION index_facility_type(af_id TEXT)
 RETURNS TABLE (facility_type TEXT)
 LANGUAGE plpgsql
 AS $Body$
+DECLARE
+	matched_values_key CONSTANT TEXT := 'matched_values';
+	raw_values_key CONSTANT TEXT := 'raw_values';
 BEGIN
 	RETURN QUERY
 SELECT
@@ -14,13 +17,13 @@ FROM
 	FROM
 		(
 		SELECT
-			jsonb_array_elements(aef.value -> 'matched_values') AS raw
+			jsonb_array_elements(aef.value -> matched_values_key) AS raw
 		FROM
 			api_extendedfield aef
 		WHERE
 			aef.facility_id = af_id
 			AND aef.field_name = 'facility_type'
-			AND aef.value -> 'matched_values' IS NOT NULL
+			AND aef.value -> matched_values_key IS NOT NULL
 	) AS standardized
 	WHERE
 		raw->>2 IS NOT NULL
@@ -38,8 +41,8 @@ FROM
 		WHERE
 			ae.facility_id = af_id
 			AND ae.field_name = 'facility_type'
-			AND ae.value -> 'matched_values' IS NOT NULL
-			AND ae.value -> 'raw_values' IS NOT NULL
+			AND ae.value -> matched_values_key IS NOT NULL
+			AND ae.value -> raw_values_key IS NOT NULL
 			AND (
 				EXISTS (
 					SELECT
@@ -84,21 +87,21 @@ FROM
 				)
 			)
 	) AS visible_fields
-	CROSS JOIN LATERAL jsonb_array_elements(visible_fields.value -> 'matched_values')
+	CROSS JOIN LATERAL jsonb_array_elements(visible_fields.value -> matched_values_key)
 		WITH ORDINALITY AS matched(matched, idx)
 	CROSS JOIN LATERAL unnest(
 		CASE
-			WHEN jsonb_typeof(visible_fields.value -> 'raw_values') = 'string' THEN
+			WHEN jsonb_typeof(visible_fields.value -> raw_values_key) = 'string' THEN
 				CASE
-					WHEN (visible_fields.value ->> 'raw_values') LIKE '%|%' THEN
-						string_to_array(visible_fields.value ->> 'raw_values', '|')
+					WHEN (visible_fields.value ->> raw_values_key) LIKE '%|%' THEN
+						string_to_array(visible_fields.value ->> raw_values_key, '|')
 					ELSE
-						ARRAY[visible_fields.value ->> 'raw_values']
+						ARRAY[visible_fields.value ->> raw_values_key]
 				END
 			ELSE
 				ARRAY(
 					SELECT
-						jsonb_array_elements_text(visible_fields.value -> 'raw_values')
+						jsonb_array_elements_text(visible_fields.value -> raw_values_key)
 				)
 		END
 	) WITH ORDINALITY AS raw_vals(raw_value, raw_idx)

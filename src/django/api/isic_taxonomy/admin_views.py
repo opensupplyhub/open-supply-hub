@@ -78,47 +78,21 @@ def isic_taxonomy_admin_view(request, admin_site):
 
     admin_url = get_isic_taxonomy_admin_url()
     config = IsicTaxonomyConfig.load()
+    form = IsicTaxonomyUploadForm()
     validation_errors = []
     preview_taxonomy = None
     preview_counts = None
 
     if request.method == 'POST':
-        action = request.POST.get('action', '')
-
-        if action in ('enable', 'disable'):
-            _handle_toggle(request, config, enable=(action == 'enable'))
-            return redirect(admin_url)
-
-        form = IsicTaxonomyUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            uploaded = form.cleaned_data.get('source_file')
-            if not uploaded:
-                messages.error(
-                    request,
-                    'Select a taxonomy spreadsheet before continuing.',
-                )
-            elif action == 'preview':
-                validation_errors, preview_taxonomy, preview_counts = (
-                    _handle_preview(uploaded)
-                )
-                if preview_taxonomy is not None:
-                    messages.success(
-                        request,
-                        'Preview generated successfully. Review the hierarchy '
-                        'below, then publish when ready.',
-                    )
-            elif action == 'publish':
-                preview_taxonomy, preview_counts, validation_errors = (
-                    _handle_publish(request, uploaded, config)
-                )
-            else:
-                messages.error(request, 'Unknown action.')
-        else:
-            for field_errors in form.errors.values():
-                for error in field_errors:
-                    messages.error(request, error)
-    else:
-        form = IsicTaxonomyUploadForm()
+        (
+            redirect_response,
+            form,
+            validation_errors,
+            preview_taxonomy,
+            preview_counts,
+        ) = _handle_post_request(request, config, admin_url)
+        if redirect_response is not None:
+            return redirect_response
 
     if preview_taxonomy is None:
         preview_taxonomy, preview_counts = _load_published_taxonomy_preview(
@@ -142,6 +116,50 @@ def isic_taxonomy_admin_view(request, admin_site):
         'has_permission': True,
     }
     return render(request, 'admin/isic_taxonomy.html', context)
+
+
+def _handle_post_request(request, config, admin_url):
+    action = request.POST.get('action', '')
+
+    if action in ('enable', 'disable'):
+        _handle_toggle(request, config, enable=(action == 'enable'))
+        return redirect(admin_url), None, [], None, None
+
+    form = IsicTaxonomyUploadForm(request.POST, request.FILES)
+    if not form.is_valid():
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                messages.error(request, error)
+        return None, form, [], None, None
+
+    uploaded = form.cleaned_data.get('source_file')
+    if not uploaded:
+        messages.error(
+            request,
+            'Select a taxonomy spreadsheet before continuing.',
+        )
+        return None, form, [], None, None
+
+    if action == 'preview':
+        validation_errors, preview_taxonomy, preview_counts = (
+            _handle_preview(uploaded)
+        )
+        if preview_taxonomy is not None:
+            messages.success(
+                request,
+                'Preview generated successfully. Review the hierarchy '
+                'below, then publish when ready.',
+            )
+        return None, form, validation_errors, preview_taxonomy, preview_counts
+
+    if action == 'publish':
+        preview_taxonomy, preview_counts, validation_errors = (
+            _handle_publish(request, uploaded, config)
+        )
+        return None, form, validation_errors, preview_taxonomy, preview_counts
+
+    messages.error(request, 'Unknown action.')
+    return None, form, [], None, None
 
 
 def _load_published_taxonomy_preview(config):

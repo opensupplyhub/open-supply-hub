@@ -47,6 +47,10 @@
     margin: 0 0 1rem;
 }
 
+.isic-taxonomy-status-list dl {
+    margin: 0;
+}
+
 .isic-taxonomy-status-list dt {
     color: var(--body-medium-color);
     font-weight: bold;
