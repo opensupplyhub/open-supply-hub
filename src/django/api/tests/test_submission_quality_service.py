@@ -1,19 +1,22 @@
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.test import TestCase
+from pydantic_ai import models
+from pydantic_ai.messages import ModelResponse, TextPart
+from pydantic_ai.models.function import FunctionModel
+from pydantic_ai.models.test import TestModel
 
 from api.services.submission_quality_service import (
     SubmissionQualityService,
     SubmissionQualityVerdicts,
 )
 
+# No test below should ever reach a real model endpoint; pydantic-ai
+# raises instead of making a network call if one slips through.
+models.ALLOW_MODEL_REQUESTS = False
 
-def _tool_use_block(data):
-    return SimpleNamespace(type='tool_use', input=data)
 
-
-def _valid_input(flagged=False, reason=''):
+def _valid_output(flagged=False, reason=''):
     verdict = {'flagged': flagged, 'reason': reason}
     return {
         'name_quality': dict(verdict),
@@ -23,79 +26,84 @@ def _valid_input(flagged=False, reason=''):
     }
 
 
+def _raise_runtime_error(messages, info):
+    raise RuntimeError('bedrock unavailable')
+
+
+def _text_only_response(messages, info):
+    # A model that answers in prose instead of calling the output tool.
+    return ModelResponse(parts=[TextPart('hello')])
+
+
 class TestSubmissionQualityService(TestCase):
     def setUp(self):
-        # Avoid constructing a real AnthropicBedrock client (which would
-        # resolve AWS credentials); each test swaps in its own fake
-        # response for messages.create.
-        with patch(
-            'api.services.submission_quality_service.AnthropicBedrock'
-        ):
+        # Avoid constructing a real bedrock-runtime client (which would
+        # resolve AWS credentials); every test overrides the agent's
+        # model, so the client is never used.
+        with patch('api.services.submission_quality_service.boto3'):
             self.service = SubmissionQualityService()
-        self.service._client = MagicMock()
 
-    def _evaluate_with_response(self, response):
-        self.service._client.messages.create.return_value = response
-        return self.service.evaluate(
-            name='Blue Horizon Facility',
-            address='990 Spring Garden St., Philadelphia PA 19123',
-            country_name='United States',
-        )
+    def _evaluate_with_model(self, model):
+        with self.service._agent.override(model=model):
+            return self.service.evaluate(
+                name='Blue Horizon Facility',
+                address='990 Spring Garden St., Philadelphia PA 19123',
+                country_name='United States',
+            )
 
-    def test_valid_response_is_parsed(self):
-        response = SimpleNamespace(
-            content=[_tool_use_block(_valid_input(flagged=True, reason='x'))]
+    def test_valid_output_is_parsed(self):
+        verdicts = self._evaluate_with_model(
+            TestModel(custom_output_args=_valid_output(
+                flagged=True, reason='x'
+            ))
         )
-        verdicts = self._evaluate_with_response(response)
 
         self.assertIsInstance(verdicts, SubmissionQualityVerdicts)
         self.assertTrue(verdicts.name_quality.flagged)
         self.assertEqual(verdicts.name_quality.reason, 'x')
 
-    def test_no_tool_use_block_fails_open(self):
-        response = SimpleNamespace(
-            content=[SimpleNamespace(type='text', text='hello')]
-        )
-        self.assertIsNone(self._evaluate_with_response(response))
-
-    def test_empty_content_fails_open(self):
-        response = SimpleNamespace(content=[])
-        self.assertIsNone(self._evaluate_with_response(response))
-
-    def test_missing_content_attribute_fails_open(self):
-        # An unexpected response object without .content must not raise.
-        response = SimpleNamespace()
-        self.assertIsNone(self._evaluate_with_response(response))
+    def test_text_only_response_fails_open(self):
+        # retries=0 on the agent means a response with no structured
+        # output raises inside run_sync instead of re-prompting.
+        result = self._evaluate_with_model(FunctionModel(_text_only_response))
+        self.assertIsNone(result)
 
     def test_missing_verdict_field_fails_open(self):
-        data = _valid_input()
+        data = _valid_output()
         del data['name_quality']['reason']
-        response = SimpleNamespace(content=[_tool_use_block(data)])
-        self.assertIsNone(self._evaluate_with_response(response))
+        result = self._evaluate_with_model(TestModel(custom_output_args=data))
+        self.assertIsNone(result)
 
     def test_missing_check_key_fails_open(self):
-        data = _valid_input()
+        data = _valid_output()
         del data['multiple_locations']
-        response = SimpleNamespace(content=[_tool_use_block(data)])
-        self.assertIsNone(self._evaluate_with_response(response))
+        result = self._evaluate_with_model(TestModel(custom_output_args=data))
+        self.assertIsNone(result)
 
     def test_non_bool_flagged_fails_open(self):
-        data = _valid_input()
+        data = _valid_output()
+        data['name_quality']['flagged'] = 'not a boolean'
+        result = self._evaluate_with_model(TestModel(custom_output_args=data))
+        self.assertIsNone(result)
+
+    def test_bool_like_string_flagged_is_coerced(self):
+        # pydantic's lax mode accepts unambiguous boolean spellings like
+        # 'true'; genuinely non-boolean junk still fails validation (see
+        # test_non_bool_flagged_fails_open). Pinned here because it is a
+        # deliberate loosening of the previous hand-rolled type guard.
+        data = _valid_output()
         data['name_quality']['flagged'] = 'true'
-        response = SimpleNamespace(content=[_tool_use_block(data)])
-        self.assertIsNone(self._evaluate_with_response(response))
+        verdicts = self._evaluate_with_model(
+            TestModel(custom_output_args=data)
+        )
+        self.assertIs(verdicts.name_quality.flagged, True)
 
     def test_non_str_reason_fails_open(self):
-        data = _valid_input()
+        data = _valid_output()
         data['address_quality']['reason'] = None
-        response = SimpleNamespace(content=[_tool_use_block(data)])
-        self.assertIsNone(self._evaluate_with_response(response))
+        result = self._evaluate_with_model(TestModel(custom_output_args=data))
+        self.assertIsNone(result)
 
-    def test_client_error_fails_open(self):
-        self.service._client.messages.create.side_effect = RuntimeError(
-            'bedrock unavailable'
-        )
-        result = self.service.evaluate(
-            name='n', address='a', country_name='c'
-        )
+    def test_model_error_fails_open(self):
+        result = self._evaluate_with_model(FunctionModel(_raise_runtime_error))
         self.assertIsNone(result)

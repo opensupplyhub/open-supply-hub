@@ -1195,3 +1195,21 @@ variable "contribot_last_list_id" {
   description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."
   default     = "NaN"
 }
+
+variable "bedrock_submission_quality_region" {
+  type        = string
+  description = "Region of the Bedrock inference profiles the SLC submission quality check may invoke. Must match the app's BEDROCK_AWS_REGION."
+  default     = "eu-west-1"
+}
+
+variable "bedrock_submission_quality_inference_profiles" {
+  type        = list(string)
+  description = "Bedrock inference profile IDs the SLC submission quality check may invoke. The active one is selected by the app's BEDROCK_SUBMISSION_QUALITY_MODEL_ID env var; keep the two in sync."
+  default     = ["eu.anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
+variable "bedrock_submission_quality_foundation_models" {
+  type        = list(string)
+  description = "Foundation model IDs underlying the inference profiles above. Granted region-wildcarded because cross-region profiles route across regions."
+  default     = ["anthropic.claude-haiku-4-5-20251001-v1:0"]
+}

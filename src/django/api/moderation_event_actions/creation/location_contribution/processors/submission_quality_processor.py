@@ -15,9 +15,10 @@ logger = logging.getLogger(__name__)
 
 # Maps each verdict returned by SubmissionQualityService to the warning
 # shown to the contributor when it's flagged. To add another AI-judgable
-# check, add a field to the tool schema in SubmissionQualityService, add
-# the corresponding entry here, and read the field off the verdicts object
-# below - no other part of this processor changes.
+# check, add a field to SubmissionQualityVerdicts in
+# SubmissionQualityService, add the corresponding entry here, and read the
+# field off the verdicts object below - no other part of this processor
+# changes.
 _WARNING_TITLES = {
     'name_quality': 'Name May Not Look Like a Facility Name',
     'address_quality': 'Address May Not Look Like a Facility Address',

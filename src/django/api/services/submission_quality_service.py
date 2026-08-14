@@ -1,9 +1,13 @@
 import logging
 import os
-from dataclasses import dataclass
 from typing import Optional
 
-from anthropic import AnthropicBedrock
+import boto3
+from botocore.config import Config
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent
+from pydantic_ai.models.bedrock import BedrockConverseModel
+from pydantic_ai.providers.bedrock import BedrockProvider
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +22,11 @@ BEDROCK_AWS_REGION = os.getenv('BEDROCK_AWS_REGION', 'eu-west-1')
 BEDROCK_AWS_PROFILE = os.getenv('BEDROCK_AWS_PROFILE')
 # Cross-region inference profile ID, not a bare foundation-model ID - Claude
 # Haiku is only invocable in this account/region through an inference
-# profile (confirmed by hand against Bedrock in this account).
+# profile (confirmed by hand against Bedrock in this account). Any Bedrock
+# model that supports forced tool use works here, but a non-default value
+# must also be granted in the bedrock_invoke_submission_quality_model IAM
+# policy (deployment/terraform/iam.tf) or the call will be denied - and
+# since this check fails open, that denial is invisible to contributors.
 SUBMISSION_QUALITY_MODEL_ID = os.getenv(
     'BEDROCK_SUBMISSION_QUALITY_MODEL_ID',
     'eu.anthropic.claude-haiku-4-5-20251001-v1:0',
@@ -29,144 +37,121 @@ SUBMISSION_QUALITY_MODEL_ID = os.getenv(
 # the warning (fail open).
 INVOKE_TIMEOUT_SECONDS = 5.0
 
-_TOOL_NAME = 'submission_quality_check'
+_INSTRUCTIONS = (
+    'You evaluate a single-location production facility contribution for '
+    'data-quality problems, reporting a verdict for every check in the '
+    'output schema. Flag a check only when there is a likely problem '
+    'worth warning the contributor about.'
+)
 
 
-def _verdict_property(description: str) -> dict:
-    return {
-        'type': 'object',
-        'description': description,
-        'properties': {
-            'flagged': {
-                'type': 'boolean',
-                'description': (
-                    'true if this check found a likely problem worth '
-                    'warning the contributor about, false otherwise.'
-                ),
-            },
-            'reason': {
-                'type': 'string',
-                'description': (
-                    'A short, one-sentence explanation shown to the '
-                    'contributor when flagged is true. Empty string when '
-                    'flagged is false.'
-                ),
-            },
-        },
-        'required': ['flagged', 'reason'],
-    }
+class QualityVerdict(BaseModel):
+    flagged: bool = Field(
+        description=(
+            'true if this check found a likely problem worth warning the '
+            'contributor about, false otherwise.'
+        ),
+    )
+    reason: str = Field(
+        description=(
+            'A short, one-sentence explanation shown to the contributor '
+            'when flagged is true. Empty string when flagged is false.'
+        ),
+    )
 
 
-_TOOL_SCHEMA = {
-    'name': _TOOL_NAME,
-    'description': (
-        'Report data-quality verdicts for a single-location production '
-        'facility contribution.'
-    ),
-    'input_schema': {
-        'type': 'object',
-        'properties': {
-            'name_quality': _verdict_property(
-                'Whether the submitted name looks like a plausible '
-                'facility/business name, as opposed to test data, a '
-                "person's name, or gibberish."
-            ),
-            'address_quality': _verdict_property(
-                'Whether the submitted address looks like a real, '
-                'sufficiently specific facility address - it should '
-                'ideally include a street name/number and either a '
-                'city/municipality or a state/province, not just a '
-                'country or a vague area.'
-            ),
-            'address_country_mismatch': _verdict_property(
-                'Whether the submitted address appears inconsistent with '
-                '(does not match) the submitted country. flagged should '
-                'be true when the address looks like it does NOT match.'
-            ),
-            'multiple_locations': _verdict_property(
-                'Whether the name or address appears to describe more '
-                'than one distinct facility, e.g. two names or two '
-                'addresses joined together.'
-            ),
-        },
-        'required': [
-            'name_quality',
-            'address_quality',
-            'address_country_mismatch',
-            'multiple_locations',
-        ],
-    },
-}
-
-
-@dataclass(frozen=True)
-class QualityVerdict:
-    flagged: bool
-    reason: str
-
-
-@dataclass(frozen=True)
-class SubmissionQualityVerdicts:
-    name_quality: QualityVerdict
-    address_quality: QualityVerdict
-    address_country_mismatch: QualityVerdict
-    multiple_locations: QualityVerdict
-
-
-def _build_verdict(verdict: dict) -> QualityVerdict:
-    # The tool input_schema types these fields, but the model's output is
-    # not hard-validated against that schema, so guard the types here.
-    # A non-bool flagged would otherwise sail through this frozen
-    # dataclass (which does no runtime type checking) and be treated as
-    # truthy downstream, showing a false-positive warning.
-    flagged = verdict['flagged']
-    reason = verdict['reason']
-    if not isinstance(flagged, bool) or not isinstance(reason, str):
-        raise TypeError(
-            f'Unexpected verdict field types: {verdict!r}'
-        )
-    return QualityVerdict(flagged=flagged, reason=reason)
+class SubmissionQualityVerdicts(BaseModel):
+    name_quality: QualityVerdict = Field(
+        description=(
+            'Whether the submitted name looks like a plausible '
+            'facility/business name, as opposed to test data, a '
+            "person's name, or gibberish."
+        ),
+    )
+    address_quality: QualityVerdict = Field(
+        description=(
+            'Whether the submitted address looks like a real, '
+            'sufficiently specific facility address - it should '
+            'ideally include a street name/number and either a '
+            'city/municipality or a state/province, not just a '
+            'country or a vague area.'
+        ),
+    )
+    address_country_mismatch: QualityVerdict = Field(
+        description=(
+            'Whether the submitted address appears inconsistent with '
+            '(does not match) the submitted country. flagged should '
+            'be true when the address looks like it does NOT match.'
+        ),
+    )
+    multiple_locations: QualityVerdict = Field(
+        description=(
+            'Whether the name or address appears to describe more '
+            'than one distinct facility, e.g. two names or two '
+            'addresses joined together.'
+        ),
+    )
 
 
 class SubmissionQualityService:
     '''
     Evaluates all AI-judgable SLC submission quality checks (name quality,
     address quality/specificity, address-country match, multiple locations
-    bundled into one submission) in a single Bedrock-hosted Claude call,
-    using forced tool-use for structured output - one round trip per
-    submission rather than one model call per check, so adding another
-    AI-judgable check later only means adding a field to this schema.
+    bundled into one submission) in a single LLM call, so adding another
+    AI-judgable check later only means adding a field to
+    SubmissionQualityVerdicts.
 
-    Fails open: any error, timeout, or unexpected response shape is logged
-    and returns None so the caller skips the warning rather than blocking
-    a legitimate submission.
+    The call goes through pydantic-ai, which is model- and
+    vendor-independent: the output schema, instructions, and everything
+    the callers see are defined against pydantic-ai's Agent, and only the
+    model construction below is Bedrock-specific (chosen because Bedrock
+    authenticates with the ECS task's IAM role - no API key to manage).
+    Swapping the model is a config change (see
+    BEDROCK_SUBMISSION_QUALITY_MODEL_ID above); swapping the provider
+    means replacing the BedrockConverseModel construction only.
+
+    Fails open: any error, timeout, or output that does not validate
+    against the schema is logged and returns None so the caller skips the
+    warning rather than blocking a legitimate submission.
     '''
 
     def __init__(self):
-        self._client = AnthropicBedrock(
-            aws_region=BEDROCK_AWS_REGION,
-            aws_profile=BEDROCK_AWS_PROFILE,
+        bedrock_client = boto3.session.Session(
+            profile_name=BEDROCK_AWS_PROFILE,
+        ).client(
+            'bedrock-runtime',
+            region_name=BEDROCK_AWS_REGION,
+            config=Config(
+                connect_timeout=INVOKE_TIMEOUT_SECONDS,
+                read_timeout=INVOKE_TIMEOUT_SECONDS,
+                # One attempt total: boto3's default retries would stack
+                # on top of the timeout and block the submission request.
+                retries={'max_attempts': 1},
+            ),
+        )
+        self._agent = Agent(
+            BedrockConverseModel(
+                SUBMISSION_QUALITY_MODEL_ID,
+                provider=BedrockProvider(bedrock_client=bedrock_client),
+            ),
+            output_type=SubmissionQualityVerdicts,
+            instructions=_INSTRUCTIONS,
+            # No re-prompting on output that fails schema validation - a
+            # retry is a second synchronous model call in the request
+            # path. An invalid output raises instead, and evaluate()
+            # fails open.
+            retries=0,
         )
 
     def evaluate(
         self, name: str, address: str, country_name: str
     ) -> Optional[SubmissionQualityVerdicts]:
         try:
-            response = self._client.messages.create(
-                model=SUBMISSION_QUALITY_MODEL_ID,
-                max_tokens=1024,
-                tools=[_TOOL_SCHEMA],
-                tool_choice={'type': 'tool', 'name': _TOOL_NAME},
-                messages=[{
-                    'role': 'user',
-                    'content': (
-                        'Evaluate this production location submission.\n'
-                        f'Name: {name}\n'
-                        f'Address: {address}\n'
-                        f'Country: {country_name}'
-                    ),
-                }],
-                timeout=INVOKE_TIMEOUT_SECONDS,
+            result = self._agent.run_sync(
+                'Evaluate this production location submission.\n'
+                f'Name: {name}\n'
+                f'Address: {address}\n'
+                f'Country: {country_name}'
             )
         except Exception:
             logger.exception(
@@ -174,41 +159,4 @@ class SubmissionQualityService:
             )
             return None
 
-        return self.__parse_response(response)
-
-    @staticmethod
-    def __parse_response(response) -> Optional[SubmissionQualityVerdicts]:
-        # Every access below - including response.content and block.type -
-        # is inside the try so that any unexpected response shape fails
-        # open (logs and returns None) rather than propagating and turning
-        # this advisory check into a hard submission failure.
-        try:
-            tool_use = next(
-                (block for block in response.content
-                 if block.type == 'tool_use'),
-                None,
-            )
-            if tool_use is None:
-                logger.error(
-                    'Submission quality check returned no tool_use block; '
-                    'skipping (fail open).'
-                )
-                return None
-
-            data = tool_use.input
-            return SubmissionQualityVerdicts(
-                name_quality=_build_verdict(data['name_quality']),
-                address_quality=_build_verdict(data['address_quality']),
-                address_country_mismatch=_build_verdict(
-                    data['address_country_mismatch']
-                ),
-                multiple_locations=_build_verdict(
-                    data['multiple_locations']
-                ),
-            )
-        except Exception:
-            logger.exception(
-                'Submission quality check returned an unexpected shape; '
-                'skipping (fail open).'
-            )
-            return None
+        return result.output
