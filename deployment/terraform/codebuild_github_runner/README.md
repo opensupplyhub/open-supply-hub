@@ -56,7 +56,7 @@ connection must be created manually **in the Test AWS account**:
 4. The connection status becomes **Available**. Copy its ARN
    (`arn:aws:codeconnections:eu-west-1:<account-id>:connection/<uuid>`).
 5. Store the ARN in SM as `oshub/test/codebuild-github-runner-connection`
-   (via `sm-secrets-cli`). Public
+   (via the `sm-secrets-cli` repo or any other method). Public
    `deployment/environments/terraform-test.tfvars` already references it with
    `codebuild_github_runner_connection_secret_name`; Terraform reads the value
    at apply time.

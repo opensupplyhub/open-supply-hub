@@ -23,7 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2311](https://opensupplyhub.atlassian.net/browse/OSDEV-2311) - Fixed the V1 Claim form (`/claim/{osID}/details`) showing a generic or empty error banner when `POST /api/facilities/{osID}/claim/` returned server validation errors. Nested DRF ListField errors (e.g. `facility_product_types` / `facility_production_types` over the 50-character per-item limit) and other field errors are now parsed and shown as specific messages, with the failing fields highlighted. Form-level errors such as an already-pending or already-approved claim still appear in the banner. Editing any field clears the stale server error banner. Profile-step Product Types and Processing Types include format guidance (Enter/Tab for separate values, 50-character item limit); Location Type(s) guidance matches the backend pipe-joined 300-character limit; Company Website notes the 200-character URL limit. Matching client-side Yup checks catch those cases before submit.
 
 ### Release instructions
-* Before deploying this release to each environment, pre-populate that environment's `oshub/<env>/…` secrets in AWS Secrets Manager using the private `sm-secrets-cli` tool. This cutover prep will be performed by the assignee of [OSDEV-2929](https://opensupplyhub.atlassian.net/browse/OSDEV-2929).
+* Before deploying this release to each environment, pre-populate that environment's `oshub/<env>/…` secrets in AWS Secrets Manager using the `sm-secrets-cli` repo or any other method. This cutover prep will be performed by the assignee of [OSDEV-2929](https://opensupplyhub.atlassian.net/browse/OSDEV-2929).
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
 
