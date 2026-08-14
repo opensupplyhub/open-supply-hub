@@ -56,7 +56,7 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` i
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
 
-When `aws_chatbot_manage_channel_configuration = true`, Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes SNS topics so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`. Slack IDs come from [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars.
+When `aws_chatbot_manage_channel_configuration = true`, Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes SNS topics so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`. Slack IDs (`aws_chatbot_slack_team_id`, `aws_chatbot_slack_channel_id`) are set in public tfvars for the **owner** environment: `deployment/environments/terraform-test.tfvars` (Dev/Test/Preprod account) and `deployment/environments/terraform-production.tfvars` (Production/Staging/RBA account).
 
 ### Shared AWS account (one channel config)
 
@@ -76,7 +76,7 @@ AWS allows **only one** Chatbot Slack channel configuration per Slack channel **
 | Production | `true` (owner) | Creates the channel config; `sns_topic_arns` = Prod SNS + optional sibling ARNs |
 | Staging / RBA | `false` | Own SNS topic only; no Chatbot resources |
 
-Owner optional list `aws_chatbot_additional_sns_topic_arns` defaults to `[]` (safe for a new account / first env). After **stable** sibling SNS topics exist, add their ARNs in private `ci-deployment` tfvars for the owner env and re-apply.
+Owner optional list `aws_chatbot_additional_sns_topic_arns` defaults to `[]` (safe for a new account / first env). After **stable** sibling SNS topics exist, update the owner env’s SM secret (`oshub/<owner>/aws-chatbot-additional-sns-topic-arns`, referenced by `aws_chatbot_additional_sns_topic_arns_secret_name` in public tfvars — Test and Production today) via `sm-secrets-cli`, then re-apply the owner env.
 
 Do **not** put ephemeral Preprod in that Terraform list. Chatbot accepts an SNS ARN even when the topic does not exist yet and does **not** create a subscription later when the topic appears. Preprod attach/detach is CI-owned:
 
@@ -96,9 +96,9 @@ New AWS account, first env: leave manage `true` and additional ARNs empty — on
 3. Copy:
    - **Workspace (team) ID** — Chatbot console → configured clients, or Slack workspace settings (starts with `T`).
    - **Channel ID** — Slack → channel details / copy link (starts with `C`).
-4. Put both values in the private `ci-deployment` tfvars for the **owner** environment (`aws_chatbot_manage_channel_configuration = true`):
-   - `aws_chatbot_slack_team_id`
-   - `aws_chatbot_slack_channel_id`
+4. Put both values in public tfvars for the **owner** environment (`aws_chatbot_manage_channel_configuration = true`):
+   - `aws_chatbot_slack_team_id` — Test tfvars (Dev/Test/Preprod) or Production tfvars (Production/Staging/RBA)
+   - `aws_chatbot_slack_channel_id` — same file as the team ID
 
 | Resource | Purpose |
 | --- | --- |

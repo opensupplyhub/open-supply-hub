@@ -1176,7 +1176,7 @@ variable "aws_chatbot_manage_channel_configuration" {
 
 variable "aws_chatbot_additional_sns_topic_arns" {
   type        = list(string)
-  description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Set in private ci-deployment tfvars; omit until those topics exist."
+  description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Prefer aws_chatbot_additional_sns_topic_arns_secret_name (SM JSON list); this direct var is the fallback when the secret name is omitted. Leave empty until sibling topics exist."
   sensitive   = true
   default     = []
 }
@@ -1374,8 +1374,9 @@ variable "anonymized_database_kms_key_id_secret_name" {
 }
 
 variable "codebuild_github_runner_connection_secret_name" {
-  type    = string
-  default = ""
+  description = "SM secret name for the CodeConnections ARN (plain string). When set, overrides codebuild_github_runner_connection_arn. Test uses oshub/test/codebuild-github-runner-connection."
+  type        = string
+  default     = ""
 }
 
 variable "aws_chatbot_additional_sns_topic_arns_secret_name" {
