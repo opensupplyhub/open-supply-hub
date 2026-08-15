@@ -87,8 +87,7 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
     data_area:
         'Enter the data or computing-specific area. Often referred to as ' +
         'data hall space or white space.',
-    non_data_area:
-        'Enter the area not used for data processing or storage.',
+    non_data_area: 'Enter the area not used for data processing or storage.',
     floor_space: 'Enter the floor space of the data center.',
     number_of_floors: 'Enter the number of floors, if known.',
     footprint: 'Enter the ground area occupied by the data center.',
