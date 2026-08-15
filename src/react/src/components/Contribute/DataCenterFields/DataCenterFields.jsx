@@ -102,6 +102,35 @@ const DataCenterFields = ({ classes, contributionForm }) => {
         );
     };
 
+    // Yes/no fields render a checkbox, measures render a value + units pair,
+    // and everything else a single text input.
+    const renderFieldControl = field => {
+        if (field.isCheckbox) {
+            return renderCheckbox(field.formName, field.label);
+        }
+
+        const placeholder = `Enter the ${field.label.toLowerCase()}`;
+
+        if (field.unitsFormName) {
+            return (
+                <div className={classes.unitsRow}>
+                    <div className={classes.unitsValue}>
+                        {renderInput(field.formName, field.label, placeholder)}
+                    </div>
+                    <div className={classes.unitsUnit}>
+                        {renderInput(
+                            field.unitsFormName,
+                            `${field.label} units`,
+                            'Units (e.g. MW)',
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        return renderInput(field.formName, field.label, placeholder);
+    };
+
     return (
         <div data-testid="data-center-fields">
             <Typography component="h2" className={classes.sectionsTitle}>
@@ -168,43 +197,7 @@ const DataCenterFields = ({ classes, contributionForm }) => {
                                                 {field.description}
                                             </Typography>
                                         ) : null}
-                                        {field.isCheckbox ? (
-                                            renderCheckbox(
-                                                field.formName,
-                                                field.label,
-                                            )
-                                        ) : field.unitsFormName ? (
-                                            <div className={classes.unitsRow}>
-                                                <div
-                                                    className={
-                                                        classes.unitsValue
-                                                    }
-                                                >
-                                                    {renderInput(
-                                                        field.formName,
-                                                        field.label,
-                                                        `Enter the ${field.label.toLowerCase()}`,
-                                                    )}
-                                                </div>
-                                                <div
-                                                    className={
-                                                        classes.unitsUnit
-                                                    }
-                                                >
-                                                    {renderInput(
-                                                        field.unitsFormName,
-                                                        `${field.label} units`,
-                                                        'Units (e.g. MW)',
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            renderInput(
-                                                field.formName,
-                                                field.label,
-                                                `Enter the ${field.label.toLowerCase()}`,
-                                            )
-                                        )}
+                                        {renderFieldControl(field)}
                                     </div>
                                 ))}
                             </div>
