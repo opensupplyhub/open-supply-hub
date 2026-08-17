@@ -76,14 +76,12 @@ resource "aws_db_parameter_group" "default" {
     apply_method = "pending-reboot"
   }
 
-  # Classes of SQL statements that pgaudit records. "ddl,role" captures schema
-  # changes and privilege/role grants without logging every read or write.
-  #
-  # Enabling this for the first time takes a staged rollout: CREATE EXTENSION
-  # pgaudit installs the event triggers that supply object type and object name
-  # for DDL records, and it can only run once the library is loaded at server
-  # start. Set rds_pgaudit_log = "none" for the first apply and reboot, create
-  # the extension, then restore the default and reboot again -- see
+  # Classes of SQL statements that pgaudit records. Deliberately "none" for now:
+  # CREATE EXTENSION pgaudit installs the event triggers that supply object type
+  # and object name for DDL records, and it can only run once the library above
+  # is loaded at server start. Setting a real class before that would produce
+  # DDL records naming no object. Phase 2 (OSDEV-3236) flips the default to
+  # "ddl,role" once the extension exists in every environment -- see
   # doc/ops/database-auditing.md.
   parameter {
     name         = "pgaudit.log"

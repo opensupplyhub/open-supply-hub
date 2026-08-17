@@ -310,9 +310,9 @@ variable "rds_shared_preload_libraries" {
 }
 
 variable "rds_pgaudit_log" {
-  description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Set to \"none\" only for the first phase of the staged rollout described in doc/ops/database-auditing.md."
+  description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Deliberately \"none\" for phase 1 of the staged rollout: CREATE EXTENSION pgaudit has to land before this is set, or DDL records are written without object type or object name. OSDEV-3236 flips it to \"ddl,role\". See doc/ops/database-auditing.md."
   type        = string
-  default     = "ddl,role"
+  default     = "none"
 
   validation {
     condition = alltrue([
