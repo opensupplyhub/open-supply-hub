@@ -4,11 +4,23 @@ from __future__ import annotations
 
 import json
 import os
-import boto3
+from enum import Enum
 from typing import Any, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
+
+import boto3
+
+
+class FacilityListStatus(str, Enum):
+    """``FacilityList.status`` values accepted by ``/api/admin-facility-lists/``."""
+
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    MATCHED = "MATCHED"
+    REPLACED = "REPLACED"
 
 
 class OSHubAPI:
