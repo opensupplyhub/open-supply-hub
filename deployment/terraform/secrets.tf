@@ -524,8 +524,8 @@ locals {
   aws_chatbot_additional_sns_topic_arns = var.aws_chatbot_additional_sns_topic_arns_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.aws_chatbot_additional_sns_topic_arns[0].secret_string) : var.aws_chatbot_additional_sns_topic_arns
 
   aws_chatbot_slack_config = var.aws_chatbot_slack_config_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.aws_chatbot_slack_config[0].secret_string) : {
-    team_id    = var.aws_chatbot_slack_team_id
-    channel_id = var.aws_chatbot_slack_channel_id
+    team_id    = ""
+    channel_id = ""
   }
   aws_chatbot_slack_team_id    = local.aws_chatbot_slack_config.team_id
   aws_chatbot_slack_channel_id = local.aws_chatbot_slack_config.channel_id

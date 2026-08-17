@@ -1181,31 +1181,14 @@ variable "aws_chatbot_additional_sns_topic_arns" {
   default     = []
 }
 
-variable "aws_chatbot_slack_team_id" {
-  type        = string
-  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Fallback when aws_chatbot_slack_config_secret_name is unset."
-  sensitive   = true
-  default     = ""
-}
-
-variable "aws_chatbot_slack_channel_id" {
-  type        = string
-  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Fallback when aws_chatbot_slack_config_secret_name is unset."
-  sensitive   = true
-  default     = ""
-}
-
 variable "aws_chatbot_slack_config_secret_name" {
   type        = string
-  description = "SM secret name for Chatbot Slack IDs as JSON {\"team_id\":\"…\",\"channel_id\":\"…\"}. Prefer this over plaintext aws_chatbot_slack_* vars."
+  description = "SM secret name for Chatbot Slack IDs as JSON {\"team_id\":\"…\",\"channel_id\":\"…\"}. Required when aws_chatbot_manage_channel_configuration is true."
   default     = ""
 
   validation {
-    condition = !var.aws_chatbot_manage_channel_configuration || (
-      var.aws_chatbot_slack_config_secret_name != "" ||
-      (length(var.aws_chatbot_slack_team_id) > 0 && length(var.aws_chatbot_slack_channel_id) > 0)
-    )
-    error_message = "When aws_chatbot_manage_channel_configuration is true, set aws_chatbot_slack_config_secret_name or both aws_chatbot_slack_team_id and aws_chatbot_slack_channel_id."
+    condition     = !var.aws_chatbot_manage_channel_configuration || var.aws_chatbot_slack_config_secret_name != ""
+    error_message = "When aws_chatbot_manage_channel_configuration is true, set aws_chatbot_slack_config_secret_name."
   }
 }
 
