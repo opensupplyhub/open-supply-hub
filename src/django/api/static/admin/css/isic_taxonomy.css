@@ -51,6 +51,17 @@
     margin: 0;
 }
 
+.isic-taxonomy-status-list dl.isic-taxonomy-status-visibility {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.isic-taxonomy-status-list dl.isic-taxonomy-status-visibility dd {
+    margin: 0;
+}
+
 .isic-taxonomy-status-list dt {
     color: var(--body-medium-color);
     font-weight: bold;
@@ -101,6 +112,11 @@
 
 .isic-taxonomy-toggle-form {
     margin-top: 1rem;
+}
+
+.isic-taxonomy-toggle-form .button,
+.isic-taxonomy-upload-form .submit-row .button {
+    padding: 10px 15px;
 }
 
 .isic-taxonomy-upload-form .submit-row {
