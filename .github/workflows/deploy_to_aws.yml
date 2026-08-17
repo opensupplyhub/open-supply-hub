@@ -356,6 +356,9 @@ jobs:
         # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
         # after a later step like terraform apply fails) would otherwise fail at
         # push with ImageTagAlreadyExistsException. Omit those targets from bake.
+        #
+        # Batch is FROM the django image at the same GIT_COMMIT tag, so it must
+        # bake in a second wave after django is pushed (or already exists).
         id: bake_targets
         env:
           ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
@@ -378,35 +381,52 @@ jobs:
             candidates+=("anonymized-database-dump|-anonymized-database-dump")
           fi
 
-          targets=()
+          wave1=()
+          wave2=()
           for entry in "${candidates[@]}"; do
             target="${entry%%|*}"
             suffix="${entry#*|}"
             repo="${IMAGE_NAME}${suffix}-${ENV_SLUG}"
             if aws ecr describe-images --repository-name "$repo" --image-ids "imageTag=${GIT_COMMIT}" >/dev/null 2>&1; then
               echo "Tag ${GIT_COMMIT} already exists in ${repo}, skipping ${target}."
+            elif [ "$target" = "batch" ]; then
+              wave2+=("$target")
             else
-              targets+=("$target")
+              wave1+=("$target")
             fi
           done
 
-          if [ "${#targets[@]}" -eq 0 ]; then
+          if [ "${#wave1[@]}" -eq 0 ] && [ "${#wave2[@]}" -eq 0 ]; then
             echo "All image tags already exist for ${GIT_COMMIT}; nothing to bake."
-            echo "targets=" >> "$GITHUB_OUTPUT"
           else
-            echo "Baking targets: ${targets[*]}"
-            echo "targets=${targets[*]}" >> "$GITHUB_OUTPUT"
+            echo "Bake wave 1 (parallel): ${wave1[*]:-"(none)"}"
+            echo "Bake wave 2 (after django): ${wave2[*]:-"(none)"}"
           fi
+          {
+            echo "wave1=${wave1[*]-}"
+            echo "wave2=${wave2[*]-}"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push Docker images to ECR for ${{ vars.ENV_NAME }}
-        if: ${{ steps.bake_targets.outputs.targets != '' }}
+      - name: Build and push Docker images to ECR for ${{ vars.ENV_NAME }} (wave 1)
+        if: ${{ steps.bake_targets.outputs.wave1 != '' }}
         env:
           ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
           IMAGE_NAME: ${{ vars.IMAGE_NAME }}
           ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
           GIT_COMMIT: ${{ env.GIT_COMMIT }}
           DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
-        run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.targets }}
+        run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.wave1 }}
+
+      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }} (wave 2)
+        # Batch FROM ${DOCKER_IMAGE}-${ENVIRONMENT}:${GIT_COMMIT} (the django image).
+        if: ${{ steps.bake_targets.outputs.wave2 != '' }}
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+        run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.wave2 }}
 
   create_kafka_topic:
     needs: [build_and_push_react_app, build_and_push_docker_image]
