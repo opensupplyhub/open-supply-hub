@@ -315,9 +315,6 @@ jobs:
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
   build_and_push_docker_image:
-    # Independent of the React/S3 publish job — both only need Terraform apply
-    # (frontend bucket / CloudFront vs ECR repos). Running them in parallel
-    # shortens deploy wall-clock; frontend and backend may finish slightly apart.
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
@@ -356,9 +353,7 @@ jobs:
         # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
         # after a later step like terraform apply fails) would otherwise fail at
         # push with ImageTagAlreadyExistsException. Omit those targets from bake.
-        #
-        # Batch is FROM the django image at the same GIT_COMMIT tag, so it must
-        # bake in a second wave after django is pushed (or already exists).
+        # Batch FROM the django image at the same GIT_COMMIT, so it bakes in wave 2.
         id: bake_targets
         env:
           ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
@@ -418,7 +413,6 @@ jobs:
         run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.wave1 }}
 
       - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }} (wave 2)
-        # Batch FROM ${DOCKER_IMAGE}-${ENVIRONMENT}:${GIT_COMMIT} (the django image).
         if: ${{ steps.bake_targets.outputs.wave2 != '' }}
         env:
           ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
