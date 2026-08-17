@@ -356,6 +356,23 @@ describe('slcValidationSchema', () => {
         });
     });
 
+    describe('isGroup field (data-center grouping)', () => {
+        it('accepts an empty value', async () => {
+            await expect(isValid({ isGroup: '' })).resolves.toBe(true);
+        });
+
+        it("accepts 'true' and 'false'", async () => {
+            await expect(isValid({ isGroup: 'true' })).resolves.toBe(true);
+            await expect(isValid({ isGroup: 'false' })).resolves.toBe(true);
+        });
+
+        it('rejects any other value', async () => {
+            await expect(validate({ isGroup: 'yes' })).rejects.toThrow(
+                'Is a group must be either true or false.',
+            );
+        });
+    });
+
     describe('dateOfSource field (data-center provenance, OSDEV-3074)', () => {
         it('accepts an empty value', async () => {
             await expect(isValid({ dateOfSource: '' })).resolves.toBe(true);

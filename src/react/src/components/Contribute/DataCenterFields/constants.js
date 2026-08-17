@@ -63,6 +63,9 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
     wue:
         'Enter the Water Usage Effectiveness: a ratio measure of water ' +
         'use. For example: 1.8.',
+    onsite_power_generation:
+        'Enter any power generated on site, as stated by the source. For ' +
+        'example: solar, on-site gas turbines.',
     cooling_mechanism:
         'Enter the cooling mechanism(s) used, as stated by the source. For ' +
         'example: air cooled, evaporative cooling.',
@@ -84,12 +87,24 @@ const DATA_CENTER_FIELD_DESCRIPTIONS = Object.freeze({
     data_area:
         'Enter the data or computing-specific area. Often referred to as ' +
         'data hall space or white space.',
+    non_data_area: 'Enter the area not used for data processing or storage.',
     floor_space: 'Enter the floor space of the data center.',
-    overall_area: 'Enter the overall or full building area.',
+    number_of_floors: 'Enter the number of floors, if known.',
+    footprint: 'Enter the ground area occupied by the data center.',
+    building_area: 'Enter the total area of the building.',
+    land_area: 'Enter the total area of land the data center occupies.',
     other_area: 'Enter any other area not captured by the fields above.',
     other_area_notes: 'Describe the type of area entered in Other Area.',
     number_of_servers: 'Enter the number of servers, if known.',
     number_of_racks: 'Enter the number of racks, if known.',
+    number_of_buildings: 'Enter the number of buildings, if known.',
+    // Grouping
+    is_group:
+        'Set to true if this record represents a group of data centers ' +
+        'rather than a single one.',
+    data_center_group_id:
+        'Enter the identifier of the group (building or campus) this data ' +
+        'center belongs to. Used to link data centers in the same group.',
     // Source details (provenance)
     source_name:
         'Enter the name of the external source the data came from. For ' +
@@ -125,6 +140,7 @@ export const DATA_CENTER_FORM_SECTIONS = Object.freeze(
                 formName: camelCase(field.key),
                 label: field.label,
                 description: DATA_CENTER_FIELD_DESCRIPTIONS[field.key] || '',
+                isCheckbox: !!field.isBoolean,
                 unitsFormName: field.unitsField
                     ? camelCase(field.unitsField)
                     : null,
@@ -136,6 +152,7 @@ export const DATA_CENTER_FORM_SECTIONS = Object.freeze(
                 formName: camelCase(field.key),
                 label: field.label,
                 description: DATA_CENTER_FIELD_DESCRIPTIONS[field.key] || '',
+                isCheckbox: false,
                 unitsFormName: null,
             })),
         },
