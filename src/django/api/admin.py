@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django import forms
 from django.db import transaction
 from django.urls import path
 from django.contrib import admin, messages
@@ -12,6 +13,11 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from api.helpers.geojson_polygon import (
+    InvalidPolygonGeoJSON,
+    parse_polygon_geojson,
+)
+from api.models.named_polygon import NamedPolygon
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
@@ -309,6 +315,63 @@ class USCountyTigerlineAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
+class NamedPolygonForm(forms.ModelForm):
+    geojson_file = forms.FileField(
+        required=False,
+        help_text=(
+            'Upload a .geojson/.json file containing a Polygon, '
+            'MultiPolygon, Feature, or FeatureCollection geometry.'
+        ),
+    )
+    geojson_text = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'rows': 10}),
+        help_text=(
+            'Or paste GeoJSON directly. Ignored if a file is uploaded. '
+            'Leave both blank when editing to keep the current boundary.'
+        ),
+    )
+
+    class Meta:
+        model = NamedPolygon
+        fields = ('name', 'description')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        geojson_file = cleaned_data.get('geojson_file')
+        geojson_text = cleaned_data.get('geojson_text')
+
+        if geojson_file:
+            try:
+                raw = geojson_file.read().decode('utf-8')
+            except UnicodeDecodeError as exc:
+                raise forms.ValidationError(
+                    f'Could not read the file as UTF-8 text: {exc}'
+                ) from exc
+        elif geojson_text:
+            raw = geojson_text
+        elif self.instance.pk and self.instance.geom:
+            return cleaned_data
+        else:
+            raise forms.ValidationError(
+                'Upload a GeoJSON file or paste GeoJSON text.'
+            )
+
+        try:
+            self.instance.geom = parse_polygon_geojson(raw)
+        except InvalidPolygonGeoJSON as exc:
+            raise forms.ValidationError(str(exc)) from exc
+
+        return cleaned_data
+
+
+class NamedPolygonAdmin(admin.ModelAdmin):
+    form = NamedPolygonForm
+    list_display = ('name', 'created_at', 'updated_at')
+    search_fields = ('name', 'description')
+    readonly_fields = ('created_at', 'updated_at')
+
+
 class PartnerDataFileUploadAdmin(admin.ModelAdmin):
     list_display = (
         "uuid",
@@ -417,4 +480,5 @@ admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
+admin_site.register(NamedPolygon, NamedPolygonAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)
