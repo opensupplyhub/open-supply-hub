@@ -527,8 +527,6 @@ locals {
     team_id    = ""
     channel_id = ""
   }
-  aws_chatbot_slack_team_id    = local.aws_chatbot_slack_config.team_id
-  aws_chatbot_slack_channel_id = local.aws_chatbot_slack_config.channel_id
 
   vanta_assumed_role_external_ids = var.vanta_assumed_role_external_ids_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.vanta_assumed_role_external_ids[0].secret_string) : var.vanta_assumed_role_external_ids
   vanta_assumed_role_principals   = var.vanta_assumed_role_principals_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.vanta_assumed_role_principals[0].secret_string) : var.vanta_assumed_role_principals

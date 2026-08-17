@@ -47,8 +47,8 @@ resource "aws_chatbot_slack_channel_configuration" "global_alarms" {
 
   configuration_name = "chatbot${local.short}GlobalAlarms"
   iam_role_arn       = aws_iam_role.chatbot[0].arn
-  slack_team_id      = local.aws_chatbot_slack_team_id
-  slack_channel_id   = local.aws_chatbot_slack_channel_id
+  slack_team_id      = local.aws_chatbot_slack_config.team_id
+  slack_channel_id   = local.aws_chatbot_slack_config.channel_id
   logging_level      = "ERROR"
 
   sns_topic_arns = concat(
