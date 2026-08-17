@@ -56,7 +56,7 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` i
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
 
-When `aws_chatbot_manage_channel_configuration = true`, Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes SNS topics so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`. Slack IDs (`aws_chatbot_slack_team_id`, `aws_chatbot_slack_channel_id`) are set in public tfvars for the **owner** environment: `deployment/environments/terraform-test.tfvars` (Dev/Test/Preprod account) and `deployment/environments/terraform-production.tfvars` (Production/Staging/RBA account).
+When `aws_chatbot_manage_channel_configuration = true`, Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes SNS topics so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`. Slack workspace and channel IDs are read from the owner env’s SM secret (`oshub/<owner>/aws-chatbot-slack-config`, referenced by `aws_chatbot_slack_config_secret_name` in public tfvars — Test and Production today) as JSON `{"team_id":"…","channel_id":"…"}`.
 
 ### Shared AWS account (one channel config)
 
@@ -96,9 +96,10 @@ New AWS account, first env: leave manage `true` and additional ARNs empty — on
 3. Copy:
    - **Workspace (team) ID** — Chatbot console → configured clients, or Slack workspace settings (starts with `T`).
    - **Channel ID** — Slack → channel details / copy link (starts with `C`).
-4. Put both values in public tfvars for the **owner** environment (`aws_chatbot_manage_channel_configuration = true`):
-   - `aws_chatbot_slack_team_id` — Test tfvars (Dev/Test/Preprod) or Production tfvars (Production/Staging/RBA)
-   - `aws_chatbot_slack_channel_id` — same file as the team ID
+4. Seed the owner env’s SM secret (`aws_chatbot_slack_config_secret_name`, e.g. `oshub/test/aws-chatbot-slack-config` or `oshub/production/aws-chatbot-slack-config`) via the `sm-secrets-cli` repo or any other method with JSON:
+   ```json
+   {"team_id": "T…", "channel_id": "C…"}
+   ```
 
 | Resource | Purpose |
 | --- | --- |

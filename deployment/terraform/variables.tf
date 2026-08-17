@@ -1183,25 +1183,29 @@ variable "aws_chatbot_additional_sns_topic_arns" {
 
 variable "aws_chatbot_slack_team_id" {
   type        = string
-  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Required when aws_chatbot_manage_channel_configuration is true."
+  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Fallback when aws_chatbot_slack_config_secret_name is unset."
   sensitive   = true
   default     = ""
-
-  validation {
-    condition     = !var.aws_chatbot_manage_channel_configuration || length(var.aws_chatbot_slack_team_id) > 0
-    error_message = "aws_chatbot_slack_team_id must be a non-empty Slack workspace ID when managing the Chatbot channel configuration."
-  }
 }
 
 variable "aws_chatbot_slack_channel_id" {
   type        = string
-  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Required when aws_chatbot_manage_channel_configuration is true."
+  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Fallback when aws_chatbot_slack_config_secret_name is unset."
   sensitive   = true
+  default     = ""
+}
+
+variable "aws_chatbot_slack_config_secret_name" {
+  type        = string
+  description = "SM secret name for Chatbot Slack IDs as JSON {\"team_id\":\"…\",\"channel_id\":\"…\"}. Prefer this over plaintext aws_chatbot_slack_* vars."
   default     = ""
 
   validation {
-    condition     = !var.aws_chatbot_manage_channel_configuration || length(var.aws_chatbot_slack_channel_id) > 0
-    error_message = "aws_chatbot_slack_channel_id must be a non-empty Slack channel ID when managing the Chatbot channel configuration."
+    condition = !var.aws_chatbot_manage_channel_configuration || (
+      var.aws_chatbot_slack_config_secret_name != "" ||
+      (length(var.aws_chatbot_slack_team_id) > 0 && length(var.aws_chatbot_slack_channel_id) > 0)
+    )
+    error_message = "When aws_chatbot_manage_channel_configuration is true, set aws_chatbot_slack_config_secret_name or both aws_chatbot_slack_team_id and aws_chatbot_slack_channel_id."
   }
 }
 

@@ -326,6 +326,16 @@ data "aws_secretsmanager_secret_version" "aws_chatbot_additional_sns_topic_arns"
   secret_id = data.aws_secretsmanager_secret.aws_chatbot_additional_sns_topic_arns[0].id
 }
 
+data "aws_secretsmanager_secret" "aws_chatbot_slack_config" {
+  count = var.aws_chatbot_slack_config_secret_name != "" ? 1 : 0
+  name  = var.aws_chatbot_slack_config_secret_name
+}
+
+data "aws_secretsmanager_secret_version" "aws_chatbot_slack_config" {
+  count     = var.aws_chatbot_slack_config_secret_name != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.aws_chatbot_slack_config[0].id
+}
+
 data "aws_secretsmanager_secret" "vanta_assumed_role_external_ids" {
   count = var.vanta_assumed_role_external_ids_secret_name != "" ? 1 : 0
   name  = var.vanta_assumed_role_external_ids_secret_name
@@ -512,6 +522,13 @@ locals {
   codebuild_github_runner_connection_arn = var.codebuild_github_runner_connection_secret_name != "" ? data.aws_secretsmanager_secret_version.codebuild_github_runner_connection[0].secret_string : var.codebuild_github_runner_connection_arn
 
   aws_chatbot_additional_sns_topic_arns = var.aws_chatbot_additional_sns_topic_arns_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.aws_chatbot_additional_sns_topic_arns[0].secret_string) : var.aws_chatbot_additional_sns_topic_arns
+
+  aws_chatbot_slack_config = var.aws_chatbot_slack_config_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.aws_chatbot_slack_config[0].secret_string) : {
+    team_id    = var.aws_chatbot_slack_team_id
+    channel_id = var.aws_chatbot_slack_channel_id
+  }
+  aws_chatbot_slack_team_id    = local.aws_chatbot_slack_config.team_id
+  aws_chatbot_slack_channel_id = local.aws_chatbot_slack_config.channel_id
 
   vanta_assumed_role_external_ids = var.vanta_assumed_role_external_ids_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.vanta_assumed_role_external_ids[0].secret_string) : var.vanta_assumed_role_external_ids
   vanta_assumed_role_principals   = var.vanta_assumed_role_principals_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.vanta_assumed_role_principals[0].secret_string) : var.vanta_assumed_role_principals
