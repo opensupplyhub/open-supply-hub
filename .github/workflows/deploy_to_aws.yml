@@ -314,16 +314,11 @@ jobs:
           aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
-  prepare_docker_image_builds:
+  build_and_push_docker_image:
     needs: build_and_push_react_app
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
-    outputs:
-      git_commit: ${{ steps.git_commit.outputs.git_commit }}
-      env_slug: ${{ steps.get_env_name.outputs.lowercase }}
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      has_builds: ${{ steps.set-matrix.outputs.has_builds }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -342,126 +337,79 @@ jobs:
           aws-region: "eu-west-1"
 
       - name: Get GIT_COMMIT
-        id: git_commit
         run: |
           export SHORT_SHA="$(git rev-parse --short HEAD)"
           export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
-          echo "git_commit=$GIT_COMMIT_CI" >> $GITHUB_OUTPUT
+          echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
 
-      - name: Build matrix of images to push
-        id: set-matrix
-        # ECR repos enforce IMMUTABLE tags and images are tagged by commit SHA, so
-        # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
-        # after a later step like terraform apply fails) would otherwise fail at
-        # `docker push` with ImageTagAlreadyExistsException. Omit repos whose tag
-        # already exists from the build matrix below.
-        env:
-          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
-          GIT_COMMIT: ${{ steps.git_commit.outputs.git_commit }}
-          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
-        run: |
-          set -euo pipefail
-
-          images='[
-            {"image":"kafka","context":"src/kafka-tools/","dockerfile":"src/kafka-tools/Dockerfile","repo_suffix":"-kafka","needs_batch_args":false},
-            {"image":"django","context":"src/django","dockerfile":"src/django/Dockerfile","repo_suffix":"","needs_batch_args":false},
-            {"image":"batch","context":"src/batch","dockerfile":"src/batch/Dockerfile","repo_suffix":"-batch","needs_batch_args":true},
-            {"image":"dedupe","context":"src/dedupe-hub/api","dockerfile":"src/dedupe-hub/api/Dockerfile","repo_suffix":"-deduplicate","needs_batch_args":false},
-            {"image":"logstash","context":"src/logstash","dockerfile":"src/logstash/Dockerfile","repo_suffix":"-logstash","needs_batch_args":false}
-          ]'
-
-          if [ "$ENV_SLUG" = "production" ]; then
-            images=$(echo "$images" | jq -c '. + [{
-              "image":"database-anonymizer",
-              "context":"deployment/terraform/database_anonymizer_scheduled_task/docker",
-              "dockerfile":"deployment/terraform/database_anonymizer_scheduled_task/docker/Dockerfile",
-              "repo_suffix":"-database-anonymizer",
-              "needs_batch_args":false
-            }]')
-          fi
-
-          if [ "$ENV_SLUG" = "test" ]; then
-            images=$(echo "$images" | jq -c '. + [{
-              "image":"anonymized-database-dump",
-              "context":"deployment/terraform/anonymized_database_dump_scheduled_task/docker",
-              "dockerfile":"deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile",
-              "repo_suffix":"-anonymized-database-dump",
-              "needs_batch_args":false
-            }]')
-          fi
-
-          matrix='{"include":[]}'
-          while IFS= read -r entry; do
-            repo_suffix=$(echo "$entry" | jq -r '.repo_suffix')
-            image=$(echo "$entry" | jq -r '.image')
-            repo="${IMAGE_NAME}${repo_suffix}-${ENV_SLUG}"
-            if aws ecr describe-images --repository-name "$repo" --image-ids "imageTag=${GIT_COMMIT}" >/dev/null 2>&1; then
-              echo "Tag ${GIT_COMMIT} already exists in ${repo}, skipping ${image}."
-            else
-              matrix=$(echo "$matrix" | jq -c --argjson entry "$entry" '.include += [$entry]')
-            fi
-          done < <(echo "$images" | jq -c '.[]')
-
-          include_count=$(echo "$matrix" | jq '.include | length')
-          if [ "$include_count" -gt 0 ]; then
-            echo "has_builds=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_builds=false" >> "$GITHUB_OUTPUT"
-          fi
-          echo "matrix=$(echo "$matrix" | jq -c .)" >> "$GITHUB_OUTPUT"
-
-  build_and_push_docker_image:
-    needs: prepare_docker_image_builds
-    if: ${{ needs.prepare_docker_image_builds.outputs.has_builds == 'true' }}
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    strategy:
-      fail-fast: false
-      # Each matrix leg runs on its own runner (no shared CPU/disk). Cap at 4
-      # concurrent legs to limit org-wide runner usage when deploy workflows overlap.
-      max-parallel: 4
-      matrix: ${{ fromJson(needs.prepare_docker_image_builds.outputs.matrix) }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials for ${{ vars.ENV_NAME }}
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "eu-west-1"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push ${{ matrix.image }} Docker image to ECR for ${{ vars.ENV_NAME }}
-        if: ${{ !matrix.needs_batch_args }}
-        uses: docker/build-push-action@v2
-        with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}${{ matrix.repo_suffix }}-${{ needs.prepare_docker_image_builds.outputs.env_slug }}:${{ needs.prepare_docker_image_builds.outputs.git_commit }}
+      - name: Select bake targets (skip immutable tags that already exist)
+        # ECR repos enforce IMMUTABLE tags and images are tagged by commit SHA, so
+        # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
+        # after a later step like terraform apply fails) would otherwise fail at
+        # push with ImageTagAlreadyExistsException. Omit those targets from bake.
+        id: bake_targets
+        env:
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+        run: |
+          set -euo pipefail
 
-      - name: Build and push ${{ matrix.image }} Docker image to ECR for ${{ vars.ENV_NAME }} (batch args)
-        if: ${{ matrix.needs_batch_args }}
-        uses: docker/build-push-action@v2
-        with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}${{ matrix.repo_suffix }}-${{ needs.prepare_docker_image_builds.outputs.env_slug }}:${{ needs.prepare_docker_image_builds.outputs.git_commit }}
-          build-args: |
-            GIT_COMMIT=${{ needs.prepare_docker_image_builds.outputs.git_commit }}
-            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
-            ENVIRONMENT=${{ needs.prepare_docker_image_builds.outputs.env_slug }}
+          # target|repo_suffix (suffix appended as ${IMAGE_NAME}${suffix}-${ENV_SLUG})
+          candidates=(
+            "kafka|-kafka"
+            "django|"
+            "batch|-batch"
+            "dedupe|-deduplicate"
+            "logstash|-logstash"
+          )
+          if [ "$ENV_SLUG" = "production" ]; then
+            candidates+=("database-anonymizer|-database-anonymizer")
+          fi
+          if [ "$ENV_SLUG" = "test" ]; then
+            candidates+=("anonymized-database-dump|-anonymized-database-dump")
+          fi
+
+          targets=()
+          for entry in "${candidates[@]}"; do
+            target="${entry%%|*}"
+            suffix="${entry#*|}"
+            repo="${IMAGE_NAME}${suffix}-${ENV_SLUG}"
+            if aws ecr describe-images --repository-name "$repo" --image-ids "imageTag=${GIT_COMMIT}" >/dev/null 2>&1; then
+              echo "Tag ${GIT_COMMIT} already exists in ${repo}, skipping ${target}."
+            else
+              targets+=("$target")
+            fi
+          done
+
+          if [ "${#targets[@]}" -eq 0 ]; then
+            echo "All image tags already exist for ${GIT_COMMIT}; nothing to bake."
+            echo "targets=" >> "$GITHUB_OUTPUT"
+          else
+            echo "Baking targets: ${targets[*]}"
+            echo "targets=${targets[*]}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push Docker images to ECR for ${{ vars.ENV_NAME }}
+        if: ${{ steps.bake_targets.outputs.targets != '' }}
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+        run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.targets }}
 
   create_kafka_topic:
-    needs: [prepare_docker_image_builds, build_and_push_docker_image]
-    if: ${{ always() && needs.prepare_docker_image_builds.result == 'success' && (needs.build_and_push_docker_image.result == 'success' || needs.build_and_push_docker_image.result == 'skipped') && inputs.deploy-plan-only == false }}
+    needs: build_and_push_docker_image
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    if: ${{ inputs.deploy-plan-only == false }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
