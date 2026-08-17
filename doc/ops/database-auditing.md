@@ -21,8 +21,10 @@ parameters:
 | `shared_preload_libraries` | `pg_stat_statements,pgaudit` | `rds_shared_preload_libraries` | `pending-reboot` |
 | `pgaudit.log` | `ddl,role` | `rds_pgaudit_log` | `pending-reboot` |
 
-Both defaults live in `deployment/terraform/variables.tf` and are deliberately
-not overridden per environment, so every environment audits the same statement
+Both defaults live in `deployment/terraform/variables.tf` and are not
+overridden per environment, so every environment audits the same statement
+classes. Both variables carry `validation` blocks: `pgaudit` cannot be dropped
+from `shared_preload_libraries`, and `pgaudit.log` only accepts real pgaudit
 classes.
 
 `ddl,role` records schema changes (`CREATE`/`ALTER`/`DROP` of tables, indexes,
@@ -38,36 +40,68 @@ silently disable query statistics.
 
 ## Rollout, per environment
 
+The rollout has two phases, and the order matters. pgaudit's documentation is
+explicit:
+
+> `CREATE EXTENSION pgaudit` must be called before `pgaudit.log` is set to
+> ensure proper pgaudit functionality. The extension installs event triggers
+> which add additional auditing for DDL. pgAudit will work without the
+> extension installed but DDL statements will not have information about the
+> object type and name.
+
+Because we audit the `ddl` class, that is not a cosmetic gap: DDL records
+written before the extension exists lack `OBJECT_TYPE` and `OBJECT_NAME`, so
+the log shows that a schema change happened but not what it touched. The
+extension cannot be created before the library is loaded, and the library only
+loads on reboot — so `pgaudit.log` has to stay `none` across that first reboot.
+
 `shared_preload_libraries` is a static PostgreSQL parameter. Terraform stages
-the change, but RDS applies it only on the next reboot — and RDS never reboots
-an instance on its own for a parameter change, not even during the maintenance
-window. Every environment runs `rds_multi_az = false`, so the reboot is a hard
-restart with roughly 30-120 seconds of downtime, not a failover. Schedule it.
+the change, but RDS applies it only on the next reboot, and RDS never reboots
+an instance on its own for a parameter change — not even during the maintenance
+window. Every environment runs `rds_multi_az = false`, so each reboot is a hard
+restart with roughly 30-120 seconds of downtime, not a failover. Both phases
+can run back to back in a single maintenance window.
 
-1. **Apply Terraform.** After the deploy, both parameters show as
-   `pending-reboot` on the parameter group, and the instance shows
-   `pending-reboot` for its parameter group status. Nothing is being audited yet.
+### Phase 1 — load the library, create the extension
 
-2. **Reboot the instance** during a low-traffic window:
+1. Add a temporary override to the environment's tfvars in
+   `deployment/environments/`:
+
+   ```hcl
+   rds_pgaudit_log = "none"
+   ```
+
+   Apply Terraform. Both parameters land on the parameter group as
+   `pending-reboot`.
+
+2. Reboot the instance:
 
    ```bash
    aws rds reboot-db-instance --db-instance-identifier opensupplyhub-enc-<env>
    aws rds wait db-instance-available --db-instance-identifier opensupplyhub-enc-<env>
    ```
 
-3. **Create the extension.** `pgaudit` was added to the `install_db_exts`
-   management command, which is idempotent:
+   pgaudit is now loaded, with session auditing off.
+
+3. Create the extension. `pgaudit` is part of the idempotent `install_db_exts`
+   management command, which exits non-zero if any extension fails — so a
+   green run is the completion signal:
 
    ```bash
    ./deployment/run_cli_task <Env> "install_db_exts"
    ```
 
-   This must run *after* the reboot. Before the reboot the library is not
-   loaded and `CREATE EXTENSION pgaudit` fails with `pgaudit must be loaded via
-   shared_preload_libraries`; the command logs that error and still installs the
-   other extensions, so a premature run is harmless but achieves nothing.
+   Confirm the exit status and the log output before continuing. If this step
+   fails, do not start phase 2.
 
-4. **Verify** (psql through the bastion, as the master user):
+### Phase 2 — turn auditing on
+
+4. Remove the `rds_pgaudit_log` override added in step 1, so the environment
+   falls back to the `ddl,role` default. Apply Terraform.
+
+5. Reboot the instance again, as in step 2.
+
+6. Verify (psql through the bastion, as the master user):
 
    ```sql
    SHOW shared_preload_libraries;   -- expect rdsutils,pg_stat_statements,pgaudit
@@ -75,23 +109,16 @@ restart with roughly 30-120 seconds of downtime, not a failover. Schedule it.
    SELECT extname FROM pg_extension WHERE extname = 'pgaudit';
    ```
 
-   Then re-run the Vanta test `aws-rds-pgaudit-enabled` and confirm the
-   environment passes.
+   Then run a harmless DDL statement and confirm the audit record in the
+   PostgreSQL log carries a populated `OBJECT_TYPE` and `OBJECT_NAME` — that is
+   what proves phase 1 landed before phase 2. Finally, re-run the Vanta test
+   `aws-rds-pgaudit-enabled` and confirm the environment passes.
 
-### A note on ordering
+Run the whole sequence on Development, then Staging, before Production.
 
-pgaudit's own documentation says `CREATE EXTENSION pgaudit` should be called
-*before* `pgaudit.log` is set. On RDS that is not strictly achievable when both
-parameters ship in one Terraform change: the library has to be loaded (reboot)
-before the extension can be created, and the reboot activates `pgaudit.log` at
-the same moment. The gap only affects object-level auditing (`pgaudit.role`),
-which OS Hub does not use — session auditing of the `ddl` and `role` classes
-works correctly.
-
-If an auditor requires AWS's documented order exactly, split the rollout: set
-`rds_pgaudit_log = "none"` in the environment's tfvars for the first apply,
-reboot, run `install_db_exts`, then remove the override and apply again. This
-costs a second reboot per environment.
+> If the `pgaudit` extension is ever dropped and needs recreating, set
+> `pgaudit.log` back to `none` first — pgaudit raises an error otherwise. That
+> is the same ordering constraint as the initial rollout.
 
 ## Where the audit records go
 
@@ -113,3 +140,7 @@ enables.
   `rds_pgaudit` role is required in any environment.
 - `read` / `write` statement classes — excluded on log-volume grounds.
 - CloudWatch Logs export — see above.
+- pgaudit is not available in the local `postgres:16` image used by
+  `docker-compose`, so `install_db_exts` fails on that one extension (and
+  therefore exits non-zero) outside AWS. The command is not part of local
+  setup.

@@ -299,13 +299,36 @@ variable "rds_log_autovacuum_min_duration" {
 }
 
 variable "rds_shared_preload_libraries" {
-  description = "Libraries loaded at PostgreSQL server start. Must include pgaudit so that database activity auditing is available (SOC 2). Static parameter: an instance reboot is required for changes to take effect."
+  description = "Comma-separated libraries loaded at PostgreSQL server start. Must include pgaudit so that database activity auditing is available (SOC 2). Static parameter: an instance reboot is required for changes to take effect."
+  type        = string
   default     = "pg_stat_statements,pgaudit"
+
+  validation {
+    condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pgaudit")
+    error_message = "rds_shared_preload_libraries must include pgaudit. Database activity auditing is a SOC 2 requirement (OSDEV-2997) and pgaudit only loads at server start."
+  }
 }
 
 variable "rds_pgaudit_log" {
-  description = "Classes of SQL statements recorded by pgaudit. Supported classes: none, all, ddl, function, misc, read, role, write."
+  description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Set to \"none\" only for the first phase of the staged rollout described in doc/ops/database-auditing.md."
+  type        = string
   default     = "ddl,role"
+
+  validation {
+    condition = alltrue([
+      for class in split(",", lower(replace(var.rds_pgaudit_log, " ", ""))) :
+      contains([
+        "none", "all", "ddl", "function", "misc", "misc_set", "read", "role", "write",
+        "-all", "-ddl", "-function", "-misc", "-misc_set", "-read", "-role", "-write"
+      ], class)
+    ])
+    error_message = "rds_pgaudit_log accepts only the pgaudit classes none, all, ddl, function, misc, misc_set, read, role and write, optionally prefixed with '-' to subtract. An unsupported class makes pgaudit raise an error at session start."
+  }
+
+  validation {
+    condition     = !contains([for class in split(",", lower(replace(var.rds_pgaudit_log, " ", ""))) : class], "none") || lower(replace(var.rds_pgaudit_log, " ", "")) == "none"
+    error_message = "rds_pgaudit_log cannot combine \"none\" with other classes. Use \"none\" on its own to disable session auditing during the first phase of the staged rollout."
+  }
 }
 
 variable "rds_cpu_threshold_percent" {
