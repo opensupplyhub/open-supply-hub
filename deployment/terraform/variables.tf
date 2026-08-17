@@ -307,6 +307,11 @@ variable "rds_shared_preload_libraries" {
     condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pgaudit")
     error_message = "rds_shared_preload_libraries must include pgaudit. Database activity auditing is a SOC 2 requirement (OSDEV-2997) and pgaudit only loads at server start."
   }
+
+  validation {
+    condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pg_stat_statements")
+    error_message = "rds_shared_preload_libraries must include pg_stat_statements. Setting this parameter in a custom parameter group replaces the postgres16 family default outright, so dropping it from the list disables query statistics silently rather than raising an error."
+  }
 }
 
 variable "rds_pgaudit_log" {

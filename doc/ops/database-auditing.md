@@ -23,9 +23,10 @@ parameters:
 
 Both defaults live in `deployment/terraform/variables.tf` and are not
 overridden per environment, so every environment audits the same statement
-classes. Both variables carry `validation` blocks: `pgaudit` cannot be dropped
-from `shared_preload_libraries`, and `pgaudit.log` only accepts real pgaudit
-classes and rejects `none` combined with anything else.
+classes. Both variables carry `validation` blocks: neither `pgaudit` nor
+`pg_stat_statements` can be dropped from `shared_preload_libraries`, and
+`pgaudit.log` only accepts real pgaudit classes and rejects `none` combined
+with anything else.
 
 `rds_pgaudit_log` ships as `none` and is flipped to `ddl,role` by
 [OSDEV-3236](https://opensupplyhub.atlassian.net/browse/OSDEV-3236). That split
