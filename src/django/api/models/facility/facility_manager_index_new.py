@@ -96,6 +96,10 @@ def build_fp_match_sql(facility_types, processing_types):
         if parts:
             param_clauses.append('(' + ' OR '.join(parts) + ')')
             all_params.extend(params)
+        else:
+            # A supplied parameter whose values are all invalid must not
+            # silently broaden the request to an unfiltered facility search.
+            param_clauses.append('(FALSE)')
 
     if not param_clauses:
         return None, []

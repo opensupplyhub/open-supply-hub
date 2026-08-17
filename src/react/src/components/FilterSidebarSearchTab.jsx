@@ -163,7 +163,12 @@ function FilterSidebarSearchTab({
     }
 
     const handleSearchClick = () => {
-        facilityProcessingTaxonomyRef.current?.commitPendingQuery?.();
+        const pendingQueryIsValid =
+            facilityProcessingTaxonomyRef.current?.commitPendingQuery?.();
+        if (pendingQueryIsValid === false) {
+            return;
+        }
+
         searchForFacilities(vectorTileFlagIsActive);
     };
 

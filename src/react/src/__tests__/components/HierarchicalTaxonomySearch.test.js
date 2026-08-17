@@ -148,6 +148,29 @@ describe('HierarchicalTaxonomySearch component', () => {
         expect(getByRole('combobox')).toHaveValue('');
     });
 
+    test('rejects free-text searches shorter than three characters', () => {
+        const onProcessingTypeChange = jest.fn();
+        const ref = createRef();
+        const { getByRole, getByText } = renderComponent({
+            onProcessingTypeChange,
+            taxonomySearchRef: ref,
+        });
+
+        fireEvent.change(getByRole('combobox'), {
+            target: { value: 'xy' },
+        });
+
+        expect(
+            getByText(
+                'Enter at least 3 characters to search facility or processing types',
+            ),
+        ).toBeInTheDocument();
+        expect(getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
+        expect(ref.current.commitPendingQuery()).toBe(false);
+        expect(onProcessingTypeChange).not.toHaveBeenCalled();
+        expect(getByRole('combobox')).toHaveValue('xy');
+    });
+
     test('commitPendingQuery ignores exact taxonomy labels', () => {
         const onProcessingTypeChange = jest.fn();
         const ref = createRef();

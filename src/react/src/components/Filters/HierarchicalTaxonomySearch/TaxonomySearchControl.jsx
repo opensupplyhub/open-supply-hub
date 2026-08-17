@@ -26,6 +26,7 @@ function TaxonomySearchControl({
     listboxId,
     showResultsPanel,
     resultsCount,
+    validationMessage,
 }) {
     const showPlaceholder = selectedChips.length === 0 && !query;
 
@@ -69,6 +70,7 @@ function TaxonomySearchControl({
                     aria-controls={showResultsPanel ? listboxId : undefined}
                     aria-autocomplete="list"
                     aria-expanded={showResultsPanel && resultsCount > 0}
+                    aria-invalid={!!validationMessage}
                     role="combobox"
                     onFocus={onFocus}
                     onBlur={onBlur}
@@ -97,10 +99,12 @@ TaxonomySearchControl.propTypes = {
     listboxId: string.isRequired,
     showResultsPanel: bool.isRequired,
     resultsCount: number.isRequired,
+    validationMessage: string,
 };
 
 TaxonomySearchControl.defaultProps = {
     disabled: false,
+    validationMessage: '',
 };
 
 export default TaxonomySearchControl;

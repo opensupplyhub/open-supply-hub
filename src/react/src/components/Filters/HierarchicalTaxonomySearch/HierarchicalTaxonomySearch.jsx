@@ -33,6 +33,8 @@ const reactSelectOptionPropType = shape({
     label: string.isRequired,
 });
 
+const MIN_FREE_TEXT_QUERY_LENGTH = 3;
+
 function HierarchicalTaxonomySearch({
     label,
     placeholder,
@@ -71,6 +73,13 @@ function HierarchicalTaxonomySearch({
 
     const trimmedQuery = query.trim();
     const isSearching = trimmedQuery.length > 0;
+    const isFreeTextQueryTooShort =
+        isSearching &&
+        !isFacilityProcessingTaxonomyLabel(trimmedQuery) &&
+        trimmedQuery.length < MIN_FREE_TEXT_QUERY_LENGTH;
+    const validationMessage = isFreeTextQueryTooShort
+        ? `Enter at least ${MIN_FREE_TEXT_QUERY_LENGTH} characters to search facility or processing types`
+        : '';
 
     useEffect(() => {
         if (isSearching) {
@@ -178,13 +187,18 @@ function HierarchicalTaxonomySearch({
 
     const commitPendingQuery = () => {
         if (!trimmedQuery || isFacilityProcessingTaxonomyLabel(trimmedQuery)) {
-            return;
+            return true;
+        }
+
+        if (isFreeTextQueryTooShort) {
+            inputRef.current?.focus();
+            return false;
         }
 
         if (processingType.some(option => option.value === trimmedQuery)) {
             setQuery('');
             setActiveRowIndex(-1);
-            return;
+            return true;
         }
 
         onProcessingTypeChange([
@@ -193,6 +207,7 @@ function HierarchicalTaxonomySearch({
         ]);
         setQuery('');
         setActiveRowIndex(-1);
+        return true;
     };
 
     useImperativeHandle(taxonomySearchRef, () => ({
@@ -283,7 +298,13 @@ function HierarchicalTaxonomySearch({
                 listboxId={listboxId}
                 showResultsPanel={showResultsPanel}
                 resultsCount={visibleRows.length}
+                validationMessage={validationMessage}
             />
+            {validationMessage ? (
+                <p className={classes.validationMessage} role="alert">
+                    {validationMessage}
+                </p>
+            ) : null}
 
             {showResultsPanel && (
                 <ul

@@ -144,6 +144,11 @@ export default function taxonomySearchStyles(theme) {
             fontSize: '14px',
             color: COLOURS.MEDIUM_GREY,
         }),
+        validationMessage: Object.freeze({
+            color: COLOURS.MATERIAL_RED,
+            fontSize: '12px',
+            margin: '6px 2px 0',
+        }),
         hint: Object.freeze({
             fontSize: '12px',
             color: COLOURS.MEDIUM_GREY,

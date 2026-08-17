@@ -248,13 +248,34 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         data = json.loads(response.content)
         self.assertEqual(data["count"], 0)
 
-    def test_search_free_text_below_min_length_is_ignored(self):
+    def test_search_free_text_below_min_length_returns_no_results(self):
         self._create_processing_type_extended_field(
             ["cement mixing"],
             [[None, None, None, None]],
         )
 
         response = self.client.get(self.url + "?processing_type=ce")
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 0)
+
+    def test_invalid_processing_type_does_not_broaden_facility_type_search(
+        self,
+    ):
+        self._create_facility_type_extended_field(
+            ["Office / HQ"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Office / HQ",
+                    "Office / HQ",
+                ]
+            ],
+        )
+
+        response = self.client.get(
+            self.url + "?facility_type=Office%20/%20HQ&processing_type=ce"
+        )
         data = json.loads(response.content)
         self.assertEqual(data["count"], 0)
 
