@@ -4,6 +4,7 @@ from botocore.exceptions import ProfileNotFound
 from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.test import APITestCase
+from waffle.testutils import override_switch
 
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
@@ -205,6 +206,30 @@ class TestSubmissionQualityProcessor(APITestCase):
         mock_evaluate.assert_not_called()
         self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNotNone(result.moderation_event)
+
+    @override_switch('slc_submission_quality_check', active=False)
+    def test_switch_off_skips_check_without_calling_llm(self):
+        # With the waffle switch off, even a submission the model would
+        # flag is created without an LLM call.
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(self.contributor, self.base_input_data)
+
+        mock_evaluate.assert_not_called()
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+
+    @override_switch('slc_submission_quality_check', active=True)
+    def test_switch_on_still_flags(self):
+        # The other tests rely on migration 0226 creating the switch
+        # active; this pins the explicit-on state so the pair of switch
+        # tests documents both positions.
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts):
+            result = self._submit(self.contributor, self.base_input_data)
+
+        self.assertEqual(result.status_code, status.HTTP_409_CONFLICT)
+        self.assertIsNone(result.moderation_event)
 
     def test_update_request_type_is_never_flagged(self):
         existing_facility = self._create_existing_facility()

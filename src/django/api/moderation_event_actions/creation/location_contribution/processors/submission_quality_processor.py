@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework import status
+from waffle import switch_is_active
 
 from api.moderation_event_actions.creation.location_contribution \
     .processors.contribution_processor import ContributionProcessor
@@ -12,6 +13,12 @@ from api.services.submission_quality_service import SubmissionQualityService
 from countries.lib.countries import COUNTRY_NAMES
 
 logger = logging.getLogger(__name__)
+
+# Kill switch for the whole check, toggleable in the Django admin without
+# a deploy (created active by migration 0226). If the Switch row is ever
+# missing, waffle falls back to WAFFLE_SWITCH_DEFAULT (False), so the
+# check disables rather than blocking submissions.
+SLC_SUBMISSION_QUALITY_CHECK_SWITCH = 'slc_submission_quality_check'
 
 # Maps each verdict returned by SubmissionQualityService to the warning
 # shown to the contributor when it's flagged. To add another AI-judgable
@@ -38,7 +45,9 @@ class SubmissionQualityProcessor(ContributionProcessor):
     ModerationEvent until the contributor resubmits with
     ignore_warnings=true, at which point this check is skipped entirely
     rather than re-run, since the contributor has already seen and
-    dismissed the warnings.
+    dismissed the warnings. The whole check sits behind the
+    slc_submission_quality_check waffle switch (on by default), so it
+    can be turned off in the Django admin without a deploy.
     '''
 
     def __init__(self, quality_service: SubmissionQualityService = None):
@@ -51,6 +60,11 @@ class SubmissionQualityProcessor(ContributionProcessor):
             return super().process(event_dto)
 
         if event_dto.source != ModerationEvent.Source.SLC.value:
+            return super().process(event_dto)
+
+        # Checked after the request-type/source guards so API and PATCH
+        # requests never query the switch.
+        if not switch_is_active(SLC_SUBMISSION_QUALITY_CHECK_SWITCH):
             return super().process(event_dto)
 
         if event_dto.ignore_warnings:
