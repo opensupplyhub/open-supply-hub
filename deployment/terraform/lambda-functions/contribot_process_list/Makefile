@@ -14,6 +14,7 @@ EXCLUDE_PACKAGES = boto3 botocore s3transfer jmespath
 LIB_MODULES = \
 	__init__.py \
 	contribot.py \
+	contribot_workbook.py \
 	known_countries.py \
 	utils.py \
 	lists_repository.py \

@@ -1,7 +1,8 @@
 """Process a single facility list: validate, upload report, return notify payload.
 
-Downloads the uploaded workbook from S3, runs ContriBot validation using the
-bundled error-codes config, uploads the annotated ``.~PROCESSED.`` report to
+Downloads the uploaded ``.csv`` or ``.xlsx`` from S3, converts CSV to a workbook
+named ``{list_id}.xlsx`` so ContriBot writes ``{list_id}.~PROCESSED.xlsx``,
+runs validation using the bundled error-codes config, uploads the report to
 Google Drive, and returns stats for the notify step.
 """
 
@@ -13,6 +14,7 @@ import shutil
 from pathlib import Path
 
 from lib.contribot import ContriBot
+from lib.contribot_workbook import ContribotWorkbook
 from lib.google_drive import GoogleDrive
 from lib.lists_repository import STATUS_PROCESSING, ListsRepository
 from lib.s3_storage import S3Storage
@@ -35,9 +37,6 @@ def handler(event, context):
     file_name = (item.get("file_name") or "").strip()
     if not file_name:
         raise ValueError(f"list_id={list_id} is missing file_name")
-
-    if not file_name.lower().endswith(".xlsx"):
-        raise ValueError(f"ContriBot requires an .xlsx workbook; got {file_name!r}")
 
     work_dir = Path("/tmp") / "contribot" / list_id
 
@@ -64,7 +63,13 @@ def handler(event, context):
         if not os.path.isfile(config_path):
             raise RuntimeError(f"Error-codes workbook not found at {config_path}")
 
-        bot = ContriBot(str(source_path), config_file=config_path)
+        contribot_workbook = ContribotWorkbook(
+            work_dir=work_dir,
+            source_path=source_path,
+            list_id=list_id,
+        )
+        workbook_path = contribot_workbook.transform()
+        bot = ContriBot(str(workbook_path), config_file=config_path)
         bot.process()
         summary = bot.save(targetfolder=str(output_dir))
 
