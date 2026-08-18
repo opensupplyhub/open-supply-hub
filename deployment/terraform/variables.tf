@@ -41,6 +41,8 @@ variable "cloudfront_price_class" {
 }
 
 variable "cloudfront_auth_token" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -145,6 +147,8 @@ variable "vpc_cidr_block" {
 }
 
 variable "external_access_cidr_blocks" {
+  type      = list(string)
+  default   = []
   sensitive = true
 }
 
@@ -198,10 +202,14 @@ variable "rds_database_name" {
 }
 
 variable "rds_database_username" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "rds_database_password" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -401,39 +409,56 @@ variable "gunicorn_workers" {
 }
 
 variable "google_server_side_api_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "google_client_side_api_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "google_analytics_key" {
+  type      = string
   default   = ""
   sensitive = true
 }
 
 variable "rollbar_server_side_access_token" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "rollbar_client_side_access_token" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "django_secret_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "default_from_email" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "data_from_email" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "notification_email_to" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -602,6 +627,8 @@ variable "aws_lambda_service_role_policy_arn" {
 }
 
 variable "oar_client_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -689,7 +716,9 @@ variable "security_protocol" {
 }
 
 variable "claim_from_email" {
-  default = "claims@opensupplyhub.org"
+  type      = string
+  default   = ""
+  sensitive = true
 }
 
 variable "dedupe_hub_live" {
@@ -873,6 +902,7 @@ variable "export_csv_schedule_expression" {
 
 variable "google_service_account_creds_base64" {
   type        = string
+  default     = ""
   sensitive   = true
   description = "Base64-encoded Google service account key"
 }
@@ -1000,12 +1030,14 @@ variable "craft_cms_origin_domain" {
 
 variable "stripe_secret_key" {
   type        = string
+  default     = ""
   sensitive   = true
   description = "Stripe secret key for payment processing"
 }
 
 variable "stripe_webhook_secret" {
   type        = string
+  default     = ""
   sensitive   = true
   description = "Stripe webhook secret for payment processing"
 }
@@ -1020,26 +1052,29 @@ variable "stripe_price_id" {
 
 variable "dark_visitors_project_key" {
   type        = string
+  default     = ""
   description = "Dark Visitors project key"
   sensitive   = true
 }
 
 variable "dark_visitors_token" {
   type        = string
+  default     = ""
   description = "Dark Visitors token"
   sensitive   = true
 }
 
 variable "dromo_license_key" {
   type        = string
+  default     = ""
   description = "Dromo license key for data management"
   sensitive   = true
 }
 
 variable "dromo_schema_id" {
   type        = string
+  default     = ""
   description = "Dromo schema ID for data management"
-  sensitive   = true
 }
 
 # VPN EC2 variables
@@ -1141,32 +1176,19 @@ variable "aws_chatbot_manage_channel_configuration" {
 
 variable "aws_chatbot_additional_sns_topic_arns" {
   type        = list(string)
-  description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Set in private ci-deployment tfvars; omit until those topics exist."
+  description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Prefer aws_chatbot_additional_sns_topic_arns_secret_name (SM JSON list); this direct var is the fallback when the secret name is omitted. Leave empty until sibling topics exist."
   sensitive   = true
   default     = []
 }
 
-variable "aws_chatbot_slack_team_id" {
+variable "aws_chatbot_slack_config_secret_name" {
   type        = string
-  description = "Slack workspace ID authorized with AWS Chatbot (e.g. T07EA123LEP). Required when aws_chatbot_manage_channel_configuration is true."
-  sensitive   = true
+  description = "SM secret name for Chatbot Slack IDs as JSON {\"team_id\":\"…\",\"channel_id\":\"…\"}. Required when aws_chatbot_manage_channel_configuration is true."
   default     = ""
 
   validation {
-    condition     = !var.aws_chatbot_manage_channel_configuration || length(var.aws_chatbot_slack_team_id) > 0
-    error_message = "aws_chatbot_slack_team_id must be a non-empty Slack workspace ID when managing the Chatbot channel configuration."
-  }
-}
-
-variable "aws_chatbot_slack_channel_id" {
-  type        = string
-  description = "Slack channel ID for CloudWatch alarm notifications (e.g. C07EZ1ABC23). Required when aws_chatbot_manage_channel_configuration is true."
-  sensitive   = true
-  default     = ""
-
-  validation {
-    condition     = !var.aws_chatbot_manage_channel_configuration || length(var.aws_chatbot_slack_channel_id) > 0
-    error_message = "aws_chatbot_slack_channel_id must be a non-empty Slack channel ID when managing the Chatbot channel configuration."
+    condition     = !var.aws_chatbot_manage_channel_configuration || var.aws_chatbot_slack_config_secret_name != ""
+    error_message = "When aws_chatbot_manage_channel_configuration is true, set aws_chatbot_slack_config_secret_name."
   }
 }
 
@@ -1212,4 +1234,224 @@ variable "bedrock_submission_quality_foundation_models" {
   type        = list(string)
   description = "Foundation model IDs underlying the inference profiles above. Granted region-wildcarded because cross-region profiles route across regions."
   default     = ["anthropic.claude-haiku-4-5-20251001-v1:0"]
+# ---------------------------------------------------------------------------
+# AWS Secrets Manager secret names (public tfvars). Values are CLI-owned in SM.
+# When a name is set, Terraform resolves ARN/value via data sources in secrets.tf.
+# ---------------------------------------------------------------------------
+
+variable "rds_master_secret_name" {
+  type        = string
+  default     = ""
+  description = "SM secret name for RDS master credentials JSON {username,password}."
+}
+
+variable "django_secret_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "cloudfront_auth_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "default_from_email_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "data_from_email_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "notification_email_to_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "claim_from_email_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_server_side_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_client_side_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_analytics_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_service_account_creds_base64_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "rollbar_server_side_access_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "rollbar_client_side_access_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "oar_client_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "hubspot_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "stripe_secret_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "stripe_webhook_secret_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "dark_visitors_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "dark_visitors_project_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "dromo_license_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "external_access_cidr_blocks_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "ip_denylist_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "ip_whitelist_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_name_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_username_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_password_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_kms_key_id_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "codebuild_github_runner_connection_secret_name" {
+  description = "SM secret name for the CodeConnections ARN (plain string). When set, overrides codebuild_github_runner_connection_arn. Test uses oshub/test/codebuild-github-runner-connection."
+  type        = string
+  default     = ""
+}
+
+variable "aws_chatbot_additional_sns_topic_arns_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "vanta_assumed_role_external_ids_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "vanta_assumed_role_principals_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymizer_destination_aws_account_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymizer_kms_key_admin_users_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_name_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_user_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_password_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_port_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "database_private_link_vpc_endpoint_service_name_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "email_anonymization_secret_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_os_hub_api_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_monday_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_slack_api_url_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_google_drive_service_key_secret_name" {
+  type    = string
+  default = ""
 }

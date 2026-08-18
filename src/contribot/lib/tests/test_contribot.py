@@ -9,8 +9,8 @@ import openpyxl
 import pandas as pd
 import pytest
 
-import contribot
-from utils import map_n_dataframe_cols_to_excel_cols
+from lib import contribot
+from lib.utils import map_n_dataframe_cols_to_excel_cols
 
 
 # --------------------------------------------------------------------------- #

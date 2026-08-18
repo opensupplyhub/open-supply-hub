@@ -87,3 +87,36 @@ craft_cms_origin_domain = "open-supply.staging.servd.dev"
 
 # Shares Chatbot channel config with Test (same AWS account / Slack channel).
 aws_chatbot_manage_channel_configuration = false
+
+waf_enabled = true
+memcached_view_cache_timeout_seconds = 120
+stripe_price_id = "price_1RdRDaPEOEmdKJkvQVzxn5qA"
+hubspot_subscription_id = "12847627"
+dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
+google_drive_shared_directory_id = "18ld9-YuqJZZE1GwBx47nih1lUJDM-3m4"
+aws_key_name = "osh-dev"
+
+rds_master_secret_name = "oshub/development/rds-master"
+django_secret_key_secret_name = "oshub/development/django-secret-key"
+cloudfront_auth_token_secret_name = "oshub/development/cloudfront-auth-token"
+default_from_email_secret_name = "oshub/development/default-from-email"
+data_from_email_secret_name = "oshub/development/data-from-email"
+notification_email_to_secret_name = "oshub/development/notification-email-to"
+claim_from_email_secret_name = "oshub/development/claim-from-email"
+google_server_side_api_key_secret_name = "oshub/development/google-server-side-api-key"
+google_client_side_api_key_secret_name = "oshub/development/google-client-side-api-key"
+google_analytics_key_secret_name = "oshub/development/google-analytics-key"
+google_service_account_creds_base64_secret_name = "oshub/development/google-service-account-creds-base64"
+oar_client_key_secret_name = "oshub/development/oar-client-key"
+hubspot_api_key_secret_name = "oshub/development/hubspot-api-key"
+stripe_secret_key_secret_name = "oshub/development/stripe-secret-key"
+stripe_webhook_secret_secret_name = "oshub/development/stripe-webhook-secret"
+dark_visitors_token_secret_name = "oshub/development/dark-visitors-token"
+dark_visitors_project_key_secret_name = "oshub/development/dark-visitors-project-key"
+dromo_license_key_secret_name = "oshub/development/dromo-license-key"
+external_access_cidr_blocks_secret_name = "oshub/development/external-access-cidr-blocks"
+ip_denylist_secret_name = "oshub/development/ip-denylist"
+contribot_os_hub_api_token_secret_name = "oshub/development/contribot-os-hub-api-token"
+contribot_monday_api_key_secret_name = "oshub/development/contribot-monday-api-key"
+contribot_slack_api_url_secret_name = "oshub/development/contribot-slack-api-url"
+contribot_google_drive_service_key_secret_name = "oshub/development/contribot-google-drive-service-key"
