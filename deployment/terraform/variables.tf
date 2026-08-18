@@ -1234,6 +1234,26 @@ variable "bedrock_submission_quality_foundation_models" {
   type        = list(string)
   description = "Foundation model IDs underlying the inference profiles above. Granted region-wildcarded because cross-region profiles route across regions."
   default     = ["anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
+variable "bedrock_invocations_alarm_hourly_threshold" {
+  type        = number
+  description = "Hourly sum of Bedrock Invocations above which the runaway alarm fires. Organic SLC submission-quality volume is a handful of calls per day, so keep this orders of magnitude above real traffic; it exists to catch retry loops and scripted abuse within the hour."
+  default     = 100
+}
+
+variable "manage_bedrock_cost_budget" {
+  type        = bool
+  description = "Whether this environment creates the account-level AWS Budget for Bedrock spend. Budgets are account-wide: set true in exactly one environment per AWS account, like aws_chatbot_manage_channel_configuration."
+  default     = false
+}
+
+variable "bedrock_cost_budget_monthly_limit_usd" {
+  type        = string
+  description = "Monthly USD limit for the Bedrock cost budget. Alerts at 80% actual and 100% forecasted spend via the global SNS topic (Slack)."
+  default     = "25"
+}
+
 # ---------------------------------------------------------------------------
 # AWS Secrets Manager secret names (public tfvars). Values are CLI-owned in SM.
 # When a name is set, Terraform resolves ARN/value via data sources in secrets.tf.

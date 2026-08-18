@@ -189,3 +189,18 @@ class TestSubmissionQualityService(TestCase):
             self._instructions_sent_to_model(''),
             _DEFAULT_INSTRUCTIONS,
         )
+
+    def test_token_usage_is_logged(self):
+        # The token log line is what makes real per-call Bedrock
+        # consumption visible in CloudWatch; spend is monitored there
+        # (alarms/budgets) rather than capped in the app.
+        with self.assertLogs(
+            'api.services.submission_quality_service', level='INFO'
+        ) as logs:
+            self._evaluate_with_model(
+                TestModel(custom_output_args=_valid_output())
+            )
+        self.assertTrue(any(
+            'Submission quality check tokens' in line
+            for line in logs.output
+        ))

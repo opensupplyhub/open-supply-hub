@@ -198,4 +198,20 @@ class SubmissionQualityService:
             )
             return None
 
+        # Separate try block: a failure reading usage must not discard a
+        # verdict the model already produced.
+        try:
+            usage = result.usage
+            logger.info(
+                'Submission quality check tokens: input=%s output=%s',
+                usage.input_tokens,
+                usage.output_tokens,
+            )
+        except Exception:
+            logger.warning(
+                'Submission quality check succeeded but token usage '
+                'could not be read.',
+                exc_info=True,
+            )
+
         return result.output
