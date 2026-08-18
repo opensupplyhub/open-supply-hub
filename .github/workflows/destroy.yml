@@ -79,16 +79,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Checkout config repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'terraform-config'
-          token: ${{ secrets.PAT }}
-
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Copy public tfvars for ${{ vars.ENV_NAME }}
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{env.TFVAR_NAME}}"  > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          cp "deployment/environments/${{ env.TFVAR_NAME }}" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{steps.get_env_name.outputs.lowercase}}.tfvars

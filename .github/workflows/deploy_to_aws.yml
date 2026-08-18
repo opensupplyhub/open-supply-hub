@@ -82,17 +82,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Checkout config repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'terraform-config'
-          token: ${{ secrets.PAT }}
-          persist-credentials: false
-
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Copy public tfvars for ${{ vars.ENV_NAME }}
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{env.TFVAR_NAME}}"  > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          cp "deployment/environments/${{ env.TFVAR_NAME }}" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{steps.get_env_name.outputs.lowercase}}.tfvars
@@ -105,11 +97,9 @@ jobs:
 
       - name: Validate whitelist and denylist usage
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}" "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
-          scripts/validate_ip_lists.sh deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars
+          scripts/validate_ip_lists.sh "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
-          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
 
       - name: Terraform Plan for ${{ vars.ENV_NAME }}
         run: ./deployment/infra plan
@@ -155,17 +145,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Checkout config repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'terraform-config'
-          token: ${{ secrets.PAT }}
-          persist-credentials: false
-
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Copy public tfvars for ${{ vars.ENV_NAME }}
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          cp "deployment/environments/${{ env.TFVAR_NAME }}" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
@@ -507,19 +489,30 @@ jobs:
         uses: actions/checkout@v4
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME == 'Preprod' || vars.ENV_NAME == 'Test') && inputs.restore-db == true}}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
         run: |
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "oshub/${ENV_SLUG}/rds-master" \
+            --query SecretString --output text)
+          DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
+          DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
+
           cd ./src/anon-tools
           mkdir -p ./keys
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./keys/key
           docker build -t restore -f Dockerfile.restore .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
+              -e AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY \
+              -e AWS_DEFAULT_REGION \
               -e ENVIRONMENT=${{ vars.ENV_NAME }} \
               -e DATABASE_NAME=opensupplyhub \
-              -e DATABASE_USERNAME=opensupplyhub \
-              -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              -e DATABASE_USERNAME="$DB_USER" \
+              -e DATABASE_PASSWORD="$DB_PASS" \
               restore
       - name: Reset database for ${{ vars.ENV_NAME }}
         if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
