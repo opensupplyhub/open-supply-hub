@@ -29,11 +29,13 @@ class TilePermissionsTest(APITestCase):
 
     @override_settings(ALLOWED_HOSTS=["testserver", ".allowed.org"])
     @override_switch("vector_tile", active=True)
-    def test_facility_grid_supports_combined_processing_and_isic_filters(self):
+    def test_facility_grid_supports_free_text_processing_and_isic_filters(
+        self,
+    ):
         response = self.client.get(
             self.tile_path,
             {
-                "processing_type": "Assembly",
+                "processing_type": "x[yz",
                 "isic_4": "section:C",
                 "combine_facility_processing_isic": "AND",
                 "sort_by": "contributors_desc",

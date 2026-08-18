@@ -1,11 +1,17 @@
 import json
 from unittest.mock import Mock, patch
 
-from api.models import ExtendedField
+from api.models import (
+    ExtendedField,
+    Facility,
+    FacilityListItem,
+    FacilityMatch,
+)
 from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
+from django.contrib.gis.geos import Point
 from django.urls import reverse
 
 
@@ -46,6 +52,45 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
                 "matched_values": matched_values,
             },
         )
+
+    def _create_indexed_facility(
+        self,
+        name,
+        row_index,
+        facility_type=None,
+        processing_type=None,
+    ):
+        list_item = FacilityListItem.objects.create(
+            name=name,
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=row_index,
+            geocoded_point=Point(row_index, row_index),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source,
+        )
+        facility = Facility.objects.create(
+            name=name,
+            address="Address",
+            country_code="US",
+            location=Point(row_index, row_index),
+            created_from=list_item,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=facility,
+            facility_list_item=list_item,
+            confidence=0.85,
+            results="",
+        )
+        list_item.facility = facility
+        list_item.save()
+        FacilityIndex.objects.filter(id=facility.id).update(
+            facility_type=facility_type or [],
+            processing_type=processing_type or [],
+        )
+        return facility
 
     def test_unmatched_raw_processing_type_indexed(self):
         self._create_processing_type_extended_field(
@@ -194,16 +239,85 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         self.assertEqual(data["count"], 1)
         self.assertEqual(data["features"][0]["id"], self.facility.id)
 
-    def test_search_unmatched_raw_processing_type_by_substring(self):
-        self._create_processing_type_extended_field(
-            ["cement mixing"],
-            [[None, None, None, None]],
+    def test_free_text_matches_word_and_prefix_but_not_middle_substring(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            name="Zebra Whole Word",
+            processing_type=["plastic caps"],
+        )
+        prefix_facility = self._create_indexed_facility(
+            "Alpha Word Prefix",
+            2,
+            processing_type=["capsulas"],
+        )
+        self._create_indexed_facility(
+            "Middle Substring",
+            3,
+            processing_type=["encapsulation"],
         )
 
-        response = self.client.get(self.url + "?processing_type=cement")
+        response = self.client.get(
+            self.url,
+            {"processing_type": "caps", "sort_by": "name_asc"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            [feature["id"] for feature in data["features"]],
+            [self.facility.id, prefix_facility.id],
+        )
+
+    def test_free_text_treats_regex_metacharacters_literally(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["x[yz finishing"],
+        )
+        self._create_indexed_facility(
+            "Regex Lookalike",
+            2,
+            processing_type=["xayz finishing"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "x[yz"},
+        )
         data = json.loads(response.content)
         self.assertEqual(data["count"], 1)
         self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_free_text_word_prefix_matching_is_accent_insensitive(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cafépress"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "cafep"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_sort_by_is_secondary_to_equal_free_text_relevance(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            name="Zebra Caps",
+            processing_type=["plastic caps"],
+        )
+        alpha_facility = self._create_indexed_facility(
+            "Alpha Caps",
+            2,
+            processing_type=["metal caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "caps", "sort_by": "name_asc"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            [feature["id"] for feature in data["features"]],
+            [alpha_facility.id, self.facility.id],
+        )
 
     def test_search_processing_type_fuzzy_typo_still_uses_taxonomy(self):
         self._create_processing_type_extended_field(

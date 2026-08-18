@@ -122,7 +122,10 @@ facilities_list_parameters = [
         description=(
             'Facility type taxonomy label or free text. Taxonomy values '
             'use exact matching; unmatched free text uses accent-insensitive '
-            'substring search across both facility type and processing type.'
+            'word or word-prefix matching across both facility type and '
+            'processing type. On the facilities list endpoint, whole-word '
+            'matches rank before word-prefix matches, followed by the '
+            'requested sort order.'
         ),
     ),
     Parameter(
@@ -133,7 +136,10 @@ facilities_list_parameters = [
         description=(
             'Processing type taxonomy label or free text. Taxonomy values '
             'use exact matching; unmatched free text uses accent-insensitive '
-            'substring search across both facility type and processing type.'
+            'word or word-prefix matching across both facility type and '
+            'processing type. On the facilities list endpoint, whole-word '
+            'matches rank before word-prefix matches, followed by the '
+            'requested sort order.'
         ),
     ),
     Parameter(
