@@ -86,8 +86,8 @@ module "database_enc" {
   iops                        = var.rds_iops
   database_identifier         = var.rds_database_identifier
   database_name               = var.rds_database_name
-  database_username           = var.rds_database_username
-  database_password           = var.rds_database_password
+  database_username           = local.rds_database_username
+  database_password           = local.rds_database_password
   backup_retention_period     = var.rds_backup_retention_period
   backup_window               = var.rds_backup_window
   maintenance_window          = var.rds_maintenance_window

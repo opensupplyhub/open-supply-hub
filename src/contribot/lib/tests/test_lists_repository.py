@@ -8,7 +8,10 @@ from botocore.exceptions import ClientError
 
 from lists_repository import (
     CURSOR_LIST_ID,
+    STATUS_FAILED,
     STATUS_PENDING,
+    STATUS_PROCESSED,
+    STATUS_PROCESSING,
     ListsRepository,
 )
 
@@ -140,3 +143,75 @@ def test_put_list_skips_existing_item():
     repo = ListsRepository(table=table)
     written = repo.put_list(1, list_name="Dup")
     assert written is False
+
+
+def test_get_list_returns_item():
+    table = MagicMock()
+    table.get_item.return_value = {"Item": {"list_id": "7", "status": STATUS_PENDING}}
+    repo = ListsRepository(table=table)
+    assert repo.get_list(7) == {"list_id": "7", "status": STATUS_PENDING}
+    table.get_item.assert_called_once_with(Key={"list_id": "7"})
+
+
+def test_get_list_returns_none_when_missing():
+    table = MagicMock()
+    table.get_item.return_value = {}
+    repo = ListsRepository(table=table)
+    assert repo.get_list("missing") is None
+
+
+def test_update_list_sets_status_only():
+    table = MagicMock()
+    repo = ListsRepository(table=table)
+    repo.update_list(9, status=STATUS_PROCESSING)
+    kwargs = table.update_item.call_args.kwargs
+    assert kwargs["Key"] == {"list_id": "9"}
+    assert kwargs["UpdateExpression"] == "SET #status = :status"
+    assert kwargs["ExpressionAttributeValues"] == {":status": STATUS_PROCESSING}
+    assert kwargs["ExpressionAttributeNames"] == {"#status": "status"}
+
+
+def test_update_list_persists_report_stats():
+    table = MagicMock()
+    repo = ListsRepository(table=table)
+    repo.update_list(
+        9,
+        report_url="https://drive.example/report",
+        num_lines=10,
+        num_errors=2,
+        error_ratio=0.2,
+    )
+    kwargs = table.update_item.call_args.kwargs
+    values = kwargs["ExpressionAttributeValues"]
+    assert values[":report_url"] == "https://drive.example/report"
+    assert values[":num_lines"] == 10
+    assert values[":num_errors"] == 2
+    assert float(values[":error_ratio"]) == 0.2
+    assert ":status" not in values
+    assert ":finished_at" not in values
+
+
+def test_update_list_terminal_status_sets_finished_at():
+    table = MagicMock()
+    repo = ListsRepository(table=table)
+    repo.update_list(3, status=STATUS_PROCESSED)
+    kwargs = table.update_item.call_args.kwargs
+    assert kwargs["Key"] == {"list_id": "3"}
+    assert kwargs["ExpressionAttributeValues"][":status"] == STATUS_PROCESSED
+    assert kwargs["ExpressionAttributeValues"][":finished_at"]
+    assert "finished_at = :finished_at" in kwargs["UpdateExpression"]
+
+
+def test_update_list_failed_status_sets_finished_at():
+    table = MagicMock()
+    repo = ListsRepository(table=table)
+    repo.update_list(3, status=STATUS_FAILED)
+    values = table.update_item.call_args.kwargs["ExpressionAttributeValues"]
+    assert values[":status"] == STATUS_FAILED
+    assert values[":finished_at"]
+
+
+def test_update_list_requires_at_least_one_field():
+    repo = ListsRepository(table=MagicMock())
+    with pytest.raises(ValueError, match="at least one field"):
+        repo.update_list(1)
