@@ -176,23 +176,25 @@ def get_efs_associated_with_contributor(
 def is_contribution_from_claimant(
     contributor: Union[None, dict],
     claimant_contributor_id: Union[None, int],
+    masked=None,
+    is_anonymized: bool = False,
 ) -> bool:
     """Whether a contribution was made by the facility's approved claimant.
 
-    Masking is deliberately NOT consulted here. The label says where a value
-    came from; hiding *who* the contributor is stays the job of
-    get_contributor_name_from_facilityindex, which every caller already routes
-    names through. A masked claimant's name is hidden everywhere on the
-    profile, claim_info included, so the label discloses no identity — and
-    fields created on the claim form are already marked as claim data whether
-    or not the claimant is masked, so skipping masked contributions here would
-    label one claimant's data two different ways depending on the channel it
-    arrived through.
+    Masked and anonymized contributions are never labeled as claim data:
+    the claimant is publicly named on the profile (claim_info), so the
+    label would tie the hidden contribution back to them by inference and
+    undo the hiding (OSDEV-3142). Fields created on the claim form itself
+    do not pass through this check and keep their claim marking either way.
     """
-    if claimant_contributor_id is None:
+    if claimant_contributor_id is None or is_anonymized:
         return False
 
-    return (contributor or {}).get('id') == claimant_contributor_id
+    contributor = contributor or {}
+    if is_contribution_masked(contributor, masked):
+        return False
+
+    return contributor.get('id') == claimant_contributor_id
 
 
 def create_name_field_from_facility_name(
@@ -204,6 +206,7 @@ def create_name_field_from_facility_name(
     is_from_created_from: bool = False,
     masked_ids: Union[None, set] = None,
     claimant_contributor_id: Union[None, int] = None,
+    is_anonymized: bool = False,
 ) -> dict:
     """Create name field from facility name of the FacilityIndex model."""
     field_data = {
@@ -215,7 +218,8 @@ def create_name_field_from_facility_name(
             contributor, user_can_see_detail, masked_ids),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_contribution_from_claimant(
-            contributor, claimant_contributor_id),
+            contributor, claimant_contributor_id,
+            masked=masked_ids, is_anonymized=is_anonymized),
         'is_from_created_from': is_from_created_from,
     }
 
@@ -235,6 +239,7 @@ def create_address_field_from_facility_address(
     is_from_created_from: bool = False,
     masked_ids: Union[None, set] = None,
     claimant_contributor_id: Union[None, int] = None,
+    is_anonymized: bool = False,
 ) -> dict:
     """Create address field from facility address of the FacilityIndex
     model.
@@ -248,7 +253,8 @@ def create_address_field_from_facility_address(
             contributor, user_can_see_detail, masked_ids),
         'updated_at': format_date(updated_at),
         'is_from_claim': is_from_claim or is_contribution_from_claimant(
-            contributor, claimant_contributor_id),
+            contributor, claimant_contributor_id,
+            masked=masked_ids, is_anonymized=is_anonymized),
         'is_from_created_from': is_from_created_from,
     }
 
@@ -372,6 +378,7 @@ def format_sectors(items,
             return user_can_see_detail
         return (user_can_see_detail and entity['source']['is_active']
                 and entity['source']['is_public']
+                and not entity['source'].get('is_anonymized', False)
                 and entity['has_active_complete_match'])
 
     def format_sector_data(entity, is_claim):
@@ -391,7 +398,9 @@ def format_sectors(items,
             # upload). The list order is deliberately left untouched: this
             # marks entries in place and never promotes them.
             'is_from_claim': is_claim or is_contribution_from_claimant(
-                entity['contributor'], claimant_contributor_id),
+                entity['contributor'], claimant_contributor_id,
+                masked=masked_ids,
+                is_anonymized=entity['source'].get('is_anonymized', False)),
         }
 
         if use_main_created_at:

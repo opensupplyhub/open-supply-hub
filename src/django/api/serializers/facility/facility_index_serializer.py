@@ -280,12 +280,15 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 name_obj.get('contributor'),
                                 created_at,
                                 name_obj.get('updated_at'),
-                                user_can_see_detail,
+                                user_can_see_detail
+                                and not name_obj.get('is_anonymized', False),
                                 is_from_created_from=name_obj.get(
                                     'is_from_created_from', False),
                                 masked_ids=masked,
                                 claimant_contributor_id=(
-                                    claimant_contributor_id)))
+                                    claimant_contributor_id),
+                                is_anonymized=name_obj.get(
+                                    'is_anonymized', False)))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -303,12 +306,16 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 address_obj.get('contributor'),
                                 created_at,
                                 address_obj.get('updated_at'),
-                                user_can_see_detail,
+                                user_can_see_detail
+                                and not address_obj.get(
+                                    'is_anonymized', False),
                                 is_from_created_from=address_obj.get(
                                     'is_from_created_from', False),
                                 masked_ids=masked,
                                 claimant_contributor_id=(
-                                    claimant_contributor_id)))
+                                    claimant_contributor_id),
+                                is_anonymized=address_obj.get(
+                                    'is_anonymized', False)))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)

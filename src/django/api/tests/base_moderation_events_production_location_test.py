@@ -171,11 +171,12 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             self.superuser.id
         )
 
-    def assert_source_creation(self, source):
+    def assert_source_creation(self, source, is_anonymized=False):
         self.assertIsNotNone(source)
         self.assertEqual(source.source_type, Source.SINGLE)
         self.assertEqual(source.is_active, True)
         self.assertEqual(source.is_public, True)
+        self.assertEqual(source.is_anonymized, is_anonymized)
         self.assertEqual(source.create, True)
 
     def assert_successful_add_production_location_without_geocode_result(

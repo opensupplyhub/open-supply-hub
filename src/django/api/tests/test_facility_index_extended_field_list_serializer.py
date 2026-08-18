@@ -72,14 +72,13 @@ class IsFromClaimTest(SimpleTestCase):
         data = serialize_one(make_extended_field())
         self.assertFalse(data['is_from_claim'])
 
-    def test_masked_claimant_contribution_is_still_from_claim(self):
-        # A masked claimant keeps the claim attribution while their identity
-        # stays hidden: the label says where the value came from, and the
-        # name/id getters do the hiding. Fields created on the claim form are
-        # already marked as claim data whether or not the claimant is masked,
-        # so excluding masked contributions here would label one claimant's
-        # data two ways depending on the channel. Raised by review on
-        # OSDEV-3170.
+    def test_masked_claimant_contribution_is_not_from_claim(self):
+        # A masked claimant's contribution is NOT labeled as claim data:
+        # the claimant is publicly named on the profile, so the label would
+        # tie the masked contribution back to them by inference and undo
+        # the masking. This supersedes the earlier OSDEV-3170 review call
+        # (label regardless of masking) — OSDEV-3142 shipped the
+        # suppression on main and the claim-marking surfaces follow it.
         data = serialize_one(
             make_extended_field(),
             context_overrides={
@@ -89,7 +88,19 @@ class IsFromClaimTest(SimpleTestCase):
                 ),
             },
         )
-        self.assertTrue(data['is_from_claim'])
-        # identity still masked
+        self.assertFalse(data['is_from_claim'])
+        # identity masked as before
         self.assertEqual(data['contributor_name'], MASKED_CONTRIBUTOR_LABEL)
         self.assertIsNone(data['contributor_id'])
+
+    def test_anonymized_claimant_contribution_is_not_from_claim(self):
+        # Same rule for source-level anonymization (OSDEV-3142): an
+        # anonymized contribution from the claimant must not carry the
+        # claim label, or the badge would de-anonymize it by inference.
+        field = make_extended_field()
+        field['is_anonymized'] = True
+        data = serialize_one(
+            field,
+            context_overrides={'claimant_contributor_id': 10},
+        )
+        self.assertFalse(data['is_from_claim'])

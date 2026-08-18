@@ -105,13 +105,15 @@ class FacilityIndexExtendedFieldListSerializer:
             return True
         # Fields the approved claimant contributed through other channels
         # (SLC, list upload) are also claimant data. See the Promotion
-        # Logic Q3 plan. Masking is not consulted: the label says where the
-        # value came from, while hiding who the contributor is remains the
-        # job of the contributor-name/id getters above. See
-        # is_contribution_from_claimant for the full reasoning.
+        # Logic Q3 plan. Masked or anonymized contributions are never
+        # attributed to the claim — the claimant is publicly named, so the
+        # label would undo the hiding by inference (OSDEV-3142). The
+        # helper owns that rule for every claim-marked surface.
         return is_contribution_from_claimant(
             extended_field.get('contributor'),
             self.context.get('claimant_contributor_id'),
+            masked=self.masked_contributors,
+            is_anonymized=bool(extended_field.get('is_anonymized')),
         )
 
     def _get_verified_count(self, extended_field: dict) -> int:
