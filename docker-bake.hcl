@@ -10,7 +10,11 @@ variable "DOCKER_IMAGE" {
 }
 
 group "default" {
-  targets = ["kafka", "django", "batch", "dedupe", "logstash"]
+  targets = ["kafka", "django", "dedupe", "logstash"]
+}
+
+group "batch-wave" {
+  targets = ["batch"]
 }
 
 target "kafka" {

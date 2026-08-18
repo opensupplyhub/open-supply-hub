@@ -410,7 +410,11 @@ jobs:
           ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
           GIT_COMMIT: ${{ env.GIT_COMMIT }}
           DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
-        run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.wave1 }}
+          BAKE_TARGETS: ${{ steps.bake_targets.outputs.wave1 }}
+        run: |
+          set -euo pipefail
+          read -r -a targets <<< "$BAKE_TARGETS"
+          docker buildx bake -f docker-bake.hcl --push "${targets[@]}"
 
       - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }} (wave 2)
         if: ${{ steps.bake_targets.outputs.wave2 != '' }}
@@ -420,7 +424,11 @@ jobs:
           ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
           GIT_COMMIT: ${{ env.GIT_COMMIT }}
           DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
-        run: docker buildx bake -f docker-bake.hcl --push ${{ steps.bake_targets.outputs.wave2 }}
+          BAKE_TARGETS: ${{ steps.bake_targets.outputs.wave2 }}
+        run: |
+          set -euo pipefail
+          read -r -a targets <<< "$BAKE_TARGETS"
+          docker buildx bake -f docker-bake.hcl --push "${targets[@]}"
 
   create_kafka_topic:
     needs: [build_and_push_react_app, build_and_push_docker_image]
