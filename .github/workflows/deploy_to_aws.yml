@@ -297,7 +297,7 @@ jobs:
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
   build_and_push_docker_image:
-    needs: build_and_push_react_app
+    needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
@@ -320,114 +320,100 @@ jobs:
 
       - name: Get GIT_COMMIT
         run: |
-              export SHORT_SHA="$(git rev-parse --short HEAD)"
-              export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
-              echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
+          export SHORT_SHA="$(git rev-parse --short HEAD)"
+          export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
+          echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Check for existing image tags (ECR repos are IMMUTABLE)
+      - name: Select bake targets (skip immutable tags that already exist)
         # ECR repos enforce IMMUTABLE tags and images are tagged by commit SHA, so
         # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
         # after a later step like terraform apply fails) would otherwise fail at
-        # `docker push` with ImageTagAlreadyExistsException. Check each repo up
-        # front and skip the corresponding push step below if that SHA tag is
-        # already present.
+        # push with ImageTagAlreadyExistsException. Omit those targets from bake.
+        # Batch FROM the django image at the same GIT_COMMIT, so it bakes in wave 2.
+        id: bake_targets
+        env:
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
         run: |
-          set -e
-          check_tag () {
-            local repo="$1"
-            local env_var="$2"
-            if aws ecr describe-images --repository-name "$repo" --image-ids imageTag="${{ env.GIT_COMMIT }}" >/dev/null 2>&1; then
-              echo "Tag ${{ env.GIT_COMMIT }} already exists in $repo, skipping push."
-              echo "$env_var=true" >> "$GITHUB_ENV"
+          set -euo pipefail
+
+          # target|repo_suffix (suffix appended as ${IMAGE_NAME}${suffix}-${ENV_SLUG})
+          candidates=(
+            "kafka|-kafka"
+            "django|"
+            "batch|-batch"
+            "dedupe|-deduplicate"
+            "logstash|-logstash"
+          )
+          if [ "$ENV_SLUG" = "production" ]; then
+            candidates+=("database-anonymizer|-database-anonymizer")
+          fi
+          if [ "$ENV_SLUG" = "test" ]; then
+            candidates+=("anonymized-database-dump|-anonymized-database-dump")
+          fi
+
+          wave1=()
+          wave2=()
+          for entry in "${candidates[@]}"; do
+            target="${entry%%|*}"
+            suffix="${entry#*|}"
+            repo="${IMAGE_NAME}${suffix}-${ENV_SLUG}"
+            if aws ecr describe-images --repository-name "$repo" --image-ids "imageTag=${GIT_COMMIT}" >/dev/null 2>&1; then
+              echo "Tag ${GIT_COMMIT} already exists in ${repo}, skipping ${target}."
+            elif [ "$target" = "batch" ]; then
+              wave2+=("$target")
             else
-              echo "$env_var=false" >> "$GITHUB_ENV"
+              wave1+=("$target")
             fi
-          }
+          done
 
-          check_tag "${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_KAFKA
-          check_tag "${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DJANGO
-          check_tag "${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_BATCH
-          check_tag "${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DEDUPE
-          check_tag "${{ vars.IMAGE_NAME }}-logstash-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_LOGSTASH
-          if [ "${{ steps.get_env_name.outputs.lowercase }}" = "production" ]; then
-            check_tag "${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DB_ANONYMIZER
+          if [ "${#wave1[@]}" -eq 0 ] && [ "${#wave2[@]}" -eq 0 ]; then
+            echo "All image tags already exist for ${GIT_COMMIT}; nothing to bake."
+          else
+            echo "Bake wave 1 (parallel): ${wave1[*]:-"(none)"}"
+            echo "Bake wave 2 (after django): ${wave2[*]:-"(none)"}"
           fi
-          if [ "${{ steps.get_env_name.outputs.lowercase }}" = "test" ]; then
-            check_tag "${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_ANON_DUMP
-          fi
+          {
+            echo "wave1=${wave1[*]-}"
+            echo "wave2=${wave2[*]-}"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push Kafka Tools Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_KAFKA != 'true' }}
-        with:
-          context: src/kafka-tools/
-          file: src/kafka-tools/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+      - name: Build and push Docker images to ECR for ${{ vars.ENV_NAME }} (wave 1)
+        if: ${{ steps.bake_targets.outputs.wave1 != '' }}
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+          BAKE_TARGETS: ${{ steps.bake_targets.outputs.wave1 }}
+        run: |
+          set -euo pipefail
+          read -r -a targets <<< "$BAKE_TARGETS"
+          docker buildx bake -f docker-bake.hcl --push "${targets[@]}"
 
-      - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_DJANGO != 'true' }}
-        with:
-          context: src/django
-          file: src/django/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_BATCH != 'true' }}
-        with:
-          context: src/batch
-          file: src/batch/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-          build-args: |
-            GIT_COMMIT=${{ env.GIT_COMMIT }}
-            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
-            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
-
-      - name: Build and push Dedupe Hub Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_DEDUPE != 'true' }}
-        with:
-          context: src/dedupe-hub/api
-          file: src/dedupe-hub/api/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Logstash Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_LOGSTASH != 'true' }}
-        with:
-          context: src/logstash
-          file: src/logstash/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-logstash-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Database Anonymizer Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'production' && env.SKIP_PUSH_DB_ANONYMIZER != 'true' }}
-        with:
-          context: deployment/terraform/database_anonymizer_scheduled_task/docker
-          file: deployment/terraform/database_anonymizer_scheduled_task/docker/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Anonymize Database Dump Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'test' && env.SKIP_PUSH_ANON_DUMP != 'true' }}
-        with:
-          context: deployment/terraform/anonymized_database_dump_scheduled_task/docker
-          file: deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }} (wave 2)
+        if: ${{ steps.bake_targets.outputs.wave2 != '' }}
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+          BAKE_TARGETS: ${{ steps.bake_targets.outputs.wave2 }}
+        run: |
+          set -euo pipefail
+          read -r -a targets <<< "$BAKE_TARGETS"
+          docker buildx bake -f docker-bake.hcl --push "${targets[@]}"
 
   create_kafka_topic:
-    needs: build_and_push_docker_image
+    needs: [build_and_push_react_app, build_and_push_docker_image]
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
@@ -531,34 +517,8 @@ jobs:
           LIST_S3_BUCKET: opensupplyhub-${{ steps.get_env_name.outputs.lowercase }}-files-eu-west-1
           RESET_LISTS_FOLDER: "api/fixtures/list_files/"
 
-  update_services:
-    needs: restore_database
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
-    steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
-        id: get_env_name
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ vars.ENV_NAME }}
-      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
-        run: |
-          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Django service update failed"; exit 1; }
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-      - name: Update ECS Dedupe Hub Service with new Image for ${{ vars.ENV_NAME }}
-        run: |
-          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }}DD --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Dedupe Hub service update failed"; exit 1; }
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-
   post_deploy:
-    needs: update_services
+    needs: restore_database
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if: ${{ inputs.deploy-plan-only == false }}
