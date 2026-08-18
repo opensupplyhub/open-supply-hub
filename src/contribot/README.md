@@ -20,7 +20,7 @@ cd src/contribot/process_list && python -m pytest tests/test_handler.py
 
 ## Lambda Source Code
 
-Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), and [`google_drive.py`](lib/google_drive.py)).
+Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), [`google_drive.py`](lib/google_drive.py), and [`contribot_workbook.py`](lib/contribot_workbook.py)).
 
 | Lambda         | Handler source                                       | Deployment package                                                                                                                     |
 | -------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,14 +70,14 @@ On each run, `fetch_lists`:
 3. Writes each returned list as a `PENDING` row **before** returning Map items to Step Functions.
 4. Conditionally advances `__CURSOR__.last_list_id` to the highest fetched id.
 
-`process_list` marks the row `PROCESSING`, downloads the workbook from S3 using `file_name` as the object key, runs ContriBot, uploads the `.~PROCESSED.` report to Google Drive, stores `report_url` / summary stats on the row, and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it raises so Step Functions `Catch` can route to `notify` with `$.error`. Final `PROCESSED` / `FAILED` status is recorded by `notify`.
+`process_list` marks the row `PROCESSING`, downloads the upload from S3 using `file_name` as the object key (`.xlsx` or `.csv`), converts CSV to a temporary workbook, and always hands ContriBot a file named `{list_id}.xlsx`. That makes the Drive report `{list_id}.~PROCESSED.xlsx` (moderation tooling reads the facility-list id from the filename stem, not the contributor’s original upload name). CSV inputs must be UTF-8 (optional BOM); delimiter is sniffed (comma, semicolon, tab, pipe). Empty, header-only, or malformed CSVs fail the task so Step Functions can route to `notify`. Native `.xlsx` validation is otherwise unchanged. The handler stores `report_url` / summary stats on the row and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it raises so Step Functions `Catch` can route to `notify` with `$.error`. Final `PROCESSED` / `FAILED` status is recorded by `notify`.
 
 ## Process
 
 | Step | Description                                                                                                    |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
-| 2    | For each list, download the `.xlsx` from S3, run facility list validation, and upload the report to Google Drive. |
+| 2    | For each list, download the `.csv` or `.xlsx` from S3, convert CSV if needed, run facility list validation, and upload `{list_id}.~PROCESSED.xlsx` to Google Drive. |
 | 3    | Send notifications to Slack and Monday so that data moderators can review the report.                          |
 
 ## Configuration
