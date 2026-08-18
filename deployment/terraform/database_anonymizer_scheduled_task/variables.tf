@@ -5,10 +5,13 @@ variable "rds_database_name" {
 }
 
 variable "rds_database_username" {
+  type    = string
+  default = ""
 }
 
-variable "rds_database_password" {
-  sensitive = true
+variable "rds_master_secret_arn" {
+  type        = string
+  description = "ARN of the CLI-owned RDS master secret used for valueFrom username/password"
 }
 
 variable "destination_aws_account" {

@@ -6,7 +6,7 @@ resource "aws_security_group_rule" "bastion_ssh_ingress" {
   from_port   = 22
   to_port     = 22
   protocol    = "tcp"
-  cidr_blocks = var.external_access_cidr_blocks
+  cidr_blocks = local.external_access_cidr_blocks
 
   security_group_id = module.vpc.bastion_security_group_id
 }
