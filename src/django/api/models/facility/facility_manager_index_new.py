@@ -1,6 +1,8 @@
+import re
+
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import BooleanField, Q
+from django.db.models import BooleanField, IntegerField, Q
 from django.db.models.expressions import RawSQL
 
 from api.facility_type_processing_type import get_facility_and_processing_type
@@ -21,12 +23,22 @@ FREE_TEXT_FP_ARRAY_MATCH = """
 (
     EXISTS (
         SELECT 1 FROM unnest(facility_type) AS elem
-        WHERE unaccent(elem) ILIKE unaccent(%s)
+        WHERE unaccent(elem) ~* unaccent(%s)
     )
     OR EXISTS (
         SELECT 1 FROM unnest(processing_type) AS elem
-        WHERE unaccent(elem) ILIKE unaccent(%s)
+        WHERE unaccent(elem) ~* unaccent(%s)
     )
+)
+"""
+
+FREE_TEXT_FP_TERM_SCORE = """
+(
+    CASE
+        WHEN {array_match} THEN 2
+        WHEN {array_match} THEN 1
+        ELSE 0
+    END
 )
 """
 
@@ -41,6 +53,23 @@ def _classify_fp_filter_value(value):
         return ('free_text', trimmed)
 
     return (None, None)
+
+
+def _free_text_fp_terms(facility_types, processing_types):
+    terms = []
+    for value in [*(facility_types or []), *(processing_types or [])]:
+        classification, data = _classify_fp_filter_value(value)
+        if classification == 'free_text':
+            terms.append(data)
+    return terms
+
+
+def _word_prefix_pattern(term):
+    return rf'\m{re.escape(term)}'
+
+
+def _whole_word_pattern(term):
+    return rf'{_word_prefix_pattern(term)}\M'
 
 
 def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
@@ -63,7 +92,7 @@ def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
 
     for term in free_text_terms:
         parts.append(FREE_TEXT_FP_ARRAY_MATCH)
-        pattern = f'%{term}%'
+        pattern = _word_prefix_pattern(term)
         params.extend([pattern, pattern])
 
     return parts, params
@@ -74,9 +103,9 @@ def build_fp_match_sql(facility_types, processing_types):
     Build a boolean SQL expression for facility/processing type filters.
 
     Taxonomy values use array overlap on the param's primary column.
-    Unmatched values fall back to accent-insensitive substring search across
-    both columns. Multiple values within one param are OR'd; facility_type
-    and processing_type params are AND'd.
+    Unmatched values fall back to an accent-insensitive word-prefix search
+    across both columns. Multiple values within one param are OR'd;
+    facility_type and processing_type params are AND'd.
     """
     param_clauses = []
     all_params = []
@@ -107,6 +136,42 @@ def build_fp_match_sql(facility_types, processing_types):
     return ' AND '.join(param_clauses), all_params
 
 
+def build_fp_relevance_sql(facility_types, processing_types):
+    """
+    Score free-text facility/processing filters across both indexed arrays.
+
+    Whole-word matches score 2 and word-prefix matches score 1. The highest
+    score wins when multiple values or indexed array elements match.
+    """
+    score_parts = []
+    params = []
+
+    for term in _free_text_fp_terms(facility_types, processing_types):
+        score_parts.append(
+            FREE_TEXT_FP_TERM_SCORE.format(
+                array_match=FREE_TEXT_FP_ARRAY_MATCH
+            )
+        )
+        whole_word_pattern = _whole_word_pattern(term)
+        word_prefix_pattern = _word_prefix_pattern(term)
+        params.extend(
+            [
+                whole_word_pattern,
+                whole_word_pattern,
+                word_prefix_pattern,
+                word_prefix_pattern,
+            ]
+        )
+
+    if not score_parts:
+        return None, []
+
+    if len(score_parts) == 1:
+        return score_parts[0], params
+
+    return f"GREATEST({', '.join(score_parts)})", params
+
+
 def annotate_facility_processing_match(
     queryset,
     facility_types,
@@ -123,6 +188,27 @@ def annotate_facility_processing_match(
                 sql,
                 params,
                 output_field=BooleanField(),
+            )
+        }
+    ), True
+
+
+def annotate_facility_processing_relevance(
+    queryset,
+    facility_types,
+    processing_types,
+    annotation_name='_fp_relevance',
+):
+    sql, params = build_fp_relevance_sql(facility_types, processing_types)
+    if not sql:
+        return queryset, False
+
+    return queryset.annotate(
+        **{
+            annotation_name: RawSQL(
+                sql,
+                params,
+                output_field=IntegerField(),
             )
         }
     ), True
