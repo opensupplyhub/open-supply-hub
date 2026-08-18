@@ -9,22 +9,22 @@ locals {
     CONTRIBOT_STATE_TABLE_NAME  = aws_dynamodb_table.contribot_state.name
     LAST_LIST_ID                = var.contribot_last_list_id
     OS_HUB_API_URL              = local.contribot_os_hub_api_url
-    OS_HUB_API_TOKEN_SECRET_ARN = aws_secretsmanager_secret.contribot_os_hub_api_token.arn
+    OS_HUB_API_TOKEN_SECRET_ARN = local.contribot_os_hub_api_token_arn
   }
 
   contribot_process_list_environment = {
     CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
     AWS_STORAGE_BUCKET_NAME             = local.files_bucket_name
     GOOGLE_DRIVE_SHARED_DIRECTORY_ID    = var.contribot_google_drive_shared_directory_id
-    GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = aws_secretsmanager_secret.contribot_google_drive_service_key.arn
+    GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = local.contribot_google_drive_service_key_arn
   }
 
   contribot_notify_environment = {
     CONTRIBOT_STATE_TABLE_NAME = aws_dynamodb_table.contribot_state.name
     MONDAY_API_URL             = "https://api.monday.com/v2"
     MONDAY_BOARD_ID            = var.contribot_monday_board_id
-    MONDAY_API_KEY_SECRET_ARN  = aws_secretsmanager_secret.contribot_monday_api_key.arn
-    SLACK_API_URL_SECRET_ARN   = aws_secretsmanager_secret.contribot_slack_api_url.arn
+    MONDAY_API_KEY_SECRET_ARN  = local.contribot_monday_api_key_arn
+    SLACK_API_URL_SECRET_ARN   = local.contribot_slack_api_url_arn
   }
 }
 
@@ -50,12 +50,12 @@ data "aws_iam_policy_document" "contribot_lambda" {
       "secretsmanager:GetSecretValue",
     ]
 
-    resources = [
-      aws_secretsmanager_secret.contribot_os_hub_api_token.arn,
-      aws_secretsmanager_secret.contribot_monday_api_key.arn,
-      aws_secretsmanager_secret.contribot_slack_api_url.arn,
-      aws_secretsmanager_secret.contribot_google_drive_service_key.arn,
-    ]
+    resources = compact([
+      local.contribot_os_hub_api_token_arn,
+      local.contribot_monday_api_key_arn,
+      local.contribot_slack_api_url_arn,
+      local.contribot_google_drive_service_key_arn,
+    ])
   }
 
   statement {

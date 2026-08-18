@@ -181,7 +181,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     custom_header {
       name  = "X-CloudFront-Auth"
-      value = var.cloudfront_auth_token
+      value = local.cloudfront_auth_token
     }
   }
 
@@ -195,7 +195,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
     custom_header {
       name  = "X-CloudFront-Auth"
-      value = var.cloudfront_auth_token
+      value = local.cloudfront_auth_token
     }
   }
 
