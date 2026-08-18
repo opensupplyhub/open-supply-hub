@@ -30,10 +30,10 @@ def handler(event, context):
                 reason = container["Reason"]
 
         # Extract "OutOfMemoryError" from "OutOfMemoryError: ..."
-        if re.match("^(.+): (.+)$", reason):
+        if re.match(r"^(.+): (.+)$", reason):
             reason = reason.partition(":")[0]
         # Extract "Error" from "Error (...)":
-        elif re.match("^(.+) \((.+)\)$", reason):
+        elif re.match(r"^(.+) \((.+)\)$", reason):
             reason = reason.partition(" (")[0]
 
         ecs_url = ECS_TASK_URL.format(
